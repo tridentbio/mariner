@@ -5,50 +5,48 @@ from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
+from app import schemas
 from app.api import deps
 from app.core.config import settings
+from app.features.user.exceptions import UserAlreadyExists
 from app.utils import send_new_account_email
+
+from app.features.user import controller
+from app.features.user.model import User
+from app.features.user.schema import UserCreate
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[schemas.User])
+@router.get("/", response_model=List[schemas.User], dependencies=[Depends(deps.get_current_active_superuser)])
 def read_users(
-    db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_superuser),  # could be in dependencies instead
+    db: Session = Depends(deps.get_db),
 ) -> Any:
     """
     Retrieve users.
     """
-    users = crud.user.get_multi(db, skip=skip, limit=limit)
+    users = controller.get_users(db, skip=skip, limit=limit)
     return users
 
-
-@router.post("/", response_model=schemas.User)
+@router.post("/", response_model=schemas.User, dependencies=[Depends(deps.get_current_active_superuser)])
 def create_user(
     *,
+    user_in: UserCreate,
     db: Session = Depends(deps.get_db),
-    user_in: schemas.UserCreate,
-    current_user: models.User = Depends(deps.get_current_active_superuser), # could be in dependencies instead
 ) -> Any:
     """
     Create new user.
     """
-    user = crud.user.get_by_email(db, email=user_in.email)
-    if user:
+    try:
+        user = controller.create_user(db, user_in=user_in)
+        return user
+    except (UserAlreadyExists):
         raise HTTPException(
             status_code=400,
             detail="The user with this username already exists in the system.",
         )
-    user = crud.user.create(db, obj_in=user_in)
-    if settings.EMAILS_ENABLED and user_in.email:
-        send_new_account_email(
-            email_to=user_in.email, username=user_in.email, password=user_in.password
-        )
-    return user
 
 
 @router.put("/me", response_model=schemas.User)
@@ -58,7 +56,7 @@ def update_user_me(
     password: str = Body(None),
     full_name: str = Body(None),
     email: EmailStr = Body(None),
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Update own user.
@@ -80,7 +78,7 @@ def read_user_me(
     db: Session = Depends(deps.get_db), # could be in dependencies? maybe should be executed before get_current_active_user
                                         # except that get_current_active_user indirectly depends on the deps.get_db resultself.
                                         # so probably could be removed
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get current user.
@@ -118,7 +116,7 @@ def create_user_open(
 @router.get("/{user_id}", response_model=schemas.User)
 def read_user_by_id(
     user_id: int,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
     """
@@ -140,7 +138,7 @@ def update_user(
     db: Session = Depends(deps.get_db),
     user_id: int,
     user_in: schemas.UserUpdate,
-    current_user: models.User = Depends(deps.get_current_active_superuser),
+    current_user: User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
     Update a user.

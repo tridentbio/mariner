@@ -1,12 +1,13 @@
+
 from typing import Any, Dict, Optional, Union
 
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
 from app.crud.base import CRUDBase
-from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
 
+from .model import User
+from .schema import UserCreate, UserUpdate
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
@@ -19,9 +20,13 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             full_name=obj_in.full_name,
             is_superuser=obj_in.is_superuser,
         )
+        print(db_obj)
         db.add(db_obj)
+        print('inserted')
         db.commit()
+        print('commited')
         db.refresh(db_obj)
+        print('updated')
         return db_obj
 
     def update(
@@ -52,4 +57,4 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return user.is_superuser
 
 
-user = CRUDUser(User)
+repo = CRUDUser(User)
