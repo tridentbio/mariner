@@ -1,6 +1,4 @@
 import api from "../../app/api";
-import { TOKEN } from "../../app/local-storage";
-
 
 export interface User { 
   email: string
