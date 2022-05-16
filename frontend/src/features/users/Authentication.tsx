@@ -19,7 +19,6 @@ const AuthenticationPage = function () {
       username: formValues.email,
       password: formValues.password
     }))
-    console.log(result)
   }
   const [formValues, setFormValues ] = useState({email: '', password: ''})
   const handleFormChange = (field: keyof typeof formValues): React.ChangeEventHandler<HTMLInputElement> => (event) => {
