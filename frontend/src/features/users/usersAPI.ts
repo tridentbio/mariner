@@ -13,13 +13,12 @@ interface TokenResponse {
 }
 
 export const login = async ( username: string, password: string): Promise<TokenResponse> => {
-
   const data = new FormData()
   data.set('username', username)
   data.set('password', password)
   return api.post('/v1/login/access-token', data)
     .then(res => {
-      localStorage.set(TOKEN, JSON.stringify(res.data))
+      localStorage.setItem(TOKEN, JSON.stringify(res.data))
       return res
     })
     .then(res => res.data)
