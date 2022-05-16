@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { TOKEN } from "../../app/local-storage";
 import * as usersApi from "./usersAPI";
 
 type Status = 'loading' | 'idle' | 'rejected'
@@ -26,6 +27,7 @@ export const login = createAsyncThunk(
   'users/login',
   async (payload: {username: string, password: string}) => {
     const response = await usersApi.login(payload.username, payload.password)
+    localStorage.setItem(TOKEN, JSON.stringify(response))
     return response
   }
 )
@@ -33,7 +35,12 @@ export const login = createAsyncThunk(
 export const usersSlice = createSlice({
   name: 'user',
   initialState,
-  reducers: {},
+  reducers: {
+    logout: (state) => {
+      state.loggedIn = null
+      localStorage.setItem(TOKEN, '')
+    }
+  },
   extraReducers: builder => {
     builder.addCase(fetchMe.pending, state => {
       state.fetchMeStatus = 'loading'
@@ -56,5 +63,7 @@ export const usersSlice = createSlice({
     })
   }
 })
+
+export const {logout} = usersSlice.actions
 
 export default usersSlice.reducer

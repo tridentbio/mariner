@@ -17,10 +17,6 @@ export const login = async ( username: string, password: string): Promise<TokenR
   data.set('username', username)
   data.set('password', password)
   return api.post('/v1/login/access-token', data)
-    .then(res => {
-      localStorage.setItem(TOKEN, JSON.stringify(res.data))
-      return res
-    })
     .then(res => res.data)
 }
 

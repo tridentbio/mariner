@@ -1,6 +1,6 @@
 import React, { useState} from 'react'
-import {Link} from 'react-router-dom'
-import { Stack, TextField, FormControl, Button } from '@mui/material'
+import {Link, useLocation, useNavigate} from 'react-router-dom'
+import { Stack, TextField, FormControl, Button, Alert } from '@mui/material'
 import {Text, LargerBoldText} from '../../components/Text'
 import { useAppDispatch } from '../../app/hooks'
 import {login} from './usersSlice'
@@ -13,14 +13,20 @@ const stack =  (props: { children: React.ReactNode }) => {
 
 const AuthenticationPage = function () {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location?.state as { from?: Location })?.from?.pathname || '/'
   const handleLoginSubmit: React.FormEventHandler = async (event) => {
     event.preventDefault()
     const result = await dispatch(login({
       username: formValues.email,
       password: formValues.password
     }))
+    if (result.payload) navigate(from, { replace: true })
+    setFailedLogin(true)
   }
   const [formValues, setFormValues ] = useState({email: '', password: ''})
+  const [ failedLogin, setFailedLogin ] = useState(false)
   const handleFormChange = (field: keyof typeof formValues): React.ChangeEventHandler<HTMLInputElement> => (event) => {
     event.preventDefault()
     setFormValues({
@@ -32,6 +38,7 @@ const AuthenticationPage = function () {
     <form onSubmit={handleLoginSubmit}>
     <FormControl component={stack}>
       <LargerBoldText>Sign in</LargerBoldText>
+      {failedLogin && <Alert severity="error">Failed to login. Incorrect email or password.</Alert>}
       <TextField label="Email" onChange={handleFormChange('email')}/>
       <TextField type="password" label="Password" onChange={handleFormChange('password')}/>
       <Button type="submit">Sign In</Button>

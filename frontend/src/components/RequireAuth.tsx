@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import {useNavigate, useLocation} from 'react-router-dom'
+import {useNavigate, useLocation, Navigate} from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import { TOKEN } from '../app/local-storage'
 import {fetchMe} from '../features/users/usersSlice'
@@ -10,19 +10,27 @@ const RequireAuth: React.FC<{children:React.ReactNode}> = (props) => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
-  useEffect(() => {
-    const token = localStorage.getItem(TOKEN)
-    if (token && !loggedIn) {
-      dispatch(fetchMe())
-    }
-  }, [])
-  if (!loggedIn && ['loading', 'idle'].includes(fetchMeStatus)) {
-    return <Text>Loading...</Text>
-  } else if (!loggedIn) {
-    navigate('/login', { replace: true, state: location })
+  const token = localStorage.getItem(TOKEN)
+  const goLogin = () => 
+    navigate('/login', { replace: true, state: {from: location} })
+  const fetchUser = async () => {
+      const result = await dispatch(fetchMe())
+      return result.payload
   }
-  // is logged in
-  return <>{props.children}</>
+  useEffect(() => {
+    if (token && fetchMeStatus !== 'loading' && !loggedIn) {
+      fetchUser().then(user => !user && goLogin())
+    } else if (!token) {
+      goLogin()
+    }
+  }, [loggedIn, fetchMeStatus, token ])
+  if (!token) {
+    return <Navigate to="/login" state={{from: location}}/>
+  } else if (['loading'].includes(fetchMeStatus)) {
+    return <Text>Loading...</Text>
+  } else {
+    return <>{props.children}</>
+  }
 }
 
 export default RequireAuth
