@@ -14,6 +14,7 @@ from app.utils import send_new_account_email
 from app.features.user import controller
 from app.features.user.model import User
 from app.features.user.schema import UserCreate
+from app.features.user.crud import repo
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ def create_user(
             detail="The user with this username already exists in the system.",
         )
 
-
+# TODO: pass to MVC layer structure
 @router.put("/me", response_model=schemas.User)
 def update_user_me(
     *,
@@ -69,10 +70,11 @@ def update_user_me(
         user_in.full_name = full_name
     if email is not None:
         user_in.email = email
-    user = crud.user.update(db, db_obj=current_user, obj_in=user_in)
+    user = repo.update(db, db_obj=current_user, obj_in=user_in)
     return user
 
 
+# TODO: pass to MVC layer structure
 @router.get("/me", response_model=schemas.User)
 def read_user_me(
     db: Session = Depends(deps.get_db), # could be in dependencies? maybe should be executed before get_current_active_user
@@ -86,6 +88,7 @@ def read_user_me(
     return current_user
 
 
+# TODO: pass to MVC layer structure
 @router.post("/open", response_model=schemas.User)
 def create_user_open(
     *,
@@ -102,17 +105,18 @@ def create_user_open(
             status_code=403,
             detail="Open user registration is forbidden on this server",
         )
-    user = crud.user.get_by_email(db, email=email)
+    user = repo.get_by_email(db, email=email)
     if user:
         raise HTTPException(
             status_code=400,
             detail="The user with this username already exists in the system",
         )
     user_in = schemas.UserCreate(password=password, email=email, full_name=full_name)
-    user = crud.user.create(db, obj_in=user_in)
+    user = repo.create(db, obj_in=user_in)
     return user
 
 
+# TODO: pass to MVC layer structure
 @router.get("/{user_id}", response_model=schemas.User)
 def read_user_by_id(
     user_id: int,
@@ -122,16 +126,17 @@ def read_user_by_id(
     """
     Get a specific user by id.
     """
-    user = crud.user.get(db, id=user_id)
+    user = repo.get(db, id=user_id)
     if user == current_user:
         return user
-    if not crud.user.is_superuser(current_user):
+    if not repo.is_superuser(current_user):
         raise HTTPException(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return user
 
 
+# TODO: pass to MVC layer structure
 @router.put("/{user_id}", response_model=schemas.User)
 def update_user(
     *,
@@ -143,11 +148,11 @@ def update_user(
     """
     Update a user.
     """
-    user = crud.user.get(db, id=user_id)
+    user = repo.get(db, id=user_id)
     if not user:
         raise HTTPException(
             status_code=404,
             detail="The user with this username does not exist in the system",
         )
-    user = crud.user.update(db, db_obj=user, obj_in=user_in)
+    user = repo.update(db, db_obj=user, obj_in=user_in)
     return user

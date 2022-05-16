@@ -1,5 +1,13 @@
 # mariner
 
+## Todos:
+1. [x] fix tests for users backend
+2. [ ] build sign in admin page
+3. [ ] dataset creation from csv backend
+4. [ ] dataset frontend creation
+5. [ ] datasets listing
+6. [ ] datasets listing backend
+---
 ## Backend Requirements
 
 * [Docker](https://www.docker.com/).
