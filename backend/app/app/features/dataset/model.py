@@ -1,0 +1,25 @@
+from typing import TYPE_CHECKING
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.sql.sqltypes import JSON, DateTime
+
+from app.db.base_class import Base
+
+if TYPE_CHECKING:
+    from .user import User  # noqa: F401
+
+
+class Dataset(Base):
+    id = Column(Integer, primary_key=True, index=True)
+    name =  Column(String, index=True)
+    description =  Column(String)
+    bytes = Column(Integer)
+    rows = Column(Integer)
+    stats = Column(JSON)
+    data_url = Column(String)
+    columns = Column(Integer)
+    created_at = Column(DateTime)
+    created_by_id = Column(Integer, ForeignKey("user.id"))
+    created_by = relationship("User", back_populates="datasets")
+
