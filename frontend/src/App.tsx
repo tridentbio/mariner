@@ -1,22 +1,21 @@
-import React from 'react';
-import {Routes, Route, Outlet} from 'react-router-dom'
-import AuthenticationPage from './features/users/Authentication';
+import { Routes, Route, Outlet } from 'react-router-dom'
+import AuthenticationPage from './features/users/Authentication'
 import DatasetsPage from './features/datasets/Datasets'
 import RequireAuth from './components/RequireAuth'
-import { TopBar } from './components/TopBar';
-import Dashboard from './features/dashboard/Dashboard';
+import { TopBar } from './components/TopBar'
+import Dashboard from './features/dashboard/Dashboard'
 
-function AppLayout() {
+function AppLayout () {
   return <>
-     <TopBar/>
-     <Outlet/>
+    <TopBar/>
+    <Outlet/>
   </>
 }
 
-function App() {
+function App () {
   return (
     <div className="App">
-      <Routes> 
+      <Routes>
         <Route path="/login" element={<AuthenticationPage/>}/>
         <Route element={<AppLayout/>}>
           <Route path="/datasets" element={<RequireAuth><DatasetsPage/></RequireAuth>}/>
@@ -24,7 +23,7 @@ function App() {
         </Route>
       </Routes>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

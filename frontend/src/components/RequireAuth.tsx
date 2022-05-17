@@ -1,21 +1,21 @@
 import React, { useEffect } from 'react'
-import {useNavigate, useLocation, Navigate} from 'react-router-dom'
+import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import { TOKEN } from '../app/local-storage'
-import {fetchMe} from '../features/users/usersSlice'
-import {Text} from '../components/Text'
+import { fetchMe } from '../features/users/usersSlice'
+import { Text } from '../components/Text'
 
 const RequireAuth: React.FC<{children:React.ReactNode}> = (props) => {
-  const {loggedIn, fetchMeStatus} = useAppSelector(state => state.users)
+  const { loggedIn, fetchMeStatus } = useAppSelector(state => state.users)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
   const token = localStorage.getItem(TOKEN)
-  const goLogin = () => 
-    navigate('/login', { replace: true, state: {from: location} })
+  const goLogin = () =>
+    navigate('/login', { replace: true, state: { from: location } })
   const fetchUser = async () => {
-      const result = await dispatch(fetchMe())
-      return result.payload
+    const result = await dispatch(fetchMe())
+    return result.payload
   }
   useEffect(() => {
     if (token && fetchMeStatus !== 'loading' && !loggedIn) {
@@ -23,9 +23,9 @@ const RequireAuth: React.FC<{children:React.ReactNode}> = (props) => {
     } else if (!token) {
       goLogin()
     }
-  }, [loggedIn, fetchMeStatus, token ])
+  }, [loggedIn, fetchMeStatus, token])
   if (!token) {
-    return <Navigate to="/login" state={{from: location}}/>
+    return <Navigate to="/login" state={{ from: location }}/>
   } else if (['loading'].includes(fetchMeStatus)) {
     return <Text>Loading...</Text>
   } else {

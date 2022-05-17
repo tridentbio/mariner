@@ -1,6 +1,6 @@
-import api from "../../app/api";
+import api from '../../app/api'
 
-export interface User { 
+export interface User {
   email: string
   id: number
   full_name: string
@@ -10,7 +10,7 @@ interface TokenResponse {
   token_type: string;
 }
 
-export const login = async ( username: string, password: string): Promise<TokenResponse> => {
+export const login = async (username: string, password: string): Promise<TokenResponse> => {
   const data = new FormData()
   data.set('username', username)
   data.set('password', password)

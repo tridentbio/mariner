@@ -33,8 +33,7 @@ export interface Paginated<T> {
   data: T[],
 }
 
-
-export const mockDataset = () => 
+export const mockDataset = () =>
   ({
     id: Math.ceil(Math.random() * (1 << 30)),
     name: 'NINK Dataset 2022',
@@ -51,17 +50,13 @@ export const mockDataset = () =>
     createdBy: {
       id: 1,
       fullName: 'Vitor',
-      avatarUrl: 'https://chat.shawandpartners.com/avatar/jose.gilberto',
+      avatarUrl: 'https://chat.shawandpartners.com/avatar/jose.gilberto'
     }
   })
-const layout = {
-  align: 'center',
-  headerAlign: 'center'
-} as const
 
 // A mock function to mimic makinggsan async request for data
-export function fetchDatasets(_filters: DatasetsListingFilters): Promise<Paginated<Dataset>> {
+export function fetchDatasets (_filters: DatasetsListingFilters): Promise<Paginated<Dataset>> {
   return new Promise((resolve) =>
-    setTimeout(() => resolve({ total: 1, data: [mockDataset(), mockDataset()]}), 500)
+    setTimeout(() => resolve({ total: 1, data: [mockDataset(), mockDataset()] }), 500)
   )
 }

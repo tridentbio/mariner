@@ -3,8 +3,8 @@ import { Typography } from '@mui/material'
 import { SystemProps, TypographyProps } from '@mui/system'
 
 export const Text: React.FC<TypographyProps & SystemProps & { children: React.ReactNode }> = (props) => {
-  return <Typography {...props}> 
-  {props?.children || null}
+  return <Typography {...props}>
+    {props?.children || null}
   </Typography>
 }
 

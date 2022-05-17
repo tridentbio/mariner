@@ -1,6 +1,6 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { TOKEN } from "../../app/local-storage";
-import * as usersApi from "./usersAPI";
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { TOKEN } from '../../app/local-storage'
+import * as usersApi from './usersAPI'
 
 type Status = 'loading' | 'idle' | 'rejected'
 export interface UsersState {
@@ -45,10 +45,10 @@ export const usersSlice = createSlice({
     builder.addCase(fetchMe.pending, state => {
       state.fetchMeStatus = 'loading'
     })
-    .addCase(fetchMe.fulfilled, (state, action) => {
-      state.fetchMeStatus = 'idle'
-      state.loggedIn = action.payload
-    })
+      .addCase(fetchMe.fulfilled, (state, action) => {
+        state.fetchMeStatus = 'idle'
+        state.loggedIn = action.payload
+      })
     builder.addCase(fetchMe.rejected, state => {
       state.fetchMeStatus = 'rejected'
     })
@@ -64,6 +64,6 @@ export const usersSlice = createSlice({
   }
 })
 
-export const {logout} = usersSlice.actions
+export const { logout } = usersSlice.actions
 
 export default usersSlice.reducer
