@@ -63,3 +63,7 @@ def create_dataset(
     db_dataset = controller.create_dataset(db, current_user, payload)
     dataset = Dataset.from_orm(db_dataset)
     return dataset
+
+@router.put("/{dataset_id}", response_model=Dataset)
+def update_dateset(db: Session = Depends(deps.get_db)):
+    pass

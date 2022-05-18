@@ -78,6 +78,5 @@ class Dataset(DatasetBase):
     id: int
 
 
-class DatasetUpdate(BaseModel):
-    name: Optional[str]
-    description: Optional[str]
+class DatasetUpdate(DatasetBase):
+    pass
