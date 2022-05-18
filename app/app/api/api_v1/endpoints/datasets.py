@@ -1,9 +1,8 @@
 from typing import Any, Generic, List, TypeVar
 
 from fastapi.datastructures import UploadFile
-from fastapi.param_functions import Body, Depends, File, Form
+from fastapi.param_functions import Depends, File, Form
 from fastapi.routing import APIRouter
-from pandas.io.common import file_exists
 from pydantic.generics import GenericModel
 from sqlalchemy.orm.session import Session
 
@@ -60,5 +59,3 @@ def create_dataset(
     db_dataset = controller.create_dataset(db, current_user, payload)
     dataset = Dataset.from_orm(db_dataset)
     return dataset
-
-

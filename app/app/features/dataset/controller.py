@@ -3,7 +3,6 @@ import io
 from uuid import uuid4
 
 import pandas
-from fastapi.datastructures import UploadFile
 from sqlalchemy.orm.session import Session
 
 from ..user.schema import User
@@ -50,4 +49,3 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         created_by_id=current_user.id
     ))
     return dataset
-

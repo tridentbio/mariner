@@ -13,7 +13,6 @@ from app.features.user.crud import repo
 from app.features.user.exceptions import UserAlreadyExists
 from app.features.user.model import User
 from app.features.user.schema import UserCreate
-from app.utils import send_new_account_email
 
 router = APIRouter()
 

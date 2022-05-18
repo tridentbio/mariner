@@ -1,5 +1,4 @@
 from fastapi.encoders import jsonable_encoder
-from fastapi.param_functions import Depends
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -44,4 +43,3 @@ def update_user(db: Session, current_user: User):
     if email is not None:
         user_in.email = email
     user = repo.update(db, db_obj=current_user, obj_in=user_in)
-

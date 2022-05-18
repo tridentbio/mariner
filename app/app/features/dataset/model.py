@@ -26,4 +26,3 @@ class Dataset(Base):
     created_at = Column(DateTime)
     created_by_id = Column(Integer, ForeignKey("user.id"))
     created_by = relationship("User", back_populates="datasets")
-
