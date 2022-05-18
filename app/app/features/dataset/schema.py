@@ -85,13 +85,14 @@ class DatasetUpdate(BaseModel):
     split_target: Optional[Split]
     split_type: Optional[SplitType] = "random"
 
+
 class DatasetUpdateRepo(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     rows: Optional[int] = None
-    columns: Optional[int]  = None
+    columns: Optional[int] = None
     bytes: Optional[int] = None
-    stats: Optional[Dict]  = None
+    stats: Optional[Dict] = None
     data_url: Optional[str] = None
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None

@@ -50,7 +50,10 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         return db_obj
 
     def update(
-        self, db: Session, db_obj: Dataset, obj_in: Union[DatasetUpdateRepo, Dict[str, Any]]
+        self,
+        db: Session,
+        db_obj: Dataset,
+        obj_in: Union[DatasetUpdateRepo, Dict[str, Any]],
     ):
         if isinstance(obj_in, dict):
             update_data = obj_in

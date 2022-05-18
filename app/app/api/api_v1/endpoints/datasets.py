@@ -66,7 +66,11 @@ def create_dataset(
     return dataset
 
 
-@router.put("/{dataset_id}", response_model=Dataset, dependencies=[Depends(deps.get_current_active_user)])
+@router.put(
+    "/{dataset_id}",
+    response_model=Dataset,
+    dependencies=[Depends(deps.get_current_active_user)],
+)
 def update_dateset(
     dataset_id: int,
     name: Optional[str] = Form(...),
@@ -76,21 +80,27 @@ def update_dateset(
     file: Optional[UploadFile] = File(None),
     current_user=Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
-    ):
-    dataset = controller.update_dataset(db, current_user, dataset_id, DatasetUpdate(
-        file=file,
-        name=name,
-        description=description,
-        split_target=split_target,
-        split_type=split_type,
-    ))
+):
+    dataset = controller.update_dataset(
+        db,
+        current_user,
+        dataset_id,
+        DatasetUpdate(
+            file=file,
+            name=name,
+            description=description,
+            split_target=split_target,
+            split_type=split_type,
+        ),
+    )
     return dataset
 
+
 @router.delete("/{dataset_id}", response_model=Dataset)
-def delete_dataset( 
-        dataset_id: int,
-        current_user = Depends(deps.get_current_active_user),
-        db: Session = Depends(deps.get_db)
-        ):
+def delete_dataset(
+    dataset_id: int,
+    current_user=Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db),
+):
     dataset = controller.delete_dataset(db, current_user, dataset_id)
     return dataset
