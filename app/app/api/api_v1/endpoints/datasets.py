@@ -16,6 +16,7 @@ from app.features.dataset.schema import (
     Split,
     SplitType,
 )
+from app.features.user.model import User
 
 router = APIRouter()
 
@@ -30,8 +31,8 @@ class Paginated(GenericModel, Generic[DataT]):
 
 @router.get("/", response_model=Paginated[Dataset])
 def get_my_datasets(
-    query=Depends(DatasetsQuery),
-    current_user=Depends(deps.get_current_active_user),
+    query: DatasetsQuery = Depends(DatasetsQuery),
+    current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
     """
@@ -43,11 +44,11 @@ def get_my_datasets(
 
 @router.post("/", response_model=Dataset)
 def create_dataset(
-    current_user=Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
     name: str = Form(...),
     description: str = Form(...),
-    split_target: Split = Form(...),
-    split_type: SplitType = Form(...),
+    split_target: Split = Form(..., alias="splitTarget"),
+    split_type: SplitType = Form(..., alias="splitType"),
     file: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
 ) -> Any:
@@ -75,8 +76,11 @@ def update_dateset(
     dataset_id: int,
     name: Optional[str] = Form(...),
     description: Optional[str] = Form(...),
-    split_target: Optional[Split] = Form(...),
-    split_type: Optional[SplitType] = Form(...),
+    split_target: Optional[Split] = Form(..., alias="splitTarget"),
+    split_type: Optional[SplitType] = Form(
+        ...,
+        alias="splitType",
+    ),
     file: Optional[UploadFile] = File(None),
     current_user=Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
@@ -99,7 +103,7 @@ def update_dateset(
 @router.delete("/{dataset_id}", response_model=Dataset)
 def delete_dataset(
     dataset_id: int,
-    current_user=Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
     dataset = controller.delete_dataset(db, current_user, dataset_id)

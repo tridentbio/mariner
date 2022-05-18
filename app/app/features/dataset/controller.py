@@ -8,7 +8,7 @@ from fastapi.datastructures import UploadFile
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm.session import Session
 
-from ..user.schema import User
+from ..user.model import User
 from .crud import repo
 from .schema import (
     DatasetCreate,

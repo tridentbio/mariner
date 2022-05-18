@@ -2,9 +2,11 @@ from datetime import datetime
 from typing import Dict, Literal, Optional
 
 from fastapi.datastructures import UploadFile
-from pydantic.main import BaseModel
+
+from app.schemas.api import ApiBaseModel
 
 SplitType = Literal["scaffold", "random"]
+ColumnType = Literal["numerical", "categorical", "string"]
 
 
 class Split(str):
@@ -32,25 +34,33 @@ class Split(str):
             raise ValueError('Split should be string "int-int-int"')
 
 
-class DatasetsQuery(BaseModel):
+class DatasetsQuery(ApiBaseModel):
     sort_by_rows: Optional[str]
     sort_by_cols: Optional[str]
     sort_by_created_at: Optional[str]
     page: int = 1
     per_page: int = 15
-
     search_by_name: Optional[str]
     created_by_id: Optional[int]
 
 
+class DatasetStats(ApiBaseModel):
+    min: Optional[float]
+    max: Optional[float]
+    avg: Optional[float]
+    na_count: Optional[float]
+    type: ColumnType
+    std_dev: Optional[float]
+
+
 # Shared properties
-class DatasetBase(BaseModel):
+class DatasetBase(ApiBaseModel):
     name: str
     description: str
     rows: int
     columns: int
     bytes: int
-    stats: Dict
+    stats: DatasetStats
     data_url: str
     split_target: Split
     split_actual: Optional[Split]
@@ -62,7 +72,7 @@ class DatasetBase(BaseModel):
         orm_mode = True
 
 
-class DatasetCreate(BaseModel):
+class DatasetCreate(ApiBaseModel):
     file: UploadFile
     name: str
     description: str
@@ -78,7 +88,7 @@ class Dataset(DatasetBase):
     id: int
 
 
-class DatasetUpdate(BaseModel):
+class DatasetUpdate(ApiBaseModel):
     file: Optional[UploadFile]
     name: Optional[str]
     description: Optional[str]
@@ -86,7 +96,7 @@ class DatasetUpdate(BaseModel):
     split_type: Optional[SplitType] = "random"
 
 
-class DatasetUpdateRepo(BaseModel):
+class DatasetUpdateRepo(ApiBaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     rows: Optional[int] = None
