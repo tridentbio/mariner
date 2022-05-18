@@ -1,4 +1,4 @@
 .mypy_cache
 .coverage
 htmlcov
-__pycache__
+__pycache__/
