@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
 from fastapi.datastructures import UploadFile
+from pydantic.main import BaseModel
 
 from app.schemas.api import ApiBaseModel
 
@@ -44,16 +45,16 @@ class DatasetsQuery(ApiBaseModel):
     created_by_id: Optional[int]
 
 
-class DatasetStats(ApiBaseModel):
-    min: Optional[float]
-    max: Optional[float]
-    avg: Optional[float]
-    na_count: Optional[float]
-    type: ColumnType
-    std_dev: Optional[float]
+# class DatasetStats(ApiBaseModel):
+#    min: Optional[float]
+#    max: Optional[float]
+#    avg: Optional[float]
+#    na_count: Optional[float]
+#    type: ColumnType
+#    std_dev: Optional[float]
+DatasetStats = Any
 
 
-# Shared properties
 class DatasetBase(ApiBaseModel):
     name: str
     description: str
@@ -68,11 +69,8 @@ class DatasetBase(ApiBaseModel):
     created_at: datetime
     created_by_id: int
 
-    class Config:
-        orm_mode = True
 
-
-class DatasetCreate(ApiBaseModel):
+class DatasetCreate(BaseModel):
     file: UploadFile
     name: str
     description: str
@@ -96,7 +94,7 @@ class DatasetUpdate(ApiBaseModel):
     split_type: Optional[SplitType] = "random"
 
 
-class DatasetUpdateRepo(ApiBaseModel):
+class DatasetUpdateRepo(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     rows: Optional[int] = None

@@ -62,6 +62,7 @@ def create_dataset(
         split_type=split_type,
         file=file,
     )
+    print(payload)
     db_dataset = controller.create_dataset(db, current_user, payload)
     dataset = Dataset.from_orm(db_dataset)
     return dataset

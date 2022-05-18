@@ -2,10 +2,10 @@ import datetime
 import io
 from uuid import uuid4
 
-import boto3
 import pandas
 from fastapi.datastructures import UploadFile
 from fastapi.exceptions import HTTPException
+from pandas.core.frame import DataFrame
 from sqlalchemy.orm.session import Session
 
 from ..user.model import User
@@ -34,21 +34,21 @@ def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
     return datasets, total
 
 
-def _get_stats(df):
-    stats = df.describe(include="all").to_dict()
+def _get_stats(df) -> DataFrame:
+    stats = df.describe(include="all")
     return stats
 
 
 def _get_entity_info_from_csv(file_bytes):
     df = pandas.read_csv(io.BytesIO(file_bytes))
-    return len(df), len(df.columns), len(file_bytes), _get_stats(df)
+    return len(df), len(df.columns), len(file_bytes), str(_get_stats(df).to_json())
 
 
 def _upload_s3(file: UploadFile):
     key = make_key()
-    s3 = boto3.client("s3")
+    # s3 = boto3.client("s3")
     # TODO: Here we should encrypt if bucket is not encrypted by AWS already
-    s3.upload_fileobj(file, DATASET_BUCKET, key)
+    # s3.upload_fileobj(file, DATASET_BUCKET, key)
     return key
 
 
