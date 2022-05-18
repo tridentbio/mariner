@@ -5,10 +5,9 @@ from typing import Any, Dict, Optional
 
 import emails
 from emails.template import JinjaTemplate
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 
 from app.core.config import settings
-
 
 
 def send_email(
