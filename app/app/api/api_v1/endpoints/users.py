@@ -8,13 +8,12 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.api import deps
 from app.core.config import settings
-from app.features.user.exceptions import UserAlreadyExists
-from app.utils import send_new_account_email
-
 from app.features.user import controller
+from app.features.user.crud import repo
+from app.features.user.exceptions import UserAlreadyExists
 from app.features.user.model import User
 from app.features.user.schema import UserCreate
-from app.features.user.crud import repo
+from app.utils import send_new_account_email
 
 router = APIRouter()
 

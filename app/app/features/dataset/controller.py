@@ -1,13 +1,14 @@
 import datetime
-import pandas
 import io
 from uuid import uuid4
+
+import pandas
 from fastapi.datastructures import UploadFile
 from sqlalchemy.orm.session import Session
 
 from ..user.schema import User
-from .schema import DatasetsQuery, DatasetCreateRepo, DatasetCreate
 from .crud import repo
+from .schema import DatasetCreate, DatasetCreateRepo, DatasetsQuery
 
 # TODO: move to somewhere appropriate
 DATASET_BUCKET = 'datasets-bucket'

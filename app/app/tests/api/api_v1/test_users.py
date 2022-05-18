@@ -4,10 +4,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.tests.utils.utils import random_email, random_lower_string
-
 from app.features.user.crud import repo
 from app.features.user.schema import UserCreate
+from app.tests.utils.utils import random_email, random_lower_string
 
 
 def test_get_users_superuser_me(

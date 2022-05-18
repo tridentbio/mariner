@@ -4,10 +4,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.features.user.crud import repo
 from app.features.user.model import User
 from app.features.user.schema import UserCreate, UserUpdate
-from app.features.user.crud import repo
 from app.tests.utils.utils import random_email, random_lower_string
+
 
 def user_authentication_headers(
     *, client: TestClient, email: str, password: str

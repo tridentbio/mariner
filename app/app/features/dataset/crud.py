@@ -5,6 +5,7 @@ from app.crud.base import CRUDBase
 from .model import Dataset
 from .schema import DatasetCreateRepo, DatasetsQuery, DatasetUpdate
 
+
 class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
     def get_many_paginated(self, db: Session, query: DatasetsQuery):
         sql_query = db.query(Dataset)

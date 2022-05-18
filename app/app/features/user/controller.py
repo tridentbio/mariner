@@ -1,14 +1,15 @@
 from fastapi.encoders import jsonable_encoder
 from fastapi.param_functions import Depends
 from sqlalchemy.orm import Session
-from app.core.config import settings
 
+from app.core.config import settings
 from app.features.user.exceptions import UserAlreadyExists
 from app.utils import send_new_account_email
 
-from .crud import repo 
-from .schema import UserCreate
+from .crud import repo
 from .model import User
+from .schema import UserCreate
+
 
 def get_users(
     db: Session,
