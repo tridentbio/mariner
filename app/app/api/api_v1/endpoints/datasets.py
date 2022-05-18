@@ -27,9 +27,8 @@ def get_my_datasets(
     """
     Retrieve datasets owned by requester
     """
-    print(current_user, query)
     datasets, total = controller.get_my_datasets(db, current_user, query)
-    return Paginated(data=datasets, total=total)
+    return Paginated(data=[ Dataset.from_orm(ds) for ds in datasets], total=total)
 
 @router.post('/', response_model=Dataset)
 def create_dataset(

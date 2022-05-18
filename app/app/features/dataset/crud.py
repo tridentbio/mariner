@@ -34,7 +34,7 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         sql_query.limit(query.per_page).offset(
                 query.page * query.per_page
         )
-        result = db.execute(sql_query).fetchall()
+        result = sql_query.all()
         total = sql_query.count()
         return result, total
 
