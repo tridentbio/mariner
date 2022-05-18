@@ -11,6 +11,7 @@ from sqlalchemy.orm.session import Session
 from ..user.model import User
 from .crud import repo
 from .schema import (
+    Dataset,
     DatasetCreate,
     DatasetCreateRepo,
     DatasetsQuery,
@@ -84,11 +85,13 @@ def update_dataset(
     dataset = repo.get(db, dataset_id)
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
+    print(dataset.created_by_id, current_user.id)
     if dataset.created_by_id != current_user.id:
         raise HTTPException(
             status_code=400, detail="Can only update datasets you created"
         )
 
+    print("creating update")
     update = DatasetUpdateRepo(
         name=data.name,
         description=data.description,
@@ -105,8 +108,12 @@ def update_dataset(
             update.stats,
         ) = _get_entity_info_from_csv(file_bytes)
 
-    dataset = repo.update(db, dataset, update)
-    return dataset
+    print("gonna save nao")
+    saved = repo.update(db, dataset, update)
+    print(str(saved))
+    print(saved.split_target)
+    print(saved.split_type)
+    return Dataset.from_orm(saved)
 
 
 def delete_dataset(db: Session, current_user: User, dataset_id: int):

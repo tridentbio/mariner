@@ -75,11 +75,11 @@ def create_dataset(
 )
 def update_dateset(
     dataset_id: int,
-    name: Optional[str] = Form(...),
-    description: Optional[str] = Form(...),
-    split_target: Optional[Split] = Form(..., alias="splitTarget"),
+    name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    split_target: Optional[Split] = Form(None, alias="splitTarget"),
     split_type: Optional[SplitType] = Form(
-        ...,
+        None,
         alias="splitType",
     ),
     file: Optional[UploadFile] = File(None),
