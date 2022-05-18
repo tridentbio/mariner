@@ -1,12 +1,13 @@
 from typing import Any, Generic, List, TypeVar
 from fastapi.datastructures import UploadFile
+from pandas.io.common import file_exists
 from pydantic.generics import GenericModel
-from fastapi.param_functions import Depends, File
+from fastapi.param_functions import Body, Depends, File, Form
 from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
 
 from app.api import deps
-from app.features.dataset.schema import DatasetCreate, DatasetsQuery, Dataset
+from app.features.dataset.schema import DatasetCreate, DatasetsQuery, Dataset, Split, SplitType
 from app.features.dataset import controller
 
 
@@ -32,15 +33,25 @@ def get_my_datasets(
 
 @router.post('/', response_model=Dataset)
 def create_dataset(
-    file: UploadFile = File(None),
-    payload = Depends(DatasetCreate),
     current_user = Depends(deps.get_current_active_user),
+    name: str = Form(...),
+    description: str = Form(...),
+    split_target: Split = Form(...),
+    split_type: SplitType = Form(...),
+    file: UploadFile = File(None),
     db: Session = Depends(deps.get_db)
     ) -> Any:
     """
     Create a dataset
     """
-    db_dataset = controller.create_dataset(db, current_user, file, payload)
+    payload = DatasetCreate(
+            name=name,
+            description=description,
+            split_target=split_target,
+            split_type=split_type,
+            file=file 
+            )
+    db_dataset = controller.create_dataset(db, current_user, payload)
     dataset = Dataset.from_orm(db_dataset)
     return dataset
 

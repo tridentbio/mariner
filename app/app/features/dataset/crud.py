@@ -31,11 +31,12 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         if query.created_by_id:
             sql_query = sql_query.filter(Dataset.created_by_id == query.created_by_id)
 
-        sql_query.limit(query.per_page).offset(
+        total = sql_query.count()
+        print(query)
+        sql_query = sql_query.limit(query.per_page).offset(
                 query.page * query.per_page
         )
         result = sql_query.all()
-        total = sql_query.count()
         return result, total
 
     def create(self, db: Session, obj_in: DatasetCreateRepo):

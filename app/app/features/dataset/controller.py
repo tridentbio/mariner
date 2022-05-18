@@ -22,10 +22,10 @@ def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
     datasets, total = repo.get_many_paginated(db, query)
     return datasets, total
 
-def create_dataset(db: Session, current_user: User, file: UploadFile, data: DatasetCreate):
+def create_dataset(db: Session, current_user: User, data: DatasetCreate):
 
     # parse csv bytes as json
-    file_raw = file.file.read()
+    file_raw = data.file.file.read()
     df = pandas.read_csv(io.BytesIO(file_raw))
     stats = df.describe(include='all').to_dict()
 
@@ -37,6 +37,9 @@ def create_dataset(db: Session, current_user: User, file: UploadFile, data: Data
     dataset = repo.create(db, DatasetCreateRepo(
         columns=len(df.columns),
         rows=len(df),
+        split_actual=None,
+        split_target=data.split_target,
+        split_type=data.split_type,
         name=data.name,
         description=data.description,
         bytes=len(file_raw), # maybe should be the encrypted size instead,
