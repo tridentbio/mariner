@@ -10,42 +10,48 @@ from .crud import repo
 from .schema import DatasetCreate, DatasetCreateRepo, DatasetsQuery
 
 # TODO: move to somewhere appropriate
-DATASET_BUCKET = 'datasets-bucket'
+DATASET_BUCKET = "datasets-bucket"
+
 
 def make_key():
     return str(uuid4())
 
+
 def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
     if not current_user.id:
-        raise Exception('wtf')
+        raise Exception("wtf")
     query.created_by_id = current_user.id
     datasets, total = repo.get_many_paginated(db, query)
     return datasets, total
+
 
 def create_dataset(db: Session, current_user: User, data: DatasetCreate):
 
     # parse csv bytes as json
     file_raw = data.file.file.read()
     df = pandas.read_csv(io.BytesIO(file_raw))
-    stats = df.describe(include='all').to_dict()
+    stats = df.describe(include="all").to_dict()
 
     key = make_key()
     # Upload to s3 bucket
     # s3 = boto3.client('s3')
     # TODO: Here we should encrypt if bucket is not encrypted by AWS already
     # s3.upload_fileobj(file, DATASET_BUCKET, key)
-    dataset = repo.create(db, DatasetCreateRepo(
-        columns=len(df.columns),
-        rows=len(df),
-        split_actual=None,
-        split_target=data.split_target,
-        split_type=data.split_type,
-        name=data.name,
-        description=data.description,
-        bytes=len(file_raw), # maybe should be the encrypted size instead,
-        created_at=datetime.datetime.now(),
-        stats=stats,
-        data_url=key,
-        created_by_id=current_user.id
-    ))
+    dataset = repo.create(
+        db,
+        DatasetCreateRepo(
+            columns=len(df.columns),
+            rows=len(df),
+            split_actual=None,
+            split_target=data.split_target,
+            split_type=data.split_type,
+            name=data.name,
+            description=data.description,
+            bytes=len(file_raw),  # maybe should be the encrypted size instead,
+            created_at=datetime.datetime.now(),
+            stats=stats,
+            data_url=key,
+            created_by_id=current_user.id,
+        ),
+    )
     return dataset

@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 class Dataset(Base):
     id = Column(Integer, primary_key=True, index=True)
-    name =  Column(String, index=True)
-    description =  Column(String)
+    name = Column(String, index=True)
+    description = Column(String)
     bytes = Column(Integer)
     rows = Column(Integer)
     stats = Column(JSON)

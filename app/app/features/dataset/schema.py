@@ -4,41 +4,44 @@ from typing import Dict, Literal, Optional
 from fastapi.datastructures import UploadFile
 from pydantic.main import BaseModel
 
-SplitType = Literal['scaffold', 'random']
+SplitType = Literal["scaffold", "random"]
+
 
 class Split(str):
     train_percents: int
     test_percents: int
     val_percents: int
 
-    @classmethod 
+    @classmethod
     def __get_validators__(cls):
         yield cls.validate
-    @classmethod 
+
+    @classmethod
     def _modify_schema__(cls, field_schema):
-        field_schema.update(
-            examples=["60-20-20", "70-20-10"]
-        )
+        field_schema.update(examples=["60-20-20", "70-20-10"])
+
     @classmethod
     def validate(cls, v):
         try:
-            splits = [int(s) for s in v.split('-')]
+            splits = [int(s) for s in v.split("-")]
             total = sum(splits)
             if total != 100:
-                raise ValueError('splits should sum to 100')
+                raise ValueError("splits should sum to 100")
             return cls(v)
-        except:
+        except ValueError:
             raise ValueError('Split should be string "int-int-int"')
+
 
 class DatasetsQuery(BaseModel):
     sort_by_rows: Optional[str]
     sort_by_cols: Optional[str]
-    sort_by_created_at: Optional[str] 
-    page: int = 1 
+    sort_by_created_at: Optional[str]
+    page: int = 1
     per_page: int = 15
 
     search_by_name: Optional[str]
     created_by_id: Optional[int]
+
 
 # Shared properties
 class DatasetBase(BaseModel):
@@ -57,19 +60,23 @@ class DatasetBase(BaseModel):
 
     class Config:
         orm_mode = True
-    
+
+
 class DatasetCreate(BaseModel):
     file: UploadFile
     name: str
     description: str
     split_target: Split
-    split_type: SplitType = 'random'
+    split_type: SplitType = "random"
+
 
 class DatasetCreateRepo(DatasetBase):
     pass
 
+
 class Dataset(DatasetBase):
     id: int
+
 
 class DatasetUpdate(BaseModel):
     name: Optional[str]

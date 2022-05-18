@@ -17,7 +17,11 @@ from app.features.user.schema import UserCreate
 router = APIRouter()
 
 
-@router.get("/", response_model=List[schemas.User], dependencies=[Depends(deps.get_current_active_superuser)])
+@router.get(
+    "/",
+    response_model=List[schemas.User],
+    dependencies=[Depends(deps.get_current_active_superuser)],
+)
 def read_users(
     skip: int = 0,
     limit: int = 100,
@@ -29,7 +33,12 @@ def read_users(
     users = controller.get_users(db, skip=skip, limit=limit)
     return users
 
-@router.post("/", response_model=schemas.User, dependencies=[Depends(deps.get_current_active_superuser)])
+
+@router.post(
+    "/",
+    response_model=schemas.User,
+    dependencies=[Depends(deps.get_current_active_superuser)],
+)
 def create_user(
     *,
     user_in: UserCreate,
@@ -46,6 +55,7 @@ def create_user(
             status_code=400,
             detail="The user with this username already exists in the system.",
         )
+
 
 # TODO: pass to MVC layer structure
 @router.put("/me", response_model=schemas.User)
@@ -75,9 +85,7 @@ def update_user_me(
 # TODO: pass to MVC layer structure
 @router.get("/me", response_model=schemas.User)
 def read_user_me(
-    db: Session = Depends(deps.get_db), # could be in dependencies? maybe should be executed before get_current_active_user
-                                        # except that get_current_active_user indirectly depends on the deps.get_db resultself.
-                                        # so probably could be removed
+    db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
