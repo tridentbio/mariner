@@ -78,5 +78,21 @@ class Dataset(DatasetBase):
     id: int
 
 
-class DatasetUpdate(DatasetBase):
-    pass
+class DatasetUpdate(BaseModel):
+    file: Optional[UploadFile]
+    name: Optional[str]
+    description: Optional[str]
+    split_target: Optional[Split]
+    split_type: Optional[SplitType] = "random"
+
+class DatasetUpdateRepo(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    rows: Optional[int] = None
+    columns: Optional[int]  = None
+    bytes: Optional[int] = None
+    stats: Optional[Dict]  = None
+    data_url: Optional[str] = None
+    split_target: Optional[Split] = None
+    split_actual: Optional[Split] = None
+    split_type: Optional[SplitType] = None

@@ -1,4 +1,4 @@
-from typing import Any, Generic, List, TypeVar
+from typing import Any, Generic, List, Optional, TypeVar
 
 from fastapi.datastructures import UploadFile
 from fastapi.param_functions import Depends, File, Form
@@ -12,6 +12,7 @@ from app.features.dataset.schema import (
     Dataset,
     DatasetCreate,
     DatasetsQuery,
+    DatasetUpdate,
     Split,
     SplitType,
 )
@@ -64,6 +65,32 @@ def create_dataset(
     dataset = Dataset.from_orm(db_dataset)
     return dataset
 
-@router.put("/{dataset_id}", response_model=Dataset)
-def update_dateset(db: Session = Depends(deps.get_db)):
-    pass
+
+@router.put("/{dataset_id}", response_model=Dataset, dependencies=[Depends(deps.get_current_active_user)])
+def update_dateset(
+    dataset_id: int,
+    name: Optional[str] = Form(...),
+    description: Optional[str] = Form(...),
+    split_target: Optional[Split] = Form(...),
+    split_type: Optional[SplitType] = Form(...),
+    file: Optional[UploadFile] = File(None),
+    current_user=Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db),
+    ):
+    dataset = controller.update_dataset(db, current_user, dataset_id, DatasetUpdate(
+        file=file,
+        name=name,
+        description=description,
+        split_target=split_target,
+        split_type=split_type,
+    ))
+    return dataset
+
+@router.delete("/{dataset_id}", response_model=Dataset)
+def delete_dataset( 
+        dataset_id: int,
+        current_user = Depends(deps.get_current_active_user),
+        db: Session = Depends(deps.get_db)
+        ):
+    dataset = controller.delete_dataset(db, current_user, dataset_id)
+    return dataset

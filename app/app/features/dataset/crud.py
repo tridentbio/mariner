@@ -1,10 +1,11 @@
 from typing import Any, Dict, Union
+
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
 
 from .model import Dataset
-from .schema import DatasetCreateRepo, DatasetsQuery, DatasetUpdate
+from .schema import DatasetCreateRepo, DatasetsQuery, DatasetUpdate, DatasetUpdateRepo
 
 
 class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
@@ -48,7 +49,9 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         db.refresh(db_obj)
         return db_obj
 
-    def update(self, db: Session, db_obj: Dataset, obj_in: Union[DatasetUpdate, Dict[str, Any]]):
+    def update(
+        self, db: Session, db_obj: Dataset, obj_in: Union[DatasetUpdateRepo, Dict[str, Any]]
+    ):
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
