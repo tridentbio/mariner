@@ -1,16 +1,20 @@
 from typing import Optional
-
+from humps import camel
 from pydantic import EmailStr
-
-from ...schemas.api import ApiBaseModel
+from pydantic.main import BaseModel
 
 
 # Shared properties
-class UserBase(ApiBaseModel):
+class UserBase(BaseModel):
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     is_superuser: bool = False
     full_name: Optional[str] = None
+
+    class Config:
+        alias_generator = camel.case
+        allow_population_by_field_name = True
+        orm_mode = True
 
 
 # Properties to receive via API on creation
