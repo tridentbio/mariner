@@ -16,9 +16,6 @@ services:
           - node.labels.${STACK_NAME?Variable not set}.app-db-data == true
   pgadmin:
     image: dpage/pgadmin4
-    networks:
-      - ${TRAEFIK_PUBLIC_NETWORK?Variable not set}
-      - default
     depends_on:
       - db
     env_file:
@@ -28,6 +25,8 @@ services:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     depends_on:
       - db
+    ports:
+      - 80:80
     env_file:
       - .env
     environment:
@@ -44,7 +43,7 @@ services:
 volumes:
   app-db-data:
 
-networks:
-  traefik-public:
-    # Allow setting it to false for testing
-    # external: ${TRAEFIK_PUBLIC_NETWORK_IS_EXTERNAL-true}
+# networks:
+#   traefik-public:
+#     # Allow setting it to false for testing
+#     external: ${TRAEFIK_PUBLIC_NETWORK_IS_EXTERNAL-true}
