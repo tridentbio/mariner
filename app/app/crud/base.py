@@ -51,12 +51,12 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
-        for field in obj_data:
-            if field in update_data:
-                setattr(db_obj, field, update_data[field])
+        for (key, value) in update_data.items():
+            if key in obj_data and key != 'id' and value != obj_data[key]:
+                print(f'setting {key} <- {value}')
+                setattr(db_obj, key, value)
         db.commit()
         db.flush()
-        db.refresh(db_obj)
         return db_obj
 
     def remove(self, db: Session, id: int) -> ModelType:

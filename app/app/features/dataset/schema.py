@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional, Union
 
 from fastapi.datastructures import UploadFile
 from pydantic.main import BaseModel
@@ -8,7 +8,6 @@ from app.schemas.api import ApiBaseModel
 
 SplitType = Literal["scaffold", "random"]
 ColumnType = Literal["numerical", "categorical", "string"]
-
 
 class Split(str):
     train_percents: int
@@ -101,7 +100,7 @@ class DatasetUpdateRepo(BaseModel):
     rows: Optional[int] = None
     columns: Optional[int] = None
     bytes: Optional[int] = None
-    stats: Optional[Dict] = None
+    stats: Optional[Union[Dict, str]] = None
     data_url: Optional[str] = None
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None

@@ -1,5 +1,6 @@
 import datetime
 import io
+import json
 from uuid import uuid4
 
 import pandas
@@ -38,13 +39,13 @@ def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
 
 
 def _get_stats(df) -> DataFrame:
-    stats = df.describe(include="all")
+    stats = df.describe(include="all").fillna("NaN")
     return stats
 
 
 def _get_entity_info_from_csv(file_bytes):
     df = pandas.read_csv(io.BytesIO(file_bytes))
-    return len(df), len(df.columns), len(file_bytes), str(_get_stats(df).to_json())
+    return len(df), len(df.columns), len(file_bytes), _get_stats(df).to_dict()
 
 
 def _upload_s3(file: UploadFile):
@@ -73,7 +74,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
             description=data.description,
             bytes=bytes,  # maybe should be the encrypted size instead,
             created_at=datetime.datetime.now(),
-            stats=stats,
+            stats= stats if isinstance(stats, dict) else jsonable_encoder(stats),
             data_url=data_url,
             created_by_id=current_user.id,
         ),
@@ -89,6 +90,7 @@ def update_dataset(
         raise DatasetNotFound(f"Dataset with id {dataset_id} not found")
     if dataset.created_by_id != current_user.id:
         raise NotCreatorOfDataset("Should be creator of dataset")
+    dataset.stats = jsonable_encoder(dataset.stats)
     dataset_dict = jsonable_encoder(dataset)
     update = DatasetUpdateRepo(**dataset_dict)
     if data.name:
@@ -121,4 +123,5 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
     if dataset.created_by_id != current_user.id:
         raise NotCreatorOfDataset("Should be creator of dataset")
     dataset = repo.remove(db, dataset.id)
-    return dataset
+    stats = json.dumps(dataset.stats)
+    return Dataset.from_orm(dataset)

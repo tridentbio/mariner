@@ -1,4 +1,5 @@
 from typing import Optional
+
 from humps import camel
 from pydantic import EmailStr
 from pydantic.main import BaseModel

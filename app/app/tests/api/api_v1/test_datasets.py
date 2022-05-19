@@ -8,6 +8,7 @@ from starlette import status
 from app.core.config import settings
 from app.features.dataset.crud import repo
 from app.features.dataset.schema import DatasetCreateRepo, Split
+from app.features.dataset.model import Dataset as DatasetModel 
 
 
 def test_get_my_datasets(
@@ -51,7 +52,7 @@ def test_update_dataset(
         DatasetCreateRepo(
             bytes=30,
             name="test",
-            stats="",
+            stats="{}",
             data_url="",
             created_at=datetime.now(),
             created_by_id=1,
@@ -72,10 +73,16 @@ def test_update_dataset(
             "splitType": "random",
             "splitTarget": "60-20-20",
         },
-        headers=superuser_token_headers,
+        headers={ **superuser_token_headers },
     )
     assert r.status_code == status.HTTP_200_OK
-    updated = repo.get(db, dataset.id)
+    response = r.json()
+    assert response is not None
+    assert response['name'] == new_name
+    db.flush()
+    updated = repo.get(db, response['id'])
+    updated = db.query(DatasetModel).filter(DatasetModel.id == dataset.id).first()
+    assert updated.id == response['id']
     assert updated is not None
     assert updated.name == new_name
 
@@ -88,7 +95,7 @@ def test_delete_dataset(
         DatasetCreateRepo(
             bytes=30,
             name="test",
-            stats="",
+            stats="{}",
             data_url="",
             created_at=datetime.now(),
             created_by_id=1,

@@ -37,7 +37,6 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
             sql_query = sql_query.filter(Dataset.created_by_id == query.created_by_id)
 
         total = sql_query.count()
-        print(query)
         sql_query = sql_query.limit(query.per_page).offset(query.page * query.per_page)
         result = sql_query.all()
         return result, total
@@ -59,8 +58,8 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
-        dataset = super().update(db, db_obj=db_obj, obj_in=update_data)
-        return dataset
+        super().update(db, db_obj=db_obj, obj_in=update_data)
+        return db_obj
 
 
 repo = CRUDDataset(Dataset)
