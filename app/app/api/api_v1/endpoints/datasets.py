@@ -45,6 +45,19 @@ def get_my_datasets(
     return Paginated(data=[Dataset.from_orm(ds) for ds in datasets], total=total)
 
 
+@router.get("/{dataset_id}", response_model=Dataset)
+def get_my_dataset(
+    dataset_id: int,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """
+    Retrieve datasets owned by requester
+    """
+    dataset = controller.get_dataset_by_id(db, current_user, dataset_id)
+    return Dataset.from_orm(dataset)
+
+
 @router.post("/", response_model=Dataset)
 def create_dataset(
     current_user: User = Depends(deps.get_current_active_user),

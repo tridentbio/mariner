@@ -44,7 +44,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db: Session,
         *,
         db_obj: ModelType,
-        obj_in: Union[UpdateSchemaType, Dict[str, Any]]
+        obj_in: Union[UpdateSchemaType, Dict[str, Any]],
     ) -> ModelType:
         obj_data = jsonable_encoder(db_obj)
         if isinstance(obj_in, dict):
@@ -52,8 +52,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         else:
             update_data = obj_in.dict(exclude_unset=True)
         for (key, value) in update_data.items():
-            if key in obj_data and key != 'id' and value != obj_data[key]:
-                print(f'setting {key} <- {value}')
+            if key in obj_data and key != "id" and value != obj_data[key]:
+                print(f"setting {key} <- {value}")
                 setattr(db_obj, key, value)
         db.commit()
         db.flush()

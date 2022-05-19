@@ -9,6 +9,7 @@ from app.schemas.api import ApiBaseModel
 SplitType = Literal["scaffold", "random"]
 ColumnType = Literal["numerical", "categorical", "string"]
 
+
 class Split(str):
     train_percents: int
     test_percents: int

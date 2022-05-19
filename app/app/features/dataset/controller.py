@@ -31,11 +31,18 @@ def make_key():
 
 
 def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
-    if not current_user.id:
-        raise Exception("wtf")
     query.created_by_id = current_user.id
     datasets, total = repo.get_many_paginated(db, query)
     return datasets, total
+
+
+def get_dataset_by_id(db: Session, current_user: User, dataset_id: int):
+    dataset = repo.get(db, dataset_id)
+    if dataset is None:
+        raise DatasetNotFound()
+    if current_user.id != dataset.created_by_id:
+        raise NotCreatorOfDataset()
+    return dataset
 
 
 def _get_stats(df) -> DataFrame:
@@ -74,7 +81,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
             description=data.description,
             bytes=bytes,  # maybe should be the encrypted size instead,
             created_at=datetime.datetime.now(),
-            stats= stats if isinstance(stats, dict) else jsonable_encoder(stats),
+            stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
             data_url=data_url,
             created_by_id=current_user.id,
         ),
@@ -123,5 +130,5 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
     if dataset.created_by_id != current_user.id:
         raise NotCreatorOfDataset("Should be creator of dataset")
     dataset = repo.remove(db, dataset.id)
-    stats = json.dumps(dataset.stats)
+    json.dumps(dataset.stats)
     return Dataset.from_orm(dataset)
