@@ -60,7 +60,7 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         else:
             update_data = obj_in.dict(exclude_unset=True)
         dataset = super().update(db, db_obj=db_obj, obj_in=update_data)
-        return super().get(db, dataset.id)
+        return dataset
 
 
 repo = CRUDDataset(Dataset)

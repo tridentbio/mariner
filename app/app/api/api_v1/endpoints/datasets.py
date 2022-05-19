@@ -1,13 +1,16 @@
 from typing import Any, Generic, List, Optional, TypeVar
 
 from fastapi.datastructures import UploadFile
+from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends, File, Form
 from fastapi.routing import APIRouter
 from pydantic.generics import GenericModel
 from sqlalchemy.orm.session import Session
+from starlette import status
 
 from app.api import deps
 from app.features.dataset import controller
+from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 from app.features.dataset.schema import (
     Dataset,
     DatasetCreate,
@@ -55,17 +58,19 @@ def create_dataset(
     """
     Create a dataset
     """
-    payload = DatasetCreate(
-        name=name,
-        description=description,
-        split_target=split_target,
-        split_type=split_type,
-        file=file,
-    )
-    print(payload)
-    db_dataset = controller.create_dataset(db, current_user, payload)
-    dataset = Dataset.from_orm(db_dataset)
-    return dataset
+    try:
+        payload = DatasetCreate(
+            name=name,
+            description=description,
+            split_target=split_target,
+            split_type=split_type,
+            file=file,
+        )
+        db_dataset = controller.create_dataset(db, current_user, payload)
+        dataset = Dataset.from_orm(db_dataset)
+        return dataset
+    except DatasetNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.put(
@@ -86,19 +91,24 @@ def update_dateset(
     current_user=Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
-    dataset = controller.update_dataset(
-        db,
-        current_user,
-        dataset_id,
-        DatasetUpdate(
-            file=file,
-            name=name,
-            description=description,
-            split_target=split_target,
-            split_type=split_type,
-        ),
-    )
-    return dataset
+    try:
+        dataset = controller.update_dataset(
+            db,
+            current_user,
+            dataset_id,
+            DatasetUpdate(
+                file=file,
+                name=name,
+                description=description,
+                split_target=split_target,
+                split_type=split_type,
+            ),
+        )
+        return dataset
+    except DatasetNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    except NotCreatorOfDataset:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.delete("/{dataset_id}", response_model=Dataset)

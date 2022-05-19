@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import EmailStr
 
-from app.schemas.api import ApiBaseModel
+from ...schemas.api import ApiBaseModel
 
 
 # Shared properties

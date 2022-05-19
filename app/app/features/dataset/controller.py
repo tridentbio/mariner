@@ -4,9 +4,11 @@ from uuid import uuid4
 
 import pandas
 from fastapi.datastructures import UploadFile
-from fastapi.exceptions import HTTPException
+from fastapi.encoders import jsonable_encoder
 from pandas.core.frame import DataFrame
 from sqlalchemy.orm.session import Session
+
+from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 
 from ..user.model import User
 from .crud import repo
@@ -84,20 +86,19 @@ def update_dataset(
 ):
     dataset = repo.get(db, dataset_id)
     if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
-    print(dataset.created_by_id, current_user.id)
+        raise DatasetNotFound(f"Dataset with id {dataset_id} not found")
     if dataset.created_by_id != current_user.id:
-        raise HTTPException(
-            status_code=400, detail="Can only update datasets you created"
-        )
-
-    print("creating update")
-    update = DatasetUpdateRepo(
-        name=data.name,
-        description=data.description,
-        split_target=data.split_target,
-        split_type=data.split_type,
-    )
+        raise NotCreatorOfDataset("Should be creator of dataset")
+    dataset_dict = jsonable_encoder(dataset)
+    update = DatasetUpdateRepo(**dataset_dict)
+    if data.name:
+        update.name = data.name
+    if data.description:
+        update.description = data.description
+    if data.split_target:
+        update.split_target = data.split_target
+    if data.split_type:
+        update.split_type = data.split_type
     if data.file:
         update.data_url = _upload_s3(data.file)
         file_bytes = data.file.file.read()
@@ -108,21 +109,16 @@ def update_dataset(
             update.stats,
         ) = _get_entity_info_from_csv(file_bytes)
 
-    print("gonna save nao")
+    update.id = dataset_id
     saved = repo.update(db, dataset, update)
-    print(str(saved))
-    print(saved.split_target)
-    print(saved.split_type)
     return Dataset.from_orm(saved)
 
 
 def delete_dataset(db: Session, current_user: User, dataset_id: int):
     dataset = repo.get(db, dataset_id)
     if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise DatasetNotFound(f"Dataset with {dataset_id} not found")
     if dataset.created_by_id != current_user.id:
-        raise HTTPException(
-            status_code=400, detail="Can only update datasets you created"
-        )
+        raise NotCreatorOfDataset("Should be creator of dataset")
     dataset = repo.remove(db, dataset.id)
     return dataset

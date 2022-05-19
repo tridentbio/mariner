@@ -40,7 +40,7 @@ def test_create_dataset(
         assert res.status_code == status.HTTP_200_OK
         id = res.json()["id"]
         ds = repo.get(db, id)
-        assert ds != None
+        assert ds is not None
 
 
 def test_update_dataset(
@@ -76,7 +76,7 @@ def test_update_dataset(
     )
     assert r.status_code == status.HTTP_200_OK
     updated = repo.get(db, dataset.id)
-    assert updated != None
+    assert updated is not None
     assert updated.name == new_name
 
 
@@ -106,4 +106,4 @@ def test_delete_dataset(
     )
     assert r.status_code == status.HTTP_200_OK
     ds = repo.get(db, dataset.id)
-    assert ds == None
+    assert ds is None
