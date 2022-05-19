@@ -81,11 +81,29 @@ def test_update_dataset(
 
 
 def test_delete_dataset(
-    client: TestClient, normal_user_token_headers: Dict[str, str]
+    client: TestClient, superuser_token_headers: Dict[str, str], db: Session
 ) -> None:
-    dataset_id = 1
-    r = client.delete(
-        f"{settings.API_V1_STR}/datasets/{dataset_id}",
-        headers=normal_user_token_headers,
+    dataset = repo.create(
+        db,
+        DatasetCreateRepo(
+            bytes=30,
+            name="test",
+            stats="",
+            data_url="",
+            created_at=datetime.now(),
+            created_by_id=1,
+            description="test",
+            rows=100,
+            columns=5,
+            split_type="random",
+            split_actual=None,
+            split_target=Split("60-20-20"),
+        ),
     )
-    r.json()
+    r = client.delete(
+        f"{settings.API_V1_STR}/datasets/{dataset.id}",
+        headers=superuser_token_headers,
+    )
+    assert r.status_code == status.HTTP_200_OK
+    ds = repo.get(db, dataset.id)
+    assert ds == None
