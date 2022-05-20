@@ -1,6 +1,6 @@
-import pytest
 from typing import Dict
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import settings

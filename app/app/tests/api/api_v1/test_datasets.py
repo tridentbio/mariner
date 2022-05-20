@@ -114,3 +114,23 @@ def test_delete_dataset(
     assert r.status_code == status.HTTP_200_OK
     ds = repo.get(db, dataset.id)
     assert ds is None
+
+
+def test_get_columns_metadata(
+    client: TestClient,
+    normal_user_token_headers: Dict[str, str],
+) -> None:
+    with open("app/tests/data/Lipophilicity.csv", "rb") as f:
+        res = client.post(
+            f"{settings.API_V1_STR}/datasets/csv-metadata",
+            files={"file": ("dataset.csv", f.read())},
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == status.HTTP_200_OK
+        cols = res.json()
+        assert isinstance(cols, list)
+        assert len(cols) == 3
+        colnames = [item["name"] for item in cols]
+        assert "CMPD_CHEMBLID" in colnames
+        assert "exp" in colnames
+        assert "smiles" in colnames

@@ -106,3 +106,9 @@ class DatasetUpdateRepo(BaseModel):
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None
     split_type: Optional[SplitType] = None
+
+
+class ColumnsMeta(BaseModel):
+    name: str
+    nacount: int
+    dtype: str

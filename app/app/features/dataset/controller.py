@@ -13,6 +13,7 @@ from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 from ..user.model import User
 from .crud import repo
 from .schema import (
+    ColumnsMeta,
     Dataset,
     DatasetCreate,
     DatasetCreateRepo,
@@ -127,3 +128,13 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
     dataset = repo.remove(db, dataset.id)
     json.dumps(dataset.stats)
     return Dataset.from_orm(dataset)
+
+
+def parse_csv_headers(csvFile: UploadFile):
+    file_raw = csvFile.file.read()
+    _, _, _, stats = _get_entity_info_from_csv(file_raw)
+    metadata = [
+        ColumnsMeta(name=key, nacount=stats[key]["na_count"], dtype=stats[key]["types"])
+        for key in stats
+    ]
+    return metadata
