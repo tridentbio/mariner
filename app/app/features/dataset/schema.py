@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from fastapi.datastructures import UploadFile
 from pydantic.main import BaseModel
@@ -70,12 +70,25 @@ class DatasetBase(ApiBaseModel):
     created_by_id: int
 
 
+class ColumnsMeta(BaseModel):
+    name: str
+    nacount: int
+    dtype: str
+
+
+class ColumnDescription(BaseModel):
+    pattern: str
+    description: str
+    dataset_id: Optional[int] = None
+
+
 class DatasetCreate(BaseModel):
     file: UploadFile
     name: str
     description: str
     split_target: Split
     split_type: SplitType = "random"
+    columns_descriptions: List[ColumnDescription] = []
 
 
 class DatasetCreateRepo(DatasetBase):
@@ -106,9 +119,3 @@ class DatasetUpdateRepo(BaseModel):
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None
     split_type: Optional[SplitType] = None
-
-
-class ColumnsMeta(BaseModel):
-    name: str
-    nacount: int
-    dtype: str

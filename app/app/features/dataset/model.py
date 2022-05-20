@@ -11,6 +11,13 @@ if TYPE_CHECKING:
     from .user import User  # noqa: F401
 
 
+class ColumnDescription(Base):
+    pattern = Column(String, primary_key=True)
+    description = Column(String)
+    dataset_id = Column(Integer, ForeignKey("dataset.id"), primary_key=True)
+    dataset = relationship("Dataset", back_populates="columns_descriptions")
+
+
 class Dataset(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
@@ -26,3 +33,4 @@ class Dataset(Base):
     created_at = Column(DateTime)
     created_by_id = Column(Integer, ForeignKey("user.id"))
     created_by = relationship("User", back_populates="datasets")
+    columns_descriptions = relationship("ColumnDescription", back_populates="dataset")

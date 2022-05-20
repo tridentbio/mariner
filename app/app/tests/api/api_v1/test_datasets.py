@@ -34,6 +34,16 @@ def test_create_dataset(
                 "description": "Test description",
                 "splitType": "random",
                 "splitTarget": "60-20-20",
+                "columnsDescriptions": [
+                    {
+                        "pattern": "col*",
+                        "description": "asdasdas",
+                    },
+                    {
+                        "pattern": "col2*",
+                        "description": "asdasdas",
+                    },
+                ],
             },
             files={"file": ("dataset.csv", f.read())},
             headers=normal_user_token_headers,
