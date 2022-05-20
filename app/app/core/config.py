@@ -82,6 +82,11 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str
     USERS_OPEN_REGISTRATION: bool = False
 
+    AWS_SECRET_KEY_ID: str
+    AWS_SECRET_KEY: str
+    AWS_REGION: str = "us-east-1"
+    AWS_DATASETS_BUCKET: str = "dev-datasets"
+
     class Config:
         case_sensitive = True
 
