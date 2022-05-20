@@ -24,8 +24,12 @@ jobs:
         # Docker Hub image
         image: postgres
         # Provide the password for postgres
+        ports:
+          - "5432:5432"
         env:
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_USER: postgres
+          POSTGRES_DB: app
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -47,8 +51,8 @@ jobs:
         poetry config virtualenvs.create false
     - name: Install dependencies
       run: |
-        poetry install --no-root
+        cd app; poetry install --no-root
     - name: Test with pytest
       run: |
-        cd app; pytest
+        cd app; POSTGRES_SERVER=localhost pytest
 
