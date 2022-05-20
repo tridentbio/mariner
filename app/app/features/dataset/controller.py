@@ -7,7 +7,6 @@ import boto3
 import pandas
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
-from pandas.core.frame import DataFrame
 from sqlalchemy.orm.session import Session
 
 from app.core.config import settings
@@ -23,6 +22,7 @@ from .schema import (
     DatasetUpdate,
     DatasetUpdateRepo,
 )
+from .utils import get_stats
 
 DATASET_BUCKET = settings.AWS_DATASETS_BUCKET
 
@@ -46,14 +46,9 @@ def get_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     return dataset
 
 
-def _get_stats(df) -> DataFrame:
-    stats = df.describe(include="all").fillna("NaN")
-    return stats
-
-
 def _get_entity_info_from_csv(file_bytes):
     df = pandas.read_csv(io.BytesIO(file_bytes))
-    return len(df), len(df.columns), len(file_bytes), _get_stats(df).to_dict()
+    return len(df), len(df.columns), len(file_bytes), get_stats(df).to_dict()
 
 
 def _upload_s3(file: UploadFile):
