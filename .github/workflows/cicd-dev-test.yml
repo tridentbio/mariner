@@ -14,28 +14,27 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     env:
-      DOMAIN:localhost
-      STACK_NAME:mariner-trident-bio
-      BACKEND_CORS_ORIGINS:["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:8080", "https://localhost", "https://localhost:4200", "https://localhost:3000", "https://localhost:8080", "http://dev.mariner.trident.bio", "https://stag.mariner.trident.bio", "https://mariner.trident.bio", "http://local.dockertoolbox.tiangolo.com", "http://localhost.tiangolo.com"]
-      PROJECT_NAME:mariner
-      SECRET_KEY:17d0be0cc06b63120770c707f14529c28d9af8d201523d022614f67eb04d8ec6
-      FIRST_SUPERUSER:admin@mariner.trident.bio
-      FIRST_SUPERUSER_PASSWORD:123456
-      SMTP_TLS:True
-      SMTP_PORT:587
-      SMTP_HOST:smtp.gmail.com
-      SMTP_USER:admin@mariner.trident.bio
-      SMTP_PASSWORD:12345
-      EMAILS_FROM_EMAIL:info@mariner.trident.bio
-      USERS_OPEN_REGISTRATION:False
+      DOMAIN: localhost
+      STACK_NAME: mariner-trident-bio
+      BACKEND_CORS_ORIGINS: ["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:8080", "https://localhost", "https://localhost:4200", "https://localhost:3000", "https://localhost:8080", "http://dev.mariner.trident.bio", "https://stag.mariner.trident.bio", "https://mariner.trident.bio", "http://local.dockertoolbox.tiangolo.com", "http://localhost.tiangolo.com"]
+      PROJECT_NAME: mariner
+      SECRET_KEY: 17d0be0cc06b63120770c707f14529c28d9af8d201523d022614f67eb04d8ec6
+      FIRST_SUPERUSER: admin@mariner.trident.bio
+      FIRST_SUPERUSER_PASSWORD: 123456
+      SMTP_TLS: True
+      SMTP_PORT: 587
+      SMTP_HOST: smtp.gmail.com
+      SMTP_USER: admin@mariner.trident.bio
+      SMTP_PASSWORD: 12345
+      EMAILS_FROM_EMAIL: info@mariner.trident.bio
+      USERS_OPEN_REGISTRATION: False
       # Postgres
-      POSTGRES_SERVER:db
-      POSTGRES_USER:postgres
-      POSTGRES_PASSWORD:123456
-      POSTGRES_DB:app
+      POSTGRES_SERVER: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: app
 
     # Service containers to run with `container-job`
     services:
