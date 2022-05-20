@@ -3,11 +3,13 @@ import io
 import json
 from uuid import uuid4
 
+import boto3
 import pandas
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
+from app.core.config import settings
 from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 
 from ..user.model import User
@@ -23,8 +25,7 @@ from .schema import (
 )
 from .utils import get_stats
 
-# TODO: move to somewhere appropriate
-DATASET_BUCKET = "datasets-bucket"
+DATASET_BUCKET = settings.AWS_DATASETS_BUCKET
 
 
 def make_key():
@@ -53,9 +54,15 @@ def _get_entity_info_from_csv(file_bytes):
 
 def _upload_s3(file: UploadFile):
     key = make_key()
-    # s3 = boto3.client("s3")
-    # TODO: Here we should encrypt if bucket is not encrypted by AWS already
-    # s3.upload_fileobj(file, DATASET_BUCKET, key)
+
+    # print(settings.AWS_REGION, settings.AWS_SECRET_KEY_ID, settings.AWS_SECRET_KEY)
+    s3 = boto3.client(
+        "s3",
+        region_name=settings.AWS_REGION,
+        aws_access_key_id=settings.AWS_SECRET_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_KEY,
+    )
+    s3.upload_fileobj(file.file, DATASET_BUCKET, key)
     return key
 
 

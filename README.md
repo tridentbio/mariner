@@ -1,22 +1,10 @@
 # mariner
 
-## Todos:
-1. [x] fix tests for users backend
-2. [ ] build sign in admin page
-3. [ ] dataset creation from csv backend
-4. [ ] dataset frontend creation
-5. [ ] datasets listing
-6. [ ] datasets listing backend
----
 ## Backend Requirements
 
 * [Docker](https://www.docker.com/).
 * [Docker Compose](https://docs.docker.com/compose/install/).
 * [Poetry](https://python-poetry.org/) for Python package and environment management.
-
-## Frontend Requirements
-
-* Node.js (with `npm`).
 
 ## Backend local development
 
