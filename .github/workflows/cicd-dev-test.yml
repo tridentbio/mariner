@@ -16,6 +16,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      SERVER_NAME: localhost
+      SERVER_HOST: localhost
+      AWS_SECRET_KEY_ID: none
+      AWS_SECRET_KEY: none
       DOMAIN: localhost
       STACK_NAME: mariner-trident-bio
       BACKEND_CORS_ORIGINS: '["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:8080", "https://localhost", "https://localhost:4200", "https://localhost:3000", "https://localhost:8080", "http://dev.mariner.trident.bio", "https://stag.mariner.trident.bio", "https://mariner.trident.bio", "http://local.dockertoolbox.tiangolo.com", "http://localhost.tiangolo.com"]'
