@@ -36,7 +36,7 @@ services:
       - SMTP_HOST=${SMTP_HOST}
     build:
       context: .
-      dockerfile: ./backend.dockerfile
+      dockerfile: ./Dockerfile
       args:
         INSTALL_DEV: ${INSTALL_DEV-false}
     deploy:
