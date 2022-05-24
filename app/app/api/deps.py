@@ -1,19 +1,19 @@
 from typing import Generator
 
-from fastapi.param_functions import Depends
-from fastapi.exceptions import HTTPException
 from fastapi import status
+from fastapi.exceptions import HTTPException
+from fastapi.param_functions import Depends
 from fastapi.security.oauth2 import OAuth2PasswordBearer
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.features.user.model import User
-from app.features.user.crud import repo
 from app.core import security
 from app.core.config import settings
 from app.db.session import SessionLocal
+from app.features.user.crud import repo
+from app.features.user.model import User
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"

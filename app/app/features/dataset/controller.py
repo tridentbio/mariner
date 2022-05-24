@@ -1,49 +1,149 @@
 import datetime
-import pandas
 import io
+import json
 from uuid import uuid4
+
+import boto3
+import pandas
 from fastapi.datastructures import UploadFile
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
-from ..user.schema import User
-from .schema import DatasetsQuery, DatasetCreateRepo, DatasetCreate
-from .crud import repo
+from app.core.config import settings
+from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 
-# TODO: move to somewhere appropriate
-DATASET_BUCKET = 'datasets-bucket'
+from ..user.model import User
+from .crud import repo
+from .schema import (
+    ColumnDescription,
+    ColumnsMeta,
+    Dataset,
+    DatasetCreate,
+    DatasetCreateRepo,
+    DatasetsQuery,
+    DatasetUpdate,
+    DatasetUpdateRepo,
+)
+from .utils import get_stats
+
+DATASET_BUCKET = settings.AWS_DATASETS
+
 
 def make_key():
     return str(uuid4())
 
+
 def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
-    if not current_user.id:
-        raise Exception('wtf')
     query.created_by_id = current_user.id
     datasets, total = repo.get_many_paginated(db, query)
     return datasets, total
 
-def create_dataset(db: Session, current_user: User, file: UploadFile, data: DatasetCreate):
 
-    # parse csv bytes as json
-    file_raw = file.file.read()
-    df = pandas.read_csv(io.BytesIO(file_raw))
-    stats = df.describe(include='all').to_dict()
-
-    key = make_key()
-    # Upload to s3 bucket
-    # s3 = boto3.client('s3')
-    # TODO: Here we should encrypt if bucket is not encrypted by AWS already
-    # s3.upload_fileobj(file, DATASET_BUCKET, key)
-    dataset = repo.create(db, DatasetCreateRepo(
-        columns=len(df.columns),
-        rows=len(df),
-        name=data.name,
-        description=data.description,
-        bytes=len(file_raw), # maybe should be the encrypted size instead,
-        created_at=datetime.datetime.now(),
-        stats=stats,
-        data_url=key,
-        created_by_id=current_user.id
-    ))
+def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
+    dataset = repo.get(db, dataset_id)
+    if dataset is None:
+        raise DatasetNotFound()
+    if current_user.id != dataset.created_by_id:
+        raise NotCreatorOfDataset()
     return dataset
 
+
+def _get_entity_info_from_csv(file: UploadFile):
+    file_bytes = file.file.read()
+    df = pandas.read_csv(io.BytesIO(file_bytes))
+    return len(df), len(df.columns), len(file_bytes), get_stats(df).to_dict()
+
+
+def _upload_s3(file: UploadFile):
+    key = f"datasets/{make_key()}_{file.filename.rstrip('.csv')}.csv"
+    s3 = boto3.client(
+        "s3",
+        region_name=settings.AWS_REGION,
+        aws_access_key_id=settings.AWS_SECRET_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_KEY,
+    )
+    s3.upload_fileobj(file.file, DATASET_BUCKET, key)
+    return key
+
+
+def create_dataset(db: Session, current_user: User, data: DatasetCreate):
+    rows, columns, bytes, stats = _get_entity_info_from_csv(data.file)
+    data.file.file.seek(0)
+    data_url = _upload_s3(data.file)
+    create_obj = DatasetCreateRepo(
+        columns=columns,
+        rows=rows,
+        split_actual=None,
+        split_target=data.split_target,
+        split_type=data.split_type,
+        name=data.name,
+        description=data.description,
+        bytes=bytes,
+        created_at=datetime.datetime.now(),
+        stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+        data_url=data_url,
+        created_by_id=current_user.id,
+    )
+    if data.columns_descriptions:
+        parsed = [json.loads(description) for description in data.columns_descriptions]
+        create_obj.columns_descriptions = [
+            ColumnDescription(pattern=c["pattern"], description=c["description"])
+            for c in parsed
+        ]
+
+    dataset = repo.create(db, create_obj)
+    return dataset
+
+
+def update_dataset(
+    db: Session, current_user: User, dataset_id: int, data: DatasetUpdate
+):
+    dataset = repo.get(db, dataset_id)
+    if not dataset:
+        raise DatasetNotFound(f"Dataset with id {dataset_id} not found")
+    if dataset.created_by_id != current_user.id:
+        raise NotCreatorOfDataset("Should be creator of dataset")
+    dataset.stats = jsonable_encoder(dataset.stats)
+    dataset_dict = jsonable_encoder(dataset)
+    update = DatasetUpdateRepo(**dataset_dict)
+    if data.name:
+        update.name = data.name
+    if data.description:
+        update.description = data.description
+    if data.split_target:
+        update.split_target = data.split_target
+    if data.split_type:
+        update.split_type = data.split_type
+    if data.file:
+        update.data_url = _upload_s3(data.file)
+        file_bytes = data.file.file.read()
+        (
+            update.rows,
+            update.columns,
+            update.bytes,
+            update.stats,
+        ) = _get_entity_info_from_csv(file_bytes)
+
+    update.id = dataset_id
+    saved = repo.update(db, dataset, update)
+    return Dataset.from_orm(saved)
+
+
+def delete_dataset(db: Session, current_user: User, dataset_id: int):
+    dataset = repo.get(db, dataset_id)
+    if not dataset:
+        raise DatasetNotFound(f"Dataset with {dataset_id} not found")
+    if dataset.created_by_id != current_user.id:
+        raise NotCreatorOfDataset("Should be creator of dataset")
+    dataset = repo.remove(db, dataset.id)
+    json.dumps(dataset.stats)
+    return Dataset.from_orm(dataset)
+
+
+def parse_csv_headers(csv_file: UploadFile):
+    _, _, _, stats = _get_entity_info_from_csv(csv_file)
+    metadata = [
+        ColumnsMeta(name=key, nacount=stats[key]["na_count"], dtype=stats[key]["types"])
+        for key in stats
+    ]
+    return metadata

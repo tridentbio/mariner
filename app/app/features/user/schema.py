@@ -1,7 +1,8 @@
-
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from humps import camel
+from pydantic import EmailStr
+from pydantic.main import BaseModel
 
 
 # Shared properties
@@ -10,6 +11,11 @@ class UserBase(BaseModel):
     is_active: Optional[bool] = True
     is_superuser: bool = False
     full_name: Optional[str] = None
+
+    class Config:
+        alias_generator = camel.case
+        allow_population_by_field_name = True
+        orm_mode = True
 
 
 # Properties to receive via API on creation
