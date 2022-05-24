@@ -54,7 +54,7 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         db_obj = Dataset(**ds_data)
 
         if obj_in.columns_descriptions:
-            db_obj = [
+            db_obj.columns_descriptions = [
                 ColumnDescription(
                     pattern=cd_in["pattern"], description=cd_in["description"]
                 )
@@ -64,8 +64,6 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         import logging
 
         logging.getLogger("sqlalchemy.engine").setLevel(logging.DEBUG)
-        print(len(db_obj.columns_descriptions))
-        print(db_obj.columns_descriptions)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)

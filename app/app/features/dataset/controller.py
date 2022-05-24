@@ -86,17 +86,11 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         created_by_id=current_user.id,
     )
     if data.columns_descriptions:
-        print("Got in if", data.columns_descriptions)
-        create_obj.columns_descriptions = list(
-            map(
-                lambda c: ColumnDescription(
-                    pattern=c.pattern, description=c.description
-                ),
-                data.columns_descriptions,
-            )
-        )
-    else:
-        print("NO IFFFFF")
+        parsed = [json.loads(description) for description in data.columns_descriptions]
+        create_obj.columns_descriptions = [
+            ColumnDescription(pattern=c["pattern"], description=c["description"])
+            for c in parsed
+        ]
 
     dataset = repo.create(db, create_obj)
     return dataset

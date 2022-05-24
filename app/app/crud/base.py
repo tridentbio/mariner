@@ -53,7 +53,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             update_data = obj_in.dict(exclude_unset=True)
         for (key, value) in update_data.items():
             if key in obj_data and key != "id" and value != obj_data[key]:
-                print(f"setting {key} <- {value}")
                 setattr(db_obj, key, value)
         db.commit()
         db.flush()
