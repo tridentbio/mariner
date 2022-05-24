@@ -92,7 +92,7 @@ class Settings(BaseSettings):
     AWS_SECRET_KEY_ID: str
     AWS_SECRET_KEY: str
     AWS_REGION: str = "us-east-1"
-    AWS_DATASETS_BUCKET: str = "dev-datasets"
+    AWS_DATASETS: str = "dev-matiner-datasets"
 
     class Config:
         case_sensitive = True
