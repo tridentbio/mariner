@@ -4,8 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
 
-from .model import Dataset
-from .schema import DatasetCreateRepo, DatasetsQuery, DatasetUpdate, DatasetUpdateRepo
+from .model import ColumnDescription, Dataset
+from .schema import (
+    DatasetCreateRepo,
+    DatasetsQuery,
+    DatasetUpdate,
+    DatasetUpdateRepo,
+)
 
 
 class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
@@ -42,8 +47,25 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         return result, total
 
     def create(self, db: Session, obj_in: DatasetCreateRepo):
-        db_obj = Dataset(**obj_in.dict())
+        obj_in_dict = obj_in.dict()
+        ds_data = {
+            k: obj_in_dict[k] for k in obj_in_dict if k != "columns_descriptions"
+        }
+        db_obj = Dataset(**ds_data)
 
+        if obj_in.columns_descriptions:
+            db_obj = [
+                ColumnDescription(
+                    pattern=cd_in["pattern"], description=cd_in["description"]
+                )
+                for cd_in in obj_in_dict["columns_descriptions"]
+            ]
+
+        import logging
+
+        logging.getLogger("sqlalchemy.engine").setLevel(logging.DEBUG)
+        print(len(db_obj.columns_descriptions))
+        print(db_obj.columns_descriptions)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
