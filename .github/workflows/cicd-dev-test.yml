@@ -1,0 +1,81 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches: [ feature/datasets ]
+  pull_request:
+    branches: [ feature/datasets ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SERVER_NAME: localhost
+      SERVER_HOST: localhost
+      AWS_SECRET_KEY_ID: none
+      AWS_SECRET_KEY: none
+      DOMAIN: localhost
+      STACK_NAME: mariner-trident-bio
+      BACKEND_CORS_ORIGINS: '["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:8080", "https://localhost", "https://localhost:4200", "https://localhost:3000", "https://localhost:8080", "http://dev.mariner.trident.bio", "https://stag.mariner.trident.bio", "https://mariner.trident.bio", "http://local.dockertoolbox.tiangolo.com", "http://localhost.tiangolo.com"]'
+      PROJECT_NAME: mariner
+      SECRET_KEY: 17d0be0cc06b63120770c707f14529c28d9af8d201523d022614f67eb04d8ec6
+      FIRST_SUPERUSER: admin@mariner.trident.bio
+      FIRST_SUPERUSER_PASSWORD: 123456
+      SMTP_TLS: True
+      SMTP_PORT: 587
+      SMTP_HOST: smtp.gmail.com
+      SMTP_USER: admin@mariner.trident.bio
+      SMTP_PASSWORD: 12345
+      EMAILS_FROM_EMAIL: info@mariner.trident.bio
+      USERS_OPEN_REGISTRATION: False
+      # Postgres
+      POSTGRES_SERVER: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: app
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_USER: postgres
+          POSTGRES_DB: app
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+    - name: Install Poetry as dependency manager
+      run: |
+        curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_HOME=/opt/poetry python && \
+        cd /usr/local/bin && \
+        ln -s /opt/poetry/bin/poetry && \
+        poetry config virtualenvs.create false
+    - name: Install dependencies
+      run: |
+        cd app; poetry shell && poetry install --no-root
+    - name: Test with pytest
+      run: |
+        cd app; POSTGRES_SERVER=localhost pytest
+
