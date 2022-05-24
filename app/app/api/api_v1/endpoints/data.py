@@ -24,7 +24,6 @@ def generate(result: StreamingBody):
     dependencies=[Depends(deps.get_current_active_superuser)],
 )
 def get_s3_data(
-    bucket_name: str = Query(..., alias="bucketName"),
     object_key: str = Query(..., alias="objectKey"),
 ) -> StreamingResponse:
     """
