@@ -1,7 +1,14 @@
 import secrets
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, EmailStr, HttpUrl, PostgresDsn, validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseSettings,
+    EmailStr,
+    HttpUrl,
+    PostgresDsn,
+    validator,
+)
 
 
 class Settings(BaseSettings):
@@ -81,6 +88,11 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
     USERS_OPEN_REGISTRATION: bool = False
+
+    AWS_SECRET_KEY_ID: str
+    AWS_SECRET_KEY: str
+    AWS_REGION: str = "us-east-1"
+    AWS_DATASETS: str = "dev-matiner-datasets"
 
     class Config:
         case_sensitive = True
