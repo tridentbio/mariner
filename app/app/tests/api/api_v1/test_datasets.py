@@ -46,8 +46,7 @@ def test_create_dataset(
                 "description": "Test description",
                 "splitType": "random",
                 "splitTarget": "60-20-20",
-                "columnsDescriptions[0]": json.dumps(descriptions[0]),
-                "columnsDescriptions[1]": json.dumps(descriptions[1]),
+                "columnsDescriptions": json.dumps(descriptions),
             },
             files={"file": ("dataset.csv", f.read())},
             headers=normal_user_token_headers,
@@ -58,7 +57,6 @@ def test_create_dataset(
         ds = repo.get(db, id)
         assert ds is not None
         assert ds.name == response["name"]
-        print(ds.columns_descriptions)
         assert len(ds.columns_descriptions) == 2
 
 

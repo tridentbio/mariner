@@ -57,7 +57,7 @@ class DatasetsQuery(ApiBaseModel):
 DatasetStats = Any
 
 
-class ColumnDescription(BaseModel):
+class ColumnDescription(ApiBaseModel):
     pattern: str
     description: str
     dataset_id: Optional[int] = None
@@ -66,10 +66,6 @@ class ColumnDescription(BaseModel):
 class ColumnDescriptionFromJSONStr(str):
     pattern: str
     description: str
-
-    def __init__(self, pattern: str, description: str):
-        self.pattern = pattern
-        self.description = description
 
     @classmethod
     def __get_validators__(cls):
@@ -84,7 +80,8 @@ class ColumnDescriptionFromJSONStr(str):
         try:
             encoded = json.loads(v)
             if isinstance(encoded, list):
-                return [cls(d["pattern"], d["description"]) for d in encoded]
+                arr = [cls(json.dumps(d)) for d in encoded]
+                return arr
             if "pattern" not in encoded or "description" not in encoded:
                 raise ValueError("Should have pattern and description")
             pattern = encoded["pattern"]

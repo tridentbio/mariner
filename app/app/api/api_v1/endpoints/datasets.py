@@ -28,7 +28,6 @@ router = APIRouter()
 DataT = TypeVar("DataT")
 
 
-# TODO: move to utils
 class Paginated(GenericModel, Generic[DataT]):
     data: List[DataT]
     total: int
@@ -67,7 +66,7 @@ def create_dataset(
     description: str = Form(...),
     split_target: Split = Form(..., alias="splitTarget"),
     split_type: SplitType = Form(..., alias="splitType"),
-    columns_descriptions: Optional[ColumnDescriptionFromJSONStr] = Form(
+    columns_descriptions: ColumnDescriptionFromJSONStr = Form(
         None, alias="columnsDescriptions"
     ),
     file: UploadFile = File(None),
@@ -76,7 +75,6 @@ def create_dataset(
     """
     Create a dataset
     """
-    print(columns_descriptions)
     if columns_descriptions is None or len(columns_descriptions) == 0:
         raise Exception("died in the beach")
     try:
