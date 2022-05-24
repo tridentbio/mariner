@@ -3,7 +3,6 @@ import io
 import json
 from uuid import uuid4
 
-import boto3
 import pandas
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
@@ -15,6 +14,7 @@ from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 from ..user.model import User
 from .crud import repo
 from .schema import (
+    ColumnDescription,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
@@ -38,7 +38,7 @@ def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
     return datasets, total
 
 
-def get_dataset_by_id(db: Session, current_user: User, dataset_id: int):
+def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     dataset = repo.get(db, dataset_id)
     if dataset is None:
         raise DatasetNotFound()
@@ -55,14 +55,13 @@ def _get_entity_info_from_csv(file_bytes):
 def _upload_s3(file: UploadFile):
     key = make_key()
 
-    # print(settings.AWS_REGION, settings.AWS_SECRET_KEY_ID, settings.AWS_SECRET_KEY)
-    s3 = boto3.client(
-        "s3",
-        region_name=settings.AWS_REGION,
-        aws_access_key_id=settings.AWS_SECRET_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_KEY,
-    )
-    s3.upload_fileobj(file.file, DATASET_BUCKET, key)
+    # s3 = boto3.client(
+    #    "s3",
+    #    region_name=settings.AWS_REGION,
+    #    aws_access_key_id=settings.AWS_SECRET_KEY_ID,
+    #    aws_secret_access_key=settings.AWS_SECRET_KEY,
+    # )
+    # s3.upload_fileobj(file.file, DATASET_BUCKET, key)
     return key
 
 
@@ -72,23 +71,34 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     file_raw = data.file.file.read()
     rows, columns, bytes, stats = _get_entity_info_from_csv(file_raw)
     data_url = _upload_s3(data.file)
-    dataset = repo.create(
-        db,
-        DatasetCreateRepo(
-            columns=columns,
-            rows=rows,
-            split_actual=None,
-            split_target=data.split_target,
-            split_type=data.split_type,
-            name=data.name,
-            description=data.description,
-            bytes=bytes,  # maybe should be the encrypted size instead,
-            created_at=datetime.datetime.now(),
-            stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
-            data_url=data_url,
-            created_by_id=current_user.id,
-        ),
+    create_obj = DatasetCreateRepo(
+        columns=columns,
+        rows=rows,
+        split_actual=None,
+        split_target=data.split_target,
+        split_type=data.split_type,
+        name=data.name,
+        description=data.description,
+        bytes=bytes,  # maybe should be the encrypted size instead,
+        created_at=datetime.datetime.now(),
+        stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+        data_url=data_url,
+        created_by_id=current_user.id,
     )
+    if data.columns_descriptions:
+        print("Got in if", data.columns_descriptions)
+        create_obj.columns_descriptions = list(
+            map(
+                lambda c: ColumnDescription(
+                    pattern=c.pattern, description=c.description
+                ),
+                data.columns_descriptions,
+            )
+        )
+    else:
+        print("NO IFFFFF")
+
+    dataset = repo.create(db, create_obj)
     return dataset
 
 

@@ -12,6 +12,7 @@ from app.api import deps
 from app.features.dataset import controller
 from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 from app.features.dataset.schema import (
+    ColumnDescriptionFromJSONStr,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
@@ -24,10 +25,10 @@ from app.features.user.model import User
 
 router = APIRouter()
 
-# TODO: move to utils
 DataT = TypeVar("DataT")
 
 
+# TODO: move to utils
 class Paginated(GenericModel, Generic[DataT]):
     data: List[DataT]
     total: int
@@ -55,7 +56,7 @@ def get_my_dataset(
     """
     Retrieve datasets owned by requester
     """
-    dataset = controller.get_dataset_by_id(db, current_user, dataset_id)
+    dataset = controller.get_my_dataset_by_id(db, current_user, dataset_id)
     return Dataset.from_orm(dataset)
 
 
@@ -66,13 +67,20 @@ def create_dataset(
     description: str = Form(...),
     split_target: Split = Form(..., alias="splitTarget"),
     split_type: SplitType = Form(..., alias="splitType"),
+    columns_descriptions: Optional[ColumnDescriptionFromJSONStr] = Form(
+        None, alias="columnsDescriptions"
+    ),
     file: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
 ) -> Any:
     """
     Create a dataset
     """
+    print(columns_descriptions)
+    if columns_descriptions is None or len(columns_descriptions) == 0:
+        raise Exception("died in the beach")
     try:
+
         payload = DatasetCreate(
             name=name,
             description=description,
@@ -80,6 +88,8 @@ def create_dataset(
             split_type=split_type,
             file=file,
         )
+        if columns_descriptions is not None:
+            payload.columns_descriptions = columns_descriptions
         db_dataset = controller.create_dataset(db, current_user, payload)
         dataset = Dataset.from_orm(db_dataset)
         return dataset

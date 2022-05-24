@@ -1,4 +1,6 @@
+import json
 from datetime import datetime
+from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from fastapi.datastructures import UploadFile
@@ -55,6 +57,43 @@ class DatasetsQuery(ApiBaseModel):
 DatasetStats = Any
 
 
+class ColumnDescription(BaseModel):
+    pattern: str
+    description: str
+    dataset_id: Optional[int] = None
+
+
+class ColumnDescriptionFromJSONStr(str):
+    pattern: str
+    description: str
+
+    def __init__(self, pattern: str, description: str):
+        self.pattern = pattern
+        self.description = description
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def _modify_schema__(cls, field_schema):
+        field_schema.update(examples=["60-20-20", "70-20-10"])
+
+    @classmethod
+    def validate(cls, v):
+        try:
+            encoded = json.loads(v)
+            if isinstance(encoded, list):
+                return [cls(d["pattern"], d["description"]) for d in encoded]
+            if "pattern" not in encoded or "description" not in encoded:
+                raise ValueError("Should have pattern and description")
+            pattern = encoded["pattern"]
+            description = encoded["description"]
+            return cls(pattern, description)
+        except JSONDecodeError:
+            raise ValueError("Should be a json")
+
+
 class DatasetBase(ApiBaseModel):
     name: str
     description: str
@@ -68,6 +107,7 @@ class DatasetBase(ApiBaseModel):
     split_type: SplitType
     created_at: datetime
     created_by_id: int
+    columns_descriptions: Optional[List[ColumnDescription]] = None
 
 
 class ColumnsMeta(BaseModel):
@@ -76,19 +116,13 @@ class ColumnsMeta(BaseModel):
     dtype: str
 
 
-class ColumnDescription(BaseModel):
-    pattern: str
-    description: str
-    dataset_id: Optional[int] = None
-
-
 class DatasetCreate(BaseModel):
     file: UploadFile
     name: str
     description: str
     split_target: Split
     split_type: SplitType = "random"
-    columns_descriptions: List[ColumnDescription] = []
+    columns_descriptions: List[ColumnDescriptionFromJSONStr] = []
 
 
 class DatasetCreateRepo(DatasetBase):
