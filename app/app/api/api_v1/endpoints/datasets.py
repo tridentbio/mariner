@@ -75,8 +75,6 @@ def create_dataset(
     """
     Create a dataset
     """
-    if columns_descriptions is None or len(columns_descriptions) == 0:
-        raise Exception("died in the beach")
     try:
 
         payload = DatasetCreate(
