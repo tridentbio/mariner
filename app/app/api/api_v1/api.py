@@ -1,6 +1,6 @@
 from fastapi.routing import APIRouter
 
-from app.api.api_v1.endpoints import datasets, login, users, utils, data
+from app.api.api_v1.endpoints import data, datasets, login, users, utils
 
 api_router = APIRouter()
 
@@ -11,4 +11,3 @@ api_router.include_router(data.router, prefix="", tags=["utils"])
 
 # Legacy from template
 api_router.include_router(utils.router, prefix="/utils", tags=["utils"])
-

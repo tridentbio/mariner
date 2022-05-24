@@ -2,8 +2,8 @@ import datetime
 import io
 import json
 from uuid import uuid4
-import boto3
 
+import boto3
 import pandas
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
@@ -26,7 +26,7 @@ from .schema import (
 )
 from .utils import get_stats
 
-DATASET_BUCKET = settings.AWS_DATASETS_BUCKET
+DATASET_BUCKET = settings.AWS_DATASETS
 
 
 def make_key():
@@ -48,29 +48,27 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     return dataset
 
 
-def _get_entity_info_from_csv(file_bytes):
+def _get_entity_info_from_csv(file: UploadFile):
+    file_bytes = file.file.read()
     df = pandas.read_csv(io.BytesIO(file_bytes))
     return len(df), len(df.columns), len(file_bytes), get_stats(df).to_dict()
 
 
 def _upload_s3(file: UploadFile):
-    key = make_key()
-
+    key = f"datasets/{make_key()}_{file.filename.rstrip('.csv')}.csv"
     s3 = boto3.client(
-       "s3",
-       region_name=settings.AWS_REGION,
-       aws_access_key_id=settings.AWS_SECRET_KEY_ID,
-       aws_secret_access_key=settings.AWS_SECRET_KEY,
+        "s3",
+        region_name=settings.AWS_REGION,
+        aws_access_key_id=settings.AWS_SECRET_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_KEY,
     )
     s3.upload_fileobj(file.file, DATASET_BUCKET, key)
     return key
 
 
 def create_dataset(db: Session, current_user: User, data: DatasetCreate):
-
-    # parse csv bytes as json
-    file_raw = data.file.file.read()
-    rows, columns, bytes, stats = _get_entity_info_from_csv(file_raw)
+    rows, columns, bytes, stats = _get_entity_info_from_csv(data.file)
+    data.file.file.seek(0)
     data_url = _upload_s3(data.file)
     create_obj = DatasetCreateRepo(
         columns=columns,
@@ -80,7 +78,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         split_type=data.split_type,
         name=data.name,
         description=data.description,
-        bytes=bytes,  # maybe should be the encrypted size instead,
+        bytes=bytes,
         created_at=datetime.datetime.now(),
         stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
         data_url=data_url,
@@ -142,9 +140,8 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
     return Dataset.from_orm(dataset)
 
 
-def parse_csv_headers(csvFile: UploadFile):
-    file_raw = csvFile.file.read()
-    _, _, _, stats = _get_entity_info_from_csv(file_raw)
+def parse_csv_headers(csv_file: UploadFile):
+    _, _, _, stats = _get_entity_info_from_csv(csv_file)
     metadata = [
         ColumnsMeta(name=key, nacount=stats[key]["na_count"], dtype=stats[key]["types"])
         for key in stats

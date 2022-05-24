@@ -61,9 +61,6 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
                 for cd_in in obj_in_dict["columns_descriptions"]
             ]
 
-        import logging
-
-        logging.getLogger("sqlalchemy.engine").setLevel(logging.DEBUG)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)

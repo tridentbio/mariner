@@ -1,30 +1,28 @@
-from io import BufferedWriter
 import boto3
-
+from botocore.response import StreamingBody
 from fastapi.param_functions import Depends, Query
 from fastapi.routing import APIRouter
 from starlette.responses import StreamingResponse
 
-from app import schemas
 from app.api import deps
 from app.core.config import settings
-
 
 router = APIRouter()
 
 
-def iters3file(filename: str, bucket_name: str, object_key: str):
-    s3 = boto3.client(
-       "s3",
-       region_name=settings.AWS_REGION,
-       aws_access_key_id=settings.AWS_SECRET_KEY_ID,
-       aws_secret_access_key=settings.AWS_SECRET_KEY,
-    )
-    with open(filename, 'wb') as f:
-        s3.download_fileobj(bucket_name, object_key, f)
-        yield from f
+def generate(result: StreamingBody):
+    print([x for x in result.iter_chunks(1024)])
 
-@router.get("/data", response_class=StreamingResponse, dependencies=[Depends(deps.get_current_active_superuser)])
+    for chunk in iter(result.iter_chunks(1024)):
+        print("chunk: ", chunk)
+        yield chunk
+
+
+@router.get(
+    "/data",
+    response_class=StreamingResponse,
+    dependencies=[Depends(deps.get_current_active_superuser)],
+)
 def get_s3_data(
     bucket_name: str = Query(..., alias="bucketName"),
     object_key: str = Query(..., alias="objectKey"),
@@ -32,4 +30,11 @@ def get_s3_data(
     """
     Proxy to AWS bucket resource after applying access control
     """
-    return  StreamingResponse(iters3file('testy', bucket_name, object_key), media_type="text/csv")
+    s3 = boto3.client(
+        "s3",
+        region_name=settings.AWS_REGION,
+        aws_access_key_id=settings.AWS_SECRET_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_KEY,
+    )
+    s3_res = s3.get_object(Bucket=settings.AWS_DATASETS, Key=object_key)
+    return StreamingResponse(s3_res["Body"].iter_chunks(), media_type="text/csv")
