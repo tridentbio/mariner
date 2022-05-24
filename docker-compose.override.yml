@@ -1,0 +1,32 @@
+version: "3.3"
+services:
+  backend:
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./app:/app:rw
+    environment:
+      - JUPYTER=jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
+      - SERVER_HOST=http://${DOMAIN?Variable not set}
+      - AWS_SECRET_KEY_ID=$AWS_SECRET_KEY_ID
+      - AWS_SECRET_KEY=$AWS_SECRET_KEY
+      - AWS_REGION=$AWS_REGION
+      - AWS_DATASETS=$AWS_DATASETS
+    build:
+      context: .
+      dockerfile: ./backend.dockerfile
+      args:
+        INSTALL_DEV: ${INSTALL_DEV-true}
+        INSTALL_JUPYTER: ${INSTALL_JUPYTER-true}
+    # command: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
+    command: /start-reload.sh
+    labels:
+      - traefik.enable=true
+      - traefik.constraint-label-stack=${TRAEFIK_TAG?Variable not set}
+      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.rule=PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`)
+      - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=80
+
+networks:
+  traefik-public:
+    # For local dev, don't expect an external Traefik network
+    external: false
