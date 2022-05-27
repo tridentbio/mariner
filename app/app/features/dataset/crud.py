@@ -18,19 +18,19 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         sql_query = db.query(Dataset)
 
         # sorting
-        if query.sort_by_cols == "ASC":
+        if query.sort_by_cols == "asc":
             sql_query = sql_query.order_by(Dataset.columns.asc())
-        elif query.sort_by_cols == "DESC":
+        elif query.sort_by_cols == "desc":
             sql_query = sql_query.order_by(Dataset.columns.desc())
 
-        if query.sort_by_rows == "ASC":
+        if query.sort_by_rows == "asc":
             sql_query = sql_query.order_by(Dataset.columns.asc())
-        elif query.sort_by_rows == "DESC":
+        elif query.sort_by_rows == "desc":
             sql_query = sql_query.order_by(Dataset.rows.desc())
 
-        if query.sort_by_created_at == "ASC":
+        if query.sort_by_created_at == "asc":
             sql_query = sql_query.order_by(Dataset.created_at.asc())
-        elif query.sort_by_created_at == "DESC":
+        elif query.sort_by_created_at == "desc":
             sql_query = sql_query.order_by(Dataset.created_at.desc())
 
         # filtering
