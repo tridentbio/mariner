@@ -2,11 +2,11 @@ from enum import Enum
 from typing import Any, List, Optional
 from pydantic.main import BaseModel
 import yaml
-import torch
 from torch import nn
 from ast import literal_eval
 
 from app.features.model.callables import layers
+
 
 class Tuple(str):
     val: tuple
@@ -43,7 +43,7 @@ class FeaturizerConfig(BaseModel):
 
 class LayerConfig(BaseModel):
     name: str
-    initial_layer: Optional[bool] = None
+    input_layer: Optional[bool] = None
     output_layer: Optional[bool] = None
     type: Layer
     args: Any
@@ -60,6 +60,14 @@ class ModelConfig(BaseModel):
 class LayerUnknownException(Exception):
     pass
 
+def get_inputs(x, batch, layer_type: Layer):
+    edgeConsumers = [Layer.GINConv2]
+    if layer_type == Layer.GlobalAddPool:
+        return x, batch.batch
+    elif layer_type in edgeConsumers:
+        return x, batch.edge_index
+    return x
+
 class CustomModel(nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
@@ -72,9 +80,9 @@ class CustomModel(nn.Module):
             if layer.type == Layer.GlobalAddPool:
                 layers_to_callables[layer.name] = layers.GlobalAddPool(**args)
             elif layer.type == Layer.Linear:
-                layers_to_callables[layer.type] = nn.Linear(**args)
+                layers_to_callables[layer.name] = nn.Linear(**args)
             elif layer.type == Layer.GINConv2:
-                layers_to_callables[layer.type] = layers.GINConvSequentialRelu(**args)
+                layers_to_callables[layer.name] = layers.GINConvSequentialRelu(**args)
             else:
                 raise LayerUnknownException(f'No layer named "{layer.type}"')
         self.layers_to_callables = layers_to_callables
@@ -87,18 +95,25 @@ class CustomModel(nn.Module):
                 return layer
         return None
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, batch):
         current_layer = None
         for layer in self.config.layers:
-            if layer.initial_layer:
+            if layer.input_layer:
                 current_layer = layer
                 break
         if current_layer is None:
-            raise Exception('No first layer')
+            raise Exception('No input layer')
 
+        visited = {}
+        x = batch.x
         while current_layer and current_layer.output_layer != True:
-            x = self.layers_to_callables[current_layer.name](x)
+            visited[current_layer.name] = 1
+            print(current_layer.name)
+            inputs = get_inputs(x, batch, current_layer.type)
+            x = self.layers_to_callables[current_layer.name](*inputs)
             current_layer = self.next_layer(current_layer)
+            if current_layer is not None and current_layer.name in visited:
+                raise Exception('Cycles not allowed')
 
         if current_layer is None:
             # Never raised if graph is valid
@@ -108,9 +123,9 @@ class CustomModel(nn.Module):
         return x
 
 
+
 def build_model_from_yaml(yamlstr: str) -> nn.Module:
     config_dict = yaml.safe_load(yamlstr)
     config = ModelConfig.parse_obj(config_dict)
     model = CustomModel(config)
     return model
-tqq

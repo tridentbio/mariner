@@ -25,7 +25,7 @@ class MoleculeFeaturizer:
     EDGE_FEATURE_SLICES: Dict[str, slice] = {}
 
     def __init__(
-            self, allow_unknown: bool = False, sym_bond_list: bool = True, 
+            self, allow_unknown: bool = True, sym_bond_list: bool = True, 
             per_atom_fragmentation: bool = False):
         super().__init__()
 

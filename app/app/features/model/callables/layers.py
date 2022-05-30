@@ -21,5 +21,5 @@ class GINConvSequentialRelu(nn.Module):
             nn.Linear(out_features, out_features)
         )
         self.layer = pygnn.GINConv(mlp, train_eps=True)
-    def forward(self, x: torch.Tensor):
-        return self.layer(x)
+    def forward(self, x: torch.Tensor, edge_index):
+        return self.layer(x, edge_index)
