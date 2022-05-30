@@ -1,6 +1,6 @@
 name: GNNExample
-input_shape: (,1) # (B, N, 1) B batches N rows 1 column (the smiles string)
-output_shape: (,1)
+input_shape: (1,) # (B, N, 1) B batches N rows 1 column (the smiles string)
+output_shape: (1,)
 featurizer:
   name: MoleculeFeaturizer
   args:
@@ -8,41 +8,45 @@ featurizer:
     sym_bond_list: true
     per_atom_fragmentation: false
 layers:
-  - GIN1: # an arbitrary name 
-		type: GINConv2
-		args:
-      - activation: ReLU
-			- feat_in: 30
-      - feat_out: 64
-		input_layer: true # input_shape must match GINConv
-		forward: GIN2
-  - GIN2: # an arbitrary name 
-		type: GINConv2ReLU
-		args:
-      - activation: ReLU
-			- feat_in: 64
-      - feat_out: 64
-		input_layer: true # input_shape must match GINConv
-		forward: GIN2
-  - GIN3: # an arbitrary name 
-		type: GINConv2ReLU
-		args:
-      - activation: ReLU
-			- feat_in: 64
-      - feat_out: 64
-		input_layer: true # input_shape must match GINConv
-		forward: GIN4
-  - GIN4: # an arbitrary name 
-		type: GINConv2ReLU
-		args:
-      - activation: ReLU
-			- feat_in: 64
-      - feat_out: 64
-		input_layer: true # input_shape must match GINConv
-		forward: Pool4x1
-  - Pool4x1:
-		type: torch_geometric.global_add_pool
-		forward: Output
-  - Output:
+  - name: GIN1
+    type: GINConv2
+    args:
+      # #activation: ReLU
+      in_features: 30
+      out_features: 64
+    input_layer: true # input_shape must match GINConv
+    forward: GIN2
+  - name: GIN2 # an arbitrary name 
+    type: GINConv2
+    args:
+      #activation: ReLU
+      in_features: 64
+      out_features: 64
+    input_layer: true # input_shape must match GINConv
+    forward: GIN2
+  - name: GIN3 # an arbitrary name 
+    type: GINConv2
+    args:
+      #activation: ReLU
+      in_features: 64
+      out_features: 64
+    input_layer: true # input_shape must match GINConv
+    forward: GIN4
+  - name: GIN4 # an arbitrary name 
+    type: GINConv2
+    args:
+      #activation: ReLU
+      in_features: 64
+      out_features: 64
+    input_layer: true # input_shape must match GINConv
+    forward: Pool4x1
+  - name: Pool4x1
+    type: torch_geometric.global_add_pool
+    args:
+    forward: Output
+  - name: Output
     type: Linear
+    args: 
+      in_features: 64
+      out_features: 1
     output_layer: true

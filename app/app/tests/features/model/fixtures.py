@@ -4,8 +4,7 @@ from pandas.core.frame import DataFrame
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
-import torch_geometric.nn as pygnn
-from torch_geometric.nn import global_add_pool
+from app.features.model.callables.layers import GINConvSequentialRelu, GlobalAddPool
 
 from app.features.model.featurizers import MoleculeFeaturizer
 
@@ -27,17 +26,6 @@ class ExampleDataset(Dataset):
             graph.y = torch.tensor([sample[self.target]])
         
         return graph
-
-
-class GlobalAddPool(nn.Module):
-    
-    def __init__(self):
-        super().__init__()
-        self.func = global_add_pool
-        
-    def forward(self, x, edge_list):
-        return self.func(x, edge_list)
-
 class ExampleModel(nn.Module):
     
     def __init__(self, num_layers: int = 4, in_channels: int = 30, hidden_channels: int = 64, out_channels: int = 1, **kwargs):
@@ -47,13 +35,7 @@ class ExampleModel(nn.Module):
         self.pool_function = GlobalAddPool()
         
         for _ in range(num_layers):
-            mlp = nn.Sequential(
-                nn.Linear(in_channels, hidden_channels),
-                nn.ReLU(),
-                nn.Linear(hidden_channels, hidden_channels)
-            )
-            
-            layers.append(pygnn.GINConv(mlp, train_eps=True))
+            layers.append(GINConvSequentialRelu(in_channels, hidden_channels))
             in_channels = hidden_channels
 
         self.layers = nn.ModuleList(layers)

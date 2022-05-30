@@ -10,14 +10,6 @@ from app.core.config import settings
 router = APIRouter()
 
 
-def generate(result: StreamingBody):
-    print([x for x in result.iter_chunks(1024)])
-
-    for chunk in iter(result.iter_chunks(1024)):
-        print("chunk: ", chunk)
-        yield chunk
-
-
 @router.get(
     "/data",
     response_class=StreamingResponse,
