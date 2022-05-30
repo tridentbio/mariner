@@ -1,0 +1,24 @@
+name: GNNExample
+input_shape: (B, N, 1) # (B, N, 1) B batches N rows 1 column
+output_shape: (1, )
+featurizer:
+  name: MoleculeFeaturizer
+  args:
+    allow_unknown: false
+    sym_bond_list: true
+    per_atom_fragmentation: false
+layers:
+  - GINConv8x4: # an arbitrary name 
+		type: GINConv
+		args:
+			- feat_in: 8 # Should match featurizer output (5 node features, 3 edge features)
+                   # because of `input_layer: true`
+      - feat_out: 4
+		input_layer: true
+		forward: Pool4x1
+  - Pool4x1:
+		type: torch_geomtric.global_add_pool
+		args:
+			- input: 64
+			- hidden_units: 32
+		forward: Output
