@@ -22,15 +22,13 @@ layers:
       #activation: ReLU
       in_features: 64
       out_features: 64
-    input_layer: true # input_shape must match GINConv
-    forward: GIN2
+    forward: GIN3
   - name: GIN3 # an arbitrary name 
     type: GINConv2
     args:
       #activation: ReLU
       in_features: 64
       out_features: 64
-    input_layer: true # input_shape must match GINConv
     forward: GIN4
   - name: GIN4 # an arbitrary name 
     type: GINConv2
@@ -38,7 +36,6 @@ layers:
       #activation: ReLU
       in_features: 64
       out_features: 64
-    input_layer: true # input_shape must match GINConv
     forward: Pool4x1
   - name: Pool4x1
     type: torch_geometric.global_add_pool
