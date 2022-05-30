@@ -80,7 +80,7 @@ class CustomModel(nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
         self.config = config
-        layers_to_callables = {}
+        layers_to_callables = nn.ModuleDict()
         for layer in config.layers:
             args = {}
             if layer.args is not None:
