@@ -1,6 +1,5 @@
 from app.features.model.builder import build_model_from_yaml
 from app.features.model.featurizers import MoleculeFeaturizer
-
 from app.tests.features.model.fixtures import create_example_model
 
 featurizer = MoleculeFeaturizer()
@@ -12,4 +11,3 @@ def test_build_model():
         model = build_model_from_yaml(f.read())
         target_model = create_example_model()
         assert repr(model) == repr(target_model)
-

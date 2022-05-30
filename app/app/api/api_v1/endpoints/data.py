@@ -1,5 +1,4 @@
 import boto3
-from botocore.response import StreamingBody
 from fastapi.param_functions import Depends, Query
 from fastapi.routing import APIRouter
 from starlette.responses import StreamingResponse

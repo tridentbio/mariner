@@ -1,9 +1,10 @@
+from ast import literal_eval
 from enum import Enum
 from typing import Any, List, Optional
-from pydantic.main import BaseModel
+
 import yaml
+from pydantic.main import BaseModel
 from torch import nn
-from ast import literal_eval
 
 from app.features.model.callables import layers
 
@@ -29,17 +30,21 @@ class Tuple(str):
         except Exception:
             raise
 
+
 class Featurizer(Enum):
-    MoleculeFeaturizer = 'MoleculeFeaturizer'
+    MoleculeFeaturizer = "MoleculeFeaturizer"
+
 
 class Layer(Enum):
-    GINConv2 = 'GINConv2'
-    GlobalAddPool = 'torch_geometric.global_add_pool'
-    Linear = 'Linear'
+    GINConv2 = "GINConv2"
+    GlobalAddPool = "torch_geometric.global_add_pool"
+    Linear = "Linear"
+
 
 class FeaturizerConfig(BaseModel):
     name: Featurizer
     args: Any
+
 
 class LayerConfig(BaseModel):
     name: str
@@ -48,6 +53,7 @@ class LayerConfig(BaseModel):
     type: Layer
     args: Any
     forward: Optional[str] = None
+
 
 class ModelConfig(BaseModel):
     name: str
@@ -60,6 +66,7 @@ class ModelConfig(BaseModel):
 class LayerUnknownException(Exception):
     pass
 
+
 def get_inputs(x, batch, layer_type: Layer):
     edgeConsumers = [Layer.GINConv2]
     if layer_type == Layer.GlobalAddPool:
@@ -67,6 +74,7 @@ def get_inputs(x, batch, layer_type: Layer):
     elif layer_type in edgeConsumers:
         return x, batch.edge_index
     return x
+
 
 class CustomModel(nn.Module):
     def __init__(self, config: ModelConfig):
@@ -102,7 +110,7 @@ class CustomModel(nn.Module):
                 current_layer = layer
                 break
         if current_layer is None:
-            raise Exception('No input layer')
+            raise Exception("No input layer")
 
         visited = {}
         x = batch.x
@@ -113,7 +121,7 @@ class CustomModel(nn.Module):
             x = self.layers_to_callables[current_layer.name](*inputs)
             current_layer = self.next_layer(current_layer)
             if current_layer is not None and current_layer.name in visited:
-                raise Exception('Cycles not allowed')
+                raise Exception("Cycles not allowed")
 
         if current_layer is None:
             # Never raised if graph is valid
@@ -121,7 +129,6 @@ class CustomModel(nn.Module):
 
         x = self.layers_to_callables[current_layer.name](x)
         return x
-
 
 
 def build_model_from_yaml(yamlstr: str) -> nn.Module:
