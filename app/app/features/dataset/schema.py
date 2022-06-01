@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from fastapi.datastructures import UploadFile
 from pydantic.main import BaseModel
+from sqlalchemy.sql.sqltypes import Enum
 
 from app.schemas.api import ApiBaseModel
 
@@ -63,6 +64,46 @@ class ColumnDescription(ApiBaseModel):
     dataset_id: Optional[int] = None
 
 
+class DataType(str, Enum):
+    numerical = 'numerical'
+    smiles = 'smiles'
+    categorical = 'categorical'
+
+
+class ColumnMetadata(ApiBaseModel):
+    key: str
+    data_type: DataType
+
+
+class ColumnMetadataFromJSONStr(str):
+    key: str
+    data_type: DataType
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def _modify_schema__(cls, field_schema):
+        field_schema.update(examples=['"[{\"key\": \"string\", \"data_type\": \"numerical\"}]"', "70-20-10"])
+
+    @classmethod
+    def validate(cls, v):
+        try:
+            encoded = json.loads(v)
+            if isinstance(encoded, list):
+                arr = []
+                for d in encoded:
+                    if 'key' not in d or 'data_type' not in d:
+                        raise ValueError('expecting key and data_type')
+                    arr.append(cls(json.dumps(d)))
+                return arr
+            if "key" not in encoded or "data_type" not in encoded:
+                raise ValueError("Should have pattern and description")
+            return 
+        except JSONDecodeError:
+            raise ValueError("Should be a json")
+
 class ColumnDescriptionFromJSONStr(str):
     pattern: str
     description: str
@@ -105,6 +146,7 @@ class DatasetBase(ApiBaseModel):
     created_at: datetime
     created_by_id: int
     columns_descriptions: Optional[List[ColumnDescription]] = None
+    columns_metadatas: Optional[List[ColumnMetadata]] = None 
 
 
 class ColumnsMeta(BaseModel):
@@ -120,6 +162,7 @@ class DatasetCreate(BaseModel):
     split_target: Split
     split_type: SplitType = "random"
     columns_descriptions: List[ColumnDescriptionFromJSONStr] = []
+    columns_metadata: List[ColumnMetadataFromJSONStr] = []
 
 
 class DatasetCreateRepo(DatasetBase):
@@ -150,3 +193,4 @@ class DatasetUpdateRepo(BaseModel):
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None
     split_type: Optional[SplitType] = None
+

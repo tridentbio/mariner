@@ -17,6 +17,12 @@ class ColumnDescription(Base):
     dataset_id = Column(Integer, ForeignKey("dataset.id"), primary_key=True)
     dataset = relationship("Dataset", back_populates="columns_descriptions")
 
+class ColumnsMetadata(Base):
+    key = Column(String, primary_key=True, nullable=False)
+    dataset_id = Column(Integer, ForeignKey("dataset.id"), primary_key=True)
+    dataset = relationship("Dataset", back_populates="columns_metadatas")
+    data_type = Column(String, nullable=False)
+
 
 class Dataset(Base):
     id = Column(Integer, primary_key=True, index=True)
@@ -36,3 +42,6 @@ class Dataset(Base):
     columns_descriptions = relationship(
         "ColumnDescription", back_populates="dataset", cascade="all,delete"
     )
+    columns_metadatas = relationship("ColumnsMetadata", back_populates="dataset", cascade="all,delete")
+
+
