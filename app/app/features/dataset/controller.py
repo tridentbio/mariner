@@ -3,7 +3,6 @@ import io
 import json
 from uuid import uuid4
 
-import boto3
 import pandas
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
@@ -16,6 +15,7 @@ from ..user.model import User
 from .crud import repo
 from .schema import (
     ColumnDescription,
+    ColumnMetadata,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
@@ -23,6 +23,7 @@ from .schema import (
     DatasetsQuery,
     DatasetUpdate,
     DatasetUpdateRepo,
+    DataType,
 )
 from .utils import get_stats
 
@@ -56,13 +57,13 @@ def _get_entity_info_from_csv(file: UploadFile):
 
 def _upload_s3(file: UploadFile):
     key = f"datasets/{make_key()}_{file.filename.rstrip('.csv')}.csv"
-    s3 = boto3.client(
-        "s3",
-        region_name=settings.AWS_REGION,
-        aws_access_key_id=settings.AWS_SECRET_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_KEY,
-    )
-    s3.upload_fileobj(file.file, DATASET_BUCKET, key)
+    # s3 = boto3.client(
+    #     "s3",
+    #     region_name=settings.AWS_REGION,
+    #     aws_access_key_id=settings.AWS_SECRET_KEY_ID,
+    #     aws_secret_access_key=settings.AWS_SECRET_KEY,
+    # )
+    # s3.upload_fileobj(file.file, DATASET_BUCKET, key)
     return key
 
 
@@ -90,7 +91,12 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
             ColumnDescription(pattern=c["pattern"], description=c["description"])
             for c in parsed
         ]
-
+    if data.columns_metadata:
+        parsed = [json.loads(metadata) for metadata in data.columns_metadata]
+        create_obj.columns_metadatas = [
+            ColumnMetadata(key=m["key"], data_type=DataType(m["data_type"]))
+            for m in parsed
+        ]
     dataset = repo.create(db, create_obj)
     return dataset
 

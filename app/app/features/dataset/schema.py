@@ -65,9 +65,9 @@ class ColumnDescription(ApiBaseModel):
 
 
 class DataType(str, Enum):
-    numerical = 'numerical'
-    smiles = 'smiles'
-    categorical = 'categorical'
+    numerical = "numerical"
+    smiles = "smiles"
+    categorical = "categorical"
 
 
 class ColumnMetadata(ApiBaseModel):
@@ -85,7 +85,9 @@ class ColumnMetadataFromJSONStr(str):
 
     @classmethod
     def _modify_schema__(cls, field_schema):
-        field_schema.update(examples=['"[{\"key\": \"string\", \"data_type\": \"numerical\"}]"', "70-20-10"])
+        field_schema.update(
+            examples=['"[{"key": "string", "data_type": "numerical"}]"', "70-20-10"]
+        )
 
     @classmethod
     def validate(cls, v):
@@ -94,15 +96,16 @@ class ColumnMetadataFromJSONStr(str):
             if isinstance(encoded, list):
                 arr = []
                 for d in encoded:
-                    if 'key' not in d or 'data_type' not in d:
-                        raise ValueError('expecting key and data_type')
+                    if "key" not in d or "data_type" not in d:
+                        raise ValueError("expecting key and data_type")
                     arr.append(cls(json.dumps(d)))
                 return arr
             if "key" not in encoded or "data_type" not in encoded:
                 raise ValueError("Should have pattern and description")
-            return 
+            return
         except JSONDecodeError:
             raise ValueError("Should be a json")
+
 
 class ColumnDescriptionFromJSONStr(str):
     pattern: str
@@ -145,8 +148,8 @@ class DatasetBase(ApiBaseModel):
     split_type: SplitType
     created_at: datetime
     created_by_id: int
-    columns_descriptions: Optional[List[ColumnDescription]] = None
-    columns_metadatas: Optional[List[ColumnMetadata]] = None 
+    columns_descriptions: List[ColumnDescription] = []
+    columns_metadatas: List[ColumnMetadata] = []
 
 
 class ColumnsMeta(BaseModel):
@@ -193,4 +196,3 @@ class DatasetUpdateRepo(BaseModel):
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None
     split_type: Optional[SplitType] = None
-

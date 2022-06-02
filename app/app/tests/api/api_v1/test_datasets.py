@@ -38,17 +38,13 @@ def test_create_dataset(
                 "pattern": "col2*",
                 "description": "asdasdas",
             },
-
         ]
         metadatas = [
             {
                 "key": "exp",
                 "data_type": "numerical",
             },
-            {
-                "key": "smiles",
-                "data_type": "smiles"
-            },
+            {"key": "smiles", "data_type": "smiles"},
         ]
 
         res = client.post(
@@ -59,7 +55,7 @@ def test_create_dataset(
                 "splitType": "random",
                 "splitTarget": "60-20-20",
                 "columnsDescriptions": json.dumps(descriptions),
-                "columnsMetadata": json.dumps(metadatas)
+                "columnsMetadata": json.dumps(metadatas),
             },
             files={"file": ("dataset.csv", f.read())},
             headers=normal_user_token_headers,
