@@ -11,6 +11,12 @@ torch_geometric_layers = [
     'torch_geometric.nn.global_add_pool',
 ]
 
+python_primitives_reprs = {
+    "<class 'int'>": "int",
+    "<class 'float'>": "float",
+    "<class 'bool'>": "bool",
+    "<class 'string'>": "string",
+}
 
 def generate(prefix: str, path: str, arg_types: Any) -> str:
     env = Environment(
@@ -29,42 +35,38 @@ def get_module_name(classpath: str) -> str:
     return '.'.join(classpath.split('.')[:-1])
 
 
-def access_attributes_of_interest(cls):
+def access_attributes_of_interest(clspath):
 
-    module_name = get_module_name(cls)
-    d = {}
-    # TODO: Get the arguments types needed to instantiate the callable. That is, check if the __init__ code has some __code__ attr
-    # If __init__ has no __code__, the callable has no instantiation args
-    # This means there is an implementation for the constructorselfselfself.
-    # args =  ___.__init__.__code__.co_varnames[:___.__init__.__code__.co_argscount]
-    # defaults = ___.__init__.__defaults__
-    # positionals = args[:len(defaults)]
-
-
+    module_name = get_module_name(clspath)
     code = f'''
 import {module_name}
-if '__init__' in dir({cls}):
-    if '__annotations__' in dir({cls}.__init__):
-        d["types"] = {cls}.__init__.__annotations__
-        d["defaults"] = {cls}.__init__.__defaults__
-        d["call_type"] = "class"
-    elif '__annotations__' in dir({cls}.__call__):
-        d["types"] = {cls}.__call__.__annotations__
-        d["defaults"] = {cls}.__call__.__defaults__
-        d["call_type"] = "func"
-if '__code__' in dir({cls}.__init__):
-    d["args"] = {cls}.__init__.__code__.co_varnames
+references['cls'] = {clspath}
 '''
-    exec(code, globals(), { 'd': d })
+    references = {} # cls must be a reference
+    exec(code, globals(), { 'references': references })
+    cls = references['cls']
+
+    d = {}
+    if '__init__' in dir(cls):
+        if '__code__' in dir(cls.__init__):
+            argscount = cls.__init__.__code__.co_argcount
+            args = cls.__init__.__code__.co_varnames[:argscount] # Exclude kword args if any
+            defaults = cls.__init__.__defaults__
+            d["types"] = cls.__init__.__annotations__
+            d["defaults"] = defaults
+            d["call_type"] = "class"
+            d["args"] = cls.__init__.__code__.co_varnames
+        elif '__annotations__' in dir(cls):
+            d["types"] = cls.__annotations__
+            d["defaults"] = cls.__defaults__
+            d["call_type"] = "func"
     return d
 
 def collect_components_info(class_paths: List[str]) -> Any:
     modules_memo = {}
-    imported = {}
     for cls in class_paths:
         try:
             dic = access_attributes_of_interest(cls)
-            print(dic)
             modules_memo[cls] = dic
         except Exception as exp:
             print(f'Failed for module {cls}: {str(exp)}')
