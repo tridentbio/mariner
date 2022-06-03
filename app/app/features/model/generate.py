@@ -23,18 +23,18 @@ python_primitives_reprs = {
 def get_module_name(classpath: str) -> str:
     return '.'.join(classpath.split('.')[:-1])
 
-
-def access_attributes_of_interest(clspath):
-
-    module_name = get_module_name(clspath)
+def get_class_from_path_string(pathstring: str):
+    module_name = get_module_name(pathstring)
     code = f'''
 import {module_name}
-references['cls'] = {clspath}
+references['cls'] = {pathstring}
 '''
     references = {} # cls must be a reference
     exec(code, globals(), { 'references': references })
-    cls = references['cls']
+    return references['cls']
 
+def access_attributes_of_interest(clspath):
+    cls = get_class_from_path_string(clspath)
     d = {}
     if '__init__' in dir(cls):
         if '__code__' in dir(cls.__init__):
@@ -80,7 +80,6 @@ def generate(path: str) -> str:
     prefix = camel.case(path_parts[0]) + compname
     prefix = prefix.title()
     info = collect_components_info([path])[path]
-    print(info)
     arg_types = {
         argname: python_primitives_reprs[info['types'][argname]]
         for argname in info['not_defaults']
