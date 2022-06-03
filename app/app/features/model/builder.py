@@ -114,9 +114,8 @@ class CustomModel(nn.Module):
 
         visited = {}
         x = batch.x
-        while current_layer and current_layer.output_layer != True:
+        while current_layer and not current_layer.output_layer:
             visited[current_layer.name] = 1
-            print(current_layer.name)
             inputs = get_inputs(x, batch, current_layer.type)
             x = self.layers_to_callables[current_layer.name](*inputs)
             current_layer = self.next_layer(current_layer)

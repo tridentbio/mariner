@@ -1,0 +1,31 @@
+from typing import Any, Optional, Literal, Union
+from app.schemas.api import ApiBaseModel
+
+class {{ prefix }}ArgsTemplate(ApiBaseModel):
+  {% for key, value in arg_types.items() %}
+    {{ key }}: Literal["{{ value }}"] = "{{ value }}"
+  {% endfor %}
+
+class {{ prefix }}Args(ApiBaseModel):
+  {% for key, value in arg_types.items() %}
+  {{ key }}: {{ value }}
+  {% endfor %}
+
+class {{prefix}}(ApiBaseModel):
+    type: Literal['{{ path }}'] = '{{ path }}'
+    args_template: {{ prefix }}ArgsTemplate
+
+    @classmethod
+    def create(cls, args: {{ prefix }}Args):
+        module_name = get_module_name(cls.type)
+        eval(f'import {module_name}')
+        lib_cls = eval('{self.type}')
+        return lib_cls(**args)
+
+class {{ prefix }}Layer(ApiBaseModel):
+    type: Literal['{{ path }}'] = '{{ path }}'
+    args: {{ prefix }}Args
+    input_layer: Optional[bool] = True
+    id: str
+    forward: str
+
