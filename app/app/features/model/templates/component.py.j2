@@ -2,14 +2,14 @@ from typing import Any, Optional, Literal, Union
 from app.schemas.api import ApiBaseModel
 
 class {{ prefix }}ArgsTemplate(ApiBaseModel):
-  {% for key, value in arg_types.items() %}
+  {%- for key, value in arg_types.items() %}
     {{ key }}: Literal["{{ value }}"] = "{{ value }}"
-  {% endfor %}
+  {%- endfor %}
 
 class {{ prefix }}Args(ApiBaseModel):
-  {% for key, value in arg_types.items() %}
+  {%- for key, value in arg_types.items() %}
   {{ key }}: {{ value }}
-  {% endfor %}
+  {%- endfor %}
 
 class {{prefix}}(ApiBaseModel):
     type: Literal['{{ path }}'] = '{{ path }}'
