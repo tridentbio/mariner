@@ -1,0 +1,17 @@
+from typing import Any, Optional, Literal, Union
+from app.schemas.api import ApiBaseModel
+{% block imports %}
+{% endblock imports %}
+def get_module_name(classpath: str) -> str:
+    return '.'.join(classpath.split('.')[:-1])
+
+def get_class_from_path_string(pathstring: str):
+    code = f'references["cls"] = {pathstring}'
+    references = {}
+    exec(code, globals(), { 'references': references })
+    return references['cls']
+
+{%- for component in components -%}
+{%- include "component.py.jinja" -%}
+{%- endfor -%}
+

@@ -71,7 +71,8 @@ def collect_components_info(class_paths: List[str]) -> Any:
 def is_primitive(pr):
     return pr == int or pr == str or pr == bool
 
-def generate(path: str) -> str:
+
+def get_component_template_args(path: str):
     path_parts = path.split('.')
     if '_' in path_parts[-1]:
         compname = camel.case(path_parts[-1])
@@ -86,11 +87,14 @@ def generate(path: str) -> str:
         if argname in info['types']
         and is_primitive(info['types'][argname])
     }
+    return prefix, arg_types
+
+def generate(path: str) -> str:
+    prefix, arg_types = get_component_template_args(path)
     env = Environment(
         loader=PackageLoader("app.features.model"),
         autoescape=select_autoescape()
     )
-
     template = env.get_template('component.py.j2')
     return template.render(
         prefix=prefix,
@@ -98,10 +102,30 @@ def generate(path: str) -> str:
         arg_types=arg_types
     )
 
+def generate_bundle(paths: List[str]) -> str:
+    env = Environment(
+        loader=PackageLoader("app.features.model"),
+        autoescape=select_autoescape()
+    )
+    template = env.get_template('base.py.jinja')
+    args = [ get_component_template_args(path) for path in paths ]
+    components = [
+        { "prefix": prefix, "arg_types": arg_types, "path": path }
+        for (prefix, arg_types), path in zip(args, paths)
+    ]
+    return template.render(
+        components=components
+    )
+    
+
 if __name__ == '__main__':
     import sys
-    compnames = sys.argv[1:]
-    for compname in compnames:
-        print(generate(compname))
+    template = sys.argv[1]
+    if template == 'component':
+        compnames = sys.argv[2:]
+        for compname in compnames:
+            print(generate(compname))
+    elif template == 'base':
+        print(generate_bundle(torch_layers + torch_geometric_layers))
 
 

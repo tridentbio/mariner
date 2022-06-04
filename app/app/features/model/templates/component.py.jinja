@@ -1,0 +1,39 @@
+{% set count=component["arg_types"]|length %}
+
+{% if count > 0 %}
+
+class {{ component["prefix"] }}ArgsTemplate(ApiBaseModel):
+  {%- for key, value in component["arg_types"].items() %}
+    {{ key }}: Literal["{{ value }}"] = "{{ value }}"
+  {%- endfor %}
+
+class {{ component["prefix"] }}Args(ApiBaseModel):
+  {%- for key, value in component["arg_types"].items() %}
+  {{ key }}: {{ value }}
+  {%- endfor %}
+
+{% endif %}
+
+class {{component["prefix"]}}(ApiBaseModel):
+    type: Literal['{{ component["path"] }}'] = '{{ component["path"] }}'
+    {% if count > 0 %}
+    args_template: {{ component["prefix"] }}ArgsTemplate
+    @classmethod
+    def create(cls, args: {{ component["prefix"] }}Args):
+        lib_cls = get_class_from_path_string(cls.type)
+        return lib_cls(**args)
+    {% else %}
+    @classmethod
+    def create(cls):
+        lib_cls = get_class_from_path_string(cls.type)
+        return lib_cls()
+    {% endif %}
+
+class {{ component["prefix"] }}Layer(ApiBaseModel):
+    type: Literal['{{ component["path"] }}'] = '{{ component["path"] }}'
+    {% if count > 0 %}
+    args: {{ component["prefix"] }}Args
+    {% endif %}
+    input_layer: Optional[bool] = True
+    id: str
+    forward: str
