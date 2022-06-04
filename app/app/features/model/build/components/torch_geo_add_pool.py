@@ -14,28 +14,22 @@ references['cls'] = {pathstring}
     exec(code, globals(), { 'references': references })
     return references['cls']
 
-class {{ prefix }}ArgsTemplate(ApiBaseModel):
-  {%- for key, value in arg_types.items() %}
-    {{ key }}: Literal["{{ value }}"] = "{{ value }}"
-  {%- endfor %}
+class TorchgeometricglobaladdpoolArgsTemplate(ApiBaseModel):
 
-class {{ prefix }}Args(ApiBaseModel):
-  {%- for key, value in arg_types.items() %}
-  {{ key }}: {{ value }}
-  {%- endfor %}
+class TorchgeometricglobaladdpoolArgs(ApiBaseModel):
 
-class {{prefix}}(ApiBaseModel):
-    type: Literal['{{ path }}'] = '{{ path }}'
-    args_template: {{ prefix }}ArgsTemplate
+class Torchgeometricglobaladdpool(ApiBaseModel):
+    type: Literal['torch_geometric.nn.global_add_pool'] = 'torch_geometric.nn.global_add_pool'
+    args_template: TorchgeometricglobaladdpoolArgsTemplate
 
     @classmethod
-    def create(cls, args: {{ prefix }}Args):
+    def create(cls, args: TorchgeometricglobaladdpoolArgs):
         lib_cls = get_class_from_path_string(cls.type)
         return lib_cls(**args)
 
-class {{ prefix }}Layer(ApiBaseModel):
-    type: Literal['{{ path }}'] = '{{ path }}'
-    args: {{ prefix }}Args
+class TorchgeometricglobaladdpoolLayer(ApiBaseModel):
+    type: Literal['torch_geometric.nn.global_add_pool'] = 'torch_geometric.nn.global_add_pool'
+    args: TorchgeometricglobaladdpoolArgs
     input_layer: Optional[bool] = True
     id: str
     forward: str
