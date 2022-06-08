@@ -83,5 +83,8 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         super().update(db, db_obj=db_obj, obj_in=update_data)
         return db_obj
 
+    def get_by_name(self, db: Session, name: str) -> Dataset:
+        return db.query(Dataset).filter(Dataset.name == name).first()
+
 
 repo = CRUDDataset(Dataset)

@@ -11,7 +11,8 @@ from torch_geometric.data import Data as PyGData
 
 
 class MoleculeFeaturizer:
-    """Small molecule featurizer.
+    """
+    Small molecule featurizer.
     Args:
         allow_unknown (bool, optional): Boolean indicating whether to add an additional feature for out-of-vocabulary one-hot encoded
             features.

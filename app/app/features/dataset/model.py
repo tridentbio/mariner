@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import JSON, DateTime
 
+from app.core.aws import Bucket, download_file_as_dataframe
 from app.db.base_class import Base
 
 
@@ -41,3 +42,7 @@ class Dataset(Base):
     columns_metadatas = relationship(
         "ColumnsMetadata", back_populates="dataset", cascade="all,delete"
     )
+
+    def get_dataframe(self):
+        df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
+        return df

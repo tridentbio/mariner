@@ -1,5 +1,6 @@
 from typing import Dict
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -31,6 +32,7 @@ def test_get_users_normal_user_me(
     assert current_user["email"] == settings.EMAIL_TEST_USER
 
 
+@pytest.mark.skip(reason="Not creating user")
 def test_create_user_new_email(
     client: TestClient, superuser_token_headers: dict, db: Session
 ) -> None:
