@@ -3,37 +3,30 @@
 {% if count > 0 %}
 
 class {{ component["prefix"] }}ArgsTemplate(ApiBaseModel):
-  {%- for key, value in component["arg_types"].items() %}
-    {{ key }}: Literal["{{ value }}"] = "{{ value }}"
-  {%- endfor %}
+    {%- for key, value in component["arg_types"].items() %}
+      {{ key }}: Literal["{{ value }}"] = "{{ value }}"
+    {%- endfor %}
 
 class {{ component["prefix"] }}Args(ApiBaseModel):
-  {%- for key, value in component["arg_types"].items() %}
-  {{ key }}: {{ value }}
-  {%- endfor %}
+    {%- for key, value in component["arg_types"].items() %}
+    {{ key }}: {{ value }}
+    {%- endfor %}
 
 {% endif %}
 
-class {{component["prefix"]}}(ApiBaseModel):
-    type: Literal['{{ component["path"] }}'] = '{{ component["path"] }}'
-    {% if count > 0 %}
-    args_template: {{ component["prefix"] }}ArgsTemplate
-    @classmethod
-    def create(cls, args: {{ component["prefix"] }}Args):
-        lib_cls = get_class_from_path_string(cls.type)
-        return lib_cls(**args)
-    {% else %}
-    @classmethod
-    def create(cls):
-        lib_cls = get_class_from_path_string(cls.type)
-        return lib_cls()
-    {% endif %}
 
-class {{ component["prefix"] }}Layer(ApiBaseModel):
+class {{ component["prefix"] }}LayerConfig(ApiBaseModel):
     type: Literal['{{ component["path"] }}'] = '{{ component["path"] }}'
     {% if count > 0 %}
     args: {{ component["prefix"] }}Args
+    def create(self):
+        lib_cls = get_class_from_path_string(self.type)
+        return lib_cls(**self.args.dict())
+    {% else %}
+    def create(self):
+        lib_cls = get_class_from_path_string(self.type)
+        return lib_cls()
     {% endif %}
     input_layer: Optional[bool] = True
-    id: str
-    forward: str
+    name: str
+    forward: Optional[str]

@@ -28,25 +28,25 @@ def test_create_dataset(
     normal_user_token_headers: Dict[str, str],
     db: Session,
 ) -> None:
-    with open("app/tests/data/HIV.csv", "rb") as f:
-        descriptions = [
-            {
-                "pattern": "col*",
-                "description": "asdasdas",
-            },
-            {
-                "pattern": "col2*",
-                "description": "asdasdas",
-            },
-        ]
-        metadatas = [
-            {
-                "key": "exp",
-                "data_type": "numerical",
-            },
-            {"key": "smiles", "data_type": "smiles"},
-        ]
+    descriptions = [
+        {
+            "pattern": "col*",
+            "description": "asdasdas",
+        },
+        {
+            "pattern": "col2*",
+            "description": "asdasdas",
+        },
+    ]
+    metadatas = [
+        {
+            "key": "exp",
+            "data_type": "numerical",
+        },
+        {"key": "smiles", "data_type": "smiles"},
+    ]
 
+    with open("app/tests/data/HIV.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
             data={

@@ -8,6 +8,7 @@ from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
+from app.core.aws import upload_s3_file
 from app.core.config import settings
 from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 
@@ -57,13 +58,7 @@ def _get_entity_info_from_csv(file: UploadFile):
 
 def _upload_s3(file: UploadFile):
     key = f"datasets/{make_key()}_{file.filename.rstrip('.csv')}.csv"
-    # s3 = boto3.client(
-    #     "s3",
-    #     region_name=settings.AWS_REGION,
-    #     aws_access_key_id=settings.AWS_SECRET_KEY_ID,
-    #     aws_secret_access_key=settings.AWS_SECRET_KEY,
-    # )
-    # s3.upload_fileobj(file.file, DATASET_BUCKET, key)
+    upload_s3_file(file, DATASET_BUCKET, key)
     return key
 
 

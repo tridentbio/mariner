@@ -1,5 +1,34 @@
-from typing import Any, Optional, Literal, Union
+from ast import literal_eval
+from typing import List, Literal
+
+import yaml
+
+from app.features.model.utils import get_class_from_path_string
 from app.schemas.api import ApiBaseModel
+
+from .layers import LayersType
+
+
+class Tuple(str):
+    val: tuple
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(examples=["(1,)", "(1,1,0)"])
+
+    @classmethod
+    def validate(cls, v):
+        try:
+            t = literal_eval(v)
+            if not isinstance(t, tuple):
+                raise ValueError("Tuple(s), s should evaluate to a tuple")
+            return cls(v)
+        except Exception:
+            raise
 
 
 class CycleInGraphException(ApiBaseModel):
@@ -7,81 +36,49 @@ class CycleInGraphException(ApiBaseModel):
     Raised when cycles are detected in the computational
     graph of the model
     """
+
     code = 200
     message = "There is a cycle in the graph"
 
 
-class Featurizer(ApiBaseModel):
+class MoleculeFeaturizerArgs(ApiBaseModel):
+    allow_unknown: bool = False
+    sym_bond_list: bool = True
+    per_atom_fragmentation: bool = False
+
+
+class MoleculeFeaturizerConfig(ApiBaseModel):
     name: str
-    args: Any
-
-def get_module_name(classpath: str) -> str:
-    return '.'.join(classpath.split('.')[:-1])
-
-class LinearArgsTemplate(ApiBaseModel):
-    in_features: Literal["int"] = "int"
-    out_features: Literal["int"] = "int"
-
-class LinearArgs(ApiBaseModel):
-    in_features: int
-    out_features: int
-
-class Linear(ApiBaseModel):
-    type: Literal['torch.nn.Linear'] = 'torch.nn.Linear'
-    args_template: LinearArgsTemplate
-
-    @classmethod
-    def create(cls, args: LinearArgs):
-        module_name = get_module_name(cls.type)
-        eval(f'import {module_name}')
-        lib_cls = eval('{self.type}')
-        return lib_cls(**args)
-
-class LinearLayer(ApiBaseModel):
-    type: Literal['torch.nn.Linear'] = 'torch.nn.Linear'
-    args: LinearArgs
-    input_layer: Optional[bool] = True
-    id: str
+    type: Literal["app.features.model.featurizers.MoleculeFeaturizer"]
+    column_names: List[str]
+    args: MoleculeFeaturizerArgs
     forward: str
 
-class GCNConvArgsTemplate(ApiBaseModel):
-    in_channels: Literal["int"] = "int"
-    out_channels: Literal["int"] = "int"
+    def create(self):
+        lib_cls = get_class_from_path_string(self.type)
+        return lib_cls(**self.args.dict())
 
-class GCNConvArgs(ApiBaseModel):
-    in_channels: int
-    out_channels: int
 
-class GCNConv(ApiBaseModel):
-    type: Literal['torch_geomtric.nn.GINConv'] = 'torch_geomtric.nn.GINConv'
-    args_template: GCNConvArgsTemplate
+class DatasetConfig(ApiBaseModel):
+    name: str
+    target_column: str
+    feature_columns: List[str]
+
+
+FeaturizersType = MoleculeFeaturizerConfig
+
+
+class ModelConfig(ApiBaseModel):
+    name: str
+    dataset: DatasetConfig
+    featurizer: FeaturizersType
+    layers: List[LayersType]
 
     @classmethod
-    def create(cls, args: LinearArgs):
-        module_name = get_module_name(cls.type)
-        eval(f'import {module_name}')
-        lib_cls = eval('{self.type}')
-        return lib_cls(**args)
-
-class GCNConvLayer(ApiBaseModel):
-    type: Literal['torch.nn.Linear'] = 'torch.nn.Linear'
-    args: LinearArgs
-    input_layer: Optional[bool] = True
-    id: str
-    forward: str
+    def from_yaml(cls, yamlstr):
+        config_dict = yaml.safe_load(yamlstr)
+        return ModelConfig.parse_obj(config_dict)
 
 
-layer_args = LinearArgs(in_features=10, out_features=64)
-layer = Linear.create(args=layer_args) 
-# equilavent to:
-# >>> torch.nn.Linear(in_features=10, out_features=64)
-
-
-class Model(ApiBaseModel):
-    name: str
-    input_shape: ... # TODO: we probly need a dataset
-    output_shape: ... # TODO: We probly need target columns
-    featurizer: Featurizer
-    layers: Union[Linear, GCNConv]
-
-
+if __name__ == "__main__":
+    print(ModelConfig.schema_json())
