@@ -29,6 +29,7 @@ layers:
     args:
       in_channels: 64
       out_channels: 64
+    input_from: GCN1
     forward: GCN3
     activation: relu
   - name: GCN3 # an arbitrary name 
