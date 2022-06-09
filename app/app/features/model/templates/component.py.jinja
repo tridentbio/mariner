@@ -14,19 +14,20 @@ class {{ component["prefix"] }}Args(ApiBaseModel):
 
 {% endif %}
 
-
-class {{ component["prefix"] }}LayerConfig(ApiBaseModel):
+class {{ component["prefix"] }}LayerConfig(BaseLayerConfig):
     type: Literal['{{ component["path"] }}'] = '{{ component["path"] }}'
     {% if count > 0 %}
     args: {{ component["prefix"] }}Args
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+          return lib_cls
         return lib_cls(**self.args.dict())
     {% else %}
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+          return lib_cls
         return lib_cls()
     {% endif %}
-    input_layer: Optional[bool] = True
-    name: str
-    forward: Optional[str]
+    forward_input_mask: int = {{ component["forward_input_mask"] }}

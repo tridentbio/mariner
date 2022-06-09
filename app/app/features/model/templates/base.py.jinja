@@ -3,13 +3,26 @@
 # Consider making the changes im `app/features/model/templates`           #
 ###########################################################################
 
-from typing import Any, Optional, Literal, Union
+from typing import Optional, Literal, Union
 from app.features.model.utils import get_class_from_path_string
 from app.schemas.api import ApiBaseModel
 {% block imports %}
 {% endblock imports %}
+
 def get_module_name(classpath: str) -> str:
     return '.'.join(classpath.split('.')[:-1])
+
+def is_func(obj):
+  return str(type(obj)) == "<class 'function'>"
+
+
+class BaseLayerConfig(ApiBaseModel):
+    is_input_layer: Optional[bool] = True
+    is_output_layer: Optional[bool] = True
+    name: str
+    forward: Optional[str]
+    def create(self):
+      pass
 
 {%- for component in components -%}
 {%- include "component.py.jinja" -%}
@@ -18,5 +31,5 @@ def get_module_name(classpath: str) -> str:
 LayersType = Union[
     {% for component in components: -%}
     {{ component['prefix'] + "LayerConfig" }},
-    {%- endfor %}
+    {% endfor %}
 ]

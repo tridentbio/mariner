@@ -13,6 +13,20 @@ def get_module_name(classpath: str) -> str:
     return ".".join(classpath.split(".")[:-1])
 
 
+def is_func(obj):
+    return str(type(obj)) == "<class 'function'>"
+
+
+class BaseLayerConfig(ApiBaseModel):
+    is_input_layer: Optional[bool] = True
+    is_output_layer: Optional[bool] = True
+    name: str
+    forward: Optional[str]
+
+    def create(self):
+        pass
+
+
 class TorchlinearArgsTemplate(ApiBaseModel):
     in_features: Literal["int"] = "int"
     out_features: Literal["int"] = "int"
@@ -23,42 +37,42 @@ class TorchlinearArgs(ApiBaseModel):
     out_features: int
 
 
-class TorchlinearLayerConfig(ApiBaseModel):
+class TorchlinearLayerConfig(BaseLayerConfig):
     type: Literal["torch.nn.Linear"] = "torch.nn.Linear"
 
     args: TorchlinearArgs
 
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+            return lib_cls
         return lib_cls(**self.args.dict())
 
-    input_layer: Optional[bool] = True
-    name: str
-    forward: Optional[str]
+    forward_input_mask: int = 8
 
 
-class TorchflattenLayerConfig(ApiBaseModel):
+class TorchflattenLayerConfig(BaseLayerConfig):
     type: Literal["torch.nn.Flatten"] = "torch.nn.Flatten"
 
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+            return lib_cls
         return lib_cls()
 
-    input_layer: Optional[bool] = True
-    name: str
-    forward: Optional[str]
+    forward_input_mask: int = 8
 
 
-class TorchgeometricginconvLayerConfig(ApiBaseModel):
+class TorchgeometricginconvLayerConfig(BaseLayerConfig):
     type: Literal["torch_geometric.nn.GINConv"] = "torch_geometric.nn.GINConv"
 
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+            return lib_cls
         return lib_cls()
 
-    input_layer: Optional[bool] = True
-    name: str
-    forward: Optional[str]
+    forward_input_mask: int = 12
 
 
 class TorchgeometricgcnconvArgsTemplate(ApiBaseModel):
@@ -71,32 +85,32 @@ class TorchgeometricgcnconvArgs(ApiBaseModel):
     out_channels: int
 
 
-class TorchgeometricgcnconvLayerConfig(ApiBaseModel):
+class TorchgeometricgcnconvLayerConfig(BaseLayerConfig):
     type: Literal["torch_geometric.nn.GCNConv"] = "torch_geometric.nn.GCNConv"
 
     args: TorchgeometricgcnconvArgs
 
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+            return lib_cls
         return lib_cls(**self.args.dict())
 
-    input_layer: Optional[bool] = True
-    name: str
-    forward: Optional[str]
+    forward_input_mask: int = 12
 
 
-class TorchgeometricglobaladdpoolLayerConfig(ApiBaseModel):
+class TorchgeometricglobaladdpoolLayerConfig(BaseLayerConfig):
     type: Literal[
         "torch_geometric.nn.global_add_pool"
     ] = "torch_geometric.nn.global_add_pool"
 
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+            return lib_cls
         return lib_cls()
 
-    input_layer: Optional[bool] = True
-    name: str
-    forward: Optional[str]
+    forward_input_mask: int = 9
 
 
 LayersType = Union[

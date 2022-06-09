@@ -11,3 +11,18 @@ references['cls'] = {pathstring}
     references = {}
     exec(code, globals(), {"references": references})
     return references["cls"]
+
+
+def get_inputs_from_mask_ltr(arr, mask):
+    """
+    >>> get_inputs_from_mask_ltr(['a', 'b', 'c'], 0b011)
+    >>> ['b', 'c']
+    """
+    bit_idx = 0b1
+    result = []
+    for idx, el in enumerate(arr[::-1]):
+        position = 1 << idx
+        if position & mask != 0:
+            result.append(el)
+        bit_idx = bit_idx << 1
+    return result[::-1]
