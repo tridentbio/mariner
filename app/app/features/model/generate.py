@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any, List
 
 from humps import camel
@@ -5,17 +6,44 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 from app.features.model.utils import get_class_from_path_string
 
-torch_layers = [
+
+@dataclass
+class Layer:
+    name: str
+    forward_input_mask: int = 0b1000
+
+
+"""
+    Layers that receive a tensor as inputs
+    of the forward call
+"""
+single_input_layer_modules = [
     "torch.nn.Linear",
     "torch.nn.Flatten",
 ]
+single_input_layers = [Layer(name, 0b1000) for name in single_input_layer_modules]
 
-
-torch_geometric_layers = [
+"""
+    Layers that receive a tensor of node features
+    and edge_index as inputs of the forward call
+"""
+edge_index_layer_modules = [
     "torch_geometric.nn.GINConv",
     "torch_geometric.nn.GCNConv",
+]
+edge_index_layers = [Layer(name, 0b1100) for name in edge_index_layer_modules]
+
+"""
+    Layers that receive a tensor of node features
+    and a torch_geometric Batch as inputs of the 
+    in the forward call
+"""
+batch_layer_modules = [
     "torch_geometric.nn.global_add_pool",
 ]
+batch_layers = [Layer(name, 0b1001) for name in batch_layer_modules]
+
+layers = single_input_layers + edge_index_layers + batch_layers
 
 python_primitives_reprs = {
     int: "int",
@@ -100,15 +128,20 @@ def generate(path: str) -> str:
     return template.render(prefix=prefix, path=path, arg_types=arg_types)
 
 
-def generate_bundle(paths: List[str]) -> str:
+def generate_bundle(layers: List[Layer]) -> str:
     env = Environment(
         loader=PackageLoader("app.features.model"), autoescape=select_autoescape()
     )
     schemas_template = env.get_template("base.py.jinja")
-    args = [get_component_template_args(path) for path in paths]
+    args = [get_component_template_args(layer.name) for layer in layers]
     components = [
-        {"prefix": prefix, "arg_types": arg_types, "path": path}
-        for (prefix, arg_types), path in zip(args, paths)
+        {
+            "prefix": prefix,
+            "arg_types": arg_types,
+            "path": layer.name,
+            "forward_input_mask": layer.forward_input_mask,
+        }
+        for (prefix, arg_types), layer in zip(args, layers)
     ]
     bundled_schema = schemas_template.render(components=components)
     return bundled_schema
@@ -123,4 +156,4 @@ if __name__ == "__main__":
         for compname in compnames:
             print(generate(compname))
     elif template == "base":
-        print(generate_bundle(torch_layers + torch_geometric_layers))
+        print(generate_bundle(layers))

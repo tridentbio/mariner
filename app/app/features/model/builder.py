@@ -2,14 +2,15 @@ from typing import List
 
 import pandas as pd
 import torch
-from fastapi.param_functions import Depends
 from sqlalchemy.orm.session import Session
 from torch import nn
 from torch.utils.data import Dataset as TorchDataset
 from torch_geometric.data import Batch
 
 from app.features.dataset.crud import CRUDDataset
-from app.features.model.schema import FeaturizersType, ModelConfig
+from app.features.model.schema.configs import FeaturizersType, ModelConfig
+from app.features.model.schema.layers import LayersType
+from app.features.model.utils import get_inputs_from_mask_ltr
 
 # def get_inputs(x, batch, layer_type: Layer):
 #    edgeConsumers = [Layer.GINConv2]
@@ -77,15 +78,51 @@ from app.features.model.schema import FeaturizersType, ModelConfig
 class CustomModel(nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
+        self.callables_by_name = {layer.name: layer.create() for layer in config.layers}
+        self.layerconfigs_by_name = {layer.name: layer for layer in config.layers}
 
-    def forward(batch):
+    def get_first_layers(self) -> List[str]:
+        return []
+
+    def forward(self, batch):
         pass
 
 
+class CustomGraphModel(nn.Module):
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.config = config
+        self.callables_by_name = {layer.name: layer.create() for layer in config.layers}
+        self.layerconfigs_by_name = {layer.name: layer for layer in config.layers}
+
+    def get_featurizer_layer(self) -> LayersType:
+        name = self.config.featurizer.forward
+        return self.layerconfigs_by_name[name]
+
+    def forward(self, batch):
+        batch = batch
+        print(batch)
+        x, edge_index, batch = batch.x, batch.edge_index, batch.batch
+        print("from dataset: ", x, edge_index, batch)
+        current_layer = self.get_featurizer_layer()
+        while not current_layer.is_output_layer:
+            layercallable = self.callables_by_name[current_layer.name]
+            print(current_layer)
+            print("mask :", format(current_layer.forward_input_mask, "b"))
+            inputs = get_inputs_from_mask_ltr(
+                [x, edge_index, batch], current_layer.forward_input_mask
+            )
+            print(inputs)
+            x = layercallable(*inputs)
+
+        inputs = get_inputs_from_mask_ltr(
+            [x, edge_index, batch], current_layer.forward_input_mask
+        )
+        x = self.callables_by_name[current_layer.name](x)
+        return x
+
+
 def build_model_from_yaml(yamlstr: str) -> nn.Module:
-    """
-    deprecated
-    """
     config = ModelConfig.from_yaml(yamlstr)
     model = CustomModel(config)
     return model
@@ -143,8 +180,8 @@ class BuilderDataset(TorchDataset):
 
 def build_dataset(
     model_config: ModelConfig,
-    dataset_repo: CRUDDataset = Depends(CRUDDataset),
-    db: Session = Depends(Session),
+    dataset_repo: CRUDDataset,
+    db: Session,
 ) -> TorchDataset:
     dataset = dataset_repo.get_by_name(db, model_config.dataset.name)
     ds_config = model_config.dataset
