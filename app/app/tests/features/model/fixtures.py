@@ -25,5 +25,3 @@ class ExampleDataset(Dataset):
             graph.y = torch.tensor([sample[self.target]])
 
         return graph
-
-
