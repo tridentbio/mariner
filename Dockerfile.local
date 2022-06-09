@@ -19,11 +19,9 @@ RUN bash -c "pip install --upgrade pip"
 # For development, Jupyter remote kernel, Hydrogen
 # Using inside the container:
 # jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
-ARG INSTALL_JUPYTER=false
+ARG INSTALL_JUPYTER=true
 RUN bash -c "if [ $INSTALL_JUPYTER == 'true' ] ; then pip install jupyterlab ; fi"
 
 COPY ./app /app
 ENV PYTHONPATH=/app
 
-# Trying to fix a permission error. should check the security impact
-USER root 
