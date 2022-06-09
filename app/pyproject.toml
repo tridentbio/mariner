@@ -37,6 +37,7 @@ torch-scatter = "^2.0.9"
 PyYAML = "^6.0"
 torchsummary = "^1.5.1"
 pytest-dotenv = "^0.5.2"
+mlflow = {extras = ["extras"], version = "^1.26.1"}
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
