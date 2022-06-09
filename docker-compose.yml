@@ -27,8 +27,30 @@ services:
       dockerfile: ./Dockerfile
       args:
         INSTALL_DEV: ${INSTALL_DEV-false}
+
+  mlflowdb:
+    image: postgres:12
+    volumes:
+      - app-mlflow-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports: 
+      - "54321:5432"
+  mlflow:
+    depends_on:
+      - mlflowdb
+    build:
+      context: .
+      dockerfile: ./Dockerfile.mlflow
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
 volumes:
   app-db-data:
+  app-mlflow-data:
 
 # networks:
 #   traefik-public:
