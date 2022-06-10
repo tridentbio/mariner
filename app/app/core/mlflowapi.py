@@ -1,13 +1,15 @@
 from typing import Optional
-
+import io
 import mlflow
 import mlflow.pytorch
 import mlflow.tracking
-import torch.jit
+import torch
 from fastapi.datastructures import UploadFile
 from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
+
+from app.tests.data.torch_target_model import ExampleModel
 
 
 def create_model_version(
@@ -17,7 +19,8 @@ def create_model_version(
     artifact_path: Optional[str] = None,
     desc: Optional[str] = None,
 ) -> ModelVersion:
-    model = torch.jit.load(file)
+    file = io.BytesIO(file.file.read())
+    model = torch.load(file)
     if not artifact_path:
         artifact_path = name
     with mlflow.start_run() as run:
@@ -48,7 +51,7 @@ def create_registered_model(
     registered_model = client.create_registered_model(
         name, tags=tags, description=description
     )
-    if torchscript is None:
+    if not torchscript:
         return registered_model, None
     version = create_model_version(client, name, torchscript, desc=version_description)
     return registered_model, version
