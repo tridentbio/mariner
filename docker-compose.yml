@@ -14,6 +14,7 @@ services:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     depends_on:
       - db
+      - mlflow
     ports:
       - 80:80
     env_file:
@@ -22,6 +23,13 @@ services:
       - SERVER_NAME=${DOMAIN?Variable not set}
       - SERVER_HOST=https://${DOMAIN?Variable not set}
       - SMTP_HOST=${SMTP_HOST}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -33,9 +41,11 @@ services:
     volumes:
       - app-mlflow-data:/var/lib/postgresql/data/pgdata
     env_file:
-      - .env
+      - .env.local.mlflow
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_SERVER=mlflowdb
+      - POSTGRES_PORT=5432
     ports: 
       - "54321:5432"
   mlflow:
@@ -45,14 +55,20 @@ services:
       context: .
       dockerfile: ./Dockerfile.mlflow
     env_file:
-      - .env
+      - .env.local.mlflow
+    environment:
+      - POSTGRES_SERVER=mlflowdb
+      - POSTGRES_PORT=5432
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
     ports:
       - "5000:5000"
 volumes:
   app-db-data:
   app-mlflow-data:
 
-# networks:
-#   traefik-public:
-#     # Allow setting it to false for testing
-#     external: ${TRAEFIK_PUBLIC_NETWORK_IS_EXTERNAL-true}
