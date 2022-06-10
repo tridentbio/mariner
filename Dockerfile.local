@@ -2,6 +2,9 @@ FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
 
 WORKDIR /app/
 
+RUN /usr/local/bin/python3 -m pip install --upgrade pip
+RUN apt-get install libpq-dev -y
+
 # Install Poetry
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_HOME=/opt/poetry python && \
     cd /usr/local/bin && \
@@ -19,7 +22,8 @@ RUN bash -c "pip install --upgrade pip"
 # For development, Jupyter remote kernel, Hydrogen
 # Using inside the container:
 # jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
-ARG INSTALL_JUPYTER=true
+ARG INSTALL_JUPYTER=false
+RUN echo $INSTALL_JUPITER
 RUN bash -c "if [ $INSTALL_JUPYTER == 'true' ] ; then pip install jupyterlab ; fi"
 
 COPY ./app /app
