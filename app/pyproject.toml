@@ -30,15 +30,9 @@ pandas = "^1.4.2"
 humps = "^0.2.2"
 MarkupSafe = "2.0.1"
 torch = "1.9.0"
-torch-geometric = "^2.0.4"
-rdkit-pypi = "^2022.3.2"
-torch-sparse = "0.6.12"
-torch-scatter = "^2.0.9"
 PyYAML = "^6.0"
 torchsummary = "^1.5.1"
-pytest-dotenv = "^0.5.2"
 mlflow = {extras = ["extras"], version = "^1.26.1"}
-python-dotenv = "^0.20.0"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
@@ -61,3 +55,8 @@ requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 # pyproject.toml
 
+[tool.poetry.scripts]
+install_deps_cpu = "deps:install_deps_cpu"
+install_deps_cu101 = "deps:install_deps_cu101"
+install_deps_cu102 = "deps:install_deps_cu102"
+install_deps_cu110 = "deps:install_deps_cu110"
