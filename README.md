@@ -1,4 +1,29 @@
 # mariner
+```
+├── app/                                   # code
+│   ├── alembic/                           # migrations folder
+│   ├── app/                               # The app module
+│   │   ├── api/                           # API route definitions
+│   │   ├── features/
+│   │   │   ├── dataset/                   # Dataset module
+│   │   │   │   ├── controller.py          # Business Logic
+│   │   │   │   ├── crud.py                # feature related DB queries and commands
+│   │   │   │   ├── exceptions.py          # User directed errors
+│   │   │   │   ├── model.py               # entity mapper class
+│   │   ├── schemas/
+│   │   ├── tests/
+│   │   ├── tests_pre_start.py
+│   │   ├── utils.py
+│   │   └── worker.py
+│   ├── scripts/                           # Format, lint, code generatino, other code scripts
+│   │   ├── ... 
+│   ├── tests-start.sh
+│   └── worker-start.sh
+├── notebooks/
+├── README.md                             # <- you're here
+└── scripts/                              # Container level script
+```
+
 
 ## Backend Requirements
 
