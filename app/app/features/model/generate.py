@@ -124,7 +124,7 @@ def generate(path: str) -> str:
     env = Environment(
         loader=PackageLoader("app.features.model"), autoescape=select_autoescape()
     )
-    template = env.get_template("component.py.j2")
+    template = env.get_template("component.py.jinja")
     return template.render(prefix=prefix, path=path, arg_types=arg_types)
 
 

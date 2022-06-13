@@ -45,6 +45,7 @@ class ExampleModel(nn.Module):
         
         return pred
 
-model = ExampleModel()
-torch.save(model, 'app/tests/data/model.pt')
+if __name__ == '__main__':
+    model = ExampleModel()
+    torch.save(model, 'app/tests/data/model.pt')
 
