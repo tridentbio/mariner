@@ -23,7 +23,7 @@ def test_get_my_datasets(
     assert isinstance(payload["data"], list)
 
 
-def test_create_dataset(
+def test_post_datasets(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
     db: Session,
@@ -73,7 +73,7 @@ def test_create_dataset(
 @pytest.mark.skip(
     reason="db consistency assertions fail for some reason, but route works"
 )
-def test_update_dataset(
+def test_put_datasets(
     client: TestClient, superuser_token_headers: Dict[str, str], db: Session
 ) -> None:
     dataset = repo.create(
@@ -116,7 +116,7 @@ def test_update_dataset(
     assert updated.name == new_name
 
 
-def test_delete_dataset(
+def test_delete_datasets(
     client: TestClient, superuser_token_headers: Dict[str, str], db: Session
 ) -> None:
     dataset = repo.create(
@@ -145,7 +145,7 @@ def test_delete_dataset(
     assert ds is None
 
 
-def test_get_columns_metadata(
+def test_get_csv_metadata(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
 ) -> None:
@@ -163,3 +163,5 @@ def test_get_columns_metadata(
         assert "CMPD_CHEMBLID" in colnames
         assert "exp" in colnames
         assert "smiles" in colnames
+
+
