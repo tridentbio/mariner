@@ -29,6 +29,24 @@ def mock_model(created_by: User) -> ModelCreate:
         created_by_id=created_by.id
     )
 
+def setup_create_model(db: Session, client: TestClient, headers):
+    user = get_test_user(db)
+    model = mock_model(user)
+    model_path = "app/tests/data/model.pt"
+    with open(model_path, 'rb') as f:
+        res = client.post(
+            f"{settings.API_V1_STR}/models/",
+            data={
+                "name": model.name,
+                "description": model.model_description,
+                "versionDescription": model.model_version_description,
+            },
+            files={"file": ("model.pt", f)},
+            headers=headers,
+        )
+        assert res.status_code == HTTP_200_OK
+    return res
+
 
 def test_post_models_success(
     db: Session,
@@ -63,11 +81,15 @@ def test_post_models_success(
         model = mlflow.pyfunc.load_model(model_uri=f"models:/{model_name}/1")
         assert model is not None
 
+def setup_function():
+    pass
 
-def test_get_models_in_registry(
+
+def test_get_models_success(
     client: TestClient, normal_user_token_headers: dict[str, str],
     db: Session
 ):
+    setup_create_model(db, client, headers=normal_user_token_headers)
     res = client.get(
         f"{settings.API_V1_STR}/models/", headers=normal_user_token_headers
     )
@@ -75,41 +97,28 @@ def test_get_models_in_registry(
     user = get_test_user(db)
     body = res.json()
     models = body["data"]
-
+    total = body['total']
     assert len(models) > 0
+    assert total > 0
     for model in models:
-        assert model.created_by_id == user.id
+        print(model)
+        assert model['createdById'] == user.id
 
 
 def test_post_models_deployment(db: Session, client: TestClient, normal_user_token_headers: dict[str, str]):
-    user = get_test_user(db)
-    model = mock_model(user)
-    model_path = "app/tests/data/model.pt"
-    with open(model_path, 'rb') as f:
-        res = client.post(
-            f"{settings.API_V1_STR}/models/",
-            data={
-                "name": model.name,
-                "description": model.model_description,
-                "versionDescription": model.model_version_description,
-            },
-            files={"file": ("model.pt", f)},
-            headers=normal_user_token_headers,
-        )
-        assert res.status_code == HTTP_200_OK
-        model = res.json()
-        data = {
-            'name': random_lower_string(),
-            'model_name': model['name'],
-            'model_version': int(model['latestVersions'][-1]['version']),
-        }
-        print(data)
-        res = client.post(
-            f"{settings.API_V1_STR}/deployments/",
-            json=data,
-            headers=normal_user_token_headers
-        )
-        assert res.status_code == HTTP_200_OK
+    res = setup_create_model(db, client, headers=normal_user_token_headers)
+    model = res.json()
+    data = {
+        'name': random_lower_string(),
+        'model_name': model['name'],
+        'model_version': int(model['latestVersions'][-1]['version']),
+    }
+    res = client.post(
+        f"{settings.API_V1_STR}/deployments/",
+        json=data,
+        headers=normal_user_token_headers
+    )
+    assert res.status_code == HTTP_200_OK
 
 
 def test_add_version_to_model():

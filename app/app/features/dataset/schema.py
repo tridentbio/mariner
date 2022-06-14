@@ -7,7 +7,7 @@ from fastapi.datastructures import UploadFile
 from pydantic.main import BaseModel
 from sqlalchemy.sql.sqltypes import Enum
 
-from app.schemas.api import ApiBaseModel
+from app.schemas.api import ApiBaseModel, PaginatedApiQuery
 
 SplitType = Literal["scaffold", "random"]
 ColumnType = Literal["numerical", "categorical", "string"]
@@ -38,12 +38,10 @@ class Split(str):
             raise ValueError('Split should be string "int-int-int"')
 
 
-class DatasetsQuery(ApiBaseModel):
+class DatasetsQuery(PaginatedApiQuery):
     sort_by_rows: Optional[str]
     sort_by_cols: Optional[str]
     sort_by_created_at: Optional[str]
-    page: int = 1
-    per_page: int = 15
     search_by_name: Optional[str]
     created_by_id: Optional[int]
 
