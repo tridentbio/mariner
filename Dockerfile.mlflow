@@ -2,7 +2,9 @@ FROM python:3.8.0
 WORKDIR /app
 RUN apt-get install libpq-dev -y
 RUN pip install \
-    mlflow \
+    'ray[serve]' \
+    'mlflow==1.26.1' \
+    'mlflow-ray-serve' \
     psycopg2 \
     boto3
 
