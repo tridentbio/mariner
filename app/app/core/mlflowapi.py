@@ -1,8 +1,10 @@
 from typing import Optional
 import io
 import mlflow
+from mlflow.deployments.base import BaseDeploymentClient
 import mlflow.pytorch
 import mlflow.tracking
+from mlflow.deployments import get_deploy_client
 import torch
 from fastapi.datastructures import UploadFile
 from mlflow.entities.model_registry.model_version import ModelVersion
@@ -55,3 +57,19 @@ def create_registered_model(
         return registered_model, None
     version = create_model_version(client, name, torchscript, desc=version_description)
     return registered_model, version
+
+def get_deployment_plugin() -> BaseDeploymentClient:
+    client = get_deploy_client('ray-serve')
+    assert client is not None
+    return client
+
+def create_deployment_with_endpoint(deployment_name: str, endpoint_name: str, model_uri: str):
+    ray_serve_client = get_deployment_plugin()
+    ray_serve_client.create_endpoint(endpoint_name)
+    deployment = ray_serve_client.create_deployment(
+        name=deployment_name,
+        model_uri=model_uri,
+        config={}
+    )
+    return deployment
+

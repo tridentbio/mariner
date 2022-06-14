@@ -40,6 +40,11 @@ def create_model(
 
 @router.post('/models/{model_name}/{model_version}/deployments')
 def post_models_deployment_success(
+    model_name: str,
+    model_version: int
 ):
+    deployment = controller.create_model_deployment(model_name, model_version)
+    return deployment
+    
     
 

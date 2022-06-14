@@ -6,7 +6,7 @@ authors = ["Admin <admin@example.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
-uvicorn = "^0.11.3"
+uvicorn = "^0.16.0"
 fastapi = "^0.54.1"
 python-multipart = "^0.0.5"
 email-validator = "^1.0.5"
@@ -33,6 +33,8 @@ torch = "1.9.0"
 PyYAML = "^6.0"
 torchsummary = "^1.5.1"
 mlflow = {extras = ["extras"], version = "^1.26.1"}
+ray = {extras = ["serve"], version = "^1.13.0"}
+mlflow-ray-serve = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
