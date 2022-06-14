@@ -21,7 +21,6 @@ def get_test_user(db: Session) -> User:
     return user
 
 
-
 def mock_model(created_by: User) -> ModelCreate:
     return ModelCreate(
         name=random_lower_string(),
@@ -29,6 +28,7 @@ def mock_model(created_by: User) -> ModelCreate:
         model_version_description=random_lower_string(),
         created_by_id=created_by.id
     )
+
 
 def test_post_models_success(
     db: Session,
@@ -64,7 +64,6 @@ def test_post_models_success(
         assert model is not None
 
 
-
 def test_get_models_in_registry(
     client: TestClient, normal_user_token_headers: dict[str, str],
     db: Session
@@ -82,17 +81,36 @@ def test_get_models_in_registry(
         assert model.created_by_id == user.id
 
 
-def test_post_models_deployment(db: Session, client: TestClient):
+def test_post_models_deployment(db: Session, client: TestClient, normal_user_token_headers: dict[str, str]):
     user = get_test_user(db)
-    model = mock_model(user.id)
-    latest_version = model
+    model = mock_model(user)
     model_path = "app/tests/data/model.pt"
     with open(model_path, 'rb') as f:
-        file = UploadFile('model.pt', io.BytesIO(f.read()))
-        model = model_ctl.create_model(db, model, file)
-    latest_version = model.latest_versions[-1]
-    res = client.post(f"{settings.API_V1_STR}/models/{model.name}/{latest_version.version}/")
-    assert res.status_code == HTTP_200_OK
+        res = client.post(
+            f"{settings.API_V1_STR}/models/",
+            data={
+                "name": model.name,
+                "description": model.model_description,
+                "versionDescription": model.model_version_description,
+            },
+            files={"file": ("model.pt", f)},
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == HTTP_200_OK
+        model = res.json()
+        data = {
+            'name': random_lower_string(),
+            'model_name': model['name'],
+            'model_version': int(model['latestVersions'][-1]['version']),
+        }
+        print(data)
+        res = client.post(
+            f"{settings.API_V1_STR}/deployments/",
+            json=data,
+            headers=normal_user_token_headers
+        )
+        assert res.status_code == HTTP_200_OK
+
 
 def test_add_version_to_model():
    pass
@@ -104,4 +122,5 @@ def test_update_model():
 
 def test_delete_model():
     pass
+
 
