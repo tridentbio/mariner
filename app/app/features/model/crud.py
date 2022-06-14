@@ -1,3 +1,4 @@
+from typing import List, Optional
 from sqlalchemy.orm.session import Session
 
 from app.crud.base import CRUDBase
@@ -14,6 +15,16 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
             db.delete(obj)
             db.commit()
         return obj
+    def get_paginated(self, db: Session, page: int, per_page: int, created_by_id: Optional[int] = None) -> tuple[List[Model], int]:
+        sql_query = db.query(Model)
+        if created_by_id:
+            sql_query = sql_query.filter(Model.created_by_id == created_by_id)
+        total = sql_query.count()
+        sql_query = sql_query.limit(per_page)
+        sql_query = sql_query.offset(per_page * page)
+        result = sql_query.all()
+        return result, total
+
 
 
 repo = CRUDModel(Model)
