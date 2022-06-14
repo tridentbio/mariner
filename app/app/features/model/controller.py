@@ -1,7 +1,7 @@
 from logging import debug
 from fastapi.datastructures import UploadFile
 from sqlalchemy.orm.session import Session
-from app.core.mlflowapi import create_registered_model, create_tracking_client
+from app.core.mlflowapi import create_registered_model, create_tracking_client, create_deployment_with_endpoint
 from app.features.model.crud import repo
 from app.features.model.schema.model import Model, ModelCreate, ModelCreateRepo
 
@@ -27,3 +27,15 @@ def create_model(
     return model
 
 
+def create_model_deployment(
+    model_name: str,
+    latest_version: int,
+):
+    deployment = create_deployment_with_endpoint(
+            deployment_name=deployment_name,
+            endpoint_name=endpoint_name,
+            model_uri=model_uri
+    )
+
+        
+    )

@@ -9,6 +9,11 @@ from app.schemas.api import ApiBaseModel
 
 ModelVersion = Any
 
+class ModelDeployment(ApiBaseModel):
+    pass
+
+
+
 class Model(ApiBaseModel):
     name: str
     model_description: Optional[str] = None
