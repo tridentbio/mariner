@@ -5,7 +5,7 @@ from app.features.model.crud import repo
 from app.features.model.deployments.crud import repo as deployment_repo
 from app.features.model.deployments.schema import Deployment, DeploymentCreate
 from app.features.model.schema.model import Model, ModelCreate, ModelCreateRepo, ModelsQuery
-from app.features.user.schema import User
+from app.features.user.model import User
 
 
 def create_model(
@@ -53,9 +53,9 @@ def create_model_deployment(
     
 def get_models(
     db: Session,
-    query: ModelsQuery
+    query: ModelsQuery,
+    current_user: User
 ):
-    print(query)
-    models, total = repo.get_paginated(db, per_page=query.per_page, page=query.page)
+    models, total = repo.get_paginated(db, created_by_id=current_user.id, per_page=query.per_page, page=query.page)
     return models, total
 

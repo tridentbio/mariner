@@ -41,13 +41,13 @@ def create_model(
 @router.get(
     "/",
     response_model=Paginated[Model],
-    dependencies=[Depends(deps.get_current_active_user)]
 )
 def get_models(
     db: Session = Depends(deps.get_db),
-    query: ModelsQuery = Depends(ModelsQuery)
+    query: ModelsQuery = Depends(ModelsQuery),
+    current_user: User = Depends(deps.get_current_active_user)
 ):
-    models, total = controller.get_models(db, query)
+    models, total = controller.get_models(db, query, current_user=current_user)
     models = [ Model.from_orm(m) for m in models ]
     return Paginated(data=models, total=total)
 
