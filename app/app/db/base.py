@@ -3,4 +3,5 @@
 from app.db.base_class import Base  # noqa
 from app.features.user.model import User  # noqa
 from app.features.dataset.model import Dataset, ColumnDescription, ColumnsMetadata
+from app.features.model.deployments.model import Deployments
 from app.features.model.model import Model
