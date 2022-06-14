@@ -37,3 +37,9 @@ def create_model(
         file,
     )
     return model
+
+@router.post('/models/{model_name}/{model_version}/deployments')
+def post_models_deployment_success(
+):
+    
+
