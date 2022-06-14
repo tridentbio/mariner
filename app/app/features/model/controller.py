@@ -4,7 +4,7 @@ from app.core.mlflowapi import create_registered_model, create_tracking_client, 
 from app.features.model.crud import repo
 from app.features.model.deployments.crud import repo as deployment_repo
 from app.features.model.deployments.schema import Deployment, DeploymentCreate
-from app.features.model.schema.model import Model, ModelCreate, ModelCreateRepo
+from app.features.model.schema.model import Model, ModelCreate, ModelCreateRepo, ModelsQuery
 from app.features.user.schema import User
 
 
@@ -51,3 +51,11 @@ def create_model_deployment(
     return Deployment.from_orm(deployment_entity)
 
     
+def get_models(
+    db: Session,
+    query: ModelsQuery
+):
+    print(query)
+    models, total = repo.get_paginated(db, per_page=query.per_page, page=query.page)
+    return models, total
+

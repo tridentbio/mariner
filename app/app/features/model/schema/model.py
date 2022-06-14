@@ -4,7 +4,7 @@ from mlflow.entities.model_registry.registered_model import RegisteredModel, Mod
 from pydantic.main import BaseModel
 
 from app.features.user.schema import User
-from app.schemas.api import ApiBaseModel
+from app.schemas.api import ApiBaseModel, PaginatedApiQuery
 
 
 ModelVersion = Any
@@ -30,6 +30,10 @@ class Model(ApiBaseModel):
         self.latest_versions = versions
         if len(versions) > 0:
             self.model_version_description = versions[0].description
+
+
+class ModelsQuery(PaginatedApiQuery):
+    pass
 
 
 class ModelCreateRepo(BaseModel):

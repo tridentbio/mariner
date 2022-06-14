@@ -6,8 +6,9 @@ from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
 
 from app.api import deps
+from app.api.api_v1.endpoints.datasets import Paginated
 from app.features.model import controller
-from app.features.model.schema.model import Model, ModelCreate
+from app.features.model.schema.model import Model, ModelCreate, ModelsQuery
 from app.features.user.model import User
 
 router = APIRouter()
@@ -37,5 +38,16 @@ def create_model(
     )
     return model
 
-    
+@router.get(
+    "/",
+    response_model=Paginated[Model],
+    dependencies=[Depends(deps.get_current_active_user)]
+)
+def get_models(
+    db: Session = Depends(deps.get_db),
+    query: ModelsQuery = Depends(ModelsQuery)
+):
+    models, total = controller.get_models(db, query)
+    models = [ Model.from_orm(m) for m in models ]
+    return Paginated(data=models, total=total)
 
