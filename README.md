@@ -398,13 +398,6 @@ They are designed to have the minimum repetition of code and configurations, so 
 
 Also, if you want to have another deployment environment, say `preprod`, you just have to change environment variables, but you can keep using the same Docker Compose files.
 
-### The .env file
-
-The `.env` file is the one that contains all your configurations, generated keys and passwords, etc.
-
-Depending on your workflow, you could want to exclude it from Git, for example if your project is public. In that case, you would have to make sure to set up a way for your CI tools to obtain it while building or deploying your project.
-
-One way to do it could be to add each environment variable to your CI/CD system, and updating the `docker-compose.yml` file to read that specific env var instead of reading the `.env` file.
 
 ## URLs
 
