@@ -8,13 +8,24 @@ services:
       - .env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports: 
       - "5432:5432"
+    networks:
+      - ray_net
   backend:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     depends_on:
-      - db
-      - mlflow
+      db:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+      ray-head:
+        condition: service_started
     ports:
       - 80:80
     env_file:
@@ -35,6 +46,8 @@ services:
       dockerfile: ./Dockerfile.local
       args:
         INSTALL_DEV: ${INSTALL_DEV-false}
+    networks:
+      - ray_net
 
   mlflowdb:
     image: postgres:12
@@ -48,9 +61,19 @@ services:
       - POSTGRES_PORT=5432
     ports: 
       - "54321:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 2s
+      retries: 15
+    networks:
+      - ray_net
+
+
   mlflow:
     depends_on:
-      - mlflowdb
+      mlflowdb:
+        condition: service_healthy
     build:
       context: .
       dockerfile: ./Dockerfile.mlflow
@@ -68,7 +91,46 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
+    networks:
+      - ray_net
+
+  ray-head:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.ray
+    env_file:
+      .env.local.ray
+    ports:
+      - "6379:6379"
+      - "8265:8265"
+      - "10001:10001"
+    env_file:
+      - .env
+    command: bash -c "ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --redis-password=123456 --block"
+    shm_size: 2g
+    networks:
+      - ray_net
+  ray-worker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.ray
+    env_file:
+      .env.local.ray
+    depends_on: 
+      - ray-head
+    env_file:
+      - .env
+    command: bash -c "ray start --address=ray-head:6379 --redis-password=123456 --num-cpus=1 --block" 
+    shm_size: 2g
+    networks:
+      - ray_net
 volumes:
   app-db-data:
   app-mlflow-data:
 
+networks:
+  ray_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.63.0.0/16
