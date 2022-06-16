@@ -1,5 +1,7 @@
 FROM python:3.9
 
-RUN pip install ray
+RUN pip install 'ray[serve]==1.13.0'
+RUN pip install 'fastapi==0.76.0'
+RUN pip install 'mlflow[extras]==1.26.1'
 
 CMD ["bash", "-c", "ray start --head --num-cpus 1 --dashboard-host 0.0.0.0 --include-dashboard true --block"]
