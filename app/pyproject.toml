@@ -35,6 +35,7 @@ torchsummary = "^1.5.1"
 mlflow = {extras = ["extras"], version = "^1.26.1"}
 ray = {extras = ["serve"], version = "^1.13.0"}
 mlflow-ray-serve = "^0.2.0"
+networkx = "^2.8.4"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
@@ -45,6 +46,7 @@ flake8 = "^3.7.9"
 pytest = "^5.4.1"
 sqlalchemy-stubs = "^0.3"
 pytest-cov = "^2.8.1"
+matplotlib = "^3.5.2"
 
 [tool.isort]
 multi_line_output = 3
