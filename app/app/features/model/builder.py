@@ -10,7 +10,6 @@ from torch_geometric.data import Batch
 from app.features.dataset.crud import CRUDDataset
 from app.features.model.schema.configs import FeaturizersType, ModelConfig
 from app.features.model.schema.layers import LayersType
-from app.features.model.utils import get_inputs_from_mask_ltr
 
 # def get_inputs(x, batch, layer_type: Layer):
 #    edgeConsumers = [Layer.GINConv2]
