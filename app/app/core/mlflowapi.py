@@ -1,4 +1,6 @@
 from typing import Optional
+import ray
+from ray import serve
 import io
 import mlflow
 from mlflow.deployments.base import BaseDeploymentClient
@@ -22,7 +24,7 @@ def create_model_version(
     desc: Optional[str] = None,
 ) -> ModelVersion:
     file = io.BytesIO(file.file.read())
-    model = torch.load(file)
+    model = ExampleModel()
     if not artifact_path:
         artifact_path = name
     with mlflow.start_run() as run:
@@ -59,17 +61,21 @@ def create_registered_model(
     return registered_model, version
 
 def get_deployment_plugin() -> BaseDeploymentClient:
-    client = get_deploy_client('ray-serve')
+    client = get_deploy_client('ray-serve://ray-head:10001')
     assert client is not None
     return client
 
 def create_deployment_with_endpoint(deployment_name: str, endpoint_name: str, model_uri: str):
-    ray_serve_client = get_deployment_plugin()
-    ray_serve_client.create_endpoint(endpoint_name)
-    deployment = ray_serve_client.create_deployment(
+    #ray.init(address=f'ray://ray-head:10001')
+    client = serve.start(detached=True)
+    print(client)
+    ray_plugin = get_deployment_plugin()
+    # ray_serve_client.create_endpoint(endpoint_name)
+    deployment = ray_plugin.create_deployment(
         name=deployment_name,
         model_uri=model_uri,
-        config={}
+        #config={"num_replicas": 1}
     )
     return deployment
+
 
