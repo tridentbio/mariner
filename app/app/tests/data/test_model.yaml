@@ -4,17 +4,17 @@ dataset:
   target_column: "exp"
   feature_columns:
     - smiles
-featurizer:
-  name: MolToGraphFeaturizer
-  type: app.features.model.featurizers.MoleculeFeaturizer
-  column_names:
-    - smiles
-  args:
-    allow_unknown: false
-    sym_bond_list: true
-    per_atom_fragmentation: false
-  forward: GCN1
-  column_names: ['smiles']
+featurizers:
+  - name: MolToGraphFeaturizer
+    type: app.features.model.featurizers.MoleculeFeaturizer
+    column_names:
+      - smiles
+    args:
+      allow_unknown: false
+      sym_bond_list: true
+      per_atom_fragmentation: false
+    forward: GCN1
+    column_names: ['smiles']
 layers:
   - name: GCN1
     type: torch_geometric.nn.GCNConv

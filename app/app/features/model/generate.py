@@ -10,40 +10,25 @@ from app.features.model.utils import get_class_from_path_string
 @dataclass
 class Layer:
     name: str
-    forward_input_mask: int = 0b1000
 
 
-"""
-    Layers that receive a tensor as inputs
-    of the forward call
-"""
-single_input_layer_modules = [
-    "torch.nn.Linear",
-    "torch.nn.Flatten",
+featurizers = [
+    Layer(name) for name in [
+        'app.features.model.featurizers.MoleculeFeaturizer'
+    ]
 ]
-single_input_layers = [Layer(name, 0b1000) for name in single_input_layer_modules]
 
-"""
-    Layers that receive a tensor of node features
-    and edge_index as inputs of the forward call
-"""
-edge_index_layer_modules = [
-    "torch_geometric.nn.GINConv",
-    "torch_geometric.nn.GCNConv",
+layers = [
+    Layer(name) for name in [
+        'app.features.model.layers.GlobalPooling',
+        'app.features.model.layers.Concat',
+        'torch.nn.Linear',
+        'torch.nn.Sigmoid',
+        'torch.nn.ReLU',
+        'torch_geometric.nn.GCNConv',
+    ]
 ]
-edge_index_layers = [Layer(name, 0b1100) for name in edge_index_layer_modules]
 
-"""
-    Layers that receive a tensor of node features
-    and a torch_geometric Batch as inputs of the 
-    in the forward call
-"""
-batch_layer_modules = [
-    "torch_geometric.nn.global_add_pool",
-]
-batch_layers = [Layer(name, 0b1001) for name in batch_layer_modules]
-
-layers = single_input_layers + edge_index_layers + batch_layers
 
 python_primitives_reprs = {
     int: "int",
@@ -59,31 +44,22 @@ def get_module_name(classpath: str) -> str:
 
 def access_attributes_of_interest(clspath):
     cls = get_class_from_path_string(clspath)
-    d = {}
-    if "__init__" in dir(cls):
-        if "__code__" in dir(cls.__init__):
-            argscount = cls.__init__.__code__.co_argcount
-            args = cls.__init__.__code__.co_varnames[
-                :argscount
-            ]  # Exclude kword args if any
-            defaults = cls.__init__.__defaults__
-            d[
-                "types"
-            ] = cls.__init__.__annotations__  # dictionary mapping argname to type
-            d["defaults"] = defaults  # tuple with ending default argument  valuts
-            d["call_type"] = "class"
-            d["args"] = args  # tuple with argnames.
-            d["not_defaults"] = args[1 : argscount - len(defaults)]
-        elif "__annotations__" in dir(cls):
-            d["types"] = cls.__annotations__
-            d["defaults"] = cls.__defaults__
-            d["call_type"] = "func"
-            argscount = cls.__code__.co_argcount
-            args = cls.__code__.co_varnames[:argscount]  # Exclude kword args if any
-
-            d["not_defaults"] = args[1 : argscount - len(d["defaults"])]
-            d["args"] = args
-    return d
+    if "__init__" in dir(cls) and '__code__' in dir(cls.__init__):
+        d = {}
+        argscount = cls.__init__.__code__.co_argcount
+        args = cls.__init__.__code__.co_varnames[
+            :argscount
+        ]  # Exclude kword args if any
+        defaults = cls.__init__.__defaults__
+        d[
+            "types"
+        ] = cls.__init__.__annotations__  # dictionary mapping argname to type
+        d["defaults"] = defaults  # tuple with ending default argument  valuts
+        d["call_type"] = "class"
+        d["args"] = args  # tuple with argnames.
+        d["not_defaults"] = args[1 : argscount - len(defaults)] if defaults else args[1:]
+        return d
+    raise Exception(f'Failed to inspect type annotations for {clspath}. Is it a class with __init__ implementation?')
 
 
 def collect_components_info(class_paths: List[str]) -> Any:
@@ -99,7 +75,7 @@ def collect_components_info(class_paths: List[str]) -> Any:
 
 
 def is_primitive(pr):
-    return pr == int or pr == str or pr == bool or pr == float
+    return pr in [int, str, bool, float]
 
 
 def get_component_template_args(path: str):
@@ -118,32 +94,53 @@ def get_component_template_args(path: str):
     }
     return prefix, arg_types
 
+def create_jinja_env():
+    env = Environment(
+        loader=PackageLoader("app.features.model"), autoescape=select_autoescape()
+    )
+    def type_name(value):
+      if value == 'string':
+        return 'str'
+      return value
+    env.globals.update(type_name=type_name)
+    return env
+
 
 def generate(path: str) -> str:
     prefix, arg_types = get_component_template_args(path)
-    env = Environment(
-        loader=PackageLoader("app.features.model"), autoescape=select_autoescape()
-    )
+    env = create_jinja_env()
     template = env.get_template("component.py.jinja")
-    return template.render(prefix=prefix, path=path, arg_types=arg_types)
+    return template.render(component={
+        'prefix':prefix, 'path': path, 'arg_types': arg_types
+    })
 
 
-def generate_bundle(layers: List[Layer]) -> str:
-    env = Environment(
-        loader=PackageLoader("app.features.model"), autoescape=select_autoescape()
-    )
+def generate_bundle() -> str:
+    env = create_jinja_env()
     schemas_template = env.get_template("base.py.jinja")
     args = [get_component_template_args(layer.name) for layer in layers]
-    components = [
+    layer_components = [
         {
             "prefix": prefix,
             "arg_types": arg_types,
             "path": layer.name,
-            "forward_input_mask": layer.forward_input_mask,
         }
         for (prefix, arg_types), layer in zip(args, layers)
     ]
-    bundled_schema = schemas_template.render(components=components)
+    args = [get_component_template_args(featurizer.name) for featurizer in featurizers]
+    featurizer_components = [
+        {
+            "prefix": prefix,
+            "arg_types": arg_types,
+            "path": layer.name,
+        }
+        for (prefix, arg_types), layer in zip(args, featurizers)
+    ]
+        
+    bundled_schema = schemas_template.render(
+        layer_components=layer_components,
+        featurizer_components=featurizer_components
+    )
     return bundled_schema
 
 
@@ -156,4 +153,4 @@ if __name__ == "__main__":
         for compname in compnames:
             print(generate(compname))
     elif template == "base":
-        print(generate_bundle(layers))
+        print(generate_bundle())

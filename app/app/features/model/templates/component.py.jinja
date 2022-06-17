@@ -9,7 +9,7 @@ class {{ component["prefix"] }}ArgsTemplate(ApiBaseModel):
 
 class {{ component["prefix"] }}Args(ApiBaseModel):
     {%- for key, value in component["arg_types"].items() %}
-    {{ key }}: {{ value }}
+    {{ key }}: {{ type_name(value) }}
     {%- endfor %}
 
 {% endif %}
@@ -30,4 +30,5 @@ class {{ component["prefix"] }}LayerConfig(BaseLayerConfig):
           return lib_cls
         return lib_cls()
     {% endif %}
-    forward_input_mask: int = {{ component["forward_input_mask"] }}
+
+
