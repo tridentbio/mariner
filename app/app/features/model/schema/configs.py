@@ -4,9 +4,9 @@ from typing import List, Literal
 import yaml
 
 from app.features.model.utils import get_class_from_path_string
+from app.features.model.layers_schema import LayersType, FeaturizersType
 from app.schemas.api import ApiBaseModel
 
-from .layers import LayersType
 
 
 class Tuple(str):
@@ -41,38 +41,20 @@ class CycleInGraphException(ApiBaseModel):
     message = "There is a cycle in the graph"
 
 
-class MoleculeFeaturizerArgs(ApiBaseModel):
-    allow_unknown: bool = False
-    sym_bond_list: bool = True
-    per_atom_fragmentation: bool = False
-
-
-class MoleculeFeaturizerConfig(ApiBaseModel):
-    name: str
-    type: Literal["app.features.model.featurizers.MoleculeFeaturizer"]
-    column_names: List[str]
-    args: MoleculeFeaturizerArgs
-    forward: str
-
-    def create(self):
-        lib_cls = get_class_from_path_string(self.type)
-        return lib_cls(**self.args.dict())
-
-
 class DatasetConfig(ApiBaseModel):
     name: str
     target_column: str
     feature_columns: List[str]
 
 
-FeaturizersType = MoleculeFeaturizerConfig
-
 
 class ModelConfig(ApiBaseModel):
     name: str
     dataset: DatasetConfig
-    featurizer: FeaturizersType
+    featurizers: List[FeaturizersType]
     layers: List[LayersType]
+
+    # TODO: validate if layer names are unique
 
     @classmethod
     def from_yaml(cls, yamlstr):

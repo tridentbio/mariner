@@ -1,5 +1,5 @@
 ###########################################################################
-# This is some auto generated code. Your changes may not take effect.     #
+# This is some auto generated code. Your changes may not have effect.     #
 # Consider making the changes im `app/features/model/templates`           #
 ###########################################################################
 
@@ -24,12 +24,23 @@ class BaseLayerConfig(ApiBaseModel):
     def create(self):
       pass
 
-{%- for component in components -%}
+{%- for component in layer_components -%}
+{%- include "component.py.jinja" -%}
+{%- endfor %}
+
+{%- for component in featurizer_components -%}
 {%- include "component.py.jinja" -%}
 {%- endfor %}
 
 LayersType = Union[
-    {% for component in components: -%}
+    {% for component in layer_components: -%}
     {{ component['prefix'] + "LayerConfig" }},
     {% endfor %}
 ]
+
+FeaturizersType = Union[
+    {% for component in featurizer_components: -%}
+    {{ component['prefix'] + "LayerConfig" }},
+    {% endfor %}
+]
+
