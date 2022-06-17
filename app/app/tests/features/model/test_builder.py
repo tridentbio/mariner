@@ -7,12 +7,11 @@ from app.features.dataset.crud import repo as datasetsrepo
 from app.features.model.builder import CustomGraphModel, build_dataset
 from app.features.model.schema.configs import (
     ModelConfig,
-    MoleculeFeaturizerConfig,
 )
 
 
 def test_dataset(db: Session):
-    yaml_model = "app/tests/data/test_model.yaml"
+    yaml_model = "app/tests/data/test_model_hard.yaml"
     with open(yaml_model) as f:
         config_dict = yaml.safe_load(f.read())
         config = ModelConfig.parse_obj(config_dict)
@@ -23,17 +22,14 @@ def test_dataset(db: Session):
 
 
 def test_model_schema():
-    yaml_model = "app/tests/data/test_model.yaml"
+    yaml_model = "app/tests/data/test_model_hard.yaml"
     with open(yaml_model) as f:
         model = ModelConfig.from_yaml(f.read())
         assert isinstance(model, ModelConfig)
-        assert isinstance(model.featurizer, MoleculeFeaturizerConfig)
-        feat = model.featurizer.create()
-        assert feat("CCCC") is not None
 
 
 def test_model_build(db: Session):
-    yaml_model = "app/tests/data/test_model.yaml"
+    yaml_model = "app/tests/data/test_model_hard.yaml"
     with open(yaml_model) as f:
         model_config = ModelConfig.from_yaml(f.read())
         ds = build_dataset(model_config, datasetsrepo, db)

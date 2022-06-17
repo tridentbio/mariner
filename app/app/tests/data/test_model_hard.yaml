@@ -46,9 +46,9 @@ layers:
   # End of fst branch
   # Second branch would simply be linear layers in mwt
   - name: AddPool
-    type: torch_geometric.nn.
+    type: app.features.model.layers.Concat
   - name: Combiner
-    type: app.features.model.layers.GlobalPooling
+    type: app.features.model.layers.Concat
     input: GCN3_Activation
     args:
       aggr: 'sum'
@@ -57,8 +57,7 @@ layers:
     input: AddPool
     args:
       in_features: 65
-      out_channels: 1
+      out_features: 1
   - name: Output
     type: torch.nn.Sigmoid
     input: LinearJoined
-

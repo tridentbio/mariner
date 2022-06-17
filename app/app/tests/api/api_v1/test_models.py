@@ -1,3 +1,4 @@
+import pytest
 import io
 import mlflow.pyfunc
 
@@ -105,6 +106,7 @@ def test_get_models_success(
         assert model['createdById'] == user.id
 
 
+@pytest.mark.skip(reason="WIP")
 def test_post_models_deployment(db: Session, client: TestClient, normal_user_token_headers: dict[str, str]):
     res = setup_create_model(db, client, headers=normal_user_token_headers)
     model = res.json()
