@@ -3,7 +3,7 @@
 # Consider making the changes im `app/features/model/templates`           #
 ###########################################################################
 
-from typing import Optional, Literal, Union
+from typing import Optional, Literal, Union, List
 from app.features.model.utils import get_class_from_path_string
 from app.schemas.api import ApiBaseModel
 
@@ -17,10 +17,8 @@ def is_func(obj):
 
 
 class BaseLayerConfig(ApiBaseModel):
-    is_input_layer: Optional[bool] = True
-    is_output_layer: Optional[bool] = True
     name: str
-    forward: Optional[str]
+    input: Union[str, List[str]]
     def create(self):
       pass
 
