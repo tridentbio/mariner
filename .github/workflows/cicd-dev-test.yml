@@ -5,9 +5,9 @@ name: Python application
 
 on:
   push:
-    branches: [ feature/datasets ]
+    branches: [ feature/model-mlflow-ci-cd]
   pull_request:
-    branches: [ feature/datasets ]
+    branches: [ feature/model-mlflow-ci-cd]
 
 permissions:
   contents: read
@@ -17,14 +17,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SERVER_NAME: localhost
-      SERVER_HOST: localhost
+      SERVER_HOST: http://localhost
+      SENTRY_DSN: ''
       AWS_SECRET_KEY_ID: none
       AWS_SECRET_KEY: none
       DOMAIN: localhost
       STACK_NAME: mariner-trident-bio
       BACKEND_CORS_ORIGINS: '["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:8080", "https://localhost", "https://localhost:4200", "https://localhost:3000", "https://localhost:8080", "http://dev.mariner.trident.bio", "https://stag.mariner.trident.bio", "https://mariner.trident.bio", "http://local.dockertoolbox.tiangolo.com", "http://localhost.tiangolo.com"]'
       PROJECT_NAME: mariner
-      SECRET_KEY: 17d0be0cc06b63120770c707f14529c28d9af8d201523d022614f67eb04d8ec6
+      SECRET_KEY: 17a0be0cc06b63120770c707f14529c28d9af8d201523d022614f67eb04d8ec7
       FIRST_SUPERUSER: admin@mariner.trident.bio
       FIRST_SUPERUSER_PASSWORD: 123456
       SMTP_TLS: True
@@ -39,17 +40,19 @@ jobs:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456
       POSTGRES_DB: app
+      MLFLOW_TRACKING_URI: http://localhost:5000
 
     # Service containers to run with `container-job`
     services:
       # Label used to access the service container
-      postgres:
+      db:
         # Docker Hub image
         image: postgres
         # Provide the password for postgres
         ports:
           - "5432:5432"
         env:
+          POSTGRES_SERVER: localhost
           POSTGRES_PASSWORD: 123456
           POSTGRES_USER: postgres
           POSTGRES_DB: app
@@ -59,6 +62,33 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      mlflowdb:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        ports:
+          - "54321:5432"
+        env:
+          POSTGRES_SERVER: localhost
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_USER: postgres
+          POSTGRES_DB: app
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mlflow:
+        image: larribas/mlflow
+        env:
+          POSTGRES_SERVER: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_DB: app
+          POSTGRES_PORT: 54321
+      ports:
+        - "5000:5000"
 
     steps:
     - uses: actions/checkout@v3
@@ -77,5 +107,5 @@ jobs:
         cd app; poetry shell && poetry install --no-root
     - name: Test with pytest
       run: |
-        cd app; POSTGRES_SERVER=localhost pytest
+        cd app; sh tests-start.sh
 
