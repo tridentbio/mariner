@@ -65,17 +65,16 @@ def get_deployment_plugin() -> BaseDeploymentClient:
     assert client is not None
     return client
 
-def create_deployment_with_endpoint(deployment_name: str, endpoint_name: str, model_uri: str):
-    #ray.init(address=f'ray://ray-head:10001')
-    client = serve.start(detached=True)
-    print(client)
+def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
+    # ray.init(address=f'ray://ray-head:10001')
+    serve.start(detached=True)
     ray_plugin = get_deployment_plugin()
-    # ray_serve_client.create_endpoint(endpoint_name)
     deployment = ray_plugin.create_deployment(
         name=deployment_name,
         model_uri=model_uri,
         #config={"num_replicas": 1}
     )
+    print(deployment)
     return deployment
 
 

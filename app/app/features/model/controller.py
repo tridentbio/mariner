@@ -44,7 +44,6 @@ def create_model_deployment(
     endpoint_name = f'{user.id}/{model_name}/{latest_version}'
     create_deployment_with_endpoint(
         deployment_name=endpoint_name,
-        endpoint_name=endpoint_name,
         model_uri=f'models:/{model_name}/{latest_version}'
     )
     deployment_entity = deployment_repo.create(db, obj_in=deployment_create)

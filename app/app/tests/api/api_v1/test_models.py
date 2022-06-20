@@ -6,6 +6,7 @@ from fastapi.datastructures import UploadFile
 from sqlalchemy.orm.session import Session
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
+from app.core.mlflowapi import get_deployment_plugin
 
 from app.features.user.model import User
 
@@ -34,14 +35,15 @@ def setup_create_model(db: Session, client: TestClient, headers):
     user = get_test_user(db)
     model = mock_model(user)
     model_path = "app/tests/data/model.pt"
+    data = {
+        "name": model.name,
+        "description": model.model_description,
+        "versionDescription": model.model_version_description,
+    }
     with open(model_path, 'rb') as f:
         res = client.post(
             f"{settings.API_V1_STR}/models/",
-            data={
-                "name": model.name,
-                "description": model.model_description,
-                "versionDescription": model.model_version_description,
-            },
+            data=data,
             files={"file": ("model.pt", f)},
             headers=headers,
         )
@@ -106,7 +108,6 @@ def test_get_models_success(
         assert model['createdById'] == user.id
 
 
-@pytest.mark.skip(reason="WIP")
 def test_post_models_deployment(db: Session, client: TestClient, normal_user_token_headers: dict[str, str]):
     res = setup_create_model(db, client, headers=normal_user_token_headers)
     model = res.json()
@@ -121,6 +122,8 @@ def test_post_models_deployment(db: Session, client: TestClient, normal_user_tok
         headers=normal_user_token_headers
     )
     assert res.status_code == HTTP_200_OK
+    plugin = get_deployment_plugin()
+    assert len(plugin.list_endpoints()) >= 1
 
 
 def test_add_version_to_model():
