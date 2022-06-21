@@ -25,6 +25,7 @@ class BaseLayerConfig(ApiBaseModel):
 
 
 class AppglobalpoolingArgsTemplate(ApiBaseModel):
+    type: Literal['app.features.model.layers.GlobalPooling'] = 'app.features.model.layers.GlobalPooling'
       aggr: Literal["string"] = "string"
 
 class AppglobalpoolingArgs(ApiBaseModel):
@@ -62,6 +63,7 @@ class AppconcatLayerConfig(BaseLayerConfig):
 
 
 class TorchlinearArgsTemplate(ApiBaseModel):
+    type: Literal['torch.nn.Linear'] = 'torch.nn.Linear'
       in_features: Literal["int"] = "int"
       out_features: Literal["int"] = "int"
 
@@ -115,6 +117,7 @@ class TorchreluLayerConfig(BaseLayerConfig):
 
 
 class TorchgeometricgcnconvArgsTemplate(ApiBaseModel):
+    type: Literal['torch_geometric.nn.GCNConv'] = 'torch_geometric.nn.GCNConv'
       in_channels: Literal["int"] = "int"
       out_channels: Literal["int"] = "int"
 
@@ -134,6 +137,10 @@ class TorchgeometricgcnconvLayerConfig(BaseLayerConfig):
           return lib_cls
         return lib_cls(**self.args.dict())
     
+
+
+
+
 
 class AppmoleculefeaturizerLayerConfig(BaseLayerConfig):
     type: Literal['app.features.model.featurizers.MoleculeFeaturizer'] = 'app.features.model.featurizers.MoleculeFeaturizer'
