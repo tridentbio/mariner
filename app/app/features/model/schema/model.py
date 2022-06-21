@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel, ModelVersion
 from pydantic.main import BaseModel
+from app.core.mlflowapi import get_model
 
 from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
@@ -44,7 +45,8 @@ class Model(ApiBaseModel):
 
 
     def load_from_mlflow(self):
-        pass
+        registered_model = get_model(self.name)
+        self.set_from_mlflow_model(registered_model, registered_model.latest_versions)
 
 
 class ModelsQuery(PaginatedApiQuery):

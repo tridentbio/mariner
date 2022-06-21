@@ -135,10 +135,6 @@ class TorchgeometricgcnconvLayerConfig(BaseLayerConfig):
         return lib_cls(**self.args.dict())
     
 
-
-
-
-
 class AppmoleculefeaturizerLayerConfig(BaseLayerConfig):
     type: Literal['app.features.model.featurizers.MoleculeFeaturizer'] = 'app.features.model.featurizers.MoleculeFeaturizer'
     

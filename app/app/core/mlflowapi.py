@@ -78,3 +78,7 @@ def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
     return deployment
 
 
+def get_model(model_registry_name: str):
+    client = create_tracking_client()
+    registered_model = client.get_registered_model(model_registry_name)
+    return registered_model
