@@ -1,3 +1,4 @@
+from typing import List, Literal, get_args
 import pytest
 import io
 import mlflow.pyfunc
@@ -14,7 +15,7 @@ from app.features.user.model import User
 from app.core.config import settings
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
-from app.features.model import controller as model_ctl
+from app.features.model import controller as model_ctl, generate
 from app.features.model.schema.model import ModelCreate
 from app.tests.utils.utils import random_lower_string
 
@@ -138,12 +139,12 @@ def test_get_model_options(client: TestClient, normal_user_token_headers: dict[s
     assert 'featurizers' in payload
     assert len(payload['layers']) > 0
     assert len(payload['featurizers']) > 0
-    layer_types = [l['type'] for l in payload['layers']]
-    featurizer_types = [l['featurizer'] for l in payload['featurizers']]
-    for t in layer_types:
-        assert isinstance(t, LayersType)
-    for t in featurizer_types:
-        assert isinstance(t, FeaturizersType)
+    layer_types: List[str] = [l['type'] for l in payload['layers']]
+    featurizer_types: List[str] = [l['type'] for l in payload['featurizers']]
+    for comp in generate.layers:
+        assert comp.name in layer_types
+    for comp in generate.featurizers:
+        assert comp.name in featurizer_types
 
 
 def test_add_version_to_model():
