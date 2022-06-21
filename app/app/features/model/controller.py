@@ -56,5 +56,8 @@ def get_models(
     current_user: User
 ):
     models, total = repo.get_paginated(db, created_by_id=current_user.id, per_page=query.per_page, page=query.page)
+    models = [ Model.from_orm(model) for model in models ]
+    for model in models:
+        model.load_from_mlflow()
     return models, total
 

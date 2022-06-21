@@ -1,9 +1,9 @@
 from ast import literal_eval
-from typing import List, Literal
+from typing import List
 
 import yaml
 
-from app.features.model.utils import get_class_from_path_string
+import networkx as nx
 from app.features.model.layers_schema import LayersType, FeaturizersType
 from app.schemas.api import ApiBaseModel
 
@@ -54,7 +54,20 @@ class ModelConfig(ApiBaseModel):
     featurizers: List[FeaturizersType]
     layers: List[LayersType]
 
-    # TODO: validate if layer names are unique
+    def make_graph(self):
+        g = nx.DiGraph()
+        for feat in self.featurizers:
+            g.add_node(feat.name)
+        for layer in self.layers:
+            g.add_node(layer.name)
+        for layer in self.layers:
+            if isinstance(layer.input, str):
+                g.add_edge(layer.input, layer.name)
+            else:
+                for input_value in layer.input:
+                    g.add_edge(input_value, layer.name)
+        return g
+
 
     @classmethod
     def from_yaml(cls, yamlstr):
