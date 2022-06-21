@@ -1,10 +1,11 @@
 from ast import literal_eval
-from typing import List
+from typing import Dict, List, Literal, Union
+from pydantic.main import BaseModel
 
 import yaml
 
 import networkx as nx
-from app.features.model.schema.layers_schema import LayersType, FeaturizersType
+from app.features.model.schema.layers_schema import FeaturizersArgsType, LayersArgsType, LayersType, FeaturizersType
 from app.schemas.api import ApiBaseModel
 
 
@@ -47,6 +48,9 @@ class DatasetConfig(ApiBaseModel):
     feature_columns: List[str]
 
 
+class ModelOptions(ApiBaseModel):
+    layers: List[LayersArgsType]
+    featurizers: List[FeaturizersArgsType]
 
 class ModelConfig(ApiBaseModel):
     name: str
