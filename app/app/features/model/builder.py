@@ -8,8 +8,7 @@ from torch.utils.data import Dataset as TorchDataset
 from torch_geometric.data import Batch
 
 from app.features.dataset.crud import CRUDDataset
-from app.features.model.schema.configs import FeaturizersType, ModelConfig
-from app.features.model.schema.layers import LayersType
+from app.features.model.schema.configs import FeaturizersType, ModelConfig, LayersType
 
 # def get_inputs(x, batch, layer_type: Layer):
 #    edgeConsumers = [Layer.GINConv2]

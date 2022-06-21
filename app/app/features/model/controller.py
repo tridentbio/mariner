@@ -1,3 +1,4 @@
+import importlib
 from fastapi.datastructures import UploadFile
 from sqlalchemy.orm.session import Session
 from app.core.mlflowapi import create_registered_model, create_tracking_client, create_deployment_with_endpoint
@@ -71,9 +72,12 @@ def get_model_options(
     layer_types = [l.name for l in generate.layers]
     featurizer_types = [f.name for f in generate.featurizers]
     for class_name in dir(layers_schema):
-        cls = __import__(class_name)
-        if cls.type in layer_types and class_name.endswith('ArgsTemplate'):
-            layers.append(cls())
-        if cls.type in featurizer_types and class_name.endswith('ArgsTemplate'):
-            featurizers.append(cls())
+        if class_name.endswith('ArgsTemplate'):
+            cls = getattr(layers_schema, class_name)
+            instance = cls()
+            print(cls)
+            if instance.type in layer_types:
+                layers.append(cls())
+            if instance.type in featurizer_types:
+                featurizers.append(cls())
     return ModelOptions(layers=layers, featurizers=featurizers)

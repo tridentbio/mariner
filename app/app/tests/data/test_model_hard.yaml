@@ -43,15 +43,16 @@ layers:
   - name: GCN3_Activation
     type: torch.nn.ReLU
     input: GCN3
-  # End of fst branch
-  # Second branch would simply be linear layers in mwt
   - name: AddPool
-    type: app.features.model.layers.Concat
-  - name: Combiner
-    type: app.features.model.layers.Concat
+    type: app.features.model.layers.GlobalPooling
     input: GCN3_Activation
     args:
       aggr: 'sum'
+  # End of fst branch
+  # Second branch would simply be linear layers in mwt
+  - name: Combiner 
+    type: app.features.model.layers.Concat
+    input: ['AddPool', 'mwt']
   - name: LinearJoined
     type: torch.nn.Linear
     input: AddPool
