@@ -4,7 +4,7 @@ from typing import List
 import yaml
 
 import networkx as nx
-from app.features.model.layers_schema import LayersType, FeaturizersType
+from app.features.model.schema.layers_schema import LayersType, FeaturizersType
 from app.schemas.api import ApiBaseModel
 
 

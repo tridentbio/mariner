@@ -3,6 +3,7 @@
 {% if count > 0 %}
 
 class {{ component["prefix"] }}ArgsTemplate(ApiBaseModel):
+      type: Literal['{{ component["path"] }}'] = '{{ component["path"] }}'
     {%- for key, value in component["arg_types"].items() %}
       {{ key }}: Literal["{{ value }}"] = "{{ value }}"
     {%- endfor %}
