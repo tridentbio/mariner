@@ -3,7 +3,7 @@
 # Consider making the changes im `app/features/model/templates`           #
 ###########################################################################
 
-from typing import Optional, Literal, Union, List
+from typing import Optional, Literal, Union, List, Any
 from app.features.model.utils import get_class_from_path_string
 from app.schemas.api import ApiBaseModel
 {% block imports %}
@@ -40,5 +40,17 @@ FeaturizersType = Union[
     {% for component in featurizer_components: -%}
     {{ component['prefix'] + "LayerConfig" }},
     {% endfor %}
+]
+
+LayersArgsType = Union[
+    {% for component in layer_components: -%}
+    {{ component['prefix'] + "ArgsTemplate" }},
+    {% endfor %}
+]
+
+FeaturizersArgsType = Union[
+    {% for component in featurizer_components: -%}
+    {{ component['prefix'] + "ArgsTemplate" }},
+    {%- endfor %}
 ]
 

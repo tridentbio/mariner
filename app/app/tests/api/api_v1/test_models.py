@@ -7,6 +7,7 @@ from sqlalchemy.orm.session import Session
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
 from app.core.mlflowapi import get_deployment_plugin
+from app.features.model.schema.layers_schema import FeaturizersType, LayersType
 
 from app.features.user.model import User
 
@@ -124,6 +125,25 @@ def test_post_models_deployment(db: Session, client: TestClient, normal_user_tok
     assert res.status_code == HTTP_200_OK
     plugin = get_deployment_plugin()
     assert len(plugin.list_endpoints()) >= 1
+
+
+def test_get_model_options(client: TestClient, normal_user_token_headers: dict[str, str]):
+    res = client.get(
+       f"{settings.API_V1_STR}/models/options",
+       headers=normal_user_token_headers
+    )
+    assert res.status_code == HTTP_200_OK
+    payload = res.json()
+    assert 'layers' in payload
+    assert 'featurizers' in payload
+    assert len(payload['layers']) > 0
+    assert len(payload['featurizers']) > 0
+    layer_types = [l['type'] for l in payload['layers']]
+    featurizer_types = [l['featurizer'] for l in payload['featurizers']]
+    for t in layer_types:
+        assert isinstance(t, LayersType)
+    for t in featurizer_types:
+        assert isinstance(t, FeaturizersType)
 
 
 def test_add_version_to_model():

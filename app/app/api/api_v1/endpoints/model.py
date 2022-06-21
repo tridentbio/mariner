@@ -8,6 +8,7 @@ from sqlalchemy.orm.session import Session
 from app.api import deps
 from app.api.api_v1.endpoints.datasets import Paginated
 from app.features.model import controller
+from app.features.model.schema.configs import ModelOptions
 from app.features.model.schema.model import Model, ModelCreate, ModelsQuery
 from app.features.user.model import User
 
@@ -51,3 +52,11 @@ def get_models(
     models = [ Model.from_orm(m) for m in models ]
     return Paginated(data=models, total=total)
 
+@router.get(
+    "/options",
+    response_model=ModelOptions,
+)
+def get_model_options(
+):
+    model_options = controller.get_model_options()
+    return model_options

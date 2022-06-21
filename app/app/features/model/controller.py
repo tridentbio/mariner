@@ -1,9 +1,12 @@
 from fastapi.datastructures import UploadFile
 from sqlalchemy.orm.session import Session
 from app.core.mlflowapi import create_registered_model, create_tracking_client, create_deployment_with_endpoint
+from app.features.model import generate
 from app.features.model.crud import repo
 from app.features.model.deployments.crud import repo as deployment_repo
 from app.features.model.deployments.schema import Deployment, DeploymentCreate
+from app.features.model.schema.configs import ModelOptions
+from app.features.model.schema import layers_schema
 from app.features.model.schema.model import Model, ModelCreate, ModelCreateRepo, ModelsQuery
 from app.features.user.model import User
 
@@ -61,3 +64,16 @@ def get_models(
         model.load_from_mlflow()
     return models, total
 
+def get_model_options(
+) -> ModelOptions:
+    layers = []
+    featurizers = []
+    layer_types = [l.name for l in generate.layers]
+    featurizer_types = [f.name for f in generate.featurizers]
+    for class_name in dir(layers_schema):
+        cls = __import__(class_name)
+        if cls.type in layer_types and class_name.endswith('ArgsTemplate'):
+            layers.append(cls())
+        if cls.type in featurizer_types and class_name.endswith('ArgsTemplate'):
+            featurizers.append(cls())
+    return ModelOptions(layers=layers, featurizers=featurizers)

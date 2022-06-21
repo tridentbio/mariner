@@ -26,9 +26,9 @@ class MoleculeFeaturizer:
 
     def __init__(
         self,
-        allow_unknown: bool = True,
-        sym_bond_list: bool = True,
-        per_atom_fragmentation: bool = False,
+        allow_unknown: bool,
+        sym_bond_list: bool,
+        per_atom_fragmentation: bool,
     ):
         super().__init__()
 
