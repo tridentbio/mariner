@@ -163,5 +163,3 @@ def test_get_csv_metadata(
         assert "CMPD_CHEMBLID" in colnames
         assert "exp" in colnames
         assert "smiles" in colnames
-
-

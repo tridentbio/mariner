@@ -4,10 +4,8 @@ from torch import nn
 from torch_geometric.data import DataLoader
 
 from app.features.dataset.crud import repo as datasetsrepo
-from app.features.model.builder import CustomGraphModel, build_dataset
-from app.features.model.schema.configs import (
-    ModelConfig,
-)
+from app.features.model.builder import CustomModel, build_dataset
+from app.features.model.schema.configs import ModelConfig
 
 
 def test_dataset(db: Session):
@@ -33,7 +31,7 @@ def test_model_build(db: Session):
     with open(yaml_model) as f:
         model_config = ModelConfig.from_yaml(f.read())
         ds = build_dataset(model_config, datasetsrepo, db)
-        model = CustomGraphModel(model_config)
+        model = CustomModel(model_config)
         assert isinstance(model, nn.Module)
         loader = DataLoader(ds)
         batch = next(iter(loader))

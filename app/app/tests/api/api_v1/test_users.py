@@ -1,8 +1,8 @@
 from typing import Dict
-from pydantic.networks import EmailStr
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
 from app.core.config import settings

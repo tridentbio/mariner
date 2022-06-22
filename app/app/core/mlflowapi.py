@@ -1,17 +1,16 @@
-from typing import Optional
-import ray
-from ray import serve
 import io
+from typing import Optional
+
 import mlflow
-from mlflow.deployments.base import BaseDeploymentClient
 import mlflow.pytorch
 import mlflow.tracking
-from mlflow.deployments import get_deploy_client
-import torch
 from fastapi.datastructures import UploadFile
+from mlflow.deployments import get_deploy_client
+from mlflow.deployments.base import BaseDeploymentClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
+from ray import serve
 
 from app.tests.data.torch_target_model import ExampleModel
 
@@ -60,10 +59,12 @@ def create_registered_model(
     version = create_model_version(client, name, torchscript, desc=version_description)
     return registered_model, version
 
+
 def get_deployment_plugin() -> BaseDeploymentClient:
-    client = get_deploy_client('ray-serve://ray-head:10001')
+    client = get_deploy_client("ray-serve://ray-head:10001")
     assert client is not None
     return client
+
 
 def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
     # ray.init(address=f'ray://ray-head:10001')
@@ -72,7 +73,7 @@ def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
     deployment = ray_plugin.create_deployment(
         name=deployment_name,
         model_uri=model_uri,
-        #config={"num_replicas": 1}
+        # config={"num_replicas": 1}
     )
     print(deployment)
     return deployment

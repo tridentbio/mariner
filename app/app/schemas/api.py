@@ -9,6 +9,7 @@ class ApiBaseModel(BaseModel):
         allow_population_by_alias = True
         orm_mode = True
 
+
 class PaginatedApiQuery(ApiBaseModel):
     page: int = 0
     per_page: int = 15

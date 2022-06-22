@@ -1,13 +1,14 @@
 # https://github.com/pyg-team/pytorch_geometric/commit/be97c5bb8c7485fbedc8bad9607aa601694ce0d2#diff-e90cb8ecd22db3edf831e1e95045231fe3277e6c32bf1af94694f5414a73d199
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import torch
 from torch import Tensor
 from torch_scatter import scatter
 
 
-def global_add_pool(x: Tensor, batch: Optional[Tensor],
-                    size: Optional[int] = None) -> Tensor:
+def global_add_pool(
+    x: Tensor, batch: Optional[Tensor], size: Optional[int] = None
+) -> Tensor:
     r"""Returns batch-wise graph-level-outputs by adding node features
     across the node dimension, so that for a single graph
     :math:`\mathcal{G}_i` its output is computed by
@@ -27,11 +28,12 @@ def global_add_pool(x: Tensor, batch: Optional[Tensor],
     if batch is None:
         return x.sum(dim=0, keepdim=True)
     size = int(batch.max().item() + 1) if size is None else size
-    return scatter(x, batch, dim=0, dim_size=size, reduce='add')
+    return scatter(x, batch, dim=0, dim_size=size, reduce="add")
 
 
-def global_mean_pool(x: Tensor, batch: Optional[Tensor],
-                     size: Optional[int] = None) -> Tensor:
+def global_mean_pool(
+    x: Tensor, batch: Optional[Tensor], size: Optional[int] = None
+) -> Tensor:
     r"""Returns batch-wise graph-level-outputs by averaging node features
     across the node dimension, so that for a single graph
     :math:`\mathcal{G}_i` its output is computed by
@@ -51,11 +53,12 @@ def global_mean_pool(x: Tensor, batch: Optional[Tensor],
     if batch is None:
         return x.mean(dim=0, keepdim=True)
     size = int(batch.max().item() + 1) if size is None else size
-    return scatter(x, batch, dim=0, dim_size=size, reduce='mean')
+    return scatter(x, batch, dim=0, dim_size=size, reduce="mean")
 
 
-def global_max_pool(x: Tensor, batch: Optional[Tensor],
-                    size: Optional[int] = None) -> Tensor:
+def global_max_pool(
+    x: Tensor, batch: Optional[Tensor], size: Optional[int] = None
+) -> Tensor:
     r"""Returns batch-wise graph-level-outputs by taking the channel-wise
     maximum across the node dimension, so that for a single graph
     :math:`\mathcal{G}_i` its output is computed by
@@ -75,7 +78,7 @@ def global_max_pool(x: Tensor, batch: Optional[Tensor],
     if batch is None:
         return x.max(dim=0, keepdim=True)[0]
     size = int(batch.max().item() + 1) if size is None else size
-    return scatter(x, batch, dim=0, dim_size=size, reduce='max')
+    return scatter(x, batch, dim=0, dim_size=size, reduce="max")
 
 
 class GlobalPooling(torch.nn.Module):
@@ -90,29 +93,31 @@ class GlobalPooling(torch.nn.Module):
             If given as a list, will make use of multiple aggregations in which
             different outputs will get concatenated in the last dimension.
     """
+
     def __init__(self, aggr: str):
         super().__init__()
 
         self.aggrs = [aggr] if isinstance(aggr, str) else aggr
 
         assert len(self.aggrs) > 0
-        assert len(set(self.aggrs) | {'sum', 'add', 'mean', 'max'}) == 4
+        assert len(set(self.aggrs) | {"sum", "add", "mean", "max"}) == 4
 
-    def forward(self, x: Tensor, batch: Optional[Tensor],
-                size: Optional[int] = None) -> Tensor:
+    def forward(
+        self, x: Tensor, batch: Optional[Tensor], size: Optional[int] = None
+    ) -> Tensor:
         """"""
         xs: List[Tensor] = []
 
         for aggr in self.aggrs:
-            if aggr == 'sum' or aggr == 'add':
+            if aggr == "sum" or aggr == "add":
                 xs.append(global_add_pool(x, batch, size))
-            elif aggr == 'mean':
+            elif aggr == "mean":
                 xs.append(global_mean_pool(x, batch, size))
-            elif aggr == 'max':
+            elif aggr == "max":
                 xs.append(global_max_pool(x, batch, size))
 
         return xs[0] if len(xs) == 1 else torch.cat(xs, dim=-1)
 
     def __repr__(self) -> str:
         aggr = self.aggrs[0] if len(self.aggrs) == 1 else self.aggrs
-        return f'{self.__class__.__name__}(aggr={aggr})'
+        return f"{self.__class__.__name__}(aggr={aggr})"
