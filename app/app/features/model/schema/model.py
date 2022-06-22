@@ -1,14 +1,15 @@
 from typing import Any, List, Optional
 
-from mlflow.entities.model_registry.registered_model import RegisteredModel, ModelVersion
+from mlflow.entities.model_registry.registered_model import (
+    ModelVersion,
+    RegisteredModel,
+)
 from pydantic.main import BaseModel
-from app.core.mlflowapi import get_model
 
+from app.core.mlflowapi import get_model
 from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
 
-
-ModelVersion = Any
 
 class ModelDeployment(ApiBaseModel):
     pass
@@ -20,20 +21,20 @@ class Model(ApiBaseModel):
     model_version_description: Optional[str] = None
     created_by_id: int
     created_by: Optional[User] = None
-    latest_versions: List[ModelVersion] = []
+    latest_versions: List[Any] = []
     mlflow_model_data_loaded: bool = False
-
 
     def get_model_uri(self, version: Optional[str] = None):
         if not self.mlflow_model_data_loaded:
             self.load_from_mlflow()
         if not version:
-            #version = self.latest_versions[-1].version
-            version = '1'
-        return f'model:/{self.name}/{version}'
+            # version = self.latest_versions[-1].version
+            version = "1"
+        return f"model:/{self.name}/{version}"
 
-
-    def set_from_mlflow_model(self, mlflow_reg_model: RegisteredModel, versions: List[ModelVersion]):
+    def set_from_mlflow_model(
+        self, mlflow_reg_model: RegisteredModel, versions: List[ModelVersion]
+    ):
         """
         Merge attributes of interest in a mlflow RegisteredModel
         """
@@ -42,7 +43,6 @@ class Model(ApiBaseModel):
         if len(versions) > 0:
             self.model_version_description = versions[0].description
         self.mlflow_model_data_loaded = True
-
 
     def load_from_mlflow(self):
         registered_model = get_model(self.name)
@@ -56,7 +56,6 @@ class ModelsQuery(PaginatedApiQuery):
 class ModelCreateRepo(BaseModel):
     name: str
     created_by_id: int
-    pass
 
 
 class ModelUpdateRepo(Model):
@@ -68,4 +67,3 @@ class ModelCreate(ApiBaseModel):
     model_description: Optional[str] = None
     model_version_description: Optional[str] = None
     created_by_id: int
-

@@ -1,4 +1,3 @@
-from os import path
 import secrets
 from typing import Any, Dict, List, Optional, Union
 
@@ -10,6 +9,7 @@ from pydantic import (
     PostgresDsn,
     validator,
 )
+
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
@@ -95,8 +95,9 @@ class Settings(BaseSettings):
     AWS_DATASETS: str = "dev-matiner-datasets"
 
     class Config:
-        #env_file = str(path.join('..', '.env.local'))
-        #env_file_encoding = 'utf-8'
+        # env_file = str(path.join('..', '.env.local'))
+        # env_file_encoding = 'utf-8'
         case_sensitive = True
 
-settings = Settings(_env_file='../.env.local')
+
+settings = Settings(_env_file="../.env.local")

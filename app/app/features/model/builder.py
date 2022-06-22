@@ -1,123 +1,72 @@
-from typing import List
+from typing import Dict, List, Union
 
+import networkx as nx
 import pandas as pd
 import torch
+import torch_geometric.nn as geom_nn
 from sqlalchemy.orm.session import Session
 from torch import nn
 from torch.utils.data import Dataset as TorchDataset
 from torch_geometric.data import Batch
+from torch_geometric.data.data import Data
 
 from app.features.dataset.crud import CRUDDataset
-from app.features.model.schema.configs import FeaturizersType, ModelConfig, LayersType
+from app.features.model.layers import Concat, GlobalPooling
+from app.features.model.schema.configs import FeaturizersType, ModelConfig
 
-# def get_inputs(x, batch, layer_type: Layer):
-#    edgeConsumers = [Layer.GINConv2]
-#    if layer_type == Layer.GlobalAddPool:
-#        return x, batch.batch
-#    elif layer_type in edgeConsumers:
-#        return x, batch.edge_index
-#    return x
+# detour. how to check the forward signature?
+edge_index_classes = geom_nn.MessagePassing
+pooling_classes = GlobalPooling
 
 
-# class CustomModel(nn.Module):
-#     def __init__(self, config: ModelConfig):
-#         super().__init__()
-#         self.config = config
-#         layers_to_callables = nn.ModuleDict()
-#         for layer in config.layers:
-#             args = {}
-#             if layer.args is not None:
-#                 args = layer.args
-#             if layer.type == Layer.GlobalAddPool:
-#                 layers_to_callables[layer.name] = layers.GlobalAddPool(**args)
-#             elif layer.type == Layer.Linear:
-#                 layers_to_callables[layer.name] = nn.Linear(**args)
-#             elif layer.type == Layer.GINConv2:
-#                 layers_to_callables[layer.name] = layers.GINConvSequentialRelu(**args)
-#             else:
-#                 raise LayerUnknownException(f'No layer named "{layer.type}"')
-#         self.layers_to_callables = layers_to_callables
-#         # TODO: validate computational graph
-#         # Check for cycles, and if inputs leads to outputs
-#
-#     def next_layer(self, current_layer: LayerConfig) -> Optional[LayerConfig]:
-#         for layer in self.config.layers:
-#             if layer.name == current_layer.forward:
-#                 return layer
-#         return None
-#
-#     def forward(self, batch):
-#         current_layer = None
-#         for layer in self.config.layers:
-#             if layer.input_layer:
-#                 current_layer = layer
-#                 break
-#         if current_layer is None:
-#             raise Exception("No input layer")
-#
-#         visited = {}
-#         x = batch.x
-#         while current_layer and not current_layer.output_layer:
-#             visited[current_layer.name] = 1
-#             inputs = get_inputs(x, batch, current_layer.type)
-#             x = self.layers_to_callables[current_layer.name](*inputs)
-#             current_layer = self.next_layer(current_layer)
-#             if current_layer is not None and current_layer.name in visited:
-#                 raise Exception("Cycles not allowed")
-#
-#         if current_layer is None:
-#             # Never raised if graph is valid
-#             raise Exception("Final layer is not output")
-#
-#         x = self.layers_to_callables[current_layer.name](x)
-#         return x
+def is_message_passing(layer):
+    """x = layer(x, edge_index)"""
+    return isinstance(layer, geom_nn.MessagePassing)
 
 
-class CustomModel(nn.Module):
-    def __init__(self, config: ModelConfig):
-        super().__init__()
-        self.callables_by_name = {layer.name: layer.create() for layer in config.layers}
-        self.layerconfigs_by_name = {layer.name: layer for layer in config.layers}
-
-    def get_first_layers(self) -> List[str]:
-        return []
-
-    def forward(self, batch):
-        pass
+def is_graph_pooling(layer):
+    """x = layer(x, batch)"""
+    return isinstance(layer, pooling_classes)
 
 
-class CustomGraphModel(nn.Module):
+def is_concat_layer(layer):
+    return isinstance(layer, Concat)
+
+
+CustomDatasetIn = Dict[str, Union[torch.Tensor, Data]]
+
+
+class CustomModel(torch.nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
         self.config = config
-        self.callables_by_name = {layer.name: layer.create() for layer in config.layers}
-        self.layerconfigs_by_name = {layer.name: layer for layer in config.layers}
+        layers_dict = {}
+        for layer in config.layers:
+            layers_dict[layer.name] = layer.create()
+        self.layers = torch.nn.ModuleDict(layers_dict)
+        self.layer_configs = {layer.type: layer for layer in config.layers}
+        graph = config.make_graph()
+        self.topo_sorting = nx.topological_sort(graph)
 
-    def get_featurizer_layer(self) -> LayersType:
-        name = self.config.featurizer.forward
-        return self.layerconfigs_by_name[name]
+    def forward(self, x: CustomDatasetIn):
+        outs = x.copy()
+        for layer_name in self.topo_sorting:
+            layer = self.layers[layer_name]
+            inputs = self.layer_configs[layer_name].input
 
-    def forward(self, batch):
-        batch = batch
-        print(batch)
-        x, edge_index, batch = batch.x, batch.edge_index, batch.batch
-        print("from dataset: ", x, edge_index, batch)
-        current_layer = self.get_featurizer_layer()
-        while not current_layer.is_output_layer:
-            layercallable = self.callables_by_name[current_layer.name]
-            print(current_layer)
-            print("mask :", format(current_layer.forward_input_mask, "b"))
-            inputs = get_inputs_from_mask_ltr(
-                [x, edge_index, batch], current_layer.forward_input_mask
-            )
-            print(inputs)
-            x = layercallable(*inputs)
-
-        inputs = get_inputs_from_mask_ltr(
-            [x, edge_index, batch], current_layer.forward_input_mask
-        )
-        x = self.callables_by_name[current_layer.name](x)
-        return x
+            if is_message_passing(layer):
+                x, edge_index = inputs.x, inputs.edge_index
+                outs[layer_name] = layer(x, edge_index)
+            elif is_graph_pooling(layer):
+                x, batch = inputs.x, inputs.batch
+                outs[layer_name] = layer(x, batch)
+            else:  # concat layers and normal layers
+                if isinstance(inputs, str):  # arrays only
+                    inputs = [inputs]
+                inputs = [outs[input_name] for input_name in inputs]
+                outs[layer_name] = layer(*inputs)
+            last = outs[layer_name]
+        return last
 
 
 def build_model_from_yaml(yamlstr: str) -> nn.Module:

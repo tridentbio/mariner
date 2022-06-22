@@ -1,13 +1,16 @@
 from ast import literal_eval
-from typing import Dict, List, Literal, Union
-from pydantic.main import BaseModel
-
-import yaml
+from typing import List
 
 import networkx as nx
-from app.features.model.schema.layers_schema import FeaturizersArgsType, LayersArgsType, LayersType, FeaturizersType
-from app.schemas.api import ApiBaseModel
+import yaml
 
+from app.features.model.schema.layers_schema import (
+    FeaturizersArgsType,
+    FeaturizersType,
+    LayersArgsType,
+    LayersType,
+)
+from app.schemas.api import ApiBaseModel
 
 
 class Tuple(str):
@@ -52,6 +55,7 @@ class ModelOptions(ApiBaseModel):
     layers: List[LayersArgsType]
     featurizers: List[FeaturizersArgsType]
 
+
 class ModelConfig(ApiBaseModel):
     name: str
     dataset: DatasetConfig
@@ -71,7 +75,6 @@ class ModelConfig(ApiBaseModel):
                 for input_value in layer.input:
                     g.add_edge(input_value, layer.name)
         return g
-
 
     @classmethod
     def from_yaml(cls, yamlstr):

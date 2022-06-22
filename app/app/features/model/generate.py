@@ -13,19 +13,18 @@ class Layer:
 
 
 featurizers = [
-    Layer(name) for name in [
-        'app.features.model.featurizers.MoleculeFeaturizer'
-    ]
+    Layer(name) for name in ["app.features.model.featurizers.MoleculeFeaturizer"]
 ]
 
 layers = [
-    Layer(name) for name in [
-        'app.features.model.layers.GlobalPooling',
-        'app.features.model.layers.Concat',
-        'torch.nn.Linear',
-        'torch.nn.Sigmoid',
-        'torch.nn.ReLU',
-        'torch_geometric.nn.GCNConv',
+    Layer(name)
+    for name in [
+        "app.features.model.layers.GlobalPooling",
+        "app.features.model.layers.Concat",
+        "torch.nn.Linear",
+        "torch.nn.Sigmoid",
+        "torch.nn.ReLU",
+        "torch_geometric.nn.GCNConv",
     ]
 ]
 
@@ -44,22 +43,23 @@ def get_module_name(classpath: str) -> str:
 
 def access_attributes_of_interest(clspath):
     cls = get_class_from_path_string(clspath)
-    if "__init__" in dir(cls) and '__code__' in dir(cls.__init__):
+    if "__init__" in dir(cls) and "__code__" in dir(cls.__init__):
         d = {}
         argscount = cls.__init__.__code__.co_argcount
         args = cls.__init__.__code__.co_varnames[
             :argscount
         ]  # Exclude kword args if any
         defaults = cls.__init__.__defaults__
-        d[
-            "types"
-        ] = cls.__init__.__annotations__  # dictionary mapping argname to type
+        d["types"] = cls.__init__.__annotations__  # dictionary mapping argname to type
         d["defaults"] = defaults  # tuple with ending default argument  valuts
         d["call_type"] = "class"
         d["args"] = args  # tuple with argnames.
-        d["not_defaults"] = args[1 : argscount - len(defaults)] if defaults else args[1:]
+        last = argscount - len(defaults or [])
+        d["not_defaults"] = args[1:last] if defaults else args[1:]
         return d
-    raise Exception(f'Failed to inspect type annotations for {clspath}. Is it a class with __init__ implementation?')
+    raise Exception(
+        f"Failed to inspect type annotations for {clspath}. Is it a class with __init__ implementation?"
+    )
 
 
 def collect_components_info(class_paths: List[str]) -> Any:
@@ -94,14 +94,17 @@ def get_component_template_args(path: str):
     }
     return prefix, arg_types
 
+
 def create_jinja_env():
     env = Environment(
         loader=PackageLoader("app.features.model"), autoescape=select_autoescape()
     )
+
     def type_name(value):
-      if value == 'string':
-        return 'str'
-      return value
+        if value == "string":
+            return "str"
+        return value
+
     env.globals.update(type_name=type_name)
     return env
 
@@ -110,9 +113,9 @@ def generate(path: str) -> str:
     prefix, arg_types = get_component_template_args(path)
     env = create_jinja_env()
     template = env.get_template("component.py.jinja")
-    return template.render(component={
-        'prefix':prefix, 'path': path, 'arg_types': arg_types
-    })
+    return template.render(
+        component={"prefix": prefix, "path": path, "arg_types": arg_types}
+    )
 
 
 def generate_bundle() -> str:
@@ -136,10 +139,9 @@ def generate_bundle() -> str:
         }
         for (prefix, arg_types), layer in zip(args, featurizers)
     ]
-        
+
     bundled_schema = schemas_template.render(
-        layer_components=layer_components,
-        featurizer_components=featurizer_components
+        layer_components=layer_components, featurizer_components=featurizer_components
     )
     return bundled_schema
 

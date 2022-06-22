@@ -1,6 +1,7 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Column, ForeignKey
 from sqlalchemy.sql.sqltypes import Integer, String
+
 from app.db.base_class import Base
 
 
@@ -10,5 +11,3 @@ class Deployment(Base):
     created_by_id = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"))
     created_by = relationship("User")
     model = relationship("Model")
-
-
