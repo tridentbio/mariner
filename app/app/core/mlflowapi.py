@@ -1,7 +1,8 @@
 import io
-from typing import Optional
+from typing import Optional, Union
 
 import mlflow
+import mlflow.pyfunc
 import mlflow.pytorch
 import mlflow.tracking
 from fastapi.datastructures import UploadFile
@@ -12,6 +13,7 @@ from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 from ray import serve
 
+from app.features.model.schema.model import Model
 from app.tests.data.torch_target_model import ExampleModel
 
 
@@ -79,7 +81,12 @@ def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
     return deployment
 
 
-def get_model(model_registry_name: str):
+def get_registry_model(model_registry_name: str):
     client = create_tracking_client()
     registered_model = client.get_registered_model(model_registry_name)
     return registered_model
+
+
+def get_model(model: Model, version: Optional[Union[int, str]]):
+    mlflowmodel = mlflow.pyfunc.load_model(model.get_model_uri(version))
+    return mlflowmodel
