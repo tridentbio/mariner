@@ -131,7 +131,7 @@ def test_post_models_deployment(
     data = {
         "name": random_lower_string(),
         "model_name": some_model.name,
-        "model_version": int(some_model.latest_versions[-1].version),
+        "model_version": int(some_model.latest_versions[-1]['version']),
     }
     res = client.post(
         f"{settings.API_V1_STR}/deployments/",
