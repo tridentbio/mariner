@@ -1,6 +1,9 @@
-from typing import List
+from typing import Dict, List
 
 import mlflow.pyfunc
+import pandas as pd
+import pytest
+from mlflow.tracking.client import MlflowClient
 from sqlalchemy.orm.session import Session
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
@@ -8,7 +11,8 @@ from starlette.testclient import TestClient
 from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
 from app.features.model import generate
-from app.features.model.schema.model import ModelCreate
+from app.features.model.model import Model as ModelEntity
+from app.features.model.schema.model import Model, ModelCreate
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
 from app.tests.utils.utils import random_lower_string
@@ -46,7 +50,24 @@ def setup_create_model(db: Session, client: TestClient, headers):
             headers=headers,
         )
         assert res.status_code == HTTP_200_OK
-    return res
+    return Model.parse_obj(res.json())
+
+
+def teardown_create_model(db: Session, model_name: str):
+    obj = db.query(ModelEntity).filter(ModelEntity.name == model_name).first()
+    db.delete(obj)
+    db.commit()
+    mlflowclient = MlflowClient()
+    mlflowclient.delete_registered_model(model_name)
+
+
+@pytest.fixture()
+def some_model(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    model = setup_create_model(db, client, normal_user_token_headers)
+    yield model
+    teardown_create_model(db, model.name)
 
 
 def test_post_models_success(
@@ -83,14 +104,12 @@ def test_post_models_success(
         assert model is not None
 
 
-def setup_function():
-    pass
-
-
 def test_get_models_success(
-    client: TestClient, normal_user_token_headers: dict[str, str], db: Session
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    db: Session,
+    some_model: Model,
 ):
-    setup_create_model(db, client, headers=normal_user_token_headers)
     res = client.get(
         f"{settings.API_V1_STR}/models/", headers=normal_user_token_headers
     )
@@ -107,14 +126,12 @@ def test_get_models_success(
 
 
 def test_post_models_deployment(
-    db: Session, client: TestClient, normal_user_token_headers: dict[str, str]
+    client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
 ):
-    res = setup_create_model(db, client, headers=normal_user_token_headers)
-    model = res.json()
     data = {
         "name": random_lower_string(),
-        "model_name": model["name"],
-        "model_version": int(model["latestVersions"][-1]["version"]),
+        "model_name": some_model.name,
+        "model_version": int(some_model.latest_versions[-1].version),
     }
     res = client.post(
         f"{settings.API_V1_STR}/deployments/",
@@ -156,3 +173,32 @@ def test_update_model():
 
 def test_delete_model():
     pass
+
+
+def test_post_predict(
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_model: Model,
+):
+    user_id = get_test_user(db).id
+    model_name = some_model.name
+    model_version = some_model.latest_versions[-1]["version"]
+    route = (
+        f"{settings.API_V1_STR}/models/{user_id}/{model_name}/{model_version}/predict"
+    )
+    df = pd.DataFrame(
+        {
+            "smiles": [
+                1,
+                2,
+                3,
+            ]
+        }
+    )
+    # data = {
+    #     'model_input': df.to_json()
+    # }
+    data = df.to_json()
+    res = client.post(route, data, headers=normal_user_token_headers)
+    assert res.status_code == 200

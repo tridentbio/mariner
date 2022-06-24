@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import (
     ModelVersion,
@@ -6,7 +6,6 @@ from mlflow.entities.model_registry.registered_model import (
 )
 from pydantic.main import BaseModel
 
-from app.core.mlflowapi import get_model
 from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
 
@@ -24,13 +23,13 @@ class Model(ApiBaseModel):
     latest_versions: List[Any] = []
     mlflow_model_data_loaded: bool = False
 
-    def get_model_uri(self, version: Optional[str] = None):
+    def get_model_uri(self, version: Optional[Union[str, int]] = None):
         if not self.mlflow_model_data_loaded:
             self.load_from_mlflow()
         if not version:
             # version = self.latest_versions[-1].version
             version = "1"
-        return f"model:/{self.name}/{version}"
+        return f"models:/{self.name}/{version}"
 
     def set_from_mlflow_model(
         self, mlflow_reg_model: RegisteredModel, versions: List[ModelVersion]
@@ -45,7 +44,9 @@ class Model(ApiBaseModel):
         self.mlflow_model_data_loaded = True
 
     def load_from_mlflow(self):
-        registered_model = get_model(self.name)
+        from app.core.mlflowapi import get_registry_model
+
+        registered_model = get_registry_model(self.name)
         self.set_from_mlflow_model(registered_model, registered_model.latest_versions)
 
 

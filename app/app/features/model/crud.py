@@ -18,6 +18,15 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
             db.commit()
         return obj
 
+    def get_by_name_from_user(self, db: Session, user_id: int, name: str):
+        model = (
+            db.query(Model)
+            .filter(Model.created_by_id == user_id)
+            .filter(Model.name == name)
+            .first()
+        )
+        return model
+
     def get_paginated(
         self, db: Session, page: int, per_page: int, created_by_id: Optional[int] = None
     ) -> tuple[List[Model], int]:
