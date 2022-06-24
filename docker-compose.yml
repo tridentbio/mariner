@@ -8,6 +8,7 @@ services:
       - .env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGUSER=postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
@@ -24,7 +25,7 @@ services:
         condition: service_healthy
       mlflow:
         condition: service_healthy
-      ray-head:
+      ray-worker:
         condition: service_started
     ports:
       - 80:80
@@ -59,6 +60,7 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
+      - PGUSER=postgres
     ports: 
       - "54321:5432"
     healthcheck:
@@ -82,6 +84,9 @@ services:
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
+      - AWS_SECRET_KEY_ID=${AWS_SECRET_KEY_ID}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
@@ -108,7 +113,10 @@ services:
       - .env
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-    command: bash -c "ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --redis-password=123456 --block"
+      - AWS_SECRET_KEY_ID=${AWS_SECRET_KEY_ID}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+
+    command: bash -c "ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block"
     shm_size: 3g
     networks:
       - ray_net
@@ -124,7 +132,9 @@ services:
       - .env
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-    command: bash -c "ray start --address=ray-head:6379 --redis-password=123456 --num-cpus=1 --block" 
+      - AWS_SECRET_KEY_ID=${AWS_SECRET_KEY_ID}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+    command: bash -c "ray start --address=ray-head:6379 --num-cpus=1 --block" 
     shm_size: 3g
     networks:
       - ray_net
@@ -134,6 +144,7 @@ volumes:
 
 networks:
   ray_net:
+
     ipam:
       driver: default
       config:
