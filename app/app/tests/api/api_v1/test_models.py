@@ -81,7 +81,6 @@ def test_post_models_success(
     model_name = model.name
     model_description = model.model_description
     model_version_description = model.model_version_description
-    assert user is not None
     with open(model_path, "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/models/",

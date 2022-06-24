@@ -16,6 +16,8 @@ from ray import serve
 from app.features.model.schema.model import Model
 from app.tests.data.torch_target_model import ExampleModel
 
+print('ARTIFACT_URI', mlflow.get_artifact_uri())
+
 
 def create_model_version(
     client: mlflow.tracking.MlflowClient,
@@ -28,6 +30,9 @@ def create_model_version(
     model = ExampleModel()
     if not artifact_path:
         artifact_path = name
+    active_run = mlflow.active_run()
+    if active_run is not None:
+        mlflow.end_run()
     with mlflow.start_run() as run:
         mlflow.pytorch.log_model(
             model,
@@ -70,7 +75,7 @@ def get_deployment_plugin() -> BaseDeploymentClient:
 
 def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
     # ray.init(address=f'ray://ray-head:10001')
-    serve.start(detached=True)
+    serve.start(detached=False)
     ray_plugin = get_deployment_plugin()
     deployment = ray_plugin.create_deployment(
         name=deployment_name,
