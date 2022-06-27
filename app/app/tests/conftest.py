@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.session import SessionLocal
+from app.features.user.crud import repo as user_repo
+from app.features.user.model import User
 from app.main import app
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
@@ -32,3 +34,12 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
     )
+
+
+def get_test_user(db: Session) -> User:
+    user = user_repo.get_by_email(db, email=settings.EMAIL_TEST_USER)
+    assert user is not None
+    return user
+
+
+pytest_plugins = ["app.tests.fixtures.model"]
