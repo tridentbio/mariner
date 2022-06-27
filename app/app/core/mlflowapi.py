@@ -16,8 +16,6 @@ from ray import serve
 from app.features.model.schema.model import Model
 from app.tests.data.torch_target_model import ExampleModel
 
-print('ARTIFACT_URI', mlflow.get_artifact_uri())
-
 
 def create_model_version(
     client: mlflow.tracking.MlflowClient,
@@ -82,7 +80,6 @@ def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
         model_uri=model_uri,
         # config={"num_replicas": 1}
     )
-    print(deployment)
     return deployment
 
 
@@ -94,4 +91,5 @@ def get_registry_model(model_registry_name: str):
 
 def get_model(model: Model, version: Optional[Union[int, str]]):
     mlflowmodel = mlflow.pyfunc.load_model(model.get_model_uri(version))
+
     return mlflowmodel
