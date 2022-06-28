@@ -1,3 +1,4 @@
+import pytest
 import yaml
 from sqlalchemy.orm.session import Session
 from torch import nn
@@ -8,6 +9,7 @@ from app.features.model.builder import CustomModel, build_dataset
 from app.features.model.schema.configs import ModelConfig
 
 
+@pytest.mark.skip(reason='unfinished')
 def test_dataset(db: Session):
     yaml_model = "app/tests/data/test_model_hard.yaml"
     with open(yaml_model) as f:
@@ -26,6 +28,7 @@ def test_model_schema():
         assert isinstance(model, ModelConfig)
 
 
+@pytest.mark.skip(reason='unfinished')
 def test_model_build(db: Session):
     yaml_model = "app/tests/data/test_model_hard.yaml"
     with open(yaml_model) as f:

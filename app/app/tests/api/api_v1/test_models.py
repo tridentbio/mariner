@@ -120,7 +120,6 @@ def test_delete_model():
     pass
 
 
-@pytest.mark.skip(reason="This test is hagging..>")
 def test_post_predict(
     db: Session,
     client: TestClient,
@@ -136,15 +135,17 @@ def test_post_predict(
     df = pd.DataFrame(
         {
             "smiles": [
-                1,
-                2,
-                3,
+                'CCCC',
+                'CCCCC',
+                'CCCCCCC',
+            ],
+            "exp": [
+                0.3,
+                0.1,
+                0.9
             ]
         }
     )
-    # data = {
-    #     'model_input': df.to_json()
-    # }
     data = df.to_json()
     res = client.post(route, data, headers=normal_user_token_headers)
     assert res.status_code == 200
