@@ -1,0 +1,22 @@
+{{- if .Values.normal_deploy.enabled -}}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-service
+spec:
+  hosts:
+   - {{ .Values.istio_url }}
+  gateways:
+  - {{ .Release.Name }}-gateway
+  http:
+  - route:
+     - destination:
+         host: {{ .Release.Name }}
+         subset: v2
+       weight: 0
+     - destination:
+         host: {{ .Release.Name }}
+         subset: v1
+       weight: 100
+{{- end }}
