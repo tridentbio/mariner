@@ -70,5 +70,5 @@ jobs:
           --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
           --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-          --set "istio_url=${{ secrets.HOST_ZONE }}"
+          --set "istio_url=backend.${{ secrets.HOST_ZONE }}"
         kubectl rollout status "deployment/$DEPLOYMENT_NAME"
