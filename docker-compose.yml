@@ -48,10 +48,9 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile.local
-      args:
-        INSTALL_DEV: ${INSTALL_DEV-false}
     networks:
       - ray_net
+    command: poetry run uvicorn app.main:app --reload --host "0.0.0.0" --port 80
 
   mlflowdb:
     image: postgres:12
@@ -81,7 +80,7 @@ services:
         condition: service_healthy
     build:
       context: .
-      dockerfile: ./Dockerfile.mlflow
+      dockerfile: ./Dockerfile.local
     env_file:
       - .env.local.mlflow
     environment:
@@ -89,14 +88,16 @@ services:
       - POSTGRES_PORT=5432
       - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
-
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
       timeout: 10s
       retries: 3
       start_period: 40s
+
     restart: unless-stopped
+    command: bash -c 'poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root $AWS_MODELS_BUCKET --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
+      #command: bash -c 'while true; do sleep 1; done;'
     ports:
       - "5000:5000"
     networks:
@@ -105,7 +106,7 @@ services:
   ray-head:
     build:
       context: .
-      dockerfile: ./Dockerfile.ray
+      dockerfile: ./Dockerfile.local
     env_file:
       .env.local.ray
     ports:
@@ -114,22 +115,22 @@ services:
       - "10001:10001"
       - "8000:8000"
     env_file:
-      - .env
+      - .env.local.ray
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
 
-    command: bash -c "ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block"
+    command: bash -c "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block"
     shm_size: 3g
     networks:
       - ray_net
   ray-worker:
     build:
       context: .
-      dockerfile: ./Dockerfile.ray
+      dockerfile: ./Dockerfile.local
     env_file:
-      .env.local.ray
+      .env.local.ray2
     depends_on: 
       - ray-head
     env_file:
@@ -138,7 +139,7 @@ services:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
-    command: bash -c "ray start --address=ray-head:6379 --num-cpus=1 --block" 
+    command: bash -c "poetry run ray start --address=ray-head:6379 --num-cpus=1 --block" 
     shm_size: 3g
     networks:
       - ray_net
@@ -148,7 +149,6 @@ volumes:
 
 networks:
   ray_net:
-
     ipam:
       driver: default
       config:

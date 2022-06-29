@@ -3,8 +3,8 @@ services:
   backend:
     ports:
       - "8888:8888"
-    volumes:
-      - ./app:/app:z
+        #volumes:
+        #  - ./app:/app:z
     environment:
       - JUPYTER=jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
       - SERVER_HOST=http://${DOMAIN?Variable not set}
@@ -19,7 +19,6 @@ services:
         INSTALL_DEV: ${INSTALL_DEV-true}
         INSTALL_JUPYTER: ${INSTALL_JUPYTER-true}
           #command: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
-    command: /start-reload.sh
 
 networks:
   traefik-public:
