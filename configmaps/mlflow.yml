@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlflow
+data:
+  AWS_ACCESS_KEY_ID: 'AKIAXQADDKX6TOZR47IP'
+  AWS_SECRET_ACCESS_KEY: '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'
+  MLFLOW_ARTIFACT_URI: 's3://trident-mlflow-artifacts-dev'
+  MLFLOW_DB_DATABASE: 'mlflow'
+  MLFLOW_DB_DIALECT: 'postgresql'
+  MLFLOW_DB_HOST: 'mariner-dev.cmoyhx7ixcpf.us-east-1.rds.amazonaws.com'
+  MLFLOW_DB_PASSWORD: 'w47BudMmmPXZMub8cQZM'
+  MLFLOW_DB_PORT: '5432'
+  MLFLOW_DB_USERNAME: 'marinerdev'
+  MLFLOW_TRACKING_PASSWORD: '68bNNENgURRns9goJ7Xi'
+  MLFLOW_TRACKING_USERNAME: 'mlflow_dev'
