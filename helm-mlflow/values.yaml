@@ -12,7 +12,7 @@ version: mlflow-v1
 port: 5000
 
 image:
-  repository: mlflow-dev
+  repository: mlflow
   pullPolicy: Always
   tag: latest
   containerPort: 5000
