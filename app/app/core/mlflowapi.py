@@ -21,9 +21,10 @@ def create_model_version(
     client: mlflow.tracking.MlflowClient,
     name: str,
     file: UploadFile,
-    artifact_path: Optional[str] = None,
+    artifact_path = 's3://dev-mariner-datasets',
     desc: Optional[str] = None,
 ) -> ModelVersion:
+    print('ARTIFACT PATH', artifact_path)
     file = io.BytesIO(file.file.read())
     model = ExampleModel()
     if not artifact_path:
@@ -72,13 +73,10 @@ def get_deployment_plugin() -> BaseDeploymentClient:
 
 
 def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
-    # ray.init(address=f'ray://ray-head:10001')
-    serve.start(detached=False)
     ray_plugin = get_deployment_plugin()
     deployment = ray_plugin.create_deployment(
         name=deployment_name,
         model_uri=model_uri,
-        # config={"num_replicas": 1}
     )
     return deployment
 
