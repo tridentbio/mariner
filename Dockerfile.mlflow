@@ -1,0 +1,16 @@
+FROM python:3.9
+WORKDIR /app
+RUN apt-get install libpq-dev -y
+RUN pip install \
+    'ray[serve]' \
+    'mlflow==1.26.1' \
+    'mlflow-ray-serve' \
+    psycopg2 \
+    boto3
+
+EXPOSE 5000
+CMD mlflow server \
+    --host 0.0.0.0 \
+    --port 5000 \
+    --default-artifact-root ${AWS_MODELS_BUCKET} \
+    --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_SERVER}:${POSTGRES_PORT}/${POSTGRES_DB}

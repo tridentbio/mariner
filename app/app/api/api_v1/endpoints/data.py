@@ -1,5 +1,4 @@
 import boto3
-from botocore.response import StreamingBody
 from fastapi.param_functions import Depends, Query
 from fastapi.routing import APIRouter
 from starlette.responses import StreamingResponse
@@ -8,14 +7,6 @@ from app.api import deps
 from app.core.config import settings
 
 router = APIRouter()
-
-
-def generate(result: StreamingBody):
-    print([x for x in result.iter_chunks(1024)])
-
-    for chunk in iter(result.iter_chunks(1024)):
-        print("chunk: ", chunk)
-        yield chunk
 
 
 @router.get(

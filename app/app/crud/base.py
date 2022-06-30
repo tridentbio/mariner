@@ -63,3 +63,13 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db.delete(obj)
         db.commit()
         return obj
+
+    def get_paginated(
+        self, db: Session, page: int, per_page: int
+    ) -> tuple[List[ModelType], int]:
+        sql_query = db.query(self.model)
+        total = sql_query.count()
+        sql_query = sql_query.limit(per_page)
+        sql_query = sql_query.offset(page * per_page)
+        result = sql_query.all()
+        return result, total

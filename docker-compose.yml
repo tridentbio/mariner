@@ -8,29 +8,148 @@ services:
       - .env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGUSER=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports: 
       - "5432:5432"
+    networks:
+      - ray_net
   backend:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+      ray-worker:
+        condition: service_started
     ports:
       - 80:80
     env_file:
       - .env
     environment:
+      - POSTGRES_SERVER=db
+      - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
       - SERVER_NAME=${DOMAIN?Variable not set}
       - SERVER_HOST=https://${DOMAIN?Variable not set}
       - SMTP_HOST=${SMTP_HOST}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
     build:
       context: .
-      dockerfile: ./Dockerfile
-      args:
-        INSTALL_DEV: ${INSTALL_DEV-false}
+      dockerfile: ./Dockerfile.local
+    networks:
+      - ray_net
+    command: poetry run uvicorn app.main:app --reload --host "0.0.0.0" --port 80
+
+  mlflowdb:
+    image: postgres:12
+    volumes:
+      - app-mlflow-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env.local.mlflow
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_SERVER=mlflowdb
+      - POSTGRES_PORT=5432
+      - PGUSER=postgres
+    ports: 
+      - "54321:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 2s
+      retries: 15
+    networks:
+      - ray_net
+
+
+  mlflow:
+    depends_on:
+      mlflowdb:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: ./Dockerfile.local
+    env_file:
+      - .env.local.mlflow
+    environment:
+      - POSTGRES_SERVER=mlflowdb
+      - POSTGRES_PORT=5432
+      - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+    command: bash -c 'poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root $AWS_MODELS_BUCKET --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
+      #command: bash -c 'while true; do sleep 1; done;'
+    ports:
+      - "5000:5000"
+    networks:
+      - ray_net
+
+  ray-head:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.local
+    env_file:
+      .env.local.ray
+    ports:
+      - "6379:6379"
+      - "8265:8265"
+      - "10001:10001"
+      - "8000:8000"
+    env_file:
+      - .env.local.ray
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
+
+    command: bash -c "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block"
+    shm_size: 3g
+    networks:
+      - ray_net
+  ray-worker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.local
+    env_file:
+      .env.local.ray2
+    depends_on: 
+      - ray-head
+    env_file:
+      - .env
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
+    command: bash -c "poetry run ray start --address=ray-head:6379 --num-cpus=1 --block" 
+    shm_size: 3g
+    networks:
+      - ray_net
 volumes:
   app-db-data:
+  app-mlflow-data:
 
-# networks:
-#   traefik-public:
-#     # Allow setting it to false for testing
-#     external: ${TRAEFIK_PUBLIC_NETWORK_IS_EXTERNAL-true}
+networks:
+  ray_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.63.0.0/16

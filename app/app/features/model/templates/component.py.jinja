@@ -1,0 +1,36 @@
+{% set count=component["arg_types"]|length %}
+
+
+class {{ component["prefix"] }}ArgsTemplate(ApiBaseModel):
+      type: Literal['{{ component["path"] }}'] = '{{ component["path"] }}'
+    {%- for key, value in component["arg_types"].items() %}
+      {{ key }}: Literal["{{ value }}"] = "{{ value }}"
+    {%- endfor %}
+
+{% if count > 0 %}
+
+class {{ component["prefix"] }}Args(ApiBaseModel):
+    {%- for key, value in component["arg_types"].items() %}
+    {{ key }}: {{ type_name(value) }}
+    {%- endfor %}
+
+{% endif %}
+
+class {{ component["prefix"] }}LayerConfig(BaseLayerConfig):
+    type: Literal['{{ component["path"] }}'] = '{{ component["path"] }}'
+    {% if count > 0 %}
+    args: {{ component["prefix"] }}Args
+    def create(self):
+        lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+          return lib_cls
+        return lib_cls(**self.args.dict())
+    {% else %}
+    def create(self):
+        lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+          return lib_cls
+        return lib_cls()
+    {% endif %}
+
+

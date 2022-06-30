@@ -23,22 +23,30 @@ def test_get_my_datasets(
     assert isinstance(payload["data"], list)
 
 
-def test_create_dataset(
+def test_post_datasets(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
     db: Session,
 ) -> None:
+    descriptions = [
+        {
+            "pattern": "col*",
+            "description": "asdasdas",
+        },
+        {
+            "pattern": "col2*",
+            "description": "asdasdas",
+        },
+    ]
+    metadatas = [
+        {
+            "key": "exp",
+            "data_type": "numerical",
+        },
+        {"key": "smiles", "data_type": "smiles"},
+    ]
+
     with open("app/tests/data/HIV.csv", "rb") as f:
-        descriptions = [
-            {
-                "pattern": "col*",
-                "description": "asdasdas",
-            },
-            {
-                "pattern": "col2*",
-                "description": "asdasdas",
-            },
-        ]
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
             data={
@@ -47,6 +55,7 @@ def test_create_dataset(
                 "splitType": "random",
                 "splitTarget": "60-20-20",
                 "columnsDescriptions": json.dumps(descriptions),
+                "columnsMetadata": json.dumps(metadatas),
             },
             files={"file": ("dataset.csv", f.read())},
             headers=normal_user_token_headers,
@@ -58,12 +67,13 @@ def test_create_dataset(
         assert ds is not None
         assert ds.name == response["name"]
         assert len(ds.columns_descriptions) == 2
+        assert len(ds.columns_metadatas) == 2
 
 
 @pytest.mark.skip(
     reason="db consistency assertions fail for some reason, but route works"
 )
-def test_update_dataset(
+def test_put_datasets(
     client: TestClient, superuser_token_headers: Dict[str, str], db: Session
 ) -> None:
     dataset = repo.create(
@@ -106,7 +116,7 @@ def test_update_dataset(
     assert updated.name == new_name
 
 
-def test_delete_dataset(
+def test_delete_datasets(
     client: TestClient, superuser_token_headers: Dict[str, str], db: Session
 ) -> None:
     dataset = repo.create(
@@ -135,7 +145,7 @@ def test_delete_dataset(
     assert ds is None
 
 
-def test_get_columns_metadata(
+def test_get_csv_metadata(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
 ) -> None:
