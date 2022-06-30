@@ -50,7 +50,7 @@ services:
       dockerfile: ./Dockerfile.local
     networks:
       - ray_net
-    command: poetry run uvicorn app.main:app --reload --host "0.0.0.0" --port 80
+    command: bash -c 'poetry run sh prestart.sh && poetry run uvicorn app.main:app --reload --host "0.0.0.0" --port 80'
 
   mlflowdb:
     image: postgres:12
@@ -96,7 +96,7 @@ services:
       start_period: 40s
 
     restart: unless-stopped
-    command: bash -c 'poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root $AWS_MODELS_BUCKET --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
+    command: bash -c 'echo $AWS_MODELS_BUCKET && poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
       #command: bash -c 'while true; do sleep 1; done;'
     ports:
       - "5000:5000"
@@ -121,7 +121,7 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
 
-    command: bash -c "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block"
+    command: bash -c "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 && serve start && while true; do sleep 1; done;"
     shm_size: 3g
     networks:
       - ray_net
