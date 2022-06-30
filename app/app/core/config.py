@@ -95,7 +95,9 @@ class Settings(BaseSettings):
     AWS_DATASETS: str = "dev-matiner-datasets"
 
     class Config:
+        # env_file = str(path.join('..', '.env.local'))
+        # env_file_encoding = 'utf-8'
         case_sensitive = True
 
 
-settings = Settings()
+settings = Settings(_env_file="../.env.local")

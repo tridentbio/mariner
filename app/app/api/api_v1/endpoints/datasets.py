@@ -13,6 +13,7 @@ from app.features.dataset import controller
 from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
 from app.features.dataset.schema import (
     ColumnDescriptionFromJSONStr,
+    ColumnMetadataFromJSONStr,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
@@ -69,6 +70,7 @@ def create_dataset(
     columns_descriptions: ColumnDescriptionFromJSONStr = Form(
         None, alias="columnsDescriptions"
     ),
+    columns_metadatas: ColumnMetadataFromJSONStr = Form(None, alias="columnsMetadata"),
     file: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
 ) -> Any:
@@ -76,7 +78,6 @@ def create_dataset(
     Create a dataset
     """
     try:
-
         payload = DatasetCreate(
             name=name,
             description=description,
@@ -86,6 +87,8 @@ def create_dataset(
         )
         if columns_descriptions is not None:
             payload.columns_descriptions = columns_descriptions
+        if columns_metadatas is not None:
+            payload.columns_metadata = columns_metadatas
         db_dataset = controller.create_dataset(db, current_user, payload)
         dataset = Dataset.from_orm(db_dataset)
         return dataset

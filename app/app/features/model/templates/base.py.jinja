@@ -1,0 +1,56 @@
+###########################################################################
+# This is some auto generated code. Your changes may not have effect.     #
+# Consider making the changes im `app/features/model/templates`           #
+###########################################################################
+
+from typing import Optional, Literal, Union, List, Any
+from app.features.model.utils import get_class_from_path_string
+from app.schemas.api import ApiBaseModel
+{% block imports %}
+{% endblock imports %}
+
+def get_module_name(classpath: str) -> str:
+    return '.'.join(classpath.split('.')[:-1])
+
+def is_func(obj):
+  return str(type(obj)) == "<class 'function'>"
+
+
+class BaseLayerConfig(ApiBaseModel):
+    name: str
+    input: Union[str, List[str]]
+    def create(self):
+      pass
+
+{%- for component in layer_components -%}
+{%- include "component.py.jinja" -%}
+{%- endfor %}
+
+{%- for component in featurizer_components -%}
+{%- include "component.py.jinja" -%}
+{%- endfor %}
+
+LayersType = Union[
+    {% for component in layer_components: -%}
+    {{ component['prefix'] + "LayerConfig" }},
+    {% endfor %}
+]
+
+FeaturizersType = Union[
+    {% for component in featurizer_components: -%}
+    {{ component['prefix'] + "LayerConfig" }},
+    {% endfor %}
+]
+
+LayersArgsType = Union[
+    {% for component in layer_components: -%}
+    {{ component['prefix'] + "ArgsTemplate" }},
+    {% endfor %}
+]
+
+FeaturizersArgsType = Union[
+    {% for component in featurizer_components: -%}
+    {{ component['prefix'] + "ArgsTemplate" }},
+    {%- endfor %}
+]
+
