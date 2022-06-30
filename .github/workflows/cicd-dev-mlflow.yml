@@ -5,7 +5,7 @@ on:
       - helm-packages
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: trident-mlflow
+  ECR_REPOSITORY: mlflow
   DEPLOYMENT_NAME: mlflow
   IMAGE_TAG: ${{ github.sha }}
 jobs:
