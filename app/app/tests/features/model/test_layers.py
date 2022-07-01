@@ -15,4 +15,4 @@ def test_Concat_other_case():
     x2 = torch.Tensor([[1.0, 2.0, 3.0, 4.0]])
     concat_layer = Concat()
     y = concat_layer(x1, x2)
-    assert torch.equal(y, torch.Tensor([1.0, 2.0, 3.0, 1.0, 2.0, 3.0, 4.0]))
+    assert torch.equal(y, torch.Tensor([[1.0, 2.0, 3.0, 1.0, 2.0, 3.0, 4.0]]))
