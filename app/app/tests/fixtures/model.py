@@ -59,6 +59,7 @@ def some_model(
     yield model
     teardown_create_model(db, model.name)
 
+
 @pytest.fixture(scope="module")
 def dataset_sample():
     from torch_geometric.data import Data
@@ -66,10 +67,10 @@ def dataset_sample():
 
     x = torch.ones(3, 30, dtype=torch.float)
     edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)
-    mwt = torch.tensor([[230.], [210.], [410.], [430.], [235.]], dtype=torch.float)
+    mwt = torch.tensor([[230.0], [210.0], [410.0], [430.0], [235.0]], dtype=torch.float)
     dataset_input = {
-        'MolToGraphFeaturizer': Data(x=x, edge_index=edge_index),
-        'mwt': mwt
+        "MolToGraphFeaturizer": Data(x=x, edge_index=edge_index),
+        "mwt": mwt,
     }
 
-    dataset_input['MolToGraphFeaturizer'].batch
+    dataset_input["MolToGraphFeaturizer"].batch

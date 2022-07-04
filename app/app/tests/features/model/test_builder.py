@@ -3,13 +3,13 @@ import yaml
 from sqlalchemy.orm.session import Session
 from torch import nn
 from torch_geometric.data import DataLoader
+from pytorch_lightning import Trainer
 
 from app.features.dataset.crud import repo as datasetsrepo
 from app.features.model.builder import CustomModel, build_dataset
 from app.features.model.schema.configs import ModelConfig
 
 
-@pytest.mark.skip(reason='unfinished')
 def test_dataset(db: Session):
     yaml_model = "app/tests/data/test_model_hard.yaml"
     with open(yaml_model) as f:
@@ -28,7 +28,6 @@ def test_model_schema():
         assert isinstance(model, ModelConfig)
 
 
-@pytest.mark.skip(reason='unfinished')
 def test_model_build(db: Session):
     yaml_model = "app/tests/data/test_model_hard.yaml"
     with open(yaml_model) as f:
@@ -37,9 +36,10 @@ def test_model_build(db: Session):
         model = CustomModel(model_config)
         assert isinstance(model, nn.Module)
         loader = DataLoader(ds)
-        batch = next(iter(loader))
-        out = model(batch)
-        print(out)
+        x, y = next(iter(loader))
+        out = model(x)
         assert out is not None
-        # assert out.size() == y.size()
-        # train(model, epochs=2, learning_rate=0.1)
+        trainer = Trainer(max_epochs=2)
+        trainer.fit(model, loader)
+        ## Trains without error
+        # TODO: check against another implementation of same model
