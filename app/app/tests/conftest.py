@@ -42,4 +42,4 @@ def get_test_user(db: Session) -> User:
     return user
 
 
-pytest_plugins = ["app.tests.fixtures.model"]
+pytest_plugins = ["app.tests.fixtures.model", "app.tests.fixtures.dataset"]
