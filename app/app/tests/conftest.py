@@ -165,17 +165,23 @@ def some_model(
     teardown_create_model(db, model.name)
 
 
-@pytest.fixture(scope="module")
-def dataset_sample():
+def mock_dataset_item():
     from torch_geometric.data import Data
     import torch
 
-    x = torch.ones(3, 30, dtype=torch.float)
+    x = torch.ones(21, 26, dtype=torch.float)
     edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)
-    mwt = torch.tensor([[230.0], [210.0], [410.0], [430.0], [235.0]], dtype=torch.float)
+    mwt = torch.tensor([[230.0]], dtype=torch.float)
+
     dataset_input = {
-        "MolToGraphFeaturizer": Data(x=x, edge_index=edge_index),
+        "MolToGraphFeaturizer": Data(x=x, edge_index=edge_index, batch=None),
         "mwt": mwt,
+        "tpsa": mwt,
     }
 
-    dataset_input["MolToGraphFeaturizer"].batch
+    return dataset_input
+
+
+@pytest.fixture(scope="module")
+def dataset_sample():
+    return mock_dataset_item()

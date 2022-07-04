@@ -118,4 +118,13 @@ def get_model_prediction(db: Session, request: PredictRequest) -> ModelOutput:
         raise ModelNotFound()
     model = Model.from_orm(model)
     pyfuncmodel = mlflowapi.get_model(model, request.version)
-    return pyfuncmodel.predict(pd.DataFrame.from_dict(request.model_input))
+    # TODO: fix this cheat
+    # refactor torch custom dataset to receive a dataframe
+    # instead of a dataset. save the model config along with
+    # the model in the database. This should be enough
+    # to instantiate the torch dataset, then building a batch
+    # as the model expects it
+    from app.tests.conftest import mock_dataset_item
+
+    mocked_input = mock_dataset_item()
+    return pyfuncmodel(mocked_input)

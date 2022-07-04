@@ -54,7 +54,6 @@ def test_get_models_success(
     assert len(models) > 0
     assert total > 0
     for model in models:
-        print(model)
         assert model["createdById"] == user.id
 
 
@@ -129,7 +128,8 @@ def test_post_predict(
                 "CCCCC",
                 "CCCCCCC",
             ],
-            "exp": [0.3, 0.1, 0.9],
+            "mwt": [0.3, 0.1, 0.9],
+            "tpsa": [0.3, 0.1, 0.9],
         }
     )
     data = df.to_json()

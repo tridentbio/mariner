@@ -87,6 +87,7 @@ def get_registry_model(model_registry_name: str):
 
 
 def get_model(model: Model, version: Optional[Union[int, str]]):
-    mlflowmodel = mlflow.pyfunc.load_model(model.get_model_uri(version))
+    # mlflowmodel = mlflow.pyfunc.load_model(model.get_model_uri(version))
+    mlflowmodel = mlflow.pytorch.load_model(model.get_model_uri(version))
 
     return mlflowmodel
