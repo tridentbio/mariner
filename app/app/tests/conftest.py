@@ -1,16 +1,26 @@
+import json
 from typing import Dict, Generator
 
+import mlflow
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from starlette import status
 
+from app.core.aws import Bucket, delete_s3_file
 from app.core.config import settings
 from app.db.session import SessionLocal
+from app.features.dataset.model import Dataset
+from app.features.model.model import Model as ModelEntity
+from app.features.model.schema.model import Model, ModelCreate
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
 from app.main import app
 from app.tests.utils.user import authentication_token_from_email
-from app.tests.utils.utils import get_superuser_token_headers
+from app.tests.utils.utils import (
+    get_superuser_token_headers,
+    random_lower_string,
+)
 
 
 @pytest.fixture(scope="session")
@@ -42,4 +52,131 @@ def get_test_user(db: Session) -> User:
     return user
 
 
-pytest_plugins = ["app.tests.fixtures.model", "app.tests.fixtures.dataset"]
+## DATASET GLOBAL FIXTURES
+def mock_dataset():
+    descriptions = [
+        {
+            "pattern": "col*",
+            "description": "asdasdas",
+        },
+        {
+            "pattern": "col2*",
+            "description": "asdasdas",
+        },
+    ]
+    metadatas = [
+        {
+            "key": "exp",
+            "data_type": "numerical",
+        },
+        {"key": "smiles", "data_type": "smiles"},
+    ]
+
+    return {
+        "name": "Small Zinc dataset",
+        "description": "Test description",
+        "splitType": "random",
+        "splitTarget": "60-20-20",
+        "columnsDescriptions": json.dumps(descriptions),
+        "columnsMetadata": json.dumps(metadatas),
+    }
+
+
+def setup_create_dataset(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    data = mock_dataset()
+    with open("app/tests/data/zinc.csv", "rb") as f:
+        res = client.post(
+            f"{settings.API_V1_STR}/datasets/",
+            data=data,
+            files={"file": ("zinc.csv", f.read())},
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == status.HTTP_200_OK
+        body = res.json()
+        return db.query(Dataset).get(body["id"])
+
+
+def teardown_create_dataset(db: Session, dataset: Dataset):
+    ds = db.query(Dataset).get(dataset.id)
+    assert ds is not None
+    db.delete(ds)
+    db.commit()
+    try:
+        delete_s3_file(bucket=Bucket.Datasets, key=ds.data_url)
+    except:
+        pass
+
+
+@pytest.fixture(scope="module")
+def some_dataset(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    ds = setup_create_dataset(db, client, normal_user_token_headers)
+    assert ds is not None
+    yield ds
+    teardown_create_dataset(db, ds)
+
+
+## MODEL GLOBAL FIXTURES
+def mock_model(created_by: User) -> ModelCreate:
+    return ModelCreate(
+        name=random_lower_string(),
+        model_description=random_lower_string(),
+        model_version_description=random_lower_string(),
+        created_by_id=created_by.id,
+    )
+
+
+def setup_create_model(db: Session, client: TestClient, headers):
+    user = get_test_user(db)
+    model = mock_model(user)
+    model_path = "app/tests/data/model.pt"
+    data = {
+        "name": model.name,
+        "description": model.model_description,
+        "versionDescription": model.model_version_description,
+    }
+    with open(model_path, "rb") as f:
+        res = client.post(
+            f"{settings.API_V1_STR}/models/",
+            data=data,
+            files={"file": ("model.pt", f)},
+            headers=headers,
+        )
+        assert res.status_code == status.HTTP_200_OK
+    return Model.parse_obj(res.json())
+
+
+def teardown_create_model(db: Session, model_name: str):
+    obj = db.query(ModelEntity).filter(ModelEntity.name == model_name).first()
+    db.delete(obj)
+    db.commit()
+    mlflowclient = mlflow.tracking.MlflowClient()
+    mlflowclient.delete_registered_model(model_name)
+
+
+@pytest.fixture(scope="module")
+def some_model(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    model = setup_create_model(db, client, normal_user_token_headers)
+    yield model
+    teardown_create_model(db, model.name)
+
+
+@pytest.fixture(scope="module")
+def dataset_sample():
+    from torch_geometric.data import Data
+    import torch
+
+    x = torch.ones(3, 30, dtype=torch.float)
+    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)
+    mwt = torch.tensor([[230.0], [210.0], [410.0], [430.0], [235.0]], dtype=torch.float)
+    dataset_input = {
+        "MolToGraphFeaturizer": Data(x=x, edge_index=edge_index),
+        "mwt": mwt,
+    }
+
+    dataset_input["MolToGraphFeaturizer"].batch

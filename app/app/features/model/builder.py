@@ -52,13 +52,14 @@ def is_graph_activation(layer, layers_dict, previous):
             return True
     return False
 
+
 CustomDatasetIn = Dict[str, Union[torch.Tensor, Data]]
 
-class CustomModel(LightningModule):
 
+class CustomModel(LightningModule):
     def __init__(self, config: ModelConfig):
         super().__init__()
-        
+
         self.config = config
 
         layers_dict = {}
@@ -67,23 +68,21 @@ class CustomModel(LightningModule):
 
         self.layers = torch.nn.ModuleDict(layers_dict)
 
-        self.layer_configs = {
-            l.name: l for l in config.layers
-        }
+        self.layer_configs = {l.name: l for l in config.layers}
 
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
-        
+
     def configure_optimizers(self):
         return Adam(self.parameters(), lr=1e-3)
-    
+
     def training_step(self, batch, batch_idx):
         x, y = batch
         logits = self(x)
         # TODO: adapt loss to problem type. MSE will only work for regression
         loss = F.mse_loss(logits, y)
         return loss
-    
+
     def forward(self, input_: CustomDatasetIn):
         storage = input_.copy()
 
@@ -93,14 +92,18 @@ class CustomModel(LightningModule):
             layer_name = node_name
             layer = self.layers[layer_name]
             layer_config = self.layer_configs[layer_name]
-            previous_layers = [p_layer for p_layer, c_layer in self.graph.in_edges(layer_name)]
+            previous_layers = [
+                p_layer for p_layer, c_layer in self.graph.in_edges(layer_name)
+            ]
             inputs = if_str_make_list(layer_config.input)
             # Step 2
             # Transform and preprocess the input and output based on the previous
             # and next layers.
-            
+
             if is_message_passing(layer):
-                assert len(inputs) == 1, f"Length of a gnn layer's inputs should be at most 1. inputs = {inputs}"
+                assert (
+                    len(inputs) == 1
+                ), f"Length of a gnn layer's inputs should be at most 1. inputs = {inputs}"
                 src = inputs[0]
                 assert isinstance(storage[src], Data)
                 x, edge_index = storage[src].x, storage[src].edge_index
@@ -110,33 +113,45 @@ class CustomModel(LightningModule):
             #         and the input is composed by x (node_features) from the last layer
             #         and the batch that comes with the data object
             elif is_graph_pooling(layer):
-                assert len(inputs) == 1, f"Length of a gnn layer's inputs should be at most 1. inputs = {inputs}"
+                assert (
+                    len(inputs) == 1
+                ), f"Length of a gnn layer's inputs should be at most 1. inputs = {inputs}"
                 src = inputs[0]
                 assert isinstance(storage[src], Data)
-                x, edge_index, batch = storage[src].x, storage[src].edge_index, storage[src].batch
+                x, edge_index, batch = (
+                    storage[src].x,
+                    storage[src].edge_index,
+                    storage[src].batch,
+                )
                 storage[layer_name] = layer(x=x, batch=batch)
             # 2.3   - if its an activation or a mlp/normal layer we need to check the
             #         previous layers to make sure that the input is in t;he correct format
             #         and check the next layers to format the output
             elif is_graph_activation(layer, self.layers, previous_layers):
-                assert len(inputs) == 1, f"Length of a activation layer's inputs should be at most 1. inputs = {inputs}"
+                assert (
+                    len(inputs) == 1
+                ), f"Length of a activation layer's inputs should be at most 1. inputs = {inputs}"
                 src = inputs[0]
                 assert isinstance(storage[src], Data)
                 x, edge_index = storage[src].x, storage[src].edge_index
                 storage[layer_name] = Data(x=layer(x), edge_index=edge_index)
             elif is_concat_layer(layer):
-                assert len(inputs) == 2, f"Length of a concat layer's inputs should be 2. inputs = {inputs}"
+                assert (
+                    len(inputs) == 2
+                ), f"Length of a concat layer's inputs should be 2. inputs = {inputs}"
                 x1, x2 = storage[inputs[0]], storage[inputs[1]]
-                storage[layer_name] = layer(x1,x2)
+                storage[layer_name] = layer(x1, x2)
             else:
-                input_values = [ 
-                    storage[input] if isinstance(storage[input], Data) else
+                input_values = [
                     storage[input]
+                    if isinstance(storage[input], Data)
+                    else storage[input]
                     for input in inputs
                 ]
                 storage[layer_name] = layer(*input_values)
             last = storage[layer_name]
         return last
+
 
 def build_model_from_yaml(yamlstr: str) -> nn.Module:
     config = ModelConfig.from_yaml(yamlstr)

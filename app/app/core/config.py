@@ -93,6 +93,7 @@ class Settings(BaseSettings):
     AWS_SECRET_KEY: str
     AWS_REGION: str = "us-east-1"
     AWS_DATASETS: str = "dev-matiner-datasets"
+    AWS_MODELS: str = "dev-matiner-datasets"
 
     class Config:
         # env_file = str(path.join('..', '.env.local'))
