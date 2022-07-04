@@ -1,16 +1,16 @@
 import datetime
 import io
 import json
-from uuid import uuid4
 
 import pandas
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
-from app.core.aws import upload_s3_file
+from app.core.aws import Bucket, upload_s3_file
 from app.core.config import settings
 from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
+from app.utils import hash_md5
 
 from ..user.model import User
 from .crud import repo
@@ -31,8 +31,8 @@ from .utils import get_stats
 DATASET_BUCKET = settings.AWS_DATASETS
 
 
-def make_key():
-    return str(uuid4())
+def make_key(filename: str):
+    return hash_md5(file=filename)
 
 
 def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
@@ -57,8 +57,9 @@ def _get_entity_info_from_csv(file: UploadFile):
 
 
 def _upload_s3(file: UploadFile):
-    key = f"datasets/{make_key()}_{file.filename.rstrip('.csv')}.csv"
-    upload_s3_file(file, DATASET_BUCKET, key)
+    file_md5 = make_key(file)
+    key = f"datasets/{file_md5}.csv"
+    upload_s3_file(file, Bucket.Datasets, key)
     return key
 
 
