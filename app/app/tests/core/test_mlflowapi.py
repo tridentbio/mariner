@@ -15,10 +15,11 @@ from app.tests.utils.utils import random_lower_string
 def mlflow_model():
     client = mlflow.tracking.MlflowClient()
     model = client.create_registered_model(random_lower_string())
-    file = UploadFile("./app/tests/data/model.pt")
-    create_model_version(client, model.name, file)
-    yield client.get_registered_model(model.name)
-    client.delete_registered_model(model.name)
+    with open("./app/tests/data/model.pt", "rb") as f:
+        file = UploadFile("model.pt", f)
+        create_model_version(client, model.name, file)
+        yield client.get_registered_model(model.name)
+        client.delete_registered_model(model.name)
 
 
 def test_create_deployment(mlflow_model: RegisteredModel):

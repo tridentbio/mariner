@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from fastapi.datastructures import UploadFile
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Optional, Union
@@ -112,7 +113,7 @@ def verify_password_reset_token(token: str) -> Optional[str]:
 
 def hash_md5(
     data: Optional[bytes] = None,
-    file: Optional[Union[str, Path, BinaryIO]] = None,
+    file: Optional[Union[str, Path, BinaryIO, UploadFile]] = None,
     chunk_size=4096,
 ):
     hash_md5 = hashlib.md5()
@@ -123,8 +124,11 @@ def hash_md5(
             with open(file, "rb") as f:
                 for chunk in iter(lambda: f.read(chunk_size), b""):
                     hash_md5.update(chunk)
-        elif isinstance(file, (BinaryIO, UploadFile)):
-            for chunk in iter(lambda: f.read(chunk_size), b""):
+        elif isinstance(file, UploadFile):
+            for chunk in iter(lambda: file.file.read(chunk_size), b""):
+                hash_md5.update(bytes(chunk))
+        elif isinstance(file, BinaryIO):
+            for chunk in iter(lambda: file.read(chunk_size), b""):
                 hash_md5.update(chunk)
     else:
         raise TypeError('Either "content" or "fname" should be provided')
