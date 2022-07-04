@@ -1,7 +1,7 @@
 """Change dataset name to be unique
 
 Revision ID: 474957253b99
-Revises: 69359f98ade3
+Revises: 2f6015f0107c
 Create Date: 2022-07-04 16:01:01.892030
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '474957253b99'
-down_revision = '69359f98ade3'
+down_revision = '2f6015f0107c'
 branch_labels = None
 depends_on = None
 

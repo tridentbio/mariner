@@ -117,6 +117,8 @@ services:
     env_file:
       - .env.local.ray
     environment:
+      - SERVER_NAME=${DOMAIN?Variable not set}
+      - SERVER_HOST=https://${DOMAIN?Variable not set}
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
@@ -137,6 +139,8 @@ services:
       - .env
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SERVER_NAME=${DOMAIN?Variable not set}
+      - SERVER_HOST=https://${DOMAIN?Variable not set}
       - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
     command: bash -c "poetry run ray start --address=ray-head:6379 --num-cpus=1 --block" 

@@ -3,6 +3,7 @@ from typing import Dict, Generator
 
 import mlflow
 import pytest
+import yaml
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from starlette import status
@@ -12,6 +13,7 @@ from app.core.config import settings
 from app.db.session import SessionLocal
 from app.features.dataset.model import Dataset
 from app.features.model.model import Model as ModelEntity
+from app.features.model.schema.configs import ModelConfig
 from app.features.model.schema.model import Model, ModelCreate
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
@@ -120,32 +122,29 @@ def some_dataset(
 
 
 # MODEL GLOBAL FIXTURES
-def mock_model(created_by: User) -> ModelCreate:
-    return ModelCreate(
-        name=random_lower_string(),
-        model_description=random_lower_string(),
-        model_version_description=random_lower_string(),
-        created_by_id=created_by.id,
-    )
+def mock_model() -> ModelCreate:
+    model_path = "app/tests/data/test_model_hard.yaml"
+    with open(model_path, "rb") as f:
+        config_dict = yaml.unsafe_load(f.read())
+        model = ModelCreate(
+            name=random_lower_string(),
+            model_description=random_lower_string(),
+            model_version_description=random_lower_string(),
+            config=ModelConfig.parse_obj(config_dict),
+        )
+        assert ModelCreate.validate(model.dict())
+        return model
 
 
 def setup_create_model(db: Session, client: TestClient, headers):
-    user = get_test_user(db)
-    model = mock_model(user)
-    model_path = "app/tests/data/model.pt"
-    data = {
-        "name": model.name,
-        "description": model.model_description,
-        "versionDescription": model.model_version_description,
-    }
-    with open(model_path, "rb") as f:
-        res = client.post(
-            f"{settings.API_V1_STR}/models/",
-            data=data,
-            files={"file": ("model.pt", f)},
-            headers=headers,
-        )
-        assert res.status_code == status.HTTP_200_OK
+    model = mock_model()
+    data = model.dict()
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        json=data,
+        headers=headers,
+    )
+    assert res.status_code == status.HTTP_200_OK
     return Model.parse_obj(res.json())
 
 
