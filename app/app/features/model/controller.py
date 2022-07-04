@@ -2,14 +2,18 @@ from typing import Any, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from fastapi.datastructures import UploadFile
 from sqlalchemy.orm.session import Session
 
 from app.core import mlflowapi
 from app.features.model import generate
+from app.features.model.builder import CustomModel
 from app.features.model.crud import repo
 from app.features.model.deployments.crud import repo as deployment_repo
-from app.features.model.deployments.schema import Deployment, DeploymentCreate
+from app.features.model.deployments.schema import (
+    Deployment,
+    DeploymentCreate,
+    DeploymentCreateRepo,
+)
 from app.features.model.exceptions import ModelNotFound
 from app.features.model.schema import layers_schema
 from app.features.model.schema.configs import ModelOptions
@@ -25,10 +29,11 @@ from app.schemas.api import ApiBaseModel
 
 def create_model(
     db: Session,
+    user: UserEntity,
     model_create: ModelCreate,
-    torchmodel: UploadFile,
 ) -> Model:
     client = mlflowapi.create_tracking_client()
+    torchmodel = CustomModel(model_create.config)
     mlflow_reg_model, version = mlflowapi.create_registered_model(
         client,
         model_create.name,
@@ -39,9 +44,7 @@ def create_model(
     model = Model.from_orm(
         repo.create(
             db,
-            obj_in=ModelCreateRepo(
-                name=model_create.name, created_by_id=model_create.created_by_id
-            ),
+            obj_in=ModelCreateRepo(name=model_create.name, created_by_id=user.id),
         )
     )
     assert version is not None
@@ -56,12 +59,20 @@ def create_model_deployment(
         deployment_create.model_name,
         deployment_create.model_version,
     )
-    endpoint_name = f"{user.id}/{model_name}/{latest_version}"
+    endpoint_name = f"{user.id}-{model_name}-{latest_version}"
     mlflowapi.create_deployment_with_endpoint(
         deployment_name=endpoint_name,
         model_uri=f"models:/{model_name}/{latest_version}",
     )
-    deployment_entity = deployment_repo.create(db, obj_in=deployment_create)
+    deployment_entity = deployment_repo.create(
+        db,
+        obj_in=DeploymentCreateRepo(
+            created_by_id=user.id,
+            name=deployment_create.name,
+            model_name=deployment_create.model_name,
+            model_version=deployment_create.model_version,
+        ),
+    )
     return Deployment.from_orm(deployment_entity)
 
 
