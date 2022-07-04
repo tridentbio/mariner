@@ -11,7 +11,6 @@ from mlflow.deployments.base import BaseDeploymentClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
-from ray import serve
 
 from app.features.model.schema.model import Model
 from app.tests.data.torch_target_model import ExampleModel
@@ -21,10 +20,10 @@ def create_model_version(
     client: mlflow.tracking.MlflowClient,
     name: str,
     file: UploadFile,
-    artifact_path = 's3://dev-mariner-datasets',
+    artifact_path="s3://dev-mariner-datasets",
     desc: Optional[str] = None,
 ) -> ModelVersion:
-    print('ARTIFACT PATH', artifact_path)
+    print("ARTIFACT PATH", artifact_path)
     file = io.BytesIO(file.file.read())
     model = ExampleModel()
     if not artifact_path:
