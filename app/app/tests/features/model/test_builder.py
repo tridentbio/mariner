@@ -41,5 +41,5 @@ def test_model_build(db: Session, some_dataset: Dataset):
         assert out is not None
         trainer = Trainer(max_epochs=2)
         trainer.fit(model, loader)
-        ## Trains without error
+        # Trained without error
         # TODO: check against another implementation of same model

@@ -52,7 +52,7 @@ def get_test_user(db: Session) -> User:
     return user
 
 
-## DATASET GLOBAL FIXTURES
+# DATASET GLOBAL FIXTURES
 def mock_dataset():
     descriptions = [
         {
@@ -105,7 +105,7 @@ def teardown_create_dataset(db: Session, dataset: Dataset):
     db.commit()
     try:
         delete_s3_file(bucket=Bucket.Datasets, key=ds.data_url)
-    except:
+    except Exception:
         pass
 
 
@@ -119,7 +119,7 @@ def some_dataset(
     teardown_create_dataset(db, ds)
 
 
-## MODEL GLOBAL FIXTURES
+# MODEL GLOBAL FIXTURES
 def mock_model(created_by: User) -> ModelCreate:
     return ModelCreate(
         name=random_lower_string(),
