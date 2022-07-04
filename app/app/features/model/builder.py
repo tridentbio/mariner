@@ -1,71 +1,135 @@
 from typing import Dict, List, Union
 
+from typing import Union, List
+from torch_geometric.loader import DataLoader
+from torch.utils.data import Dataset as nnDataset
+from app.features.dataset.model import Dataset
+from app.features.model.schema.configs import ModelConfig
+
 import networkx as nx
 import pandas as pd
 import torch
 import torch_geometric.nn as geom_nn
 from sqlalchemy.orm.session import Session
 from torch import nn
+from torch.nn import functional as F, ReLU, Sigmoid
 from torch.utils.data import Dataset as TorchDataset
+from torch.optim import Adam
 from torch_geometric.data import Batch
 from torch_geometric.data.data import Data
 
 from app.features.dataset.crud import CRUDDataset
 from app.features.model.layers import Concat, GlobalPooling
 from app.features.model.schema.configs import FeaturizersType, ModelConfig
+from pytorch_lightning import LightningModule
 
 # detour. how to check the forward signature?
 edge_index_classes = geom_nn.MessagePassing
 pooling_classes = GlobalPooling
 
+edge_index_classes = ( geom_nn.MessagePassing )
+pooling_classes = ( GlobalPooling )
+activations = (ReLU, Sigmoid)
 
 def is_message_passing(layer):
-    """x = layer(x, edge_index)"""
+    """ x = layer(x, edge_index) """
     return isinstance(layer, geom_nn.MessagePassing)
 
-
 def is_graph_pooling(layer):
-    """x = layer(x, batch)"""
+    """ x = layer(x, batch) """
     return isinstance(layer, pooling_classes)
-
 
 def is_concat_layer(layer):
     return isinstance(layer, Concat)
 
+def is_graph_activation(layer, layers_dict, previous):
+    """
+    takes the a dictionary with nn.Modules and the keys of
+    previous layers, checking if 
+    """
+    if not isinstance(layer, activations):
+        return False
+    for name in previous:
+        if is_message_passing(layers_dict[name]) or is_graph_pooling(layers_dict[name]):
+            return True
+    return False
 
-CustomDatasetIn = Dict[str, Union[torch.Tensor, Data]]
 
+class CustomModel(LightningModule):
 
-class CustomModel(torch.nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
+        
         self.config = config
+
         layers_dict = {}
         for layer in config.layers:
             layers_dict[layer.name] = layer.create()
+
         self.layers = torch.nn.ModuleDict(layers_dict)
-        self.layer_configs = {layer.type: layer for layer in config.layers}
-        graph = config.make_graph()
-        self.topo_sorting = nx.topological_sort(graph)
 
-    def forward(self, x: CustomDatasetIn):
-        outs = x.copy()
-        for layer_name in self.topo_sorting:
+        self.layer_configs = {
+            l.name: l for l in config.layers
+        }
+
+        self.graph = config.make_graph()
+        self.topo_sorting = list(nx.topological_sort(self.graph))
+        
+    def configure_optimizers(self):
+        return Adam(self.parameters(), lr=1e-3)
+    
+    def training_step(self, batch, _batch_idx):
+        x, y = batch
+        logits = self(x)
+        # TODO: adapt loss to problem type. MSE will only work for regression
+        loss = F.mse_loss(logits, y)
+        return loss
+    
+    def forward(self, input_: Dict[str, Union[Data, torch.Tensor]]):
+        storage = input_.copy()
+
+        assert len(self.topo_sorting) >= 1, "empty graph not allowed"
+        for node_name in self.topo_sorting:
+            if not node_name in self.layers:
+                continue
+            layer_name = node_name
             layer = self.layers[layer_name]
-            inputs = self.layer_configs[layer_name].input
-
-            if is_message_passing(layer):
-                x, edge_index = inputs.x, inputs.edge_index
-                outs[layer_name] = layer(x, edge_index)
+            layer_config = self.layer_configs[layer_name]
+            previous_layers = [p_layer for p_layer, c_layer in self.graph.in_edges(layer_name)]
+            inputs = if_str_make_list(layer_config.input)
+            # Step 2
+            # Transform and preprocess the input and output based on the previous
+            # and next layers.
+            if is_message_passing(layer) or is_graph_activation(layer, self.layers, previous_layers):
+                assert len(inputs) == 1, f"Length of a gnn layer's inputs should be at most 1. inputs = {inputs}"
+                src = inputs[0]
+                assert isinstance(storage[src], Data)
+                x, edge_index = storage[src].x, storage[src].edge_index
+                x, edge_index = layer(x=x, edge_index=edge_index), edge_index
+                storage[layer_name] = Data(x=x, edge_index=edge_index)
+            # 2.2   - if its an pooling layer it always have just one input
+            #         and the input is composed by x (node_features) from the last layer
+            #         and the batch that comes with the data object
             elif is_graph_pooling(layer):
-                x, batch = inputs.x, inputs.batch
-                outs[layer_name] = layer(x, batch)
-            else:  # concat layers and normal layers
-                if isinstance(inputs, str):  # arrays only
-                    inputs = [inputs]
-                inputs = [outs[input_name] for input_name in inputs]
-                outs[layer_name] = layer(*inputs)
-            last = outs[layer_name]
+                assert len(inputs) == 1, f"Length of a gnn layer's inputs should be at most 1. inputs = {inputs}"
+                src = inputs[0]
+                assert isinstance(storage[src], Data)
+                x, batch = storage[src].x, storage[src].batch
+                storage[layer_name] = layer(x=x, batch=batch)
+            # 2.3   - if its an activation or a mlp/normal layer we need to check the
+            #         previous layers to make sure that the input is in t;he correct format
+            #         and check the next layers to format the output
+            elif is_concat_layer(layer):
+                assert len(inputs) == 2, f"Length of a concat layer's inputs should be 2. inputs = {inputs}"
+                x1, x2 = storage[inputs[0]], storage[inputs[1]]
+                storage[layer_name] = layer(x1,x2)
+            else:
+                input_values = [ 
+                    storage[input]
+                    for input in inputs
+                ]
+                storage[layer_name] = layer(*input_values)
+            last = storage[layer_name]
         return last
 
 
@@ -75,55 +139,56 @@ def build_model_from_yaml(yamlstr: str) -> nn.Module:
     return model
 
 
-class BuilderDataset(TorchDataset):
-    def __init__(
-        self,
-        dataframe: pd.DataFrame,
-        target_col: str,
-        feature_columns: List[str],
-        featurizers: List[FeaturizersType],
-    ):
-        self.target_col = target_col
-        self.feature_columns = feature_columns
-        self.data = dataframe
-        self.featurizer_configs = {
-            featurizer.name: featurizer for featurizer in featurizers
-        }
-        self.featurizers = {
-            featurizer.name: featurizer.create() for featurizer in featurizers
-        }
-        self.callables = {}
+def if_str_make_list(str_or_list: Union[str, List[str]]) -> List[str]:
+    if isinstance(str_or_list, str):
+        return [str_or_list]
+    return str_or_list
 
+class CustomDataset(nnDataset):
+    def __init__(self, dataset: Dataset, model_config: ModelConfig):
+        super().__init__()
+        self.dataset = dataset
+        self.model_config = model_config
+        self.df = dataset.get_dataframe()
+        # maps featurizer name to actual featurizer instance
+        self.featurizers_dict = { f.name: f.create() for f in model_config.featurizers }
+        # maps featurizer name to featurizer config
+        self.featurizer_configs = { f.name: f for f in model_config.featurizers }
+        
     def __len__(self):
-        return len(self.data)
+        return len(self.df)
+    
+    def get_not_featurized(self):
+        is_col_featurized = {
+            col: False 
+            for col in self.model_config.dataset.feature_columns
+        }
+        for feat_config in self.featurizer_configs.values():
+            inputs = if_str_make_list(feat_config.input)
+            for input in inputs:
+                is_col_featurized[input] = True
+        not_featurized = [
+            col
+            for col, is_featurized in is_col_featurized.items()
+            if not is_featurized
+        ]
+        return not_featurized
 
-    def split_featurized_and_not(self):
-        featurized = {col: False for col in self.feature_columns}
-        for _, feat in self.featurizer_configs.items():
-            for col in feat.column_names:
-                featurized[col] = True
-        featurized_cols = {col: True for col in featurized if featurized[col]}.keys()
-        unfeaturized_cols = {
-            col: True for col in featurized if not featurized[col]
-        }.keys()
-
-        return featurized_cols, unfeaturized_cols
-
-    def __getitem__(self, idx: int):
-        sample = dict(self.data.iloc[idx, :])
-        _, not_featurized_columns = self.split_featurized_and_not()
-        out = {}
-        for feat_name, feat in self.featurizers.items():
-            [col] = self.featurizer_configs[feat_name].column_names
-            graph = feat(sample[col])
-            out[feat_name] = graph  # torch_geometric Data class
-        batch = Batch([g for _, g in out.items()])
-        batch.featurizers = [feat for _, feat in self.featurizers.items()]
-        batch.not_featurized_columns = not_featurized_columns
-        batch.not_featurized = self.data.loc[idx, not_featurized_columns]
-        batch.y = torch.Tensor([sample[self.target_col]])
-        return batch
-
+    def __getitem__(self, idx):
+        sample = {}
+        target_column = self.model_config.dataset.target_column
+        y = torch.Tensor([self.df.loc[idx, [target_column]]])
+        not_featurized_cols = self.get_not_featurized()
+        for column in not_featurized_cols:
+            # TODO, validate columns. For now assuming are all scalars
+            sample[column] = torch.Tensor([self.df.loc[idx, column]])
+        for feat_name, feat in self.featurizers_dict.items():
+            feat_config = self.featurizer_configs[feat_name]
+            inputs = if_str_make_list(feat_config.input)
+            assert len(inputs) == 1, "Only featurizers with a single input for now"
+            sample[feat_name] = feat(self.df.loc[idx, inputs[0]])
+        
+        return sample, y
 
 def build_dataset(
     model_config: ModelConfig,
@@ -131,12 +196,4 @@ def build_dataset(
     db: Session,
 ) -> TorchDataset:
     dataset = dataset_repo.get_by_name(db, model_config.dataset.name)
-    ds_config = model_config.dataset
-    df = dataset.get_dataframe()
-    featurizers = [model_config.featurizer]
-    return BuilderDataset(
-        df,
-        target_col=ds_config.target_column,
-        feature_columns=ds_config.feature_columns,
-        featurizers=featurizers,
-    )
+    return CustomDataset(dataset, model_config)
