@@ -1,7 +1,7 @@
 from pathlib import Path
-from fastapi.datastructures import UploadFile
 
 import pytest
+from fastapi.datastructures import UploadFile
 
 from app.utils import hash_md5
 
@@ -13,7 +13,7 @@ def test_hash_md5(tmp_path: Path):
     file2.touch()
     file1.write_bytes(b"foo")
     file2.write_bytes(b"foo")
-    with open(file1, 'rb') as file3:
+    with open(file1, "rb") as file3:
         uploadfile = UploadFile("file3", file3)
         assert hash_md5(data=b"foo") == hash_md5(file=file1)
         assert hash_md5(file=uploadfile) == hash_md5(file=file1)

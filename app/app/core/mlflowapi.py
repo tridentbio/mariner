@@ -1,11 +1,10 @@
-import io
 from typing import Optional, Union
 
 import mlflow
 import mlflow.pyfunc
 import mlflow.pytorch
 import mlflow.tracking
-from fastapi.datastructures import UploadFile
+import torch
 from mlflow.deployments import get_deploy_client
 from mlflow.deployments.base import BaseDeploymentClient
 from mlflow.entities.model_registry.model_version import ModelVersion
@@ -13,19 +12,15 @@ from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 
 from app.features.model.schema.model import Model
-from app.tests.data.torch_target_model import ExampleModel
 
 
 def create_model_version(
     client: mlflow.tracking.MlflowClient,
     name: str,
-    file: UploadFile,
+    model: torch.nn.Module,
     artifact_path="s3://dev-mariner-datasets",
     desc: Optional[str] = None,
 ) -> ModelVersion:
-    print("ARTIFACT PATH", artifact_path)
-    file = io.BytesIO(file.file.read())
-    model = ExampleModel()
     if not artifact_path:
         artifact_path = name
     active_run = mlflow.active_run()
@@ -51,7 +46,7 @@ def create_tracking_client():
 def create_registered_model(
     client: mlflow.tracking.MlflowClient,
     name: str,
-    torchscript: Optional[UploadFile] = None,
+    torchscript: Optional[torch.nn.Module] = None,
     tags: Optional[dict[str, str]] = None,
     description: Optional[str] = None,
     version_description: Optional[str] = None,
@@ -65,10 +60,15 @@ def create_registered_model(
     return registered_model, version
 
 
+_client = None
+
+
 def get_deployment_plugin() -> BaseDeploymentClient:
-    client = get_deploy_client("ray-serve://ray-head:10001")
-    assert client is not None
-    return client
+    global _client
+    if _client is None:
+        _client = get_deploy_client("ray-serve://ray-head:10001")
+        assert _client is not None
+    return _client
 
 
 def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
