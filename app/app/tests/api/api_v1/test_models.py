@@ -2,7 +2,6 @@ from typing import List
 
 import mlflow.pyfunc
 import pandas as pd
-import pytest
 from sqlalchemy.orm.session import Session
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
@@ -135,15 +134,11 @@ def test_post_predict(
     df = pd.DataFrame(
         {
             "smiles": [
-                'CCCC',
-                'CCCCC',
-                'CCCCCCC',
+                "CCCC",
+                "CCCCC",
+                "CCCCCCC",
             ],
-            "exp": [
-                0.3,
-                0.1,
-                0.9
-            ]
+            "exp": [0.3, 0.1, 0.9],
         }
     )
     data = df.to_json()
