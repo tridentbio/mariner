@@ -1,8 +1,7 @@
-from typing import Any, Optional
+from typing import Any
 
-from fastapi.datastructures import UploadFile
 from fastapi.exceptions import HTTPException
-from fastapi.param_functions import Depends, File, Form
+from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
 from pandas.core.frame import DataFrame
 from pydantic.main import BaseModel
@@ -25,22 +24,14 @@ router = APIRouter()
     response_model=Model,
 )
 def create_model(
+    model_create: ModelCreate,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
-    name: str = Form(...),
-    file: UploadFile = File(None),
-    description: Optional[str] = Form(None),
-    version_description: Optional[str] = Form(None),
 ) -> Model:
     model = controller.create_model(
         db,
-        ModelCreate(
-            name=name,
-            created_by_id=current_user.id,
-            model_description=description,
-            model_version_description=version_description,
-        ),
-        file,
+        current_user,
+        model_create,
     )
     return model
 

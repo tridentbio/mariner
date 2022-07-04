@@ -1,6 +1,5 @@
 import hashlib
 import logging
-from fastapi.datastructures import UploadFile
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Optional, Union
