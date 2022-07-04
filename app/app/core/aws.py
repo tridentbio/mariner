@@ -1,6 +1,5 @@
 import enum
 import io
-from typing import Optional
 
 import boto3
 import pandas as pd
@@ -24,9 +23,9 @@ def create_s3_client():
     return s3
 
 
-def upload_s3_file(file: UploadFile, bucket: Bucket, key: Optional[str] = None):
+def upload_s3_file(file: UploadFile, bucket: Bucket, key):
     s3 = create_s3_client()
-    s3.upload_fileobj(file.file, bucket, key)
+    s3.upload_fileobj(file.file, bucket.value, key)
 
 
 def download_file_as_dataframe(bucket: Bucket, key: str) -> pd.DataFrame:
