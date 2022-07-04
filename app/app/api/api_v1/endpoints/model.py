@@ -1,5 +1,6 @@
 from typing import Any
 
+import torch
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
@@ -82,5 +83,9 @@ def post_predict(
         )
     except ModelNotFound:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Model Not Found")
-    assert isinstance(prediction, DataFrame)
-    return prediction.to_json()
+    if isinstance(prediction, torch.Tensor):
+        return prediction.tolist()
+    elif isinstance(prediction, DataFrame):
+        return prediction.to_json()
+    else:
+        raise TypeError("Unexpected model output")
