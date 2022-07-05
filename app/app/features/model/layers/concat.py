@@ -3,6 +3,9 @@ from torch import nn
 
 
 class Concat(nn.Module):
+    '''
+    A helper layer that concatenates the outputs of 2 other layers
+    '''
     def __init__(self):
         super().__init__()
 
