@@ -2,7 +2,6 @@ from typing import List
 
 import mlflow.pyfunc
 import pandas as pd
-import pytest
 from sqlalchemy.orm.session import Session
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
@@ -11,8 +10,7 @@ from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
 from app.features.model import generate
 from app.features.model.schema.model import Model
-from app.tests.conftest import get_test_user
-from app.tests.fixtures.model import mock_model
+from app.tests.conftest import get_test_user, mock_model
 from app.tests.utils.utils import random_lower_string
 
 
@@ -21,32 +19,22 @@ def test_post_models_success(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
 ):
-    model_path = "app/tests/data/model.pt"
     user = get_test_user(db)
-    model = mock_model(user)
-    model_name = model.name
-    model_description = model.model_description
-    model_version_description = model.model_version_description
-    with open(model_path, "rb") as f:
-        res = client.post(
-            f"{settings.API_V1_STR}/models/",
-            data={
-                "name": model_name,
-                "description": model_description,
-                "version_description": model_version_description,
-            },
-            files={"file": ("model.pt", f)},
-            headers=normal_user_token_headers,
-        )
-        body = res.json()
-        assert res.status_code == HTTP_200_OK
-        assert body["name"] == model_name
-        assert body["createdById"] == user.id
-        assert body["modelDescription"] == model_description
-        assert body["modelVersionDescription"] == model_version_description
-        assert len(body["latestVersions"]) == 1
-        model = mlflow.pyfunc.load_model(model_uri=f"models:/{model_name}/1")
-        assert model is not None
+    model = mock_model()
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        json=model.dict(),
+        headers=normal_user_token_headers,
+    )
+    body = res.json()
+    assert res.status_code == HTTP_200_OK
+    assert body["name"] == model.name
+    assert body["createdById"] == user.id
+    assert body["modelDescription"] == model.model_description
+    assert body["modelVersionDescription"] == model.model_version_description
+    assert len(body["latestVersions"]) == 1
+    model = mlflow.pyfunc.load_model(model_uri=f"models:/{model.name}/1")
+    assert model is not None
 
 
 def test_get_models_success(
@@ -66,7 +54,6 @@ def test_get_models_success(
     assert len(models) > 0
     assert total > 0
     for model in models:
-        print(model)
         assert model["createdById"] == user.id
 
 
@@ -75,8 +62,8 @@ def test_post_models_deployment(
 ):
     data = {
         "name": random_lower_string(),
-        "model_name": some_model.name,
-        "model_version": int(some_model.latest_versions[-1]["version"]),
+        "modelName": some_model.name,
+        "modelVersion": int(some_model.latest_versions[-1]["version"]),
     }
     res = client.post(
         f"{settings.API_V1_STR}/deployments/",
@@ -84,8 +71,10 @@ def test_post_models_deployment(
         headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK
+    body = res.json()
+    assert body["modelName"] == data["modelName"]
     plugin = get_deployment_plugin()
-    assert len(plugin.list_endpoints()) >= 1
+    assert len(plugin.list_deployments()) >= 1
 
 
 def test_get_model_options(
@@ -135,15 +124,12 @@ def test_post_predict(
     df = pd.DataFrame(
         {
             "smiles": [
-                'CCCC',
-                'CCCCC',
-                'CCCCCCC',
+                "CCCC",
+                "CCCCC",
+                "CCCCCCC",
             ],
-            "exp": [
-                0.3,
-                0.1,
-                0.9
-            ]
+            "mwt": [0.3, 0.1, 0.9],
+            "tpsa": [0.3, 0.1, 0.9],
         }
     )
     data = df.to_json()

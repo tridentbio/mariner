@@ -6,6 +6,7 @@ from mlflow.entities.model_registry.registered_model import (
 )
 from pydantic.main import BaseModel
 
+from app.features.model.schema.configs import ModelConfig
 from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
 
@@ -67,4 +68,4 @@ class ModelCreate(ApiBaseModel):
     name: str
     model_description: Optional[str] = None
     model_version_description: Optional[str] = None
-    created_by_id: int
+    config: ModelConfig
