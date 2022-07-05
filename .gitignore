@@ -5,3 +5,4 @@ __pycache__/
 .env
 .ipynb_checkpoints/
 dev-mariner-datasets/
+lightning_logs/

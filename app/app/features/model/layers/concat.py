@@ -7,4 +7,4 @@ class Concat(nn.Module):
         super().__init__()
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor):
-        return torch.cat([x1, x2])
+        return torch.cat([x1, x2], dim=-1)
