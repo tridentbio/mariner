@@ -1,5 +1,7 @@
 from typing import List
 
+from pydantic.networks import AnyHttpUrl
+
 import mlflow.pyfunc
 import pandas as pd
 from sqlalchemy.orm.session import Session
@@ -91,10 +93,19 @@ def test_get_model_options(
     assert len(payload["featurizers"]) > 0
     layer_types: List[str] = [layer["type"] for layer in payload["layers"]]
     featurizer_types: List[str] = [layer["type"] for layer in payload["featurizers"]]
+
+    def assert_component_info(component_dict: dict):
+        assert 'docs' in component_dict
+        assert 'docsLink' in component_dict
+        assert isinstance(component_dict['docs'], str)
+        assert AnyHttpUrl(component_dict['docs'], scheme="https") is not None
     for comp in generate.layers:
         assert comp.name in layer_types
     for comp in generate.featurizers:
         assert comp.name in featurizer_types
+
+    for layer_payload in payload["layers"] + payload['featurizers']:
+        assert_component_info(layer_payload)
 
 
 def test_add_version_to_model():
