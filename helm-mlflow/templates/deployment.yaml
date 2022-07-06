@@ -61,18 +61,18 @@ spec:
               containerPort: {{ .Values.image.containerPort }}
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: {{ .Values.image.livenessProbe.path }}
-              port: {{ .Values.image.livenessProbe.port }}
+            exec:
+              command:
+              - ls
             initialDelaySeconds: {{ .Values.image.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.image.livenessProbe.periodSeconds }}
             successThreshold: {{ .Values.image.livenessProbe.successThreshold }}
             failureThreshold: {{ .Values.image.livenessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.image.livenessProbe.timeoutSeconds }}
           readinessProbe:
-            httpGet:
-              path: {{ .Values.image.readinessProbe.path }}
-              port: {{ .Values.image.readinessProbe.port }}
+            exec:
+              command:
+              - ls
             initialDelaySeconds: {{ .Values.image.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.image.readinessProbe.periodSeconds }}
             successThreshold: {{ .Values.image.readinessProbe.successThreshold }}
