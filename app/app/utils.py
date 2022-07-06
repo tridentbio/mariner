@@ -1,10 +1,12 @@
+import hashlib
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, BinaryIO, Dict, Optional, Union
 
 import emails
 from emails.template import JinjaTemplate
+from fastapi.datastructures import UploadFile
 from jose import JWTError, jwt
 
 from app.core.config import settings
@@ -106,3 +108,27 @@ def verify_password_reset_token(token: str) -> Optional[str]:
         return decoded_token["email"]
     except JWTError:
         return None
+
+
+def hash_md5(
+    data: Optional[bytes] = None,
+    file: Optional[Union[str, Path, BinaryIO, UploadFile]] = None,
+    chunk_size=4096,
+):
+    hash_md5 = hashlib.md5()
+    if data:
+        hash_md5.update(data)
+    elif file:
+        if isinstance(file, (str, Path)):
+            with open(file, "rb") as f:
+                for chunk in iter(lambda: f.read(chunk_size), b""):
+                    hash_md5.update(chunk)
+        elif isinstance(file, UploadFile):
+            for chunk in iter(lambda: file.file.read(chunk_size), b""):
+                hash_md5.update(bytes(chunk))
+        elif isinstance(file, BinaryIO):
+            for chunk in iter(lambda: file.read(chunk_size), b""):
+                hash_md5.update(chunk)
+    else:
+        raise TypeError('Either "content" or "fname" should be provided')
+    return hash_md5.hexdigest()
