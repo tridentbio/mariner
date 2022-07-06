@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ include "chart.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    helm.sh/chart: {{ include "chart.chart" . }}
+    app.kubernetes.io/version: {{ .Release.Name }}-v1
+    version: {{ .Release.Name }}-v1
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ include "chart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      helm.sh/chart: {{ include "chart.chart" . }}
+      app.kubernetes.io/version: {{ .Release.Name }}-v1
+      version: {{ .Release.Name }}-v1
+  strategy:
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+        {{- with .Values.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        app: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ include "chart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        helm.sh/chart: {{ include "chart.chart" . }}
+        app.kubernetes.io/version: {{ .Release.Name }}-v1
+        version: {{ .Release.Name }}-v1
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "chart.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Release.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:latest"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.image.containerPort }}-tcp
+              containerPort: {{ .Values.image.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.image.livenessProbe.path }}
+              port: {{ .Values.image.livenessProbe.port }}
+            initialDelaySeconds: {{ .Values.image.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.image.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.image.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.image.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.image.livenessProbe.timeoutSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.image.readinessProbe.path }}
+              port: {{ .Values.image.readinessProbe.port }}
+            initialDelaySeconds: {{ .Values.image.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.image.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.image.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.image.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.image.readinessProbe.timeoutSeconds }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
