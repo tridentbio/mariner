@@ -63,6 +63,7 @@ class LayerAnnotation(ApiBaseModel):
     num_inputs: int
     num_outputs: int
     rules: List[LayerRule]
+    class_path: str
 
 
 class ModelOptions(ApiBaseModel):
