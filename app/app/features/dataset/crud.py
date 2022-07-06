@@ -3,9 +3,8 @@ from typing import Any, Dict, Union
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
-
-from .model import ColumnDescription, ColumnsMetadata, Dataset
-from .schema import (
+from app.db.base import ColumnDescription, ColumnsMetadata, Dataset
+from app.features.dataset.schema import (
     DatasetCreateRepo,
     DatasetsQuery,
     DatasetUpdate,
