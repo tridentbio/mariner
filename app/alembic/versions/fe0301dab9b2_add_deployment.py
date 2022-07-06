@@ -1,8 +1,8 @@
-"""Add deployment entity
+"""add deployment
 
-Revision ID: 69359f98ade3
-Revises: 2f6015f0107c
-Create Date: 2022-06-14 19:44:25.864233
+Revision ID: fe0301dab9b2
+Revises: 474957253b99
+Create Date: 2022-07-04 20:57:01.316627
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '69359f98ade3'
-down_revision = '2f6015f0107c'
+revision = 'fe0301dab9b2'
+down_revision = '474957253b99'
 branch_labels = None
 depends_on = None
 
@@ -21,6 +21,7 @@ def upgrade():
     op.create_table('deployment',
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('model_name', sa.String(), nullable=True),
+    sa.Column('model_version', sa.String(), nullable=True),
     sa.Column('created_by_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_id'], ['user.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['model_name'], ['model.name'], ondelete='SET NULL'),

@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.features.dataset.crud import repo
 from app.features.dataset.model import Dataset as DatasetModel
 from app.features.dataset.schema import DatasetCreateRepo, Split
+from app.tests.utils.utils import random_lower_string
 
 
 def test_get_my_datasets(
@@ -50,7 +51,7 @@ def test_post_datasets(
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
             data={
-                "name": "Test dataset",
+                "name": random_lower_string(),
                 "description": "Test description",
                 "splitType": "random",
                 "splitTarget": "60-20-20",
@@ -111,8 +112,8 @@ def test_put_datasets(
     db.flush()
     updated = repo.get(db, response["id"])
     updated = db.query(DatasetModel).filter(DatasetModel.id == dataset.id).first()
-    assert updated.id == response["id"]
     assert updated is not None
+    assert updated.id == response["id"]
     assert updated.name == new_name
 
 

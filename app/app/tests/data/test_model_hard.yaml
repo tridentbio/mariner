@@ -1,10 +1,11 @@
 name: GNNExample
 dataset:
-  name: test_dataset_2
-  target_column: "tpsa"
+  name: Small Zinc dataset
+  target_column: tpsa
   feature_columns:
     - smiles
     - mwt
+
 featurizers:
   - name: MolToGraphFeaturizer
     type: app.features.model.featurizers.MoleculeFeaturizer
@@ -14,51 +15,69 @@ featurizers:
       allow_unknown: false
       sym_bond_list: true
       per_atom_fragmentation: false
+
 layers:
+
   # Start fst branch (from featurizer)
   - name: GCN1
     type: torch_geometric.nn.GCNConv
     args:
-      in_channels: 30
+      in_channels: 26
       out_channels: 64
     input: MolToGraphFeaturizer
+
   - name: GCN1_Activation
     type: torch.nn.ReLU
     input: GCN1
+
   - name: GCN2 
     type: torch_geometric.nn.GCNConv
     input: GCN1_Activation
     args:
       in_channels: 64
       out_channels: 64
+
   - name: GCN2_Activation
     type: torch.nn.ReLU
     input: GCN2
-  - name: GCN3 # an arbitrary name 
+
+  - name: GCN3
     type: torch_geometric.nn.GCNConv
     input: GCN2_Activation
     args:
       in_channels: 64
       out_channels: 64
+
   - name: GCN3_Activation
     type: torch.nn.ReLU
     input: GCN3
+
   - name: AddPool
     type: app.features.model.layers.GlobalPooling
     input: GCN3_Activation
     args:
       aggr: 'sum'
   # End of fst branch
+
   # Second branch would simply be linear layers in mwt
-  - name: Combiner 
+  - name: Linear1
+    type: torch.nn.Linear
+    args:
+      in_features: 1
+      out_features: 10
+    input: mwt
+
+  - name: Combiner
     type: app.features.model.layers.Concat
-    input: ['AddPool', 'mwt']
+    input: ['AddPool', 'Linear1']
+
   - name: LinearJoined
     type: torch.nn.Linear
-    input: AddPool
+    input: Combiner
     args:
-      in_features: 65
+      in_features: 74
       out_features: 1
-  - name: Output
+
+  - name: OutputSigmoid
     type: torch.nn.Sigmoid
     input: LinearJoined
