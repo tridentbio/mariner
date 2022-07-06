@@ -1,9 +1,12 @@
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, get_type_hints
 
 import numpy as np
 import pandas as pd
+import torch
+import torch_geometric
 from sqlalchemy.orm.session import Session
 
+import app.features.model.layers as mariner_layers
 from app.core import mlflowapi
 from app.features.model import generate
 from app.features.model.builder import CustomModel
@@ -16,13 +19,18 @@ from app.features.model.deployments.schema import (
 )
 from app.features.model.exceptions import ModelNotFound
 from app.features.model.schema import layers_schema
-from app.features.model.schema.configs import ModelOptions
+from app.features.model.schema.configs import (
+    LayerAnnotation,
+    LayerRule,
+    ModelOptions,
+)
 from app.features.model.schema.model import (
     Model,
     ModelCreate,
     ModelCreateRepo,
     ModelsQuery,
 )
+from app.features.model.utils import get_class_from_path_string
 from app.features.user.model import User as UserEntity
 from app.schemas.api import ApiBaseModel
 
@@ -86,11 +94,91 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
     return models, total
 
 
+def get_documentation_link(class_path: str) -> Optional[str]:
+    def is_from_pygnn(class_path: str) -> bool:
+        return class_path.startswith("torch_geometric.")
+
+    def is_from_pytorch(class_path: str) -> bool:
+        return class_path.startswith("torch.")
+
+    if is_from_pygnn(class_path):
+        return f"https://pytorch-geometric.readthedocs.io/en/latest/modules/nn.html#{class_path}"
+    elif is_from_pytorch(class_path):
+        return f"https://pytorch.org/docs/stable/generated/torch.nn.Linear.html#{class_path}"
+    return None
+
+
+def remove_indentation_of_section(text: str, section_title: str) -> str:
+    def count_tabs(line: str) -> int:
+        # naive loop over chars
+        total = 0
+        for c in line:
+            if c == " " or c == "\t":
+                total += 1
+            else:
+                break
+        return total
+
+    lines = text.split("\n")
+    start_idx = None
+    tab_size = None
+    end_idx = None
+    for idx, line in enumerate(lines):
+        if section_title in line:
+            start_idx = idx
+            end_idx = start_idx
+            tab_size = count_tabs(line) + 4
+            continue
+        if tab_size is not None and count_tabs(line) >= tab_size:
+            assert end_idx is not None
+            end_idx = end_idx + 1
+        elif start_idx is not None:
+            break
+    if start_idx is None or end_idx is None:
+        return text
+    return "\n".join(lines[:start_idx] + lines[end_idx + 1 :])
+
+
+def get_inputs_outputs_and_rules(component_cls) -> tuple[int, int, List[LayerRule]]:
+    rules = []
+    if issubclass(component_cls, torch_geometric.nn.MessagePassing) or issubclass(
+        component_cls, mariner_layers.GlobalPooling
+    ):
+        rules.append("graph-receiver")
+        return 1, 1, rules
+    elif issubclass(component_cls, mariner_layers.Concat):
+        rules.append("inputs-same-type")
+        return 2, 1, rules
+    elif issubclass(component_cls, torch.nn.Module):
+        type_hints_keys = get_type_hints(component_cls.forward).keys()
+        inputs = len(type_hints_keys) - int("return" in type_hints_keys)
+        return inputs, 1, rules
+    else:
+        type_hints_keys = get_type_hints(component_cls.__call__).keys()
+        inputs = len(type_hints_keys) - int("return" in type_hints_keys)
+        return inputs, 1, rules
+
+
+def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
+    docs_link = get_documentation_link(cls_path)
+    cls = get_class_from_path_string(cls_path)
+    docs = remove_indentation_of_section(cls.__doc__, "Examples:")
+    inputs, outputs, rules = get_inputs_outputs_and_rules(cls)
+    return LayerAnnotation(
+        docs_link=docs_link,
+        docs=docs,
+        num_inputs=inputs,
+        num_outputs=outputs,
+        rules=rules,
+    )
+
+
 def get_model_options() -> ModelOptions:
     layers = []
     featurizers = []
     layer_types = [layer.name for layer in generate.layers]
     featurizer_types = [f.name for f in generate.featurizers]
+    component_annotations = []
     for class_name in dir(layers_schema):
         if class_name.endswith("ArgsTemplate"):
             cls = getattr(layers_schema, class_name)
@@ -99,7 +187,14 @@ def get_model_options() -> ModelOptions:
                 layers.append(cls())
             if instance.type in featurizer_types:
                 featurizers.append(cls())
-    return ModelOptions(layers=layers, featurizers=featurizers)
+    for class_path in layer_types + featurizer_types:
+        annotation = get_annotations_from_cls(class_path)
+        component_annotations.append(annotation)
+    return ModelOptions(
+        layers=layers,
+        featurizers=featurizers,
+        component_annotations=component_annotations,
+    )
 
 
 ModelOutput = Union[np.ndarray, pd.Series, pd.DataFrame, List]

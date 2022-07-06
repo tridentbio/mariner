@@ -1,5 +1,5 @@
 from ast import literal_eval
-from typing import List
+from typing import List, Literal, Optional, Union
 
 import networkx as nx
 import yaml
@@ -51,9 +51,24 @@ class DatasetConfig(ApiBaseModel):
     feature_columns: List[str]
 
 
+MessagePassingRule = Literal["graph-receiver"]
+InputsSameTypeRule = Literal["inputs-same-type"]
+
+LayerRule = Union[MessagePassingRule, InputsSameTypeRule]
+
+
+class LayerAnnotation(ApiBaseModel):
+    docs_link: Optional[str]
+    docs: Optional[str]
+    num_inputs: int
+    num_outputs: int
+    rules: List[LayerRule]
+
+
 class ModelOptions(ApiBaseModel):
     layers: List[LayersArgsType]
     featurizers: List[FeaturizersArgsType]
+    component_annotations: List[LayerAnnotation]
 
 
 class ModelConfig(ApiBaseModel):
