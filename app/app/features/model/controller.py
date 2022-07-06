@@ -170,6 +170,7 @@ def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
         num_inputs=inputs,
         num_outputs=outputs,
         rules=rules,
+        class_path=cls_path
     )
 
 
