@@ -58,7 +58,8 @@ def access_attributes_of_interest(clspath):
         d["not_defaults"] = args[1:last] if defaults else args[1:]
         return d
     raise Exception(
-        f"Failed to inspect type annotations for {clspath}. Is it a class with __init__ implementation?"
+        f"Failed to inspect type annotations for {clspath}. "
+        "Is it a class with __init__ implementation?"
     )
 
 
