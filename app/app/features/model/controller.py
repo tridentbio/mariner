@@ -108,13 +108,15 @@ def get_documentation_link(class_path: str) -> Optional[str]:
     return None
 
 
-def remove_indentation_of_section(text: str, section_title: str) -> str:
+def remove_section_by_identation(text: str, section_title: str) -> str:
     def count_tabs(line: str) -> int:
         # naive loop over chars
         total = 0
         for c in line:
-            if c == " " or c == "\t":
+            if c == " ":
                 total += 1
+            elif c == '\t':
+                total += 2
             else:
                 break
         return total
@@ -162,7 +164,7 @@ def get_inputs_outputs_and_rules(component_cls) -> tuple[int, int, List[LayerRul
 def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
     docs_link = get_documentation_link(cls_path)
     cls = get_class_from_path_string(cls_path)
-    docs = remove_indentation_of_section(cls.__doc__, "Examples:")
+    docs = remove_section_by_identation(cls.__doc__, "Examples:")
     inputs, outputs, rules = get_inputs_outputs_and_rules(cls)
     return LayerAnnotation(
         docs_link=docs_link,
