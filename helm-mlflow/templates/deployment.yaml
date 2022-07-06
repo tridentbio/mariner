@@ -64,20 +64,20 @@ spec:
             exec:
               command:
               - ls
-            initialDelaySeconds: {{ .Values.image.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.image.livenessProbe.periodSeconds }}
-            successThreshold: {{ .Values.image.livenessProbe.successThreshold }}
-            failureThreshold: {{ .Values.image.livenessProbe.failureThreshold }}
-            timeoutSeconds: {{ .Values.image.livenessProbe.timeoutSeconds }}
+            failureThreshold: 10
+            initialDelaySeconds: 180
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
           readinessProbe:
             exec:
               command:
               - ls
-            initialDelaySeconds: {{ .Values.image.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.image.readinessProbe.periodSeconds }}
-            successThreshold: {{ .Values.image.readinessProbe.successThreshold }}
-            failureThreshold: {{ .Values.image.readinessProbe.failureThreshold }}
-            timeoutSeconds: {{ .Values.image.readinessProbe.timeoutSeconds }}
+            failureThreshold: 10
+            initialDelaySeconds: 180
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}
