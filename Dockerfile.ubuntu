@@ -1,0 +1,3 @@
+FROM ubuntu
+# CMD [ "echo", "$TEST" ]
+CMD [ "sh", "-c", "echo $TEST"]
