@@ -16,20 +16,20 @@ image:
   pullPolicy: Always
   tag: latest
   containerPort: 5000
-  livenessProbe:
-    path: /
-    port: 5000
-    periodSeconds: 30
-    successThreshold: 1
-    failureThreshold: 3
-    timeoutSeconds: 1
-  readinessProbe:
-    path: /
-    port: 5000
-    periodSeconds: 30
-    successThreshold: 1
-    failureThreshold: 3
-    timeoutSeconds: 1
+  # livenessProbe:
+  #   path: /
+  #   port: 5000
+  #   periodSeconds: 30
+  #   successThreshold: 1
+  #   failureThreshold: 3
+  #   timeoutSeconds: 1
+  # readinessProbe:
+  #   path: /
+  #   port: 5000
+  #   periodSeconds: 30
+  #   successThreshold: 1
+  #   failureThreshold: 3
+  #   timeoutSeconds: 1
 
 strategy:
   rollingUpdate:
