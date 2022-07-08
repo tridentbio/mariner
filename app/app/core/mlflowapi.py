@@ -40,7 +40,8 @@ def create_model_version(
 
 
 def create_tracking_client():
-    return mlflow.tracking.MlflowClient()
+    client = mlflow.tracking.MlflowClient()
+    return client
 
 
 def create_registered_model(
@@ -91,3 +92,9 @@ def get_model(model: Model, version: Optional[Union[int, str]]):
     mlflowmodel = mlflow.pytorch.load_model(model.get_model_uri(version))
 
     return mlflowmodel
+
+
+def get_model_version(model_name: str, version: str):
+    client = create_tracking_client()
+    mlflowversion = client.get_model_version(model_name, version)
+    return mlflowversion

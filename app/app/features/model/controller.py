@@ -29,6 +29,8 @@ from app.features.model.schema.model import (
     ModelCreate,
     ModelCreateRepo,
     ModelsQuery,
+    ModelVersion,
+    ModelVersionCreateRepo,
 )
 from app.features.model.utils import get_class_from_path_string
 from app.features.user.model import User as UserEntity
@@ -42,21 +44,31 @@ def create_model(
 ) -> Model:
     client = mlflowapi.create_tracking_client()
     torchmodel = CustomModel(model_create.config)
-    mlflow_reg_model, version = mlflowapi.create_registered_model(
+    regmodel, version = mlflowapi.create_registered_model(
         client,
         model_create.name,
         torchmodel,
         description=model_create.model_description,
         version_description=model_create.model_version_description,
     )
-    model = Model.from_orm(
-        repo.create(
+    model = repo.create(
+        db,
+        obj_in=ModelCreateRepo(name=model_create.name, created_by_id=user.id),
+    )
+    version = ModelVersion.from_orm(
+        repo.create_model_version(
             db,
-            obj_in=ModelCreateRepo(name=model_create.name, created_by_id=user.id),
+            version_create=ModelVersionCreateRepo(
+                model_name=model.name,
+                model_version=version.version
+                if isinstance(version.version, str)
+                else str(version.version),
+                config=model_create.config,
+            ),
         )
     )
-    assert version is not None
-    model.set_from_mlflow_model(mlflow_reg_model, versions=[version] if version else [])
+    model = Model.from_orm(repo.get_by_name(db, model.name))
+    model.description = regmodel.description
     return model
 
 
@@ -72,6 +84,7 @@ def create_model_deployment(
         deployment_name=endpoint_name,
         model_uri=f"models:/{model_name}/{latest_version}",
     )
+
     deployment_entity = deployment_repo.create(
         db,
         obj_in=DeploymentCreateRepo(
@@ -102,9 +115,9 @@ def get_documentation_link(class_path: str) -> Optional[str]:
         return class_path.startswith("torch.")
 
     if is_from_pygnn(class_path):
-        return f"https://pytorch-geometric.readthedocs.io/en/latest/modules/nn.html#{class_path}"
+        return f"https://pytorch-geometric.readthedocs.io/en/latest/modules/nn.html#{class_path}"  # noqa: E501
     elif is_from_pytorch(class_path):
-        return f"https://pytorch.org/docs/stable/generated/torch.nn.Linear.html#{class_path}"
+        return f"https://pytorch.org/docs/stable/generated/torch.nn.Linear.html#{class_path}"  # noqa: E501
     return None
 
 
@@ -115,7 +128,7 @@ def remove_section_by_identation(text: str, section_title: str) -> str:
         for c in line:
             if c == " ":
                 total += 1
-            elif c == '\t':
+            elif c == "\t":
                 total += 2
             else:
                 break
@@ -172,7 +185,7 @@ def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
         num_inputs=inputs,
         num_outputs=outputs,
         rules=rules,
-        class_path=cls_path
+        class_path=cls_path,
     )
 
 
