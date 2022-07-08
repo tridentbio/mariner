@@ -8,6 +8,7 @@ class ApiBaseModel(BaseModel):
         allow_population_by_field_name = True
         allow_population_by_alias = True
         orm_mode = True
+        underscore_attrs_are_private = True
 
 
 class PaginatedApiQuery(ApiBaseModel):
