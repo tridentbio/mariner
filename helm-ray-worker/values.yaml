@@ -9,23 +9,23 @@ normal_deploy:
 
 version: mlflow-v1
 
-port: 8265
+port: 5000
 
 image:
   repository: mlflow-dev
   pullPolicy: Always
   tag: latest
-  containerPort: 8265
+  containerPort: 5000
   livenessProbe:
     path: /
-    port: 8265
+    port: 5000
     periodSeconds: 30
     successThreshold: 1
     failureThreshold: 3
     timeoutSeconds: 1
   readinessProbe:
     path: /
-    port: 8265
+    port: 5000
     periodSeconds: 30
     successThreshold: 1
     failureThreshold: 3
@@ -60,17 +60,15 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 8265
-  port_redis: 10001
-  port_workers: 6379
+  port: 5000
   annotations:
     alb.ingress.kubernetes.io/target-type: ip
 
 ingress:
-  enabled: true
+  enabled: false
   annotations:
     kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/load-balancer-name: ray-alb
+    alb.ingress.kubernetes.io/load-balancer-name: mlflow-alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
@@ -78,15 +76,14 @@ ingress:
     alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
     alb.ingress.kubernetes.io/success-codes: '200'
     alb.ingress.kubernetes.io/healthy-threshold-count: '2'
-    alb.ingress.kubernetes.io/subnets: 'subnet-0f0f6d47ecf1e2a8c,subnet-00f651057baca1078'
     alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
   hosts:
-  - host: ray.dev.mariner.trident.bio
+  - host: mlflow.dev.trident.bio
   tls:
   - hosts:
-    - ray.dev.mariner.trident.bio
+    - mlflow.dev.trident.bio
 
-istio_url: ray.dev.mariner.trident.bio
+istio_url: mlflow.dev.trident.bio
 
 resources:
   limits:
