@@ -19,14 +19,6 @@ spec:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.port }}
       protocol: TCP
-      name: dashboard
-    - port: 6379
-      targetPort: 6379
-      protocol: TCP
-      name: redis
-    - port: 10001
-      targetPort: 10001
-      protocol: TCP
-      name: workers
+      name: http
   selector:
     app: {{ .Release.Name }}
