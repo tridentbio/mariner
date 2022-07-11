@@ -1,4 +1,4 @@
-name: test
+name: Deploy to Develop
 
 on:
   push:
@@ -142,6 +142,7 @@ jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-20.04
+    needs: test
     steps:
     - name: Information
       env:
