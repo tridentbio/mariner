@@ -110,6 +110,7 @@ jobs:
       - name: Run tests
         working-directory: ./app
         run: |
+          pip3 install --upgrade requests
           source .venv/bin/activate
           pytest app/tests
           coverage report
