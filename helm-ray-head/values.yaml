@@ -7,12 +7,12 @@ canary:
 normal_deploy:
   enabled: true
 
-version: mlflow-v1
+version: ray-head-v1
 
 port: 8265
 
 image:
-  repository: mlflow-dev
+  repository: ray-head-dev
   pullPolicy: Always
   tag: latest
   containerPort: 8265
@@ -46,7 +46,7 @@ serviceAccount:
   name: ""
 
 podAnnotations:
-  product: mlflow
+  product: ray-head
 
 podSecurityContext: {}
 
@@ -90,11 +90,11 @@ istio_url: ray.dev.mariner.trident.bio
 
 resources:
   limits:
+    cpu: 1024Mi
+    memory: 2048Mi
+  requests:
     cpu: 500m
     memory: 1024Mi
-  requests:
-    cpu: 200m
-    memory: 256Mi
 
 autoscaling:
   enabled: false
