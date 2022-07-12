@@ -35,12 +35,5 @@ spec:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
-          - pathType: Prefix
-            path: /#/
-            backend:
-              service:
-                name: {{ $fullName }}
-                port:
-                  number: {{ $svcPort }}
     {{- end }}
   {{- end }}
