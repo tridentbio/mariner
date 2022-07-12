@@ -7,12 +7,12 @@ from fastapi.routing import APIRouter
 from pandas.core.frame import DataFrame
 from pydantic.main import BaseModel
 from sqlalchemy.orm.session import Session
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
+from starlette import status
 
 from app.api import deps
 from app.api.api_v1.endpoints.datasets import Paginated
 from app.features.model import controller
-from app.features.model.exceptions import ModelNotFound
+from app.features.model.exceptions import ModelNameAlreadyUsed, ModelNotFound
 from app.features.model.schema.configs import ModelOptions
 from app.features.model.schema.model import Model, ModelCreate, ModelsQuery
 from app.features.user.model import User
@@ -29,12 +29,18 @@ def create_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Model:
-    model = controller.create_model(
-        db,
-        current_user,
-        model_create,
-    )
-    return model
+    try:
+        model = controller.create_model(
+            db,
+            current_user,
+            model_create,
+        )
+        return model
+    except ModelNameAlreadyUsed:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Another model is already registered with that name",
+        )
 
 
 @router.get(
@@ -70,7 +76,7 @@ def post_predict(
     db: Session = Depends(deps.get_db),
 ) -> Any:
     if user_id != current_user.id:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     try:
         prediction = controller.get_model_prediction(
             db,
@@ -82,7 +88,9 @@ def post_predict(
             ),
         )
     except ModelNotFound:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Model Not Found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Model Not Found"
+        )
     if isinstance(prediction, torch.Tensor):
         return prediction.tolist()
     elif isinstance(prediction, DataFrame):

@@ -1,5 +1,6 @@
 from typing import Any, List, Optional, Union, get_type_hints
 
+import mlflow.exceptions
 import numpy as np
 import pandas as pd
 import torch
@@ -17,7 +18,7 @@ from app.features.model.deployments.schema import (
     DeploymentCreate,
     DeploymentCreateRepo,
 )
-from app.features.model.exceptions import ModelNotFound
+from app.features.model.exceptions import ModelNameAlreadyUsed, ModelNotFound
 from app.features.model.schema import layers_schema
 from app.features.model.schema.configs import (
     LayerAnnotation,
@@ -44,32 +45,37 @@ def create_model(
 ) -> Model:
     client = mlflowapi.create_tracking_client()
     torchmodel = CustomModel(model_create.config)
-    regmodel, version = mlflowapi.create_registered_model(
-        client,
-        model_create.name,
-        torchmodel,
-        description=model_create.model_description,
-        version_description=model_create.model_version_description,
-    )
-    model = repo.create(
-        db,
-        obj_in=ModelCreateRepo(name=model_create.name, created_by_id=user.id),
-    )
-    version = ModelVersion.from_orm(
-        repo.create_model_version(
-            db,
-            version_create=ModelVersionCreateRepo(
-                model_name=model.name,
-                model_version=version.version
-                if isinstance(version.version, str)
-                else str(version.version),
-                config=model_create.config,
-            ),
+    try:
+        regmodel, version = mlflowapi.create_registered_model(
+            client,
+            model_create.name,
+            torchmodel,
+            description=model_create.model_description,
+            version_description=model_create.model_version_description,
         )
-    )
-    model = Model.from_orm(repo.get_by_name(db, model.name))
-    model.description = regmodel.description
-    return model
+
+        model = repo.create(
+            db,
+            obj_in=ModelCreateRepo(name=model_create.name, created_by_id=user.id),
+        )
+        if version is not None:
+            version = ModelVersion.from_orm(
+                repo.create_model_version(
+                    db,
+                    version_create=ModelVersionCreateRepo(
+                        model_name=model.name,
+                        model_version=version.version
+                        if isinstance(version.version, str)
+                        else str(version.version),
+                        config=model_create.config,
+                    ),
+                )
+            )
+        model = Model.from_orm(repo.get_by_name(db, model.name))
+        model.description = regmodel.description
+        return model
+    except mlflow.exceptions.RestException:
+        raise ModelNameAlreadyUsed()
 
 
 def create_model_deployment(
