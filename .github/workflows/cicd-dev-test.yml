@@ -112,7 +112,7 @@ jobs:
         run: |
           pip3 install --upgrade requests
           source .venv/bin/activate
-          pytest app/tests
+          poetry run pytest
           coverage report
         env:
           SERVER_NAME: localhost
