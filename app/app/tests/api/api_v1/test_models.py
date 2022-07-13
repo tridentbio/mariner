@@ -4,12 +4,14 @@ import mlflow.pyfunc
 import pandas as pd
 from pydantic.networks import AnyHttpUrl
 from sqlalchemy.orm.session import Session
+from starlette import status
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
 
 from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
 from app.features.model import generate
+from app.features.model.model import ModelVersion
 from app.features.model.schema.model import Model
 from app.tests.conftest import get_test_user, mock_model
 from app.tests.utils.utils import random_lower_string
@@ -28,14 +30,36 @@ def test_post_models_success(
         headers=normal_user_token_headers,
     )
     body = res.json()
+
     assert res.status_code == HTTP_200_OK
     assert body["name"] == model.name
     assert body["createdById"] == user.id
-    assert body["modelDescription"] == model.model_description
-    assert body["modelVersionDescription"] == model.model_version_description
-    assert len(body["latestVersions"]) == 1
-    model = mlflow.pyfunc.load_model(model_uri=f"models:/{model.name}/1")
+    assert body["description"] == model.model_description
+    assert "versions" in body
+    assert len(body["versions"]) == 1
+    version = body["versions"][0]
+    model_version = version["modelVersion"]
+    assert version["config"]["name"] is not None
+    model = mlflow.pyfunc.load_model(model_uri=f"models:/{model.name}/{model_version}")
     assert model is not None
+    db_model_config = db.query(ModelVersion).filter(
+        ModelVersion.model_name == body["name"]
+        and ModelVersion.model_version == model_version
+    )
+    assert db_model_config is not None
+
+
+def test_post_models_check_model_name_is_unique(
+    client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
+):
+    model = mock_model(some_model.name)
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        json=model.dict(),
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == status.HTTP_409_CONFLICT
+    assert res.json()["detail"] == "Another model is already registered with that name"
 
 
 def test_get_models_success(
@@ -64,7 +88,7 @@ def test_post_models_deployment(
     data = {
         "name": random_lower_string(),
         "modelName": some_model.name,
-        "modelVersion": int(some_model.latest_versions[-1]["version"]),
+        "modelVersion": int(some_model.versions[-1].model_version),
     }
     res = client.post(
         f"{settings.API_V1_STR}/deployments/",
@@ -128,7 +152,7 @@ def test_post_predict(
 ):
     user_id = get_test_user(db).id
     model_name = some_model.name
-    model_version = some_model.latest_versions[-1]["version"]
+    model_version = some_model.versions[-1].model_version
     route = (
         f"{settings.API_V1_STR}/models/{user_id}/{model_name}/{model_version}/predict"
     )

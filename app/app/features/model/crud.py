@@ -1,10 +1,15 @@
 from typing import List, Optional
 
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
 from app.crud.base import CRUDBase
-from app.features.model.model import Model
-from app.features.model.schema.model import ModelCreateRepo, ModelUpdateRepo
+from app.features.model.model import Model, ModelVersion
+from app.features.model.schema.model import (
+    ModelCreateRepo,
+    ModelUpdateRepo,
+    ModelVersionCreateRepo,
+)
 
 
 class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
@@ -38,6 +43,16 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
         sql_query = sql_query.offset(per_page * page)
         result = sql_query.all()
         return result, total
+
+    def create_model_version(
+        self, db: Session, version_create: ModelVersionCreateRepo
+    ) -> ModelVersion:
+        obj_in_data = jsonable_encoder(version_create)
+        db_obj = ModelVersion(**obj_in_data)  # type: ignore
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
 
 
 repo = CRUDModel(Model)
