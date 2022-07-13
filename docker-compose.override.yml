@@ -12,6 +12,14 @@ services:
       - AWS_SECRET_KEY=$AWS_SECRET_KEY
       - AWS_REGION=$AWS_REGION
       - AWS_DATASETS=$AWS_DATASETS
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
     build:
       context: .
       dockerfile: ./Dockerfile.local
@@ -19,8 +27,30 @@ services:
         INSTALL_DEV: ${INSTALL_DEV-true}
         INSTALL_JUPYTER: ${INSTALL_JUPYTER-true}
           #command: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
-
-networks:
-  traefik-public:
-    # For local dev, don't expect an external Traefik network
-    external: false
+  mlflow:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
+  db:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
+  mlflowdb:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
