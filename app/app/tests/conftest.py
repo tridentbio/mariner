@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.db.session import SessionLocal
 from app.features.dataset.model import Dataset
 from app.features.model.model import Model as ModelEntity
+from app.features.model.model import ModelVersion
 from app.features.model.schema.configs import ModelConfig
 from app.features.model.schema.model import Model, ModelCreate
 from app.features.user.crud import repo as user_repo
@@ -122,17 +123,16 @@ def some_dataset(
 
 
 # MODEL GLOBAL FIXTURES
-def mock_model() -> ModelCreate:
+def mock_model(name=None) -> ModelCreate:
     model_path = "app/tests/data/test_model_hard.yaml"
     with open(model_path, "rb") as f:
         config_dict = yaml.unsafe_load(f.read())
         model = ModelCreate(
-            name=random_lower_string(),
+            name=name if name is not None else random_lower_string(),
             model_description=random_lower_string(),
             model_version_description=random_lower_string(),
             config=ModelConfig.parse_obj(config_dict),
         )
-        assert ModelCreate.validate(model.dict())
         return model
 
 
@@ -149,6 +149,8 @@ def setup_create_model(db: Session, client: TestClient, headers):
 
 
 def teardown_create_model(db: Session, model_name: str):
+    obj = db.query(ModelVersion).filter(ModelVersion.model_name == model_name).first()
+    db.delete(obj)
     obj = db.query(ModelEntity).filter(ModelEntity.name == model_name).first()
     db.delete(obj)
     db.commit()
@@ -166,8 +168,8 @@ def some_model(
 
 
 def mock_dataset_item():
-    from torch_geometric.data import Data
     import torch
+    from torch_geometric.data import Data
 
     x = torch.ones(21, 26, dtype=torch.float)
     edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)

@@ -1,9 +1,10 @@
-
 from app.features.model.controller import remove_section_by_identation
 
 
 def test_remove_section_by_identation():
-    assert remove_section_by_identation(r'''The graph convolutional operator from the `"Semi-supervised
+    assert (
+        remove_section_by_identation(
+            r"""The graph convolutional operator from the `"Semi-supervised
     Classification with Graph Convolutional Networks"
     <https://arxiv.org/abs/1609.02907>`_ paper
 
@@ -51,7 +52,10 @@ def test_remove_section_by_identation():
         **kwargs (optional): Additional arguments of
             :class:`torch_geometric.nn.conv.MessagePassing`.
 
-    Shapes:''', 'Args') == r'''The graph convolutional operator from the `"Semi-supervised
+    Shapes:""",
+            "Args",
+        )
+        == r"""The graph convolutional operator from the `"Semi-supervised
     Classification with Graph Convolutional Networks"
     <https://arxiv.org/abs/1609.02907>`_ paper
 
@@ -77,4 +81,5 @@ def test_remove_section_by_identation():
     node :obj:`i` (default: :obj:`1.0`)
 
 
-    Shapes:'''
+    Shapes:"""
+    )

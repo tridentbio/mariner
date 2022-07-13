@@ -1,8 +1,16 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import JSON, Column, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 
 from app.db.base_class import Base
+
+
+class ModelVersion(Base):
+    model_name = Column(
+        String, ForeignKey("model.name", ondelete="CASCADE"), primary_key=True
+    )
+    model_version = Column(String, primary_key=True)
+    config = Column(JSON)
 
 
 class Model(Base):
@@ -11,3 +19,4 @@ class Model(Base):
     created_by = relationship(
         "User",
     )
+    versions = relationship("ModelVersion")
