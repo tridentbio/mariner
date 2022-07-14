@@ -170,3 +170,21 @@ def test_post_predict(
     data = df.to_json()
     res = client.post(route, data, headers=normal_user_token_headers)
     assert res.status_code == 200
+
+
+def test_get_model_version(client: TestClient, some_model: Model):
+    version = some_model.versions[-1].model_version
+    res = client.get(f"{settings.API_V1_STR}/models/{some_model.name}/{version}")
+    assert res.status_code == 200
+    body = res.json()
+    assert body['name'] == some_model.name
+
+
+def test_get_model_version_model_not_found(client: TestClient):
+    res = client.get(f"{settings.API_V1_STR}/models/NOT_A_SAVED_MODEL_NAME/42")
+    assert res.status_code == 404
+
+
+def test_get_model_version_version_not_foudn(client: TestClient, some_model: Model):
+    res = client.get(f"{settings.API_V1_STR}/models/{some_model.name}/42")
+    assert res.status_code == 404

@@ -97,3 +97,13 @@ def post_predict(
         return prediction.to_json()
     else:
         raise TypeError("Unexpected model output")
+
+
+@router.get("/{model_name}", response_model=Model)
+def get_model(
+    model_name: str,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+):
+    model = controller.get_model_version(db, current_user, model_name)
+    return model

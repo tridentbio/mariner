@@ -245,3 +245,11 @@ def get_model_prediction(db: Session, request: PredictRequest) -> ModelOutput:
 
     mocked_input = mock_dataset_item()
     return pyfuncmodel(mocked_input)
+
+
+def get_model_version(db: Session, user: UserEntity, model_name: str) -> Model:
+    model = Model.from_orm(repo.get_by_name_from_user(db, user.id, model_name))
+    if not model:
+        raise ModelNotFound()
+    model.load_from_mlflow()
+    return model
