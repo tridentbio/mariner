@@ -25,8 +25,6 @@ services:
         condition: service_healthy
       mlflow:
         condition: service_healthy
-      ray-worker:
-        condition: service_started
     ports:
       - 80:80
     env_file:
@@ -91,9 +89,9 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
-      timeout: 10s
+      timeout: 60s
       retries: 3
-      start_period: 40s
+      start_period: 90s
 
     restart: unless-stopped
     command: bash -c 'echo $AWS_MODELS_BUCKET && poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
