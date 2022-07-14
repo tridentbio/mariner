@@ -57,6 +57,7 @@ class ModelsQuery(PaginatedApiQuery):
 
 
 class ModelCreateRepo(BaseModel):
+    dataset_id: int
     name: str
     created_by_id: int
 

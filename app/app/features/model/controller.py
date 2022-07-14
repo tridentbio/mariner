@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 import torch_geometric
 from sqlalchemy.orm.session import Session
+from app.features.dataset.exceptions import DatasetNotFound
 
 import app.features.model.layers as mariner_layers
 from app.core import mlflowapi
@@ -35,6 +36,7 @@ from app.features.model.schema.model import (
 )
 from app.features.model.utils import get_class_from_path_string
 from app.features.user.model import User as UserEntity
+from app.features.dataset.crud import repo as dataset_repo
 from app.schemas.api import ApiBaseModel
 
 
@@ -44,6 +46,9 @@ def create_model(
     model_create: ModelCreate,
 ) -> Model:
     client = mlflowapi.create_tracking_client()
+    dataset = dataset_repo.get_by_name(db, model_create.config.dataset.name)
+    if not dataset:
+        raise DatasetNotFound()
     torchmodel = CustomModel(model_create.config)
     try:
         regmodel, version = mlflowapi.create_registered_model(
@@ -56,7 +61,9 @@ def create_model(
 
         model = repo.create(
             db,
-            obj_in=ModelCreateRepo(name=model_create.name, created_by_id=user.id),
+            obj_in=ModelCreateRepo(
+                name=model_create.name, created_by_id=user.id, dataset_id=dataset.id
+            ),
         )
         if version is not None:
             version = ModelVersion.from_orm(

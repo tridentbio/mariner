@@ -19,4 +19,7 @@ class Model(Base):
     created_by = relationship(
         "User",
     )
+    dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="CASCADE"))
+
+    dataset = relationship("Dataset")
     versions = relationship("ModelVersion")

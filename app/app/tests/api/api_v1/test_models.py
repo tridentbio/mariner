@@ -49,6 +49,22 @@ def test_post_models_success(
     assert db_model_config is not None
 
 
+def test_post_models_dataset_not_found(
+    client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
+):
+    model = mock_model(some_model.name)
+    model.name = random_lower_string()
+    datasetname = "a dataset name that is not registered"
+    model.config.dataset.name = datasetname
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        json=model.dict(),
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+    assert res.json()["detail"] == f'Dataset "{datasetname}" not found'
+
+
 def test_post_models_check_model_name_is_unique(
     client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
 ):
@@ -177,7 +193,7 @@ def test_get_model_version(client: TestClient, some_model: Model):
     res = client.get(f"{settings.API_V1_STR}/models/{some_model.name}/{version}")
     assert res.status_code == 200
     body = res.json()
-    assert body['name'] == some_model.name
+    assert body["name"] == some_model.name
 
 
 def test_get_model_version_model_not_found(client: TestClient):
