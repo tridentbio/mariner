@@ -16,10 +16,10 @@ services:
       resources:
         limits:
           cpus: '0.25'
-          memory: 50M
+          memory: 1G
         reservations:
           cpus: '0.25'
-          memory: 20M
+          memory: 500M
     build:
       context: .
       dockerfile: ./Dockerfile.local
@@ -32,25 +32,16 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 50M
+          memory: 2G
         reservations:
           cpus: '0.25'
-          memory: 20M
-  db:
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 50M
-        reservations:
-          cpus: '0.25'
-          memory: 20M
+          memory: 1G
   mlflowdb:
     deploy:
       resources:
         limits:
           cpus: '0.50'
-          memory: 50M
+          memory: 500M
         reservations:
           cpus: '0.25'
-          memory: 20M
+          memory: 100M
