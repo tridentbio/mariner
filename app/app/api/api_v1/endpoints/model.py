@@ -11,6 +11,7 @@ from starlette import status
 
 from app.api import deps
 from app.api.api_v1.endpoints.datasets import Paginated
+from app.features.dataset.exceptions import DatasetNotFound
 from app.features.model import controller
 from app.features.model.exceptions import ModelNameAlreadyUsed, ModelNotFound
 from app.features.model.schema.configs import ModelOptions
@@ -40,6 +41,11 @@ def create_model(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Another model is already registered with that name",
+        )
+    except DatasetNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Dataset "{model_create.config.dataset.name} not found',
         )
 
 
