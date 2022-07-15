@@ -2,6 +2,7 @@ from typing import List, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic.main import BaseModel
+from app.features.dataset.schema import Dataset
 
 from app.features.model.schema.configs import ModelConfig
 from app.features.user.schema import User
@@ -29,6 +30,8 @@ class Model(ApiBaseModel):
     description: Optional[str] = None
     created_by_id: int
     created_by: Optional[User] = None
+    dataset_id: int
+    dataset: Optional[Dataset] = None
     versions: List[ModelVersion]
 
     _loaded: Optional[RegisteredModel] = None
@@ -37,18 +40,21 @@ class Model(ApiBaseModel):
         if not self._loaded:
             self._loaded = self.load_from_mlflow()
         if not version:
-            # version = self.latest_versions[-1].version
-            version = "1"
+            version = self.versions[-1].model_version
         return f"models:/{self.name}/{version}"
 
     def set_from_registered_model(self, regmodel: RegisteredModel):
         self.description = regmodel.description
 
     def load_from_mlflow(self):
+        if self._loaded:
+            return self._loaded
+
         from app.core.mlflowapi import get_registry_model
 
         registered_model = get_registry_model(self.name)
         self.set_from_registered_model(registered_model)
+        self._loaded = registered_model
         return registered_model
 
 
