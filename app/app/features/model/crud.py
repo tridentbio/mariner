@@ -1,10 +1,12 @@
+from os import name
 from typing import List, Optional
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
 from app.crud.base import CRUDBase
-from app.features.model.model import Model, ModelVersion
+from app.features.dataset.schema import ColumnsMeta
+from app.features.model.model import Model, ModelFeaturesAndTarget, ModelVersion
 from app.features.model.schema.model import (
     ModelCreateRepo,
     ModelUpdateRepo,
@@ -52,6 +54,23 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
+        return db_obj
+
+    def create(self, db: Session, obj_in: ModelCreateRepo):
+        relations = ["columns"]
+        obj_in_dict = obj_in.dict()
+        model_data = {k: obj_in_dict[k] for k in obj_in_dict if k not in relations}
+        db_obj = Model(**model_data)
+
+        if obj_in.columns:
+            db_obj.columns = [
+                ModelFeaturesAndTarget(**col.dict()) for col in obj_in.columns
+            ]
+
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+
         return db_obj
 
 

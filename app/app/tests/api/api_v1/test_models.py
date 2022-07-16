@@ -10,6 +10,7 @@ from starlette.testclient import TestClient
 
 from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
+from app.features.dataset.model import Dataset
 from app.features.model import generate
 from app.features.model.model import ModelVersion
 from app.features.model.schema.model import Model
@@ -21,6 +22,7 @@ def test_post_models_success(
     db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
+    some_dataset: Dataset
 ):
     user = get_test_user(db)
     model = mock_model()
@@ -33,6 +35,7 @@ def test_post_models_success(
 
     assert res.status_code == HTTP_200_OK
     assert body["name"] == model.name
+    assert 'columns' in body
     assert body["createdById"] == user.id
     assert body["description"] == model.model_description
     assert "versions" in body

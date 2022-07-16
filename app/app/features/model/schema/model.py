@@ -1,9 +1,9 @@
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic.main import BaseModel
-from app.features.dataset.schema import Dataset
 
+from app.features.dataset.schema import Dataset
 from app.features.model.schema.configs import ModelConfig
 from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
@@ -25,6 +25,12 @@ class ModelVersion(ApiBaseModel):
         return version
 
 
+class ModelFeaturesAndTarget(ApiBaseModel):
+    model_name: str
+    column_name: str
+    column_type: Literal["feature", "target"]
+
+
 class Model(ApiBaseModel):
     name: str
     description: Optional[str] = None
@@ -33,6 +39,7 @@ class Model(ApiBaseModel):
     dataset_id: int
     dataset: Optional[Dataset] = None
     versions: List[ModelVersion]
+    columns: List[ModelFeaturesAndTarget]
 
     _loaded: Optional[RegisteredModel] = None
 
@@ -66,6 +73,7 @@ class ModelCreateRepo(BaseModel):
     dataset_id: int
     name: str
     created_by_id: int
+    columns: List[ModelFeaturesAndTarget]
 
 
 class ModelUpdateRepo(Model):
