@@ -13,6 +13,14 @@ class ModelVersion(Base):
     config = Column(JSON)
 
 
+class ModelFeaturesAndTarget(Base):
+    model_name = Column(
+        String, ForeignKey("model.name", ondelete="CASCADE"), primary_key=True
+    )
+    column_name = Column(String, primary_key=True)
+    column_type = Column(String)
+
+
 class Model(Base):
     name = Column(String, primary_key=True)
     created_by_id = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"))
@@ -23,3 +31,4 @@ class Model(Base):
 
     dataset = relationship("Dataset")
     versions = relationship("ModelVersion")
+    columns = relationship("ModelFeaturesAndTarget")

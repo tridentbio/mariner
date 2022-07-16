@@ -6,10 +6,11 @@ import pandas as pd
 import torch
 import torch_geometric
 from sqlalchemy.orm.session import Session
-from app.features.dataset.exceptions import DatasetNotFound
 
 import app.features.model.layers as mariner_layers
 from app.core import mlflowapi
+from app.features.dataset.crud import repo as dataset_repo
+from app.features.dataset.exceptions import DatasetNotFound
 from app.features.model import generate
 from app.features.model.builder import CustomModel
 from app.features.model.crud import repo
@@ -30,13 +31,13 @@ from app.features.model.schema.model import (
     Model,
     ModelCreate,
     ModelCreateRepo,
+    ModelFeaturesAndTarget,
     ModelsQuery,
     ModelVersion,
     ModelVersionCreateRepo,
 )
 from app.features.model.utils import get_class_from_path_string
 from app.features.user.model import User as UserEntity
-from app.features.dataset.crud import repo as dataset_repo
 from app.schemas.api import ApiBaseModel
 
 
@@ -62,7 +63,24 @@ def create_model(
         model = repo.create(
             db,
             obj_in=ModelCreateRepo(
-                name=model_create.name, created_by_id=user.id, dataset_id=dataset.id
+                name=model_create.name,
+                created_by_id=user.id,
+                dataset_id=dataset.id,
+                columns=[
+                    ModelFeaturesAndTarget(
+                        model_name=model_create.name,
+                        column_name=feature_col,
+                        column_type="feature",
+                    )
+                    for feature_col in model_create.config.dataset.feature_columns
+                ]
+                + [
+                    ModelFeaturesAndTarget(
+                        model_name=model_create.name,
+                        column_name=model_create.config.dataset.target_column,
+                        column_type="target",
+                    )
+                ],
             ),
         )
         if version is not None:
@@ -255,8 +273,9 @@ def get_model_prediction(db: Session, request: PredictRequest) -> ModelOutput:
 
 
 def get_model_version(db: Session, user: UserEntity, model_name: str) -> Model:
-    model = Model.from_orm(repo.get_by_name_from_user(db, user.id, model_name))
-    if not model:
+    modeldb = repo.get_by_name_from_user(db, user.id, model_name)
+    if not modeldb:
         raise ModelNotFound()
+    model = Model.from_orm(modeldb)
     model.load_from_mlflow()
     return model

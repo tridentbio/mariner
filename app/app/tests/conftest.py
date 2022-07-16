@@ -160,7 +160,10 @@ def teardown_create_model(db: Session, model_name: str):
 
 @pytest.fixture(scope="module")
 def some_model(
-    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: Dict[str, str],
+    some_dataset: Dataset,
 ):
     model = setup_create_model(db, client, normal_user_token_headers)
     yield model
