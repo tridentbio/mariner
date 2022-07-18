@@ -1,3 +1,4 @@
+from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
@@ -33,7 +34,8 @@ class Dataset(Base):
     split_type = Column(String)
     data_url = Column(String)
     columns = Column(Integer)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, server_default=current_timestamp())
+    updated_at = Column(DateTime, server_default=current_timestamp())
     created_by_id = Column(Integer, ForeignKey("user.id"))
     created_by = relationship("User", back_populates="datasets")
     columns_descriptions = relationship(

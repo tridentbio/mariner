@@ -45,7 +45,7 @@ def create_model(
     except DatasetNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Dataset "{model_create.config.dataset.name} not found',
+            detail=f'Dataset "{model_create.config.dataset.name}" not found',
         )
 
 
