@@ -76,7 +76,7 @@ def mock_dataset():
     ]
 
     return {
-        "name": "Small Zinc dataset",
+        "name": "Small Zinc dataset2",
         "description": "Test description",
         "splitType": "random",
         "splitTarget": "60-20-20",

@@ -1,6 +1,8 @@
 from sqlalchemy import JSON, Column, Integer, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.sql.sqltypes import DateTime
 
 from app.db.base_class import Base
 
@@ -11,6 +13,8 @@ class ModelVersion(Base):
     )
     model_version = Column(String, primary_key=True)
     config = Column(JSON)
+    created_at = Column(DateTime, server_default=current_timestamp())
+    updated_at = Column(DateTime, server_default=current_timestamp())
 
 
 class ModelFeaturesAndTarget(Base):
@@ -30,5 +34,7 @@ class Model(Base):
     dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="CASCADE"))
 
     dataset = relationship("Dataset")
-    versions = relationship("ModelVersion")
-    columns = relationship("ModelFeaturesAndTarget")
+    versions = relationship("ModelVersion", cascade="all,delete")
+    columns = relationship("ModelFeaturesAndTarget", cascade="all,delete")
+    created_at = Column(DateTime, server_default=current_timestamp())
+    updated_at = Column(DateTime, server_default=current_timestamp())

@@ -12,14 +12,6 @@ services:
       - AWS_SECRET_KEY=$AWS_SECRET_KEY
       - AWS_REGION=$AWS_REGION
       - AWS_DATASETS=$AWS_DATASETS
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 500M
     build:
       context: .
       dockerfile: ./Dockerfile.local
@@ -31,17 +23,30 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.50'
-          memory: 2G
-        reservations:
-          cpus: '0.25'
+          memory: 1.5G
+
+  ray-head:
+    deploy:
+      resources:
+        limits:
           memory: 1G
+  ray-worker:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  db:
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+        reservations:
+          memory: 100M
   mlflowdb:
     deploy:
       resources:
         limits:
-          cpus: '0.50'
           memory: 500M
         reservations:
-          cpus: '0.25'
           memory: 100M

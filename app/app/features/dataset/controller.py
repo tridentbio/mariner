@@ -77,6 +77,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         description=data.description,
         bytes=bytes,
         created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
         stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
         data_url=data_url,
         created_by_id=current_user.id,
