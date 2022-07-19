@@ -95,7 +95,7 @@ def create_dataset(
     except DatasetNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except DatasetAlreadyExists:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Dataset name already in use")
 
 
 @router.put(
