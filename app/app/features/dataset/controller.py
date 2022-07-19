@@ -9,7 +9,7 @@ from sqlalchemy.orm.session import Session
 
 from app.core.aws import Bucket, upload_s3_file
 from app.core.config import settings
-from app.features.dataset.exceptions import DatasetNotFound, NotCreatorOfDataset
+from app.features.dataset.exceptions import DatasetAlreadyExists, DatasetNotFound, NotCreatorOfDataset
 from app.utils import hash_md5
 
 from ..user.model import User
@@ -64,6 +64,9 @@ def _upload_s3(file: UploadFile):
 
 
 def create_dataset(db: Session, current_user: User, data: DatasetCreate):
+    existing_dataset = repo.get_by_name(db, data.name)
+    if existing_dataset:
+        raise DatasetAlreadyExists()
     rows, columns, bytes, stats = _get_entity_info_from_csv(data.file)
     data.file.file.seek(0)
     data_url = _upload_s3(data.file)
@@ -94,6 +97,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
             ColumnMetadata(key=m["key"], data_type=DataType(m["data_type"]))
             for m in parsed
         ]
+
     dataset = repo.create(db, create_obj)
     return dataset
 

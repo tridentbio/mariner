@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Generator
+from typing import Dict, Generator, Optional
 
 import mlflow
 import pytest
@@ -56,7 +56,7 @@ def get_test_user(db: Session) -> User:
 
 
 # DATASET GLOBAL FIXTURES
-def mock_dataset():
+def mock_dataset(name: Optional[str] = None):
     descriptions = [
         {
             "pattern": "col*",
@@ -76,7 +76,7 @@ def mock_dataset():
     ]
 
     return {
-        "name": "Small Zinc dataset2",
+        "name": name if name else "Small Zinc dataset2",
         "description": "Test description",
         "splitType": "random",
         "splitTarget": "60-20-20",
