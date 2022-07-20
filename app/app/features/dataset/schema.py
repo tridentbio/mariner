@@ -145,6 +145,7 @@ class DatasetBase(ApiBaseModel):
     split_actual: Optional[Split]
     split_type: SplitType
     created_at: datetime
+    updated_at: datetime
     created_by_id: int
     columns_descriptions: List[ColumnDescription] = []
     columns_metadatas: List[ColumnMetadata] = []

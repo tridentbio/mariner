@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.features.dataset.crud import repo
 from app.features.dataset.model import Dataset as DatasetModel
 from app.features.dataset.schema import DatasetCreateRepo, Split
+from app.tests.conftest import mock_dataset
 from app.tests.utils.utils import random_lower_string
 
 
@@ -70,6 +71,22 @@ def test_post_datasets(
         assert len(ds.columns_descriptions) == 2
         assert len(ds.columns_metadatas) == 2
 
+def test_post_datasets_name_conflict(
+    client: TestClient,
+    some_dataset: DatasetModel,
+    normal_user_token_headers: dict[str, str],
+):
+    ds = mock_dataset(name=some_dataset.name)
+    with open("app/tests/data/zinc.csv", "rb") as f:
+        res = client.post(
+            f"{settings.API_V1_STR}/datasets/",
+            data=ds,
+            files={"file": ("zinc.csv", f.read())},
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == status.HTTP_409_CONFLICT
+
+
 
 @pytest.mark.skip(
     reason="db consistency assertions fail for some reason, but route works"
@@ -85,6 +102,7 @@ def test_put_datasets(
             stats="{}",
             data_url="",
             created_at=datetime.now(),
+            updated_at=datetime.now(),
             created_by_id=1,
             description="test",
             rows=100,
@@ -128,6 +146,7 @@ def test_delete_datasets(
             stats="{}",
             data_url="",
             created_at=datetime.now(),
+            updated_at=datetime.now(),
             created_by_id=1,
             description="test",
             rows=100,
