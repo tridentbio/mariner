@@ -2,6 +2,7 @@ import json
 from typing import Dict, Generator, Optional
 
 import mlflow
+from pydantic.types import NoneBytes
 import pytest
 import yaml
 from fastapi.testclient import TestClient
@@ -76,7 +77,7 @@ def mock_dataset(name: Optional[str] = None):
     ]
 
     return {
-        "name": name if name else "Small Zinc dataset2",
+        "name": name if name else "Small Zinc dataset",
         "description": "Test description",
         "splitType": "random",
         "splitTarget": "60-20-20",
@@ -123,27 +124,36 @@ def some_dataset(
 
 
 # MODEL GLOBAL FIXTURES
-def mock_model(name=None) -> ModelCreate:
+def mock_model(name=None, dataset_name=None) -> ModelCreate:
     model_path = "app/tests/data/test_model_hard.yaml"
     with open(model_path, "rb") as f:
         config_dict = yaml.unsafe_load(f.read())
+        config = ModelConfig.parse_obj(config_dict)
+        if dataset_name:
+            config.dataset.name = dataset_name
         model = ModelCreate(
             name=name if name is not None else random_lower_string(),
             model_description=random_lower_string(),
             model_version_description=random_lower_string(),
-            config=ModelConfig.parse_obj(config_dict),
+            config=config,
         )
         return model
 
 
-def setup_create_model(db: Session, client: TestClient, headers):
-    model = mock_model()
+def setup_create_model(client: TestClient, headers, dataset: Optional[Dataset] = None):
+    model = None
+    if dataset:
+        model = mock_model(dataset_name=dataset.name)
+    else:
+        model = mock_model()
     data = model.dict()
     res = client.post(
         f"{settings.API_V1_STR}/models/",
         json=data,
         headers=headers,
     )
+
+    print(res.json())
     assert res.status_code == status.HTTP_200_OK
     return Model.parse_obj(res.json())
 
@@ -165,7 +175,7 @@ def some_model(
     normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
 ):
-    model = setup_create_model(db, client, normal_user_token_headers)
+    model = setup_create_model(client, normal_user_token_headers, some_dataset)
     yield model
     teardown_create_model(db, model.name)
 
