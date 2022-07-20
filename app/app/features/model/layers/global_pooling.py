@@ -9,7 +9,8 @@ from torch_scatter import scatter
 def global_add_pool(
     x: Tensor, batch: Optional[Tensor], size: Optional[int] = None
 ) -> Tensor:
-    r"""Returns batch-wise graph-level-outputs by adding node features
+    r"""
+    Returns batch-wise graph-level-outputs by adding node features
     across the node dimension, so that for a single graph
     :math:`\mathcal{G}_i` its output is computed by
 

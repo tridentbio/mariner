@@ -19,8 +19,34 @@ services:
         INSTALL_DEV: ${INSTALL_DEV-true}
         INSTALL_JUPYTER: ${INSTALL_JUPYTER-true}
           #command: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
+  mlflow:
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
 
-networks:
-  traefik-public:
-    # For local dev, don't expect an external Traefik network
-    external: false
+  ray-head:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+  ray-worker:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  db:
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+        reservations:
+          memory: 100M
+  mlflowdb:
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+        reservations:
+          memory: 100M

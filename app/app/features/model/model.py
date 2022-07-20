@@ -1,8 +1,28 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import JSON, Column, Integer, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
+from sqlalchemy.sql.sqltypes import DateTime
 
 from app.db.base_class import Base
+
+
+class ModelVersion(Base):
+    model_name = Column(
+        String, ForeignKey("model.name", ondelete="CASCADE"), primary_key=True
+    )
+    model_version = Column(String, primary_key=True)
+    config = Column(JSON)
+    created_at = Column(DateTime, server_default=current_timestamp())
+    updated_at = Column(DateTime, server_default=current_timestamp())
+
+
+class ModelFeaturesAndTarget(Base):
+    model_name = Column(
+        String, ForeignKey("model.name", ondelete="CASCADE"), primary_key=True
+    )
+    column_name = Column(String, primary_key=True)
+    column_type = Column(String)
 
 
 class Model(Base):
@@ -11,3 +31,10 @@ class Model(Base):
     created_by = relationship(
         "User",
     )
+    dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="CASCADE"))
+
+    dataset = relationship("Dataset")
+    versions = relationship("ModelVersion", cascade="all,delete")
+    columns = relationship("ModelFeaturesAndTarget", cascade="all,delete")
+    created_at = Column(DateTime, server_default=current_timestamp())
+    updated_at = Column(DateTime, server_default=current_timestamp())
