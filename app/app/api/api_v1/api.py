@@ -4,6 +4,7 @@ from app.api.api_v1.endpoints import (
     data,
     datasets,
     deployment,
+    experiments,
     login,
     model,
     users,
@@ -19,6 +20,9 @@ api_router.include_router(data.router, prefix="", tags=["utils"])
 api_router.include_router(model.router, prefix="/models", tags=["models"])
 api_router.include_router(
     deployment.router, prefix="/deployments", tags=["model-deployments"]
+)
+api_router.include_router(
+    experiments.router, prefix="/experiments", tags=["model-deployments"]
 )
 
 

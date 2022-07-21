@@ -2,7 +2,6 @@ import json
 from typing import Dict, Generator, Optional
 
 import mlflow
-from pydantic.types import NoneBytes
 import pytest
 import yaml
 from fastapi.testclient import TestClient
@@ -12,7 +11,7 @@ from starlette import status
 from app.core.aws import Bucket, delete_s3_file
 from app.core.config import settings
 from app.db.session import SessionLocal
-from app.features.dataset.model import Dataset
+from app.features.dataset.model import ColumnDescription, Dataset
 from app.features.model.model import Model as ModelEntity
 from app.features.model.model import ModelVersion
 from app.features.model.schema.configs import ModelConfig
@@ -90,6 +89,8 @@ def setup_create_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):
     data = mock_dataset()
+    db.query(Dataset).filter(Dataset.name == data['name']).delete()
+    db.commit()
     with open("app/tests/data/zinc.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",

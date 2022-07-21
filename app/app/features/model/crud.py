@@ -1,17 +1,28 @@
-from os import name
 from typing import List, Optional
 
+import pydantic
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
 from app.crud.base import CRUDBase
-from app.features.dataset.schema import ColumnsMeta
-from app.features.model.model import Model, ModelFeaturesAndTarget, ModelVersion
+from app.features.model.model import (
+    Experiment,
+    Model,
+    ModelFeaturesAndTarget,
+    ModelVersion,
+)
 from app.features.model.schema.model import (
     ModelCreateRepo,
     ModelUpdateRepo,
     ModelVersionCreateRepo,
 )
+
+
+class ExperimentCreateRepo(pydantic.BaseModel):
+    model_name: str
+    model_version_name: str
+    experiment_id: str
+    stage: str = "NOT RUNNING"
 
 
 class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
@@ -71,6 +82,13 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
         db.commit()
         db.refresh(db_obj)
 
+        return db_obj
+
+    def create_experiment(self, db: Session, obj_in: ExperimentCreateRepo):
+        db_obj = Experiment(**obj_in.dict())
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
         return db_obj
 
 

@@ -87,9 +87,13 @@ def get_registry_model(model_registry_name: str):
     return registered_model
 
 
-def get_model(model: Model, version: Optional[Union[int, str]]):
-    mlflowmodel = mlflow.pytorch.load_model(model.get_model_uri(version))
+def get_model_by_uri(model_uri: str):
+    mlflowmodel = mlflow.pytorch.load_model(model_uri)
     return mlflowmodel
+
+
+def get_model(model: Model, version: Optional[Union[int, str]]):
+    return get_model_by_uri(model.get_model_uri(version))
 
 
 def get_model_version(model_name: str, version: str):

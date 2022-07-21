@@ -10,6 +10,7 @@ from torch.nn import ReLU, Sigmoid
 from torch.nn import functional as F
 from torch.optim import Adam
 from torch.utils.data import Dataset as TorchDataset
+from torch_geometric.data import Dataset as PygDataset
 from torch_geometric.data.data import Data
 
 from app.features.dataset.crud import CRUDDataset
@@ -159,7 +160,7 @@ def if_str_make_list(str_or_list: Union[str, List[str]]) -> List[str]:
     return str_or_list
 
 
-class CustomDataset(TorchDataset):
+class CustomDataset(PygDataset):
     def __init__(self, dataset: Dataset, model_config: ModelConfig):
         super().__init__()
         self.dataset = dataset

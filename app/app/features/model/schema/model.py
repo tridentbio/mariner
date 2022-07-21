@@ -1,10 +1,11 @@
+from datetime import datetime
 from typing import List, Literal, Optional, Union
 
-from datetime import datetime
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic.main import BaseModel
 
 from app.features.dataset.schema import Dataset
+from app.features.model.builder import CustomModel
 from app.features.model.schema.configs import ModelConfig
 from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
@@ -20,6 +21,13 @@ class ModelVersion(ApiBaseModel):
     config: ModelConfig
     created_at: datetime
     updated_at: datetime
+    # model: Optional["Model"] = None
+
+    def build_torch_model(self):
+        return CustomModel(self.config)
+
+    def get_mlflow_uri(self):
+        return f"models:/{self.model_name}/{self.model_version}"
 
     def load_from_mlflowapi(self):
         from app.core.mlflowapi import get_model_version
@@ -45,7 +53,6 @@ class Model(ApiBaseModel):
     columns: List[ModelFeaturesAndTarget]
     created_at: datetime
     updated_at: datetime
-
 
     _loaded: Optional[RegisteredModel] = None
 
@@ -97,3 +104,20 @@ class ModelVersionCreateRepo(BaseModel):
     model_name: str
     model_version: str
     config: ModelConfig
+
+
+class TrainingRequest(ApiBaseModel):
+    model_name: str
+    experiment_name: str
+    model_version: str
+    learning_rate: float
+    epochs: int
+
+
+class Experiment(ApiBaseModel):
+    model_name: str
+    model_version_name: str
+    model_version: ModelVersion
+    created_at: datetime
+    updated_at: datetime
+    experiment_id: str
