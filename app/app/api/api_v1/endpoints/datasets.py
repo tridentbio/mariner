@@ -10,7 +10,11 @@ from starlette import status
 
 from app.api import deps
 from app.features.dataset import controller
-from app.features.dataset.exceptions import DatasetAlreadyExists, DatasetNotFound, NotCreatorOfDataset
+from app.features.dataset.exceptions import (
+    DatasetAlreadyExists,
+    DatasetNotFound,
+    NotCreatorOfDataset,
+)
 from app.features.dataset.schema import (
     ColumnDescriptionFromJSONStr,
     ColumnMetadataFromJSONStr,
@@ -95,7 +99,9 @@ def create_dataset(
     except DatasetNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except DatasetAlreadyExists:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Dataset name already in use")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Dataset name already in use"
+        )
 
 
 @router.put(
