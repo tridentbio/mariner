@@ -1,6 +1,6 @@
-from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import JSON, DateTime
 

@@ -22,7 +22,7 @@ def test_post_models_success(
     db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_dataset: Dataset
+    some_dataset: Dataset,
 ):
     user = get_test_user(db)
     model = mock_model()
@@ -35,7 +35,7 @@ def test_post_models_success(
 
     assert res.status_code == HTTP_200_OK
     assert body["name"] == model.name
-    assert 'columns' in body
+    assert "columns" in body
     assert body["createdById"] == user.id
     assert body["description"] == model.model_description
     assert "versions" in body
@@ -191,9 +191,13 @@ def test_post_predict(
     assert res.status_code == 200
 
 
-def test_get_model_version(client: TestClient, some_model: Model, normal_user_token_headers: dict[str, str]):
-    res = client.get(f"{settings.API_V1_STR}/models/{some_model.name}/", headers=normal_user_token_headers)
+def test_get_model_version(
+    client: TestClient, some_model: Model, normal_user_token_headers: dict[str, str]
+):
+    res = client.get(
+        f"{settings.API_V1_STR}/models/{some_model.name}/",
+        headers=normal_user_token_headers,
+    )
     assert res.status_code == 200
     body = res.json()
     assert body["name"] == some_model.name
-
