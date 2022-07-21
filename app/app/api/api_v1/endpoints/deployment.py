@@ -19,6 +19,5 @@ def create_deployment(
     db: Session = Depends(deps.get_db),
     current_user=Depends(deps.get_current_active_user),
 ):
-    print(deployment_create, current_user)
     deployment = controller.create_model_deployment(db, deployment_create, current_user)
     return deployment

@@ -153,7 +153,6 @@ def setup_create_model(client: TestClient, headers, dataset: Optional[Dataset] =
         headers=headers,
     )
 
-    print(res.json())
     assert res.status_code == status.HTTP_200_OK
     return Model.parse_obj(res.json())
 
