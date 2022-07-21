@@ -71,6 +71,7 @@ def test_post_datasets(
         assert len(ds.columns_descriptions) == 2
         assert len(ds.columns_metadatas) == 2
 
+
 def test_post_datasets_name_conflict(
     client: TestClient,
     some_dataset: DatasetModel,
@@ -85,7 +86,6 @@ def test_post_datasets_name_conflict(
             headers=normal_user_token_headers,
         )
         assert res.status_code == status.HTTP_409_CONFLICT
-
 
 
 @pytest.mark.skip(

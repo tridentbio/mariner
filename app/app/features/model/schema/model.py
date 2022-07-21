@@ -1,6 +1,6 @@
+from datetime import datetime
 from typing import List, Literal, Optional, Union
 
-from datetime import datetime
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic.main import BaseModel
 
@@ -45,7 +45,6 @@ class Model(ApiBaseModel):
     columns: List[ModelFeaturesAndTarget]
     created_at: datetime
     updated_at: datetime
-
 
     _loaded: Optional[RegisteredModel] = None
 

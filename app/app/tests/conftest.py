@@ -2,7 +2,6 @@ import json
 from typing import Dict, Generator, Optional
 
 import mlflow
-from pydantic.types import NoneBytes
 import pytest
 import yaml
 from fastapi.testclient import TestClient
