@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import torch
 import torch_geometric
-from pydantic.types import NoneBytes
 from sqlalchemy.orm.session import Session
 
 import app.features.model.layers as mariner_layers
@@ -14,7 +13,7 @@ from app.features.dataset.crud import repo as dataset_repo
 from app.features.dataset.exceptions import DatasetNotFound
 from app.features.model import generate
 from app.features.model.builder import CustomModel
-from app.features.model.crud import ExperimentCreateRepo, repo
+from app.features.model.crud import repo
 from app.features.model.deployments.crud import repo as deployment_repo
 from app.features.model.deployments.schema import (
     Deployment,
@@ -24,7 +23,6 @@ from app.features.model.deployments.schema import (
 from app.features.model.exceptions import (
     ModelNameAlreadyUsed,
     ModelNotFound,
-    ModelVersionNotFound,
 )
 from app.features.model.schema import layers_schema
 from app.features.model.schema.configs import (
@@ -33,7 +31,6 @@ from app.features.model.schema.configs import (
     ModelOptions,
 )
 from app.features.model.schema.model import (
-    Experiment,
     Model,
     ModelCreate,
     ModelCreateRepo,
@@ -41,9 +38,7 @@ from app.features.model.schema.model import (
     ModelsQuery,
     ModelVersion,
     ModelVersionCreateRepo,
-    TrainingRequest,
 )
-from app.features.model.train import start_training
 from app.features.model.utils import get_class_from_path_string
 from app.features.user.model import User as UserEntity
 from app.schemas.api import ApiBaseModel
@@ -287,31 +282,4 @@ def get_model_version(db: Session, user: UserEntity, model_name: str) -> Model:
     model = Model.from_orm(modeldb)
     model.load_from_mlflow()
     return model
-
-def create_model_traning(
-    db: Session, user: UserEntity, training_request: TrainingRequest
-) -> Experiment:
-    print(training_request)
-    model = repo.get_by_name(db, training_request.model_name)
-    if not model:
-        raise ModelNotFound()
-    model = Model.from_orm(model)
-    if not model or model.created_by_id != user.id:
-        raise ModelNotFound()
-
-    model_version = None
-    for version in model.versions:
-        if version.model_version == training_request.model_version:
-            model_version = version
-    if not model_version:
-        raise ModelVersionNotFound()
-    dataset = dataset_repo.get_by_name(db, model_version.config.dataset.name)
-    experiment_id = start_training(model_version, training_request,dataset)
-    experiment = repo.create_experiment(db, ExperimentCreateRepo(
-        model_name= training_request.model_name,
-        model_version_name=model_version.model_version,
-        experiment_id=experiment_id
-    ))
-    print(experiment)
-    return Experiment.from_orm(experiment)
 
