@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from sqlalchemy.orm.session import Session
 from app.features.experiments.schema import TrainingRequest
@@ -10,7 +11,7 @@ from app.tests.conftest import get_test_user
 from app.tests.utils.utils import random_lower_string
 
 @pytest.fixture(scope="function")
-def some_experiment(db: Session, some_model: Model):
+async def some_experiment(db: Session, some_model: Model):
     db.query(ExperimentEntity).delete()
     db.commit()
     user = get_test_user(db)
@@ -22,7 +23,7 @@ def some_experiment(db: Session, some_model: Model):
         experiment_name="teste",
         learning_rate=0.05,
     )
-    exp = exp_ctl.create_model_traning(db, user, request)
+    exp = await exp_ctl.create_model_traning(db, user, request)
     return Experiment.from_orm(exp)
 
 @pytest.fixture(scope="function")
@@ -37,9 +38,12 @@ def some_experiments(db: Session, some_model: Model):
         epochs=1,
         experiment_name=random_lower_string(),
         learning_rate=0.05,
-    )  for _ in range(10) ]
+    )  for _ in range(3) ]
     exps = [ exp_ctl.create_model_traning(db, user, request) for request in requests ]
-    yield [Experiment.from_orm(exp) for exp in exps ]
-    db.query(ExperimentEntity).delete()
-    db.commit()
+    loop = asyncio.get_event_loop()
+    exps = loop.run_until_complete(asyncio.gather(*exps))
+    # exps = db.query(ExperimentEntity).all()
+    # exps = [Experiment.from_orm(exp) for exp in exps ]
+    assert len(exps) == 3
+    return exps
 
