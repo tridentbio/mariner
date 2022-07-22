@@ -28,7 +28,8 @@ from app.tests.utils.utils import (
 
 @pytest.fixture(scope="session")
 def db() -> Generator:
-    yield SessionLocal()
+    sesion = SessionLocal()
+    yield sesion
 
 
 @pytest.fixture(scope="module")
@@ -153,7 +154,6 @@ def setup_create_model(client: TestClient, headers, dataset: Optional[Dataset] =
         json=data,
         headers=headers,
     )
-
     assert res.status_code == status.HTTP_200_OK
     return Model.parse_obj(res.json())
 
@@ -175,6 +175,8 @@ def some_model(
     normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
 ):
+    db.query(ModelEntity).delete()
+    db.commit()
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
     yield model
     teardown_create_model(db, model.name)

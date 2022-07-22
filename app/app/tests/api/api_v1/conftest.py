@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from app.features.experiments.schema import Experiment, TrainingRequest
 
@@ -20,9 +21,13 @@ def some_experiments(db, some_model):
         epochs=1,
         experiment_name=random_lower_string(),
         learning_rate=0.05,
-    )  for _ in range(10) ]
+    )  for _ in range(3) ]
     exps = [ exp_ctl.create_model_traning(db, user, request) for request in requests ]
-    yield [Experiment.from_orm(exp) for exp in exps ]
+    exps = asyncio.get_event_loop().run_until_complete(
+        asyncio.gather(*exps)
+    )
+    yield exps
+    # yield [Experiment.from_orm(exp) for exp in exps ]
     db.query(ExperimentEntity).delete()
     db.commit()
 

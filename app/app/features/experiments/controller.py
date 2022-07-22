@@ -1,10 +1,11 @@
 from typing import List
 from sqlalchemy.orm.session import Session
+from app.features.model.builder import CustomDataset
 from app.features.model.exceptions import ModelNotFound, ModelVersionNotFound
 from app.features.model.schema.model import Model
 from app.features.user.model import User as UserEntity
 from app.features.model.crud import repo as model_repo
-from app.features.experiments.train import start_training
+from app.features.experiments.train.run import start_training
 from app.features.dataset.crud import repo as dataset_repo
 from app.features.experiments.crud import ExperimentCreateRepo, repo as exp_repo
 from app.features.experiments.schema import (
@@ -13,7 +14,7 @@ from app.features.experiments.schema import (
     Experiment
 )
 
-def create_model_traning(
+async def create_model_traning(
     db: Session, user: UserEntity, training_request: TrainingRequest
 ) -> Experiment:
     model = model_repo.get_by_name(db, training_request.model_name)
@@ -30,7 +31,9 @@ def create_model_traning(
     if not model_version:
         raise ModelVersionNotFound()
     dataset = dataset_repo.get_by_name(db, model_version.config.dataset.name)
-    experiment_id = start_training(model_version, training_request,dataset)
+    torchmodel = model_version.build_torch_model()
+    dataset = CustomDataset(dataset.get_dataframe(), model_version.config)
+    experiment_id = await start_training(torchmodel, training_request, dataset)
     experiment = exp_repo.create(db, obj_in=ExperimentCreateRepo(
         model_name= training_request.model_name,
         model_version_name=model_version.model_version,

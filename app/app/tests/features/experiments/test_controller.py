@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy.orm.session import Session
 from app.features.experiments.model import Experiment
 from app.features.experiments.schema import ListExperimentsQuery, TrainingRequest
@@ -7,14 +8,15 @@ from app.features.experiments import controller as experiments_ctl
 from app.tests.utils.utils import random_lower_string 
 
 
-def test_get_experiments(db: Session, some_model: Model, some_experiments):
+@pytest.mark.asyncio
+async def test_get_experiments(db: Session, some_model: Model, some_experiments):
     user = get_test_user(db)
     query = ListExperimentsQuery(model_name=some_model.name)
     experiments = experiments_ctl.get_experiments(db, user, query)
-    assert len(experiments) > 0
-    assert len(experiments) == len(some_experiments)
+    assert len(experiments) == len(some_experiments) == 3
 
-def test_create_model_training(db: Session, some_model: Model):
+@pytest.mark.asyncio
+async def test_create_model_training(db: Session, some_model: Model):
     user = get_test_user(db)
     version = some_model.versions[-1]
     request = TrainingRequest(
@@ -24,7 +26,7 @@ def test_create_model_training(db: Session, some_model: Model):
         experiment_name=random_lower_string(),
         learning_rate=0.05,
     )
-    exp = experiments_ctl.create_model_traning(db, user, request)
+    exp = await experiments_ctl.create_model_traning(db, user, request)
     assert exp.model_name == some_model.name
 
     assert exp.model_version.model_version == version.model_version

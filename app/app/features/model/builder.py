@@ -1,6 +1,7 @@
 from typing import Dict, List, Union
 
 import networkx as nx
+from pandas.core.frame import DataFrame
 import torch
 import torch_geometric.nn as geom_nn
 from pytorch_lightning import LightningModule
@@ -161,11 +162,11 @@ def if_str_make_list(str_or_list: Union[str, List[str]]) -> List[str]:
 
 
 class CustomDataset(PygDataset):
-    def __init__(self, dataset: Dataset, model_config: ModelConfig):
+    def __init__(self, dataset: DataFrame, model_config: ModelConfig):
         super().__init__()
         self.dataset = dataset
         self.model_config = model_config
-        self.df = dataset.get_dataframe()
+        self.df = dataset
         # maps featurizer name to actual featurizer instance
         self.featurizers_dict = {f.name: f.create() for f in model_config.featurizers}
         # maps featurizer name to featurizer config
@@ -210,4 +211,5 @@ def build_dataset(
     db: Session,
 ) -> TorchDataset:
     dataset = dataset_repo.get_by_name(db, model_config.dataset.name)
-    return CustomDataset(dataset, model_config)
+    df = dataset.get_dataframe()
+    return CustomDataset(df, model_config)

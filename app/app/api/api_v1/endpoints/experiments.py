@@ -13,12 +13,12 @@ router = APIRouter()
 
 
 @router.post("/", response_model=Experiment)
-def post_experiments(
+async def post_experiments(
     request: TrainingRequest,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    result = experiments_ctl.create_model_traning(db, current_user, request)
+    result = await experiments_ctl.create_model_traning(db, current_user, request)
     return result
 
 @router.get("/", response_model=List[Experiment])

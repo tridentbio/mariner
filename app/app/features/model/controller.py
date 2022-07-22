@@ -135,6 +135,7 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
     models, total = repo.get_paginated(
         db, created_by_id=current_user.id, per_page=query.per_page, page=query.page
     )
+    print([m.dataset_id for m in models])
     models = [Model.from_orm(model) for model in models]
     for model in models:
         model.load_from_mlflow()
