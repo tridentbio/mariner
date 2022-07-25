@@ -1,10 +1,11 @@
 import asyncio
-import pytest
-from app.features.experiments.schema import Experiment, TrainingRequest
 
-from app.features.model.schema.model import Model
-from app.features.experiments.model import Experiment as ExperimentEntity
+import pytest
+
 from app.features.experiments import controller as exp_ctl
+from app.features.experiments.model import Experiment as ExperimentEntity
+from app.features.experiments.schema import TrainingRequest
+from app.features.model.schema.model import Model
 from app.tests.conftest import get_test_user
 from app.tests.utils.utils import random_lower_string
 
@@ -15,21 +16,23 @@ def some_experiments(db, some_model):
     db.commit()
     user = get_test_user(db)
     version = some_model.versions[-1]
-    requests = [ TrainingRequest(
-        model_name=some_model.name,
-        model_version=version.model_version,
-        epochs=1,
-        experiment_name=random_lower_string(),
-        learning_rate=0.05,
-    )  for _ in range(3) ]
-    exps = [ exp_ctl.create_model_traning(db, user, request) for request in requests ]
-    exps = asyncio.get_event_loop().run_until_complete(
-        asyncio.gather(*exps)
-    )
+    requests = [
+        TrainingRequest(
+            model_name=some_model.name,
+            model_version=version.model_version,
+            epochs=1,
+            experiment_name=random_lower_string(),
+            learning_rate=0.05,
+        )
+        for _ in range(3)
+    ]
+    exps = [exp_ctl.create_model_traning(db, user, request) for request in requests]
+    exps = asyncio.get_event_loop().run_until_complete(asyncio.gather(*exps))
     yield exps
     # yield [Experiment.from_orm(exp) for exp in exps ]
     db.query(ExperimentEntity).delete()
     db.commit()
+
 
 @pytest.fixture(scope="module")
 def mocked_experiment_payload(some_model: Model):

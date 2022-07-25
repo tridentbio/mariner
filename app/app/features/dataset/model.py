@@ -11,13 +11,17 @@ from app.db.base_class import Base
 class ColumnDescription(Base):
     pattern = Column(String, primary_key=True)
     description = Column(String)
-    dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="CASCADE"), primary_key=True)
+    dataset_id = Column(
+        Integer, ForeignKey("dataset.id", ondelete="CASCADE"), primary_key=True
+    )
     dataset = relationship("Dataset", back_populates="columns_descriptions")
 
 
 class ColumnsMetadata(Base):
     key = Column(String, primary_key=True, nullable=False)
-    dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="CASCADE"), primary_key=True)
+    dataset_id = Column(
+        Integer, ForeignKey("dataset.id", ondelete="CASCADE"), primary_key=True
+    )
     dataset = relationship("Dataset", back_populates="columns_metadatas")
     data_type = Column(String, nullable=False)
 

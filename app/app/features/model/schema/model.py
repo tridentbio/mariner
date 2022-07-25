@@ -104,4 +104,3 @@ class ModelVersionCreateRepo(BaseModel):
     model_name: str
     model_version: str
     config: ModelConfig
-

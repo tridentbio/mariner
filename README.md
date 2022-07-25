@@ -19,6 +19,8 @@
 cd app; poetry run pre-commit install
 ```
 
+To run the pre-commit hook with the local dependencies, you must run the `git commit` inside the poetry virtual environment
+
 * Start the stack with Docker Compose:
 
 ```bash

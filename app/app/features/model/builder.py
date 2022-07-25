@@ -1,9 +1,9 @@
 from typing import Dict, List, Union
 
 import networkx as nx
-from pandas.core.frame import DataFrame
 import torch
 import torch_geometric.nn as geom_nn
+from pandas.core.frame import DataFrame
 from pytorch_lightning import LightningModule
 from sqlalchemy.orm.session import Session
 from torch import nn
@@ -15,7 +15,6 @@ from torch_geometric.data import Dataset as PygDataset
 from torch_geometric.data.data import Data
 
 from app.features.dataset.crud import CRUDDataset
-from app.features.dataset.model import Dataset
 from app.features.model.layers import Concat, GlobalPooling
 from app.features.model.schema.configs import ModelConfig
 

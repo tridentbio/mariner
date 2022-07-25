@@ -20,10 +20,7 @@ from app.features.model.deployments.schema import (
     DeploymentCreate,
     DeploymentCreateRepo,
 )
-from app.features.model.exceptions import (
-    ModelNameAlreadyUsed,
-    ModelNotFound,
-)
+from app.features.model.exceptions import ModelNameAlreadyUsed, ModelNotFound
 from app.features.model.schema import layers_schema
 from app.features.model.schema.configs import (
     LayerAnnotation,
@@ -283,4 +280,3 @@ def get_model_version(db: Session, user: UserEntity, model_name: str) -> Model:
     model = Model.from_orm(modeldb)
     model.load_from_mlflow()
     return model
-

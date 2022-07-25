@@ -1,10 +1,9 @@
-
-
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import and_
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import Column, ForeignKeyConstraint
 from sqlalchemy.sql.sqltypes import DateTime, String
+
 from app.db.base_class import Base
 from app.features.model.model import ModelVersion
 
@@ -29,6 +28,6 @@ class Experiment(Base):
         ForeignKeyConstraint(
             ["model_name", "model_version_name"],
             ["modelversion.model_name", "modelversion.model_version"],
-            ondelete="CASCADE"
+            ondelete="CASCADE",
         ),
     )

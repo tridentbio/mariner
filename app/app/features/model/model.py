@@ -19,7 +19,6 @@ class ModelVersion(Base):
     updated_at = Column(DateTime, server_default=current_timestamp())
 
 
-
 class ModelFeaturesAndTarget(Base):
     model_name = Column(
         String, ForeignKey("model.name", ondelete="CASCADE"), primary_key=True

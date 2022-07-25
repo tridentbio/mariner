@@ -46,16 +46,6 @@ class DatasetsQuery(PaginatedApiQuery):
     created_by_id: Optional[int]
 
 
-# class DatasetStats(ApiBaseModel):
-#    min: Optional[float]
-#    max: Optional[float]
-#    avg: Optional[float]
-#    na_count: Optional[float]
-#    type: ColumnType
-#    std_dev: Optional[float]
-DatasetStats = Any
-
-
 class ColumnDescription(ApiBaseModel):
     pattern: str
     description: str
@@ -139,7 +129,7 @@ class DatasetBase(ApiBaseModel):
     rows: int
     columns: int
     bytes: int
-    stats: DatasetStats
+    stats: Any
     data_url: str
     split_target: Split
     split_actual: Optional[Split]
