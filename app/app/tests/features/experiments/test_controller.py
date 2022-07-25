@@ -1,11 +1,15 @@
 import pytest
 from sqlalchemy.orm.session import Session
+
+from app.features.experiments import controller as experiments_ctl
 from app.features.experiments.model import Experiment
-from app.features.experiments.schema import ListExperimentsQuery, TrainingRequest
+from app.features.experiments.schema import (
+    ListExperimentsQuery,
+    TrainingRequest,
+)
 from app.features.model.schema.model import Model
 from app.tests.conftest import get_test_user
-from app.features.experiments import controller as experiments_ctl
-from app.tests.utils.utils import random_lower_string 
+from app.tests.utils.utils import random_lower_string
 
 
 @pytest.mark.asyncio
@@ -14,6 +18,7 @@ async def test_get_experiments(db: Session, some_model: Model, some_experiments)
     query = ListExperimentsQuery(model_name=some_model.name)
     experiments = experiments_ctl.get_experiments(db, user, query)
     assert len(experiments) == len(some_experiments) == 3
+
 
 @pytest.mark.asyncio
 async def test_create_model_training(db: Session, some_model: Model):
@@ -30,7 +35,10 @@ async def test_create_model_training(db: Session, some_model: Model):
     assert exp.model_name == some_model.name
 
     assert exp.model_version.model_version == version.model_version
-    db_exp = db.query(Experiment).filter(Experiment.experiment_id == exp.experiment_id).first()
+    db_exp = (
+        db.query(Experiment)
+        .filter(Experiment.experiment_id == exp.experiment_id)
+        .first()
+    )
     assert db_exp.experiment_id == exp.experiment_id
     assert db_exp.model_name == exp.model_name
-

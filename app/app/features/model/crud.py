@@ -4,17 +4,12 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
 from app.crud.base import CRUDBase
-from app.features.model.model import (
-    Model,
-    ModelFeaturesAndTarget,
-    ModelVersion,
-)
+from app.features.model.model import Model, ModelFeaturesAndTarget, ModelVersion
 from app.features.model.schema.model import (
     ModelCreateRepo,
     ModelUpdateRepo,
     ModelVersionCreateRepo,
 )
-
 
 
 class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):

@@ -34,4 +34,3 @@ class AppLogger(LightningLoggerBase):
         # Optional. Any code that needs to be run after training
         # finishes goes here
         pass
-

@@ -6,7 +6,7 @@ from fastapi.datastructures import UploadFile
 from app.utils import hash_md5
 
 
-def test_hash_md5(tmp_path: Path):
+def test_hash_md5(tmp_path: Path) -> None:
     file1 = tmp_path / "file1"
     file2 = tmp_path / "file2"
     file1.touch()
@@ -23,6 +23,6 @@ def test_hash_md5(tmp_path: Path):
         assert hash_md5(file=file1) != hash_md5(file=file2)
 
 
-def test_hash_md5_no_args():
+def test_hash_md5_no_args() -> None:
     with pytest.raises(TypeError):
         hash_md5()

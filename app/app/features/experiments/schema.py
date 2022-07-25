@@ -23,5 +23,3 @@ class Experiment(ApiBaseModel):
 
 class ListExperimentsQuery(ApiBaseModel):
     model_name: str
-    
-
