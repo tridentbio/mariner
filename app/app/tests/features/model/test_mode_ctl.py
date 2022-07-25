@@ -1,9 +1,21 @@
-from app.features.model.controller import remove_section_by_identation
+from sqlalchemy.orm.session import Session
+
+import app.features.model.controller as model_ctl
+from app.features.model.model import Model as ModelEntity
+from app.features.model.schema.model import Model
+from app.tests.conftest import get_test_user
+
+
+def test_delete_model(db: Session, model: Model):
+    user = get_test_user(db)
+    model_ctl.delete_model(db, user, model.name)
+    model_db = db.query(ModelEntity).filter(ModelEntity.name == model.name).first()
+    assert not model_db
 
 
 def test_remove_section_by_identation():
     assert (
-        remove_section_by_identation(
+        model_ctl.remove_section_by_identation(
             r"""The graph convolutional operator from the `"Semi-supervised
     Classification with Graph Convolutional Networks"
     <https://arxiv.org/abs/1609.02907>`_ paper

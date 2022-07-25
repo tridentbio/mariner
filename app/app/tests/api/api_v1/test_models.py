@@ -12,9 +12,11 @@ from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
 from app.features.dataset.model import Dataset
 from app.features.model import generate
+from app.features.model.model import Model as ModelEntity
 from app.features.model.model import ModelVersion
 from app.features.model.schema.model import Model
-from app.tests.conftest import get_test_user, mock_model
+from app.tests.conftest import get_test_user
+from app.tests.features.model.conftest import mock_model, setup_create_model
 from app.tests.utils.utils import random_lower_string
 
 
@@ -159,8 +161,19 @@ def test_update_model():
     pass
 
 
-def test_delete_model():
-    pass
+def test_delete_model(
+    client: TestClient,
+    db: Session,
+    normal_user_token_headers: dict[str, str],
+    some_dataset: Dataset,
+):
+    model = setup_create_model(client, normal_user_token_headers, some_dataset)
+    model_name = model.name
+    res = client.delete(
+        f"{settings.API_V1_STR}/models/{model_name}", headers=normal_user_token_headers
+    )
+    assert res.status_code == 200
+    assert not db.query(ModelEntity).filter(ModelEntity.name == model_name).first()
 
 
 def test_post_predict(

@@ -113,3 +113,13 @@ def get_model(
 ):
     model = controller.get_model_version(db, current_user, model_name)
     return model
+
+
+@router.delete("/{model_name}", response_model=Model)
+def delete_model(
+    model_name: str,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+):
+    model = controller.delete_model(db, current_user, model_name)
+    return model

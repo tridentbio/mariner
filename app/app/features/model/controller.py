@@ -1,5 +1,6 @@
 from typing import Any, List, Optional, Union, get_type_hints
 
+import mlflow
 import mlflow.exceptions
 import numpy as np
 import pandas as pd
@@ -279,4 +280,15 @@ def get_model_version(db: Session, user: UserEntity, model_name: str) -> Model:
         raise ModelNotFound()
     model = Model.from_orm(modeldb)
     model.load_from_mlflow()
+    return model
+
+
+def delete_model(db: Session, user: UserEntity, model_name: str) -> Model:
+    model = repo.get_by_name(db, model_name)
+    if not model or model.created_by_id != user.id:
+        raise ModelNotFound()
+    model = Model.from_orm(model)
+    client = mlflow.tracking.MlflowClient()
+    client.delete_registered_model(model.name)
+    repo.delete_by_name(db, model_name)
     return model
