@@ -8,6 +8,17 @@
 
 ## Backend local development
 
+### Meeting coding standards
+
+- Install the dependencies in the `app/` folder
+```bash
+  poetry install
+```
+- Install pre-commit in the `app/` folder:
+```bash
+cd app; poetry run pre-commit install
+```
+
 * Start the stack with Docker Compose:
 
 ```bash
