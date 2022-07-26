@@ -1,9 +1,12 @@
-name: Deploy to Develop
+name: Deploy to Develop - Tests
 
 on:
-  push:
-    branches:
-      - helm-packages
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'develop'
 jobs:
   test:
     runs-on: ubuntu-latest
