@@ -1,0 +1,57 @@
+version: "3.3"
+services:
+  db:
+    image: postgres:12
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGUSER=postgres
+      - POSTGRES_SERVER=localhost
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=app
+    ports: 
+      - "5432:5432"
+    networks:
+      - ray_net
+
+  mlflowdb:
+    image: postgres:12
+    env_file:
+      - .env.local.mlflow
+    environment:
+      - POSTGRES_SERVER=localhost
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=app
+    ports: 
+      - "54321:5432"
+    networks:
+      - ray_net
+
+  mlflow:
+    depends_on:
+      - mlflowdb
+    build:
+      context: .
+      dockerfile: ./Dockerfile.local
+    environment:
+      - POSTGRES_SERVER=localhost
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=app
+      - POSTGRES_PORT=54321
+
+    restart: unless-stopped
+    command: bash -c 'echo $AWS_MODELS_BUCKET && poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
+      #command: bash -c 'while true; do sleep 1; done;'
+    ports:
+      - "5000:5000"
+    networks:
+      - ray_net
+
+networks:
+  ray_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.63.0.0/16
