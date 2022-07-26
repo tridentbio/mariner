@@ -54,6 +54,30 @@ def test_post_models_success(
     assert db_model_config is not None
 
 
+def test_post_models_on_existing_model_creates_new_version(
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_model: Model,
+):
+    new_version = some_model.versions[0].copy()
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        json={
+            "name": some_model.name,
+            "config": new_version.config.dict(),
+            "modelVersionDescription": "This should be  version 2",
+        },
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == status.HTTP_200_OK
+    model = db.query(ModelEntity).filter(ModelEntity.name == some_model.name).first()
+    assert model
+    model = Model.from_orm(model)
+    assert len(model.versions) == 2
+    assert model.versions[-1].model_version == "2"
+
+
 def test_post_models_dataset_not_found(
     client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
 ):

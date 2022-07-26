@@ -10,6 +10,7 @@ from mlflow.deployments.base import BaseDeploymentClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
+from mlflow.tracking.client import MlflowClient
 
 from app.features.model.schema.model import Model
 
@@ -81,8 +82,9 @@ def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
     return deployment
 
 
-def get_registry_model(model_registry_name: str):
-    client = create_tracking_client()
+def get_registry_model(model_registry_name: str, client: Optional[MlflowClient] = None):
+    if not client:
+        client = create_tracking_client()
     registered_model = client.get_registered_model(model_registry_name)
     return registered_model
 
