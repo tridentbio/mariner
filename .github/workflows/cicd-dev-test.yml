@@ -52,6 +52,10 @@ jobs:
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v2
+      - name: Build the stack
+        run: docker-compose -f docker-compose-cicd.yml up -d 
+      - name: Test
+        run: docker-compose ps
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v2
