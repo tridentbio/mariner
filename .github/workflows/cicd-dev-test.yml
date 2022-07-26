@@ -7,45 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      db:
-        image: postgres
-        ports:
-          - "5432:5432"
-        env:
-          POSTGRES_SERVER: localhost
-          POSTGRES_PASSWORD: 123456
-          POSTGRES_USER: postgres
-          POSTGRES_DB: app
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      mlflowdb:
-        image: postgres
-        ports:
-          - "54321:5432"
-        env:
-          POSTGRES_SERVER: localhost
-          POSTGRES_PASSWORD: 123456
-          POSTGRES_USER: postgres
-          POSTGRES_DB: app
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      mlflow:
-        image: larribas/mlflow
-        env:
-          POSTGRES_SERVER: localhost
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: 123456
-          POSTGRES_DB: app
-          POSTGRES_PORT: 54321
-        ports:
-          - "5000:5000"
     steps:
       #----------------------------------------------
       # check-out repo and set-up python
