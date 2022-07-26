@@ -1,0 +1,49 @@
+version: "3.3"
+services:
+  db:
+    image: postgres:12
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGUSER=postgres
+      - POSTGRES_SERVER=localhost
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=app
+    ports: 
+      - "5432:5432"
+    networks:
+      - ray_net
+
+  mlflowdb:
+    image: postgres:12
+    environment:
+      - POSTGRES_SERVER=localhost
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=app
+    ports: 
+      - "54321:5432"
+    networks:
+      - ray_net
+
+  mlflow:
+    depends_on:
+      - mlflowdb
+    image: larribas/mlflow
+    environment:
+      - POSTGRES_SERVER=localhost
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=app
+      - POSTGRES_PORT=54321
+    ports:
+      - "5000:5000"
+    networks:
+      - ray_net
+
+networks:
+  ray_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.63.0.0/16
