@@ -16,8 +16,6 @@ services:
 
   mlflowdb:
     image: postgres:12
-    env_file:
-      - .env.local.mlflow
     environment:
       - POSTGRES_SERVER=localhost
       - POSTGRES_PASSWORD=123456
@@ -31,19 +29,13 @@ services:
   mlflow:
     depends_on:
       - mlflowdb
-    build:
-      context: .
-      dockerfile: ./Dockerfile.local
+    image: larribas/mlflow
     environment:
       - POSTGRES_SERVER=localhost
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=app
       - POSTGRES_PORT=54321
-
-    restart: unless-stopped
-    command: bash -c 'echo $AWS_MODELS_BUCKET && poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
-      #command: bash -c 'while true; do sleep 1; done;'
     ports:
       - "5000:5000"
     networks:
