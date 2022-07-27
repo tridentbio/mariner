@@ -12,11 +12,11 @@
 
 - Install the dependencies in the `app/` folder
 ```bash
-  poetry install
+cd app; poetry install
 ```
 - Install pre-commit in the `app/` folder:
 ```bash
-cd app; poetry run pre-commit install
+poetry run pre-commit install
 ```
 
 To run the pre-commit hook with the local dependencies, you must run the `git commit` inside the poetry virtual environment
