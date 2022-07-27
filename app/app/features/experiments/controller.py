@@ -1,4 +1,5 @@
 from typing import List
+from uuid import uuid4
 
 from sqlalchemy.orm.session import Session
 
@@ -10,6 +11,7 @@ from app.features.experiments.schema import (
     ListExperimentsQuery,
     TrainingRequest,
 )
+from app.features.experiments.tasks import get_exp_manager
 from app.features.experiments.train.run import start_training
 from app.features.model.builder import CustomDataset
 from app.features.model.crud import repo as model_repo
@@ -37,7 +39,7 @@ async def create_model_traning(
     dataset = dataset_repo.get_by_name(db, model_version.config.dataset.name)
     torchmodel = model_version.build_torch_model()
     dataset = CustomDataset(dataset.get_dataframe(), model_version.config)
-    experiment_id = await start_training(torchmodel, training_request, dataset)
+    experiment_id, task = await start_training(torchmodel, training_request, dataset)
     experiment = exp_repo.create(
         db,
         obj_in=ExperimentCreateRepo(
@@ -46,6 +48,7 @@ async def create_model_traning(
             experiment_id=experiment_id,
         ),
     )
+    get_exp_manager().add_experiment(experiment.experiment_id, task)
     return Experiment.from_orm(experiment)
 
 

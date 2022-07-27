@@ -1,4 +1,5 @@
 import asyncio
+from asyncio.tasks import Task
 
 import mlflow
 from mlflow.entities.experiment import Experiment
@@ -28,13 +29,12 @@ async def train_run(
     loggers = [logger, applogger]
     trainer = Trainer(max_epochs=training_request.epochs, logger=loggers)
     trainer.fit(model, dataloader)
-    # TODO: Log metrics on mlflow
     mlflow.pytorch.log_model(model, get_artifact_uri(run.info.run_id))
 
 
 async def start_training(
     model: LightningModule, training_request: TrainingRequest, dataset: CustomDataset
-) -> str:
+) -> tuple[str, Task]:
     # TODO: Customize learning rate, preferably here
     mlflow.create_experiment(training_request.experiment_name)
     experiment = mlflow.get_experiment_by_name(training_request.experiment_name)
@@ -42,6 +42,5 @@ async def start_training(
     dataloader = DataLoader(dataset)
     coroutine = train_run(experiment, model, dataloader, training_request)
     task = asyncio.create_task(coroutine)
-    get_exp_manager().add_experiment(experiment.experiment_id, task)
 
-    return experiment.experiment_id
+    return experiment.experiment_id, task
