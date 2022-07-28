@@ -61,7 +61,9 @@ class CustomModel(LightningModule):
     def training_step(self, batch, batch_idx):
         prediction = self(batch).reshape(len(batch["y"]))
         loss = self.loss_fn(prediction, batch["y"])
-        self.log("train_loss", loss, on_epoch=True, on_step=False)
+        self.log(
+            "train_loss", loss, batch_size=len(batch["y"]), on_epoch=True, on_step=False
+        )
         return loss
 
     def forward(self, input_):

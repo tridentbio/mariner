@@ -7,6 +7,7 @@ from app.features.experiments.schema import (
     ListExperimentsQuery,
     TrainingRequest,
 )
+from app.features.experiments.tasks import get_exp_manager
 from app.features.model.schema.model import Model
 from app.tests.conftest import get_test_user
 from app.tests.utils.utils import random_lower_string
@@ -33,8 +34,10 @@ async def test_create_model_training(db: Session, some_model: Model):
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
     assert exp.model_name == some_model.name
-
     assert exp.model_version.model_version == version.model_version
+    task = get_exp_manager().get_task(exp.experiment_id)
+    assert task
+    await task
     db_exp = (
         db.query(Experiment)
         .filter(Experiment.experiment_id == exp.experiment_id)
@@ -42,3 +45,7 @@ async def test_create_model_training(db: Session, some_model: Model):
     )
     assert db_exp.experiment_id == exp.experiment_id
     assert db_exp.model_name == exp.model_name
+    assert db_exp.train_metrics
+    assert db_exp.history
+    assert "train_loss" in db_exp.train_metrics
+    assert len(db_exp.history["train_loss"]) == request.epochs
