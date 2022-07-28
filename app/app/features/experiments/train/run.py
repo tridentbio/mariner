@@ -11,7 +11,6 @@ from pytorch_lightning.trainer.trainer import Trainer
 from torch_geometric.loader.dataloader import DataLoader
 
 from app.features.experiments.schema import TrainingRequest
-from app.features.experiments.tasks import get_exp_manager
 from app.features.experiments.train.custom_logger import AppLogger
 from app.features.model.builder import CustomDataset
 

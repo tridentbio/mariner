@@ -1,8 +1,8 @@
-from typing import Generator
+from typing import Generator, Union
 
-from fastapi import status
+from fastapi import WebSocket, status
 from fastapi.exceptions import HTTPException
-from fastapi.param_functions import Depends
+from fastapi.param_functions import Cookie, Depends, Query
 from fastapi.security.oauth2 import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
@@ -61,3 +61,13 @@ def get_current_active_superuser(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+async def get_cookie_or_token(
+    websocket: WebSocket,
+    session: Union[str, None] = Cookie(default=None),
+    token: Union[str, None] = Query(default=None),
+):
+    if session is None and token is None:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+    return session or token
