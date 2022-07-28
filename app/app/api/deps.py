@@ -1,4 +1,4 @@
-from typing import Generator, Union
+from typing import Union
 
 from fastapi import WebSocket, status
 from fastapi.exceptions import HTTPException
@@ -20,7 +20,7 @@ reusable_oauth2 = OAuth2PasswordBearer(
 )
 
 
-def get_db() -> Generator:
+def get_db():
     db = SessionLocal()
     yield db
     db.close()

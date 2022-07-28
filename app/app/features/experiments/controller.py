@@ -1,5 +1,5 @@
 from asyncio.tasks import Task
-from typing import List, Literal
+from typing import Dict, List, Literal
 
 import mlflow
 from mlflow.tracking._tracking_service.utils import get_tracking_uri
@@ -7,10 +7,11 @@ from mlflow.tracking.artifact_utils import get_artifact_uri
 from mlflow.tracking.client import MlflowClient
 from sqlalchemy.orm.session import Session
 
+from app.api.websocket import WebSocketMessage, get_websockets_manager
 from app.builder.dataset import DataModule
 from app.features.dataset.crud import repo as dataset_repo
 from app.features.experiments.crud import ExperimentCreateRepo
-from app.features.experiments.crud import repo as exp_repo
+from app.features.experiments.crud import repo as experiments_repo
 from app.features.experiments.schema import (
     Experiment,
     ListExperimentsQuery,
@@ -24,6 +25,7 @@ from app.features.model.crud import repo as model_repo
 from app.features.model.exceptions import ModelNotFound, ModelVersionNotFound
 from app.features.model.schema.model import Model
 from app.features.user.model import User as UserEntity
+from app.schemas.api import ApiBaseModel
 
 
 async def create_model_traning(
@@ -79,7 +81,6 @@ async def create_model_traning(
             mlflow.pytorch.log_model(
                 model,
                 get_artifact_uri(run_id, tracking_uri=get_tracking_uri()),
-                run_id=run_id,
             )
         elif done and exception:
             raise exception
@@ -112,7 +113,7 @@ def log_metrics(
     history: dict[str, list[float]],
     stage: Literal["train", "val", "test"] = "train",
 ) -> None:
-    pass
+    experiments_repo.update_metrics(db, experiment_id, stage, metrics, history)
 
 
 def get_running_histories(user: UserEntity) -> List[RunningHistory]:
@@ -127,5 +128,18 @@ def get_running_histories(user: UserEntity) -> List[RunningHistory]:
     ]
 
 
-def broadcast_epoch_metrics(experiment_id, metrics: dict[str, float], epoch: int):
-    pass
+class UpdateRunningData(ApiBaseModel):
+    metrics: Dict[str, float]
+    epoch: int
+
+
+async def broadcast_epoch_metrics(experiment_id, metrics: dict[str, float], epoch: int):
+    # TODO: Get user that created the experiment. Worst case, add it to CustomLogger
+    user_id = "1"
+    await get_websockets_manager().send_message(
+        user_id,
+        WebSocketMessage(
+            type="update-running-metrics",
+            data=UpdateRunningData(metrics=metrics, epoch=epoch),
+        ),
+    )

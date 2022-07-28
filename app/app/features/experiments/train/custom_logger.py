@@ -10,11 +10,9 @@ from app.features.experiments import controller as experiments_controller
 
 class AppLogger(LightningLoggerBase):
     running_history: Dict[str, List[float]]
-    db: Session
     experiment_id: str
 
     def __init__(self, experiment_id: str):
-        self.db = SessionLocal()
         self.running_history = {}
         self.experiment_id = experiment_id
 
@@ -57,10 +55,14 @@ class AppLogger(LightningLoggerBase):
         for metric_name, metric_values in self.running_history.items():
             metrics[metric_name] = metric_values[-1]
 
+        db: Session = SessionLocal()
         experiments_controller.log_metrics(
-            self.db,
+            db,
             self.experiment_id,
             metrics,
             history=self.running_history,
             stage="train",
         )
+        db.commit()
+        db.flush()
+        db.close()

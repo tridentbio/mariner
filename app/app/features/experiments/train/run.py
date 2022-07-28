@@ -26,7 +26,11 @@ async def start_training(
 ) -> Task:
     data_module.setup(stage="fit")
     trainer = Trainer(
-        max_epochs=training_request.epochs, logger=loggers, log_every_n_steps=1
+        max_epochs=training_request.epochs,
+        logger=loggers,
+        log_every_n_steps=1,
+        enable_progress_bar=False,
+        enable_checkpointing=False,
     )
     coroutine = train_run(trainer, model, data_module)
     task = asyncio.create_task(coroutine)

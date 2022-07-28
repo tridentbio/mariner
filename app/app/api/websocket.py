@@ -1,5 +1,4 @@
-from abc import ABC
-from typing import Dict, Literal, Optional
+from typing import Any, Dict, Literal
 
 from fastapi import WebSocket
 from fastapi.param_functions import Depends
@@ -10,9 +9,9 @@ from app.api import deps
 from app.schemas.api import ApiBaseModel
 
 
-class WebSocketMessage(ApiBaseModel, ABC):
-    type: str
-    data: ApiBaseModel
+class WebSocketMessage(ApiBaseModel):
+    type: Literal["pong", "update-running-metrics"]
+    data: Any
 
 
 class ConnectionManager:
@@ -42,7 +41,7 @@ class ConnectionManager:
 _manager = None
 
 
-def get_manager() -> ConnectionManager:
+def get_websockets_manager() -> ConnectionManager:
     global _manager
     if not _manager:
         _manager = ConnectionManager()
@@ -52,22 +51,13 @@ def get_manager() -> ConnectionManager:
 ws_router = APIRouter()
 
 
-class PongWSData(ApiBaseModel):
-    message = "PONG"
-
-
-class PongWSMessage(WebSocketMessage):
-    type: Literal["pong"]
-    data: Optional[PongWSData]
-
-
 @ws_router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket, user: str = Depends(deps.get_cookie_or_token)
 ):
-    manager = get_manager()
+    manager = get_websockets_manager()
     await manager.connect(user, websocket)
-    pong_message = PongWSMessage(type="pong", data=PongWSData())
+    pong_message = WebSocketMessage(type="pong", data=[])
     while True:
         await websocket.receive_text()
         await manager.send_message(user, pong_message)
