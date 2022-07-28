@@ -36,6 +36,7 @@ emails = "^0.6"
 pytorch-lightning = "^1.6.4"
 pre-commit = "^2.20.0"
 mypy = "^0.971"
+websockets = "^10.3"
 
 [tool.poetry.dev-dependencies]
 black = "^21.10b0"
