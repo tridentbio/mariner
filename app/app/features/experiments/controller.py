@@ -61,7 +61,7 @@ async def create_model_traning(
     task = await start_training(
         torchmodel, training_request, data_module, loggers=logger
     )
-    experiment = exp_repo.create(
+    experiment = experiments_repo.create(
         db,
         obj_in=ExperimentCreateRepo(
             model_name=training_request.model_name,
@@ -102,7 +102,7 @@ def get_experiments(
     model = model_repo.get_by_name(db, query.model_name)
     if model.created_by_id != user.id:
         raise ModelNotFound()
-    exps = exp_repo.get_by_model_name(db, query.model_name)
+    exps = experiments_repo.get_by_model_name(db, query.model_name)
     return [Experiment.from_orm(exp) for exp in exps]
 
 
