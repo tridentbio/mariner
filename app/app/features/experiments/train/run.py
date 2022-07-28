@@ -1,40 +1,33 @@
 import asyncio
 from asyncio.tasks import Task
 
-import mlflow
-from mlflow.entities.experiment import Experiment
-from mlflow.tracking.artifact_utils import get_artifact_uri
-from mlflow.tracking.client import MlflowClient
 from pytorch_lightning.core.lightning import LightningModule
-from pytorch_lightning.loggers.mlflow import MLFlowLogger
 from pytorch_lightning.trainer.trainer import Trainer
-from torch_geometric.loader.dataloader import DataLoader
 
+from app.builder.dataset import DataModule
 from app.features.experiments.schema import TrainingRequest
 from app.features.experiments.train.custom_logger import AppLogger
-from app.builder.dataset import CustomDataset, DataModule
 
 
 async def train_run(
     trainer: Trainer,
-    experiment: Experiment,
     model: LightningModule,
     data_module: DataModule,
-):
-    client = MlflowClient()
-    run = client.create_run(experiment.experiment_id)
+) -> LightningModule:
     trainer.fit(model, data_module.train_dataloader())
-    mlflow.pytorch.log_model(model, get_artifact_uri(run.info.run_id))
+    return model
 
 
 async def start_training(
-    model: LightningModule, training_request: TrainingRequest, data_module: DataModule
-) -> tuple[str, Task, AppLogger]:
-    applogger = AppLogger()
-    trainer = Trainer(max_epochs=training_request.epochs, logger=applogger)
-    mlflow.create_experiment(training_request.experiment_name)
-    experiment = mlflow.get_experiment_by_name(training_request.experiment_name)
-    assert experiment
-    coroutine = train_run(trainer, experiment, model, data_module, training_request)
+    model: LightningModule,
+    training_request: TrainingRequest,
+    data_module: DataModule,
+    loggers: AppLogger,
+) -> Task:
+    data_module.setup(stage="fit")
+    trainer = Trainer(
+        max_epochs=training_request.epochs, logger=loggers, log_every_n_steps=1
+    )
+    coroutine = train_run(trainer, model, data_module)
     task = asyncio.create_task(coroutine)
-    return experiment.experiment_id, task, applogger
+    return task
