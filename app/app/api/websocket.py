@@ -1,12 +1,12 @@
 from abc import ABC
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
+from starlette.websockets import WebSocketState
 
 from app.api import deps
-from app.features.user.model import User
 from app.schemas.api import ApiBaseModel
 
 
@@ -20,6 +20,11 @@ class ConnectionManager:
         self.active_connections: Dict[str, WebSocket] = {}
 
     async def connect(self, session_id: str, websocket: WebSocket):
+        if session_id in self.active_connections:
+            ws = self.active_connections[session_id]
+            if ws.application_state == WebSocketState.CONNECTED:
+                await ws.close()
+            self.active_connections.pop(session_id)
         await websocket.accept()
         self.active_connections[session_id] = websocket
 
@@ -27,7 +32,7 @@ class ConnectionManager:
         self.active_connections.pop(session_id)
 
     async def send_message(self, session_id: str, message: WebSocketMessage):
-        await self.active_connections[session_id].send_json(message.json())
+        await self.active_connections[session_id].send_text(message.json())
 
     async def broadcast(self, message: str):
         for connection in self.active_connections.values():
@@ -52,26 +57,17 @@ class PongWSData(ApiBaseModel):
 
 
 class PongWSMessage(WebSocketMessage):
-    type = "pong"
+    type: Literal["pong"]
     data: Optional[PongWSData]
-
-    def __init__(self):
-        self.type = "pong"
-        self.data = PongWSData()
 
 
 @ws_router.websocket("/ws")
 async def websocket_endpoint(
-    websocket: WebSocket, user: User = Depends(deps.get_current_active_user)
+    websocket: WebSocket, user: str = Depends(deps.get_cookie_or_token)
 ):
-    print("hello from /ws")
     manager = get_manager()
-    await manager.connect(user.email, websocket)
-    try:
-        while True:
-            msg = await websocket.receive_json()
-            print(f"User {user.email} send {repr(msg)}")
-            pong_message = PongWSMessage()
-            await manager.send_message(user.email, pong_message)
-    except WebSocketDisconnect:
-        manager.disconnect_session(user.email)
+    await manager.connect(user, websocket)
+    pong_message = PongWSMessage(type="pong", data=PongWSData())
+    while True:
+        await websocket.receive_text()
+        await manager.send_message(user, pong_message)
