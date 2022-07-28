@@ -4,8 +4,8 @@ from typing import List, Literal, Optional, Union
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic.main import BaseModel
 
+from app.builder.model import CustomModel
 from app.features.dataset.schema import Dataset
-from app.features.model.builder import CustomModel
 from app.features.model.schema.configs import ModelConfig
 from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery

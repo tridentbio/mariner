@@ -1,18 +1,25 @@
-from typing import List
+from asyncio.tasks import Task
+from typing import List, Literal
 
+import mlflow
+from mlflow.tracking._tracking_service.utils import get_tracking_uri
+from mlflow.tracking.artifact_utils import get_artifact_uri
+from mlflow.tracking.client import MlflowClient
 from sqlalchemy.orm.session import Session
 
+from app.builder.dataset import DataModule
 from app.features.dataset.crud import repo as dataset_repo
 from app.features.experiments.crud import ExperimentCreateRepo
 from app.features.experiments.crud import repo as exp_repo
 from app.features.experiments.schema import (
     Experiment,
     ListExperimentsQuery,
+    RunningHistory,
     TrainingRequest,
 )
-from app.features.experiments.tasks import get_exp_manager
+from app.features.experiments.tasks import ExperimentView, get_exp_manager
+from app.features.experiments.train.custom_logger import AppLogger
 from app.features.experiments.train.run import start_training
-from app.builder.dataset import CustomDataset, DataModule
 from app.features.model.crud import repo as model_repo
 from app.features.model.exceptions import ModelNotFound, ModelVersionNotFound
 from app.features.model.schema.model import Model
@@ -35,6 +42,7 @@ async def create_model_traning(
             model_version = version
     if not model_version:
         raise ModelVersionNotFound()
+
     dataset = dataset_repo.get_by_name(db, model_version.config.dataset.name)
     torchmodel = model_version.build_torch_model()
     featurizers_config = model_version.config.featurizers
@@ -43,9 +51,14 @@ async def create_model_traning(
         data=dataset.get_dataframe(),
         dataset_config=model_version.config.dataset,
         split_target=dataset.split_target,
-        split_type=dataset.split_type
+        split_type=dataset.split_type,
     )
-    experiment_id, task, logger = await start_training(torchmodel, training_request, data_module)
+
+    experiment_id = mlflow.create_experiment(training_request.experiment_name)
+    logger = AppLogger(experiment_id)
+    task = await start_training(
+        torchmodel, training_request, data_module, loggers=logger
+    )
     experiment = exp_repo.create(
         db,
         obj_in=ExperimentCreateRepo(
@@ -54,7 +67,31 @@ async def create_model_traning(
             experiment_id=experiment_id,
         ),
     )
-    get_exp_manager().add_experiment(experiment.experiment_id, task)
+
+    def finish_task(task: Task, experiment_id: str):
+        exception = task.exception()
+        done = task.done()
+        if done and not exception:
+            client = MlflowClient()
+            model = task.result()
+            run = client.create_run(experiment_id)
+            run_id = run.info.run_id
+            mlflow.pytorch.log_model(
+                model,
+                get_artifact_uri(run_id, tracking_uri=get_tracking_uri()),
+                run_id=run_id,
+            )
+        elif done and exception:
+            raise exception
+        else:
+            raise Exception("Task is not done")
+
+    get_exp_manager().add_experiment(
+        ExperimentView(
+            experiment_id=experiment_id, user_id=user.id, task=task, logger=logger
+        ),
+        lambda task: finish_task(task, experiment_id),
+    )
     return Experiment.from_orm(experiment)
 
 
@@ -66,3 +103,29 @@ def get_experiments(
         raise ModelNotFound()
     exps = exp_repo.get_by_model_name(db, query.model_name)
     return [Experiment.from_orm(exp) for exp in exps]
+
+
+def log_metrics(
+    db: Session,
+    experiment_id: str,
+    metrics: dict[str, float],
+    history: dict[str, list[float]],
+    stage: Literal["train", "val", "test"] = "train",
+) -> None:
+    pass
+
+
+def get_running_histories(user: UserEntity) -> List[RunningHistory]:
+    experiments = get_exp_manager().get_from_user(user.id)
+    return [
+        RunningHistory(
+            experiment_id=exp.experiment_id,
+            user_id=user.id,
+            running_history=exp.logger.running_history,
+        )
+        for exp in experiments
+    ]
+
+
+def broadcast_epoch_metrics(experiment_id, metrics: dict[str, float], epoch: int):
+    pass

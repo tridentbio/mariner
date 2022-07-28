@@ -122,7 +122,7 @@ class DataModule(pl.LightningDataModule):
         split_target: str,
         featurizers_config: List[AppmoleculefeaturizerLayerConfig],
         dataset_config: DatasetConfig,
-        batch_size: int=32,
+        batch_size: int = 32,
     ):
         self.prepare_data_per_node = False
         self.dataset_config = dataset_config

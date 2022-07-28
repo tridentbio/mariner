@@ -1,25 +1,51 @@
 from asyncio.tasks import Task
 from ctypes import ArgumentError
-from typing import Dict, Optional
+from typing import Any, Callable, Dict, Optional
+
+from app.features.experiments.train.custom_logger import AppLogger
+
+
+class ExperimentView:
+    experiment_id: str
+    user_id: int
+    task: Task
+    logger: AppLogger
+
+    def __init__(self, experiment_id: str, user_id: int, task: Task, logger: AppLogger):
+        self.experiment_id = experiment_id
+        self.user_id = user_id
+        self.task = task
+        self.logger = logger
 
 
 class ExperimentManager:
     def __init__(self):
-        self.tasks: Dict[str, Task] = {}
+        self.experiments: Dict[str, ExperimentView] = {}
 
-    def done_callback(self, experiment_id: str, task: Task):
-        # Experiments need to have it's state updated in the database
-        self.tasks.pop(experiment_id)
-
-    def add_experiment(self, experiment_id: str, task: Task):
-        if experiment_id in self.tasks:
+    def add_experiment(
+        self, experiment: ExperimentView, done_callback: Optional[Callable[[Task], Any]]
+    ):
+        experiment_id = experiment.experiment_id
+        task = experiment.task
+        if experiment_id in self.experiments:
             raise ArgumentError("experiment_id already has a task")
-        self.tasks[experiment_id] = task
-        task.add_done_callback(lambda task: self.done_callback(experiment_id, task))
+        self.experiments[experiment_id] = experiment
+        if done_callback:
+            task.add_done_callback(done_callback)
+
+    def get_logger(self, experiment_id: str):
+        if experiment_id in self.experiments:
+            return self.experiments[experiment_id].logger
+
+    def get_from_user(self, user_id: int):
+        experiments = [
+            exp for exp in self.experiments.values() if exp.user_id == user_id
+        ]
+        return experiments
 
     def get_task(self, experiemnt_id: str):
-        if experiemnt_id in self.tasks:
-            return self.tasks[experiemnt_id]
+        if experiemnt_id in self.experiments:
+            return self.experiments[experiemnt_id].task
 
 
 _task_manager: Optional[ExperimentManager] = None

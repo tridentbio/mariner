@@ -59,11 +59,9 @@ class CustomModel(LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx):
-        prediction = self(batch).reshape(
-            4,
-        )
-        # TODO: adapt loss to problem type. MSE will only work for regression
+        prediction = self(batch).reshape(len(batch["y"]))
         loss = self.loss_fn(prediction, batch["y"])
+        self.log("train_loss", loss, on_epoch=True, on_step=False)
         return loss
 
     def forward(self, input_):

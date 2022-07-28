@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Dict, List
 
 from app.features.model.schema.model import ModelVersion
 from app.schemas.api import ApiBaseModel
@@ -23,3 +24,15 @@ class Experiment(ApiBaseModel):
 
 class ListExperimentsQuery(ApiBaseModel):
     model_name: str
+
+
+class RunningHistory(ApiBaseModel):
+    experiment_id: str
+    user_id: int
+    # maps metric name to values
+    running_history: Dict[str, List[float]]
+
+
+class EpochUpdate(ApiBaseModel):
+    experiment_id: str
+    metrics: Dict[str, float]
