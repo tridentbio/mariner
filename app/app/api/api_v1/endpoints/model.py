@@ -31,6 +31,7 @@ def create_model(
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Model:
     try:
+        print(model_create)
         model = controller.create_model(
             db,
             current_user,
