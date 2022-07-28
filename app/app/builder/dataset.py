@@ -120,9 +120,9 @@ class DataModule(pl.LightningDataModule):
         data: pd.DataFrame,
         split_type: str,
         split_target: str,
-        batch_size: int,
-        dataset_config: DatasetConfig,
         featurizers_config: List[AppmoleculefeaturizerLayerConfig],
+        dataset_config: DatasetConfig,
+        batch_size: int=32,
     ):
         self.prepare_data_per_node = False
         self.dataset_config = dataset_config

@@ -12,34 +12,29 @@ from torch_geometric.loader.dataloader import DataLoader
 
 from app.features.experiments.schema import TrainingRequest
 from app.features.experiments.train.custom_logger import AppLogger
-from app.features.model.builder import CustomDataset
+from app.builder.dataset import CustomDataset, DataModule
 
 
 async def train_run(
+    trainer: Trainer,
     experiment: Experiment,
     model: LightningModule,
-    dataloader: DataLoader,
-    training_request: TrainingRequest,
+    data_module: DataModule,
 ):
     client = MlflowClient()
     run = client.create_run(experiment.experiment_id)
-    logger = MLFlowLogger(experiment_name=experiment.name, run_id=run.info.run_id)
-    applogger = AppLogger()
-    loggers = [logger, applogger]
-    trainer = Trainer(max_epochs=training_request.epochs, logger=loggers)
-    trainer.fit(model, dataloader)
+    trainer.fit(model, data_module.train_dataloader())
     mlflow.pytorch.log_model(model, get_artifact_uri(run.info.run_id))
 
 
 async def start_training(
-    model: LightningModule, training_request: TrainingRequest, dataset: CustomDataset
-) -> tuple[str, Task]:
-    # TODO: Customize learning rate, preferably here
+    model: LightningModule, training_request: TrainingRequest, data_module: DataModule
+) -> tuple[str, Task, AppLogger]:
+    applogger = AppLogger()
+    trainer = Trainer(max_epochs=training_request.epochs, logger=applogger)
     mlflow.create_experiment(training_request.experiment_name)
     experiment = mlflow.get_experiment_by_name(training_request.experiment_name)
     assert experiment
-    dataloader = DataLoader(dataset)
-    coroutine = train_run(experiment, model, dataloader, training_request)
+    coroutine = train_run(trainer, experiment, model, data_module, training_request)
     task = asyncio.create_task(coroutine)
-
-    return experiment.experiment_id, task
+    return experiment.experiment_id, task, applogger
