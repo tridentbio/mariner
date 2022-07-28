@@ -12,7 +12,7 @@ from app.features.experiments.schema import (
 )
 from app.features.experiments.tasks import get_exp_manager
 from app.features.experiments.train.run import start_training
-from app.features.model.builder import CustomDataset
+from app.builder.dataset import CustomDataset, DataModule
 from app.features.model.crud import repo as model_repo
 from app.features.model.exceptions import ModelNotFound, ModelVersionNotFound
 from app.features.model.schema.model import Model
@@ -37,8 +37,15 @@ async def create_model_traning(
         raise ModelVersionNotFound()
     dataset = dataset_repo.get_by_name(db, model_version.config.dataset.name)
     torchmodel = model_version.build_torch_model()
-    dataset = CustomDataset(dataset.get_dataframe(), model_version.config)
-    experiment_id, task = await start_training(torchmodel, training_request, dataset)
+    featurizers_config = model_version.config.featurizers
+    data_module = DataModule(
+        featurizers_config=featurizers_config,
+        data=dataset.get_dataframe(),
+        dataset_config=model_version.config.dataset,
+        split_target=dataset.split_target,
+        split_type=dataset.split_type
+    )
+    experiment_id, task, logger = await start_training(torchmodel, training_request, data_module)
     experiment = exp_repo.create(
         db,
         obj_in=ExperimentCreateRepo(
