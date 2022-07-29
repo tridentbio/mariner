@@ -1,5 +1,6 @@
 from asyncio.tasks import Task
-from typing import Dict, List, Literal
+import logging
+from typing import Any, Dict, List, Literal
 
 import mlflow
 from mlflow.tracking._tracking_service.utils import get_tracking_uri
@@ -10,8 +11,12 @@ from sqlalchemy.orm.session import Session
 from app.api.websocket import WebSocketMessage, get_websockets_manager
 from app.builder.dataset import DataModule
 from app.features.dataset.crud import repo as dataset_repo
-from app.features.experiments.crud import ExperimentCreateRepo
+from app.features.experiments.crud import (
+    ExperimentCreateRepo,
+    ExperimentUpdateRepo,
+)
 from app.features.experiments.crud import repo as experiments_repo
+from app.features.experiments.exceptions import ExperimentNotFound
 from app.features.experiments.schema import (
     Experiment,
     ListExperimentsQuery,
@@ -26,6 +31,10 @@ from app.features.model.exceptions import ModelNotFound, ModelVersionNotFound
 from app.features.model.schema.model import Model
 from app.features.user.model import User as UserEntity
 from app.schemas.api import ApiBaseModel
+
+
+def log_error(msg: str):
+    logging.error('[experiments_ctl]: %s ' % msg)
 
 
 async def create_model_traning(
@@ -64,6 +73,7 @@ async def create_model_traning(
     experiment = experiments_repo.create(
         db,
         obj_in=ExperimentCreateRepo(
+            created_by_id=user.id,
             model_name=training_request.model_name,
             model_version_name=model_version.model_version,
             experiment_id=experiment_id,
@@ -71,6 +81,8 @@ async def create_model_traning(
     )
 
     def finish_task(task: Task, experiment_id: str):
+        experiment = experiments_repo.get(db, experiment_id)
+        assert experiment
         exception = task.exception()
         done = task.done()
         if done and not exception:
@@ -82,8 +94,15 @@ async def create_model_traning(
                 model,
                 get_artifact_uri(run_id, tracking_uri=get_tracking_uri()),
             )
+            experiments_repo.update(
+                db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
+            )
+
         elif done and exception:
-            raise exception
+            experiments_repo.update(
+                db, obj_in=ExperimentUpdateRepo(stage="FAILED"), db_obj=experiment
+            )
+            log_error(str(exception))
         else:
             raise Exception("Task is not done")
 
@@ -113,7 +132,23 @@ def log_metrics(
     history: dict[str, list[float]],
     stage: Literal["train", "val", "test"] = "train",
 ) -> None:
-    experiments_repo.update_metrics(db, experiment_id, stage, metrics, history)
+    experiment_db = experiments_repo.get(db, experiment_id)
+    if not experiment_db:
+        raise ExperimentNotFound()
+
+    update_obj = ExperimentUpdateRepo(history=history)
+    if stage == "train":
+        update_obj.train_metrics = metrics
+
+    experiments_repo.update(db, db_obj=experiment_db, obj_in=update_obj)
+
+
+def log_hyperparams(db: Session, experiment_id: str, hyperparams: dict[str, Any]):
+    experiment_db = experiments_repo.get(db, experiment_id)
+    if not experiment_db:
+        raise ExperimentNotFound()
+    update_obj = ExperimentUpdateRepo(hyperparams=hyperparams)
+    experiments_repo.update(db, db_obj=experiment_db, obj_in=update_obj)
 
 
 def get_running_histories(user: UserEntity) -> List[RunningHistory]:

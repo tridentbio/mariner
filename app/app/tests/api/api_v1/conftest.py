@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from app.features.experiments import controller as exp_ctl
-from app.features.experiments.model import Experiment as ExperimentEntity
+from app.features.experiments.model import Experiment as Experiment
 from app.features.experiments.schema import TrainingRequest
 from app.features.model.schema.model import Model
 from app.tests.conftest import get_test_user
@@ -12,7 +12,7 @@ from app.tests.utils.utils import random_lower_string
 
 @pytest.fixture(scope="function")
 def some_experiments(db, some_model):
-    db.query(ExperimentEntity).delete()
+    db.query(Experiment).delete()
     db.commit()
     user = get_test_user(db)
     version = some_model.versions[-1]
@@ -30,7 +30,7 @@ def some_experiments(db, some_model):
     exps = asyncio.get_event_loop().run_until_complete(asyncio.gather(*exps))
     yield exps
     # yield [Experiment.from_orm(exp) for exp in exps ]
-    db.query(ExperimentEntity).delete()
+    db.query(Experiment).delete()
     db.commit()
 
 

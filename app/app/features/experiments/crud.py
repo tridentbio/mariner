@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Dict, List, Literal, Optional
 
 import pydantic
 from sqlalchemy.orm.session import Session
@@ -11,35 +11,32 @@ class ExperimentCreateRepo(pydantic.BaseModel):
     model_name: str
     model_version_name: str
     experiment_id: str
-    stage: str = "NOT RUNNING"
+    created_by_id: int
+
+    stage: Literal[
+        "NOT RUNNING", "STARTED", "RUNNING", "FAILED", "SUCCESS"
+    ] = "NOT RUNNING"
+    train_metrics: Optional[Dict[str, float]] = None
+    hyperparams: Optional[Dict[str, Any]] = None
+    val_metrics: Optional[Dict[str, float]] = None
+    test_metrics: Optional[Dict[str, float]] = None
+    history: Optional[Dict[str, List[float]]] = None
 
 
-class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentCreateRepo]):
+class ExperimentUpdateRepo(pydantic.BaseModel):
+    stage: Optional[
+        Literal["NOT RUNNING", "STARTED", "RUNNING", "FAILED", "SUCCESS"]
+    ] = None
+    train_metrics: Optional[Dict[str, float]] = None
+    hyperparams: Optional[Dict[str, Any]] = None
+    val_metrics: Optional[Dict[str, float]] = None
+    test_metrics: Optional[Dict[str, float]] = None
+    history: Optional[Dict[str, List[float]]] = None
+
+
+class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdateRepo]):
     def get_by_model_name(self, db: Session, model_name: str):
         return db.query(Experiment).filter(Experiment.model_name == model_name).all()
-
-    def update_metrics(
-        self,
-        db: Session,
-        experiment_id: str,
-        stage: Literal["train", "val", "test"],
-        metrics: dict[str, float],
-        history: dict[str, list[float]],
-    ):
-        experiment = (
-            db.query(Experiment)
-            .filter(Experiment.experiment_id == experiment_id)
-            .first()
-        )
-        experiment.history = history
-        if stage == "train":
-            experiment.train_metrics = metrics
-        elif stage == "val":
-            experiment.val_metrics = metrics
-        elif stage == "test":
-            experiment.test_metrics = metrics
-        db.commit()
-        db.flush()
 
 
 repo = CRUDExperiment(Experiment)
