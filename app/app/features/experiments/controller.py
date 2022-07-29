@@ -66,7 +66,9 @@ async def create_model_traning(
     )
 
     experiment_id = mlflow.create_experiment(training_request.experiment_name)
-    logger = AppLogger(experiment_id)
+    logger = AppLogger(
+        experiment_id, experiment_name=training_request.experiment_name, user_id=user.id
+    )
     task = await start_training(
         torchmodel, training_request, data_module, loggers=logger
     )
@@ -166,18 +168,26 @@ def get_running_histories(user: UserEntity) -> List[RunningHistory]:
 class UpdateRunningData(ApiBaseModel):
     metrics: Dict[str, float]
     epoch: int
+    experiment_id: str
+    experiment_name: str
 
 
 async def broadcast_epoch_metrics(
-    db: Session, experiment_id, metrics: dict[str, float], epoch: int
+    user_id: int,
+    experiment_id: str,
+    experiment_name: str,
+    metrics: dict[str, float],
+    epoch: int,
 ):
-    experiment = experiments_repo.get(db, experiment_id)
-    if not experiment:
-        raise ExperimentNotFound()
     await get_websockets_manager().send_message(
-        experiment.created_by_id,
+        user_id,
         WebSocketMessage(
             type="update-running-metrics",
-            data=UpdateRunningData(metrics=metrics, epoch=epoch),
+            data=UpdateRunningData(
+                experiment_id=experiment_id,
+                experiment_name=experiment_name,
+                metrics=metrics,
+                epoch=epoch,
+            ),
         ),
     )
