@@ -172,7 +172,7 @@ class UpdateRunningData(ApiBaseModel):
     experiment_name: str
 
 
-async def broadcast_epoch_metrics(
+async def send_ws_epoch_update(
     user_id: int,
     experiment_id: str,
     experiment_name: str,
