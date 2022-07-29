@@ -36,7 +36,7 @@ class AppLogger(LightningLoggerBase):
     @rank_zero_only
     async def log_metrics(self, metrics, step):
         if step:
-            await experiments_controller.broadcast_epoch_metrics(
+            await experiments_controller.send_ws_epoch_update(
                 self.user_id, self.experiment_id, self.experiment_name, metrics, step
             )
         for metric_name, metric_value in metrics.items():
