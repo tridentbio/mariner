@@ -1,5 +1,5 @@
-from asyncio.tasks import Task
 import logging
+from asyncio.tasks import Task
 from typing import Any, Dict, List, Literal
 
 import mlflow
@@ -34,7 +34,7 @@ from app.schemas.api import ApiBaseModel
 
 
 def log_error(msg: str):
-    logging.error('[experiments_ctl]: %s ' % msg)
+    logging.error("[experiments_ctl]: %s " % msg)
 
 
 async def create_model_traning(
@@ -168,11 +168,14 @@ class UpdateRunningData(ApiBaseModel):
     epoch: int
 
 
-async def broadcast_epoch_metrics(experiment_id, metrics: dict[str, float], epoch: int):
-    # TODO: Get user that created the experiment. Worst case, add it to CustomLogger
-    user_id = "1"
+async def broadcast_epoch_metrics(
+    db: Session, experiment_id, metrics: dict[str, float], epoch: int
+):
+    experiment = experiments_repo.get(db, experiment_id)
+    if not experiment:
+        raise ExperimentNotFound()
     await get_websockets_manager().send_message(
-        user_id,
+        experiment.created_by_id,
         WebSocketMessage(
             type="update-running-metrics",
             data=UpdateRunningData(metrics=metrics, epoch=epoch),
