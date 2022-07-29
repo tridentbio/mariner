@@ -2,8 +2,9 @@ import pytest
 from sqlalchemy.orm.session import Session
 
 from app.features.experiments import controller as experiments_ctl
-from app.features.experiments.model import Experiment
+from app.features.experiments.model import Experiment as ExperimentEntity
 from app.features.experiments.schema import (
+    Experiment,
     ListExperimentsQuery,
     TrainingRequest,
 )
@@ -37,15 +38,29 @@ async def test_create_model_training(db: Session, some_model: Model):
     assert exp.model_version.model_version == version.model_version
     task = get_exp_manager().get_task(exp.experiment_id)
     assert task
-    await task
-    db_exp = (
-        db.query(Experiment)
-        .filter(Experiment.experiment_id == exp.experiment_id)
+
+    # Assertions before task completion
+    db_exp = Experiment.from_orm(
+        db.query(ExperimentEntity)
+        .filter(ExperimentEntity.experiment_id == exp.experiment_id)
         .first()
     )
     assert db_exp.experiment_id == exp.experiment_id
     assert db_exp.model_name == exp.model_name
+    assert db_exp.created_by_id == user.id
+
+    # Await for task
+    await task
+
+    # Assertions over task outcome
+    db_exp = Experiment.from_orm(
+        db.query(ExperimentEntity)
+        .filter(ExperimentEntity.experiment_id == exp.experiment_id)
+        .first()
+    )
     assert db_exp.train_metrics
     assert db_exp.history
+    assert db_exp.hyperparams
     assert "train_loss" in db_exp.train_metrics
     assert len(db_exp.history["train_loss"]) == request.epochs
+
