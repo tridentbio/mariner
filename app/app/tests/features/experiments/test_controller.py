@@ -63,4 +63,3 @@ async def test_create_model_training(db: Session, some_model: Model):
     assert db_exp.hyperparams
     assert "train_loss" in db_exp.train_metrics
     assert len(db_exp.history["train_loss"]) == request.epochs
-

@@ -71,3 +71,9 @@ async def get_cookie_or_token(
     if session is None and token is None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
     return session or token
+
+
+def get_current_websocket_user(
+    db: Session = Depends(get_db), token: str = Depends(get_cookie_or_token)
+) -> User:
+    return get_current_user(db, token)

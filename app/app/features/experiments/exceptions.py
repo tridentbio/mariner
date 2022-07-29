@@ -1,2 +1,2 @@
-class ExperimentNotFound:
+class ExperimentNotFound(Exception):
     pass
