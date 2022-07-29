@@ -47,7 +47,7 @@ async def start_training(
     data_module.setup(stage="fit")
     trainer = Trainer(
         max_epochs=training_request.epochs,
-        logger=loggers,
+        # logger=loggers,
         log_every_n_steps=1,
         enable_progress_bar=False,
         enable_checkpointing=False,
