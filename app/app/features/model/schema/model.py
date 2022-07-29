@@ -47,7 +47,7 @@ class Model(ApiBaseModel):
     description: Optional[str] = None
     created_by_id: int
     created_by: Optional[User] = None
-    dataset_id: int
+    dataset_id: Optional[int] = None
     dataset: Optional[Dataset] = None
     versions: List[ModelVersion]
     columns: List[ModelFeaturesAndTarget]

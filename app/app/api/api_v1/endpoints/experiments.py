@@ -36,10 +36,10 @@ def get_experiments(
     result = experiments_ctl.get_experiments(db, current_user, experiments_query)
     return result
 
+
 @router.get("/running-history", response_model=List[RunningHistory])
 def get_experiments_running_history(
     user: User = Depends(deps.get_current_active_user),
 ) -> List[RunningHistory]:
     histories = experiments_ctl.get_running_histories(user)
     return histories
-

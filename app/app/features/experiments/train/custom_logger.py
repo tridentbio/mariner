@@ -33,12 +33,9 @@ class AppLogger(LightningLoggerBase):
     def log_hyperparams(self, params):
         db: Session = SessionLocal()
         experiments_controller.log_hyperparams(
-            db,
-            self.experiment_id,
-            hyperparams=params
+            db, self.experiment_id, hyperparams=params
         )
         db.close()
-
 
     @rank_zero_only
     def log_metrics(self, metrics, step):

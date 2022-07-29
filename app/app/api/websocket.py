@@ -1,6 +1,6 @@
 from typing import Any, Dict, Literal
 
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
 from starlette.websockets import WebSocketState
@@ -23,7 +23,7 @@ class ConnectionManager:
         if user_id in self.active_connections:
             ws = self.active_connections[user_id]
             if ws.application_state == WebSocketState.CONNECTED:
-                await ws.close()
+                return
             self.active_connections.pop(user_id)
         await websocket.accept()
         self.active_connections[user_id] = websocket
@@ -61,4 +61,7 @@ async def websocket_endpoint(
     manager = get_websockets_manager()
     await manager.connect(user.id, websocket)
     while True:
-        await websocket.receive_text()  # continuously wait for a message from client
+        try:
+            await websocket.receive_text()  # continuously wait for a message
+        except WebSocketDisconnect:
+            break

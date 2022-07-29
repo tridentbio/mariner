@@ -10,7 +10,6 @@ from app.core.aws import Bucket, delete_s3_file
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.features.dataset.model import Dataset
-from app.features.model.model import Model as ModelEntity
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
 from app.main import app
@@ -115,7 +114,7 @@ def some_dataset(
     ds = setup_create_dataset(db, client, normal_user_token_headers)
     assert ds is not None
     yield ds
-    teardown_create_dataset(db, ds)
+    # teardown_create_dataset(db, ds)
 
 
 # MODEL GLOBAL FIXTURES
@@ -128,8 +127,8 @@ def some_model(
     normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
 ):
-    db.query(ModelEntity).delete()
-    db.commit()
+    # db.query(ModelEntity).delete()
+    # db.commit()
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
     yield model
     # teardown_create_model(db, model.name)

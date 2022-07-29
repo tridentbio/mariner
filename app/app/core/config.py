@@ -95,6 +95,8 @@ class Settings(BaseSettings):
     AWS_DATASETS: str = "dev-matiner-datasets"
     AWS_MODELS: str = "dev-matiner-datasets"
 
+    RAY_ADDRESS: str = "http://ray-head:10000"
+
     class Config:
         # env_file = str(path.join('..', '.env.local'))
         # env_file_encoding = 'utf-8'

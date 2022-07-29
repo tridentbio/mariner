@@ -30,7 +30,7 @@ async def test_add_task_remove_when_done(
         return 42
 
     sleep_task = asyncio.create_task(sleep())
-    logger = AppLogger(some_experiment.experiment_id)
+    logger = AppLogger(some_experiment.experiment_id, "teste", 1)
     task_manager.add_experiment(
         ExperimentView(task=sleep_task, experiment_id="1", user_id=1, logger=logger)
     )
