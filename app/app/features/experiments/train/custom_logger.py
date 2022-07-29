@@ -11,10 +11,14 @@ from app.features.experiments import controller as experiments_controller
 class AppLogger(LightningLoggerBase):
     running_history: Dict[str, List[float]]
     experiment_id: str
+    experiment_name: str
+    user_id: int
 
-    def __init__(self, experiment_id: str):
+    def __init__(self, experiment_id: str, experiment_name: str, user_id: int):
         self.running_history = {}
         self.experiment_id = experiment_id
+        self.experiment_name = experiment_name
+        self.user_id = user_id
 
     @property
     def name(self):
@@ -30,12 +34,11 @@ class AppLogger(LightningLoggerBase):
         pass
 
     @rank_zero_only
-    def log_metrics(self, metrics, step):
+    async def log_metrics(self, metrics, step):
         if step:
-            experiments_controller.broadcast_epoch_metrics(
-                self.experiment_id, metrics, step
+            await experiments_controller.broadcast_epoch_metrics(
+                self.user_id, self.experiment_id, self.experiment_name, metrics, step
             )
-
         for metric_name, metric_value in metrics.items():
             if metric_name not in self.running_history:
                 self.running_history[metric_name] = []
