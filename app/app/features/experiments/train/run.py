@@ -33,7 +33,7 @@ def train_run_sync(
     return model
 
 
-async def unwrap_ref(obj_ref: ray.ObjectRef[LightningModule]) -> LightningModule:
+async def unwrap_ref(obj_ref: ray.ObjectRef) -> LightningModule:
     result = await obj_ref
     return result
 
