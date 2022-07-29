@@ -1,5 +1,5 @@
-import logging
 import asyncio
+import logging
 from asyncio.tasks import Task
 from typing import Any, Dict, List, Literal
 
@@ -152,7 +152,6 @@ def log_hyperparams(db: Session, experiment_id: str, hyperparams: dict[str, Any]
         raise ExperimentNotFound()
     update_obj = ExperimentUpdateRepo(hyperparams=hyperparams)
     experiments_repo.update(db, db_obj=experiment_db, obj_in=update_obj)
-    print('saved hyperparams')
 
 
 def get_running_histories(user: UserEntity) -> List[RunningHistory]:
@@ -191,7 +190,7 @@ def send_ws_epoch_update(
                 metrics=metrics,
                 epoch=epoch,
             ),
-        )
+        ),
     )
 
     def on_complete(task: Task):

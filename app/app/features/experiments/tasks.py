@@ -23,7 +23,9 @@ class ExperimentManager:
         self.experiments: Dict[str, ExperimentView] = {}
 
     def add_experiment(
-        self, experiment: ExperimentView, done_callback: Optional[Callable[[Task], Any]]
+        self,
+        experiment: ExperimentView,
+        done_callback: Optional[Callable[[Task], Any]] = None,
     ):
         experiment_id = experiment.experiment_id
         task = experiment.task

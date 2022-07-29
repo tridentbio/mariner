@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from app.features.model.schema.model import ModelVersion
+from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel
 
 
@@ -21,6 +22,8 @@ class Experiment(ApiBaseModel):
     updated_at: datetime
     created_by_id: int
     experiment_id: str
+    stage: str
+    created_by: Optional[User]
     hyperparams: Optional[Dict[str, float]]
     train_metrics: Optional[Dict[str, float]]
     val_metrics: Optional[Dict[str, float]]
