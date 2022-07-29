@@ -37,6 +37,8 @@ class ExperimentUpdateRepo(pydantic.BaseModel):
 class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdateRepo]):
     def get_by_model_name(self, db: Session, model_name: str):
         return db.query(Experiment).filter(Experiment.model_name == model_name).all()
+    def get(self, db: Session, experiment_id: str):
+        return db.query(Experiment).filter(Experiment.experiment_id == experiment_id).first()
 
 
 repo = CRUDExperiment(Experiment)

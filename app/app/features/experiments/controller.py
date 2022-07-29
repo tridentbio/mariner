@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from asyncio.tasks import Task
 from typing import Any, Dict, List, Literal
 
@@ -151,6 +152,7 @@ def log_hyperparams(db: Session, experiment_id: str, hyperparams: dict[str, Any]
         raise ExperimentNotFound()
     update_obj = ExperimentUpdateRepo(hyperparams=hyperparams)
     experiments_repo.update(db, db_obj=experiment_db, obj_in=update_obj)
+    print('saved hyperparams')
 
 
 def get_running_histories(user: UserEntity) -> List[RunningHistory]:
@@ -172,14 +174,14 @@ class UpdateRunningData(ApiBaseModel):
     experiment_name: str
 
 
-async def send_ws_epoch_update(
+def send_ws_epoch_update(
     user_id: int,
     experiment_id: str,
     experiment_name: str,
     metrics: dict[str, float],
     epoch: int,
 ):
-    await get_websockets_manager().send_message(
+    coroutine = get_websockets_manager().send_message(
         user_id,
         WebSocketMessage(
             type="update-running-metrics",
@@ -189,5 +191,11 @@ async def send_ws_epoch_update(
                 metrics=metrics,
                 epoch=epoch,
             ),
-        ),
+        )
     )
+
+    def on_complete(task: Task):
+        if task.exception():
+            log_error(str(task.exception()))
+
+    asyncio.create_task(coroutine).add_done_callback(on_complete)

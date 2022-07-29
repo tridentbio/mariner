@@ -31,12 +31,19 @@ class AppLogger(LightningLoggerBase):
 
     @rank_zero_only
     def log_hyperparams(self, params):
-        pass
+        db: Session = SessionLocal()
+        experiments_controller.log_hyperparams(
+            db,
+            self.experiment_id,
+            hyperparams=params
+        )
+        db.close()
+
 
     @rank_zero_only
-    async def log_metrics(self, metrics, step):
+    def log_metrics(self, metrics, step):
         if step:
-            await experiments_controller.send_ws_epoch_update(
+            experiments_controller.send_ws_epoch_update(
                 self.user_id, self.experiment_id, self.experiment_name, metrics, step
             )
         for metric_name, metric_value in metrics.items():
