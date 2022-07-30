@@ -113,7 +113,7 @@ async def create_model_traning(
         ExperimentView(
             experiment_id=experiment_id, user_id=user.id, task=task, logger=logger
         ),
-        lambda task: finish_task(task, experiment_id),
+        finish_task
     )
     return Experiment.from_orm(experiment)
 
