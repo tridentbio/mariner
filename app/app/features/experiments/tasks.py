@@ -22,18 +22,24 @@ class ExperimentManager:
     def __init__(self):
         self.experiments: Dict[str, ExperimentView] = {}
 
+    def handle_finish(self, task: Task, experiment_id: str, done_callback: Optional[Callable[[Task, str], Any]]):
+        if done_callback: done_callback(task, experiment_id)
+        self.experiments.pop(experiment_id)
+
+
     def add_experiment(
         self,
         experiment: ExperimentView,
-        done_callback: Optional[Callable[[Task], Any]] = None,
+        done_callback: Optional[Callable[[Task, str], Any]] = None,
     ):
         experiment_id = experiment.experiment_id
         task = experiment.task
         if experiment_id in self.experiments:
             raise ArgumentError("experiment_id already has a task")
         self.experiments[experiment_id] = experiment
-        if done_callback:
-            task.add_done_callback(done_callback)
+        task.add_done_callback(
+            lambda task: self.handle_finish(task, experiment_id, done_callback)
+        )
 
     def get_logger(self, experiment_id: str):
         if experiment_id in self.experiments:

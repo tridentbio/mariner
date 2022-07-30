@@ -4,6 +4,7 @@ import mlflow
 import mlflow.pyfunc
 import mlflow.pytorch
 import mlflow.tracking
+import ray
 import torch
 from mlflow.deployments import get_deploy_client
 from mlflow.deployments.base import BaseDeploymentClient
@@ -74,6 +75,8 @@ def get_deployment_plugin() -> BaseDeploymentClient:
 
 
 def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
+    if ray.is_initialized():
+        ray.shutdown()
     ray_plugin = get_deployment_plugin()
     deployment = ray_plugin.create_deployment(
         name=deployment_name,

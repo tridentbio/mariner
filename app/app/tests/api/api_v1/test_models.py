@@ -95,13 +95,13 @@ def test_post_models_dataset_not_found(
 
 
 def test_post_models_check_model_name_is_unique(
-    client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
+    client: TestClient, superuser_token_headers: dict[str, str], some_model: Model
 ):
     model = mock_model(some_model.name)
     res = client.post(
         f"{settings.API_V1_STR}/models/",
         json=model.dict(),
-        headers=normal_user_token_headers,
+        headers=superuser_token_headers,
     )
     assert res.status_code == status.HTTP_409_CONFLICT
     assert res.json()["detail"] == "Another model is already registered with that name"
