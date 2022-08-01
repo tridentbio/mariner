@@ -2,7 +2,6 @@ from typing import Dict, List, Union
 
 import networkx as nx
 import torch
-import torch_geometric.nn as geom_nn
 from pandas.core.frame import DataFrame
 from pytorch_lightning import LightningModule
 from sqlalchemy.orm.session import Session
@@ -11,12 +10,13 @@ from torch.nn import ReLU, Sigmoid
 from torch.nn import functional as F
 from torch.optim import Adam
 from torch.utils.data import Dataset as TorchDataset
-from torch_geometric.data import Dataset as PygDataset
-from torch_geometric.data.data import Data
 
+import torch_geometric.nn as geom_nn
 from app.features.dataset.crud import CRUDDataset
 from app.features.model.layers import Concat, GlobalPooling
 from app.features.model.schema.configs import ModelConfig
+from torch_geometric.data import Dataset as PygDataset
+from torch_geometric.data.data import Data
 
 # detour. how to check the forward signature?
 edge_index_classes = geom_nn.MessagePassing

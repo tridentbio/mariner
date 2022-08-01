@@ -113,7 +113,7 @@ async def create_model_traning(
         ExperimentView(
             experiment_id=experiment_id, user_id=user.id, task=task, logger=logger
         ),
-        finish_task
+        finish_task,
     )
     return Experiment.from_orm(experiment)
 
@@ -132,7 +132,7 @@ def log_metrics(
     db: Session,
     experiment_id: str,
     metrics: dict[str, float],
-    history: dict[str, list[float]],
+    history: dict[str, list[float]] = {},
     stage: Literal["train", "val", "test"] = "train",
 ) -> None:
     experiment_db = experiments_repo.get(db, experiment_id)

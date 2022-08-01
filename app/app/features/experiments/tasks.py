@@ -22,10 +22,15 @@ class ExperimentManager:
     def __init__(self):
         self.experiments: Dict[str, ExperimentView] = {}
 
-    def handle_finish(self, task: Task, experiment_id: str, done_callback: Optional[Callable[[Task, str], Any]]):
-        if done_callback: done_callback(task, experiment_id)
+    def handle_finish(
+        self,
+        task: Task,
+        experiment_id: str,
+        done_callback: Optional[Callable[[Task, str], Any]],
+    ):
+        if done_callback:
+            done_callback(task, experiment_id)
         self.experiments.pop(experiment_id)
-
 
     def add_experiment(
         self,
