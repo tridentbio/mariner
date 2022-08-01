@@ -19,6 +19,7 @@ class Experiment(Base):
         epochs (Column): (class attribute) Number of epochs on training experiment
     """
 
+    experiment_name = Column(String)
     model_version_name = Column(String)
     model_name = Column(String)
     created_at = Column(DateTime, server_default=current_timestamp())

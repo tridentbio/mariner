@@ -40,7 +40,10 @@ class AppLogger(LightningLoggerBase):
 
     @rank_zero_only
     def log_metrics(self, metrics, step):
-        data = {"metrics": {}, "epoch": step if step else None}
+        data = {
+            "metrics": {},
+            "epoch": metrics["epoch"] if "epoch" in metrics else None,
+        }
         for metric_name, metric_value in metrics.items():
             if metric_name not in self.running_history:
                 self.running_history[metric_name] = []

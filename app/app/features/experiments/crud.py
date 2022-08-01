@@ -12,7 +12,7 @@ class ExperimentCreateRepo(pydantic.BaseModel):
     model_version_name: str
     experiment_id: str
     created_by_id: int
-
+    experiment_name: Optional[str] = None
     stage: Literal[
         "NOT RUNNING", "STARTED", "RUNNING", "FAILED", "SUCCESS"
     ] = "NOT RUNNING"
