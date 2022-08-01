@@ -15,6 +15,7 @@ class TrainingRequest(ApiBaseModel):
 
 
 class Experiment(ApiBaseModel):
+    experiment_name: Optional[str]
     model_name: str
     model_version_name: str
     model_version: ModelVersion

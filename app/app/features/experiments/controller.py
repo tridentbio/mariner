@@ -1,6 +1,6 @@
 import logging
 from asyncio.tasks import Task
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Optional
 
 import mlflow
 from mlflow.tracking._tracking_service.utils import get_tracking_uri
@@ -75,11 +75,13 @@ async def create_model_traning(
     experiment = experiments_repo.create(
         db,
         obj_in=ExperimentCreateRepo(
+            experiment_name=training_request.experiment_name,
             created_by_id=user.id,
             model_name=training_request.model_name,
             model_version_name=model_version.model_version,
             experiment_id=experiment_id,
             epochs=training_request.epochs,
+            stage="RUNNING",
         ),
     )
 
@@ -166,9 +168,10 @@ def get_running_histories(user: UserEntity) -> List[RunningHistory]:
 
 class UpdateRunningData(ApiBaseModel):
     metrics: Dict[str, float]
-    epoch: int
+    epoch: Optional[int] = None
     experiment_id: str
     experiment_name: str
+    stage: Optional[str] = None
 
 
 async def send_ws_epoch_update(
@@ -176,7 +179,8 @@ async def send_ws_epoch_update(
     experiment_id: str,
     experiment_name: str,
     metrics: dict[str, float],
-    epoch: int,
+    epoch: Optional[int] = None,
+    stage: Optional[str] = None,
 ):
     running_history = get_exp_manager().get_running_history(experiment_id)
     if running_history is None:
@@ -194,6 +198,7 @@ async def send_ws_epoch_update(
                 experiment_name=experiment_name,
                 metrics=metrics,
                 epoch=epoch,
+                stage=stage,
             ),
         ),
     )

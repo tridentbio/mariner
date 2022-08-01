@@ -77,6 +77,13 @@ async def post_update_metrics(
         experiments_ctl.log_metrics(
             db=db, experiment_id=experiment_id, metrics=metrics, history=history
         )
+        await experiments_ctl.send_ws_epoch_update(
+            experiment_id=experiment_id,
+            metrics=metrics,
+            experiment_name=experiment_name,
+            user_id=user_id,
+            stage="SUCCESS",
+        )
     elif msgtype == "hyperparams":
         experiments_ctl.log_hyperparams(
             db=db,
