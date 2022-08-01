@@ -22,7 +22,7 @@ api_router.include_router(
     deployment.router, prefix="/deployments", tags=["model-deployments"]
 )
 api_router.include_router(
-    experiments.router, prefix="/experiments", tags=["model-deployments"]
+    experiments.router, prefix="/experiments", tags=["experiments"]
 )
 
 

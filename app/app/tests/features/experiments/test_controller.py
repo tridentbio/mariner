@@ -1,4 +1,5 @@
 import time
+
 import pytest
 from sqlalchemy.orm.session import Session
 
@@ -60,7 +61,7 @@ async def test_create_model_training(db: Session, some_model: Model):
         .filter(ExperimentEntity.experiment_id == exp.experiment_id)
         .first()
     )
-    #assert db_exp.train_metrics
-    #assert db_exp.history
-    #assert "train_loss" in db_exp.train_metrics
-    #assert len(db_exp.history["train_loss"]) == request.epochs
+    assert db_exp.train_metrics
+    assert db_exp.history
+    assert "train_loss" in db_exp.train_metrics
+    assert len(db_exp.history["train_loss"]) == request.epochs

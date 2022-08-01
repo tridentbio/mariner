@@ -26,11 +26,15 @@ services:
           memory: 1.5G
 
   ray-head:
+    volumes:
+      - ./app:/app:z
     deploy:
       resources:
         limits:
           memory: 1G
   ray-worker:
+    volumes:
+      - ./app:/app:z
     deploy:
       resources:
         limits:

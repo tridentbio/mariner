@@ -5,9 +5,8 @@ from sqlalchemy.orm.session import Session
 
 from app.features.experiments.crud import ExperimentCreateRepo
 from app.features.experiments.crud import repo as experiments_repo
-from app.features.experiments.schema import Experiment
-from app.features.experiments.schema import Experiment
 from app.features.experiments.model import Experiment as ExperimentEntity
+from app.features.experiments.schema import Experiment
 from app.features.model.schema.model import Model, ModelVersion
 from app.tests.conftest import get_test_user
 from app.tests.utils.utils import random_lower_string
@@ -50,7 +49,9 @@ def some_experiment(
     assert exp
     exp = Experiment.from_orm(exp)
     yield exp
-    db.query(ExperimentEntity).filter(ExperimentEntity.experiment_id == exp.experiment_id).delete()
+    db.query(ExperimentEntity).filter(
+        ExperimentEntity.experiment_id == exp.experiment_id
+    ).delete()
 
 
 @pytest.fixture(scope="function")
@@ -65,7 +66,9 @@ def some_cmoplete_experiment(
     assert exp
     exp = Experiment.from_orm(exp)
     yield exp
-    db.query(ExperimentEntity).filter(ExperimentEntity.experiment_id == exp.experiment_id).delete()
+    db.query(ExperimentEntity).filter(
+        ExperimentEntity.experiment_id == exp.experiment_id
+    ).delete()
     db.commit()
 
 

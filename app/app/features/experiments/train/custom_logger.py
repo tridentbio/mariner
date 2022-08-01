@@ -1,11 +1,8 @@
 from typing import Dict, List
 
+import requests
 from pytorch_lightning.loggers.base import LightningLoggerBase
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
-from sqlalchemy.orm.session import Session
-
-from app.db.session import SessionLocal
-from app.features.experiments import controller as experiments_controller
 
 
 class AppLogger(LightningLoggerBase):
@@ -26,50 +23,49 @@ class AppLogger(LightningLoggerBase):
 
     @property
     def version(self):
-        # Return the experiment version, int or str.
         return "0.1"
+
+    def make_contextualized_data(self):
+        return {
+            "experimentName": self.experiment_name,
+            "experimentId": self.experiment_id,
+            "userId": self.user_id,
+        }
 
     @rank_zero_only
     def log_hyperparams(self, params):
-        db: Session = SessionLocal()
-        experiments_controller.log_hyperparams(
-            db, self.experiment_id, hyperparams=params
-        )
-        db.close()
+        self.send(params, "hyperparams")
 
     @rank_zero_only
     def log_metrics(self, metrics, step):
+        data = {}
         if step:
-            experiments_controller.send_ws_epoch_update(
-                self.user_id, self.experiment_id, self.experiment_name, metrics, step
-            )
+            data["step"] = step
         for metric_name, metric_value in metrics.items():
             if metric_name not in self.running_history:
                 self.running_history[metric_name] = []
             self.running_history[metric_name].append(metric_value)
+            data[metric_name] = metric_value
+        self.send(data, "epochMetrics")
 
     @rank_zero_only
     def save(self):
         pass
 
+    def send(self, msg, msg_type):
+        data = self.make_contextualized_data()
+        data["type"] = msg_type
+        data["data"] = msg
+        requests.post(
+            "http://backend/api/v1/experiments/epoch_metrics", json=data
+        )
+
     @rank_zero_only
     def finalize(self, status):
-        # Optional. Any code that needs to be run after training
-        # finishes goes here
         if status != "success":
-            raise Exception("training finised unsuccessfull")
-        metrics = {}
+            raise Exception(f"training finised unsuccessfull, with status {status}")
+        data = {"metrics": {}}
         for metric_name, metric_values in self.running_history.items():
-            metrics[metric_name] = metric_values[-1]
-
-        db: Session = SessionLocal()
-        experiments_controller.log_metrics(
-            db,
-            self.experiment_id,
-            metrics,
-            history=self.running_history,
-            stage="train",
-        )
-        db.commit()
-        db.flush()
-        db.close()
+            data["metrics"][metric_name] = metric_values[-1]
+        data["history"] = self.running_history
+        self.send(data, "metrics")

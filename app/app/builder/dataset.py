@@ -4,13 +4,13 @@ import pandas as pd
 import pytorch_lightning as pl
 from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import random_split
-from torch_geometric.loader import DataLoader
 
 from app.builder.utils import size_repr
 from app.features.model.schema.configs import DatasetConfig
 from app.features.model.schema.layers_schema import (
     AppmoleculefeaturizerLayerConfig,
 )
+from torch_geometric.loader import DataLoader
 
 from .storage import BaseStorage
 

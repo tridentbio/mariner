@@ -68,5 +68,5 @@ async def test_start_training(
     assert logger
 
     await task
-    #assert "train_loss" in logger.running_history
-    #assert len(logger.running_history["train_loss"]) == request.epochs
+    # assert "train_loss" in logger.running_history
+    # assert len(logger.running_history["train_loss"]) == request.epochs
