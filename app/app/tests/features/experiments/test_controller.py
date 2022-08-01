@@ -50,6 +50,7 @@ async def test_create_model_training(db: Session, some_model: Model):
     assert db_exp.experiment_id == exp.experiment_id
     assert db_exp.model_name == exp.model_name
     assert db_exp.created_by_id == user.id
+    assert db_exp.epochs == request.epochs
 
     # Await for task
     await task

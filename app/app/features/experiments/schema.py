@@ -23,12 +23,13 @@ class Experiment(ApiBaseModel):
     created_by_id: int
     experiment_id: str
     stage: str
-    created_by: Optional[User]
-    hyperparams: Optional[Dict[str, float]]
-    train_metrics: Optional[Dict[str, float]]
-    val_metrics: Optional[Dict[str, float]]
-    test_metrics: Optional[Dict[str, float]]
-    history: Optional[Dict[str, List[float]]]
+    created_by: Optional[User] = None
+    hyperparams: Optional[Dict[str, float]] = None
+    epochs: Optional[int] = None
+    train_metrics: Optional[Dict[str, float]] = None
+    val_metrics: Optional[Dict[str, float]] = None
+    test_metrics: Optional[Dict[str, float]] = None
+    history: Optional[Dict[str, List[float]]] = None
 
 
 class ListExperimentsQuery(ApiBaseModel):

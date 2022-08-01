@@ -21,6 +21,7 @@ class ExperimentCreateRepo(pydantic.BaseModel):
     val_metrics: Optional[Dict[str, float]] = None
     test_metrics: Optional[Dict[str, float]] = None
     history: Optional[Dict[str, List[float]]] = None
+    epochs: Optional[int] = None
 
 
 class ExperimentUpdateRepo(pydantic.BaseModel):
@@ -32,6 +33,7 @@ class ExperimentUpdateRepo(pydantic.BaseModel):
     val_metrics: Optional[Dict[str, float]] = None
     test_metrics: Optional[Dict[str, float]] = None
     history: Optional[Dict[str, List[float]]] = None
+    epochs: Optional[int] = None
 
 
 class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdateRepo]):

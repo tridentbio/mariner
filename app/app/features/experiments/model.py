@@ -16,6 +16,7 @@ class Experiment(Base):
         history (Column): (class attribute) Metrics per epoch
         hyperparams (Column): (class attribute) All network hyperparams used
             in the training
+        epochs (Column): (class attribute) Number of epochs on training experiment
     """
 
     model_version_name = Column(String)
@@ -26,6 +27,7 @@ class Experiment(Base):
     experiment_id = Column(String, primary_key=True)
     stage = Column(String, server_default="RUNNING")
     history = Column(JSON)
+    epochs = Column(Integer)
     train_metrics = Column(JSON)
     val_metrics = Column(JSON)
     test_metrics = Column(JSON)

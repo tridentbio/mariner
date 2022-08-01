@@ -15,6 +15,10 @@ class WebSocketMessage(ApiBaseModel):
     data: Any
 
 
+def is_closed(ws: WebSocket):
+    return ws.application_state == WebSocketState.DISCONNECTED
+
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[int, WebSocket] = {}
@@ -22,9 +26,8 @@ class ConnectionManager:
     async def connect(self, user_id: int, websocket: WebSocket):
         if user_id in self.active_connections:
             ws = self.active_connections[user_id]
-            if ws.application_state == WebSocketState.CONNECTED:
-                return
-            self.active_connections.pop(user_id)
+            if ws and not is_closed(ws):
+                await ws.close()
         await websocket.accept()
         self.active_connections[user_id] = websocket
 
@@ -33,6 +36,9 @@ class ConnectionManager:
 
     async def send_message(self, user_id: int, message: WebSocketMessage):
         if user_id not in self.active_connections:
+            print(
+                "[WARNING]: Sending message but websocket not found" f"UserId {user_id}"
+            )
             return
         await self.active_connections[user_id].send_text(message.json())
 
@@ -58,10 +64,12 @@ ws_router = APIRouter()
 async def websocket_endpoint(
     websocket: WebSocket, user: User = Depends(deps.get_current_websocket_user)
 ):
+    print(user)
     manager = get_websockets_manager()
     await manager.connect(user.id, websocket)
-    while True:
+    while websocket.application_state == WebSocketState.CONNECTED:
         try:
             await websocket.receive_text()  # continuously wait for a message
-        except WebSocketDisconnect:
+        except (WebSocketDisconnect, AssertionError) as exp:
+            print("WEBSOCKET CONNECTION LOOP FAILED " + str(exp))
             break

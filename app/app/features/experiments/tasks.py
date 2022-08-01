@@ -1,21 +1,19 @@
 from asyncio.tasks import Task
 from ctypes import ArgumentError
-from typing import Any, Callable, Dict, Optional
-
-from app.features.experiments.train.custom_logger import AppLogger
+from typing import Any, Callable, Dict, List, Optional
 
 
 class ExperimentView:
     experiment_id: str
     user_id: int
     task: Task
-    logger: AppLogger
+    running_history: Dict[str, List[float]]
 
-    def __init__(self, experiment_id: str, user_id: int, task: Task, logger: AppLogger):
+    def __init__(self, experiment_id: str, user_id: int, task: Task):
         self.experiment_id = experiment_id
         self.user_id = user_id
         self.task = task
-        self.logger = logger
+        self.running_history = {}
 
 
 class ExperimentManager:
@@ -46,9 +44,9 @@ class ExperimentManager:
             lambda task: self.handle_finish(task, experiment_id, done_callback)
         )
 
-    def get_logger(self, experiment_id: str):
+    def get_running_history(self, experiment_id: str):
         if experiment_id in self.experiments:
-            return self.experiments[experiment_id].logger
+            return self.experiments[experiment_id].running_history
 
     def get_from_user(self, user_id: int):
         experiments = [

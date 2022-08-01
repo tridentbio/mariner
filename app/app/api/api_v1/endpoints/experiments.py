@@ -55,14 +55,16 @@ class MetricsUpdate(ApiBaseModel):
 
 
 @router.post("/epoch_metrics", response_model=str)
-def post_update_metrics(parsed_msg: MetricsUpdate, db: Session = Depends(deps.get_db)):
+async def post_update_metrics(
+    parsed_msg: MetricsUpdate, db: Session = Depends(deps.get_db)
+):
     msgtype = parsed_msg.type
     data = parsed_msg.data
     experiment_id = parsed_msg.experiment_id
     experiment_name = parsed_msg.experiment_name
     user_id = parsed_msg.user_id
-    if msgtype == "epoch_metrics":
-        experiments_ctl.send_ws_epoch_update(
+    if msgtype == "epochMetrics":
+        await experiments_ctl.send_ws_epoch_update(
             user_id=user_id,
             experiment_id=experiment_id,
             experiment_name=experiment_name,
@@ -81,4 +83,6 @@ def post_update_metrics(parsed_msg: MetricsUpdate, db: Session = Depends(deps.ge
             experiment_id=experiment_id,
             hyperparams=data["hyperparams"],
         )
+    else:
+        raise Exception(f"Failed msg type {msgtype}")
     return "ok"
