@@ -1,3 +1,4 @@
+import time
 from typing import Dict, List
 
 import requests
@@ -10,6 +11,7 @@ class AppLogger(LightningLoggerBase):
     experiment_id: str
     experiment_name: str
     user_id: int
+    last_sent_at: float = 0
 
     def __init__(self, experiment_id: str, experiment_name: str, user_id: int):
         self.running_history = {}
@@ -38,27 +40,26 @@ class AppLogger(LightningLoggerBase):
 
     @rank_zero_only
     def log_metrics(self, metrics, step):
-        data = {}
-        if step:
-            data["step"] = step
+        data = {"metrics": {}, "epoch": step if step else None}
         for metric_name, metric_value in metrics.items():
             if metric_name not in self.running_history:
                 self.running_history[metric_name] = []
             self.running_history[metric_name].append(metric_value)
-            data[metric_name] = metric_value
+            data["metrics"][metric_name] = metric_value
         self.send(data, "epochMetrics")
 
     @rank_zero_only
     def save(self):
         pass
 
-    def send(self, msg, msg_type):
+    def send(self, msg, msg_type, force=False):
+        if not force and time.time() - self.last_sent_at < 5:
+            return
         data = self.make_contextualized_data()
         data["type"] = msg_type
         data["data"] = msg
-        requests.post(
-            "http://backend/api/v1/experiments/epoch_metrics", json=data
-        )
+        requests.post("http://backend/api/v1/experiments/epoch_metrics", json=data)
+        self.last_sent_at = time.time()
 
     @rank_zero_only
     def finalize(self, status):
@@ -68,4 +69,4 @@ class AppLogger(LightningLoggerBase):
         for metric_name, metric_values in self.running_history.items():
             data["metrics"][metric_name] = metric_values[-1]
         data["history"] = self.running_history
-        self.send(data, "metrics")
+        self.send(data, "metrics", force=True)

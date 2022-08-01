@@ -2,7 +2,7 @@ from typing import Union
 
 from fastapi import WebSocket, status
 from fastapi.exceptions import HTTPException
-from fastapi.param_functions import Cookie, Depends, Query
+from fastapi.param_functions import Depends, Query
 from fastapi.security.oauth2 import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
@@ -65,12 +65,11 @@ def get_current_active_superuser(
 
 async def get_cookie_or_token(
     websocket: WebSocket,
-    session: Union[str, None] = Cookie(default=None),
     token: Union[str, None] = Query(default=None),
 ):
-    if session is None and token is None:
+    if token is None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-    return session or token
+    return token
 
 
 def get_current_websocket_user(

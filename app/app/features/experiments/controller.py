@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from asyncio.tasks import Task
 from typing import Any, Dict, List, Literal
@@ -80,6 +79,7 @@ async def create_model_traning(
             model_name=training_request.model_name,
             model_version_name=model_version.model_version,
             experiment_id=experiment_id,
+            epochs=training_request.epochs,
         ),
     )
 
@@ -110,9 +110,7 @@ async def create_model_traning(
             raise Exception("Task is not done")
 
     get_exp_manager().add_experiment(
-        ExperimentView(
-            experiment_id=experiment_id, user_id=user.id, task=task, logger=logger
-        ),
+        ExperimentView(experiment_id=experiment_id, user_id=user.id, task=task),
         finish_task,
     )
     return Experiment.from_orm(experiment)
@@ -160,7 +158,7 @@ def get_running_histories(user: UserEntity) -> List[RunningHistory]:
         RunningHistory(
             experiment_id=exp.experiment_id,
             user_id=user.id,
-            running_history=exp.logger.running_history,
+            running_history=exp.running_history,
         )
         for exp in experiments
     ]
@@ -173,14 +171,21 @@ class UpdateRunningData(ApiBaseModel):
     experiment_name: str
 
 
-def send_ws_epoch_update(
+async def send_ws_epoch_update(
     user_id: int,
     experiment_id: str,
     experiment_name: str,
     metrics: dict[str, float],
     epoch: int,
 ):
-    coroutine = get_websockets_manager().send_message(
+    running_history = get_exp_manager().get_running_history(experiment_id)
+    if running_history is None:
+        return
+    for metric_name, metric_value in metrics.items():
+        if metric_name not in running_history:
+            running_history[metric_name] = []
+        running_history[metric_name].append(metric_value)
+    await get_websockets_manager().send_message(
         user_id,
         WebSocketMessage(
             type="update-running-metrics",
@@ -192,9 +197,3 @@ def send_ws_epoch_update(
             ),
         ),
     )
-
-    def on_complete(task: Task):
-        if task.exception():
-            log_error(str(task.exception()))
-
-    asyncio.create_task(coroutine).add_done_callback(on_complete)
