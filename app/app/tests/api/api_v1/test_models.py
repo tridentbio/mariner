@@ -1,8 +1,8 @@
 from typing import List
 
-import pytest
 import mlflow.pyfunc
 import pandas as pd
+import pytest
 from pydantic.networks import AnyHttpUrl
 from sqlalchemy.orm.session import Session
 from starlette import status
