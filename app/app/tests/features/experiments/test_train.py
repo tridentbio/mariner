@@ -30,9 +30,8 @@ async def test_add_task_remove_when_done(
         return 42
 
     sleep_task = asyncio.create_task(sleep())
-    logger = AppLogger(some_experiment.experiment_id, "teste", 1)
     task_manager.add_experiment(
-        ExperimentView(task=sleep_task, experiment_id="1", user_id=1, logger=logger)
+        ExperimentView(task=sleep_task, experiment_id="1", user_id=1)
     )
     result = await sleep_task
     assert result == 42
@@ -47,7 +46,7 @@ async def test_start_training(
     version = some_model.versions[-1]
     exp_name = random_lower_string()
     request = TrainingRequest(
-        epochs=20,
+        epochs=1,
         learning_rate=1e-3,
         experiment_name=exp_name,
         model_name=some_model.name,
