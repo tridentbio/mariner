@@ -64,7 +64,6 @@ ws_router = APIRouter()
 async def websocket_endpoint(
     websocket: WebSocket, user: User = Depends(deps.get_current_websocket_user)
 ):
-    print(user)
     manager = get_websockets_manager()
     await manager.connect(user.id, websocket)
     while websocket.application_state == WebSocketState.CONNECTED:
