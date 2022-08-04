@@ -17,5 +17,6 @@ def get_component_config_by_type(name: str) -> Optional[BaseModel]:
 def get_component_args_by_type(name: str) -> Optional[BaseModel]:
     component = get_component_config_by_type(name)
     if component:
-        args = get_type_hints(component)["args"]
-        return args
+        th = get_type_hints(component)
+        if "args" in th:
+            return th["args"]
