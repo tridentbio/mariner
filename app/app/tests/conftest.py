@@ -10,11 +10,14 @@ from app.core.aws import Bucket, delete_s3_file
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.features.dataset.model import Dataset
+from app.features.model.model import Model as ModelEntity
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
-from app.features.model.model import Model as ModelEntity
 from app.main import app
-from app.tests.features.model.conftest import setup_create_model, teardown_create_model
+from app.tests.features.model.conftest import (
+    setup_create_model,
+    teardown_create_model,
+)
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
 
