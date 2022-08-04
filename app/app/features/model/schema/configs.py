@@ -5,7 +5,7 @@ import networkx as nx
 import yaml
 from pydantic import ValidationError, root_validator
 
-from app.features.model.generate import get_component_args_by_type
+from app.features.model.components_query import get_component_args_by_type
 from app.features.model.schema.layers_schema import (
     FeaturizersArgsType,
     FeaturizersType,
@@ -137,7 +137,8 @@ class ModelConfig(ApiBaseModel):
                 pprint(exp)
                 errors += [
                     MissingComponentArgs(
-                        missing=[l for l in error["loc"]], component_name=layer["name"]
+                        missing=[missing_arg_name for missing_arg_name in error["loc"]],
+                        component_name=layer["name"],
                     )
                     for error in exp.errors()
                     if error["type"] == "value_error.missing"
@@ -153,7 +154,7 @@ class ModelConfig(ApiBaseModel):
             except ValidationError as exp:
                 errors += [
                     MissingComponentArgs(
-                        missing=[l for l in error["loc"]],
+                        missing=[missing_arg_name for missing_arg_name in error["loc"]],
                         component_name=featurizer["name"],
                     )
                     for error in exp.errors()
