@@ -15,10 +15,38 @@ from app.features.dataset.model import Dataset
 from app.features.model import generate
 from app.features.model.model import Model as ModelEntity
 from app.features.model.model import ModelVersion
-from app.features.model.schema.model import Model
+from app.features.model.schema import layers_schema as layers
+from app.features.model.schema.configs import DatasetConfig, ModelConfig
+from app.features.model.schema.model import Model, ModelCreate
 from app.tests.conftest import get_test_user
 from app.tests.features.model.conftest import mock_model, setup_create_model
 from app.tests.utils.utils import random_lower_string
+
+
+@pytest.fixture(scope="function")
+def mocked_invalid_model(some_dataset: Dataset) -> ModelCreate:
+    config = ModelConfig(
+        name=random_lower_string(),
+        dataset=DatasetConfig(
+            name=some_dataset.name, feature_columns=["mwt"], target_column="tpsa"
+        ),
+        featurizers=[],
+        layers=[
+            layers.TorchlinearLayerConfig(
+                type="torch.nn.Linear",
+                args=layers.TorchlinearArgs(in_features=27, out_features=1),
+                input="mwt",
+                name="1",
+            )
+        ],
+    )
+    model = ModelCreate(
+        name=config.name,
+        model_description=random_lower_string(),
+        model_version_description=random_lower_string(),
+        config=config,
+    )
+    return model
 
 
 def test_post_models_success(
@@ -240,3 +268,46 @@ def test_get_model_version(
     assert res.status_code == 200
     body = res.json()
     assert body["name"] == some_model.name
+
+
+def test_post_models_invalid_type(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    mocked_invalid_model: ModelCreate,
+):
+    wrong_layer_name = mocked_invalid_model.config.layers[0].name
+    mocked_invalid_model.config.layers[0].type = "aksfkasmf"
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        headers=normal_user_token_headers,
+        json=mocked_invalid_model.dict(),
+    )
+    error_body = res.json()
+    assert res.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert "detail" in error_body
+    assert len(error_body["detail"]) == 1
+    assert error_body["detail"][0]["type"] == "value_error.unknowncomponenttype"
+    assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name
+
+
+def test_post_models_missing_arguments(
+    client: TestClient,
+    mocked_invalid_model: ModelCreate,
+    normal_user_token_headers: dict[str, str],
+):
+
+    tmp = mocked_invalid_model.dict()
+    del tmp["config"]["layers"][0]["args"]["in_features"]
+    mocked_invalid_model = ModelCreate.construct(**tmp)
+    wrong_layer_name = mocked_invalid_model.config["layers"][0]["name"]
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        headers=normal_user_token_headers,
+        json=mocked_invalid_model.dict(),
+    )
+    assert res.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    error_body = res.json()
+    assert "detail" in error_body
+    assert len(error_body["detail"]) == 1
+    assert error_body["detail"][0]["type"] == "value_error.missingcomponentargs"
+    assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name

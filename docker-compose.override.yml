@@ -13,12 +13,10 @@ services:
       - AWS_REGION=$AWS_REGION
       - AWS_DATASETS=$AWS_DATASETS
     build:
-      context: .
-      dockerfile: ./Dockerfile.local
       args:
         INSTALL_DEV: ${INSTALL_DEV-true}
         INSTALL_JUPYTER: ${INSTALL_JUPYTER-true}
-          #command: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
+        #command: bash -c "while true; do sleep 1; done"  # Infinite loop to keep container live doing nothing
   mlflow:
     deploy:
       resources:
@@ -26,15 +24,11 @@ services:
           memory: 1.5G
 
   ray-head:
-    volumes:
-      - ./app:/app:z
     deploy:
       resources:
         limits:
           memory: 1G
   ray-worker:
-    volumes:
-      - ./app:/app:z
     deploy:
       resources:
         limits:
