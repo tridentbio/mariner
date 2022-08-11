@@ -128,13 +128,9 @@ class ModelConfig(ApiBaseModel):
             args_cls = get_component_args_by_type(layer["type"])
             if not args_cls:
                 continue
-            print("gonna validate now")
             try:
                 args_cls.validate(layer["args"])
             except ValidationError as exp:
-                from pprint import pprint
-
-                pprint(exp)
                 errors += [
                     MissingComponentArgs(
                         missing=[missing_arg_name for missing_arg_name in error["loc"]],

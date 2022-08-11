@@ -3,7 +3,7 @@ from typing import Any, Dict, Union
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
-from app.db.base import ColumnDescription, ColumnsMetadata, Dataset
+from app.db.base import ColumnsMetadata, Dataset
 from app.features.dataset.schema import (
     DatasetCreateRepo,
     DatasetsQuery,
@@ -47,21 +47,13 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
 
     def create(self, db: Session, obj_in: DatasetCreateRepo):
         obj_in_dict = obj_in.dict()
-        relations_key = ["columns_descriptions", "columns_metadatas"]
+        relations_key = ["columns_metadata"]
         ds_data = {k: obj_in_dict[k] for k in obj_in_dict if k not in relations_key}
         db_obj = Dataset(**ds_data)
 
-        if obj_in.columns_descriptions:
-            db_obj.columns_descriptions = [
-                ColumnDescription(
-                    pattern=cd_in["pattern"], description=cd_in["description"]
-                )
-                for cd_in in obj_in_dict["columns_descriptions"]
-            ]
-        if obj_in.columns_metadatas:
-            db_obj.columns_metadatas = [
-                ColumnsMetadata(key=cd_me["key"], data_type=cd_me["data_type"])
-                for cd_me in obj_in_dict["columns_metadatas"]
+        if obj_in.columns_metadata:
+            db_obj.columns_metadata = [
+                ColumnsMetadata(**cd_me) for cd_me in obj_in_dict["columns_metadata"]
             ]
 
         db.add(db_obj)

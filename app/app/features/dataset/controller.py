@@ -19,8 +19,6 @@ from app.utils import hash_md5
 from ..user.model import User
 from .crud import repo
 from .schema import (
-    ColumnDescription,
-    ColumnMetadata,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
@@ -28,7 +26,6 @@ from .schema import (
     DatasetsQuery,
     DatasetUpdate,
     DatasetUpdateRepo,
-    DataType,
 )
 from .utils import get_stats
 
@@ -88,21 +85,11 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
         data_url=data_url,
         created_by_id=current_user.id,
+        columns_metadata=data.columns_metadata,
     )
-    if data.columns_descriptions:
-        parsed = [json.loads(description) for description in data.columns_descriptions]
-        create_obj.columns_descriptions = [
-            ColumnDescription(pattern=c["pattern"], description=c["description"])
-            for c in parsed
-        ]
-    if data.columns_metadata:
-        parsed = [json.loads(metadata) for metadata in data.columns_metadata]
-        create_obj.columns_metadatas = [
-            ColumnMetadata(key=m["key"], data_type=DataType(m["data_type"]))
-            for m in parsed
-        ]
 
     dataset = repo.create(db, create_obj)
+    dataset = repo.get(db, dataset.id)
     return dataset
 
 

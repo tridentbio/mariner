@@ -54,22 +54,17 @@ def get_test_user(db: Session) -> User:
 
 # DATASET GLOBAL FIXTURES
 def mock_dataset(name: Optional[str] = None):
-    descriptions = [
-        {
-            "pattern": "col*",
-            "description": "asdasdas",
-        },
-        {
-            "pattern": "col2*",
-            "description": "asdasdas",
-        },
-    ]
     metadatas = [
         {
-            "key": "exp",
+            "pattern": "exp",
             "data_type": "numerical",
+            "description": "speriment measurement",
         },
-        {"key": "smiles", "data_type": "smiles"},
+        {
+            "pattern": "smiles",
+            "data_type": "smiles",
+            "description": "SMILES representaion of molecule",
+        },
     ]
 
     return {
@@ -77,7 +72,6 @@ def mock_dataset(name: Optional[str] = None):
         "description": "Test description",
         "splitType": "random",
         "splitTarget": "60-20-20",
-        "columnsDescriptions": json.dumps(descriptions),
         "columnsMetadata": json.dumps(metadatas),
     }
 
