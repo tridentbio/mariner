@@ -16,6 +16,25 @@ from .storage import BaseStorage
 
 
 class DataInstance(BaseStorage):
+    """ DataInstance basically works like a map/storage. It works
+    through a structure similar to a python dict with some more
+    features to support pytorch operations. This way it is possible
+    to support types such as tensors, `pytorch_geometric.Data` and
+    other data types used in models.
+
+    For information about the methods see:
+    https://docs.python.org/3/reference/datamodel.html
+
+    Args:
+        y (Any): The target value for that instance.
+        **kwargs: Any arg passed via kwargs will become an
+            attribute of the instance.
+
+    Example:
+    >>> data = DataInstance()
+    >>> data.x = torch.tensor([1.76])
+    """
+
     def __init__(self, y=None, **kwargs):
 
         self.__dict__["_store"] = BaseStorage(_parent=self)
@@ -55,6 +74,33 @@ class DataInstance(BaseStorage):
 
 
 class CustomDataset(TorchDataset):
+    """Class that implements a custom dataset to support multiple
+    inputs from multiple different layers.
+
+    The CustomDataset makes use of the DataInstance to allow a kind
+    of dynamic storage that works as a hashmap, in this way you can
+    store content from different layers to a neural network with more
+    than one input.
+
+    See:
+        https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset
+        https://pytorch.org/docs/stable/_modules/torch/utils/data/dataset.html#Dataset
+
+    Args:
+        data (pd.DataFrame): DataFrame instance with the data that
+            will be used by the CustomDataset.
+        feature_columns (List[str]): List of columns that will be
+            used by the model to be extracted.
+        featurizers_config (List[AppmoleculefeaturizerLayerConfig]):
+            Object containing information about the featurizers
+            used by the CustomDataset.
+        target (str, optional): Name of the columns that will be
+            used as the model target for predictions.
+
+    Example:
+    >>> dataset = CustomDataset(data, ['mwt', 'smiles'], featurizer_config, 'tpsa')
+    """
+
     def __init__(
         self,
         data: pd.DataFrame,
@@ -62,6 +108,7 @@ class CustomDataset(TorchDataset):
         featurizers_config,
         target: str = None,
     ) -> None:
+        super().__init__()
         self.data = data
         self.target = target
         self.columns = feature_columns
@@ -70,6 +117,12 @@ class CustomDataset(TorchDataset):
         self.setup()
 
     def _determine_task_type(self) -> str:
+        """Determine the task type based on the column selected as
+        target.
+
+        Returns:
+            str: String "regression" or "classification".
+        """
         target_type = self.data.dtypes[self.target]
 
         if "float" in target_type.name:
@@ -115,6 +168,29 @@ class CustomDataset(TorchDataset):
 
 
 class DataModule(pl.LightningDataModule):
+    """ DataModule is responsible for integrating and handling the
+    dataloaders of each step of an experiment (training, testing and
+    validation) in order to provide a pytorch lightning compatible
+    interface to speed up and facilitate its maintenance.
+
+    Args:
+        data (pd.DataFrame): Pandas DataFrame that contains the
+            dataset to be used by the model.
+        split_type (str): Type of split that will be performed
+            on the dataset, it can be random or scaffold.
+        split_target (str): String containing information about
+            the split target, for random the split_target will
+            contain a string with the split size for the dataset
+            in the 3 steps with the following format, training-val-test.
+        featurizers_config (List[AppmoleculefeaturizerLayerConfig]):
+            Object containing information about the featurizers
+            used by the CustomDataset.
+        dataset_config (DatasetConfig): Object containing information
+            about the Dataset used.
+        batch_size (int, optional): Number of data instances in each
+            batch. Defaults to 32.
+    """
+
     def __init__(
         self,
         data: pd.DataFrame,
@@ -124,7 +200,7 @@ class DataModule(pl.LightningDataModule):
         dataset_config: DatasetConfig,
         batch_size: int = 32,
     ):
-        self.prepare_data_per_node = False
+        super().__init__()
         self.dataset_config = dataset_config
         self.featurizers_config = featurizers_config
 
@@ -142,7 +218,18 @@ class DataModule(pl.LightningDataModule):
             self.dataset_config.target_column,
         )
 
-    def setup(self, stage):
+    def setup(self, stage = None):
+        """ Method used for pytorch lightning to setup the data
+        module instance and prepare the data loaders to be used in
+        the trainer.
+
+        See:
+            https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.LightningDataModule.html#pytorch_lightning.core.LightningDataModule
+            https://pytorch-lightning.readthedocs.io/en/latest/common/trainer.html
+
+        Args:
+            stage (_type_, optional): _description_. Defaults to None.
+        """
         train_split, val_split, _ = self.split_target.split("-")
 
         full_size = len(self.dataset)
@@ -158,15 +245,42 @@ class DataModule(pl.LightningDataModule):
         self.val_dataset = val_dataset
         self.test_dataset = test_dataset
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
+        """ Return the DataLoader instance used to train the custom
+        model.
+
+        Returns:
+            DataLoader: instance used in train steps.
+        """
         return DataLoader(
             self.train_dataset,
             self.batch_size,
             shuffle=True,
         )
 
-    def test_dataloader(self):
-        return DataLoader(self.test_dataset, self.batch_size, shuffle=False)
+    def test_dataloader(self) -> DataLoader:
+        """ Return the DataLoader instance used to test the custom
+        model.
 
-    def val_dataloader(self):
-        return DataLoader(self.test_dataset, self.batch_size, shuffle=True)
+        TODO: maybe whe can set drop last or other params in dl.
+
+        Returns:
+            DataLoader: instance used in test steps.
+        """
+        return DataLoader(
+            self.test_dataset,
+            self.batch_size,
+            shuffle=False
+        )
+
+    def val_dataloader(self) -> DataLoader:
+        """ Return the DataLoader used to validate the custom model.
+
+        Returns:
+            DataLoader: instance used in validation steps.
+        """
+        return DataLoader(
+            self.test_dataset,
+            self.batch_size,
+            shuffle=True
+        )
