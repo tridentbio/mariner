@@ -16,7 +16,7 @@ from .storage import BaseStorage
 
 
 class DataInstance(BaseStorage):
-    """ DataInstance basically works like a map/storage. It works
+    """DataInstance basically works like a map/storage. It works
     through a structure similar to a python dict with some more
     features to support pytorch operations. This way it is possible
     to support types such as tensors, `pytorch_geometric.Data` and
@@ -168,7 +168,7 @@ class CustomDataset(TorchDataset):
 
 
 class DataModule(pl.LightningDataModule):
-    """ DataModule is responsible for integrating and handling the
+    """DataModule is responsible for integrating and handling the
     dataloaders of each step of an experiment (training, testing and
     validation) in order to provide a pytorch lightning compatible
     interface to speed up and facilitate its maintenance.
@@ -218,8 +218,8 @@ class DataModule(pl.LightningDataModule):
             self.dataset_config.target_column,
         )
 
-    def setup(self, stage = None):
-        """ Method used for pytorch lightning to setup the data
+    def setup(self, stage=None):
+        """Method used for pytorch lightning to setup the data
         module instance and prepare the data loaders to be used in
         the trainer.
 
@@ -246,7 +246,7 @@ class DataModule(pl.LightningDataModule):
         self.test_dataset = test_dataset
 
     def train_dataloader(self) -> DataLoader:
-        """ Return the DataLoader instance used to train the custom
+        """Return the DataLoader instance used to train the custom
         model.
 
         Returns:
@@ -259,7 +259,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     def test_dataloader(self) -> DataLoader:
-        """ Return the DataLoader instance used to test the custom
+        """Return the DataLoader instance used to test the custom
         model.
 
         TODO: maybe whe can set drop last or other params in dl.
@@ -267,20 +267,12 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in test steps.
         """
-        return DataLoader(
-            self.test_dataset,
-            self.batch_size,
-            shuffle=False
-        )
+        return DataLoader(self.test_dataset, self.batch_size, shuffle=False)
 
     def val_dataloader(self) -> DataLoader:
-        """ Return the DataLoader used to validate the custom model.
+        """Return the DataLoader used to validate the custom model.
 
         Returns:
             DataLoader: instance used in validation steps.
         """
-        return DataLoader(
-            self.test_dataset,
-            self.batch_size,
-            shuffle=True
-        )
+        return DataLoader(self.test_dataset, self.batch_size, shuffle=True)
