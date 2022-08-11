@@ -1,5 +1,3 @@
-from typing import Any, Dict, Union
-
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
@@ -7,12 +5,11 @@ from app.db.base import ColumnsMetadata, Dataset
 from app.features.dataset.schema import (
     DatasetCreateRepo,
     DatasetsQuery,
-    DatasetUpdate,
     DatasetUpdateRepo,
 )
 
 
-class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
+class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
     def get_many_paginated(self, db: Session, query: DatasetsQuery):
         sql_query = db.query(Dataset)
 
@@ -50,7 +47,6 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         relations_key = ["columns_metadata"]
         ds_data = {k: obj_in_dict[k] for k in obj_in_dict if k not in relations_key}
         db_obj = Dataset(**ds_data)
-
         if obj_in.columns_metadata:
             db_obj.columns_metadata = [
                 ColumnsMetadata(**cd_me) for cd_me in obj_in_dict["columns_metadata"]
@@ -65,13 +61,18 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdate]):
         self,
         db: Session,
         db_obj: Dataset,
-        obj_in: Union[DatasetUpdateRepo, Dict[str, Any]],
+        obj_in: DatasetUpdateRepo,
     ):
-        if isinstance(obj_in, dict):
-            update_data = obj_in
-        else:
-            update_data = obj_in.dict(exclude_unset=True)
-        super().update(db, db_obj=db_obj, obj_in=update_data)
+        if obj_in.columns_metadata:
+            db.query(ColumnsMetadata).filter(
+                ColumnsMetadata.dataset_id == db_obj.id
+            ).delete()
+            db_obj.columns_metadata = [
+                ColumnsMetadata(**cd_me.dict()) for cd_me in obj_in.columns_metadata
+            ]
+            db.add(db_obj)
+            db.commit()
+        super().update(db, db_obj=db_obj, obj_in=obj_in)
         return db_obj
 
     def get_by_name(self, db: Session, name: str) -> Dataset:

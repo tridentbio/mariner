@@ -112,15 +112,17 @@ def update_dataset(
         update.split_target = data.split_target
     if data.split_type:
         update.split_type = data.split_type
+    if data.columns_metadata:
+        update.columns_metadata = data.columns_metadata
     if data.file:
-        update.data_url = _upload_s3(data.file)
-        file_bytes = data.file.file.read()
         (
             update.rows,
             update.columns,
             update.bytes,
             update.stats,
-        ) = _get_entity_info_from_csv(file_bytes)
+        ) = _get_entity_info_from_csv(data.file)
+        data.file.file.seek(0)
+        update.data_url = _upload_s3(data.file)
 
     update.id = dataset_id
     saved = repo.update(db, dataset, update)
