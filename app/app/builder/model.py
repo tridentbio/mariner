@@ -44,22 +44,18 @@ class CustomModel(LightningModule):
         return Adam(self.parameters(), lr=1e-3)
 
     def test_step(self, batch, batch_idx):
-        prediction = self(batch).reshape(
-            4,
-        )
+        prediction = self(batch).squeeze()
         loss = self.loss_fn(prediction, batch["y"])
         # self.logger.log('test_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        prediction = self(batch).reshape(
-            4,
-        )
+        prediction = self(batch).squeeze()
         loss = self.loss_fn(prediction, batch["y"])
         return loss
 
     def training_step(self, batch, batch_idx):
-        prediction = self(batch).reshape(len(batch["y"]))
+        prediction = self(batch).squeeze()
         loss = self.loss_fn(prediction, batch["y"])
         self.log(
             "train_loss", loss, batch_size=len(batch["y"]), on_epoch=True, on_step=False
