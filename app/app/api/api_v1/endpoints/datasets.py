@@ -78,9 +78,6 @@ def create_dataset(
     Create a dataset
     """
     try:
-
-        print(columns_metadatas)
-        print(columns_metadatas.metadatas)
         payload = DatasetCreate(
             name=name,
             description=description,
