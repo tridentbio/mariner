@@ -5,6 +5,8 @@ import requests
 from pytorch_lightning.loggers.base import LightningLoggerBase
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
+from app.core.config import settings
+
 
 class AppLogger(LightningLoggerBase):
     running_history: Dict[str, List[float]]
@@ -61,7 +63,18 @@ class AppLogger(LightningLoggerBase):
         data = self.make_contextualized_data()
         data["type"] = msg_type
         data["data"] = msg
-        requests.post("http://backend/api/v1/experiments/epoch_metrics", json=data)
+        try:
+            requests.post(
+                f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics", json=data
+            )
+        except (requests.ConnectionError, requests.ConnectTimeout) as exp:
+            print(
+                f'Failed logging metrics to {settings.SERVER_HOST}/api/v1/experiments'
+                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
+                 'the ray services, and that it points to the mariner backend'
+            )
+            raise exp
+
         self.last_sent_at = time.time()
 
     @rank_zero_only
