@@ -112,6 +112,9 @@ def update_dateset(
         alias="splitType",
     ),
     file: Optional[UploadFile] = File(None),
+    columns_metadatas: Optional[ColumnMetadataFromJSONStr] = Form(
+        None, alias="columnsMetadata"
+    ),
     current_user=Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
@@ -126,6 +129,9 @@ def update_dateset(
                 description=description,
                 split_target=split_target,
                 split_type=split_type,
+                columns_metadata=columns_metadatas.metadatas
+                if columns_metadatas
+                else None,
             ),
         )
         return dataset

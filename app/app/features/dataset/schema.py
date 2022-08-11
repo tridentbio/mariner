@@ -140,11 +140,12 @@ class Dataset(DatasetBase):
 
 
 class DatasetUpdate(ApiBaseModel):
-    file: Optional[UploadFile]
-    name: Optional[str]
-    description: Optional[str]
-    split_target: Optional[Split]
-    split_type: Optional[SplitType] = "random"
+    file: Optional[UploadFile] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    split_target: Optional[Split] = None
+    split_type: Optional[SplitType] = None
+    columns_metadata: Optional[List[ColumnMetadata]] = None
 
 
 class DatasetUpdateRepo(BaseModel):
@@ -159,3 +160,4 @@ class DatasetUpdateRepo(BaseModel):
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None
     split_type: Optional[SplitType] = None
+    columns_metadata: Optional[List[ColumnMetadata]] = None
