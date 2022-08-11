@@ -8,22 +8,14 @@ from app.core.aws import Bucket, download_file_as_dataframe
 from app.db.base_class import Base
 
 
-class ColumnDescription(Base):
-    pattern = Column(String, primary_key=True)
-    description = Column(String)
-    dataset_id = Column(
-        Integer, ForeignKey("dataset.id", ondelete="CASCADE"), primary_key=True
-    )
-    dataset = relationship("Dataset", back_populates="columns_descriptions")
-
-
 class ColumnsMetadata(Base):
-    key = Column(String, primary_key=True, nullable=False)
+    data_type = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    pattern = Column(String, primary_key=True)
     dataset_id = Column(
         Integer, ForeignKey("dataset.id", ondelete="CASCADE"), primary_key=True
     )
-    dataset = relationship("Dataset", back_populates="columns_metadatas")
-    data_type = Column(String, nullable=False)
+    dataset = relationship("Dataset", back_populates="columns_metadata")
 
 
 class Dataset(Base):
@@ -42,10 +34,7 @@ class Dataset(Base):
     updated_at = Column(DateTime, server_default=current_timestamp())
     created_by_id = Column(Integer, ForeignKey("user.id"))
     created_by = relationship("User", back_populates="datasets")
-    columns_descriptions = relationship(
-        "ColumnDescription", back_populates="dataset", cascade="all,delete"
-    )
-    columns_metadatas = relationship(
+    columns_metadata = relationship(
         "ColumnsMetadata", back_populates="dataset", cascade="all,delete"
     )
 

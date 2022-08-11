@@ -30,22 +30,17 @@ def test_post_datasets(
     normal_user_token_headers: Dict[str, str],
     db: Session,
 ) -> None:
-    descriptions = [
-        {
-            "pattern": "col*",
-            "description": "asdasdas",
-        },
-        {
-            "pattern": "col2*",
-            "description": "asdasdas",
-        },
-    ]
     metadatas = [
         {
-            "key": "exp",
+            "pattern": "exp",
             "data_type": "numerical",
+            "description": "speriment measurement",
         },
-        {"key": "smiles", "data_type": "smiles"},
+        {
+            "pattern": "smiles",
+            "data_type": "smiles",
+            "description": "SMILES representaion of molecule",
+        },
     ]
 
     with open("app/tests/data/HIV.csv", "rb") as f:
@@ -56,7 +51,6 @@ def test_post_datasets(
                 "description": "Test description",
                 "splitType": "random",
                 "splitTarget": "60-20-20",
-                "columnsDescriptions": json.dumps(descriptions),
                 "columnsMetadata": json.dumps(metadatas),
             },
             files={"file": ("dataset.csv", f.read())},
@@ -65,11 +59,11 @@ def test_post_datasets(
         assert res.status_code == status.HTTP_200_OK
         response = res.json()
         id = response["id"]
+        assert len(response["columnsMetadata"]) == 2
         ds = repo.get(db, id)
         assert ds is not None
         assert ds.name == response["name"]
-        assert len(ds.columns_descriptions) == 2
-        assert len(ds.columns_metadatas) == 2
+        assert len(ds.columns_metadata) == 2
 
 
 def test_post_datasets_name_conflict(
