@@ -1,7 +1,11 @@
+from fastapi import status
+from sqlalchemy.orm import Session
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
 
 from app.core.config import settings
+from app.features.experiments.schema import Experiment
+from app.tests.conftest import get_test_user
 
 
 def test_post_experiments(
@@ -27,3 +31,42 @@ def test_get_experiments(
     assert res.status_code == HTTP_200_OK
     exps = res.json()
     assert len(exps) == len(some_experiments)
+
+
+def test_post_update_metrics_unauthorized(
+    client: TestClient, db: Session, some_experiment: Experiment
+):
+    user_id = get_test_user(db).id
+    metrics_update = {
+        "type": "epochMetrics",
+        "data": {"metrics": [], "epoch": 1},
+        "experimentId": some_experiment.experiment_id,
+        "experimentName": "",
+        "userId": user_id,
+    }
+    res = client.post(
+        f"{settings.API_V1_STR}/experiments/epoch_metrics",
+        json=metrics_update,
+    )
+    assert res.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_post_update_metrics_sucess(
+    client: TestClient,
+    db: Session,
+    some_experiment: Experiment,
+):
+    user_id = get_test_user(db).id
+    metrics_update = {
+        "type": "epochMetrics",
+        "data": {"metrics": [], "epoch": 1},
+        "experimentId": some_experiment.experiment_id,
+        "experimentName": "",
+        "userId": user_id,
+    }
+    res = client.post(
+        f"{settings.API_V1_STR}/experiments/epoch_metrics",
+        json=metrics_update,
+        headers={"Authorization": f"Bearer ${settings.APPLICATION_SECRET}"},
+    )
+    assert res.status_code == status.HTTP_403_FORBIDDEN
