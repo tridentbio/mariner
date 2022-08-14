@@ -1,12 +1,16 @@
 import asyncio
+from collections.abc import Generator
 
 import pytest
+from sqlalchemy.orm import Session
 
 from app.features.experiments import controller as exp_ctl
-from app.features.experiments.model import Experiment as Experiment
-from app.features.experiments.schema import TrainingRequest
+from app.features.experiments.crud import repo as experiments_repo
+from app.features.experiments.model import Experiment as ExperimentEntity
+from app.features.experiments.schema import Experiment, TrainingRequest
 from app.features.model.schema.model import Model
 from app.tests.conftest import get_test_user
+from app.tests.features.experiments.conftest import mock_experiment
 from app.tests.utils.utils import random_lower_string
 
 
@@ -45,3 +49,20 @@ def mocked_experiment_payload(some_model: Model):
         "modelVersion": version,
         "modelName": some_model.name,
     }
+
+
+@pytest.fixture(scope="function")
+def some_experiment(
+    db: Session, some_model: Model
+) -> Generator[Experiment, None, None]:
+    user = get_test_user(db)
+    version = some_model.versions[-1]
+    exp = experiments_repo.create(
+        db, obj_in=mock_experiment(some_model, version, user.id, stage="started")
+    )
+    assert exp
+    exp = Experiment.from_orm(exp)
+    yield exp
+    db.query(ExperimentEntity).filter(
+        ExperimentEntity.experiment_id == exp.experiment_id
+    ).delete()

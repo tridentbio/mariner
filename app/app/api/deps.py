@@ -1,6 +1,6 @@
 from typing import Union
 
-from fastapi import WebSocket, status
+from fastapi import Header, WebSocket, status
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends, Query
 from fastapi.security.oauth2 import OAuth2PasswordBearer
@@ -67,9 +67,17 @@ async def get_cookie_or_token(
     websocket: WebSocket,
     token: Union[str, None] = Query(default=None),
 ):
-    if token is None:
+    if not token:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
     return token
+
+
+def assert_trusted_service(authorization: Union[str, None] = Header("Authorization")):
+    if (
+        not authorization
+        or authorization.lstrip("Bearer: ") != settings.APPLICATION_SECRET
+    ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
 def get_current_websocket_user(

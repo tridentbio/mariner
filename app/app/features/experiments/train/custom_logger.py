@@ -69,9 +69,9 @@ class AppLogger(LightningLoggerBase):
             )
         except (requests.ConnectionError, requests.ConnectTimeout) as exp:
             print(
-                f'Failed logging metrics to {settings.SERVER_HOST}/api/v1/experiments'
-                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
-                 'the ray services, and that it points to the mariner backend'
+                f"Failed logging metrics to {settings.SERVER_HOST}/api/v1/experiments"
+                '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
+                "the ray services, and that it points to the mariner backend"
             )
             raise exp
 
