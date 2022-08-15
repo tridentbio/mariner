@@ -65,7 +65,9 @@ class AppLogger(LightningLoggerBase):
         data["data"] = msg
         try:
             requests.post(
-                f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics", json=data
+                f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics",
+                json=data,
+                headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
             )
         except (requests.ConnectionError, requests.ConnectTimeout) as exp:
             print(

@@ -67,11 +67,6 @@ async def post_update_metrics(
     experiment_id = parsed_msg.experiment_id
     experiment_name = parsed_msg.experiment_name
     user_id = parsed_msg.user_id
-    print(
-        f"experiment_id={experiment_id}"
-        "experiment_name={experiment_name}"
-        "user_id={user_id}"
-    )
     if msgtype == "epochMetrics":
         await experiments_ctl.send_ws_epoch_update(
             user_id=user_id,

@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     AWS_MODELS: str = "dev-matiner-datasets"
 
     RAY_ADDRESS: str = "ray://ray-head:10001"
-    APPLICATION_SECRET: str = "ehs7hx6ahx8as8a7712y73y18ha89h"
+    APPLICATION_SECRET: str
 
     class Config:
         # env_file = str(path.join('..', '.env.local'))
