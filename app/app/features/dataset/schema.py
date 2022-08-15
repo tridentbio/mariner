@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from json.decoder import JSONDecodeError
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union, no_type_check
 
 from fastapi.datastructures import UploadFile
 from pydantic.main import BaseModel
@@ -10,13 +10,16 @@ from sqlalchemy.sql.sqltypes import Enum
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
 
 SplitType = Literal["scaffold", "random"]
-ColumnType = Literal["numerical", "categorical", "string"]
 
 
 class Split(str):
+    string: str
     train_percents: int
     test_percents: int
     val_percents: int
+
+    def __init__(self, string: str):
+        self.string = string
 
     @classmethod
     def __get_validators__(cls):
@@ -27,13 +30,27 @@ class Split(str):
         field_schema.update(examples=["60-20-20", "70-20-10"])
 
     @classmethod
+    def build(
+        cls, *, train_percents: int, test_percents: int, val_percents: int
+    ) -> str:
+        return f"{train_percents}-{test_percents}-{val_percents}"
+
+    @no_type_check
+    def __new__(cls, url: Optional[str], **kwargs) -> object:
+        return str.__new__(cls, cls.build(**kwargs) if url is None else url)
+
+    @classmethod
     def validate(cls, v):
         try:
             splits = [int(s) for s in v.split("-")]
             total = sum(splits)
             if total != 100:
                 raise ValueError("splits should sum to 100")
-            return cls(v)
+            instance = cls(v)
+            instance.train_percents = splits[0]
+            instance.test_percents = splits[1]
+            instance.val_percents = splits[2]
+            return instance
         except ValueError:
             raise ValueError('Split should be string "int-int-int"')
 
@@ -46,91 +63,40 @@ class DatasetsQuery(PaginatedApiQuery):
     created_by_id: Optional[int]
 
 
-# class DatasetStats(ApiBaseModel):
-#    min: Optional[float]
-#    max: Optional[float]
-#    avg: Optional[float]
-#    na_count: Optional[float]
-#    type: ColumnType
-#    std_dev: Optional[float]
-DatasetStats = Any
-
-
-class ColumnDescription(ApiBaseModel):
-    pattern: str
-    description: str
-    dataset_id: Optional[int] = None
-
-
 class DataType(str, Enum):
+    string = "string"
     numerical = "numerical"
     smiles = "smiles"
     categorical = "categorical"
 
 
 class ColumnMetadata(ApiBaseModel):
-    key: str
-    data_type: DataType
+    data_type: str
+    description: str
+    pattern: str
+    dataset_id: Optional[int] = None
 
 
 class ColumnMetadataFromJSONStr(str):
-    key: str
-    data_type: DataType
+    metadatas: List[ColumnMetadata] = []
 
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
 
     @classmethod
-    def _modify_schema__(cls, field_schema):
-        field_schema.update(
-            examples=['"[{"key": "string", "data_type": "numerical"}]"', "70-20-10"]
-        )
-
-    @classmethod
     def validate(cls, v):
         try:
             encoded = json.loads(v)
-            if isinstance(encoded, list):
-                arr = []
-                for d in encoded:
-                    if "key" not in d or "data_type" not in d:
-                        raise ValueError("expecting key and data_type")
-                    arr.append(cls(json.dumps(d)))
-                return arr
-            if "key" not in encoded or "data_type" not in encoded:
-                raise ValueError("Should have pattern and description")
-            return
+            assert isinstance(encoded, list), "should be array"
+            metadatas = []
+            for obj in encoded:
+                metadatas.append(ColumnMetadata.parse_obj(obj))
+            instance = cls(v)
+            instance.metadatas = metadatas
+            return instance
         except JSONDecodeError:
-            raise ValueError("Should be a json")
-
-
-class ColumnDescriptionFromJSONStr(str):
-    pattern: str
-    description: str
-
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def _modify_schema__(cls, field_schema):
-        field_schema.update(examples=["60-20-20", "70-20-10"])
-
-    @classmethod
-    def validate(cls, v):
-        try:
-            encoded = json.loads(v)
-            if isinstance(encoded, list):
-                arr = [cls(json.dumps(d)) for d in encoded]
-                return arr
-            if "pattern" not in encoded or "description" not in encoded:
-                raise ValueError("Should have pattern and description")
-            pattern = encoded["pattern"]
-            description = encoded["description"]
-            return cls(pattern, description)
-        except JSONDecodeError:
-            raise ValueError("Should be a json")
+            raise ValueError("Should be a json string")
 
 
 class DatasetBase(ApiBaseModel):
@@ -139,7 +105,7 @@ class DatasetBase(ApiBaseModel):
     rows: int
     columns: int
     bytes: int
-    stats: DatasetStats
+    stats: Any
     data_url: str
     split_target: Split
     split_actual: Optional[Split]
@@ -147,8 +113,7 @@ class DatasetBase(ApiBaseModel):
     created_at: datetime
     updated_at: datetime
     created_by_id: int
-    columns_descriptions: List[ColumnDescription] = []
-    columns_metadatas: List[ColumnMetadata] = []
+    columns_metadata: List[ColumnMetadata] = []
 
 
 class ColumnsMeta(BaseModel):
@@ -163,8 +128,7 @@ class DatasetCreate(BaseModel):
     description: str
     split_target: Split
     split_type: SplitType = "random"
-    columns_descriptions: List[ColumnDescriptionFromJSONStr] = []
-    columns_metadata: List[ColumnMetadataFromJSONStr] = []
+    columns_metadata: List[ColumnMetadata] = []
 
 
 class DatasetCreateRepo(DatasetBase):
@@ -176,11 +140,12 @@ class Dataset(DatasetBase):
 
 
 class DatasetUpdate(ApiBaseModel):
-    file: Optional[UploadFile]
-    name: Optional[str]
-    description: Optional[str]
-    split_target: Optional[Split]
-    split_type: Optional[SplitType] = "random"
+    file: Optional[UploadFile] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    split_target: Optional[Split] = None
+    split_type: Optional[SplitType] = None
+    columns_metadata: Optional[List[ColumnMetadata]] = None
 
 
 class DatasetUpdateRepo(BaseModel):
@@ -195,3 +160,4 @@ class DatasetUpdateRepo(BaseModel):
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None
     split_type: Optional[SplitType] = None
+    columns_metadata: Optional[List[ColumnMetadata]] = None

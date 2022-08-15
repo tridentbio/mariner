@@ -1,13 +1,14 @@
 from typing import Any, List, Optional, Union, get_type_hints
 
+import mlflow
 import mlflow.exceptions
 import numpy as np
 import pandas as pd
 import torch
-import torch_geometric
 from sqlalchemy.orm.session import Session
 
 import app.features.model.layers as mariner_layers
+import torch_geometric
 from app.core import mlflowapi
 from app.features.dataset.crud import repo as dataset_repo
 from app.features.dataset.exceptions import DatasetNotFound
@@ -46,49 +47,68 @@ def create_model(
     user: UserEntity,
     model_create: ModelCreate,
 ) -> Model:
+    r"""
+    Creates a model and a model config if passed with a
+    non-existing `model_create.name`, otherwise creates a
+    new model version
+    """
     client = mlflowapi.create_tracking_client()
     dataset = dataset_repo.get_by_name(db, model_create.config.dataset.name)
     if not dataset:
         raise DatasetNotFound()
     torchmodel = CustomModel(model_create.config)
+    existingmodel = repo.get_by_name(db, model_create.name)
+    if existingmodel and existingmodel.created_by_id != user.id:
+        raise ModelNameAlreadyUsed()
     try:
-        regmodel, version = mlflowapi.create_registered_model(
-            client,
-            model_create.name,
-            torchmodel,
-            description=model_create.model_description,
-            version_description=model_create.model_version_description,
-        )
+        if not existingmodel:
+            regmodel, version = mlflowapi.create_registered_model(
+                client,
+                model_create.name,
+                torchmodel,
+                description=model_create.model_description,
+                version_description=model_create.model_version_description,
+            )
+        else:
+            regmodel = mlflowapi.get_registry_model(model_create.name, client=client)
+            version = mlflowapi.create_model_version(
+                client,
+                existingmodel.name,
+                torchmodel,
+                desc=model_create.model_version_description,
+            )
 
-        model = repo.create(
-            db,
-            obj_in=ModelCreateRepo(
-                name=model_create.name,
-                created_by_id=user.id,
-                dataset_id=dataset.id,
-                columns=[
-                    ModelFeaturesAndTarget(
-                        model_name=model_create.name,
-                        column_name=feature_col,
-                        column_type="feature",
-                    )
-                    for feature_col in model_create.config.dataset.feature_columns
-                ]
-                + [
-                    ModelFeaturesAndTarget(
-                        model_name=model_create.name,
-                        column_name=model_create.config.dataset.target_column,
-                        column_type="target",
-                    )
-                ],
-            ),
-        )
-        if version is not None:
+        if not existingmodel:
+            existingmodel = repo.create(
+                db,
+                obj_in=ModelCreateRepo(
+                    name=model_create.name,
+                    created_by_id=user.id,
+                    dataset_id=dataset.id,
+                    columns=[
+                        ModelFeaturesAndTarget(
+                            model_name=model_create.name,
+                            column_name=feature_col,
+                            column_type="feature",
+                        )
+                        for feature_col in model_create.config.dataset.feature_columns
+                    ]
+                    + [
+                        ModelFeaturesAndTarget(
+                            model_name=model_create.name,
+                            column_name=model_create.config.dataset.target_column,
+                            column_type="target",
+                        )
+                    ],
+                ),
+            )
+
+        if version:
             version = ModelVersion.from_orm(
                 repo.create_model_version(
                     db,
                     version_create=ModelVersionCreateRepo(
-                        model_name=model.name,
+                        model_name=existingmodel.name,
                         model_version=version.version
                         if isinstance(version.version, str)
                         else str(version.version),
@@ -96,7 +116,7 @@ def create_model(
                     ),
                 )
             )
-        model = Model.from_orm(repo.get_by_name(db, model.name))
+        model = Model.from_orm(repo.get_by_name(db, existingmodel.name))
         model.description = regmodel.description
         return model
     except mlflow.exceptions.RestException:
@@ -278,4 +298,15 @@ def get_model_version(db: Session, user: UserEntity, model_name: str) -> Model:
         raise ModelNotFound()
     model = Model.from_orm(modeldb)
     model.load_from_mlflow()
+    return model
+
+
+def delete_model(db: Session, user: UserEntity, model_name: str) -> Model:
+    model = repo.get_by_name(db, model_name)
+    if not model or model.created_by_id != user.id:
+        raise ModelNotFound()
+    model = Model.from_orm(model)
+    client = mlflow.tracking.MlflowClient()
+    client.delete_registered_model(model.name)
+    repo.delete_by_name(db, model_name)
     return model

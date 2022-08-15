@@ -11,7 +11,9 @@ class ModelVersion(Base):
     model_name = Column(
         String, ForeignKey("model.name", ondelete="CASCADE"), primary_key=True
     )
+    # model = relationship("Model", back_populates="versions")
     model_version = Column(String, primary_key=True)
+    # experiments = relationship("Experiment", back_populates="model_version")
     config = Column(JSON)
     created_at = Column(DateTime, server_default=current_timestamp())
     updated_at = Column(DateTime, server_default=current_timestamp())
@@ -31,7 +33,7 @@ class Model(Base):
     created_by = relationship(
         "User",
     )
-    dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="CASCADE"))
+    dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="SET NULL"))
 
     dataset = relationship("Dataset")
     versions = relationship("ModelVersion", cascade="all,delete")

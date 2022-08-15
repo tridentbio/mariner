@@ -2,6 +2,7 @@ from typing import List
 
 import mlflow.pyfunc
 import pandas as pd
+import pytest
 from pydantic.networks import AnyHttpUrl
 from sqlalchemy.orm.session import Session
 from starlette import status
@@ -12,10 +13,40 @@ from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
 from app.features.dataset.model import Dataset
 from app.features.model import generate
+from app.features.model.model import Model as ModelEntity
 from app.features.model.model import ModelVersion
-from app.features.model.schema.model import Model
-from app.tests.conftest import get_test_user, mock_model
+from app.features.model.schema import layers_schema as layers
+from app.features.model.schema.configs import DatasetConfig, ModelConfig
+from app.features.model.schema.model import Model, ModelCreate
+from app.tests.conftest import get_test_user
+from app.tests.features.model.conftest import mock_model, setup_create_model
 from app.tests.utils.utils import random_lower_string
+
+
+@pytest.fixture(scope="function")
+def mocked_invalid_model(some_dataset: Dataset) -> ModelCreate:
+    config = ModelConfig(
+        name=random_lower_string(),
+        dataset=DatasetConfig(
+            name=some_dataset.name, feature_columns=["mwt"], target_column="tpsa"
+        ),
+        featurizers=[],
+        layers=[
+            layers.TorchlinearLayerConfig(
+                type="torch.nn.Linear",
+                args=layers.TorchlinearArgs(in_features=27, out_features=1),
+                input="mwt",
+                name="1",
+            )
+        ],
+    )
+    model = ModelCreate(
+        name=config.name,
+        model_description=random_lower_string(),
+        model_version_description=random_lower_string(),
+        config=config,
+    )
+    return model
 
 
 def test_post_models_success(
@@ -52,6 +83,30 @@ def test_post_models_success(
     assert db_model_config is not None
 
 
+def test_post_models_on_existing_model_creates_new_version(
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_model: Model,
+):
+    new_version = some_model.versions[0].copy()
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        json={
+            "name": some_model.name,
+            "config": new_version.config.dict(),
+            "modelVersionDescription": "This should be  version 2",
+        },
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == status.HTTP_200_OK
+    model = db.query(ModelEntity).filter(ModelEntity.name == some_model.name).first()
+    assert model
+    model = Model.from_orm(model)
+    assert len(model.versions) == 2
+    assert model.versions[-1].model_version == "2"
+
+
 def test_post_models_dataset_not_found(
     client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
 ):
@@ -69,13 +124,13 @@ def test_post_models_dataset_not_found(
 
 
 def test_post_models_check_model_name_is_unique(
-    client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
+    client: TestClient, superuser_token_headers: dict[str, str], some_model: Model
 ):
     model = mock_model(some_model.name)
     res = client.post(
         f"{settings.API_V1_STR}/models/",
         json=model.dict(),
-        headers=normal_user_token_headers,
+        headers=superuser_token_headers,
     )
     assert res.status_code == status.HTTP_409_CONFLICT
     assert res.json()["detail"] == "Another model is already registered with that name"
@@ -101,6 +156,7 @@ def test_get_models_success(
         assert model["createdById"] == user.id
 
 
+@pytest.mark.skip("Flaky test not so important now")
 def test_post_models_deployment(
     client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
 ):
@@ -159,8 +215,19 @@ def test_update_model():
     pass
 
 
-def test_delete_model():
-    pass
+def test_delete_model(
+    client: TestClient,
+    db: Session,
+    normal_user_token_headers: dict[str, str],
+    some_dataset: Dataset,
+):
+    model = setup_create_model(client, normal_user_token_headers, some_dataset)
+    model_name = model.name
+    res = client.delete(
+        f"{settings.API_V1_STR}/models/{model_name}", headers=normal_user_token_headers
+    )
+    assert res.status_code == 200
+    assert not db.query(ModelEntity).filter(ModelEntity.name == model_name).first()
 
 
 def test_post_predict(
@@ -201,3 +268,46 @@ def test_get_model_version(
     assert res.status_code == 200
     body = res.json()
     assert body["name"] == some_model.name
+
+
+def test_post_models_invalid_type(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    mocked_invalid_model: ModelCreate,
+):
+    wrong_layer_name = mocked_invalid_model.config.layers[0].name
+    mocked_invalid_model.config.layers[0].type = "aksfkasmf"
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        headers=normal_user_token_headers,
+        json=mocked_invalid_model.dict(),
+    )
+    error_body = res.json()
+    assert res.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert "detail" in error_body
+    assert len(error_body["detail"]) == 1
+    assert error_body["detail"][0]["type"] == "value_error.unknowncomponenttype"
+    assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name
+
+
+def test_post_models_missing_arguments(
+    client: TestClient,
+    mocked_invalid_model: ModelCreate,
+    normal_user_token_headers: dict[str, str],
+):
+
+    tmp = mocked_invalid_model.dict()
+    del tmp["config"]["layers"][0]["args"]["in_features"]
+    mocked_invalid_model = ModelCreate.construct(**tmp)
+    wrong_layer_name = mocked_invalid_model.config["layers"][0]["name"]
+    res = client.post(
+        f"{settings.API_V1_STR}/models/",
+        headers=normal_user_token_headers,
+        json=mocked_invalid_model.dict(),
+    )
+    assert res.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    error_body = res.json()
+    assert "detail" in error_body
+    assert len(error_body["detail"]) == 1
+    assert error_body["detail"][0]["type"] == "value_error.missingcomponentargs"
+    assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name

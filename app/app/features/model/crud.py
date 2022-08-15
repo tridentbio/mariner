@@ -71,5 +71,9 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
 
         return db_obj
 
+    def delete_by_name(self, db: Session, model_name: str) -> None:
+        db.query(Model).filter(Model.name == model_name).delete()
+        db.commit()
+
 
 repo = CRUDModel(Model)

@@ -2,7 +2,7 @@ from typing import Dict, List, Union
 
 import networkx as nx
 import torch
-import torch_geometric.nn as geom_nn
+from pandas.core.frame import DataFrame
 from pytorch_lightning import LightningModule
 from sqlalchemy.orm.session import Session
 from torch import nn
@@ -10,12 +10,13 @@ from torch.nn import ReLU, Sigmoid
 from torch.nn import functional as F
 from torch.optim import Adam
 from torch.utils.data import Dataset as TorchDataset
-from torch_geometric.data.data import Data
 
+import torch_geometric.nn as geom_nn
 from app.features.dataset.crud import CRUDDataset
-from app.features.dataset.model import Dataset
 from app.features.model.layers import Concat, GlobalPooling
 from app.features.model.schema.configs import ModelConfig
+from torch_geometric.data import Dataset as PygDataset
+from torch_geometric.data.data import Data
 
 # detour. how to check the forward signature?
 edge_index_classes = geom_nn.MessagePassing
@@ -159,12 +160,12 @@ def if_str_make_list(str_or_list: Union[str, List[str]]) -> List[str]:
     return str_or_list
 
 
-class CustomDataset(TorchDataset):
-    def __init__(self, dataset: Dataset, model_config: ModelConfig):
+class CustomDataset(PygDataset):
+    def __init__(self, dataset: DataFrame, model_config: ModelConfig):
         super().__init__()
         self.dataset = dataset
         self.model_config = model_config
-        self.df = dataset.get_dataframe()
+        self.df = dataset
         # maps featurizer name to actual featurizer instance
         self.featurizers_dict = {f.name: f.create() for f in model_config.featurizers}
         # maps featurizer name to featurizer config
@@ -209,4 +210,5 @@ def build_dataset(
     db: Session,
 ) -> TorchDataset:
     dataset = dataset_repo.get_by_name(db, model_config.dataset.name)
-    return CustomDataset(dataset, model_config)
+    df = dataset.get_dataframe()
+    return CustomDataset(df, model_config)

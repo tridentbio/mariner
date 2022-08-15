@@ -1,0 +1,17 @@
+repos:
+- repo: local
+  hooks:
+    - id: format
+      name: formation script 
+      entry: bash -c 'cd app; sh scripts/format.sh'
+      language: system
+      types: [python]
+      require_serial: true
+      pass_filenames: false
+    - id: lint 
+      name: linting script
+      entry: bash -c 'cd app; sh scripts/lint.sh'
+      language: system
+      types: [python]
+      require_serial: true
+      pass_filenames: false
