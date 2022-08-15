@@ -4,12 +4,14 @@ import mlflow
 import mlflow.pyfunc
 import mlflow.pytorch
 import mlflow.tracking
+import ray
 import torch
 from mlflow.deployments import get_deploy_client
 from mlflow.deployments.base import BaseDeploymentClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
+from mlflow.tracking.client import MlflowClient
 
 from app.features.model.schema.model import Model
 
@@ -73,6 +75,8 @@ def get_deployment_plugin() -> BaseDeploymentClient:
 
 
 def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
+    if ray.is_initialized():
+        ray.shutdown()
     ray_plugin = get_deployment_plugin()
     deployment = ray_plugin.create_deployment(
         name=deployment_name,
@@ -81,15 +85,20 @@ def create_deployment_with_endpoint(deployment_name: str, model_uri: str):
     return deployment
 
 
-def get_registry_model(model_registry_name: str):
-    client = create_tracking_client()
+def get_registry_model(model_registry_name: str, client: Optional[MlflowClient] = None):
+    if not client:
+        client = create_tracking_client()
     registered_model = client.get_registered_model(model_registry_name)
     return registered_model
 
 
-def get_model(model: Model, version: Optional[Union[int, str]]):
-    mlflowmodel = mlflow.pytorch.load_model(model.get_model_uri(version))
+def get_model_by_uri(model_uri: str):
+    mlflowmodel = mlflow.pytorch.load_model(model_uri)
     return mlflowmodel
+
+
+def get_model(model: Model, version: Optional[Union[int, str]]):
+    return get_model_by_uri(model.get_model_uri(version))
 
 
 def get_model_version(model_name: str, version: str):

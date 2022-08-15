@@ -114,7 +114,7 @@ def hash_md5(
     data: Optional[bytes] = None,
     file: Optional[Union[str, Path, BinaryIO, UploadFile]] = None,
     chunk_size=4096,
-):
+) -> str:
     hash_md5 = hashlib.md5()
     if data:
         hash_md5.update(data)

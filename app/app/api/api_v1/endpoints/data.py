@@ -12,7 +12,7 @@ router = APIRouter()
 @router.get(
     "/data",
     response_class=StreamingResponse,
-    dependencies=[Depends(deps.get_current_active_superuser)],
+    dependencies=[Depends(deps.get_current_active_user)],
 )
 def get_s3_data(
     object_key: str = Query(..., alias="objectKey"),

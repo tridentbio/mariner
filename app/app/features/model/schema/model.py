@@ -4,6 +4,7 @@ from typing import List, Literal, Optional, Union
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic.main import BaseModel
 
+from app.builder.model import CustomModel
 from app.features.dataset.schema import Dataset
 from app.features.model.schema.configs import ModelConfig
 from app.features.user.schema import User
@@ -20,6 +21,13 @@ class ModelVersion(ApiBaseModel):
     config: ModelConfig
     created_at: datetime
     updated_at: datetime
+    # model: Optional["Model"] = None
+
+    def build_torch_model(self):
+        return CustomModel(self.config)
+
+    def get_mlflow_uri(self):
+        return f"models:/{self.model_name}/{self.model_version}"
 
     def load_from_mlflowapi(self):
         from app.core.mlflowapi import get_model_version
@@ -39,7 +47,7 @@ class Model(ApiBaseModel):
     description: Optional[str] = None
     created_by_id: int
     created_by: Optional[User] = None
-    dataset_id: int
+    dataset_id: Optional[int] = None
     dataset: Optional[Dataset] = None
     versions: List[ModelVersion]
     columns: List[ModelFeaturesAndTarget]

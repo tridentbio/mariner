@@ -77,7 +77,3 @@ layers:
     args:
       in_features: 74
       out_features: 1
-
-  - name: OutputSigmoid
-    type: torch.nn.Sigmoid
-    input: LinearJoined

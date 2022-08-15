@@ -1,8 +1,8 @@
-from typing import Generator
+from typing import Union
 
-from fastapi import status
+from fastapi import Header, WebSocket, status
 from fastapi.exceptions import HTTPException
-from fastapi.param_functions import Depends
+from fastapi.param_functions import Depends, Query
 from fastapi.security.oauth2 import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
@@ -20,12 +20,10 @@ reusable_oauth2 = OAuth2PasswordBearer(
 )
 
 
-def get_db() -> Generator:
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
+def get_db():
+    db = SessionLocal()
+    yield db
+    db.close()
 
 
 def get_current_user(
@@ -63,3 +61,27 @@ def get_current_active_superuser(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+async def get_cookie_or_token(
+    websocket: WebSocket,
+    token: Union[str, None] = Query(default=None),
+):
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+    return token
+
+
+def assert_trusted_service(authorization: Union[str, None] = Header("Authorization")):
+    if not authorization:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    else:
+        token = authorization.split(" ")
+        if len(token) < 2 or token[1] != settings.APPLICATION_SECRET:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+
+def get_current_websocket_user(
+    db: Session = Depends(get_db), token: str = Depends(get_cookie_or_token)
+) -> User:
+    return get_current_user(db, token)

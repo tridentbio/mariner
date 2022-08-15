@@ -1,9 +1,7 @@
 import json
 from typing import Dict, Generator, Optional
 
-import mlflow
 import pytest
-import yaml
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from starlette import status
@@ -13,22 +11,21 @@ from app.core.config import settings
 from app.db.session import SessionLocal
 from app.features.dataset.model import Dataset
 from app.features.model.model import Model as ModelEntity
-from app.features.model.model import ModelVersion
-from app.features.model.schema.configs import ModelConfig
-from app.features.model.schema.model import Model, ModelCreate
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
 from app.main import app
-from app.tests.utils.user import authentication_token_from_email
-from app.tests.utils.utils import (
-    get_superuser_token_headers,
-    random_lower_string,
+from app.tests.features.model.conftest import (
+    setup_create_model,
+    teardown_create_model,
 )
+from app.tests.utils.user import authentication_token_from_email
+from app.tests.utils.utils import get_superuser_token_headers
 
 
 @pytest.fixture(scope="session")
 def db() -> Generator:
-    yield SessionLocal()
+    sesion = SessionLocal()
+    yield sesion
 
 
 @pytest.fixture(scope="module")
@@ -57,22 +54,17 @@ def get_test_user(db: Session) -> User:
 
 # DATASET GLOBAL FIXTURES
 def mock_dataset(name: Optional[str] = None):
-    descriptions = [
-        {
-            "pattern": "col*",
-            "description": "asdasdas",
-        },
-        {
-            "pattern": "col2*",
-            "description": "asdasdas",
-        },
-    ]
     metadatas = [
         {
-            "key": "exp",
+            "pattern": "exp",
             "data_type": "numerical",
+            "description": "speriment measurement",
         },
-        {"key": "smiles", "data_type": "smiles"},
+        {
+            "pattern": "smiles",
+            "data_type": "smiles",
+            "description": "SMILES representaion of molecule",
+        },
     ]
 
     return {
@@ -80,7 +72,6 @@ def mock_dataset(name: Optional[str] = None):
         "description": "Test description",
         "splitType": "random",
         "splitTarget": "60-20-20",
-        "columnsDescriptions": json.dumps(descriptions),
         "columnsMetadata": json.dumps(metadatas),
     }
 
@@ -89,6 +80,8 @@ def setup_create_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):
     data = mock_dataset()
+    db.query(Dataset).filter(Dataset.name == data["name"]).delete()
+    db.commit()
     with open("app/tests/data/zinc.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
@@ -123,48 +116,6 @@ def some_dataset(
 
 
 # MODEL GLOBAL FIXTURES
-def mock_model(name=None, dataset_name=None) -> ModelCreate:
-    model_path = "app/tests/data/test_model_hard.yaml"
-    with open(model_path, "rb") as f:
-        config_dict = yaml.unsafe_load(f.read())
-        config = ModelConfig.parse_obj(config_dict)
-        if dataset_name:
-            config.dataset.name = dataset_name
-        model = ModelCreate(
-            name=name if name is not None else random_lower_string(),
-            model_description=random_lower_string(),
-            model_version_description=random_lower_string(),
-            config=config,
-        )
-        return model
-
-
-def setup_create_model(client: TestClient, headers, dataset: Optional[Dataset] = None):
-    model = None
-    if dataset:
-        model = mock_model(dataset_name=dataset.name)
-    else:
-        model = mock_model()
-    data = model.dict()
-    res = client.post(
-        f"{settings.API_V1_STR}/models/",
-        json=data,
-        headers=headers,
-    )
-
-    print(res.json())
-    assert res.status_code == status.HTTP_200_OK
-    return Model.parse_obj(res.json())
-
-
-def teardown_create_model(db: Session, model_name: str):
-    obj = db.query(ModelVersion).filter(ModelVersion.model_name == model_name).first()
-    db.delete(obj)
-    obj = db.query(ModelEntity).filter(ModelEntity.name == model_name).first()
-    db.delete(obj)
-    db.commit()
-    mlflowclient = mlflow.tracking.MlflowClient()
-    mlflowclient.delete_registered_model(model_name)
 
 
 @pytest.fixture(scope="module")
@@ -174,6 +125,8 @@ def some_model(
     normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
 ):
+    db.query(ModelEntity).delete()
+    db.commit()
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
     yield model
     teardown_create_model(db, model.name)

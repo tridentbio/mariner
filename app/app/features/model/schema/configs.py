@@ -1,9 +1,11 @@
 from ast import literal_eval
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union, get_args, get_type_hints
 
 import networkx as nx
 import yaml
+from pydantic import ValidationError, root_validator
 
+from app.features.model.components_query import get_component_args_by_type
 from app.features.model.schema.layers_schema import (
     FeaturizersArgsType,
     FeaturizersType,
@@ -72,11 +74,97 @@ class ModelOptions(ApiBaseModel):
     component_annotations: List[LayerAnnotation]
 
 
+class UnknownComponentType(ValueError):
+    component_name: str
+
+    def __init__(self, *args, component_name: str):
+        super().__init__(*args)
+        self.component_name = component_name
+
+
+class MissingComponentArgs(ValueError):
+    component_name: str
+    missing: List[Union[str, int]]
+
+    def __init__(self, *args, missing: List[Union[str, int]], component_name: str):
+        super().__init__(*args)
+        self.component_name = component_name
+        self.missing = missing
+
+
 class ModelConfig(ApiBaseModel):
+    @root_validator(pre=True)
+    def check_types_defined(cls, values):
+        layers = values.get("layers")
+        featurizers = values.get("featurizers")
+        layer_types = [
+            get_args(get_type_hints(cls)["type"])[0] for cls in get_args(LayersType)
+        ]
+        featurizer_types = [get_args(get_type_hints(FeaturizersType)["type"])[0]]
+        for layer in layers:
+            if not isinstance(layer, dict):
+                layer = layer.dict()
+            if layer["type"] not in layer_types:
+                raise UnknownComponentType(
+                    "A layer has unknown type", component_name=layer["name"]
+                )
+        for featurizer in featurizers:
+            if not isinstance(featurizer, dict):
+                featurizer = featurizer.dict()
+            if featurizer["type"] not in featurizer_types:
+                raise UnknownComponentType(
+                    "A featurizer has unknown type", component_name=featurizer["name"]
+                )
+        return values
+
+    @root_validator(pre=True)
+    def check_no_missing_args(cls, values):
+        layers = values.get("layers")
+        featurizers = values.get("featurizers")
+        errors = []
+        for layer in layers:
+            if not isinstance(layer, dict):
+                layer = layer.dict()
+            args_cls = get_component_args_by_type(layer["type"])
+            if not args_cls:
+                continue
+            try:
+                args_cls.validate(layer["args"])
+            except ValidationError as exp:
+                errors += [
+                    MissingComponentArgs(
+                        missing=[missing_arg_name for missing_arg_name in error["loc"]],
+                        component_name=layer["name"],
+                    )
+                    for error in exp.errors()
+                    if error["type"] == "value_error.missing"
+                ]
+        for featurizer in featurizers:
+            if not isinstance(featurizer, dict):
+                featurizer = featurizer.dict()
+            args_cls = get_component_args_by_type(featurizer["type"])
+            if not args_cls:
+                continue
+            try:
+                args_cls.validate(featurizer["args"])
+            except ValidationError as exp:
+                errors += [
+                    MissingComponentArgs(
+                        missing=[missing_arg_name for missing_arg_name in error["loc"]],
+                        component_name=featurizer["name"],
+                    )
+                    for error in exp.errors()
+                    if error["type"] == "value_error.missing"
+                ]
+
+        if len(errors) > 0:
+            raise errors[0]
+        return values
+
     name: str
     dataset: DatasetConfig
-    featurizers: List[FeaturizersType]
     layers: List[LayersType]
+    featurizers: List[FeaturizersType]
 
     def make_graph(self):
         g = nx.DiGraph()

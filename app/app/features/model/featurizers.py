@@ -1,3 +1,4 @@
+# flake8: noqa
 from typing import Dict, List, Union
 
 import numpy as np
@@ -6,6 +7,7 @@ import torch
 from rdkit.Chem.rdchem import Atom as RDKitAtom
 from rdkit.Chem.rdchem import Bond as RDKitBond
 from rdkit.Chem.rdchem import Mol as RDKitMol
+
 from torch_geometric.data import Batch as PyGBatch
 from torch_geometric.data import Data as PyGData
 

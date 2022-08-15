@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-
 set -x
-
-mypy app
-black app --check
-isort --recursive --check-only app
+# mypy --explicit-package-bases --namespace-packages app
 flake8
