@@ -16,7 +16,7 @@ from app.tests.utils.utils import random_lower_string
 
 @pytest.fixture(scope="function")
 def some_experiments(db, some_model):
-    db.query(Experiment).delete()
+    db.query(ExperimentEntity).delete()
     db.commit()
     user = get_test_user(db)
     version = some_model.versions[-1]
@@ -34,7 +34,7 @@ def some_experiments(db, some_model):
     exps = asyncio.get_event_loop().run_until_complete(asyncio.gather(*exps))
     yield exps
     # yield [Experiment.from_orm(exp) for exp in exps ]
-    db.query(Experiment).delete()
+    db.query(ExperimentEntity).delete()
     db.commit()
 
 

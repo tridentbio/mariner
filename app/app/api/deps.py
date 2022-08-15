@@ -73,11 +73,12 @@ async def get_cookie_or_token(
 
 
 def assert_trusted_service(authorization: Union[str, None] = Header("Authorization")):
-    if (
-        not authorization
-        or authorization.lstrip("Bearer: ") != settings.APPLICATION_SECRET
-    ):
+    if not authorization:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    else:
+        token = authorization.split(" ")
+        if len(token) < 2 or token[1] != settings.APPLICATION_SECRET:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
 def get_current_websocket_user(

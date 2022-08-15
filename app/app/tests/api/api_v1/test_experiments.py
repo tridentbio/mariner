@@ -67,6 +67,6 @@ def test_post_update_metrics_sucess(
     res = client.post(
         f"{settings.API_V1_STR}/experiments/epoch_metrics",
         json=metrics_update,
-        headers={"Authorization": f"Bearer ${settings.APPLICATION_SECRET}"},
+        headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
     )
-    assert res.status_code == status.HTTP_403_FORBIDDEN
+    assert res.status_code == status.HTTP_200_OK
