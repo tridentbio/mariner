@@ -1,7 +1,6 @@
 import torch
-
-from torch.nn import functional as F
 from torch import nn
+from torch.nn import functional as F
 
 
 class OneHot(nn.Module):
@@ -16,4 +15,3 @@ class OneHot(nn.Module):
 
     def forward(self, x1: torch.Tensor):
         return F.one_hot(x1, num_classes=self.num_classes)
-

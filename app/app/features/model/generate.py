@@ -157,10 +157,6 @@ if __name__ == "__main__":
         for compname in compnames:
             print(generate(compname))
     elif template == "base":
-        try:
-            bundle = generate_bundle()
-            print(bundle)
-            sys.exit(0)
-        except:
-            raise
-
+        bundle = generate_bundle()
+        print(bundle)
+        sys.exit(0)
