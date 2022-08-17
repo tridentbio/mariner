@@ -1,6 +1,7 @@
 import datetime
 import io
 import json
+from typing import List
 
 import pandas
 from fastapi.datastructures import UploadFile
@@ -12,6 +13,7 @@ from app.core.config import settings
 from app.features.dataset.exceptions import (
     DatasetAlreadyExists,
     DatasetNotFound,
+    InvalidCategoricalColumn,
     NotCreatorOfDataset,
 )
 from app.utils import hash_md5
@@ -19,6 +21,7 @@ from app.utils import hash_md5
 from ..user.model import User
 from .crud import repo
 from .schema import (
+    ColumnsDescription,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
@@ -51,10 +54,33 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     return dataset
 
 
-def _get_entity_info_from_csv(file: UploadFile):
+def get_entity_info_from_csv(
+    file: UploadFile, columns_descriptions: List[ColumnsDescription]
+):
     file_bytes = file.file.read()
     df = pandas.read_csv(io.BytesIO(file_bytes))
-    return len(df), len(df.columns), len(file_bytes), get_stats(df).to_dict()
+    assert isinstance(df, pandas.DataFrame)
+    stats = get_stats(df).to_dict()
+    import re
+
+    for column in stats:
+        for description in columns_descriptions:
+            if description.data_type == "categorical" and re.compile(
+                description.pattern
+            ).search(str(column)):
+                if df[column].dtype not in [int, object]:
+                    raise InvalidCategoricalColumn(
+                        f'Column "{column}" of type{df[column].dtype} cannot'
+                        "be a categorical column because it's type is not string"
+                        "or int"
+                    )
+                else:
+                    unique_values = df[column].unique()
+                    categoriesmap = {
+                        column: index for index, column in enumerate(unique_values)
+                    }
+                    stats[column]["categories"] = categoriesmap
+    return len(df), len(df.columns), len(file_bytes), stats
 
 
 def _upload_s3(file: UploadFile):
@@ -68,7 +94,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     existing_dataset = repo.get_by_name(db, data.name)
     if existing_dataset:
         raise DatasetAlreadyExists()
-    rows, columns, bytes, stats = _get_entity_info_from_csv(data.file)
+    rows, columns, bytes, stats = get_entity_info_from_csv(data.file, data.columns_metadata)
     data.file.file.seek(0)
     data_url = _upload_s3(data.file)
     create_obj = DatasetCreateRepo(
@@ -120,7 +146,7 @@ def update_dataset(
             update.columns,
             update.bytes,
             update.stats,
-        ) = _get_entity_info_from_csv(data.file)
+        ) = get_entity_info_from_csv(data.file)
         data.file.file.seek(0)
         update.data_url = _upload_s3(data.file)
 
@@ -141,9 +167,11 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
 
 
 def parse_csv_headers(csv_file: UploadFile):
-    _, _, _, stats = _get_entity_info_from_csv(csv_file)
+
+    file_bytes = csv_file.file.read()
+    df = pandas.read_csv(io.BytesIO(file_bytes))
     metadata = [
-        ColumnsMeta(name=key, nacount=stats[key]["na_count"], dtype=stats[key]["types"])
-        for key in stats
+        ColumnsMeta(name=key, nacount=0, dtype=str(df[key].dtype))
+        for key in df
     ]
     return metadata

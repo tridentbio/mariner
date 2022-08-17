@@ -70,15 +70,15 @@ class DataType(str, Enum):
     categorical = "categorical"
 
 
-class ColumnMetadata(ApiBaseModel):
-    data_type: str
+class ColumnsDescription(ApiBaseModel):
+    data_type: DataType
     description: str
     pattern: str
     dataset_id: Optional[int] = None
 
 
 class ColumnMetadataFromJSONStr(str):
-    metadatas: List[ColumnMetadata] = []
+    metadatas: List[ColumnsDescription] = []
 
     @classmethod
     def __get_validators__(cls):
@@ -91,7 +91,7 @@ class ColumnMetadataFromJSONStr(str):
             assert isinstance(encoded, list), "should be array"
             metadatas = []
             for obj in encoded:
-                metadatas.append(ColumnMetadata.parse_obj(obj))
+                metadatas.append(ColumnsDescription.parse_obj(obj))
             instance = cls(v)
             instance.metadatas = metadatas
             return instance
@@ -113,7 +113,7 @@ class DatasetBase(ApiBaseModel):
     created_at: datetime
     updated_at: datetime
     created_by_id: int
-    columns_metadata: List[ColumnMetadata] = []
+    columns_metadata: List[ColumnsDescription] = []
 
 
 class ColumnsMeta(BaseModel):
@@ -128,7 +128,7 @@ class DatasetCreate(BaseModel):
     description: str
     split_target: Split
     split_type: SplitType = "random"
-    columns_metadata: List[ColumnMetadata] = []
+    columns_metadata: List[ColumnsDescription] = []
 
 
 class DatasetCreateRepo(DatasetBase):
@@ -145,7 +145,7 @@ class DatasetUpdate(ApiBaseModel):
     description: Optional[str] = None
     split_target: Optional[Split] = None
     split_type: Optional[SplitType] = None
-    columns_metadata: Optional[List[ColumnMetadata]] = None
+    columns_metadata: Optional[List[ColumnsDescription]] = None
 
 
 class DatasetUpdateRepo(BaseModel):
@@ -160,4 +160,4 @@ class DatasetUpdateRepo(BaseModel):
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None
     split_type: Optional[SplitType] = None
-    columns_metadata: Optional[List[ColumnMetadata]] = None
+    columns_metadata: Optional[List[ColumnsDescription]] = None
