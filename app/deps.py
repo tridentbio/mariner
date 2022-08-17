@@ -3,13 +3,13 @@
 import subprocess
 
 
-def make_download_uri(platform: str, torch_version="1.9.0"):
+def make_download_uri(platform: str, torch_version="1.12.1"):
     return f'https://data.pyg.org/whl/torch-{torch_version}+{platform}.html'
 
 
 def install_deps(cuda):
     pip_install_command = ["poetry", "run", "pip", "install"]
-    deps = ['torch-scatter==2.0.9', 'torch-sparse==0.6.12', 'torch-geometric']
+    deps = ['torch-scatter', 'torch-sparse', 'torch-geometric']
     for lib in deps:
         subprocess.call(
             pip_install_command
@@ -31,3 +31,5 @@ def install_deps_cu102():
 
 def install_deps_cu110():
     install_deps("cu110")
+
+
