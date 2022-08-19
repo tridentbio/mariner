@@ -7,7 +7,7 @@ from app.core.mlflowapi import (
     create_deployment_with_endpoint,
     create_model_version,
 )
-from app.features.model.builder import CustomModel
+from app.builder.model import CustomModel
 from app.tests.features.model.conftest import mock_model
 from app.tests.utils.utils import random_lower_string
 

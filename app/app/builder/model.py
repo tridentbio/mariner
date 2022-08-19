@@ -6,14 +6,44 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.optim.adam import Adam
 from torch_geometric.data.data import Data
 
-from app.features.model.builder import (
-    is_concat_layer,
-    is_graph_activation,
-    is_graph_pooling,
-    is_message_passing,
-)
 from app.features.model.schema.configs import ModelConfig
 
+from app.features.model.layers import Concat, GlobalPooling
+from torch.nn import ReLU, Sigmoid
+import torch_geometric.nn as geom_nn
+
+edge_index_classes = geom_nn.MessagePassing
+pooling_classes = GlobalPooling
+
+edge_index_classes = geom_nn.MessagePassing
+pooling_classes = GlobalPooling
+activations = (ReLU, Sigmoid)
+
+def is_message_passing(layer):
+    """x = layer(x, edge_index)"""
+    return isinstance(layer, geom_nn.MessagePassing)
+
+
+def is_graph_pooling(layer):
+    """x = layer(x, batch)"""
+    return isinstance(layer, pooling_classes)
+
+
+def is_concat_layer(layer):
+    return isinstance(layer, Concat)
+
+
+def is_graph_activation(layer, layers_dict, previous):
+    """
+    takes the a dictionary with nn.Modules and the keys of
+    previous layers, checking if
+    """
+    if not isinstance(layer, activations):
+        return False
+    for name in previous:
+        if is_message_passing(layers_dict[name]) or is_graph_pooling(layers_dict[name]):
+            return True
+    return False
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
     if isinstance(x, str):
