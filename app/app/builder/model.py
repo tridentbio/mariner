@@ -63,7 +63,6 @@ class CustomModel(LightningModule):
         return loss
 
     def forward(self, input_):
-        print(input_)
         storage = input_.copy()
 
         for key, value in storage.items():

@@ -314,9 +314,6 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model(model, request.version)
-    print(pyfuncmodel.__class__, modelversion.build_torch_model().__class__)
-    # pyfuncmodel = modelversion.build_torch_model()
-
     return pyfuncmodel(modelinput)
 
 
@@ -339,3 +336,4 @@ def delete_model(db: Session, user: UserEntity, model_name: str) -> Model:
     client = mlflow.tracking.MlflowClient()
     client.delete_registered_model(model.name)
     repo.delete_by_name(db, model_name)
+    return model
