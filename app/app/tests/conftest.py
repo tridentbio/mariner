@@ -129,7 +129,7 @@ def some_model(
     db.commit()
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
     yield model
-    teardown_create_model(db, model.name)
+    # teardown_create_model(db, model.name)
 
 
 def mock_dataset_item():
