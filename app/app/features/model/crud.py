@@ -23,7 +23,7 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
             db.commit()
         return obj
 
-    def get_by_name_from_user(self, db: Session, user_id: int, name: str):
+    def get_by_name_from_user(self, db: Session, user_id: int, name: str) -> Model:
         model = (
             db.query(Model)
             .filter(Model.created_by_id == user_id)

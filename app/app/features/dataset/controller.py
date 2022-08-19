@@ -94,7 +94,9 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     existing_dataset = repo.get_by_name(db, data.name)
     if existing_dataset:
         raise DatasetAlreadyExists()
-    rows, columns, bytes, stats = get_entity_info_from_csv(data.file, data.columns_metadata)
+    rows, columns, bytes, stats = get_entity_info_from_csv(
+        data.file, data.columns_metadata
+    )
     data.file.file.seek(0)
     data_url = _upload_s3(data.file)
     create_obj = DatasetCreateRepo(
@@ -171,7 +173,6 @@ def parse_csv_headers(csv_file: UploadFile):
     file_bytes = csv_file.file.read()
     df = pandas.read_csv(io.BytesIO(file_bytes))
     metadata = [
-        ColumnsMeta(name=key, nacount=0, dtype=str(df[key].dtype))
-        for key in df
+        ColumnsMeta(name=key, nacount=0, dtype=str(df[key].dtype)) for key in df
     ]
     return metadata
