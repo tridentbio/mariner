@@ -1,11 +1,10 @@
-from typing import Any
+from typing import Any, Dict, List
 
 import torch
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
 from pandas.core.frame import DataFrame
-from pydantic.main import BaseModel
 from sqlalchemy.orm.session import Session
 from starlette import status
 
@@ -77,7 +76,7 @@ def post_predict(
     model_name: str,
     user_id: int,
     model_version: str,
-    model_input=Depends(BaseModel),  # Any json
+    model_input: Dict[str, List[Any]],  # Any json
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:

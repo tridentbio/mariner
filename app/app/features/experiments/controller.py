@@ -57,9 +57,10 @@ async def create_model_traning(
     dataset = dataset_repo.get_by_name(db, model_version.config.dataset.name)
     torchmodel = model_version.build_torch_model()
     featurizers_config = model_version.config.featurizers
+    df = dataset.get_dataframe()
     data_module = DataModule(
         featurizers_config=featurizers_config,
-        data=dataset.get_dataframe(),
+        data=df,
         dataset_config=model_version.config.dataset,
         split_target=dataset.split_target,
         split_type=dataset.split_type,
@@ -98,6 +99,7 @@ async def create_model_traning(
             mlflow.pytorch.log_model(
                 model,
                 get_artifact_uri(run_id, tracking_uri=get_tracking_uri()),
+                registered_model_name=model_version.model_name,
             )
             experiments_repo.update(
                 db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment

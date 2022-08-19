@@ -1,7 +1,6 @@
 from typing import List
 
 import mlflow.pyfunc
-import pandas as pd
 import pytest
 from pydantic.networks import AnyHttpUrl
 from sqlalchemy.orm.session import Session
@@ -242,20 +241,21 @@ def test_post_predict(
     route = (
         f"{settings.API_V1_STR}/models/{user_id}/{model_name}/{model_version}/predict"
     )
-    df = pd.DataFrame(
-        {
+    res = client.post(
+        route,
+        json={
             "smiles": [
                 "CCCC",
                 "CCCCC",
                 "CCCCCCC",
             ],
             "mwt": [0.3, 0.1, 0.9],
-            "tpsa": [0.3, 0.1, 0.9],
-        }
+        },
+        headers=normal_user_token_headers,
     )
-    data = df.to_json()
-    res = client.post(route, data, headers=normal_user_token_headers)
     assert res.status_code == 200
+    body = res.json()
+    assert len(body) == 3
 
 
 def test_get_model_version(

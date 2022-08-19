@@ -56,6 +56,12 @@ class Model(ApiBaseModel):
 
     _loaded: Optional[RegisteredModel] = None
 
+    def get_version(self, version: Union[str, int]) -> Optional[ModelVersion]:
+        for v in self.versions:
+            if v.model_version == version:
+                return v
+        return None
+
     def get_model_uri(self, version: Optional[Union[str, int]] = None):
         if not self._loaded:
             self._loaded = self.load_from_mlflow()
