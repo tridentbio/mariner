@@ -7,8 +7,9 @@ from app.db.base_class import Base
 
 class Deployment(Base):
     name = Column(String, primary_key=True)
-    model_name = Column(String, ForeignKey("model.name", ondelete="SET NULL"))
-    model_version = Column(String)
-    created_by_id = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"))
+    model_version_id = Column(
+        Integer, ForeignKey("modelversion.id", ondelete="CASCADE")
+    )
+    created_by_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     created_by = relationship("User")
-    model = relationship("Model")
+    model = relationship("ModelVersion")

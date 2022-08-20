@@ -14,10 +14,7 @@ from app.features.model.model import Model as ModelEntity
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
 from app.main import app
-from app.tests.features.model.conftest import (
-    setup_create_model,
-    teardown_create_model,
-)
+from app.tests.features.model.conftest import setup_create_model
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
 

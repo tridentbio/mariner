@@ -311,3 +311,10 @@ def test_post_models_missing_arguments(
     assert len(error_body["detail"]) == 1
     assert error_body["detail"][0]["type"] == "value_error.missingcomponentargs"
     assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name
+
+
+def test_model_versioning():
+    """
+    Checks if the model versioning mapping between mariner
+    models and MLFlow Registry is correct
+    """
