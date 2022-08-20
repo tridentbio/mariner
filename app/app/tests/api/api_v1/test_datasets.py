@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.features.dataset.crud import repo
 from app.features.dataset.model import Dataset as DatasetModel
 from app.features.dataset.schema import DatasetCreateRepo, Split
-from app.tests.conftest import mock_dataset
+from app.tests.conftest import get_test_user, mock_dataset
 from app.tests.utils.utils import random_lower_string
 
 
@@ -86,7 +86,7 @@ def test_post_datasets_name_conflict(
     reason="db consistency assertions fail for some reason, but route works"
 )
 def test_put_datasets(
-    client: TestClient, superuser_token_headers: Dict[str, str], db: Session
+    client: TestClient, normal_user_token_headers: Dict[str, str], db: Session
 ) -> None:
     dataset = repo.create(
         db,
@@ -115,7 +115,7 @@ def test_put_datasets(
             "splitType": "random",
             "splitTarget": "60-20-20",
         },
-        headers={**superuser_token_headers},
+        headers=normal_user_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
     response = r.json()
@@ -130,8 +130,9 @@ def test_put_datasets(
 
 
 def test_delete_datasets(
-    client: TestClient, superuser_token_headers: Dict[str, str], db: Session
+    client: TestClient, normal_user_token_headers: Dict[str, str], db: Session
 ) -> None:
+    user = get_test_user(db)
     dataset = repo.create(
         db,
         DatasetCreateRepo(
@@ -141,7 +142,7 @@ def test_delete_datasets(
             data_url="",
             created_at=datetime.now(),
             updated_at=datetime.now(),
-            created_by_id=1,
+            created_by_id=user.id,
             description="test",
             rows=100,
             columns=5,
@@ -152,7 +153,7 @@ def test_delete_datasets(
     )
     r = client.delete(
         f"{settings.API_V1_STR}/datasets/{dataset.id}",
-        headers=superuser_token_headers,
+        headers=normal_user_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
     ds = repo.get(db, dataset.id)

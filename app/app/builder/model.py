@@ -2,15 +2,14 @@ from typing import List, Union
 
 import networkx as nx
 import torch
+import torch_geometric.nn as geom_nn
 from pytorch_lightning.core.lightning import LightningModule
+from torch.nn import ReLU, Sigmoid
 from torch.optim.adam import Adam
 from torch_geometric.data.data import Data
 
-from app.features.model.schema.configs import ModelConfig
-
 from app.features.model.layers import Concat, GlobalPooling
-from torch.nn import ReLU, Sigmoid
-import torch_geometric.nn as geom_nn
+from app.features.model.schema.configs import ModelConfig
 
 edge_index_classes = geom_nn.MessagePassing
 pooling_classes = GlobalPooling
@@ -18,6 +17,7 @@ pooling_classes = GlobalPooling
 edge_index_classes = geom_nn.MessagePassing
 pooling_classes = GlobalPooling
 activations = (ReLU, Sigmoid)
+
 
 def is_message_passing(layer):
     """x = layer(x, edge_index)"""
@@ -44,6 +44,7 @@ def is_graph_activation(layer, layers_dict, previous):
         if is_message_passing(layers_dict[name]) or is_graph_pooling(layers_dict[name]):
             return True
     return False
+
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
     if isinstance(x, str):
