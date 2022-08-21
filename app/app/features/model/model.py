@@ -24,7 +24,7 @@ class ModelVersion(Base):
     model_id = Column(
         Integer, ForeignKey("model.id", ondelete="CASCADE"), nullable=False
     )
-    # model = relationship("Model", back_populates="versions")
+    model = relationship("Model", back_populates="versions")
     name = Column(String, nullable=False)
     mlflow_name = Column(String, nullable=False)
     # experiments = relationship("Experiment", back_populates="model_version")

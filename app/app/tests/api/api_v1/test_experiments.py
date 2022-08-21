@@ -16,18 +16,20 @@ def test_post_experiments(
         json=mocked_experiment_payload,
         headers=normal_user_token_headers,
     )
+    print(res.json())
     assert res.status_code == HTTP_200_OK
 
 
 def test_get_experiments(
     client: TestClient, some_model, some_experiments, normal_user_token_headers
 ):
-    params = {"modelName": some_model.name}
+    params = {"modelId": some_model.id}
     res = client.get(
         f"{settings.API_V1_STR}/experiments/",
         params=params,
         headers=normal_user_token_headers,
     )
+    print(res.json())
     assert res.status_code == HTTP_200_OK
     exps = res.json()
     assert len(exps) == len(some_experiments)
@@ -40,7 +42,7 @@ def test_post_update_metrics_unauthorized(
     metrics_update = {
         "type": "epochMetrics",
         "data": {"metrics": [], "epoch": 1},
-        "experimentId": some_experiment.experiment_id,
+        "experimentId": some_experiment.id,
         "experimentName": "",
         "userId": user_id,
     }
@@ -60,7 +62,7 @@ def test_post_update_metrics_sucess(
     metrics_update = {
         "type": "epochMetrics",
         "data": {"metrics": [], "epoch": 1},
-        "experimentId": some_experiment.experiment_id,
+        "experimentId": some_experiment.id,
         "experimentName": "",
         "userId": user_id,
     }

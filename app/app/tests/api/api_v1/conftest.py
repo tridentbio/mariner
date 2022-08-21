@@ -15,17 +15,16 @@ from app.tests.utils.utils import random_lower_string
 
 
 @pytest.fixture(scope="function")
-def some_experiments(db, some_model):
+def some_experiments(db, some_model: Model):
     db.query(ExperimentEntity).delete()
     db.commit()
     user = get_test_user(db)
     version = some_model.versions[-1]
     requests = [
         TrainingRequest(
-            model_name=some_model.name,
-            model_version=version.model_version,
+            model_version_id=version.id,
             epochs=1,
-            experiment_name=random_lower_string(),
+            name=random_lower_string(),
             learning_rate=0.05,
         )
         for _ in range(3)
@@ -41,13 +40,12 @@ def some_experiments(db, some_model):
 @pytest.fixture(scope="module")
 def mocked_experiment_payload(some_model: Model):
     experiment_name = random_lower_string()
-    version = some_model.versions[-1].model_version
+    version = some_model.versions[-1]
     return {
-        "experimentName": experiment_name,
+        "name": experiment_name,
         "learningRate": 0.05,
         "epochs": 1,
-        "modelVersion": version,
-        "modelName": some_model.name,
+        "modelVersionId": version.id,
     }
 
 
@@ -58,11 +56,9 @@ def some_experiment(
     user = get_test_user(db)
     version = some_model.versions[-1]
     exp = experiments_repo.create(
-        db, obj_in=mock_experiment(some_model, version, user.id, stage="started")
+        db, obj_in=mock_experiment(version, user.id, stage="started")
     )
     assert exp
     exp = Experiment.from_orm(exp)
     yield exp
-    db.query(ExperimentEntity).filter(
-        ExperimentEntity.experiment_id == exp.experiment_id
-    ).delete()
+    db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).delete()

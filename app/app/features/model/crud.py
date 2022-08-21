@@ -75,5 +75,8 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
         db.query(Model).filter(Model.name == model_name).delete()
         db.commit()
 
+    def get_model_version(self, db: Session, id: int) -> Optional[ModelVersion]:
+        return db.query(ModelVersion).filter(ModelVersion.id == id).first()
+
 
 repo = CRUDModel(Model)
