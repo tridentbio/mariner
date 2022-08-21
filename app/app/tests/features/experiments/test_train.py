@@ -48,9 +48,8 @@ async def test_start_training(
     request = TrainingRequest(
         epochs=1,
         learning_rate=1e-3,
-        experiment_name=exp_name,
-        model_name=some_model.name,
-        model_version=version.model_version,
+        name=exp_name,
+        model_version_id=version.id,
     )
     model = version.build_torch_model()
     featurizers_config = version.config.featurizers

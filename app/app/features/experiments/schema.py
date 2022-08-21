@@ -7,22 +7,21 @@ from app.schemas.api import ApiBaseModel
 
 
 class TrainingRequest(ApiBaseModel):
-    model_name: str
-    experiment_name: str
-    model_version: str
+    name: str
+    model_version_id: int
     learning_rate: float
     epochs: int
 
 
 class Experiment(ApiBaseModel):
-    experiment_name: Optional[str]
-    model_name: str
-    model_version_name: str
+    name: Optional[str]
+    model_version_id: int
     model_version: ModelVersion
     created_at: datetime
     updated_at: datetime
     created_by_id: int
-    experiment_id: str
+    id: int
+    mlflow_id: str
     stage: str
     created_by: Optional[User] = None
     hyperparams: Optional[Dict[str, float]] = None
@@ -34,7 +33,7 @@ class Experiment(ApiBaseModel):
 
 
 class ListExperimentsQuery(ApiBaseModel):
-    model_name: str
+    model_id: int
 
 
 class RunningHistory(ApiBaseModel):

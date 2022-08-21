@@ -90,19 +90,18 @@ def create_model(
             db,
             obj_in=ModelCreateRepo(
                 name=model_create.name,
+                mlflow_name=f"{user.id}-{model_create.name}",
                 created_by_id=user.id,
                 dataset_id=dataset.id,
                 columns=[
-                    ModelFeaturesAndTarget(
-                        model_name=model_create.name,
+                    ModelFeaturesAndTarget.construct(
                         column_name=feature_col,
                         column_type="feature",
                     )
                     for feature_col in model_create.config.dataset.feature_columns
                 ]
                 + [
-                    ModelFeaturesAndTarget(
-                        model_name=model_create.name,
+                    ModelFeaturesAndTarget.construct(
                         column_name=model_create.config.dataset.target_column,
                         column_type="target",
                     )
@@ -115,8 +114,9 @@ def create_model(
             repo.create_model_version(
                 db,
                 version_create=ModelVersionCreateRepo(
-                    model_name=existingmodel.name,
-                    model_version=version.version
+                    mlflow_name=f"{user.id}-{version.version}",
+                    model_id=existingmodel.id,
+                    name=version.version
                     if isinstance(version.version, str)
                     else str(version.version),
                     config=model_create.config,

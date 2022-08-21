@@ -9,7 +9,7 @@ from app.tests.conftest import get_test_user
 
 
 def test_get_model_prediction(db: Session, model: Model):
-    version = model.versions[-1].model_version
+    version = model.versions[-1].name
     test_user = get_test_user(db)
     ds = dataset_repo.get(db, model.dataset_id)
     assert ds

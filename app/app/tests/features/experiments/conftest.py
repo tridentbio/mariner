@@ -13,16 +13,15 @@ from app.tests.utils.utils import random_lower_string
 
 
 def mock_experiment(
-    some_model: Model,
     version: ModelVersion,
     user_id: int,
     stage: Optional[Literal["started", "success"]] = None,
 ):
     create_obj = ExperimentCreateRepo(
-        experiment_id=random_lower_string(),
+        epochs=1,
+        mlflow_id=random_lower_string(),
         created_by_id=user_id,
-        model_name=some_model.name,
-        model_version_name=version.model_version,
+        model_version_id=version.id,
     )
     if stage == "started":
         pass  # create_obj is ready
@@ -83,7 +82,7 @@ def some_experiments(
     version = some_model.versions[-1]
     exps = [
         experiments_repo.create(
-            db, obj_in=mock_experiment(some_model, version, user.id, stage="started")
+            db, obj_in=mock_experiment(version, user.id, stage="started")
         )
         for _ in range(0, 3)
     ]

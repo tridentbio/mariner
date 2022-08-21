@@ -16,8 +16,10 @@ class ModelDeployment(ApiBaseModel):
 
 
 class ModelVersion(ApiBaseModel):
-    model_name: str
-    model_version: str
+    id: int
+    model_id: int
+    name: str
+    mlflow_name: str
     config: ModelConfig
     created_at: datetime
     updated_at: datetime
@@ -27,23 +29,25 @@ class ModelVersion(ApiBaseModel):
         return CustomModel(self.config)
 
     def get_mlflow_uri(self):
-        return f"models:/{self.model_name}/{self.model_version}"
+        return f"models:/{self.model_id}/{self.name}"
 
     def load_from_mlflowapi(self):
         from app.core.mlflowapi import get_model_version
 
-        version = get_model_version(self.model_name, self.model_version)
+        version = get_model_version(self.model_id, self.name)
         return version
 
 
 class ModelFeaturesAndTarget(ApiBaseModel):
-    model_name: str
+    model_id: int
     column_name: str
     column_type: Literal["feature", "target"]
 
 
 class Model(ApiBaseModel):
+    id: int
     name: str
+    mlflow_name: str
     description: Optional[str] = None
     created_by_id: int
     created_by: Optional[User] = None
@@ -58,7 +62,7 @@ class Model(ApiBaseModel):
 
     def get_version(self, version: Union[str, int]) -> Optional[ModelVersion]:
         for v in self.versions:
-            if v.model_version == version:
+            if v.name == version:
                 return v
         return None
 
@@ -66,7 +70,7 @@ class Model(ApiBaseModel):
         if not self._loaded:
             self._loaded = self.load_from_mlflow()
         if not version:
-            version = self.versions[-1].model_version
+            version = self.versions[-1].name
         return f"models:/{self.name}/{version}"
 
     def set_from_registered_model(self, regmodel: RegisteredModel):
@@ -93,6 +97,7 @@ class ModelCreateRepo(BaseModel):
     name: str
     created_by_id: int
     columns: List[ModelFeaturesAndTarget]
+    mlflow_name: str
 
 
 class ModelUpdateRepo(Model):
@@ -107,6 +112,7 @@ class ModelCreate(ApiBaseModel):
 
 
 class ModelVersionCreateRepo(BaseModel):
-    model_name: str
-    model_version: str
+    mlflow_name: str
+    model_id: int
+    name: str
     config: ModelConfig

@@ -71,13 +71,12 @@ def test_post_models_success(
     assert "versions" in body
     assert len(body["versions"]) == 1
     version = body["versions"][0]
-    model_version = version["modelVersion"]
+    model_version = version["name"]
     assert version["config"]["name"] is not None
     model = mlflow.pyfunc.load_model(model_uri=f"models:/{model.name}/{model_version}")
     assert model is not None
     db_model_config = db.query(ModelVersion).filter(
-        ModelVersion.model_name == body["name"]
-        and ModelVersion.model_version == model_version
+        ModelVersion.id == version["id"] and ModelVersion.name == model_version
     )
     assert db_model_config is not None
 
@@ -103,7 +102,7 @@ def test_post_models_on_existing_model_creates_new_version(
     assert model
     model = Model.from_orm(model)
     assert len(model.versions) == 2
-    assert model.versions[-1].model_version == "2"
+    assert model.versions[-1].name == "2"
 
 
 def test_post_models_dataset_not_found(
@@ -162,7 +161,7 @@ def test_post_models_deployment(
     data = {
         "name": random_lower_string(),
         "modelName": some_model.name,
-        "modelVersion": int(some_model.versions[-1].model_version),
+        "modelVersion": int(some_model.versions[-1].name),
     }
     res = client.post(
         f"{settings.API_V1_STR}/deployments/",
@@ -237,7 +236,7 @@ def test_post_predict(
 ):
     user_id = get_test_user(db).id
     model_name = some_model.name
-    model_version = some_model.versions[-1].model_version
+    model_version = some_model.versions[-1].name
     route = (
         f"{settings.API_V1_STR}/models/{user_id}/{model_name}/{model_version}/predict"
     )

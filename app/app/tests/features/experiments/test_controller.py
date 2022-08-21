@@ -19,7 +19,7 @@ from app.tests.utils.utils import random_lower_string
 @pytest.mark.asyncio
 async def test_get_experiments(db: Session, some_model: Model, some_experiments):
     user = get_test_user(db)
-    query = ListExperimentsQuery(model_name=some_model.name)
+    query = ListExperimentsQuery(model_id=some_model.id)
     experiments = experiments_ctl.get_experiments(db, user, query)
     assert len(experiments) == len(some_experiments) == 3
 
@@ -29,26 +29,22 @@ async def test_create_model_training(db: Session, some_model: Model):
     user = get_test_user(db)
     version = some_model.versions[-1]
     request = TrainingRequest(
-        model_name=some_model.name,
-        model_version=version.model_version,
+        model_version_id=version.id,
         epochs=1,
-        experiment_name=random_lower_string(),
+        name=random_lower_string(),
         learning_rate=0.05,
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
-    assert exp.model_name == some_model.name
-    assert exp.model_version.model_version == version.model_version
-    task = get_exp_manager().get_task(exp.experiment_id)
+    assert exp.model_version_id == version.id
+    assert exp.model_version.name == version.name
+    task = get_exp_manager().get_task(exp.mlflow_id)
     assert task
 
     # Assertions before task completion
     db_exp = Experiment.from_orm(
-        db.query(ExperimentEntity)
-        .filter(ExperimentEntity.experiment_id == exp.experiment_id)
-        .first()
+        db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
     )
-    assert db_exp.experiment_id == exp.experiment_id
-    assert db_exp.model_name == exp.model_name
+    assert db_exp.model_version_id == exp.model_version_id
     assert db_exp.created_by_id == user.id
     assert db_exp.epochs == request.epochs
 
@@ -58,9 +54,7 @@ async def test_create_model_training(db: Session, some_model: Model):
 
     # Assertions over task outcome
     db_exp = Experiment.from_orm(
-        db.query(ExperimentEntity)
-        .filter(ExperimentEntity.experiment_id == exp.experiment_id)
-        .first()
+        db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
     )
     assert db_exp.train_metrics
     assert db_exp.history
