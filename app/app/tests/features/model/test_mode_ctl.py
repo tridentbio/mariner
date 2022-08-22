@@ -9,7 +9,7 @@ from app.tests.conftest import get_test_user
 
 
 def test_get_model_prediction(db: Session, model: Model):
-    version = model.versions[-1].name
+    version = model.versions[-1]
     test_user = get_test_user(db)
     ds = dataset_repo.get(db, model.dataset_id)
     assert ds
@@ -19,7 +19,7 @@ def test_get_model_prediction(db: Session, model: Model):
     result = model_ctl.get_model_prediction(
         db,
         model_ctl.PredictRequest(
-            user_id=test_user.id, model_name=model.name, version=version, model_input=df
+            user_id=test_user.id, model_version_id=version.id, model_input=df
         ),
     )
     for tpsa in result:
@@ -28,7 +28,7 @@ def test_get_model_prediction(db: Session, model: Model):
 
 def test_delete_model(db: Session, model: Model):
     user = get_test_user(db)
-    model_ctl.delete_model(db, user, model.name)
+    model_ctl.delete_model(db, user, model.id)
     model_db = db.query(ModelEntity).filter(ModelEntity.name == model.name).first()
     assert not model_db
 

@@ -1,8 +1,8 @@
-"""initial seed
+"""empty message
 
-Revision ID: 738947765abf
+Revision ID: c802dd15b21a
 Revises: 
-Create Date: 2022-08-20 19:56:37.485472
+Create Date: 2022-08-22 13:29:32.311733
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '738947765abf'
+revision = 'c802dd15b21a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -82,7 +82,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('model_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('mlflow_name', sa.String(), nullable=False),
+    sa.Column('mlflow_version', sa.String(), nullable=False),
+    sa.Column('mlflow_model_name', sa.String(), nullable=False),
     sa.Column('config', sa.JSON(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),

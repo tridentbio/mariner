@@ -19,22 +19,22 @@ class ModelVersion(ApiBaseModel):
     id: int
     model_id: int
     name: str
-    mlflow_name: str
+    mlflow_version: str
+    mlflow_model_name: str
     config: ModelConfig
     created_at: datetime
     updated_at: datetime
-    # model: Optional["Model"] = None
 
     def build_torch_model(self):
         return CustomModel(self.config)
 
     def get_mlflow_uri(self):
-        return f"models:/{self.model_id}/{self.name}"
+        return f"models:/{self.mlflow_model_name}/{self.mlflow_version}"
 
     def load_from_mlflowapi(self):
         from app.core.mlflowapi import get_model_version
 
-        version = get_model_version(self.model_id, self.name)
+        version = get_model_version(self.mlflow_model_name, self.mlflow_version)
         return version
 
 
@@ -70,8 +70,8 @@ class Model(ApiBaseModel):
         if not self._loaded:
             self._loaded = self.load_from_mlflow()
         if not version:
-            version = self.versions[-1].name
-        return f"models:/{self.name}/{version}"
+            version = self.versions[-1].mlflow_version
+        return f"models:/{self.mlflow_name}/{version}"
 
     def set_from_registered_model(self, regmodel: RegisteredModel):
         self.description = regmodel.description
@@ -82,7 +82,7 @@ class Model(ApiBaseModel):
 
         from app.core.mlflowapi import get_registry_model
 
-        registered_model = get_registry_model(self.name)
+        registered_model = get_registry_model(self.mlflow_name)
         self.set_from_registered_model(registered_model)
         self._loaded = registered_model
         return registered_model
@@ -112,7 +112,8 @@ class ModelCreate(ApiBaseModel):
 
 
 class ModelVersionCreateRepo(BaseModel):
-    mlflow_name: str
+    mlflow_version: str
+    mlflow_model_name: str
     model_id: int
     name: str
     config: ModelConfig

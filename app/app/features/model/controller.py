@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union, get_type_hints
+from typing import Any, List, Optional, get_type_hints
 
 import mlflow
 import mlflow.exceptions
@@ -65,22 +65,23 @@ def create_model(
         raise DatasetNotFound()
     torchmodel = CustomModel(model_create.config)
     existingmodel = repo.get_by_name(db, model_create.name)
+    mlflow_name = f"{user.id}-{model_create.name}"
     if existingmodel and existingmodel.created_by_id != user.id:
         raise ModelNameAlreadyUsed()
 
     if not existingmodel:
         regmodel, version = mlflowapi.create_registered_model(
             client,
-            model_create.name,
+            mlflow_name,
             torchmodel,
             description=model_create.model_description,
             version_description=model_create.model_version_description,
         )
     else:
-        regmodel = mlflowapi.get_registry_model(model_create.name, client=client)
+        regmodel = mlflowapi.get_registry_model(mlflow_name, client=client)
         version = mlflowapi.create_model_version(
             client,
-            existingmodel.name,
+            existingmodel.mlflow_name,
             torchmodel,
             desc=model_create.model_version_description,
         )
@@ -90,7 +91,7 @@ def create_model(
             db,
             obj_in=ModelCreateRepo(
                 name=model_create.name,
-                mlflow_name=f"{user.id}-{model_create.name}",
+                mlflow_name=mlflow_name,
                 created_by_id=user.id,
                 dataset_id=dataset.id,
                 columns=[
@@ -114,11 +115,12 @@ def create_model(
             repo.create_model_version(
                 db,
                 version_create=ModelVersionCreateRepo(
-                    mlflow_name=f"{user.id}-{version.version}",
-                    model_id=existingmodel.id,
-                    name=version.version
+                    mlflow_version=version.version
                     if isinstance(version.version, str)
                     else str(version.version),
+                    model_id=existingmodel.id,
+                    name=f"{mlflow_name}-{version.version}",
+                    mlflow_model_name=regmodel.name,
                     config=model_create.config,
                 ),
             )
@@ -291,18 +293,15 @@ def get_model_options() -> ModelOptions:
 
 class PredictRequest(ApiBaseModel):
     user_id: int
-    model_name: str
-    version: Union[str, int]
+    model_version_id: int
     model_input: Any
 
 
 def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
     """(Slowly) Loads a model version and apply it to a sample input"""
-    dbmodel = repo.get_by_name_from_user(db, request.user_id, request.model_name)
-    if not dbmodel:
-        raise ModelNotFound()
-    model = Model.from_orm(dbmodel)
-    modelversion = model.get_version(request.version)
+    modelversion = ModelVersion.from_orm(
+        repo.get_model_version(db, request.model_version_id)
+    )
     if not modelversion:
         raise ModelVersionNotFound()
     df = pd.DataFrame.from_dict(request.model_input)
@@ -313,7 +312,7 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
     )
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
-    pyfuncmodel = mlflowapi.get_model(model, request.version)
+    pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
     return pyfuncmodel(modelinput)
 
 
@@ -327,13 +326,13 @@ def get_model_version(db: Session, user: UserEntity, model_name: str) -> Model:
     return model
 
 
-def delete_model(db: Session, user: UserEntity, model_name: str) -> Model:
+def delete_model(db: Session, user: UserEntity, model_id: int) -> Model:
     """Deletes a model and all it's artifacts"""
-    model = repo.get_by_name(db, model_name)
+    model = repo.get(db, model_id)
     if not model or model.created_by_id != user.id:
         raise ModelNotFound()
     model = Model.from_orm(model)
     client = mlflow.tracking.MlflowClient()
-    client.delete_registered_model(model.name)
-    repo.delete_by_name(db, model_name)
+    client.delete_registered_model(model.mlflow_name)
+    repo.delete_by_id(db, model_id)
     return model

@@ -48,14 +48,14 @@ def setup_create_model(client: TestClient, headers, dataset: Optional[Dataset] =
     return Model.parse_obj(res.json())
 
 
-def teardown_create_model(db: Session, model_name: str):
-    obj = db.query(ModelVersion).filter(ModelVersion.model_name == model_name).first()
+def teardown_create_model(db: Session, model: Model):
+    obj = db.query(ModelVersion).filter(ModelVersion.model_id == model.id).first()
     db.delete(obj)
-    obj = db.query(ModelEntity).filter(ModelEntity.name == model_name).first()
+    obj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
     db.delete(obj)
     db.commit()
     mlflowclient = mlflow.tracking.MlflowClient()
-    mlflowclient.delete_registered_model(model_name)
+    mlflowclient.delete_registered_model(model.mlflow_name)
 
 
 @pytest.fixture(scope="function")
