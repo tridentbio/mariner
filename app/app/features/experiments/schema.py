@@ -37,7 +37,7 @@ class ListExperimentsQuery(ApiBaseModel):
 
 
 class RunningHistory(ApiBaseModel):
-    experiment_id: str
+    experiment_id: int
     user_id: int
     # maps metric name to values
     running_history: Dict[str, List[float]]

@@ -4,12 +4,12 @@ from typing import Any, Callable, Dict, List, Optional
 
 
 class ExperimentView:
-    experiment_id: str
+    experiment_id: int
     user_id: int
     task: Task
     running_history: Dict[str, List[float]]
 
-    def __init__(self, experiment_id: str, user_id: int, task: Task):
+    def __init__(self, experiment_id: int, user_id: int, task: Task):
         self.experiment_id = experiment_id
         self.user_id = user_id
         self.task = task
@@ -18,13 +18,13 @@ class ExperimentView:
 
 class ExperimentManager:
     def __init__(self):
-        self.experiments: Dict[str, ExperimentView] = {}
+        self.experiments: Dict[int, ExperimentView] = {}
 
     def handle_finish(
         self,
         task: Task,
-        experiment_id: str,
-        done_callback: Optional[Callable[[Task, str], Any]],
+        experiment_id: int,
+        done_callback: Optional[Callable[[Task, int], Any]],
     ):
         if done_callback:
             done_callback(task, experiment_id)
@@ -33,7 +33,7 @@ class ExperimentManager:
     def add_experiment(
         self,
         experiment: ExperimentView,
-        done_callback: Optional[Callable[[Task, str], Any]] = None,
+        done_callback: Optional[Callable[[Task, int], Any]] = None,
     ):
         experiment_id = experiment.experiment_id
         task = experiment.task
@@ -44,7 +44,7 @@ class ExperimentManager:
             lambda task: self.handle_finish(task, experiment_id, done_callback)
         )
 
-    def get_running_history(self, experiment_id: str):
+    def get_running_history(self, experiment_id: int):
         if experiment_id in self.experiments:
             return self.experiments[experiment_id].running_history
 
@@ -54,7 +54,7 @@ class ExperimentManager:
         ]
         return experiments
 
-    def get_task(self, experiemnt_id: str):
+    def get_task(self, experiemnt_id: int):
         if experiemnt_id in self.experiments:
             return self.experiments[experiemnt_id].task
 

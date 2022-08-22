@@ -43,14 +43,12 @@ def some_experiment(
     user = get_test_user(db)
     version = some_model.versions[-1]
     exp = experiments_repo.create(
-        db, obj_in=mock_experiment(some_model, version, user.id, stage="started")
+        db, obj_in=mock_experiment(version, user.id, stage="started")
     )
     assert exp
     exp = Experiment.from_orm(exp)
     yield exp
-    db.query(ExperimentEntity).filter(
-        ExperimentEntity.experiment_id == exp.experiment_id
-    ).delete()
+    db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).delete()
 
 
 @pytest.fixture(scope="function")
@@ -60,14 +58,12 @@ def some_cmoplete_experiment(
     user = get_test_user(db)
     version = some_model.versions[-1]
     exp = experiments_repo.create(
-        db, obj_in=mock_experiment(some_model, version, user.id, stage="success")
+        db, obj_in=mock_experiment(version, user.id, stage="success")
     )
     assert exp
     exp = Experiment.from_orm(exp)
     yield exp
-    db.query(ExperimentEntity).filter(
-        ExperimentEntity.experiment_id == exp.experiment_id
-    ).delete()
+    db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).delete()
     db.commit()
 
 

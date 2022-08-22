@@ -71,25 +71,20 @@ def get_model_options():
     return model_options
 
 
-@router.post("/{user_id}/{model_name}/{model_version}/predict", response_model=Any)
+@router.post("/{model_version_id}", response_model=Any)
 def post_predict(
-    model_name: str,
-    user_id: int,
-    model_version: str,
+    model_version_id: int,
     model_input: Dict[str, List[Any]],  # Any json
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
-    if user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     try:
         prediction = controller.get_model_prediction(
             db,
             controller.PredictRequest(
                 user_id=current_user.id,
-                model_name=model_name,
+                model_version_id=model_version_id,
                 model_input=model_input,
-                version=model_version,
             ),
         )
     except ModelNotFound:
@@ -114,11 +109,11 @@ def get_model(
     return model
 
 
-@router.delete("/{model_name}", response_model=Model)
+@router.delete("/{model_id}", response_model=Model)
 def delete_model(
-    model_name: str,
+    model_id: int,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    model = controller.delete_model(db, current_user, model_name)
+    model = controller.delete_model(db, current_user, model_id)
     return model

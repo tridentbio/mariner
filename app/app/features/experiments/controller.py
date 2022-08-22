@@ -59,18 +59,11 @@ async def create_model_traning(
         split_target=dataset.split_target,
         split_type=dataset.split_type,
     )
-
-    experiment_id = mlflow.create_experiment(training_request.name)
-    logger = AppLogger(
-        experiment_id, experiment_name=training_request.name, user_id=user.id
-    )
-    task = await start_training(
-        torchmodel, training_request, data_module, loggers=logger
-    )
+    mlflow_experiment_id = mlflow.create_experiment(training_request.name)
     experiment = experiments_repo.create(
         db,
         obj_in=ExperimentCreateRepo(
-            mlflow_id=experiment_id,
+            mlflow_id=mlflow_experiment_id,
             experiment_name=training_request.name,
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,
@@ -78,8 +71,14 @@ async def create_model_traning(
             stage="RUNNING",
         ),
     )
+    logger = AppLogger(
+        experiment.id, experiment_name=training_request.name, user_id=user.id
+    )
+    task = await start_training(
+        torchmodel, training_request, data_module, loggers=logger
+    )
 
-    def finish_task(task: Task, experiment_id: str):
+    def finish_task(task: Task, experiment_id: int):
         experiment = experiments_repo.get(db, experiment_id)
         assert experiment
         exception = task.exception()
@@ -87,12 +86,12 @@ async def create_model_traning(
         if done and not exception:
             client = MlflowClient()
             model = task.result()
-            run = client.create_run(experiment_id)
+            run = client.create_run(experiment.mlflow_id)
             run_id = run.info.run_id
             mlflow.pytorch.log_model(
                 model,
                 get_artifact_uri(run_id, tracking_uri=get_tracking_uri()),
-                registered_model_name=model_version.model_id,
+                registered_model_name=model_version.mlflow_model_name,
             )
             experiments_repo.update(
                 db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
@@ -107,7 +106,7 @@ async def create_model_traning(
             raise Exception("Task is not done")
 
     get_exp_manager().add_experiment(
-        ExperimentView(experiment_id=experiment_id, user_id=user.id, task=task),
+        ExperimentView(experiment_id=experiment.id, user_id=user.id, task=task),
         finish_task,
     )
     return Experiment.from_orm(experiment)
@@ -125,11 +124,12 @@ def get_experiments(
 
 def log_metrics(
     db: Session,
-    experiment_id: str,
+    experiment_id: int,
     metrics: dict[str, float],
     history: dict[str, list[float]] = {},
     stage: Literal["train", "val", "test"] = "train",
 ) -> None:
+    print("Hi from log metrics")
     experiment_db = experiments_repo.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
@@ -141,7 +141,7 @@ def log_metrics(
     experiments_repo.update(db, db_obj=experiment_db, obj_in=update_obj)
 
 
-def log_hyperparams(db: Session, experiment_id: str, hyperparams: dict[str, Any]):
+def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]):
     experiment_db = experiments_repo.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
@@ -164,14 +164,14 @@ def get_running_histories(user: UserEntity) -> List[RunningHistory]:
 class UpdateRunningData(ApiBaseModel):
     metrics: Dict[str, float]
     epoch: Optional[int] = None
-    experiment_id: str
+    experiment_id: int
     experiment_name: str
     stage: Optional[str] = None
 
 
 async def send_ws_epoch_update(
     user_id: int,
-    experiment_id: str,
+    experiment_id: int,
     experiment_name: str,
     metrics: dict[str, float],
     epoch: Optional[int] = None,

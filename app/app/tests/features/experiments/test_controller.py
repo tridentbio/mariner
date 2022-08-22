@@ -37,7 +37,7 @@ async def test_create_model_training(db: Session, some_model: Model):
     exp = await experiments_ctl.create_model_traning(db, user, request)
     assert exp.model_version_id == version.id
     assert exp.model_version.name == version.name
-    task = get_exp_manager().get_task(exp.mlflow_id)
+    task = get_exp_manager().get_task(exp.id)
     assert task
 
     # Assertions before task completion
