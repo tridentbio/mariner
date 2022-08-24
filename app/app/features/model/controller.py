@@ -5,10 +5,10 @@ import mlflow.exceptions
 import numpy as np
 import pandas as pd
 import torch
+import torch_geometric
 from sqlalchemy.orm.session import Session
 
 import app.features.model.layers as mariner_layers
-import torch_geometric
 from app.core import mlflowapi
 from app.features.dataset.crud import repo as dataset_repo
 from app.features.dataset.exceptions import DatasetNotFound
