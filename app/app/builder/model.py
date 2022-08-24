@@ -4,6 +4,7 @@ import networkx as nx
 import torch
 from pytorch_lightning.core.lightning import LightningModule
 from torch.optim.adam import Adam
+from torch_geometric.data.data import Data
 
 from app.features.model.builder import (
     is_concat_layer,
@@ -12,7 +13,6 @@ from app.features.model.builder import (
     is_message_passing,
 )
 from app.features.model.schema.configs import ModelConfig
-from torch_geometric.data.data import Data
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:

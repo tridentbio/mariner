@@ -127,6 +127,7 @@ class DatasetCreate(BaseModel):
     name: str
     description: str
     split_target: Split
+    split_column: str = None
     split_type: SplitType = "random"
     columns_metadata: List[ColumnMetadata] = []
 
@@ -143,6 +144,7 @@ class DatasetUpdate(ApiBaseModel):
     file: Optional[UploadFile] = None
     name: Optional[str] = None
     description: Optional[str] = None
+    split_column: Optional[str] = None
     split_target: Optional[Split] = None
     split_type: Optional[SplitType] = None
     columns_metadata: Optional[List[ColumnMetadata]] = None
@@ -159,5 +161,6 @@ class DatasetUpdateRepo(BaseModel):
     data_url: Optional[str] = None
     split_target: Optional[Split] = None
     split_actual: Optional[Split] = None
+    split_column: Optional[str] = None
     split_type: Optional[SplitType] = None
     columns_metadata: Optional[List[ColumnMetadata]] = None

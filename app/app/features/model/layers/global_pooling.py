@@ -3,7 +3,6 @@ from typing import List, Optional
 
 import torch
 from torch import Tensor
-
 from torch_scatter import scatter
 
 
