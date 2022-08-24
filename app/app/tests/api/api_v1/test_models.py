@@ -260,7 +260,7 @@ def test_get_model_version(
     client: TestClient, some_model: Model, normal_user_token_headers: dict[str, str]
 ):
     res = client.get(
-        f"{settings.API_V1_STR}/models/{some_model.name}/",
+        f"{settings.API_V1_STR}/models/{some_model.id}/",
         headers=normal_user_token_headers,
     )
     assert res.status_code == 200
