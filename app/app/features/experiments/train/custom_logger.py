@@ -10,12 +10,12 @@ from app.core.config import settings
 
 class AppLogger(LightningLoggerBase):
     running_history: Dict[str, List[float]]
-    experiment_id: str
+    experiment_id: int
     experiment_name: str
     user_id: int
     last_sent_at: float = 0
 
-    def __init__(self, experiment_id: str, experiment_name: str, user_id: int):
+    def __init__(self, experiment_id: int, experiment_name: str, user_id: int):
         self.running_history = {}
         self.experiment_id = experiment_id
         self.experiment_name = experiment_name

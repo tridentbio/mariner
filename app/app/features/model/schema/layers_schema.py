@@ -25,6 +25,31 @@ class BaseLayerConfig(ApiBaseModel):
         pass
 
 
+class ApponehotArgsTemplate(ApiBaseModel):
+    type: Literal[
+        "app.features.model.layers.OneHot"
+    ] = "app.features.model.layers.OneHot"
+    num_classes: Literal["int"] = "int"
+
+
+class ApponehotArgs(ApiBaseModel):
+    num_classes: int
+
+
+class ApponehotLayerConfig(BaseLayerConfig):
+    type: Literal[
+        "app.features.model.layers.OneHot"
+    ] = "app.features.model.layers.OneHot"
+
+    args: ApponehotArgs
+
+    def create(self):
+        lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+            return lib_cls
+        return lib_cls(**self.args.dict())
+
+
 class AppglobalpoolingArgsTemplate(ApiBaseModel):
     type: Literal[
         "app.features.model.layers.GlobalPooling"
@@ -172,6 +197,7 @@ class AppmoleculefeaturizerLayerConfig(BaseLayerConfig):
 
 
 LayersType = Union[
+    ApponehotLayerConfig,
     AppglobalpoolingLayerConfig,
     AppconcatLayerConfig,
     TorchlinearLayerConfig,
@@ -185,6 +211,7 @@ FeaturizersType = Union[
 ]
 
 LayersArgsType = Union[
+    ApponehotArgsTemplate,
     AppglobalpoolingArgsTemplate,
     AppconcatArgsTemplate,
     TorchlinearArgsTemplate,

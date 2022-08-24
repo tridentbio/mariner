@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 import mlflow
 import mlflow.pyfunc
@@ -12,8 +12,6 @@ from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 from mlflow.tracking.client import MlflowClient
-
-from app.features.model.schema.model import Model
 
 
 def create_model_version(
@@ -95,10 +93,6 @@ def get_registry_model(model_registry_name: str, client: Optional[MlflowClient] 
 def get_model_by_uri(model_uri: str):
     mlflowmodel = mlflow.pytorch.load_model(model_uri)
     return mlflowmodel
-
-
-def get_model(model: Model, version: Optional[Union[int, str]]):
-    return get_model_by_uri(model.get_model_uri(version))
 
 
 def get_model_version(model_name: str, version: str):

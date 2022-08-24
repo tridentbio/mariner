@@ -1,3 +1,7 @@
+class InvalidCategoricalColumn(Exception):
+    pass
+
+
 class NotCreatorOfDataset(Exception):
     pass
 

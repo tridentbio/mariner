@@ -28,6 +28,7 @@ class Dataset(Base):
     split_target = Column(String)
     split_actual = Column(String)
     split_type = Column(String)
+    split_column = Column(String, nullable=True)
     data_url = Column(String)
     columns = Column(Integer)
     created_at = Column(DateTime, server_default=current_timestamp())

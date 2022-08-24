@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.features.dataset import controller as dataset_ctl
 from app.features.dataset.model import Dataset
 from app.features.dataset.schema import (
-    ColumnMetadata,
+    ColumnsDescription,
     DatasetCreate,
     DataType,
     Split,
@@ -16,15 +16,15 @@ from app.tests.utils.utils import random_lower_string
 def test_create_dataset(db: Session):
     with open("app/tests/data/Lipophilicity.csv", "rb") as f:
         colsdescription = [
-            ColumnMetadata(
+            ColumnsDescription(
                 pattern="CMPD_CHEM.*",
                 data_type=DataType("string"),
                 description="exp id",
             ),
-            ColumnMetadata(
+            ColumnsDescription(
                 pattern="exp", data_type=DataType("numerical"), description="exp id"
             ),
-            ColumnMetadata(
+            ColumnsDescription(
                 pattern="smiles", data_type=DataType("smiles"), description="exp id"
             ),
         ]

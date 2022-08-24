@@ -23,7 +23,7 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
             db.commit()
         return obj
 
-    def get_by_name_from_user(self, db: Session, user_id: int, name: str):
+    def get_by_name_from_user(self, db: Session, user_id: int, name: str) -> Model:
         model = (
             db.query(Model)
             .filter(Model.created_by_id == user_id)
@@ -71,9 +71,12 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
 
         return db_obj
 
-    def delete_by_name(self, db: Session, model_name: str) -> None:
-        db.query(Model).filter(Model.name == model_name).delete()
+    def delete_by_id(self, db: Session, model_id: int) -> None:
+        db.query(Model).filter(Model.id == model_id).delete()
         db.commit()
+
+    def get_model_version(self, db: Session, id: int) -> Optional[ModelVersion]:
+        return db.query(ModelVersion).filter(ModelVersion.id == id).first()
 
 
 repo = CRUDModel(Model)

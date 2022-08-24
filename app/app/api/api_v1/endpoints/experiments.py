@@ -49,7 +49,7 @@ def get_experiments_running_history(
 class MetricsUpdate(ApiBaseModel):
     type: str
     data: Any
-    experiment_id: str
+    experiment_id: int
     experiment_name: str
     user_id: int
 
