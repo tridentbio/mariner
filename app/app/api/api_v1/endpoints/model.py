@@ -1,11 +1,10 @@
-from typing import Any
+from typing import Any, Dict, List
 
 import torch
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
 from pandas.core.frame import DataFrame
-from pydantic.main import BaseModel
 from sqlalchemy.orm.session import Session
 from starlette import status
 
@@ -72,25 +71,20 @@ def get_model_options():
     return model_options
 
 
-@router.post("/{user_id}/{model_name}/{model_version}/predict", response_model=Any)
+@router.post("/{model_version_id}", response_model=Any)
 def post_predict(
-    model_name: str,
-    user_id: int,
-    model_version: str,
-    model_input=Depends(BaseModel),  # Any json
+    model_version_id: int,
+    model_input: Dict[str, List[Any]],  # Any json
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
-    if user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     try:
         prediction = controller.get_model_prediction(
             db,
             controller.PredictRequest(
                 user_id=current_user.id,
-                model_name=model_name,
+                model_version_id=model_version_id,
                 model_input=model_input,
-                version=model_version,
             ),
         )
     except ModelNotFound:
@@ -105,21 +99,21 @@ def post_predict(
         raise TypeError("Unexpected model output")
 
 
-@router.get("/{model_name}", response_model=Model)
+@router.get("/{model_id}", response_model=Model)
 def get_model(
-    model_name: str,
+    model_id: int,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    model = controller.get_model_version(db, current_user, model_name)
+    model = controller.get_model_version(db, current_user, model_id)
     return model
 
 
-@router.delete("/{model_name}", response_model=Model)
+@router.delete("/{model_id}", response_model=Model)
 def delete_model(
-    model_name: str,
+    model_id: int,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    model = controller.delete_model(db, current_user, model_name)
+    model = controller.delete_model(db, current_user, model_id)
     return model

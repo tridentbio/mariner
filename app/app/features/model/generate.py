@@ -19,6 +19,7 @@ featurizers = [
 layers = [
     Layer(name)
     for name in [
+        "app.features.model.layers.OneHot",
         "app.features.model.layers.GlobalPooling",
         "app.features.model.layers.Concat",
         "torch.nn.Linear",
@@ -156,4 +157,6 @@ if __name__ == "__main__":
         for compname in compnames:
             print(generate(compname))
     elif template == "base":
-        print(generate_bundle())
+        bundle = generate_bundle()
+        print(bundle)
+        sys.exit(0)

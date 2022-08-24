@@ -1,7 +1,6 @@
 from typing import List
 
 import mlflow.pyfunc
-import pandas as pd
 import pytest
 from pydantic.networks import AnyHttpUrl
 from sqlalchemy.orm.session import Session
@@ -72,13 +71,16 @@ def test_post_models_success(
     assert "versions" in body
     assert len(body["versions"]) == 1
     version = body["versions"][0]
-    model_version = version["modelVersion"]
+    mlflow_model_name = version["mlflowModelName"]
+    mlflow_version = version["mlflowVersion"]
+    model_version = version["name"]
     assert version["config"]["name"] is not None
-    model = mlflow.pyfunc.load_model(model_uri=f"models:/{model.name}/{model_version}")
+    model = mlflow.pyfunc.load_model(
+        model_uri=f"models:/{mlflow_model_name}/{mlflow_version}"
+    )
     assert model is not None
     db_model_config = db.query(ModelVersion).filter(
-        ModelVersion.model_name == body["name"]
-        and ModelVersion.model_version == model_version
+        ModelVersion.id == version["id"] and ModelVersion.name == model_version
     )
     assert db_model_config is not None
 
@@ -104,7 +106,7 @@ def test_post_models_on_existing_model_creates_new_version(
     assert model
     model = Model.from_orm(model)
     assert len(model.versions) == 2
-    assert model.versions[-1].model_version == "2"
+    assert model.versions[-1].name
 
 
 def test_post_models_dataset_not_found(
@@ -163,7 +165,7 @@ def test_post_models_deployment(
     data = {
         "name": random_lower_string(),
         "modelName": some_model.name,
-        "modelVersion": int(some_model.versions[-1].model_version),
+        "modelVersion": int(some_model.versions[-1].name),
     }
     res = client.post(
         f"{settings.API_V1_STR}/deployments/",
@@ -222,47 +224,43 @@ def test_delete_model(
     some_dataset: Dataset,
 ):
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
-    model_name = model.name
     res = client.delete(
-        f"{settings.API_V1_STR}/models/{model_name}", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/models/{model.id}", headers=normal_user_token_headers
     )
     assert res.status_code == 200
-    assert not db.query(ModelEntity).filter(ModelEntity.name == model_name).first()
+    assert not db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
 
 
 def test_post_predict(
-    db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
     some_model: Model,
 ):
-    user_id = get_test_user(db).id
-    model_name = some_model.name
-    model_version = some_model.versions[-1].model_version
-    route = (
-        f"{settings.API_V1_STR}/models/{user_id}/{model_name}/{model_version}/predict"
-    )
-    df = pd.DataFrame(
-        {
+    model_version = some_model.versions[-1].id
+    route = f"{settings.API_V1_STR}/models/{model_version}"
+    res = client.post(
+        route,
+        json={
             "smiles": [
                 "CCCC",
                 "CCCCC",
                 "CCCCCCC",
             ],
             "mwt": [0.3, 0.1, 0.9],
-            "tpsa": [0.3, 0.1, 0.9],
-        }
+        },
+        headers=normal_user_token_headers,
     )
-    data = df.to_json()
-    res = client.post(route, data, headers=normal_user_token_headers)
+    print(res.json())
     assert res.status_code == 200
+    body = res.json()
+    assert len(body) == 3
 
 
 def test_get_model_version(
     client: TestClient, some_model: Model, normal_user_token_headers: dict[str, str]
 ):
     res = client.get(
-        f"{settings.API_V1_STR}/models/{some_model.name}/",
+        f"{settings.API_V1_STR}/models/{some_model.id}/",
         headers=normal_user_token_headers,
     )
     assert res.status_code == 200
@@ -311,3 +309,10 @@ def test_post_models_missing_arguments(
     assert len(error_body["detail"]) == 1
     assert error_body["detail"][0]["type"] == "value_error.missingcomponentargs"
     assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name
+
+
+def test_model_versioning():
+    """
+    Checks if the model versioning mapping between mariner
+    models and MLFlow Registry is correct
+    """

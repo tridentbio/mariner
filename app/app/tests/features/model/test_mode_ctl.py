@@ -1,14 +1,34 @@
+import torch
 from sqlalchemy.orm.session import Session
 
 import app.features.model.controller as model_ctl
+from app.features.dataset.crud import repo as dataset_repo
 from app.features.model.model import Model as ModelEntity
 from app.features.model.schema.model import Model
 from app.tests.conftest import get_test_user
 
 
+def test_get_model_prediction(db: Session, model: Model):
+    version = model.versions[-1]
+    test_user = get_test_user(db)
+    ds = dataset_repo.get(db, model.dataset_id)
+    assert ds
+    df = ds.get_dataframe()
+    df = df.to_dict()
+    assert df
+    result = model_ctl.get_model_prediction(
+        db,
+        model_ctl.PredictRequest(
+            user_id=test_user.id, model_version_id=version.id, model_input=df
+        ),
+    )
+    for tpsa in result:
+        assert isinstance(tpsa, torch.Tensor)
+
+
 def test_delete_model(db: Session, model: Model):
     user = get_test_user(db)
-    model_ctl.delete_model(db, user, model.name)
+    model_ctl.delete_model(db, user, model.id)
     model_db = db.query(ModelEntity).filter(ModelEntity.name == model.name).first()
     assert not model_db
 

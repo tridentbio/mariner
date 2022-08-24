@@ -28,7 +28,7 @@ from app.features.experiments.train.custom_logger import AppLogger
 from app.features.experiments.train.run import start_training
 from app.features.model.crud import repo as model_repo
 from app.features.model.exceptions import ModelNotFound, ModelVersionNotFound
-from app.features.model.schema.model import Model
+from app.features.model.schema.model import ModelVersion
 from app.features.user.model import User as UserEntity
 from app.schemas.api import ApiBaseModel
 
@@ -40,52 +40,45 @@ def log_error(msg: str):
 async def create_model_traning(
     db: Session, user: UserEntity, training_request: TrainingRequest
 ) -> Experiment:
-    model = model_repo.get_by_name(db, training_request.model_name)
-    if not model:
-        raise ModelNotFound()
-    model = Model.from_orm(model)
-    if not model or model.created_by_id != user.id:
-        raise ModelNotFound()
+    model_version = model_repo.get_model_version(
+        db, id=training_request.model_version_id
+    )
 
-    model_version = None
-    for version in model.versions:
-        if version.model_version == training_request.model_version:
-            model_version = version
     if not model_version:
         raise ModelVersionNotFound()
+    model_version = ModelVersion.from_orm(model_version)
 
     dataset = dataset_repo.get_by_name(db, model_version.config.dataset.name)
     torchmodel = model_version.build_torch_model()
     featurizers_config = model_version.config.featurizers
+    df = dataset.get_dataframe()
     data_module = DataModule(
         featurizers_config=featurizers_config,
-        data=dataset.get_dataframe(),
+        data=df,
         dataset_config=model_version.config.dataset,
         split_target=dataset.split_target,
         split_type=dataset.split_type,
     )
-
-    experiment_id = mlflow.create_experiment(training_request.experiment_name)
-    logger = AppLogger(
-        experiment_id, experiment_name=training_request.experiment_name, user_id=user.id
-    )
-    task = await start_training(
-        torchmodel, training_request, data_module, loggers=logger
-    )
+    mlflow_experiment_id = mlflow.create_experiment(training_request.name)
     experiment = experiments_repo.create(
         db,
         obj_in=ExperimentCreateRepo(
-            experiment_name=training_request.experiment_name,
+            mlflow_id=mlflow_experiment_id,
+            experiment_name=training_request.name,
             created_by_id=user.id,
-            model_name=training_request.model_name,
-            model_version_name=model_version.model_version,
-            experiment_id=experiment_id,
+            model_version_id=training_request.model_version_id,
             epochs=training_request.epochs,
             stage="RUNNING",
         ),
     )
+    logger = AppLogger(
+        experiment.id, experiment_name=training_request.name, user_id=user.id
+    )
+    task = await start_training(
+        torchmodel, training_request, data_module, loggers=logger
+    )
 
-    def finish_task(task: Task, experiment_id: str):
+    def finish_task(task: Task, experiment_id: int):
         experiment = experiments_repo.get(db, experiment_id)
         assert experiment
         exception = task.exception()
@@ -93,11 +86,12 @@ async def create_model_traning(
         if done and not exception:
             client = MlflowClient()
             model = task.result()
-            run = client.create_run(experiment_id)
+            run = client.create_run(experiment.mlflow_id)
             run_id = run.info.run_id
             mlflow.pytorch.log_model(
                 model,
                 get_artifact_uri(run_id, tracking_uri=get_tracking_uri()),
+                registered_model_name=model_version.mlflow_model_name,
             )
             experiments_repo.update(
                 db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
@@ -112,7 +106,7 @@ async def create_model_traning(
             raise Exception("Task is not done")
 
     get_exp_manager().add_experiment(
-        ExperimentView(experiment_id=experiment_id, user_id=user.id, task=task),
+        ExperimentView(experiment_id=experiment.id, user_id=user.id, task=task),
         finish_task,
     )
     return Experiment.from_orm(experiment)
@@ -121,20 +115,21 @@ async def create_model_traning(
 def get_experiments(
     db: Session, user: UserEntity, query: ListExperimentsQuery
 ) -> List[Experiment]:
-    model = model_repo.get_by_name(db, query.model_name)
-    if model.created_by_id != user.id:
+    model = model_repo.get(db, query.model_id)
+    if model and model.created_by_id != user.id:
         raise ModelNotFound()
-    exps = experiments_repo.get_by_model_name(db, query.model_name)
+    exps = experiments_repo.get_by_model_id(db, query.model_id)
     return [Experiment.from_orm(exp) for exp in exps]
 
 
 def log_metrics(
     db: Session,
-    experiment_id: str,
+    experiment_id: int,
     metrics: dict[str, float],
     history: dict[str, list[float]] = {},
     stage: Literal["train", "val", "test"] = "train",
 ) -> None:
+    print("Hi from log metrics")
     experiment_db = experiments_repo.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
@@ -146,7 +141,7 @@ def log_metrics(
     experiments_repo.update(db, db_obj=experiment_db, obj_in=update_obj)
 
 
-def log_hyperparams(db: Session, experiment_id: str, hyperparams: dict[str, Any]):
+def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]):
     experiment_db = experiments_repo.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
@@ -169,14 +164,14 @@ def get_running_histories(user: UserEntity) -> List[RunningHistory]:
 class UpdateRunningData(ApiBaseModel):
     metrics: Dict[str, float]
     epoch: Optional[int] = None
-    experiment_id: str
+    experiment_id: int
     experiment_name: str
     stage: Optional[str] = None
 
 
 async def send_ws_epoch_update(
     user_id: int,
-    experiment_id: str,
+    experiment_id: int,
     experiment_name: str,
     metrics: dict[str, float],
     epoch: Optional[int] = None,

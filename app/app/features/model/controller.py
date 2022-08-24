@@ -1,19 +1,20 @@
-from typing import Any, List, Optional, Union, get_type_hints
+from typing import Any, List, Optional, get_type_hints
 
 import mlflow
 import mlflow.exceptions
-import numpy as np
 import pandas as pd
 import torch
 import torch_geometric
 from sqlalchemy.orm.session import Session
+from torch_geometric.loader import DataLoader
 
 import app.features.model.layers as mariner_layers
+from app.builder.dataset import CustomDataset
+from app.builder.model import CustomModel
 from app.core import mlflowapi
 from app.features.dataset.crud import repo as dataset_repo
 from app.features.dataset.exceptions import DatasetNotFound
 from app.features.model import generate
-from app.features.model.builder import CustomModel
 from app.features.model.crud import repo
 from app.features.model.deployments.crud import repo as deployment_repo
 from app.features.model.deployments.schema import (
@@ -21,7 +22,11 @@ from app.features.model.deployments.schema import (
     DeploymentCreate,
     DeploymentCreateRepo,
 )
-from app.features.model.exceptions import ModelNameAlreadyUsed, ModelNotFound
+from app.features.model.exceptions import (
+    ModelNameAlreadyUsed,
+    ModelNotFound,
+    ModelVersionNotFound,
+)
 from app.features.model.schema import layers_schema
 from app.features.model.schema.configs import (
     LayerAnnotation,
@@ -50,7 +55,9 @@ def create_model(
     r"""
     Creates a model and a model config if passed with a
     non-existing `model_create.name`, otherwise creates a
-    new model version
+    new model version.
+    Triggers the creation of a RegisteredModel and a ModelVersion
+    in MLFlow API's
     """
     client = mlflowapi.create_tracking_client()
     dataset = dataset_repo.get_by_name(db, model_create.config.dataset.name)
@@ -58,74 +65,79 @@ def create_model(
         raise DatasetNotFound()
     torchmodel = CustomModel(model_create.config)
     existingmodel = repo.get_by_name(db, model_create.name)
+    mlflow_name = f"{user.id}-{model_create.name}"
     if existingmodel and existingmodel.created_by_id != user.id:
         raise ModelNameAlreadyUsed()
-    try:
-        if not existingmodel:
-            regmodel, version = mlflowapi.create_registered_model(
-                client,
-                model_create.name,
-                torchmodel,
-                description=model_create.model_description,
-                version_description=model_create.model_version_description,
-            )
-        else:
-            regmodel = mlflowapi.get_registry_model(model_create.name, client=client)
-            version = mlflowapi.create_model_version(
-                client,
-                existingmodel.name,
-                torchmodel,
-                desc=model_create.model_version_description,
-            )
 
-        if not existingmodel:
-            existingmodel = repo.create(
+    if not existingmodel:
+        regmodel, version = mlflowapi.create_registered_model(
+            client,
+            mlflow_name,
+            torchmodel,
+            description=model_create.model_description,
+            version_description=model_create.model_version_description,
+        )
+    else:
+        regmodel = mlflowapi.get_registry_model(mlflow_name, client=client)
+        version = mlflowapi.create_model_version(
+            client,
+            existingmodel.mlflow_name,
+            torchmodel,
+            desc=model_create.model_version_description,
+        )
+
+    if not existingmodel:
+        existingmodel = repo.create(
+            db,
+            obj_in=ModelCreateRepo(
+                name=model_create.name,
+                mlflow_name=mlflow_name,
+                created_by_id=user.id,
+                dataset_id=dataset.id,
+                columns=[
+                    ModelFeaturesAndTarget.construct(
+                        column_name=feature_col,
+                        column_type="feature",
+                    )
+                    for feature_col in model_create.config.dataset.feature_columns
+                ]
+                + [
+                    ModelFeaturesAndTarget.construct(
+                        column_name=model_create.config.dataset.target_column,
+                        column_type="target",
+                    )
+                ],
+            ),
+        )
+
+    if version:
+        version = ModelVersion.from_orm(
+            repo.create_model_version(
                 db,
-                obj_in=ModelCreateRepo(
-                    name=model_create.name,
-                    created_by_id=user.id,
-                    dataset_id=dataset.id,
-                    columns=[
-                        ModelFeaturesAndTarget(
-                            model_name=model_create.name,
-                            column_name=feature_col,
-                            column_type="feature",
-                        )
-                        for feature_col in model_create.config.dataset.feature_columns
-                    ]
-                    + [
-                        ModelFeaturesAndTarget(
-                            model_name=model_create.name,
-                            column_name=model_create.config.dataset.target_column,
-                            column_type="target",
-                        )
-                    ],
+                version_create=ModelVersionCreateRepo(
+                    mlflow_version=version.version
+                    if isinstance(version.version, str)
+                    else str(version.version),
+                    model_id=existingmodel.id,
+                    name=f"{mlflow_name}-{version.version}",
+                    mlflow_model_name=regmodel.name,
+                    config=model_create.config,
                 ),
             )
-
-        if version:
-            version = ModelVersion.from_orm(
-                repo.create_model_version(
-                    db,
-                    version_create=ModelVersionCreateRepo(
-                        model_name=existingmodel.name,
-                        model_version=version.version
-                        if isinstance(version.version, str)
-                        else str(version.version),
-                        config=model_create.config,
-                    ),
-                )
-            )
-        model = Model.from_orm(repo.get_by_name(db, existingmodel.name))
-        model.description = regmodel.description
-        return model
-    except mlflow.exceptions.RestException:
-        raise ModelNameAlreadyUsed()
+        )
+    model = Model.from_orm(repo.get_by_name(db, existingmodel.name))
+    model.description = regmodel.description
+    return model
 
 
 def create_model_deployment(
     db: Session, deployment_create: DeploymentCreate, user: UserEntity
 ) -> Deployment:
+    """Create a deployment object that represents an endpoint responsible
+    for model inferences
+
+    TODO: Create authentication configuration for deployment
+    """
     model_name, latest_version = (
         deployment_create.model_name,
         deployment_create.model_version,
@@ -149,6 +161,7 @@ def create_model_deployment(
 
 
 def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
+    """Get all registered models"""
     models, total = repo.get_paginated(
         db, created_by_id=current_user.id, per_page=query.per_page, page=query.page
     )
@@ -159,6 +172,9 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
 
 
 def get_documentation_link(class_path: str) -> Optional[str]:
+    """Create documentation link for the class_paths of pytorch
+    and pygnn objects"""
+
     def is_from_pygnn(class_path: str) -> bool:
         return class_path.startswith("torch_geometric.")
 
@@ -174,7 +190,6 @@ def get_documentation_link(class_path: str) -> Optional[str]:
 
 def remove_section_by_identation(text: str, section_title: str) -> str:
     def count_tabs(line: str) -> int:
-        # naive loop over chars
         total = 0
         for c in line:
             if c == " ":
@@ -206,6 +221,10 @@ def remove_section_by_identation(text: str, section_title: str) -> str:
 
 
 def get_inputs_outputs_and_rules(component_cls) -> tuple[int, int, List[LayerRule]]:
+    """Based on the class hierarchy of a component, get's the number of inputs and outputs
+    the component expects, as well as a list of known rules for components, that will
+    be able to be validated separatelly
+    """
     rules = []
     if issubclass(component_cls, torch_geometric.nn.MessagePassing) or issubclass(
         component_cls, mariner_layers.GlobalPooling
@@ -226,6 +245,12 @@ def get_inputs_outputs_and_rules(component_cls) -> tuple[int, int, List[LayerRul
 
 
 def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
+    """Gives metadata information of the component implemented by `cls_path`
+    Current metadata includes:
+        - Docs and Docs' link
+        - Number of inputs and outputs the component expects
+        - Known rules for the component
+    """
     docs_link = get_documentation_link(cls_path)
     cls = get_class_from_path_string(cls_path)
     docs = remove_section_by_identation(cls.__doc__, "Examples:")
@@ -241,6 +266,8 @@ def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
 
 
 def get_model_options() -> ModelOptions:
+    """Gets all component (featurizers and layer) options supported by the system,
+    along with metadata about each"""
     layers = []
     featurizers = []
     layer_types = [layer.name for layer in generate.layers]
@@ -264,49 +291,48 @@ def get_model_options() -> ModelOptions:
     )
 
 
-ModelOutput = Union[np.ndarray, pd.Series, pd.DataFrame, List]
-
-
 class PredictRequest(ApiBaseModel):
     user_id: int
-    model_name: str
-    version: Optional[Union[str, int]]
+    model_version_id: int
     model_input: Any
 
 
-def get_model_prediction(db: Session, request: PredictRequest) -> ModelOutput:
-    model = repo.get_by_name_from_user(db, request.user_id, request.model_name)
-    if not model:
-        raise ModelNotFound()
-    model = Model.from_orm(model)
-    pyfuncmodel = mlflowapi.get_model(model, request.version)
-    # TODO: fix this cheat
-    # refactor torch custom dataset to receive a dataframe
-    # instead of a dataset. save the model config along with
-    # the model in the database. This should be enough
-    # to instantiate the torch dataset, then building a batch
-    # as the model expects it
-    from app.tests.conftest import mock_dataset_item
+def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
+    """(Slowly) Loads a model version and apply it to a sample input"""
+    modelversion = ModelVersion.from_orm(
+        repo.get_model_version(db, request.model_version_id)
+    )
+    if not modelversion:
+        raise ModelVersionNotFound()
+    df = pd.DataFrame.from_dict(request.model_input)
+    dataset = CustomDataset(
+        data=df,
+        feature_columns=modelversion.config.dataset.feature_columns,
+        featurizers_config=modelversion.config.featurizers,
+    )
+    dataloader = DataLoader(dataset, batch_size=len(df))
+    modelinput = next(iter(dataloader))
+    pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
+    return pyfuncmodel(modelinput)
 
-    mocked_input = mock_dataset_item()
-    return pyfuncmodel(mocked_input)
 
-
-def get_model_version(db: Session, user: UserEntity, model_name: str) -> Model:
-    modeldb = repo.get_by_name_from_user(db, user.id, model_name)
-    if not modeldb:
+def get_model_version(db: Session, user: UserEntity, model_id: int) -> Model:
+    """Gets a single model version"""
+    modeldb = repo.get(db, model_id)
+    if not modeldb or modeldb.created_by_id != user.id:
         raise ModelNotFound()
     model = Model.from_orm(modeldb)
     model.load_from_mlflow()
     return model
 
 
-def delete_model(db: Session, user: UserEntity, model_name: str) -> Model:
-    model = repo.get_by_name(db, model_name)
+def delete_model(db: Session, user: UserEntity, model_id: int) -> Model:
+    """Deletes a model and all it's artifacts"""
+    model = repo.get(db, model_id)
     if not model or model.created_by_id != user.id:
         raise ModelNotFound()
     model = Model.from_orm(model)
     client = mlflow.tracking.MlflowClient()
-    client.delete_registered_model(model.name)
-    repo.delete_by_name(db, model_name)
+    client.delete_registered_model(model.mlflow_name)
+    repo.delete_by_id(db, model_id)
     return model
