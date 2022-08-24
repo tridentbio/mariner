@@ -47,7 +47,10 @@ def get_my_datasets(
     Retrieve datasets owned by requester
     """
     datasets, total = controller.get_my_datasets(db, current_user, query)
-    return Paginated(data=[Dataset.from_orm(ds) for ds in datasets], total=total)
+    return Paginated(
+        data=[Dataset.from_orm(ds) for ds in datasets],
+        total=total
+    )
 
 
 @router.get("/{dataset_id}", response_model=Dataset)
@@ -70,6 +73,7 @@ def create_dataset(
     description: str = Form(...),
     split_target: Split = Form(..., alias="splitTarget"),
     split_type: SplitType = Form(..., alias="splitType"),
+    split_column: Optional[str] = Form(None, alias="splitOn"),
     columns_metadatas: ColumnMetadataFromJSONStr = Form(None, alias="columnsMetadata"),
     file: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
@@ -86,14 +90,22 @@ def create_dataset(
             file=file,
             columns_metadata=columns_metadatas.metadatas,
         )
+
+        if split_column:
+            payload.split_column = split_column
+
         db_dataset = controller.create_dataset(db, current_user, payload)
+
         dataset = Dataset.from_orm(db_dataset)
         return dataset
+
     except DatasetNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
     except DatasetAlreadyExists:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Dataset name already in use"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Dataset name already in use"
         )
 
 
@@ -106,6 +118,7 @@ def update_dateset(
     dataset_id: int,
     name: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
+    split_column: Optional[str] = Form(None, alias="splitOn"),
     split_target: Optional[Split] = Form(None, alias="splitTarget"),
     split_type: Optional[SplitType] = Form(
         None,
@@ -127,6 +140,7 @@ def update_dateset(
                 file=file,
                 name=name,
                 description=description,
+                split_column=split_column,
                 split_target=split_target,
                 split_type=split_type,
                 columns_metadata=columns_metadatas.metadatas

@@ -2,12 +2,12 @@ import yaml
 from pytorch_lightning import Trainer
 from sqlalchemy.orm.session import Session
 from torch import nn
+from torch_geometric.data import DataLoader
 
 from app.features.dataset.crud import repo as datasetsrepo
 from app.features.dataset.model import Dataset
 from app.features.model.builder import CustomModel, build_dataset
 from app.features.model.schema.configs import ModelConfig
-from torch_geometric.data import DataLoader
 
 
 def test_dataset(db: Session, some_dataset: Dataset):

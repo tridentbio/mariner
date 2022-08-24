@@ -1,6 +1,7 @@
 from typing import Dict, List
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
 
