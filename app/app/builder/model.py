@@ -7,6 +7,7 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.nn import ReLU, Sigmoid
 from torch.optim.adam import Adam
 from torch_geometric.data.data import Data
+
 from app.features.model.layers import Concat, GlobalPooling
 from app.features.model.schema.configs import ModelConfig
 

@@ -47,10 +47,7 @@ def get_my_datasets(
     Retrieve datasets owned by requester
     """
     datasets, total = controller.get_my_datasets(db, current_user, query)
-    return Paginated(
-        data=[Dataset.from_orm(ds) for ds in datasets],
-        total=total
-    )
+    return Paginated(data=[Dataset.from_orm(ds) for ds in datasets], total=total)
 
 
 @router.get("/{dataset_id}", response_model=Dataset)
@@ -104,8 +101,7 @@ def create_dataset(
 
     except DatasetAlreadyExists:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Dataset name already in use"
+            status_code=status.HTTP_409_CONFLICT, detail="Dataset name already in use"
         )
 
 

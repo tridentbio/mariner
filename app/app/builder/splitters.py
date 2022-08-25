@@ -7,7 +7,6 @@ from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
 
 
 class RandomSplitter:
-
     def __init__(self):
         pass
 
@@ -19,7 +18,7 @@ class RandomSplitter:
         val_size: float = 0.05,
         seed: int = None,
     ):
-        np.testing.assert_almost_equal(train_size + val_size + test_size, 1.)
+        np.testing.assert_almost_equal(train_size + val_size + test_size, 1.0)
 
         if seed is not None:
             np.random.seed(seed)
@@ -37,17 +36,16 @@ class RandomSplitter:
         test_ids = shuffled[val_cut:]
 
         # Create an empty column to be used as a marker
-        dataset['step'] = None
+        dataset["step"] = None
         # Fill the step column with each equivalent step
-        dataset.loc[train_ids, 'step'] = 'train'
-        dataset.loc[val_ids, 'step'] = 'val'
-        dataset.loc[test_ids, 'step'] = 'test'
+        dataset.loc[train_ids, "step"] = "train"
+        dataset.loc[val_ids, "step"] = "val"
+        dataset.loc[test_ids, "step"] = "test"
 
         return dataset
 
 
 class ScaffoldSplitter:
-    
     def __init__(self) -> None:
         pass
 
@@ -56,7 +54,7 @@ class ScaffoldSplitter:
         scaffold = MurckoScaffoldSmiles(mol=mol, includeChirality=include_chirality)
         return scaffold
 
-    def generate_scaffolds(self, dataset: pd.DataFrame, smiles_column: str = 'smiles'):
+    def generate_scaffolds(self, dataset: pd.DataFrame, smiles_column: str = "smiles"):
         scaffolds: Dict[str, List[int]] = {}
 
         for i, smiles in enumerate(dataset[smiles_column]):
@@ -69,7 +67,8 @@ class ScaffoldSplitter:
 
         scaffolds = {key: sorted(value) for key, value in scaffolds.items()}
         scaffolds_sets = [
-            scaffold_set for (scaffold, scaffold_set) in sorted(
+            scaffold_set
+            for (scaffold, scaffold_set) in sorted(
                 scaffolds.items(), key=lambda x: (len(x[1]), x[1][0]), reverse=True
             )
         ]
@@ -79,13 +78,13 @@ class ScaffoldSplitter:
     def split(
         self,
         dataset: pd.DataFrame,
-        smiles_column: str = 'smiles',
+        smiles_column: str = "smiles",
         train_size: float = 0.8,
         test_size: float = 0.1,
         val_size: float = 0.1,
-        seed: int = None
+        seed: int = None,
     ):
-        np.testing.assert_almost_equal(train_size + test_size + val_size, 1.)
+        np.testing.assert_almost_equal(train_size + test_size + val_size, 1.0)
         scaffold_sets = self.generate_scaffolds(dataset, smiles_column)
 
         if seed is not None:
@@ -108,10 +107,10 @@ class ScaffoldSplitter:
                 train_ids += scaffold_set
 
         # Create an empty column to be used as a marker
-        dataset['step'] = None
+        dataset["step"] = None
         # Fill the step column with each equivalent step
-        dataset.loc[train_ids, 'step'] = 'train'
-        dataset.loc[val_ids, 'step'] = 'val'
-        dataset.loc[test_ids, 'step'] = 'test'
+        dataset.loc[train_ids, "step"] = "train"
+        dataset.loc[val_ids, "step"] = "val"
+        dataset.loc[test_ids, "step"] = "test"
 
         return dataset

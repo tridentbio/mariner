@@ -71,7 +71,7 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
                 ColumnsMetadata(**cd_me.dict()) for cd_me in obj_in.columns_metadata
             ]
             db.add(db_obj)
-            db.commit()
+            del obj_in.columns_metadata
         super().update(db, db_obj=db_obj, obj_in=obj_in)
         return db_obj
 

@@ -1,7 +1,7 @@
 import datetime
 import io
 import json
-from typing import List
+from typing import Any, List, Mapping, Union
 
 import pandas
 from fastapi.datastructures import UploadFile
@@ -36,7 +36,7 @@ from .utils import get_stats
 DATASET_BUCKET = settings.AWS_DATASETS
 
 
-def make_key(filename: str):
+def make_key(filename: Union[str, UploadFile]):
     return hash_md5(file=filename)
 
 
@@ -57,7 +57,7 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
 
 def get_entity_info_from_csv(
     file: UploadFile, columns_descriptions: List[ColumnsDescription]
-):
+) -> tuple[int, int, int, Mapping[Any, Any]]:
     file_bytes = file.file.read()
     df = pandas.read_csv(io.BytesIO(file_bytes))
     assert isinstance(df, pandas.DataFrame)
@@ -102,13 +102,13 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     data.file.file.seek(0)
 
     # Before upload we need to do the split
-    if data.split_type == 'random':
+    if data.split_type == "random":
         splitter = RandomSplitter()
 
         file_bytes = data.file.file.read()
         df = pandas.read_csv(io.BytesIO(file_bytes))
 
-        split_target = data.split_target.split('-')
+        split_target = data.split_target.split("-")
         train_size, val_size, test_size = split_target
         train_size = int(train_size) / 100
         val_size = int(val_size) / 100
@@ -124,28 +124,20 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     else:
 
         if data.split_column is None:
-            raise ValueError(
-                'Split Column cannot be none due to ScaffoldSplitter'
-            )
+            raise ValueError("Split Column cannot be none due to ScaffoldSplitter")
 
         splitter = ScaffoldSplitter()
 
         file_bytes = data.file.file.read()
         df = pandas.read_csv(io.BytesIO(file_bytes))
 
-        split_target = data.split_target.split('-')
+        split_target = data.split_target.split("-")
         train_size, val_size, test_size = split_target
         train_size = int(train_size) / 100
         val_size = int(val_size) / 100
         test_size = int(test_size) / 100
 
-        dataset = splitter.split(
-            df,
-            data.split_column,
-            train_size,
-            test_size,
-            val_size
-        )
+        dataset = splitter.split(df, data.split_column, train_size, test_size, val_size)
 
         dataset_file = io.BytesIO()
         dataset.to_csv(dataset_file)
@@ -180,16 +172,16 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
 def update_dataset(
     db: Session, current_user: User, dataset_id: int, data: DatasetUpdate
 ):
-    dataset = repo.get(db, dataset_id)
+    existingdataset = repo.get(db, dataset_id)
 
-    if not dataset:
+    if not existingdataset:
         raise DatasetNotFound(f"Dataset with id {dataset_id} not found")
 
-    if dataset.created_by_id != current_user.id:
+    if existingdataset.created_by_id != current_user.id:
         raise NotCreatorOfDataset("Should be creator of dataset")
 
-    dataset.stats = jsonable_encoder(dataset.stats)
-    dataset_dict = jsonable_encoder(dataset)
+    existingdataset.stats = jsonable_encoder(existingdataset.stats)
+    dataset_dict = jsonable_encoder(existingdataset)
     update = DatasetUpdateRepo(**dataset_dict)
 
     if data.name:
@@ -217,11 +209,11 @@ def update_dataset(
             update.columns,
             update.bytes,
             update.stats,
-        ) = get_entity_info_from_csv(data.file)
+        ) = get_entity_info_from_csv(data.file, update.columns_metadata or [])
         data.file.file.seek(0)
 
         # Before upload we need to do the split
-        if data.split_type == 'random':
+        if data.split_type == "random":
             data.file.file.seek(0)
 
             splitter = RandomSplitter()
@@ -229,7 +221,7 @@ def update_dataset(
             file_bytes = data.file.file.read()
             df = pandas.read_csv(io.BytesIO(file_bytes))
 
-            split_target = data.split_target.split('-')
+            split_target = data.split_target.split("-")
             train_size, val_size, test_size = split_target
             train_size = int(train_size) / 100
             val_size = int(val_size) / 100
@@ -246,39 +238,30 @@ def update_dataset(
         else:
 
             if data.split_column is None:
-                raise ValueError(
-                    'Split Column cannot be none due to ScaffoldSplitter'
-                )
+                raise ValueError("Split Column cannot be none due to ScaffoldSplitter")
 
             splitter = ScaffoldSplitter()
-
             file_bytes = data.file.file.read()
             df = pandas.read_csv(io.BytesIO(file_bytes))
-
-            split_target = data.split_target.split('-')
+            split_target = data.split_target.split("-")
             train_size, val_size, test_size = split_target
             train_size = int(train_size) / 100
             val_size = int(val_size) / 100
             test_size = int(test_size) / 100
-
             dataset = splitter.split(
-                df,
-                data.split_column,
-                train_size,
-                test_size,
-                val_size
+                df, data.split_column, train_size, test_size, val_size
             )
 
             dataset_file = io.BytesIO()
             dataset.to_csv(dataset_file)
             dataset_file.seek(0)
-
             data.file.file = dataset_file
 
         update.data_url = _upload_s3(data.file)
 
     update.id = dataset_id
-    saved = repo.update(db, dataset, update)
+    saved = repo.update(db, existingdataset, update)
+    db.flush()
     return Dataset.from_orm(saved)
 
 

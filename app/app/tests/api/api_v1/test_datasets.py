@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 from typing import Dict
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 from starlette import status
@@ -82,33 +81,15 @@ def test_post_datasets_name_conflict(
         assert res.status_code == status.HTTP_409_CONFLICT
 
 
-@pytest.mark.skip(
-    reason="db consistency assertions fail for some reason, but route works"
-)
 def test_put_datasets(
-    client: TestClient, normal_user_token_headers: Dict[str, str], db: Session
+    client: TestClient,
+    normal_user_token_headers: Dict[str, str],
+    db: Session,
+    some_dataset: DatasetModel,
 ) -> None:
-    dataset = repo.create(
-        db,
-        DatasetCreateRepo(
-            bytes=30,
-            name="test",
-            stats="{}",
-            data_url="",
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-            created_by_id=1,
-            description="test",
-            rows=100,
-            columns=5,
-            split_type="random",
-            split_actual=None,
-            split_target=Split("60-20-20"),
-        ),
-    )
     new_name = "new name"
     r = client.put(
-        f"{settings.API_V1_STR}/datasets/{dataset.id}",
+        f"{settings.API_V1_STR}/datasets/{some_dataset.id}",
         data={
             "name": new_name,
             "description": new_name,
@@ -121,9 +102,9 @@ def test_put_datasets(
     response = r.json()
     assert response is not None
     assert response["name"] == new_name
-    db.flush()
+    db.commit()
     updated = repo.get(db, response["id"])
-    updated = db.query(DatasetModel).filter(DatasetModel.id == dataset.id).first()
+    updated = db.query(DatasetModel).filter(DatasetModel.id == some_dataset.id).first()
     assert updated is not None
     assert updated.id == response["id"]
     assert updated.name == new_name
