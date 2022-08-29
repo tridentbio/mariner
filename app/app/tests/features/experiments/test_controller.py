@@ -1,5 +1,4 @@
 import pytest
-import pytorch_lightning as pl
 from mockito import patch
 from sqlalchemy.orm.session import Session
 
@@ -61,11 +60,6 @@ async def test_create_model_training(db: Session, some_model: Model):
     assert len(db_exp.history["train_loss"]) == request.epochs
 
 
-class MockedCustomModel(pl.LightningModule):
-    def forward(self):
-        raise Exception("bad bad model")
-
-
 @pytest.mark.asyncio
 async def test_experiment_has_stacktrace_when_training_fails(
     db: Session, some_model: Model
@@ -83,7 +77,7 @@ async def test_experiment_has_stacktrace_when_training_fails(
     import app.builder.model
     import app.features.experiments.train.run
 
-    def _raise(x):
+    def _raise(_):
         raise Exception("bad bad model")
 
     patch(app.builder.model.CustomModel.forward, lambda x: _raise(x))
