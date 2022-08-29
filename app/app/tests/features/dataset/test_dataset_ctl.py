@@ -6,8 +6,10 @@ from app.features.dataset.model import Dataset
 from app.features.dataset.schema import (
     ColumnsDescription,
     DatasetCreate,
-    DataType,
+    NumericalDataType,
+    SmileDataType,
     Split,
+    StringDataType,
 )
 from app.tests.conftest import get_test_user
 from app.tests.utils.utils import random_lower_string
@@ -18,14 +20,14 @@ def test_create_dataset(db: Session):
         colsdescription = [
             ColumnsDescription(
                 pattern="CMPD_CHEM.*",
-                data_type=DataType("string"),
+                data_type=StringDataType(domain_kind="string"),
                 description="exp id",
             ),
             ColumnsDescription(
-                pattern="exp", data_type=DataType("numerical"), description="exp id"
+                pattern="exp", data_type=NumericalDataType(domain_kind="numerical"), description="exp id"
             ),
             ColumnsDescription(
-                pattern="smiles", data_type=DataType("smiles"), description="exp id"
+                pattern="smiles", data_type=SmileDataType(domain_kind="smiles"), description="exp id"
             ),
         ]
         name = random_lower_string()
@@ -39,6 +41,7 @@ def test_create_dataset(db: Session):
         )
         user = get_test_user(db)
         dataset = dataset_ctl.create_dataset(db, user, create_obj)
+        assert dataset
         assert dataset.name == name
         db_obj = db.query(Dataset).filter(Dataset.name == name).first()
         assert db_obj

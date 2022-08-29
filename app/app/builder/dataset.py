@@ -1,4 +1,5 @@
-from typing import Any, List
+from logging import DEBUG, getLogger
+from typing import Any, List, Optional
 
 import pandas as pd
 import pytorch_lightning as pl
@@ -7,7 +8,7 @@ from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
 from app.builder.utils import size_repr
-from app.features.model.schema.configs import DatasetConfig
+from app.features.model.schema.configs import ColumnConfig, DatasetConfig
 from app.features.model.schema.layers_schema import (
     AppmoleculefeaturizerLayerConfig,
 )
@@ -104,9 +105,9 @@ class CustomDataset(TorchDataset):
     def __init__(
         self,
         data: pd.DataFrame,
-        feature_columns,
+        feature_columns: List[ColumnConfig],
         featurizers_config,
-        target: str = None,
+        target: Optional[ColumnConfig]= None,
     ) -> None:
         super().__init__()
         self.data = data
@@ -123,13 +124,14 @@ class CustomDataset(TorchDataset):
         Returns:
             str: String "regression" or "classification".
         """
-        target_type = self.data.dtypes[self.target]
+        assert self.target, "cannot auto determine task type when target = None"
+        target_type = self.data.dtypes[self.target.name]
 
         if "float" in target_type.name:
             # If it is a float target, we treat the task as a regression
             return "regression"
 
-        return AttributeError("Unsupported target type for prediction.")
+        raise AttributeError("Unsupported target type for prediction.")
 
     def setup(self):
         # First we need to determine the type of the task
@@ -155,14 +157,20 @@ class CustomDataset(TorchDataset):
             d[featurizer.name] = self._featurizers[featurizer.name](
                 sample[featurizer.input[0]]
             )
-            columns_to_include.remove(featurizer.input[0])
+
+            # Remove featurized columns from columsn_to_include
+            # since it's featurized value was already included
+            for index, col in enumerate(columns_to_include):
+                if col.name == featurizer.input[0]:
+                    columns_to_include.pop(index)
+                    break
 
         # After that we can include all of the columns that remains from the featurizers
         for column in columns_to_include:
-            d[column] = sample[column]
+            d[column.name] = sample[column.name]
 
         if self.target:
-            d.y = sample[self.target]
+            d.y = sample[self.target.name]
 
         return d
 

@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Dict, List
 
@@ -64,13 +65,14 @@ class AppLogger(LightningLoggerBase):
         data["type"] = msg_type
         data["data"] = msg
         try:
-            requests.post(
+            res = requests.post(
                 f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics",
                 json=data,
                 headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
             )
+            assert res.status_code == 200, f"Failed to log metrics to the backend got status_code == {res.status_code}"
         except (requests.ConnectionError, requests.ConnectTimeout) as exp:
-            print(
+            logging.error(
                 f"Failed logging metrics to {settings.SERVER_HOST}/api/v1/experiments"
                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
                 "the ray services, and that it points to the mariner backend"

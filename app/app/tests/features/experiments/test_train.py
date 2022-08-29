@@ -2,6 +2,7 @@ import asyncio
 import time
 
 import pytest
+from sqlalchemy.orm import Session
 
 from app.builder.dataset import DataModule
 from app.features.dataset.model import Dataset
@@ -10,6 +11,7 @@ from app.features.experiments.tasks import ExperimentManager, ExperimentView
 from app.features.experiments.train.custom_logger import AppLogger
 from app.features.experiments.train.run import start_training
 from app.features.model.schema.model import Model
+from app.tests.conftest import get_test_user
 from app.tests.utils.utils import random_lower_string
 
 
@@ -23,15 +25,22 @@ def task_manager():
 
 @pytest.mark.asyncio
 async def test_add_task_remove_when_done(
-    task_manager: ExperimentManager, some_experiment: Experiment
+    db: Session,
+    task_manager: ExperimentManager,
+    some_experiment: Experiment
 ):
     async def sleep():
         time.sleep(3)
         return 42
 
     sleep_task = asyncio.create_task(sleep())
+    user = get_test_user(db)
     task_manager.add_experiment(
-        ExperimentView(task=sleep_task, experiment_id="1", user_id=1)
+        ExperimentView(
+            task=sleep_task,
+            experiment_id=some_experiment.id,
+            user_id=user.id
+        )
     )
     result = await sleep_task
     assert result == 42
@@ -40,8 +49,10 @@ async def test_add_task_remove_when_done(
 
 @pytest.mark.asyncio
 async def test_start_training(
+    db: Session,
     some_dataset: Dataset,
     some_model: Model,
+    some_experiment: Experiment,
 ):
     version = some_model.versions[-1]
     exp_name = random_lower_string()
@@ -60,7 +71,8 @@ async def test_start_training(
         split_target=some_dataset.split_target,
         split_type=some_dataset.split_type,
     )
-    logger = AppLogger(1, "teste", 1)
+    user = get_test_user(db)
+    logger = AppLogger(some_experiment.id, "teste", user.id)
     task = await start_training(model, request, data_module, loggers=logger)
     assert task
     assert logger

@@ -3,7 +3,8 @@ from typing import List, Literal, Optional, Union, get_args, get_type_hints
 
 import networkx as nx
 import yaml
-from pydantic import ValidationError, root_validator
+from pydantic import Field, ValidationError, root_validator
+from app.features.dataset.schema import CategoricalDataType, NumericalDataType, SmileDataType, StringDataType
 
 from app.features.model.components_query import get_component_args_by_type
 from app.features.model.schema.layers_schema import (
@@ -37,20 +38,15 @@ class Tuple(str):
             raise
 
 
-class CycleInGraphException(ApiBaseModel):
-    """
-    Raised when cycles are detected in the computational
-    graph of the model
-    """
-
-    code = 200
-    message = "There is a cycle in the graph"
+class ColumnConfig(ApiBaseModel):
+    name: str
+    data_type: Union[NumericalDataType, StringDataType, SmileDataType, CategoricalDataType] = Field(...)
 
 
 class DatasetConfig(ApiBaseModel):
     name: str
-    target_column: str
-    feature_columns: List[str]
+    target_column: ColumnConfig
+    feature_columns: List[ColumnConfig]
 
 
 MessagePassingRule = Literal["graph-receiver"]

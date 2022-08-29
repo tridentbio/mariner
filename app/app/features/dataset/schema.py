@@ -4,8 +4,9 @@ from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, Literal, Optional, Union, no_type_check
 
 from fastapi.datastructures import UploadFile
+from pydantic import Field, validator
 from pydantic.main import BaseModel
-from sqlalchemy.sql.sqltypes import Enum
+from app.core.aws import Bucket, download_file_as_dataframe
 
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
 
@@ -63,18 +64,41 @@ class DatasetsQuery(PaginatedApiQuery):
     created_by_id: Optional[int]
 
 
-class DataType(str, Enum):
-    string = "string"
-    numerical = "numerical"
-    smiles = "smiles"
-    categorical = "categorical"
+class NumericalDataType(ApiBaseModel):
+    domain_kind: Literal["numerical"] = Field('numerical')
 
+    @validator('domain_kind')
+    def check_domain_kind(cls, v):
+        return 'numerical'
+
+class StringDataType(ApiBaseModel):
+    domain_kind: Literal["string"] = Field('string')
+
+    @validator('domain_kind')
+    def check_domain_kind(cls, v):
+        return 'string'
+
+class CategoricalDataType(ApiBaseModel):
+    domain_kind: Literal['categorical'] = Field('categorical')
+    classes: dict[Union[str, int], int]
+
+    @validator('domain_kind')
+    def check_domain_kind(cls, v):
+        return 'categorical'
+
+class SmileDataType(ApiBaseModel):
+    domain_kind: Literal['smiles'] = Field('smiles')
+
+    @validator('domain_kind')
+    def check_domain_kind(cls, v):
+        return 'smiles'
 
 class ColumnsDescription(ApiBaseModel):
-    data_type: DataType
+    data_type: Union[NumericalDataType, StringDataType, CategoricalDataType, SmileDataType] = Field(...) 
     description: str
     pattern: str
     dataset_id: Optional[int] = None
+
 
 
 class ColumnMetadataFromJSONStr(str):
@@ -126,7 +150,7 @@ class DatasetCreate(BaseModel):
     name: str
     description: str
     split_target: Split
-    split_column: str = None
+    split_column: Optional[str] = None
     split_type: SplitType = "random"
     columns_metadata: List[ColumnsDescription] = []
 
@@ -138,6 +162,9 @@ class DatasetCreateRepo(DatasetBase):
 class Dataset(DatasetBase):
     id: int
 
+    def get_dataframe(self):
+        df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
+        return df
 
 class DatasetUpdate(ApiBaseModel):
     file: Optional[UploadFile] = None

@@ -129,7 +129,6 @@ def log_metrics(
     history: dict[str, list[float]] = {},
     stage: Literal["train", "val", "test"] = "train",
 ) -> None:
-    print("Hi from log metrics")
     experiment_db = experiments_repo.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()

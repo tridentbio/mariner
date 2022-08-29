@@ -1,8 +1,8 @@
-"""empty message
+"""seed
 
-Revision ID: 9d8ee3ec4f15
+Revision ID: 4452555d97de
 Revises: 
-Create Date: 2022-08-24 21:19:25.700911
+Create Date: 2022-08-28 21:08:40.152228
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '9d8ee3ec4f15'
+revision = '4452555d97de'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -40,6 +40,7 @@ def upgrade():
     sa.Column('split_target', sa.String(), nullable=True),
     sa.Column('split_actual', sa.String(), nullable=True),
     sa.Column('split_type', sa.String(), nullable=True),
+    sa.Column('split_column', sa.String(), nullable=True),
     sa.Column('data_url', sa.String(), nullable=True),
     sa.Column('columns', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
@@ -51,7 +52,7 @@ def upgrade():
     op.create_index(op.f('ix_dataset_id'), 'dataset', ['id'], unique=False)
     op.create_index(op.f('ix_dataset_name'), 'dataset', ['name'], unique=True)
     op.create_table('columnsmetadata',
-    sa.Column('data_type', sa.String(), nullable=False),
+    sa.Column('data_type', sa.JSON(), nullable=False),
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('pattern', sa.String(), nullable=False),
     sa.Column('dataset_id', sa.Integer(), nullable=False),

@@ -96,14 +96,14 @@ def create_model(
                 dataset_id=dataset.id,
                 columns=[
                     ModelFeaturesAndTarget.construct(
-                        column_name=feature_col,
+                        column_name=feature_col.name,
                         column_type="feature",
                     )
                     for feature_col in model_create.config.dataset.feature_columns
                 ]
                 + [
                     ModelFeaturesAndTarget.construct(
-                        column_name=model_create.config.dataset.target_column,
+                        column_name=model_create.config.dataset.target_column.name,
                         column_type="target",
                     )
                 ],

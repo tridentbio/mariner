@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List
 
 import pandas as pd
 import pytest
@@ -7,7 +6,7 @@ from fastapi import UploadFile
 from fastapi.encoders import jsonable_encoder
 
 from app.features.dataset.controller import get_entity_info_from_csv
-from app.features.dataset.schema import ColumnsDescription, DataType
+from app.features.dataset.schema import CategoricalDataType, ColumnsDescription, NumericalDataType
 from app.features.dataset.utils import get_stats
 
 
@@ -44,33 +43,29 @@ def dataset_file(tmp_path: Path):
         yield UploadFile("dataset", f)
 
 
-@pytest.fixture(scope="function")
-def columns_descriptions() -> List[ColumnsDescription]:
-    return [
+def test_get_entity_info_from_csv(
+    dataset_file: UploadFile
+):
+    columns_descriptions = [
         ColumnsDescription(
             pattern="a",
-            description="asdjiasd",
+            description="THIS IS A",
             dataset_id=3,
-            data_type=DataType("numerical"),
+            data_type=NumericalDataType(domain_kind="numerical"),
         ),
         ColumnsDescription(
             pattern="b",
-            description="asdjiasd",
+            description="THIS IS B",
             dataset_id=3,
-            data_type=DataType("categorical"),
+            data_type=CategoricalDataType(domain_kind="categorical", classes={"a": 0, "b": 1, "c": 2}),
         ),
         ColumnsDescription(
             pattern="c",
-            description="asdjiasd",
+            description="THIS IS C",
             dataset_id=3,
-            data_type=DataType("categorical"),
+            data_type=CategoricalDataType(domain_kind="categorical", classes={100: 0, 200: 1, 300: 2}),
         ),
     ]
-
-
-def test_get_entity_info_from_csv(
-    dataset_file: UploadFile, columns_descriptions: List[ColumnsDescription]
-):
     nrows, ncols, fsize, stats = get_entity_info_from_csv(
         dataset_file, columns_descriptions
     )

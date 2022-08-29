@@ -52,11 +52,14 @@ async def test_create_model_training(db: Session, some_model: Model):
     await task
     time.sleep(5)
 
+    db.commit()
     # Assertions over task outcome
+    db_exp = db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
     db_exp = Experiment.from_orm(
-        db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
+        db_exp
     )
     assert db_exp.train_metrics
     assert db_exp.history
     assert "train_loss" in db_exp.train_metrics
     assert len(db_exp.history["train_loss"]) == request.epochs
+
