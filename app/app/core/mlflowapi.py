@@ -69,7 +69,7 @@ _client = None
 def get_deployment_plugin() -> BaseDeploymentClient:
     global _client
     if _client is None:
-        _client = get_deploy_client("ray-serve://ray-cluster.ray.svc.cluster.local:10001")
+        _client = get_deploy_client("ray://ray-cluster.ray.svc.cluster.local:10001")
         assert _client is not None
     return _client
 
