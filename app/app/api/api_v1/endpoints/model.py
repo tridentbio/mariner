@@ -71,7 +71,7 @@ def get_model_options():
     return model_options
 
 
-@router.post("/{model_version_id}", response_model=Any)
+@router.post("/{model_version_id}/predict", response_model=Any)
 def post_predict(
     model_version_id: int,
     model_input: Dict[str, List[Any]],  # Any json
