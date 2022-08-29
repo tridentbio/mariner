@@ -38,7 +38,8 @@ def is_concat_layer(layer):
 def is_graph_activation(layer, layers_dict, previous):
     """
     takes the a dictionary with nn.Modules and the keys of
-    previous layers, checking if
+    previous layers, checking if it expectes a pygnn Data instance
+    with batch
     """
     if not isinstance(layer, activations):
         return False
