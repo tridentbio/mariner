@@ -16,7 +16,11 @@ from app.features.model import generate
 from app.features.model.model import Model as ModelEntity
 from app.features.model.model import ModelVersion
 from app.features.model.schema import layers_schema as layers
-from app.features.model.schema.configs import ColumnConfig, DatasetConfig, ModelConfig
+from app.features.model.schema.configs import (
+    ColumnConfig,
+    DatasetConfig,
+    ModelConfig,
+)
 from app.features.model.schema.model import Model, ModelCreate
 from app.tests.conftest import get_test_user
 from app.tests.features.model.conftest import mock_model, setup_create_model
@@ -30,7 +34,7 @@ def mocked_invalid_model(some_dataset: Dataset) -> ModelCreate:
         dataset=DatasetConfig(
             name=some_dataset.name,
             feature_columns=[ColumnConfig(name="mwt", data_type=NumericalDataType())],
-            target_column=ColumnConfig(name="tpsa", data_type=NumericalDataType())
+            target_column=ColumnConfig(name="tpsa", data_type=NumericalDataType()),
         ),
         featurizers=[],
         layers=[
@@ -319,6 +323,3 @@ def test_model_versioning():
     Checks if the model versioning mapping between mariner
     models and MLFlow Registry is correct
     """
-    pass
-
-

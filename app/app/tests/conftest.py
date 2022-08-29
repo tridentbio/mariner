@@ -62,27 +62,23 @@ def mock_dataset(name: Optional[str] = None):
         {
             "pattern": "mwt",
             "data_type": {
-                    "domain_kind": "numerical",
-                },
+                "domain_kind": "numerical",
+            },
             "description": "Molecular Weigth",
         },
         {
             "pattern": "tpsa",
             "data_type": {
-                    "domain_kind": "numerical",
-                },
+                "domain_kind": "numerical",
+            },
             "description": "T Polar surface",
         },
         {
             "pattern": "mwt_group",
             "data_type": {
-                    "domain_kind": "categorical",
-                    "classes": {
-                        "yes": 0,
-                        "no": 1
-                    },
-
-                },
+                "domain_kind": "categorical",
+                "classes": {"yes": 0, "no": 1},
+            },
             "description": "yes if mwt is larger than 300 otherwise no",
         },
     ]

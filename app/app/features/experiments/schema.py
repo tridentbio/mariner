@@ -30,6 +30,7 @@ class Experiment(ApiBaseModel):
     val_metrics: Optional[Dict[str, float]] = None
     test_metrics: Optional[Dict[str, float]] = None
     history: Optional[Dict[str, List[float]]] = None
+    stack_trace: Optional[str]
 
 
 class ListExperimentsQuery(ApiBaseModel):

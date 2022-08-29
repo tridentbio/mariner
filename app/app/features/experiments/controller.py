@@ -98,10 +98,13 @@ async def create_model_traning(
             )
 
         elif done and exception:
+            stack_trace = str(exception)
             experiments_repo.update(
-                db, obj_in=ExperimentUpdateRepo(stage="FAILED"), db_obj=experiment
+                db,
+                obj_in=ExperimentUpdateRepo(stage="FAILED", stack_trace=stack_trace),
+                db_obj=experiment,
             )
-            log_error(str(exception))
+            logging.error(exception)
         else:
             raise Exception("Task is not done")
 

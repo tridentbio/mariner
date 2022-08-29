@@ -6,7 +6,11 @@ from fastapi import UploadFile
 from fastapi.encoders import jsonable_encoder
 
 from app.features.dataset.controller import get_entity_info_from_csv
-from app.features.dataset.schema import CategoricalDataType, ColumnsDescription, NumericalDataType
+from app.features.dataset.schema import (
+    CategoricalDataType,
+    ColumnsDescription,
+    NumericalDataType,
+)
 from app.features.dataset.utils import get_stats
 
 
@@ -43,9 +47,7 @@ def dataset_file(tmp_path: Path):
         yield UploadFile("dataset", f)
 
 
-def test_get_entity_info_from_csv(
-    dataset_file: UploadFile
-):
+def test_get_entity_info_from_csv(dataset_file: UploadFile):
     columns_descriptions = [
         ColumnsDescription(
             pattern="a",
@@ -57,13 +59,17 @@ def test_get_entity_info_from_csv(
             pattern="b",
             description="THIS IS B",
             dataset_id=3,
-            data_type=CategoricalDataType(domain_kind="categorical", classes={"a": 0, "b": 1, "c": 2}),
+            data_type=CategoricalDataType(
+                domain_kind="categorical", classes={"a": 0, "b": 1, "c": 2}
+            ),
         ),
         ColumnsDescription(
             pattern="c",
             description="THIS IS C",
             dataset_id=3,
-            data_type=CategoricalDataType(domain_kind="categorical", classes={100: 0, 200: 1, 300: 2}),
+            data_type=CategoricalDataType(
+                domain_kind="categorical", classes={100: 0, 200: 1, 300: 2}
+            ),
         ),
     ]
     nrows, ncols, fsize, stats = get_entity_info_from_csv(

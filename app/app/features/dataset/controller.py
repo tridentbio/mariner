@@ -278,9 +278,5 @@ def parse_csv_headers(csv_file: UploadFile):
 
     file_bytes = csv_file.file.read()
     df = pandas.read_csv(io.BytesIO(file_bytes))
-    metadata = [
-        ColumnsMeta(name=key,
-            dtype=str(df[key].dtype)
-        ) for key in df
-    ]
+    metadata = [ColumnsMeta(name=key, dtype=str(df[key].dtype)) for key in df]
     return metadata

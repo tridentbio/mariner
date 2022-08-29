@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Literal, Optional, Union, no_type_check
 from fastapi.datastructures import UploadFile
 from pydantic import Field, validator
 from pydantic.main import BaseModel
-from app.core.aws import Bucket, download_file_as_dataframe
 
+from app.core.aws import Bucket, download_file_as_dataframe
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery
 
 SplitType = Literal["scaffold", "random"]
@@ -65,40 +65,45 @@ class DatasetsQuery(PaginatedApiQuery):
 
 
 class NumericalDataType(ApiBaseModel):
-    domain_kind: Literal["numerical"] = Field('numerical')
+    domain_kind: Literal["numerical"] = Field("numerical")
 
-    @validator('domain_kind')
+    @validator("domain_kind")
     def check_domain_kind(cls, v):
-        return 'numerical'
+        return "numerical"
+
 
 class StringDataType(ApiBaseModel):
-    domain_kind: Literal["string"] = Field('string')
+    domain_kind: Literal["string"] = Field("string")
 
-    @validator('domain_kind')
+    @validator("domain_kind")
     def check_domain_kind(cls, v):
-        return 'string'
+        return "string"
+
 
 class CategoricalDataType(ApiBaseModel):
-    domain_kind: Literal['categorical'] = Field('categorical')
+    domain_kind: Literal["categorical"] = Field("categorical")
     classes: dict[Union[str, int], int]
 
-    @validator('domain_kind')
+    @validator("domain_kind")
     def check_domain_kind(cls, v):
-        return 'categorical'
+        return "categorical"
+
 
 class SmileDataType(ApiBaseModel):
-    domain_kind: Literal['smiles'] = Field('smiles')
+    domain_kind: Literal["smiles"] = Field("smiles")
 
-    @validator('domain_kind')
+    @validator("domain_kind")
     def check_domain_kind(cls, v):
-        return 'smiles'
+        return "smiles"
+
 
 class ColumnsDescription(ApiBaseModel):
-    data_type: Union[NumericalDataType, StringDataType, CategoricalDataType, SmileDataType] = Field(...) 
+    data_type: Union[
+        NumericalDataType, StringDataType, CategoricalDataType, SmileDataType
+    ] = Field(...)
     description: str
     pattern: str
     dataset_id: Optional[int] = None
-
 
 
 class ColumnMetadataFromJSONStr(str):
@@ -165,6 +170,7 @@ class Dataset(DatasetBase):
     def get_dataframe(self):
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
         return df
+
 
 class DatasetUpdate(ApiBaseModel):
     file: Optional[UploadFile] = None

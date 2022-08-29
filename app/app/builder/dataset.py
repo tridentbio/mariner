@@ -1,4 +1,3 @@
-from logging import DEBUG, getLogger
 from typing import Any, List, Optional
 
 import pandas as pd
@@ -107,7 +106,7 @@ class CustomDataset(TorchDataset):
         data: pd.DataFrame,
         feature_columns: List[ColumnConfig],
         featurizers_config,
-        target: Optional[ColumnConfig]= None,
+        target: Optional[ColumnConfig] = None,
     ) -> None:
         super().__init__()
         self.data = data
