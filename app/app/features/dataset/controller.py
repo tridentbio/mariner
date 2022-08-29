@@ -4,9 +4,10 @@ import json
 import re
 from typing import Any, List, Mapping, Union
 
-import pandas
+import pandas as pd
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
+from rdkit import Chem
 from sqlalchemy.orm.session import Session
 
 from app.builder.splitters import RandomSplitter, ScaffoldSplitter
@@ -23,6 +24,7 @@ from app.utils import hash_md5
 from ..user.model import User
 from .crud import repo
 from .schema import (
+    CategoricalDataType,
     ColumnsDescription,
     ColumnsMeta,
     Dataset,
@@ -31,6 +33,9 @@ from .schema import (
     DatasetsQuery,
     DatasetUpdate,
     DatasetUpdateRepo,
+    NumericalDataType,
+    SmileDataType,
+    StringDataType,
 )
 from .utils import get_stats
 
@@ -274,9 +279,57 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
     return Dataset.from_orm(dataset)
 
 
-def parse_csv_headers(csv_file: UploadFile):
+def validate_smiles(smiles: str) -> str:
+    mol = Chem.MolFromSmiles(smiles, sanitize=False)
+    if mol is None:
+        raise (ValueError, f'SMILES "{smiles}" is not syntacticaly valid.')
+    else:
+        try:
+            Chem.SanitizeMol(mol)
+        except:
+            raise (ValueError, f'SMILES "{smiles}" does not have valid chemistry.')
 
+    return str
+
+
+def validate_smiles_series(smiles_series: pd.Series) -> bool:
+    for val in smiles_series:
+        try:
+            validate_smiles(val)
+        except:
+            return False
+    return True
+
+
+def infer_domain_type_from_series(series: pd.Series):
+    if series.dtype == float:
+        return NumericalDataType(domain_kind="numerical")
+    elif series.dtype == object:
+        # check if it is smiles
+        if validate_smiles_series(series):
+            return SmileDataType(domain_kind="smiles")
+        # check if it is likely to be categorical
+        uniques = series.sort().unique()
+        if len(uniques) <= 100:
+            return CategoricalDataType(
+                domain_kind="categorical",
+                classes={val: idx for idx, val in enumerate(uniques)},
+            )
+        return StringDataType(domain_kind="string")
+    elif series.dtype == int:
+        uniques = series.sort().unique()
+        if len(uniques) <= 100:
+            return CategoricalDataType(
+                domain_kind="categorical",
+                classes={val: idx for idx, val in enumerate(uniques)},
+            )
+
+
+def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
     file_bytes = csv_file.file.read()
     df = pandas.read_csv(io.BytesIO(file_bytes))
-    metadata = [ColumnsMeta(name=key, dtype=str(df[key].dtype)) for key in df]
+    metadata = [
+        ColumnsMeta(name=key, dtype=infer_domain_type_from_series(df[key]))
+        for key in df
+    ]
     return metadata

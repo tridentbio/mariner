@@ -147,7 +147,9 @@ class DatasetBase(ApiBaseModel):
 
 class ColumnsMeta(BaseModel):
     name: str
-    dtype: str
+    dtype: Optional[
+        Union[CategoricalDataType, NumericalDataType, StringDataType, SmileDataType]
+    ]
 
 
 class DatasetCreate(BaseModel):
