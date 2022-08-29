@@ -11,11 +11,12 @@ from starlette.testclient import TestClient
 from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
 from app.features.dataset.model import Dataset
+from app.features.dataset.schema import NumericalDataType
 from app.features.model import generate
 from app.features.model.model import Model as ModelEntity
 from app.features.model.model import ModelVersion
 from app.features.model.schema import layers_schema as layers
-from app.features.model.schema.configs import DatasetConfig, ModelConfig
+from app.features.model.schema.configs import ColumnConfig, DatasetConfig, ModelConfig
 from app.features.model.schema.model import Model, ModelCreate
 from app.tests.conftest import get_test_user
 from app.tests.features.model.conftest import mock_model, setup_create_model
@@ -27,7 +28,9 @@ def mocked_invalid_model(some_dataset: Dataset) -> ModelCreate:
     config = ModelConfig(
         name=random_lower_string(),
         dataset=DatasetConfig(
-            name=some_dataset.name, feature_columns=["mwt"], target_column="tpsa"
+            name=some_dataset.name,
+            feature_columns=[ColumnConfig(name="mwt", data_type=NumericalDataType())],
+            target_column=ColumnConfig(name="tpsa", data_type=NumericalDataType())
         ),
         featurizers=[],
         layers=[
@@ -237,7 +240,7 @@ def test_post_predict(
     some_model: Model,
 ):
     model_version = some_model.versions[-1].id
-    route = f"{settings.API_V1_STR}/models/{model_version}"
+    route = f"{settings.API_V1_STR}/models/{model_version}/predict"
     res = client.post(
         route,
         json={
@@ -316,3 +319,6 @@ def test_model_versioning():
     Checks if the model versioning mapping between mariner
     models and MLFlow Registry is correct
     """
+    pass
+
+

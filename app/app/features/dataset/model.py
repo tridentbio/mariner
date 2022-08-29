@@ -9,7 +9,7 @@ from app.db.base_class import Base
 
 
 class ColumnsMetadata(Base):
-    data_type = Column(String, nullable=False)
+    data_type = Column(JSON, nullable=False)
     description = Column(String, nullable=True)
     pattern = Column(String, primary_key=True)
     dataset_id = Column(

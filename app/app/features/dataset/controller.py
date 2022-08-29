@@ -1,6 +1,7 @@
 import datetime
 import io
 import json
+import re
 from typing import Any, List, Mapping, Union
 
 import pandas
@@ -62,11 +63,9 @@ def get_entity_info_from_csv(
     df = pandas.read_csv(io.BytesIO(file_bytes))
     assert isinstance(df, pandas.DataFrame)
     stats = get_stats(df).to_dict()
-    import re
-
     for column in stats:
         for description in columns_descriptions:
-            if description.data_type == "categorical" and re.compile(
+            if description.data_type.domain_kind == "categorical" and re.compile(
                 description.pattern
             ).search(str(column)):
                 if df[column].dtype not in [int, object]:
@@ -87,6 +86,7 @@ def get_entity_info_from_csv(
 def _upload_s3(file: UploadFile):
     file_md5 = make_key(file)
     key = f"datasets/{file_md5}.csv"
+    file.file.seek(0)
     upload_s3_file(file, Bucket.Datasets, key)
     return key
 
@@ -118,7 +118,6 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
 
         dataset_file = io.BytesIO()
         dataset.to_csv(dataset_file)
-        dataset_file.seek(0)
 
         data.file.file = dataset_file
     else:
@@ -141,7 +140,6 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
 
         dataset_file = io.BytesIO()
         dataset.to_csv(dataset_file)
-        dataset_file.seek(0)
 
         data.file.file = dataset_file
 
@@ -281,6 +279,8 @@ def parse_csv_headers(csv_file: UploadFile):
     file_bytes = csv_file.file.read()
     df = pandas.read_csv(io.BytesIO(file_bytes))
     metadata = [
-        ColumnsMeta(name=key, nacount=0, dtype=str(df[key].dtype)) for key in df
+        ColumnsMeta(name=key,
+            dtype=str(df[key].dtype)
+        ) for key in df
     ]
     return metadata

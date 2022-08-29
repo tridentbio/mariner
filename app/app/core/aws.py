@@ -29,11 +29,10 @@ def upload_s3_file(file: UploadFile, bucket: Bucket, key):
 
 
 def download_file_as_dataframe(bucket: Bucket, key: str) -> pd.DataFrame:
-    # s3uri = f's3://{bucket.value}/{key}'
-    # df = pd.read_csv(s3uri)
     s3 = create_s3_client()
     s3_res = s3.get_object(Bucket=bucket.value, Key=key)
-    data = io.BytesIO(s3_res["Body"].read())
+    s3body = s3_res["Body"].read()
+    data = io.BytesIO(s3body)
     df = pd.read_csv(data)
     return df
 

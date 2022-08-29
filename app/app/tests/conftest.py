@@ -53,14 +53,37 @@ def get_test_user(db: Session) -> User:
 def mock_dataset(name: Optional[str] = None):
     metadatas = [
         {
-            "pattern": "exp",
-            "data_type": "numerical",
-            "description": "speriment measurement",
+            "pattern": "smiles",
+            "data_type": {
+                "domain_kind": "smiles",
+            },
+            "description": "smiles column",
         },
         {
-            "pattern": "smiles",
-            "data_type": "smiles",
-            "description": "SMILES representaion of molecule",
+            "pattern": "mwt",
+            "data_type": {
+                    "domain_kind": "numerical",
+                },
+            "description": "Molecular Weigth",
+        },
+        {
+            "pattern": "tpsa",
+            "data_type": {
+                    "domain_kind": "numerical",
+                },
+            "description": "T Polar surface",
+        },
+        {
+            "pattern": "mwt_group",
+            "data_type": {
+                    "domain_kind": "categorical",
+                    "classes": {
+                        "yes": 0,
+                        "no": 1
+                    },
+
+                },
+            "description": "yes if mwt is larger than 300 otherwise no",
         },
     ]
 
@@ -79,11 +102,11 @@ def setup_create_dataset(
     data = mock_dataset()
     db.query(Dataset).filter(Dataset.name == data["name"]).delete()
     db.commit()
-    with open("app/tests/data/zinc.csv", "rb") as f:
+    with open("app/tests/data/zinc_extra.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
             data=data,
-            files={"file": ("zinc.csv", f.read())},
+            files={"file": ("zinc_extra.csv", f.read())},
             headers=normal_user_token_headers,
         )
         assert res.status_code == status.HTTP_200_OK

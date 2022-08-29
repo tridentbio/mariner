@@ -1,10 +1,17 @@
 name: GNNExample
 dataset:
   name: Small Zinc dataset
-  target_column: tpsa
-  feature_columns:
-    - smiles
-    - mwt
+  targetColumn: 
+    name: tpsa
+    dataType:
+      domainKind: smiles
+  featureColumns:
+    - name: smiles
+      dataType:
+        domainKind: smiles
+    - name: mwt
+      dataType:
+        domainKind: numerical
 
 featurizers:
   - name: MolToGraphFeaturizer
