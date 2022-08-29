@@ -34,6 +34,7 @@ class ExperimentUpdateRepo(pydantic.BaseModel):
     test_metrics: Optional[Dict[str, float]] = None
     history: Optional[Dict[str, List[float]]] = None
     epochs: Optional[int] = None
+    stack_trace: Optional[str] = None
 
 
 class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdateRepo]):

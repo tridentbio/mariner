@@ -25,9 +25,7 @@ def task_manager():
 
 @pytest.mark.asyncio
 async def test_add_task_remove_when_done(
-    db: Session,
-    task_manager: ExperimentManager,
-    some_experiment: Experiment
+    db: Session, task_manager: ExperimentManager, some_experiment: Experiment
 ):
     async def sleep():
         time.sleep(3)
@@ -37,9 +35,7 @@ async def test_add_task_remove_when_done(
     user = get_test_user(db)
     task_manager.add_experiment(
         ExperimentView(
-            task=sleep_task,
-            experiment_id=some_experiment.id,
-            user_id=user.id
+            task=sleep_task, experiment_id=some_experiment.id, user_id=user.id
         )
     )
     result = await sleep_task

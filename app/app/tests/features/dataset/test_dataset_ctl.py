@@ -24,10 +24,14 @@ def test_create_dataset(db: Session):
                 description="exp id",
             ),
             ColumnsDescription(
-                pattern="exp", data_type=NumericalDataType(domain_kind="numerical"), description="exp id"
+                pattern="exp",
+                data_type=NumericalDataType(domain_kind="numerical"),
+                description="exp id",
             ),
             ColumnsDescription(
-                pattern="smiles", data_type=SmileDataType(domain_kind="smiles"), description="exp id"
+                pattern="smiles",
+                data_type=SmileDataType(domain_kind="smiles"),
+                description="exp id",
             ),
         ]
         name = random_lower_string()

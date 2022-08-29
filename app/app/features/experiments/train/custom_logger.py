@@ -70,7 +70,10 @@ class AppLogger(LightningLoggerBase):
                 json=data,
                 headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
             )
-            assert res.status_code == 200, f"Failed to log metrics to the backend got status_code == {res.status_code}"
+            assert res.status_code == 200, (
+                "Failed to log metrics to the backend got"
+                f"status_code == {res.status_code}"
+            )
         except (requests.ConnectionError, requests.ConnectTimeout) as exp:
             logging.error(
                 f"Failed logging metrics to {settings.SERVER_HOST}/api/v1/experiments"

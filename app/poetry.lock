@@ -1577,6 +1577,14 @@ mlflow = "*"
 mlserver = "*"
 
 [[package]]
+name = "mockito"
+version = "1.4.0"
+description = "Spying framework"
+category = "main"
+optional = false
+python-versions = ">=2.7"
+
+[[package]]
 name = "msal"
 version = "1.18.0"
 description = "The Microsoft Authentication Library (MSAL) for Python library enables your app to access the Microsoft Cloud by supporting authentication of users with Microsoft Azure Active Directory accounts (AAD) and Microsoft Accounts (MSA) using industry standard OAuth2 and OpenID Connect."
@@ -2993,7 +3001,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<4.0"
-content-hash = "54539fd2f21a85e68885dadf845c699df9ab14373b5274cd6b485a16d5d2c5af"
+content-hash = "a602bb5bd07741b2ce2053982a33da944d41d35aa530f4593145da7332109428"
 
 [metadata.files]
 absl-py = [
@@ -4057,6 +4065,10 @@ mlserver = [
 mlserver-mlflow = [
     {file = "mlserver-mlflow-1.1.0.tar.gz", hash = "sha256:85f24dd67c60b4d346cd194d805768c9d2f5ee2c01136da5a6f4294ab0067bba"},
     {file = "mlserver_mlflow-1.1.0-py3-none-any.whl", hash = "sha256:21645552349013af95554a05454c2219cb0c5262f880f84a25178f58c04045f4"},
+]
+mockito = [
+    {file = "mockito-1.4.0-py3-none-any.whl", hash = "sha256:1719c6bec3523f9b465c86d247bb76027f53ab10f76b2a126dde409d0492fe3e"},
+    {file = "mockito-1.4.0.tar.gz", hash = "sha256:409ab604c9ebe1bb7dc18ec6b0ed98a8ad5127b08273f5804b22f4d1b51e5222"},
 ]
 msal = [
     {file = "msal-1.18.0-py2.py3-none-any.whl", hash = "sha256:9c10e6cb32e0b6b8eaafc1c9a68bc3b2ff71505e0c5b8200799582d8b9f22947"},

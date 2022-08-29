@@ -4,8 +4,13 @@ from typing import List, Literal, Optional, Union, get_args, get_type_hints
 import networkx as nx
 import yaml
 from pydantic import Field, ValidationError, root_validator
-from app.features.dataset.schema import CategoricalDataType, NumericalDataType, SmileDataType, StringDataType
 
+from app.features.dataset.schema import (
+    CategoricalDataType,
+    NumericalDataType,
+    SmileDataType,
+    StringDataType,
+)
 from app.features.model.components_query import get_component_args_by_type
 from app.features.model.schema.layers_schema import (
     FeaturizersArgsType,
@@ -40,7 +45,9 @@ class Tuple(str):
 
 class ColumnConfig(ApiBaseModel):
     name: str
-    data_type: Union[NumericalDataType, StringDataType, SmileDataType, CategoricalDataType] = Field(...)
+    data_type: Union[
+        NumericalDataType, StringDataType, SmileDataType, CategoricalDataType
+    ] = Field(...)
 
 
 class DatasetConfig(ApiBaseModel):

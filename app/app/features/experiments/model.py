@@ -46,6 +46,7 @@ class Experiment(Base):
     val_metrics = Column(JSON)
     test_metrics = Column(JSON)
     hyperparams = Column(JSON)
+    stack_trace = Column(String)
 
     created_by = relationship(
         "User",

@@ -7,8 +7,8 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.nn import ReLU, Sigmoid
 from torch.optim.adam import Adam
 from torch_geometric.data.data import Data
-from app.features.dataset.schema import CategoricalDataType
 
+from app.features.dataset.schema import CategoricalDataType
 from app.features.model.layers import Concat, GlobalPooling
 from app.features.model.layers.one_hot import OneHot
 from app.features.model.schema.configs import ModelConfig
@@ -63,8 +63,7 @@ class CustomModel(LightningModule):
 
         layers_dict = {}
         columns_config = {
-            col_config.name: col_config
-            for col_config in config.dataset.feature_columns
+            col_config.name: col_config for col_config in config.dataset.feature_columns
         }
 
         for layer in config.layers:
@@ -74,7 +73,9 @@ class CustomModel(LightningModule):
             # OneHot.classes
             if isinstance(layer_instance, OneHot):
                 col = columns_config[if_str_make_list(layer.input)[0]]
-                assert isinstance(col.data_type, CategoricalDataType), "OneHot layers can only have inputs from a categorical column"
+                assert isinstance(
+                    col.data_type, CategoricalDataType
+                ), "OneHot layers can only have inputs from a categorical column"
                 layer_instance.classes = col.data_type.classes
 
             layers_dict[layer.name] = layer_instance
