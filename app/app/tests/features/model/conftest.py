@@ -52,10 +52,11 @@ def teardown_create_model(db: Session, model: Model):
     obj = db.query(ModelVersion).filter(ModelVersion.model_id == model.id).first()
     db.delete(obj)
     obj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
-    db.delete(obj)
-    db.commit()
-    mlflowclient = mlflow.tracking.MlflowClient()
-    mlflowclient.delete_registered_model(model.mlflow_name)
+    if obj:
+        db.delete(obj)
+        db.flush()
+        mlflowclient = mlflow.tracking.MlflowClient()
+        mlflowclient.delete_registered_model(model.mlflow_name)
 
 
 @pytest.fixture(scope="function")
@@ -65,7 +66,10 @@ def model(
     normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
 ):
-    db.query(ModelEntity).delete()
     db.commit()
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
-    return model
+    yield model
+    dbobj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
+    if dbobj:
+        db.delete(dbobj)
+        db.flush()

@@ -73,33 +73,32 @@ async def test_experiment_has_stacktrace_when_training_fails(
         learning_rate=0.05,
     )
     # Mock CustomLogger forward to raise an Exception
-    # hopefully it will work on ray too
     import app.builder.model
     import app.features.experiments.train.run
 
     def _raise(_):
         raise Exception("bad bad model")
 
-    patch(app.builder.model.CustomModel.forward, lambda x: _raise(x))
     # Patch remote ray training for local
-    patch(
+    with patch(
         app.features.experiments.train.run.train_run_sync.remote,
         app.features.experiments.train.run.train_run,
-    )
+    ), patch(app.builder.model.CustomModel.forward, lambda x: _raise(x)):
+        exp = await experiments_ctl.create_model_traning(db, user, request)
+        assert exp.model_version_id == version.id
+        assert exp.model_version.name == version.name
+        task = get_exp_manager().get_task(exp.id)
+        assert task
+        # Await for tas
+        with pytest.raises(Exception):
+            await task
 
-    exp = await experiments_ctl.create_model_traning(db, user, request)
-    assert exp.model_version_id == version.id
-    assert exp.model_version.name == version.name
-    task = get_exp_manager().get_task(exp.id)
-    assert task
-    # Await for tas
-    with pytest.raises(Exception):
-        await task
-
-    db.commit()
-    # Assertions over task outcome
-    db_exp = db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
-    db_exp = Experiment.from_orm(db_exp)
-    assert db_exp.stack_trace
-    assert len(db_exp.stack_trace) > 0
-    assert db_exp.stage == "FAILED"
+        db.commit()
+        # Assertions over task outcome
+        db_exp = (
+            db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
+        )
+        db_exp = Experiment.from_orm(db_exp)
+        assert db_exp.stack_trace
+        assert len(db_exp.stack_trace) > 0
+        assert db_exp.stage == "FAILED"

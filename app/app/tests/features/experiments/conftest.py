@@ -84,5 +84,8 @@ def some_experiments(
     ]
     exps = [Experiment.from_orm(exp) for exp in exps]
     yield exps
-    db.query(ExperimentEntity).delete()
-    db.commit()
+    db.query(ExperimentEntity).filter(
+        ExperimentEntity.id.in_([exp.id for exp in exps])
+    ).delete()
+
+    db.flush()

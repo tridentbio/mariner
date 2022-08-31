@@ -82,7 +82,7 @@ class CustomModel(LightningModule):
 
         self.layers = torch.nn.ModuleDict(layers_dict)
 
-        self.layer_configs = {l.name: l for l in config.layers}
+        self.layer_configs = {layer.name: layer for layer in config.layers}
 
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
@@ -122,7 +122,7 @@ class CustomModel(LightningModule):
         last = None
 
         for _, node_name in enumerate(self.topo_sorting):
-            if not node_name in self.layers:
+            if node_name not in self.layers:
                 continue
             layer_name = node_name
             layer = self.layers[layer_name]
@@ -136,9 +136,10 @@ class CustomModel(LightningModule):
             # and next layers.
 
             if is_message_passing(layer):
-                assert (
-                    len(inputs) == 1
-                ), f"Length of a gnn layer's inputs should be at most 1. inputs = {inputs}"
+                assert len(inputs) == 1, (
+                    "Length of a gnn layer's inputs should be at most 1."
+                    f"inputs = {inputs}"
+                )
                 src = inputs[0]
                 assert isinstance(storage[src], Data)
                 x, edge_index, batch_values = (
@@ -150,13 +151,12 @@ class CustomModel(LightningModule):
                 storage[layer_name] = Data(
                     x=x, edge_index=edge_index, batch=batch_values
                 )
-            # 2.2   - if its an pooling layer it always have just one input
-            #         and the input is composed by x (node_features) from the last layer
-            #         and the batch that comes with the data object
+
             elif is_graph_pooling(layer):
-                assert (
-                    len(inputs) == 1
-                ), f"Length of a gnn layer's inputs should be at most 1. inputs = {inputs}"
+                assert len(inputs) == 1, (
+                    "Length of a gnn layer's inputs should be at most 1."
+                    f"inputs = {inputs}"
+                )
                 src = inputs[0]
                 assert isinstance(storage[src], Data)
                 x, edge_index, batch_values = (
@@ -165,13 +165,12 @@ class CustomModel(LightningModule):
                     storage[src].batch,
                 )
                 storage[layer_name] = layer(x=x, batch=batch_values)
-            # 2.3   - if its an activation or a mlp/normal layer we need to check the
-            #         previous layers to make sure that the input is in t;he correct format
-            #         and check the next layers to format the output
+
             elif is_graph_activation(layer, self.layers, previous_layers):
-                assert (
-                    len(inputs) == 1
-                ), f"Length of a activation layer's inputs should be at most 1. inputs = {inputs}"
+                assert len(inputs) == 1, (
+                    "Length of a activation layer's inputs should be at most 1."
+                    f"inputs = {inputs}"
+                )
                 src = inputs[0]
                 assert isinstance(storage[src], Data)
                 x, edge_index, batch_values = (

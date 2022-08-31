@@ -91,7 +91,7 @@ def test_put_datasets(
     db: Session,
     some_dataset: DatasetModel,
 ) -> None:
-    new_name = "new name"
+    new_name = random_lower_string()
     r = client.put(
         f"{settings.API_V1_STR}/datasets/{some_dataset.id}",
         data={
@@ -157,9 +157,21 @@ def test_get_csv_metadata(
         )
         assert res.status_code == status.HTTP_200_OK
         cols = res.json()
-        assert isinstance(cols, list)
-        assert len(cols) == 3
-        colnames = [item["name"] for item in cols]
-        assert "CMPD_CHEMBLID" in colnames
-        assert "exp" in colnames
-        assert "smiles" in colnames
+        assert {
+            "name": "CMPD_CHEMBLID",
+            "dtype": {
+                "domainKind": "string",
+            },
+        } in cols
+        assert {
+            "name": "exp",
+            "dtype": {
+                "domainKind": "numerical",
+            },
+        } in cols
+        assert {
+            "name": "smiles",
+            "dtype": {
+                "domainKind": "smiles",
+            },
+        } in cols

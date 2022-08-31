@@ -36,9 +36,6 @@ class ConnectionManager:
 
     async def send_message(self, user_id: int, message: WebSocketMessage):
         if user_id not in self.active_connections:
-            print(
-                "[WARNING]: Sending message but websocket not found" f"UserId {user_id}"
-            )
             return
         await self.active_connections[user_id].send_text(message.json())
 
@@ -69,6 +66,5 @@ async def websocket_endpoint(
     while websocket.application_state == WebSocketState.CONNECTED:
         try:
             await websocket.receive_text()  # continuously wait for a message
-        except (WebSocketDisconnect, AssertionError) as exp:
-            print("WEBSOCKET CONNECTION LOOP FAILED " + str(exp))
+        except (WebSocketDisconnect, AssertionError):
             break

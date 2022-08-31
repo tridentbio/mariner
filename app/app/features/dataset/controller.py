@@ -1,7 +1,6 @@
 import datetime
 import io
 import json
-import re
 from typing import Any, List, Mapping, Union
 
 import pandas as pd
@@ -16,7 +15,6 @@ from app.core.config import settings
 from app.features.dataset.exceptions import (
     DatasetAlreadyExists,
     DatasetNotFound,
-    InvalidCategoricalColumn,
     NotCreatorOfDataset,
 )
 from app.utils import hash_md5
@@ -25,7 +23,6 @@ from ..user.model import User
 from .crud import repo
 from .schema import (
     CategoricalDataType,
-    ColumnsDescription,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
@@ -62,29 +59,12 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
 
 
 def get_entity_info_from_csv(
-    file: UploadFile, columns_descriptions: List[ColumnsDescription]
+    file: UploadFile,
 ) -> tuple[int, int, int, Mapping[Any, Any]]:
     file_bytes = file.file.read()
-    df = pandas.read_csv(io.BytesIO(file_bytes))
-    assert isinstance(df, pandas.DataFrame)
+    df = pd.read_csv(io.BytesIO(file_bytes))
+    assert isinstance(df, pd.DataFrame)
     stats = get_stats(df).to_dict()
-    for column in stats:
-        for description in columns_descriptions:
-            if description.data_type.domain_kind == "categorical" and re.compile(
-                description.pattern
-            ).search(str(column)):
-                if df[column].dtype not in [int, object]:
-                    raise InvalidCategoricalColumn(
-                        f'Column "{column}" of type{df[column].dtype} cannot'
-                        "be a categorical column because it's type is not string"
-                        "or int"
-                    )
-                else:
-                    unique_values = df[column].unique()
-                    categoriesmap = {
-                        column: index for index, column in enumerate(unique_values)
-                    }
-                    stats[column]["categories"] = categoriesmap
     return len(df), len(df.columns), len(file_bytes), stats
 
 
@@ -101,9 +81,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
 
     if existing_dataset:
         raise DatasetAlreadyExists()
-    rows, columns, bytes, stats = get_entity_info_from_csv(
-        data.file, data.columns_metadata
-    )
+    rows, columns, bytes, stats = get_entity_info_from_csv(data.file)
     data.file.file.seek(0)
 
     # Before upload we need to do the split
@@ -111,7 +89,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         splitter = RandomSplitter()
 
         file_bytes = data.file.file.read()
-        df = pandas.read_csv(io.BytesIO(file_bytes))
+        df = pd.read_csv(io.BytesIO(file_bytes))
 
         split_target = data.split_target.split("-")
         train_size, val_size, test_size = split_target
@@ -133,7 +111,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         splitter = ScaffoldSplitter()
 
         file_bytes = data.file.file.read()
-        df = pandas.read_csv(io.BytesIO(file_bytes))
+        df = pd.read_csv(io.BytesIO(file_bytes))
 
         split_target = data.split_target.split("-")
         train_size, val_size, test_size = split_target
@@ -212,7 +190,7 @@ def update_dataset(
             update.columns,
             update.bytes,
             update.stats,
-        ) = get_entity_info_from_csv(data.file, update.columns_metadata or [])
+        ) = get_entity_info_from_csv(data.file)
         data.file.file.seek(0)
 
         # Before upload we need to do the split
@@ -222,7 +200,7 @@ def update_dataset(
             splitter = RandomSplitter()
 
             file_bytes = data.file.file.read()
-            df = pandas.read_csv(io.BytesIO(file_bytes))
+            df = pd.read_csv(io.BytesIO(file_bytes))
 
             split_target = data.split_target.split("-")
             train_size, val_size, test_size = split_target
@@ -245,7 +223,7 @@ def update_dataset(
 
             splitter = ScaffoldSplitter()
             file_bytes = data.file.file.read()
-            df = pandas.read_csv(io.BytesIO(file_bytes))
+            df = pd.read_csv(io.BytesIO(file_bytes))
             split_target = data.split_target.split("-")
             train_size, val_size, test_size = split_target
             train_size = int(train_size) / 100
@@ -282,21 +260,20 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
 def validate_smiles(smiles: str) -> str:
     mol = Chem.MolFromSmiles(smiles, sanitize=False)
     if mol is None:
-        raise (ValueError, f'SMILES "{smiles}" is not syntacticaly valid.')
+        raise ValueError(f'SMILES "{smiles}" is not syntacticaly valid.')
     else:
         try:
             Chem.SanitizeMol(mol)
-        except:
-            raise (ValueError, f'SMILES "{smiles}" does not have valid chemistry.')
-
-    return str
+        except:  # noqa: E722
+            raise ValueError(f'SMILES "{smiles}" does not have valid chemistry.')
+    return smiles
 
 
 def validate_smiles_series(smiles_series: pd.Series) -> bool:
     for val in smiles_series:
         try:
             validate_smiles(val)
-        except:
+        except ValueError:
             return False
     return True
 
@@ -309,7 +286,8 @@ def infer_domain_type_from_series(series: pd.Series):
         if validate_smiles_series(series):
             return SmileDataType(domain_kind="smiles")
         # check if it is likely to be categorical
-        uniques = series.sort().unique()
+        series = series.sort_values()
+        uniques = series.unique()
         if len(uniques) <= 100:
             return CategoricalDataType(
                 domain_kind="categorical",
@@ -317,7 +295,8 @@ def infer_domain_type_from_series(series: pd.Series):
             )
         return StringDataType(domain_kind="string")
     elif series.dtype == int:
-        uniques = series.sort().unique()
+        series = series.sort_values()
+        uniques = series.unique()
         if len(uniques) <= 100:
             return CategoricalDataType(
                 domain_kind="categorical",
@@ -327,7 +306,7 @@ def infer_domain_type_from_series(series: pd.Series):
 
 def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
     file_bytes = csv_file.file.read()
-    df = pandas.read_csv(io.BytesIO(file_bytes))
+    df = pd.read_csv(io.BytesIO(file_bytes))
     metadata = [
         ColumnsMeta(name=key, dtype=infer_domain_type_from_series(df[key]))
         for key in df
