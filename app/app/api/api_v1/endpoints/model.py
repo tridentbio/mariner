@@ -13,7 +13,7 @@ from app.api.api_v1.endpoints.datasets import Paginated
 from app.features.dataset.exceptions import DatasetNotFound
 from app.features.model import controller
 from app.features.model.exceptions import ModelNameAlreadyUsed, ModelNotFound
-from app.features.model.schema.configs import ModelOptions
+from app.features.model.schema.configs import ModelConfig, ModelOptions
 from app.features.model.schema.model import Model, ModelCreate, ModelsQuery
 from app.features.user.model import User
 
@@ -117,3 +117,12 @@ def delete_model(
 ):
     model = controller.delete_model(db, current_user, model_id)
     return model
+
+
+@router.post(
+    "/check-config",
+    response_model=controller.ForwardCheck,
+    dependencies=[Depends(deps.get_current_active_user)],
+)
+def post_check_config(model_config: ModelConfig, db: Session = Depends(deps.get_db)):
+    return controller.naive_check_forward_exception(db, model_config)

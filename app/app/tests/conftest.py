@@ -10,6 +10,7 @@ from app.core.aws import Bucket, delete_s3_file
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.features.dataset.model import Dataset
+from app.features.model.schema.configs import ModelConfig
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
 from app.main import app
@@ -168,3 +169,10 @@ def mock_dataset_item():
 @pytest.fixture(scope="module")
 def dataset_sample():
     return mock_dataset_item()
+
+
+@pytest.fixture(scope="function")
+def model_config() -> Generator[ModelConfig, None, None]:
+    path = "app/tests/data/test_model_hard.yaml"
+    with open(path, "rb") as f:
+        yield ModelConfig.from_yaml(f.read())

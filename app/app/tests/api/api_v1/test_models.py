@@ -1,7 +1,8 @@
-from typing import List
+from typing import Any, List
 
 import mlflow.pyfunc
 import pytest
+from mockito import patch
 from pydantic.networks import AnyHttpUrl
 from sqlalchemy.orm.session import Session
 from starlette import status
@@ -10,7 +11,7 @@ from starlette.testclient import TestClient
 
 from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
-from app.features.dataset.model import Dataset
+from app.features.dataset.model import Dataset as DatasetEntity
 from app.features.dataset.schema import NumericalDataType
 from app.features.model import generate
 from app.features.model.model import Model as ModelEntity
@@ -28,7 +29,7 @@ from app.tests.utils.utils import random_lower_string
 
 
 @pytest.fixture(scope="function")
-def mocked_invalid_model(some_dataset: Dataset) -> ModelCreate:
+def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
     config = ModelConfig(
         name=random_lower_string(),
         dataset=DatasetConfig(
@@ -59,7 +60,7 @@ def test_post_models_success(
     db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_dataset: Dataset,
+    some_dataset: DatasetEntity,
 ):
     user = get_test_user(db)
     model = mock_model()
@@ -228,7 +229,7 @@ def test_delete_model(
     client: TestClient,
     db: Session,
     normal_user_token_headers: dict[str, str],
-    some_dataset: Dataset,
+    some_dataset: DatasetEntity,
 ):
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
     res = client.delete(
@@ -315,6 +316,47 @@ def test_post_models_missing_arguments(
     assert len(error_body["detail"]) == 1
     assert error_body["detail"][0]["type"] == "value_error.missingcomponentargs"
     assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name
+
+
+def test_post_check_config_good_model(
+    some_dataset: DatasetEntity,
+    normal_user_token_headers: dict[str, str],
+    client: TestClient,
+    model_config: ModelConfig,
+):
+    res = client.post(
+        f"{settings.API_V1_STR}/models/check-config",
+        headers=normal_user_token_headers,
+        json=model_config.dict(),
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert "output" in body
+
+
+def test_post_check_config_bad_model(
+    some_dataset: DatasetEntity,
+    normal_user_token_headers: dict[str, str],
+    client: TestClient,
+    model_config: ModelConfig,
+):
+    import app.builder.model
+
+    def raise_(x: Any):
+        raise Exception("some random exception in the forward")
+
+    with patch(app.builder.model.CustomModel.forward, raise_):
+        res = client.post(
+            f"{settings.API_V1_STR}/models/check-config",
+            headers=normal_user_token_headers,
+            json=model_config.dict(),
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert not body["output"]
+        assert "stackTrace" in body
+        assert "some random exception in the forward" in body["stackTrace"]
+        assert len(body["stackTrace"].split("\n")) > 1
 
 
 def test_model_versioning():

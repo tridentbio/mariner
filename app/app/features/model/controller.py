@@ -1,8 +1,10 @@
+import traceback
 from typing import Any, List, Optional, get_type_hints
 
 import mlflow
 import mlflow.exceptions
 import pandas as pd
+import pytorch_lightning as pl
 import torch
 import torch_geometric
 from sqlalchemy.orm.session import Session
@@ -31,6 +33,7 @@ from app.features.model.schema import layers_schema
 from app.features.model.schema.configs import (
     LayerAnnotation,
     LayerRule,
+    ModelConfig,
     ModelOptions,
 )
 from app.features.model.schema.model import (
@@ -47,13 +50,49 @@ from app.features.user.model import User as UserEntity
 from app.schemas.api import ApiBaseModel
 
 
+def get_model_and_dataloader(
+    db: Session, config: ModelConfig
+) -> tuple[pl.LightningModule, DataLoader]:
+    dataset = dataset_repo.get_by_name(db, config.dataset.name)
+    assert dataset
+    df = dataset.get_dataframe()
+    dataset = CustomDataset(
+        data=df,
+        feature_columns=config.dataset.feature_columns,
+        featurizers_config=config.featurizers,
+    )
+    dataloader = DataLoader(dataset, batch_size=len(df))
+    model = CustomModel(config)
+    return model, dataloader
+
+
+class ForwardCheck(ApiBaseModel):
+    stack_trace: Optional[str] = None
+    output: Optional[Any] = None
+
+
+def naive_check_forward_exception(db: Session, config: ModelConfig) -> ForwardCheck:
+    """Given a model config, run it through a small set of the dataset
+    and return the exception if any. It does not mean the training will
+    run smoothly for all examples of the dataset, but it gives some
+    confidence about the model trainability"""
+    try:
+        model, dataloader = get_model_and_dataloader(db, config)
+        sample = next(iter(dataloader))
+        output = model(sample)
+        return ForwardCheck(output=output)
+    except:  # noqa E722
+        lines = traceback.format_exc(limit=5)
+        return ForwardCheck(stack_trace=lines)
+
+
 def create_model(
     db: Session,
     user: UserEntity,
     model_create: ModelCreate,
 ) -> Model:
     r"""
-    Creates a model and a model config if passed with a
+    Creates a model and a model version if passed with a
     non-existing `model_create.name`, otherwise creates a
     new model version.
     Triggers the creation of a RegisteredModel and a ModelVersion
