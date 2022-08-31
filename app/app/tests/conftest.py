@@ -171,7 +171,7 @@ def dataset_sample():
     return mock_dataset_item()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def model_config() -> Generator[ModelConfig, None, None]:
     path = "app/tests/data/test_model_hard.yaml"
     with open(path, "rb") as f:
