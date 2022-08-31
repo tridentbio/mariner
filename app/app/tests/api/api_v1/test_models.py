@@ -257,7 +257,6 @@ def test_post_predict(
         },
         headers=normal_user_token_headers,
     )
-    print(res.json())
     assert res.status_code == 200
     body = res.json()
     assert len(body) == 3
