@@ -1,10 +1,14 @@
+from typing import Any
+
 import torch
+from mockito import patch
 from sqlalchemy.orm.session import Session
 
 import app.features.model.controller as model_ctl
 from app.features.dataset.crud import repo as dataset_repo
+from app.features.dataset.model import Dataset as DatasetEntity
 from app.features.model.model import Model as ModelEntity
-from app.features.model.schema.model import Model
+from app.features.model.schema.model import Model, ModelConfig
 from app.tests.conftest import get_test_user
 
 
@@ -115,3 +119,23 @@ def test_remove_section_by_identation():
 
     Shapes:"""
     )
+
+
+def test_check_forward_exception_good_model(
+    db: Session, some_dataset: DatasetEntity, model_config: ModelConfig
+):
+    check = model_ctl.naive_check_forward_exception(db, model_config)
+    assert check.stack_trace is None
+    assert check.output is not None
+
+
+def test_check_forward_exception_bad_model(db: Session, model_config: ModelConfig):
+    import app.builder.model
+
+    def raise_(x: Any):
+        raise Exception("bad bad model")
+
+    with patch(app.builder.model.CustomModel.forward, raise_):
+        check = model_ctl.naive_check_forward_exception(db, model_config)
+        assert check.output is None
+        assert check.stack_trace is not None
