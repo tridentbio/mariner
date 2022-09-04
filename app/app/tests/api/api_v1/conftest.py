@@ -16,7 +16,6 @@ from app.tests.utils.utils import random_lower_string
 
 @pytest.fixture(scope="function")
 def some_experiments(db, some_model: Model):
-    db.query(ExperimentEntity).delete()
     db.commit()
     user = get_test_user(db)
     version = some_model.versions[-1]

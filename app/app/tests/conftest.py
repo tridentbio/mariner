@@ -14,10 +14,7 @@ from app.features.model.schema.configs import ModelConfig
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
 from app.main import app
-from app.tests.features.model.conftest import (
-    setup_create_model,
-    teardown_create_model,
-)
+from app.tests.features.model.conftest import setup_create_model
 from app.tests.utils.user import authentication_token_from_email
 from app.tests.utils.utils import get_superuser_token_headers
 
@@ -131,7 +128,7 @@ def some_dataset(
     ds = setup_create_dataset(db, client, normal_user_token_headers)
     assert ds is not None
     yield ds
-    teardown_create_dataset(db, ds)
+    # teardown_create_dataset(db, ds)
 
 
 # MODEL GLOBAL FIXTURES
@@ -146,7 +143,7 @@ def some_model(
 ):
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
     yield model
-    teardown_create_model(db, model)
+    # teardown_create_model(db, model)
 
 
 def mock_dataset_item():
