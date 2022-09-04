@@ -36,6 +36,7 @@ pytorch-lightning = "^1.6.4"
 websockets = "^10.3"
 setuptools = "58.2.0"
 torch = "^1.12.1"
+Pint = "^0.19.2"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.20.0"
