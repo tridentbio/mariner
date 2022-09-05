@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[units.Unit])
-def get_units(q: str = Query(...)):
+def get_units(q: Optional[str]):
     return units.search_units(q)
 
 
