@@ -9,7 +9,7 @@ def test_get_units(
     client: testclient.TestClient, normal_user_token_headers: Dict[str, str]
 ):
     res = client.get(
-        f"{settings.API_V1_STR}/datasets/units?q=m",
+        f"{settings.API_V1_STR}/units?q=m",
         headers=normal_user_token_headers,
     )
     assert res.status_code == status.HTTP_200_OK
