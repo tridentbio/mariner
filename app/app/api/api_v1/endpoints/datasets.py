@@ -1,5 +1,5 @@
 from typing import Any, Generic, List, Optional, TypeVar
-from app.app.features.dataset.schema import DatasetSummary
+from app.features.dataset.schema import DatasetSummary
 
 from fastapi.datastructures import UploadFile
 from fastapi.exceptions import HTTPException
