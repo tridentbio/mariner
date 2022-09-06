@@ -6,7 +6,7 @@ from app.features.dataset.model import Dataset
 from app.features.dataset.schema import (
     ColumnsDescription,
     DatasetCreate,
-    NumericalDataType,
+    QuantityDataType,
     SmileDataType,
     Split,
     StringDataType,
@@ -25,7 +25,7 @@ def test_create_dataset(db: Session):
             ),
             ColumnsDescription(
                 pattern="exp",
-                data_type=NumericalDataType(domain_kind="numerical"),
+                data_type=QuantityDataType(unit="mole", domain_kind="numerical"),
                 description="exp id",
             ),
             ColumnsDescription(

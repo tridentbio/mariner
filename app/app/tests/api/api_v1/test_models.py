@@ -34,8 +34,16 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
         name=random_lower_string(),
         dataset=DatasetConfig(
             name=some_dataset.name,
-            feature_columns=[ColumnConfig(name="mwt", data_type=NumericalDataType())],
-            target_column=ColumnConfig(name="tpsa", data_type=NumericalDataType()),
+            feature_columns=[
+                ColumnConfig(
+                    name="mwt",
+                    data_type=NumericalDataType(domain_kind="numerical", unit="mole"),
+                )
+            ],
+            target_column=ColumnConfig(
+                name="tpsa",
+                data_type=NumericalDataType(domain_kind="numerical", unit="mole"),
+            ),
         ),
         featurizers=[],
         layers=[

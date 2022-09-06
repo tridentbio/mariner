@@ -2,16 +2,16 @@ from typing import List, Union
 
 import networkx as nx
 import torch
-import torch_geometric.nn as geom_nn
 from pytorch_lightning.core.lightning import LightningModule
 from torch.nn import ReLU, Sigmoid
 from torch.optim.adam import Adam
-from torch_geometric.data.data import Data
 
+import torch_geometric.nn as geom_nn
 from app.features.dataset.schema import CategoricalDataType
 from app.features.model.layers import Concat, GlobalPooling
 from app.features.model.layers.one_hot import OneHot
 from app.features.model.schema.configs import ModelConfig
+from torch_geometric.data.data import Data
 
 edge_index_classes = geom_nn.MessagePassing
 pooling_classes = GlobalPooling

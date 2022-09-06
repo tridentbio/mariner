@@ -3,6 +3,7 @@ from typing import Any, Callable, Sequence
 
 import numpy as np
 import torch
+
 from torch_sparse import SparseTensor
 
 
