@@ -1,4 +1,5 @@
 from typing import Any, Generic, List, Optional, TypeVar
+from app.app.features.dataset.schema import DatasetSummary
 
 from fastapi.datastructures import UploadFile
 from fastapi.exceptions import HTTPException
@@ -48,6 +49,18 @@ def get_my_datasets(
     """
     datasets, total = controller.get_my_datasets(db, current_user, query)
     return Paginated(data=[Dataset.from_orm(ds) for ds in datasets], total=total)
+
+
+@router.get("/{dataset_id}/summary", response_model=DatasetSummary)
+def get_my_dataset_summary(
+    dataset_id: int,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db)
+) -> Any:
+    dataset = controller.get_my_dataset_by_id(db, current_user, dataset_id)
+    summary = dataset.stats
+
+    return summary
 
 
 @router.get("/{dataset_id}", response_model=Dataset)

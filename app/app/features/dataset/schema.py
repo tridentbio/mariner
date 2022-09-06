@@ -184,6 +184,13 @@ class DatasetUpdate(ApiBaseModel):
     columns_metadata: Optional[List[ColumnsDescription]] = None
 
 
+class DatasetSummary(BaseModel):
+    train: Dict[str, any]
+    val: Dict[str, any]
+    test: Dict[str, any]
+    full: Dict[str, any]
+
+
 class DatasetUpdateRepo(BaseModel):
     id: int
     name: Optional[str] = None
