@@ -155,6 +155,7 @@ def get_dataset_summary(dataset: pd.DataFrame, smiles_column: str):
         chem_dataset['has_chiral_centers'].apply(lambda x: 1 if x else 0)
     )
 
+    statistics[smiles_column] = {}
     for column, dtype in chem_dataset.dtypes.items():
         if np.issubdtype(dtype, float):
             statistics[smiles_column][column] = {
