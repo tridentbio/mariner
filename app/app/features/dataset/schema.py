@@ -72,6 +72,10 @@ class NumericalDataType(ApiBaseModel):
         return "numerical"
 
 
+class QuantityDataType(NumericalDataType):
+    unit: str
+
+
 class StringDataType(ApiBaseModel):
     domain_kind: Literal["string"] = Field("string")
 
@@ -99,7 +103,7 @@ class SmileDataType(ApiBaseModel):
 
 class ColumnsDescription(ApiBaseModel):
     data_type: Union[
-        NumericalDataType, StringDataType, CategoricalDataType, SmileDataType
+        QuantityDataType, StringDataType, CategoricalDataType, SmileDataType
     ] = Field(...)
     description: str
     pattern: str

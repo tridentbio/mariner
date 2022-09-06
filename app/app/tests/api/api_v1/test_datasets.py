@@ -36,6 +36,7 @@ def test_post_datasets(
                 "domain_kind": "numerical",
             },
             "description": "speriment measurement",
+            "unit": "mole",
         },
         {
             "pattern": "smiles",

@@ -34,7 +34,7 @@ def get_units():
     return result
 
 
-def search_units(search: str) -> List[Unit]:
+def search_units(search: str = "") -> List[Unit]:
     units = get_units()
     return [unit for unit in units if search.lower() in unit.name.lower()]
 

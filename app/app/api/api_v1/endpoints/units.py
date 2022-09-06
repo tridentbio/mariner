@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/", response_model=List[units.Unit])
 def get_units(q: Optional[str]):
-    return units.search_units(q)
+    return units.search_units(q if q is not None else "")
 
 
 @router.get("/valid", response_model=units.Unit)

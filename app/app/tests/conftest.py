@@ -61,16 +61,12 @@ def mock_dataset(name: Optional[str] = None):
         },
         {
             "pattern": "mwt",
-            "data_type": {
-                "domain_kind": "numerical",
-            },
+            "data_type": {"domain_kind": "numerical", "unit": "mole"},
             "description": "Molecular Weigth",
         },
         {
             "pattern": "tpsa",
-            "data_type": {
-                "domain_kind": "numerical",
-            },
+            "data_type": {"domain_kind": "numerical", "unit": "mole"},
             "description": "T Polar surface",
         },
         {

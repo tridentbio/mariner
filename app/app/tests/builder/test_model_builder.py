@@ -13,7 +13,7 @@ from app.features.dataset.schema import (
     ColumnsDescription,
     Dataset,
     DatasetCreate,
-    NumericalDataType,
+    QuantityDataType,
     SmileDataType,
     Split,
 )
@@ -34,17 +34,17 @@ def zinc_extra_dataset(db: Session) -> Generator[Dataset, None, None]:
     columns_metadata = [
         ColumnsDescription(
             pattern="smiles",
-            data_type=SmileDataType(),
+            data_type=SmileDataType(domain_kind="smiles"),
             description="smiles column",
         ),
         ColumnsDescription(
             pattern="mwt",
-            data_type=NumericalDataType(),
+            data_type=QuantityDataType(domain_kind="numerical", unit="mole"),
             description="Molecular Weigth",
         ),
         ColumnsDescription(
             pattern="tpsa",
-            data_type=NumericalDataType(),
+            data_type=QuantityDataType(domain_kind="numerical", unit="mole"),
             description="T Polar surface",
         ),
         ColumnsDescription(

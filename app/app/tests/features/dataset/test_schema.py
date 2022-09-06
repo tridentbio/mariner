@@ -4,7 +4,7 @@ from pydantic import BaseModel, ValidationError
 from app.features.dataset.schema import (
     CategoricalDataType,
     ColumnsDescription,
-    NumericalDataType,
+    QuantityDataType,
     SmileDataType,
     Split,
     StringDataType,
@@ -33,7 +33,7 @@ class TestSplit:
 class TestColumnDescription:
     descriptions_fixture = [
         {
-            "data_type": NumericalDataType(domain_kind="numerical"),
+            "data_type": QuantityDataType(unit="mole", domain_kind="numerical"),
             "pattern": "tpsa",
             "description": "TPSA",
         },
@@ -66,12 +66,13 @@ class TestColumnDescription:
             {
                 "pattern": "exp",
                 "dataType": {
-                    "domainKind": "numerical"
+                    "domainKind": "numerical",
+                    "unit": "mole"
                 },
                 "description": "experiment measurement"
             }
         """,
-            NumericalDataType,
+            QuantityDataType,
             "numerical",
         ),
         (

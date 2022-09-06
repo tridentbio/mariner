@@ -6,11 +6,10 @@ import mlflow.exceptions
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-import torch_geometric
 from sqlalchemy.orm.session import Session
-from torch_geometric.loader import DataLoader
 
 import app.features.model.layers as mariner_layers
+import torch_geometric
 from app.builder.dataset import CustomDataset
 from app.builder.model import CustomModel
 from app.core import mlflowapi
@@ -48,6 +47,7 @@ from app.features.model.schema.model import (
 from app.features.model.utils import get_class_from_path_string
 from app.features.user.model import User as UserEntity
 from app.schemas.api import ApiBaseModel
+from torch_geometric.loader import DataLoader
 
 
 def get_model_and_dataloader(
