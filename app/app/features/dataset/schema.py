@@ -189,10 +189,10 @@ class DatasetUpdate(ApiBaseModel):
 
 
 class DatasetSummary(BaseModel):
-    train: Dict[str, any]
-    val: Dict[str, any]
-    test: Dict[str, any]
-    full: Dict[str, any]
+    train: Dict[str, Any]
+    val: Dict[str, Any]
+    test: Dict[str, Any]
+    full: Dict[str, Any]
 
 
 class DatasetUpdateRepo(BaseModel):
