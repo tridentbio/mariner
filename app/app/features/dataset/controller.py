@@ -139,12 +139,9 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     smiles_column = None
 
     for col in df.columns:
-        try:
-            validate_smiles_series(df[col])
+        if validate_smiles_series(df[col]):
             smiles_column = col
             break
-        except Exception:
-            continue
 
     if smiles_column:
         stats = get_summary(df, smiles_column)
@@ -273,12 +270,9 @@ def update_dataset(
         smiles_column = None
 
         for col in df.columns:
-            try:
-                validate_smiles_series(df[col])
+            if validate_smiles_series(df[col]):
                 smiles_column = col
                 break
-            except Exception:
-                continue
 
         if smiles_column:
             stats = get_summary(dataset, smiles_column)
@@ -304,7 +298,11 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
 
 
 def validate_smiles(smiles: str) -> str:
-    mol = Chem.MolFromSmiles(smiles, sanitize=False)
+    try:
+        mol = Chem.MolFromSmiles(smiles, sanitize=False)
+    except Exception:
+        raise ValueError(f'Type of SMILES {type(smiles)} must be a string.')
+
     if mol is None:
         raise ValueError(f'SMILES "{smiles}" is not syntacticaly valid.')
     else:
@@ -314,6 +312,7 @@ def validate_smiles(smiles: str) -> str:
             raise ValueError(
                 f'SMILES "{smiles}" does not have valid chemistry.'
             )
+
     return smiles
 
 
