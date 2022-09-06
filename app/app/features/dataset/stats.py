@@ -166,3 +166,14 @@ def get_dataset_summary(dataset: pd.DataFrame, smiles_column: str):
             }
 
     return statistics
+
+
+def get_stats(dataset: pd.DataFrame, smiles_column: str):
+    stats = {}
+
+    stats['full'] = get_dataset_summary(dataset, smiles_column)
+    stats['train'] = get_dataset_summary(dataset[dataset['step'] == 'train'])
+    stats['test'] = get_dataset_summary(dataset[dataset['step'] == 'test'])
+    stats['val'] = get_dataset_summary(dataset[dataset['val'] == 'val'])
+
+    return stats
