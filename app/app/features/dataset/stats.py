@@ -182,7 +182,7 @@ def get_stats(dataset: pd.DataFrame, smiles_column: str):
         smiles_column
     )
     stats['val'] = get_dataset_summary(
-        dataset[dataset['val'] == 'val'],
+        dataset[dataset['step'] == 'val'],
         smiles_column
     )
 
