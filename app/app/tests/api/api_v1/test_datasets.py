@@ -32,9 +32,7 @@ def test_post_datasets(
     metadatas = [
         {
             "pattern": "exp",
-            "data_type": {
-                "domain_kind": "numerical",
-            },
+            "data_type": {"domain_kind": "numerical", "unit": "mole"},
             "description": "speriment measurement",
             "unit": "mole",
         },
