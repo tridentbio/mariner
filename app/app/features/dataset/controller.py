@@ -19,6 +19,7 @@ from app.features.dataset.exceptions import (
 )
 from app.utils import hash_md5
 
+from .stats import get_stats as get_summary
 from ..user.model import User
 from .crud import repo
 from .schema import (
@@ -97,16 +98,18 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         val_size = int(val_size) / 100
         test_size = int(test_size) / 100
 
-        dataset = splitter.split(df, train_size, test_size, val_size)
+        df = splitter.split(df, train_size, test_size, val_size)
 
         dataset_file = io.BytesIO()
-        dataset.to_csv(dataset_file)
+        df.to_csv(dataset_file)
 
         data.file.file = dataset_file
     else:
 
         if data.split_column is None:
-            raise ValueError("Split Column cannot be none due to ScaffoldSplitter")
+            raise ValueError(
+                "Split Column cannot be none due to ScaffoldSplitter"
+            )
 
         splitter = ScaffoldSplitter()
 
@@ -119,12 +122,32 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         val_size = int(val_size) / 100
         test_size = int(test_size) / 100
 
-        dataset = splitter.split(df, data.split_column, train_size, test_size, val_size)
+        df = splitter.split(
+            df,
+            data.split_column,
+            train_size,
+            test_size,
+            val_size
+        )
 
         dataset_file = io.BytesIO()
-        dataset.to_csv(dataset_file)
+        df.to_csv(dataset_file)
 
         data.file.file = dataset_file
+
+    # Detect the smiles column name
+    smiles_column = None
+
+    for col in df.columns:
+        try:
+            validate_smiles_series(df[col])
+            smiles_column = col
+            break
+        except Exception:
+            continue
+
+    if smiles_column:
+        stats = get_summary(df, smiles_column)
 
     data_url = _upload_s3(data.file)
 
@@ -145,8 +168,12 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         columns_metadata=data.columns_metadata,
     )
 
+    if smiles_column:
+        create_obj.stats = stats
+
     dataset = repo.create(db, create_obj)
     dataset = repo.get(db, dataset.id)
+
     return dataset
 
 
@@ -219,7 +246,9 @@ def update_dataset(
         else:
 
             if data.split_column is None:
-                raise ValueError("Split Column cannot be none due to ScaffoldSplitter")
+                raise ValueError(
+                    "Split Column cannot be none due to ScaffoldSplitter"
+                )
 
             splitter = ScaffoldSplitter()
             file_bytes = data.file.file.read()
@@ -239,6 +268,23 @@ def update_dataset(
             data.file.file = dataset_file
 
         update.data_url = _upload_s3(data.file)
+
+        # Detect the smiles column name
+        smiles_column = None
+
+        for col in df.columns:
+            try:
+                validate_smiles_series(df[col])
+                smiles_column = col
+                break
+            except Exception:
+                continue
+
+        if smiles_column:
+            stats = get_summary(dataset, smiles_column)
+
+        if smiles_column:
+            update.stats = stats
 
     update.id = dataset_id
     saved = repo.update(db, existingdataset, update)
@@ -265,7 +311,9 @@ def validate_smiles(smiles: str) -> str:
         try:
             Chem.SanitizeMol(mol)
         except:  # noqa: E722
-            raise ValueError(f'SMILES "{smiles}" does not have valid chemistry.')
+            raise ValueError(
+                f'SMILES "{smiles}" does not have valid chemistry.'
+            )
     return smiles
 
 
