@@ -173,8 +173,17 @@ def get_stats(dataset: pd.DataFrame, smiles_column: str):
     stats = {}
 
     stats['full'] = get_dataset_summary(dataset, smiles_column)
-    stats['train'] = get_dataset_summary(dataset[dataset['step'] == 'train'])
-    stats['test'] = get_dataset_summary(dataset[dataset['step'] == 'test'])
-    stats['val'] = get_dataset_summary(dataset[dataset['val'] == 'val'])
+    stats['train'] = get_dataset_summary(
+        dataset[dataset['step'] == 'train'],
+        smiles_column
+    )
+    stats['test'] = get_dataset_summary(
+        dataset[dataset['step'] == 'test'],
+        smiles_column
+    )
+    stats['val'] = get_dataset_summary(
+        dataset[dataset['val'] == 'val'],
+        smiles_column
+    )
 
     return stats
