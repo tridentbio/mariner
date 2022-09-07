@@ -8,6 +8,7 @@ from pydantic import Field, ValidationError, root_validator
 from app.features.dataset.schema import (
     CategoricalDataType,
     NumericalDataType,
+    QuantityDataType,
     SmileDataType,
     StringDataType,
 )
@@ -46,7 +47,11 @@ class Tuple(str):
 class ColumnConfig(ApiBaseModel):
     name: str
     data_type: Union[
-        NumericalDataType, StringDataType, SmileDataType, CategoricalDataType
+        QuantityDataType,
+        NumericalDataType,
+        StringDataType,
+        SmileDataType,
+        CategoricalDataType,
     ] = Field(...)
 
 
