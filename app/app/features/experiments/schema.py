@@ -7,14 +7,14 @@ from app.schemas.api import ApiBaseModel
 
 
 class TrainingRequest(ApiBaseModel):
-    name: str
+    name: Optional[str]
     model_version_id: int
     learning_rate: float
     epochs: int
 
 
 class Experiment(ApiBaseModel):
-    name: Optional[str]
+    experiment_name: Optional[str]
     model_version_id: int
     model_version: ModelVersion
     created_at: datetime
