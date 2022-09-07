@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pint
 
@@ -11,7 +11,7 @@ class Unit(ApiBaseModel):
     latex: str
 
 
-def make_api_unit_from_pint_unit(punit: pint.Unit) -> Unit:
+def make_api_unit_from_pint_unit(punit: Union[pint.Quantity, pint.Unit]) -> Unit:
     return Unit(
         name=punit._repr_html_(),
         latex=punit._repr_latex_(),
@@ -22,12 +22,17 @@ def make_api_unit_from_pint_unit(punit: pint.Unit) -> Unit:
 def get_units():
     """Gets all units from the registry. There are around 1000 by default"""
     result: List[Unit] = []
+    _used = {}
     ureg = pint.UnitRegistry()
     for key in ureg:
         try:
             pint_attr = getattr(ureg, key)
-            if isinstance(pint_attr, pint.Unit):
+            if (
+                isinstance(pint_attr, pint.Unit)
+                and pint_attr._repr_html_() not in _used
+            ):
                 result.append(make_api_unit_from_pint_unit(pint_attr))
+                _used[pint_attr._repr_html_()] = True
         except pint.errors.UndefinedUnitError:
             continue
 
@@ -43,6 +48,6 @@ def valid_unit(unit: str) -> Optional[Unit]:
     ureg = pint.UnitRegistry()
     try:
         quantity = ureg(unit)
-        return make_api_unit_from_pint_unit(quantity.unit)
+        return make_api_unit_from_pint_unit(quantity)
     except pint.errors.UndefinedUnitError:
         return None
