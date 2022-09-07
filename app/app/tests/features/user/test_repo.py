@@ -1,4 +1,5 @@
 from fastapi.encoders import jsonable_encoder
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from app.core.security import verify_password
@@ -10,7 +11,7 @@ from app.tests.utils.utils import random_email, random_lower_string
 def test_create_user(db: Session) -> None:
     email = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=email, password=password)
+    user_in = UserCreate(email=EmailStr(email), password=password)
     user = repo.create(db, obj_in=user_in)
     assert user.email == email
     assert hasattr(user, "hashed_password")
@@ -19,7 +20,7 @@ def test_create_user(db: Session) -> None:
 def test_authenticate_user(db: Session) -> None:
     email = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=email, password=password)
+    user_in = UserCreate(email=EmailStr(email), password=password)
     user = repo.create(db, obj_in=user_in)
     authenticated_user = repo.authenticate(db, email=email, password=password)
     assert authenticated_user
@@ -36,7 +37,7 @@ def test_not_authenticate_user(db: Session) -> None:
 def test_check_if_user_is_active(db: Session) -> None:
     email = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=email, password=password)
+    user_in = UserCreate(email=EmailStr(email), password=password)
     user = repo.create(db, obj_in=user_in)
     is_active = repo.is_active(user)
     assert is_active is True
@@ -45,7 +46,7 @@ def test_check_if_user_is_active(db: Session) -> None:
 def test_check_if_user_is_active_inactive(db: Session) -> None:
     email = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=email, password=password, disabled=True)
+    user_in = UserCreate(email=email, password=password)
     user = repo.create(db, obj_in=user_in)
     is_active = repo.is_active(user)
     assert is_active
@@ -54,7 +55,7 @@ def test_check_if_user_is_active_inactive(db: Session) -> None:
 def test_check_if_user_is_superuser(db: Session) -> None:
     email = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=email, password=password, is_superuser=True)
+    user_in = UserCreate(email=EmailStr(email), password=password, is_superuser=True)
     user = repo.create(db, obj_in=user_in)
     is_superuser = repo.is_superuser(user)
     assert is_superuser is True
@@ -63,7 +64,7 @@ def test_check_if_user_is_superuser(db: Session) -> None:
 def test_check_if_user_is_superuser_normal_user(db: Session) -> None:
     username = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=username, password=password)
+    user_in = UserCreate(email=EmailStr(username), password=password)
     user = repo.create(db, obj_in=user_in)
     is_superuser = repo.is_superuser(user)
     assert is_superuser is False
@@ -72,7 +73,7 @@ def test_check_if_user_is_superuser_normal_user(db: Session) -> None:
 def test_get_user(db: Session) -> None:
     password = random_lower_string()
     username = random_email()
-    user_in = UserCreate(email=username, password=password, is_superuser=True)
+    user_in = UserCreate(email=EmailStr(username), password=password, is_superuser=True)
     user = repo.create(db, obj_in=user_in)
     user_2 = repo.get(db, id=user.id)
     assert user_2
@@ -83,7 +84,7 @@ def test_get_user(db: Session) -> None:
 def test_update_user(db: Session) -> None:
     password = random_lower_string()
     email = random_email()
-    user_in = UserCreate(email=email, password=password, is_superuser=True)
+    user_in = UserCreate(email=EmailStr(email), password=password, is_superuser=True)
     user = repo.create(db, obj_in=user_in)
     new_password = random_lower_string()
     user_in_update = UserUpdate(password=new_password, is_superuser=True)

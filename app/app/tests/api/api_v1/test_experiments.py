@@ -1,3 +1,4 @@
+import pytest
 from fastapi import status
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_200_OK
@@ -8,6 +9,7 @@ from app.features.experiments.schema import Experiment
 from app.tests.conftest import get_test_user
 
 
+@pytest.mark.long
 def test_post_experiments(
     client: TestClient, mocked_experiment_payload: dict, normal_user_token_headers
 ):

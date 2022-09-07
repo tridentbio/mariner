@@ -11,7 +11,7 @@ dataset:
         domainKind: smiles
     - name: mwt
       dataType:
-        domainKind: numerical
+        domainKind: numeric
 
 featurizers:
   - name: MolToGraphFeaturizer

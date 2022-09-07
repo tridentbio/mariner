@@ -25,7 +25,7 @@ def test_create_dataset(db: Session):
             ),
             ColumnsDescription(
                 pattern="exp",
-                data_type=QuantityDataType(unit="mole", domain_kind="numerical"),
+                data_type=QuantityDataType(unit="mole", domain_kind="numeric"),
                 description="exp id",
             ),
             ColumnsDescription(

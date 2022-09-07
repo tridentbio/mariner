@@ -44,6 +44,7 @@ async def test_add_task_remove_when_done(
 
 
 @pytest.mark.asyncio
+@pytest.mark.long
 async def test_start_training(
     db: Session,
     some_dataset: Dataset,

@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from typing import Dict
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 from starlette import status
@@ -24,6 +25,7 @@ def test_get_my_datasets(
     assert isinstance(payload["data"], list)
 
 
+@pytest.mark.long
 def test_post_datasets(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -32,7 +34,7 @@ def test_post_datasets(
     metadatas = [
         {
             "pattern": "exp",
-            "data_type": {"domain_kind": "numerical", "unit": "mole"},
+            "data_type": {"domain_kind": "numeric", "unit": "mole"},
             "description": "speriment measurement",
             "unit": "mole",
         },
@@ -165,7 +167,7 @@ def test_get_csv_metadata(
         assert {
             "name": "exp",
             "dtype": {
-                "domainKind": "numerical",
+                "domainKind": "numeric",
             },
         } in cols
         assert {

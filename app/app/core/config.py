@@ -54,7 +54,7 @@ class Settings(BaseSettings):
             scheme="postgresql",
             user=values.get("POSTGRES_USER"),
             password=values.get("POSTGRES_PASSWORD"),
-            host=values.get("POSTGRES_SERVER"),
+            host=values.get("POSTGRES_SERVER") or "localhost",
             path=f"/{values.get('POSTGRES_DB') or ''}",
         )
 

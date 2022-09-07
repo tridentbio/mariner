@@ -39,12 +39,12 @@ def zinc_extra_dataset(db: Session) -> Generator[Dataset, None, None]:
         ),
         ColumnsDescription(
             pattern="mwt",
-            data_type=QuantityDataType(domain_kind="numerical", unit="mole"),
+            data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
             description="Molecular Weigth",
         ),
         ColumnsDescription(
             pattern="tpsa",
-            data_type=QuantityDataType(domain_kind="numerical", unit="mole"),
+            data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
             description="T Polar surface",
         ),
         ColumnsDescription(
