@@ -24,6 +24,7 @@ async def test_get_experiments(db: Session, some_model: Model, some_experiments)
 
 
 @pytest.mark.asyncio
+@pytest.mark.long
 async def test_create_model_training(db: Session, some_model: Model):
     user = get_test_user(db)
     version = some_model.versions[-1]

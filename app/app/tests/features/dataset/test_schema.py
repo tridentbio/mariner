@@ -33,7 +33,7 @@ class TestSplit:
 class TestColumnDescription:
     descriptions_fixture = [
         {
-            "data_type": QuantityDataType(unit="mole", domain_kind="numerical"),
+            "data_type": QuantityDataType(unit="mole", domain_kind="numeric"),
             "pattern": "tpsa",
             "description": "TPSA",
         },
@@ -66,14 +66,14 @@ class TestColumnDescription:
             {
                 "pattern": "exp",
                 "dataType": {
-                    "domainKind": "numerical",
+                    "domainKind": "numeric",
                     "unit": "mole"
                 },
                 "description": "experiment measurement"
             }
         """,
             QuantityDataType,
-            "numerical",
+            "numeric",
         ),
         (
             """

@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ class RandomSplitter:
         train_size: float = 0.8,
         test_size: float = 0.15,
         val_size: float = 0.05,
-        seed: int = None,
+        seed: Optional[int] = None,
     ):
         np.testing.assert_almost_equal(train_size + val_size + test_size, 1.0)
 
@@ -82,7 +82,7 @@ class ScaffoldSplitter:
         train_size: float = 0.8,
         test_size: float = 0.1,
         val_size: float = 0.1,
-        seed: int = None,
+        seed: Optional[int] = None,
     ):
         np.testing.assert_almost_equal(train_size + test_size + val_size, 1.0)
         scaffold_sets = self.generate_scaffolds(dataset, smiles_column)

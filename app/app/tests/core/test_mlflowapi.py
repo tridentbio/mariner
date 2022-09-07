@@ -23,6 +23,7 @@ def mlflow_model():
     client.delete_registered_model(model.name)
 
 
+@pytest.mark.long
 def test_create_deployment(mlflow_model: RegisteredModel):
     version = mlflow_model.latest_versions[-1].version
     model_uri = f"models:/{mlflow_model.name}/{version}"

@@ -19,7 +19,6 @@ from app.features.dataset.exceptions import (
 )
 from app.utils import hash_md5
 
-from .stats import get_stats as get_summary
 from ..user.model import User
 from .crud import repo
 from .schema import (
@@ -35,6 +34,7 @@ from .schema import (
     SmileDataType,
     StringDataType,
 )
+from .stats import get_stats as get_summary
 from .utils import get_stats
 
 DATASET_BUCKET = settings.AWS_DATASETS
@@ -107,9 +107,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     else:
 
         if data.split_column is None:
-            raise ValueError(
-                "Split Column cannot be none due to ScaffoldSplitter"
-            )
+            raise ValueError("Split Column cannot be none due to ScaffoldSplitter")
 
         splitter = ScaffoldSplitter()
 
@@ -122,13 +120,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         val_size = int(val_size) / 100
         test_size = int(test_size) / 100
 
-        df = splitter.split(
-            df,
-            data.split_column,
-            train_size,
-            test_size,
-            val_size
-        )
+        df = splitter.split(df, data.split_column, train_size, test_size, val_size)
 
         dataset_file = io.BytesIO()
         df.to_csv(dataset_file)
@@ -243,9 +235,7 @@ def update_dataset(
         else:
 
             if data.split_column is None:
-                raise ValueError(
-                    "Split Column cannot be none due to ScaffoldSplitter"
-                )
+                raise ValueError("Split Column cannot be none due to ScaffoldSplitter")
 
             splitter = ScaffoldSplitter()
             file_bytes = data.file.file.read()
@@ -301,7 +291,7 @@ def validate_smiles(smiles: str) -> str:
     try:
         mol = Chem.MolFromSmiles(smiles, sanitize=False)
     except Exception:
-        raise ValueError(f'Type of SMILES {type(smiles)} must be a string.')
+        raise ValueError(f"Type of SMILES {type(smiles)} must be a string.")
 
     if mol is None:
         raise ValueError(f'SMILES "{smiles}" is not syntacticaly valid.')
@@ -309,9 +299,7 @@ def validate_smiles(smiles: str) -> str:
         try:
             Chem.SanitizeMol(mol)
         except:  # noqa: E722
-            raise ValueError(
-                f'SMILES "{smiles}" does not have valid chemistry.'
-            )
+            raise ValueError(f'SMILES "{smiles}" does not have valid chemistry.')
 
     return smiles
 
@@ -327,7 +315,7 @@ def validate_smiles_series(smiles_series: pd.Series) -> bool:
 
 def infer_domain_type_from_series(series: pd.Series):
     if series.dtype == float:
-        return NumericalDataType(domain_kind="numerical")
+        return NumericalDataType(domain_kind="numeric")
     elif series.dtype == object:
         # check if it is smiles
         if validate_smiles_series(series):

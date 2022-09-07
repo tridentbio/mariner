@@ -65,11 +65,11 @@ class DatasetsQuery(PaginatedApiQuery):
 
 
 class NumericalDataType(ApiBaseModel):
-    domain_kind: Literal["numerical"] = Field("numerical")
+    domain_kind: Literal["numeric"] = Field("numeric")
 
     @validator("domain_kind")
     def check_domain_kind(cls, v):
-        return "numerical"
+        return "numeric"
 
 
 class QuantityDataType(NumericalDataType):

@@ -20,7 +20,7 @@ class TestDatasetCRUD:
             "columns": 10,
             "bytes": 100,
             "columnsMetadata": [
-                {"pattern": "abc", "dataType": "numerical", "description": "abc"}
+                {"pattern": "abc", "dataType": "numeric", "description": "abc"}
             ],
         }
         update_dataset_obj = DatasetUpdateRepo(**update_data)

@@ -85,7 +85,6 @@ def update_user_me(
 # TODO: pass to MVC layer structure
 @router.get("/me", response_model=schemas.User)
 def read_user_me(
-    db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
@@ -143,13 +142,16 @@ def read_user_by_id(
 
 
 # TODO: pass to MVC layer structure
-@router.put("/{user_id}", response_model=schemas.User)
+@router.put(
+    "/{user_id}",
+    response_model=schemas.User,
+    dependencies=[Depends(deps.get_current_active_superuser)],
+)
 def update_user(
     *,
     db: Session = Depends(deps.get_db),
     user_id: int,
     user_in: schemas.UserUpdate,
-    current_user: User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
     Update a user.

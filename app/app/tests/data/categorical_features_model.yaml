@@ -5,7 +5,7 @@ dataset:
   targetColumn: 
     name: mwt
     dataType:
-      domainKind: numerical
+      domainKind: numeric
   featureColumns:
     - name: smiles
       dataType:
