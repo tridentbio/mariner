@@ -12,10 +12,12 @@ EventSource = Literal["training:completed"]
 class EventReadEntity(Base):
     """Represents the user marked an event as read"""
 
-    event_id = Column(Integer, ForeignKey("event.id"), primary_key=True)
+    event_id = Column(
+        Integer, ForeignKey("event.id", ondelete="CASCADE"), primary_key=True
+    )
     user_id = Column(Integer, ForeignKey("user.id"), primary_key=True)
     created_at = Column(DateTime, server_default=current_timestamp())
-    event = relationship("EventEntity", back_populates="reads")
+    event = relationship("EventEntity")
 
 
 class EventEntity(Base):
@@ -34,7 +36,6 @@ class EventEntity(Base):
     timestamp = Column(DateTime, nullable=False)
     source = Column(String, nullable=False)
     payload = Column(JSON, nullable=True)
-    reads = relationship("EventReadEntity")
 
     @validates("source")
     def validate_source(self, key, source):
