@@ -125,11 +125,17 @@ def get_dataset_summary(dataset: pd.DataFrame, smiles_column: str):
 
     # Iterate over column and calculate the
     # distributions for each int or float column
+    # If the column is of any other type, an empty
+    # stats obj is created, because the keys of
+    # the stats summary object is used to get the
+    # complete array of colums of the dataset
     for column, dtype in dataset.dtypes.items():
         if np.issubdtype(dtype, float):
             statistics[column] = {"hist": create_float_histogram(dataset[column], 15)}
         elif np.issubdtype(dtype, int):
             statistics[column] = {"hist": create_int_histogram(dataset[column], 15)}
+        else:
+            statistics[column] = {}
 
     # Calculate and compute chemical stats for smile column
     (
