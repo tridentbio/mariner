@@ -70,17 +70,19 @@ class AppLogger(LightningLoggerBase):
                 json=data,
                 headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
             )
-            assert res.status_code == 200, (
-                "Failed to log metrics to the backend got"
-                f"status_code == {res.status_code}"
-            )
-        except (requests.ConnectionError, requests.ConnectTimeout) as exp:
+            if res.status_code != 200:
+                logging.warning(
+                    "POST %s failed with status %s",
+                    f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics",
+                    res.status_code,
+                )
+
+        except (requests.ConnectionError, requests.ConnectTimeout):
             logging.error(
                 f"Failed logging metrics to {settings.SERVER_HOST}/api/v1/experiments"
                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
                 "the ray services, and that it points to the mariner backend"
             )
-            raise exp
 
         self.last_sent_at = time.time()
 
