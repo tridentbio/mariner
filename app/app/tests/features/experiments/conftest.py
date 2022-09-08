@@ -8,32 +8,8 @@ from app.features.experiments.crud import repo as experiments_repo
 from app.features.experiments.model import Experiment as ExperimentEntity
 from app.features.experiments.schema import Experiment
 from app.features.model.schema.model import Model, ModelVersion
-from app.tests.conftest import get_test_user
+from app.tests.conftest import get_test_user, mock_experiment
 from app.tests.utils.utils import random_lower_string
-
-
-def mock_experiment(
-    version: ModelVersion,
-    user_id: int,
-    stage: Optional[Literal["started", "success"]] = None,
-):
-    create_obj = ExperimentCreateRepo(
-        epochs=1,
-        mlflow_id=random_lower_string(),
-        created_by_id=user_id,
-        model_version_id=version.id,
-    )
-    if stage == "started":
-        pass  # create_obj is ready
-    elif stage == "success":
-        create_obj.history = {
-            "train_loss": [300.3, 210.9, 160.8, 130.3, 80.4, 50.1, 20.0]
-        }
-        create_obj.train_metrics = {"train_loss": 200.3}
-        create_obj.stage = "SUCCESS"
-    else:
-        raise NotImplementedError()
-    return create_obj
 
 
 @pytest.fixture(scope="function")
@@ -87,5 +63,4 @@ def some_experiments(
     db.query(ExperimentEntity).filter(
         ExperimentEntity.id.in_([exp.id for exp in exps])
     ).delete()
-
     db.flush()

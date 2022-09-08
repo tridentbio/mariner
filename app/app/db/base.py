@@ -2,6 +2,7 @@
 # imported by Alembic
 from app.db.base_class import Base  # noqa
 from app.features.dataset.model import ColumnsMetadata, Dataset  # noqa
+from app.features.events.event_model import EventEntity  # noqa
 from app.features.experiments.model import Experiment  # noqa
 from app.features.model.deployments.model import Deployment  # noqa
 from app.features.model.model import (  # noqa

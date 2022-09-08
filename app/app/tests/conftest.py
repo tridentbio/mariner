@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Generator, Optional
+from typing import Dict, Generator, Literal, Optional
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,13 +10,24 @@ from app.core.aws import Bucket, delete_s3_file
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.features.dataset.model import Dataset
+from app.features.experiments.crud import ExperimentCreateRepo
+from app.features.experiments.crud import repo as experiments_repo
+from app.features.experiments.model import Experiment as ExperimentEntity
+from app.features.experiments.schema import Experiment
 from app.features.model.schema.configs import ModelConfig
+from app.features.model.schema.model import Model, ModelVersion
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
 from app.main import app
-from app.tests.features.model.conftest import setup_create_model
+from app.tests.features.model.conftest import (
+    setup_create_model,
+    teardown_create_model,
+)
 from app.tests.utils.user import authentication_token_from_email
-from app.tests.utils.utils import get_superuser_token_headers
+from app.tests.utils.utils import (
+    get_superuser_token_headers,
+    random_lower_string,
+)
 
 
 @pytest.fixture(scope="session")
@@ -139,7 +150,7 @@ def some_model(
 ):
     model = setup_create_model(client, normal_user_token_headers, some_dataset)
     yield model
-    # teardown_create_model(db, model)
+    teardown_create_model(db, model)
 
 
 def mock_dataset_item():
@@ -169,3 +180,46 @@ def model_config() -> Generator[ModelConfig, None, None]:
     path = "app/tests/data/test_model_hard.yaml"
     with open(path, "rb") as f:
         yield ModelConfig.from_yaml(f.read())
+
+
+def mock_experiment(
+    version: ModelVersion,
+    user_id: int,
+    stage: Optional[Literal["started", "success"]] = None,
+):
+    create_obj = ExperimentCreateRepo(
+        epochs=1,
+        mlflow_id=random_lower_string(),
+        created_by_id=user_id,
+        model_version_id=version.id,
+    )
+    if stage == "started":
+        pass  # create_obj is ready
+    elif stage == "success":
+        create_obj.history = {
+            "train_loss": [300.3, 210.9, 160.8, 130.3, 80.4, 50.1, 20.0]
+        }
+        create_obj.train_metrics = {"train_loss": 200.3}
+        create_obj.stage = "SUCCESS"
+    else:
+        raise NotImplementedError()
+    return create_obj
+
+
+@pytest.fixture(scope="module")
+def some_experiments(db, some_model: Model):
+    db.commit()
+    user = get_test_user(db)
+    version = some_model.versions[-1]
+    exps = [
+        Experiment.from_orm(
+            experiments_repo.create(
+                db, obj_in=mock_experiment(version, user.id, stage="started")
+            )
+        )
+        for _ in range(3)
+    ]
+    yield exps
+    ids = [exp.id for exp in exps]
+    db.query(ExperimentEntity).filter(ExperimentEntity.id.in_(ids)).delete()
+    db.flush()

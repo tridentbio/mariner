@@ -12,26 +12,6 @@ from app.tests.features.experiments.conftest import mock_experiment
 from app.tests.utils.utils import random_lower_string
 
 
-@pytest.fixture(scope="function")
-def some_experiments(db, some_model: Model):
-    db.commit()
-    user = get_test_user(db)
-    version = some_model.versions[-1]
-    exps = [
-        Experiment.from_orm(
-            experiments_repo.create(
-                db, obj_in=mock_experiment(version, user.id, stage="started")
-            )
-        )
-        for _ in range(3)
-    ]
-    yield exps
-    # yield [Experiment.from_orm(exp) for exp in exps ]
-    ids = [exp.id for exp in exps]
-    db.query(ExperimentEntity).filter(ExperimentEntity.id.in_(ids)).delete()
-    db.commit()
-
-
 @pytest.fixture(scope="module")
 def mocked_experiment_payload(some_model: Model):
     experiment_name = random_lower_string()
