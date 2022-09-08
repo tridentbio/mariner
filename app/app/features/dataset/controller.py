@@ -127,6 +127,8 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
 
         data.file.file = dataset_file
 
+    data_url = _upload_s3(data.file)
+
     # Detect the smiles column name
     smiles_column = None
 
@@ -137,8 +139,6 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
 
     if smiles_column:
         stats = get_summary(df, smiles_column)
-
-    data_url = _upload_s3(data.file)
 
     create_obj = DatasetCreateRepo(
         columns=columns,
