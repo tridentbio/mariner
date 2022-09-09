@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Query, Session
 
 from app.crud.base import CRUDBase
 from app.features.events.event_model import (
@@ -11,7 +11,6 @@ from app.features.events.event_model import (
     EventReadEntity,
     EventSource,
 )
-from app.features.user.model import User as UserEntity
 
 
 class EventCreateRepo(BaseModel):
@@ -26,20 +25,43 @@ class EventUpdateRepo(BaseModel):
 
 
 class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, EventUpdateRepo]):
+    def _is_event_to_user(self, query: Query, user_id: int):
+        return query.filter(
+            or_(EventEntity.user_id.is_(None), EventEntity.user_id == user_id)
+        )
+
+    def _with_reads_join(self, q: Query):
+        return q.join(
+            EventReadEntity, EventReadEntity.event_id == EventEntity.id, isouter=True
+        )
+
+    def _filter_unread(self, q: Query):
+        return q.filter(EventReadEntity.event_id.is_(None))
+
     def get_events_by_source(
         self, db: Session, user_id: int
     ) -> Dict[EventSource, List[EventEntity]]:
         """
-        Gets the events of a user grouped by source
+        Gets the unread events of a user grouped by source
         """
-        return {}
 
-    def get_from_user(self, db: Session, user: UserEntity) -> List[EventEntity]:
-        return (
-            db.query(EventEntity)
-            .filter(or_(EventEntity.user_id.is_(None), EventEntity.user_id == user.id))
-            .all()
-        )
+        query = self._with_reads_join(db.query(EventEntity))
+        query = self._is_event_to_user(query, user_id=user_id)
+        query = self._filter_unread(query)
+        events: List[EventEntity] = query.all()
+        grouped = {}
+        for event in events:
+            if event.source not in grouped:
+                grouped[event.source] = [event]
+            else:
+                grouped[event.source].append(event)
+        return grouped
+
+    def get_to_user(self, db: Session, user_id: int) -> List[EventEntity]:
+        """Gets global (where user_id is null) and personal notifications of a user"""
+        query = db.query(EventEntity)
+        query = self._is_event_to_user(query, user_id)
+        return query.all()
 
     def update_read(self, db: Session, dbobjs: List[EventEntity], user_id: int) -> int:
         event_ids = [dbobj.id for dbobj in dbobjs]
