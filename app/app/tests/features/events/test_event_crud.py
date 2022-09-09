@@ -35,9 +35,7 @@ class TestEventCrud:
 
     def test_get_event_by_source(self, events_fixture, db: Session):
         user = get_test_user(db)
-        print(repr([evt.source for evt in events_fixture]))
         events_by_source = events_repo.get_events_by_source(db, user.id)
-        print(events_by_source["training:completed"])
 
         def _get(source: str):
             return [evt for evt in events_fixture if evt.source == source]
