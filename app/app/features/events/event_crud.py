@@ -58,7 +58,7 @@ class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, EventUpdateRepo]):
         return grouped
 
     def get_to_user(self, db: Session, user_id: int) -> List[EventEntity]:
-        """Gets global (where user_id is null) and personal notifications of a user"""
+        """Gets global (where user_id is null) and personal events of a user"""
         query = db.query(EventEntity)
         query = self._is_event_to_user(query, user_id)
         return query.all()
