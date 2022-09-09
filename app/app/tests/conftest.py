@@ -189,6 +189,7 @@ def mock_experiment(
 ):
     create_obj = ExperimentCreateRepo(
         epochs=1,
+        experiment_name=random_lower_string(),
         mlflow_id=random_lower_string(),
         created_by_id=user_id,
         model_version_id=version.id,

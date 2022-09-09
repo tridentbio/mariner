@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from sqlalchemy.orm import Session
 
@@ -18,9 +18,13 @@ class EventsbySource(ApiBaseModel):
 
 def build_message(source: EventSource, events: List[EventEntity]) -> str:
     if source == "training:completed":
+        assert len(events) > 0, "events argument cannot be empty"
         last_event = events[-1]
-        experiment_name = dict(last_event.payload)["experiment_name"]
-        and_others = " and other {len(events)-1}" if len(events) > 1 else ""
+        experiment_name = last_event.payload["experiment_name"]
+        if len(events) == 2:
+            and_others = f' and "{events[0].payload["experiment_name"]}"'
+        else:
+            and_others = f" and {len(events)-1} others" if len(events) > 1 else ""
         return f'Training "{experiment_name}"{and_others} completed'
     raise NotImplemented(f'No message building for source = "{source}"')
 
@@ -37,11 +41,11 @@ def get_events_from_user(db: Session, user: UserEntity):
     return payload
 
 
-def set_events_read(db: Session, user: UserEntity, event_ids: List[int]) -> List[int]:
+def set_events_read(db: Session, user: UserEntity, event_ids: List[int]) -> int:
     """Sets the read flag on the notifications.
     Returns a list of succesfully updated events"""
     events = [
-        event for event in events_repo.get_from_user(db, user) if event.id in event_ids
+        event for event in events_repo.get_to_user(db, user.id) if event.id in event_ids
     ]
     updated_count = events_repo.update_read(db, events, user.id)
     return updated_count
@@ -53,12 +57,14 @@ class EventCreate(ApiBaseModel):
     user_id: Optional[int]
     timestamp: datetime
     source: Literal["training:completed"]
+    payload: Dict[str, Any]
 
 
 def create_event(db: Session, event: EventCreate):
     """Used by other controllers to register some event"""
     values = event.dict()
-    event = events_repo.create(db, EventCreateRepo.construct(**values))
+    creation_obj = EventCreateRepo.construct(**values)
+    event = events_repo.create(db, obj_in=creation_obj)
     if not event:
         raise RuntimeError("event was not created")
     return Event.from_orm(event)

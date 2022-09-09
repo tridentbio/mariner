@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from app.features.events.event_model import EventSource
 from app.schemas.api import ApiBaseModel
@@ -10,3 +10,4 @@ class Event(ApiBaseModel):
     user_id: Optional[int]
     source: EventSource
     timestamp: datetime
+    payload: Dict[str, Any]

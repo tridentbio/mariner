@@ -40,4 +40,6 @@ class EventEntity(Base):
     @validates("source")
     def validate_source(self, key, source):
         valid_event_sources = ["training:completed"]
-        return source in valid_event_sources
+        if not source in valid_event_sources:
+            raise ValueError(f"Invalid source for EventEntity {source}")
+        return source
