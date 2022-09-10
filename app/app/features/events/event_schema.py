@@ -11,3 +11,4 @@ class Event(ApiBaseModel):
     source: EventSource
     timestamp: datetime
     payload: Dict[str, Any]
+    url: Optional[str]

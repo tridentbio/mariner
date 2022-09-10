@@ -1,5 +1,6 @@
 import logging
 from asyncio.tasks import Task
+from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 import mlflow
@@ -10,7 +11,9 @@ from sqlalchemy.orm.session import Session
 
 from app.api.websocket import WebSocketMessage, get_websockets_manager
 from app.builder.dataset import DataModule
+from app.core.config import settings
 from app.features.dataset.crud import repo as dataset_repo
+from app.features.events.events_ctl import EventCreate
 from app.features.experiments.crud import (
     ExperimentCreateRepo,
     ExperimentUpdateRepo,
@@ -141,6 +144,22 @@ def log_metrics(
         update_obj.train_metrics = metrics
 
     experiments_repo.update(db, db_obj=experiment_db, obj_in=update_obj)
+    from app.features.events import events_ctl
+
+    model = experiment_db.model_version.model
+    events_ctl.create_event(
+        db,
+        EventCreate(
+            source="training:completed",
+            user_id=experiment_db.created_by_id,
+            timestamp=datetime.now(),
+            payload={
+                "id": experiment_db.id,
+                "experiment_name": experiment_db.experiment_name,
+            },
+            url=f"{settings.WEBAPP_URL}/models/{model.id}#training",
+        ),
+    )
 
 
 def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]):

@@ -4,6 +4,7 @@ from app.api.api_v1.endpoints import (
     data,
     datasets,
     deployment,
+    events,
     experiments,
     login,
     model,
@@ -26,6 +27,7 @@ api_router.include_router(
     experiments.router, prefix="/experiments", tags=["experiments"]
 )
 api_router.include_router(units.router, prefix="/units", tags=["units"])
+api_router.include_router(events.router, prefix="/events", tags=["events"])
 
 
 # Legacy from template

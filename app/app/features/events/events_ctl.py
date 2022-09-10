@@ -14,6 +14,7 @@ class EventsbySource(ApiBaseModel):
     source: EventSource
     total: int
     message: str
+    events: List[Event]
 
 
 def build_message(source: EventSource, events: List[EventEntity]) -> str:
@@ -34,7 +35,10 @@ def get_events_from_user(db: Session, user: UserEntity):
     events_grouped = events_repo.get_events_by_source(db, user.id)
     payload: List[EventsbySource] = [
         EventsbySource(
-            source=key, total=len(events), message=build_message(key, events)
+            source=key,
+            total=len(events),
+            message=build_message(key, events),
+            events=[Event.from_orm(evt) for evt in events],
         )
         for key, events in events_grouped.items()
     ]
@@ -58,13 +62,14 @@ class EventCreate(ApiBaseModel):
     timestamp: datetime
     source: Literal["training:completed"]
     payload: Dict[str, Any]
+    url: Optional[str]
 
 
 def create_event(db: Session, event: EventCreate):
     """Used by other controllers to register some event"""
     values = event.dict()
     creation_obj = EventCreateRepo.construct(**values)
-    event = events_repo.create(db, obj_in=creation_obj)
+    newevent = events_repo.create(db, obj_in=creation_obj)
     if not event:
         raise RuntimeError("event was not created")
-    return Event.from_orm(event)
+    return Event.from_orm(newevent)

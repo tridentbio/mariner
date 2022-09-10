@@ -36,6 +36,7 @@ class EventEntity(Base):
     timestamp = Column(DateTime, nullable=False)
     source = Column(String, nullable=False)
     payload = Column(JSON, nullable=True)
+    url = Column(String, nullable=True)
 
     @validates("source")
     def validate_source(self, key, source):
