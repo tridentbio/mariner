@@ -18,6 +18,7 @@ class EventCreateRepo(BaseModel):
     user_id: Optional[int]
     timestamp: datetime
     payload: Any
+    url: Optional[str]
 
 
 class EventUpdateRepo(BaseModel):
