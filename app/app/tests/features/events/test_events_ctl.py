@@ -68,5 +68,3 @@ def test_create_event(db: Session):
     assert event.payload == event_payload
 
 
-def test_events_are_created_when_training_completes():
-    ...
