@@ -33,9 +33,6 @@ def post_events_read(
     db: Session = Depends(deps.get_db),
     user: User = Depends(deps.get_current_active_user),
 ):
-    import logging
-
-    logging.error(read_request)
     return EventsReadResponse(
         total=events_ctl.set_events_read(db, user, read_request.event_ids)
     )
