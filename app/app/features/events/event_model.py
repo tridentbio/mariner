@@ -6,7 +6,7 @@ from sqlalchemy.sql.functions import current_timestamp
 
 from app.db.base_class import Base
 
-EventSource = Literal["training:completed"]
+EventSource = Literal["training:completed", "changelog"]
 
 
 class EventReadEntity(Base):
@@ -40,7 +40,7 @@ class EventEntity(Base):
 
     @validates("source")
     def validate_source(self, key, source):
-        valid_event_sources = ["training:completed"]
+        valid_event_sources = ["changelog", "training:completed"]
         if source not in valid_event_sources:
             raise ValueError(f"Invalid source for EventEntity {source}")
         return source

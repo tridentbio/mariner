@@ -58,11 +58,11 @@ def set_events_read(db: Session, user: UserEntity, event_ids: List[int]) -> int:
 class EventCreate(ApiBaseModel):
     """A payload to describe a new event"""
 
-    user_id: Optional[int]
+    user_id: Optional[int] = None
     timestamp: datetime
-    source: Literal["training:completed"]
+    source: Literal["training:completed", "changelog"]
     payload: Dict[str, Any]
-    url: Optional[str]
+    url: Optional[str] = None
 
 
 def create_event(db: Session, event: EventCreate):
