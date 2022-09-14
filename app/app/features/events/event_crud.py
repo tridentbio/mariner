@@ -86,5 +86,11 @@ class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, EventUpdateRepo]):
         db.commit()
         return updated
 
+    def get(self, db: Session, from_source: Optional[EventSource] = None):
+        query = db.query(EventEntity)
+        if from_source:
+            query = query.filter(EventEntity.source == from_source)
+        return query.all()
+
 
 events_repo = EventCRUD(EventEntity)

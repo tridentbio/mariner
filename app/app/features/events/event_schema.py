@@ -7,8 +7,8 @@ from app.schemas.api import ApiBaseModel
 
 class Event(ApiBaseModel):
     id: int
-    user_id: Optional[int]
+    user_id: Optional[int] = None
     source: EventSource
     timestamp: datetime
     payload: Dict[str, Any]
-    url: Optional[str]
+    url: Optional[str] = None
