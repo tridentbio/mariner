@@ -8,6 +8,25 @@
 
 ## Backend local development
 
+
+### Publishing releases
+A cli tool was made to publish releases from the [RLEASES.md](./RELEASES.md) file.
+
+If on the commit, there is an upgrade to the version in the pyproject, the script will
+detect it, and use it to filter the current release to publish notifications for.
+
+You may use it from the command line for debugging like so:
+```bash
+python -m app.changelog --help
+cat RELEASES.md | python -m app.changelog publish
+```
+
+or from the docker compose
+```bash
+docker-compose run backend python -m app.changelog --help
+cat RELEASES.md | docker-compose run backend python -m app.changelog publish
+```
+
 ### Meeting coding standards
 
 - Install the dependencies in the `app/` folder

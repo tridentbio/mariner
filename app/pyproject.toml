@@ -53,6 +53,9 @@ pytest-cov = "^3.0.0"
 pytest-dotenv = "^0.5.2"
 pytest-timeout = "^2.1.0"
 
+[tool.poetry.group.dev.dependencies]
+click = "8.0.4"
+
 [tool.isort]
 multi_line_output = 3
 include_trailing_comma = true
