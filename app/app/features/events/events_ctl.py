@@ -27,6 +27,8 @@ def build_message(source: EventSource, events: List[EventEntity]) -> str:
         else:
             and_others = f" and {len(events)-1} others" if len(events) > 1 else ""
         return f'Training "{experiment_name}"{and_others} completed'
+    elif source == 'changelog':
+        return 'Checkout what\'s new!'
     raise NotImplemented(f'No message building for source = "{source}"')
 
 
