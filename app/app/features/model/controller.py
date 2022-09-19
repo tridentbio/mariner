@@ -7,6 +7,7 @@ import pandas as pd
 import pytorch_lightning as pl
 import torch
 from sqlalchemy.orm.session import Session
+from app.logger import logger
 
 import app.features.model.layers as mariner_layers
 import torch_geometric
@@ -206,7 +207,12 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
     )
     models = [Model.from_orm(model) for model in models]
     for model in models:
-        model.load_from_mlflow()
+        try:
+            model.load_from_mlflow()
+        except mlflow.exceptions.MlflowException as exp:
+            logger.error("Error while getting model's mlflow data")
+            logger.error(exp)
+
     return models, total
 
 

@@ -1,3 +1,4 @@
+from wonderwords import RandomWord
 import hashlib
 import logging
 from datetime import datetime, timedelta
@@ -132,3 +133,7 @@ def hash_md5(
     else:
         raise TypeError('Either "content" or "fname" should be provided')
     return hash_md5.hexdigest()
+
+
+def random_pretty_name() -> str:
+    return RandomWord().word(word_min_length=4)

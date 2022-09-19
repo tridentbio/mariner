@@ -28,6 +28,7 @@ def test_get_events_from_user(db: Session, events_fixture: List[EventEntity]):
             source="training:completed",
             total=3,
             message=f"",
+            events=[],
         )
     ]
     got = events_ctl.get_events_from_user(db, user)
@@ -66,5 +67,3 @@ def test_create_event(db: Session):
     assert event
     assert event.user_id == user.id
     assert event.payload == event_payload
-
-
