@@ -367,8 +367,23 @@ def test_post_check_config_bad_model(
         assert len(body["stackTrace"].split("\n")) > 1
 
 
+def test_get_name_suggestion(
+    client: TestClient, normal_user_token_headers: dict[str, str]
+):
+    res = client.get(
+        f"{settings.API_V1_STR}/models/name-suggestion",
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert "name" in body
+    assert type(body["name"]) == str
+    assert len(body["name"]) > 4
+
+
 def test_model_versioning():
     """
     Checks if the model versioning mapping between mariner
     models and MLFlow Registry is correct
     """
+    pass

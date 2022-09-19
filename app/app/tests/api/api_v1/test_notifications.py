@@ -53,6 +53,7 @@ async def test_post_read_notifications(
     events_fixture: List[EventEntity],
 ):
     assert len(events_fixture) == 1
+    print(experiments_fixture)
     result = await experiments_fixture
     res = client.get(
         f"{settings.API_V1_STR}/events/report",
@@ -62,12 +63,14 @@ async def test_post_read_notifications(
     body = res.json()
     assert len(body) == 1
     assert body[0]["total"] == 1
+    print("repor", body)
 
     res = client.post(
         f"{settings.API_V1_STR}/events/read",
         headers=normal_user_token_headers,
         json={"eventIds": [event.id for event in events_fixture]},
     )
+    print("read", res.json())
     assert res.status_code == 200
     assert res.json() == {"total": 1}, "POST /events/read doesn't update any event"
 

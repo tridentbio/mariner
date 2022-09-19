@@ -16,6 +16,8 @@ from app.features.model.exceptions import ModelNameAlreadyUsed, ModelNotFound
 from app.features.model.schema.configs import ModelConfig, ModelOptions
 from app.features.model.schema.model import Model, ModelCreate, ModelsQuery
 from app.features.user.model import User
+from app.schemas.api import ApiBaseModel
+from app.utils import random_pretty_name
 
 router = APIRouter()
 
@@ -69,6 +71,19 @@ def get_models(
 def get_model_options():
     model_options = controller.get_model_options()
     return model_options
+
+
+class GetNameSuggestionResponse(ApiBaseModel):
+    name: str
+
+
+@router.get(
+    "/name-suggestion",
+    dependencies=[Depends(deps.get_current_active_user)],
+    response_model=GetNameSuggestionResponse,
+)
+def get_name_suggestion():
+    return GetNameSuggestionResponse(name=random_pretty_name())
 
 
 @router.post("/{model_version_id}/predict", response_model=Any)
