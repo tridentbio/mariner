@@ -155,11 +155,9 @@ def create_model(
             repo.create_model_version(
                 db,
                 version_create=ModelVersionCreateRepo(
-                    mlflow_version=version.version
-                    if isinstance(version.version, str)
-                    else str(version.version),
+                    mlflow_version=str(version.version),
                     model_id=existingmodel.id,
-                    name=f"{mlflow_name}-{version.version}",
+                    name=model_create.config.name,
                     mlflow_model_name=regmodel.name,
                     config=model_create.config,
                 ),
@@ -203,7 +201,11 @@ def create_model_deployment(
 def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
     """Get all registered models"""
     models, total = repo.get_paginated(
-        db, created_by_id=current_user.id, per_page=query.per_page, page=query.page
+        db,
+        created_by_id=current_user.id,
+        per_page=query.per_page,
+        page=query.page,
+        q=query.q,
     )
     models = [Model.from_orm(model) for model in models]
     for model in models:

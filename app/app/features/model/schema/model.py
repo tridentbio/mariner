@@ -8,7 +8,7 @@ from app.builder.model import CustomModel
 from app.features.dataset.schema import Dataset
 from app.features.model.schema.configs import ModelConfig
 from app.features.user.schema import User
-from app.schemas.api import ApiBaseModel, PaginatedApiQuery
+from app.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 
 
 class ModelDeployment(ApiBaseModel):
@@ -22,7 +22,7 @@ class ModelVersion(ApiBaseModel):
     mlflow_version: str
     mlflow_model_name: str
     config: ModelConfig
-    created_at: datetime
+    created_at: utc_datetime
     updated_at: datetime
 
     def build_torch_model(self):
@@ -89,7 +89,8 @@ class Model(ApiBaseModel):
 
 
 class ModelsQuery(PaginatedApiQuery):
-    pass
+    q: Optional[str] = None
+    dataset_id: Optional[int] = None
 
 
 class ModelCreateRepo(BaseModel):
