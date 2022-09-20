@@ -1,9 +1,8 @@
-from datetime import datetime
 from typing import Dict, List, Optional
 
 from app.features.model.schema.model import ModelVersion
 from app.features.user.schema import User
-from app.schemas.api import ApiBaseModel
+from app.schemas.api import ApiBaseModel, utc_datetime
 
 
 class TrainingRequest(ApiBaseModel):
@@ -17,8 +16,8 @@ class Experiment(ApiBaseModel):
     experiment_name: Optional[str]
     model_version_id: int
     model_version: ModelVersion
-    created_at: datetime
-    updated_at: datetime
+    created_at: utc_datetime
+    updated_at: utc_datetime
     created_by_id: int
     id: int
     mlflow_id: str

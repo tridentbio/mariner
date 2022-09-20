@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from json.decoder import JSONDecodeError
 from typing import Any, Dict, List, Literal, Optional, Union, no_type_check
 
@@ -8,7 +7,7 @@ from pydantic import Field, validator
 from pydantic.main import BaseModel
 
 from app.core.aws import Bucket, download_file_as_dataframe
-from app.schemas.api import ApiBaseModel, PaginatedApiQuery
+from app.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 
 SplitType = Literal["scaffold", "random"]
 
@@ -143,8 +142,8 @@ class DatasetBase(ApiBaseModel):
     split_target: Split
     split_actual: Optional[Split]
     split_type: SplitType
-    created_at: datetime
-    updated_at: datetime
+    created_at: utc_datetime
+    updated_at: utc_datetime
     created_by_id: int
     columns_metadata: List[ColumnsDescription] = []
 

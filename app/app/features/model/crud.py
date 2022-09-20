@@ -33,11 +33,18 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
         return model
 
     def get_paginated(
-        self, db: Session, page: int, per_page: int, created_by_id: Optional[int] = None
+        self,
+        db: Session,
+        page: int,
+        per_page: int,
+        created_by_id: Optional[int] = None,
+        q: Optional[str] = None,
     ) -> tuple[List[Model], int]:
         sql_query = db.query(Model)
         if created_by_id:
             sql_query = sql_query.filter(Model.created_by_id == created_by_id)
+        if q:
+            sql_query = sql_query.filter(Model.name.startswith(q))
         total = sql_query.count()
         sql_query = sql_query.limit(per_page)
         sql_query = sql_query.offset(per_page * page)
