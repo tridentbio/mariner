@@ -101,7 +101,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         df = splitter.split(df, train_size, test_size, val_size)
 
         dataset_file = io.BytesIO()
-        df.to_csv(dataset_file)
+        df.to_csv(dataset_file, index=False)
 
         data.file.file = dataset_file
     else:
@@ -123,7 +123,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         df = splitter.split(df, data.split_column, train_size, test_size, val_size)
 
         dataset_file = io.BytesIO()
-        df.to_csv(dataset_file)
+        df.to_csv(dataset_file, index=False)
 
         data.file.file = dataset_file
 
@@ -227,7 +227,7 @@ def update_dataset(
             dataset = splitter.split(df, train_size, test_size, val_size)
 
             dataset_file = io.BytesIO()
-            dataset.to_csv(dataset_file)
+            dataset.to_csv(dataset_file, index=False)
             dataset_file.seek(0)
 
             data.file.file = dataset_file
@@ -250,7 +250,7 @@ def update_dataset(
             )
 
             dataset_file = io.BytesIO()
-            dataset.to_csv(dataset_file)
+            dataset.to_csv(dataset_file, index=False)
             dataset_file.seek(0)
             data.file.file = dataset_file
 
