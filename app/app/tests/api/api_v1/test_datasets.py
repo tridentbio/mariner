@@ -67,6 +67,7 @@ def test_post_datasets(
         ds = repo.get(db, id)
         assert ds is not None
         assert ds.name == response["name"]
+        assert response["columns"] == 3
         assert len(ds.columns_metadata) == 2
 
 
