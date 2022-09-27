@@ -209,16 +209,20 @@ def mock_experiment(
 
 @pytest.fixture(scope="module")
 def some_experiments(db, some_model: Model):
+    """Mock 2 successful and 1 running experiments"""
     db.commit()
     user = get_test_user(db)
     version = some_model.versions[-1]
     exps = [
         Experiment.from_orm(
             experiments_repo.create(
-                db, obj_in=mock_experiment(version, user.id, stage="started")
+                db,
+                obj_in=mock_experiment(
+                    version, user.id, stage="success" if i % 2 == 0 else "started"
+                ),
             )
         )
-        for _ in range(3)
+        for i in range(3)
     ]
     yield exps
     ids = [exp.id for exp in exps]

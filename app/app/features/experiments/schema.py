@@ -1,4 +1,6 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
+
+from fastapi import Query
 
 from app.features.model.schema.model import ModelVersion
 from app.features.user.schema import User
@@ -12,6 +14,9 @@ class TrainingRequest(ApiBaseModel):
     epochs: int
 
 
+ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]
+
+
 class Experiment(ApiBaseModel):
     experiment_name: Optional[str]
     model_version_id: int
@@ -21,7 +26,7 @@ class Experiment(ApiBaseModel):
     created_by_id: int
     id: int
     mlflow_id: str
-    stage: str
+    stage: ExperimentStage
     created_by: Optional[User] = None
     hyperparams: Optional[Dict[str, float]] = None
     epochs: Optional[int] = None
@@ -33,7 +38,9 @@ class Experiment(ApiBaseModel):
 
 
 class ListExperimentsQuery(ApiBaseModel):
+    stage: Optional[List[str]] = Query(default=None)
     model_id: int
+    model_version_ids: Optional[List[int]] = Query(default=None)
 
 
 class RunningHistory(ApiBaseModel):

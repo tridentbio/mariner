@@ -1,4 +1,5 @@
-from typing import Any, List
+from typing import Any, List, Optional, Union
+from fastapi import Query
 
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
@@ -8,6 +9,7 @@ from app.api import deps
 from app.features.experiments import controller as experiments_ctl
 from app.features.experiments.schema import (
     Experiment,
+    ExperimentStage,
     ListExperimentsQuery,
     RunningHistory,
     TrainingRequest,
@@ -30,10 +32,12 @@ async def post_experiments(
 
 @router.get("/", response_model=List[Experiment])
 def get_experiments(
-    experiments_query: ListExperimentsQuery = Depends(),
+    experiments_query: ListExperimentsQuery = Depends(ListExperimentsQuery),
+    stage: Optional[List[str]] = Query(default=None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> List[Experiment]:
+    experiments_query.stage = stage
     result = experiments_ctl.get_experiments(db, current_user, experiments_query)
     return result
 
