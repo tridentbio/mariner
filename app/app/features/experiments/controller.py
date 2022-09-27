@@ -124,7 +124,7 @@ def get_experiments(
     model = model_repo.get(db, query.model_id)
     if model and model.created_by_id != user.id:
         raise ModelNotFound()
-    exps = experiments_repo.get_by_model_id(db, query.model_id)
+    exps = experiments_repo.get_many(db, query)
     return [Experiment.from_orm(exp) for exp in exps]
 
 

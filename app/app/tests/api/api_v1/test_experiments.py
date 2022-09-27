@@ -37,6 +37,22 @@ def test_get_experiments(
     assert len(exps) > 1
 
 
+def test_get_experiments_by_stage(
+    client: TestClient, some_model, some_experiments, normal_user_token_headers
+):
+    params = {"modelId": some_model.id, "stage": ["SUCCESS", "FAILED"]}
+    res = client.get(
+        f"{settings.API_V1_STR}/experiments/?modelId={some_model.id}&stage[]=SUCCESS",
+        params=params,
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == HTTP_200_OK
+    exps = res.json()
+    for exp in exps:
+        assert exp["stage"] == "SUCCESS"
+    assert len(exps) == 2
+
+
 def test_post_update_metrics_unauthorized(
     client: TestClient, db: Session, some_experiment: Experiment
 ):
