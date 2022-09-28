@@ -24,4 +24,7 @@ RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
 ENV PYTHONPATH=/app
 
 # CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
-CMD [ "sh", "-c", "poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 80"]
+# CMD [ "sh", "-c", "poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 80"]
+COPY ./entrypoints/mariner.sh ./
+RUN chmod +x ./mariner.sh
+ENTRYPOINT ["/app/mariner.sh"]

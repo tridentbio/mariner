@@ -24,4 +24,7 @@ RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
 ENV PYTHONPATH=/app
 
 # CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
-CMD [ "sh", "-c", "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block"]
+# CMD [ "sh", "-c", "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block"]
+COPY ./entrypoints/ray-head.sh ./
+RUN chmod +x ./ray-head.sh
+ENTRYPOINT ["/app/ray-head.sh"]

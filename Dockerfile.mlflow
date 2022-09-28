@@ -26,4 +26,6 @@ ENV PYTHONPATH=/app
 # CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
 # CMD [ "poetry", "run", "mlflow", "server", "--host", "0.0. 0.0", "--port", "5000", "--default-artifact-root", "$AWS_MODELS_BUCKET", "--backend-store-uri", "postgresql://postgres:123456@mlflowdb:5432/app" ]
 
-CMD [ "sh", "-c", "poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root $MLFLOW_ARTIFACT_URI --backend-store-uri $MLFLOW_DB_DIALECT://$MLFLOW_DB_USERNAME:$MLFLOW_DB_PASSWORD@$MLFLOW_DB_HOST:$MLFLOW_DB_PORT/$MLFLOW_DB_DATABASE" ]
+COPY ./entrypoints/mlflow.sh ./
+RUN chmod +x ./mlflow.sh
+ENTRYPOINT ["/app/mlflow.sh"]
