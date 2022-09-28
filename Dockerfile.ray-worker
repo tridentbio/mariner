@@ -21,7 +21,10 @@ RUN bash -c "pip install jupyterlab"
 RUN apt-get install libpq-dev -y
 COPY ./app /app
 RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app 
 
 # CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
-CMD [ "sh", "-c", "poetry run ray start --address=$RAY_HEAD_ADDRESS:$RAY_HEAD_PORT --num-cpus=$RAY_NUM_CPU --block"]
+# CMD [ "sh", "-c", "poetry run ray start --address=$RAY_HEAD_ADDRESS:$RAY_HEAD_PORT --num-cpus=$RAY_NUM_CPU --block"]
+COPY ./entrypoints/ray-worker.sh ./
+RUN chmod +x ./ray-worker.sh
+ENTRYPOINT ["/app/ray-worker.sh"]
