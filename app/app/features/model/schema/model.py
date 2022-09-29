@@ -118,3 +118,7 @@ class ModelVersionCreateRepo(BaseModel):
     model_id: int
     name: str
     config: ModelConfig
+
+
+class ModelVersionUpdateRepo(BaseModel):
+    mlflow_version: str

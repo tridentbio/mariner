@@ -9,6 +9,7 @@ from app.features.model.schema.model import (
     ModelCreateRepo,
     ModelUpdateRepo,
     ModelVersionCreateRepo,
+    ModelVersionUpdateRepo,
 )
 
 
@@ -84,6 +85,15 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
 
     def get_model_version(self, db: Session, id: int) -> Optional[ModelVersion]:
         return db.query(ModelVersion).filter(ModelVersion.id == id).first()
+
+    def update_model_version(
+        self, db: Session, version_id: int, obj_in: ModelVersionUpdateRepo
+    ):
+        version = db.query(ModelVersion).filter(ModelVersion.id == version_id).first()
+        for key, value in obj_in.dict().items():
+            setattr(version, key, value)
+        db.add(version)
+        db.flush()
 
 
 repo = CRUDModel(Model)
