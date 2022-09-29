@@ -31,7 +31,7 @@ from app.features.experiments.train.custom_logger import AppLogger
 from app.features.experiments.train.run import start_training
 from app.features.model.crud import repo as model_repo
 from app.features.model.exceptions import ModelNotFound, ModelVersionNotFound
-from app.features.model.schema.model import ModelVersion
+from app.features.model.schema.model import ModelVersion, ModelVersionUpdateRepo
 from app.features.user.model import User as UserEntity
 from app.schemas.api import ApiBaseModel
 
@@ -91,13 +91,25 @@ async def create_model_traning(
             model = task.result()
             run = client.create_run(experiment.mlflow_id)
             run_id = run.info.run_id
-            mlflow.pytorch.log_model(
+            model_info = mlflow.pytorch.log_model(
                 model,
                 get_artifact_uri(run_id, tracking_uri=get_tracking_uri()),
                 registered_model_name=model_version.mlflow_model_name,
             )
+            mlflow_model = client.get_registered_model(model_version.mlflow_model_name)
+            assert (
+                mlflow_model.latest_versions and mlflow_model.latest_versions >= 1
+            ), "runtime error: latest_versions should have at least a version"
+            latest_version = mlflow_model.latest_versions[-1]
+            assert latest_version
+            model_info.mlflow_version
             experiments_repo.update(
                 db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
+            )
+            model_repo.update_model_version(
+                db,
+                experiment.model_version_id,
+                ModelVersionUpdateRepo(mlflow_version=latest_version.version),
             )
 
         elif done and exception:

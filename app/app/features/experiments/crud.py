@@ -46,12 +46,12 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
     def filter_by_stages(self, query: Query, stages: List[str]) -> Query:
         return query.filter(Experiment.stage.in_(stages))
 
-    def get_by_model_id(self, db: Session, id: int):
+    def get_by_model_id(self, db: Session, id: int) -> List[Experiment]:
         query = db.query(Experiment)
         query = self.filter_by_model_id(query, id)
         return query.all()
 
-    def get_many(self, db: Session, q: ListExperimentsQuery):
+    def get_many(self, db: Session, q: ListExperimentsQuery) -> List[Experiment]:
         query = db.query(Experiment)
         if q.model_id:
             query = self.filter_by_model_id(query, q.model_id)
@@ -59,7 +59,7 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
             query = self.filter_by_stages(query, q.stage)
         return query.all()
 
-    def get(self, db: Session, experiment_id: int):
+    def get(self, db: Session, experiment_id: int) -> Experiment:
         return db.query(Experiment).filter(Experiment.id == experiment_id).first()
 
 
