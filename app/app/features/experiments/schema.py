@@ -12,6 +12,7 @@ class TrainingRequest(ApiBaseModel):
     model_version_id: int
     learning_rate: float
     epochs: int
+    batch_size: Optional[int] = None
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]

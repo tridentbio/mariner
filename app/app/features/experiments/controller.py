@@ -61,6 +61,7 @@ async def create_model_traning(
         dataset_config=model_version.config.dataset,
         split_target=dataset.split_target,
         split_type=dataset.split_type,
+        batch_size=training_request.batch_size or 32,
     )
     mlflow_experiment_id = mlflow.create_experiment(training_request.name)
     experiment = experiments_repo.create(
