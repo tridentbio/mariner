@@ -264,10 +264,6 @@ def remove_section_by_identation(text: str, section_title: str) -> str:
     return "\n".join(lines[:start_idx] + lines[end_idx + 1 :])
 
 
-def map_to_str(arr: List[Any]) -> List[str]:
-    return [str(el) for el in arr]
-
-
 def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
     """Gives metadata information of the component implemented by `cls_path`
     Current metadata includes:
