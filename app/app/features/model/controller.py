@@ -9,8 +9,6 @@ import torch
 from sqlalchemy.orm.session import Session
 from app.logger import logger
 
-import app.features.model.layers as mariner_layers
-import torch_geometric
 from app.builder.dataset import CustomDataset
 from app.builder.model import CustomModel
 from app.core import mlflowapi
@@ -32,7 +30,6 @@ from app.features.model.exceptions import (
 from app.features.model.schema import layers_schema
 from app.features.model.schema.configs import (
     LayerAnnotation,
-    LayerRule,
     ModelConfig,
     ModelOptions,
 )
@@ -267,28 +264,8 @@ def remove_section_by_identation(text: str, section_title: str) -> str:
     return "\n".join(lines[:start_idx] + lines[end_idx + 1 :])
 
 
-def get_inputs_outputs_and_rules(component_cls) -> tuple[int, int, List[LayerRule]]:
-    """Based on the class hierarchy of a component, get's the number of inputs and outputs
-    the component expects, as well as a list of known rules for components, that will
-    be able to be validated separatelly
-    """
-    rules = []
-    if issubclass(component_cls, torch_geometric.nn.MessagePassing) or issubclass(
-        component_cls, mariner_layers.GlobalPooling
-    ):
-        rules.append("graph-receiver")
-        return 1, 1, rules
-    elif issubclass(component_cls, mariner_layers.Concat):
-        rules.append("inputs-same-type")
-        return 2, 1, rules
-    elif issubclass(component_cls, torch.nn.Module):
-        type_hints_keys = get_type_hints(component_cls.forward).keys()
-        inputs = len(type_hints_keys) - int("return" in type_hints_keys)
-        return inputs, 1, rules
-    else:
-        type_hints_keys = get_type_hints(component_cls.__call__).keys()
-        inputs = len(type_hints_keys) - int("return" in type_hints_keys)
-        return inputs, 1, rules
+def map_to_str(arr: List[Any]) -> List[str]:
+    return [str(el) for el in arr]
 
 
 def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
@@ -301,13 +278,13 @@ def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
     docs_link = get_documentation_link(cls_path)
     cls = get_class_from_path_string(cls_path)
     docs = remove_section_by_identation(cls.__doc__, "Examples:")
-    inputs, outputs, rules = get_inputs_outputs_and_rules(cls)
+    type_hints = {key: str(value) for key, value in get_type_hints(cls).items()}
+    output_type_hint = str(type_hints.pop("return", None))
     return LayerAnnotation(
         docs_link=docs_link,
         docs=docs,
-        num_inputs=inputs,
-        num_outputs=outputs,
-        rules=rules,
+        positional_inputs=type_hints,
+        output_type=output_type_hint,
         class_path=cls_path,
     )
 
