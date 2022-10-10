@@ -12,7 +12,7 @@ from starlette.testclient import TestClient
 from app.core.config import settings
 from app.core.mlflowapi import get_deployment_plugin
 from app.features.dataset.model import Dataset as DatasetEntity
-from app.features.dataset.schema import NumericalDataType
+from app.features.dataset.schema import NumericalDataType, QuantityDataType
 from app.features.model import generate
 from app.features.model.model import Model as ModelEntity
 from app.features.model.model import ModelVersion
@@ -37,12 +37,12 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
             feature_columns=[
                 ColumnConfig(
                     name="mwt",
-                    data_type=NumericalDataType(domain_kind="numeric", unit="mole"),
+                    data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
                 )
             ],
             target_column=ColumnConfig(
                 name="tpsa",
-                data_type=NumericalDataType(domain_kind="numeric", unit="mole"),
+                data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
             ),
         ),
         featurizers=[],
