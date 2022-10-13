@@ -7,13 +7,13 @@ class {{ component["prefix"] }}ConstructorArgsSummary(ApiBaseModel):
     
     Generated code
     """
-      type = '{{ component["path"] }}'
+    type = '{{ component["path"] }}'
     {%- for key, value in component["ctr"]["pos"] %}
-      {{ key }} = "{{ value }}"
+    {{ key }} = "{{ value }}"
     {%- endfor %}
 
     {%- for key, value in component["ctr"]["kw"] %}
-      {{ key }} = "{{ value }}?"
+    {{ key }} = "{{ value }}?"
     {%- endfor %}
 
 {% if ctr_count > 0 %}
@@ -34,6 +34,27 @@ class {{ component["prefix"] }}ConstructorArgs(ApiBaseModel):
 
 {% endif %}
 
+{% if fwd_count > 0 %}
+
+class {{ component["prefix"] }}ForwardArgs(ApiBaseModel):
+    """
+    Maps to references for the the arguments of {{ component["path"] }}.forward or {{ component["path"]}}.__call__
+
+    References can be names of layers/featurizers defined in the same model config or reference an attribute
+    of the same component
+
+    Generated code
+    """
+
+    {%- for key, value in component["fwd"]["pos"] %}
+    {{ key }}: str
+    {%- endfor %}
+    {%- for key, value in component["fwd"]["kw"] %}
+    {{ key }}: Optional[str] = None
+    {%- endfor %}
+
+{% endif %}
+
 class {{ component["prefix"] }}LayerConfig(BaseLayerConfig):
     """
     Layer configuration.
@@ -50,7 +71,7 @@ class {{ component["prefix"] }}LayerConfig(BaseLayerConfig):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
           return lib_cls
-        return lib_cls(**self.args.dict())
+        return lib_cls(**self.constructorArgs.dict())
     {% else %}
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
