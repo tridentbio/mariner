@@ -1,7 +1,8 @@
-from typing import Optional, get_type_hints
+from inspect import Parameter, Signature, signature
+import inspect
+from typing import Optional
 from dataclasses import dataclass
 from typing import Any, List
-import typing
 
 from humps import camel
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -59,7 +60,7 @@ def access_attributes_of_interest(clspath):
         d["call_type"] = "class"
         d["args"] = args  # tuple with argnames.
         last = argscount - len(defaults or [])
-        d["not_defaults"] = args[1:last] if defaults else args[1:]
+        d["not_defaults"] = args[1:last]
         return d
     raise Exception(
         f"Failed to inspect type annotations for {clspath}. "
@@ -75,7 +76,6 @@ def collect_components_info(class_paths: List[str]) -> Any:
             dic = access_attributes_of_interest(cls)
             modules_memo[cls] = dic
         except Exception as exp:
-            print(f"Failed for module {cls}: {str(exp)}")
             raise exp
     return modules_memo
 
@@ -102,69 +102,6 @@ def get_component_template_args(path: str):
     return prefix, arg_types
 
 
-class Argument:
-    """
-    Represents an argument in a function signature
-
-    Attributes:
-        required:
-        name:
-        type:
-
-    """
-
-    def __init__(self, required: bool, name: str, type: typing.Any):
-        self.required = required
-        self.name = name
-        self.type = type
-
-
-def args_to_list(args: List[Argument]) -> List[tuple[str, Any]]:
-    """
-    Maps a list of arguments back to a list of (arg_name, arg_type) tuple
-
-    Args:
-        args (List[Argument]):
-
-    Returns:
-        List[tuple[str, Any]]
-
-
-    """
-    return [(arg.name, arg.type) for arg in args]
-
-
-class Signature:
-    """
-    Represents the signature of a function call
-
-    Attributes:
-        args(List[Argument]): A summary of the arguments involved in the function call
-        return_type(Any): The return type of the function
-    """
-
-    def __init__(
-        self,
-        pos_args_names_and_types: List[tuple[str, Any]],
-        kwargs_names_and_types: List[tuple[str, Any]],
-        return_type: Any,
-    ):
-        self.args = [
-            Argument(name=name, type=type, required=True)
-            for name, type in pos_args_names_and_types
-        ] + [
-            Argument(name=name, type=type, required=False)
-            for name, type in kwargs_names_and_types
-        ]
-        self.return_type = return_type
-
-    def get_positional_arguments(self) -> List[Argument]:
-        return [arg for arg in self.args if arg.required]
-
-    def get_keyword_arguments(self) -> List[Argument]:
-        return [arg for arg in self.args if not arg.required]
-
-
 def get_component_constructor_signature(
     class_def: Any,
 ) -> Optional[Signature]:
@@ -178,7 +115,7 @@ def get_component_constructor_signature(
         Signature
 
     """
-    return _get_component_signature(class_def, "__init__")
+    return get_component_signature(class_def, "__init__")
 
 
 def get_component_forward_signature(class_def: Any) -> Optional[Signature]:
@@ -192,13 +129,13 @@ def get_component_forward_signature(class_def: Any) -> Optional[Signature]:
         Signature
     """
     if "forward" in dir(class_def):
-        return _get_component_signature(class_def, "forward")
+        return get_component_signature(class_def, "forward")
     elif "__call__" in dir(class_def):
-        return _get_component_signature(class_def, "__call__")
+        return get_component_signature(class_def, "__call__")
     return None
 
 
-def _get_component_signature(class_def: Any, method_name: str) -> Optional[Signature]:
+def get_component_signature(class_def: Any, method_name: str) -> Optional[Signature]:
     if method_name not in dir(class_def):
         return None
     method = getattr(class_def, method_name)
@@ -206,26 +143,35 @@ def _get_component_signature(class_def: Any, method_name: str) -> Optional[Signa
         raise Exception(
             "Unsure how to introspect method {method_name} with no __code__"
         )
-    positional_argscount = class_def.__init__.__code__.co_argcount
-    positional_arg_names = class_def.__init__.__code__.co_varnames[
-        :positional_argscount
-    ]
-    type_hints = get_type_hints(method)
-    args_names_and_types = [
-        (arg_name, arg_type)
-        for arg_name, arg_type in type_hints.items()
-        if arg_name in positional_arg_names
-    ]
-    kwargs_names_and_types = [
-        (arg_name, arg_type)
-        for arg_name, arg_type in type_hints.items()
-        if arg_name not in positional_arg_names and arg_name != "return"
-    ]
-    return Signature(
-        pos_args_names_and_types=args_names_and_types,
-        kwargs_names_and_types=kwargs_names_and_types,
-        return_type=type_hints.get("return", None),
+    return signature(method)
+
+
+def is_bad(parameter: Parameter):
+    return parameter.annotation == inspect._empty
+
+
+def is_positional(parameter: Parameter):
+    return parameter.name != "self" and (
+        (
+            parameter.kind == Parameter.POSITIONAL_OR_KEYWORD
+            and parameter.default == Parameter.empty
+        )
+        or parameter.kind == Parameter.POSITIONAL_ONLY
     )
+
+
+def is_optional(parameter: Parameter):
+    return parameter.name != "self" and (
+        parameter.kind == Parameter.KEYWORD_ONLY
+        or (
+            parameter.kind == Parameter.POSITIONAL_OR_KEYWORD
+            and parameter.default != inspect._empty
+        )
+    )
+
+
+def args_to_list(params: List[Parameter]) -> List[tuple[str, Any]]:
+    return [(param.name, str(param.annotation)) for param in params]
 
 
 def get_component_template_args_v2(path: str):
@@ -252,18 +198,43 @@ def get_component_template_args_v2(path: str):
     prefix = prefix.title()
     class_def = get_class_from_path_string(path)
     ctr_signature = get_component_constructor_signature(class_def)
-    forward_signature = get_component_forward_signature(class_def)
+    fwd_signature = get_component_forward_signature(class_def)
+
     if ctr_signature:
         ctr = {
-            "pos": args_to_list(ctr_signature.get_positional_arguments()),
-            "kw": args_to_list(ctr_signature.get_keyword_arguments()),
+            "pos": args_to_list(
+                [
+                    param
+                    for param in ctr_signature.parameters.values()
+                    if is_positional(param) and not is_bad(param)
+                ]
+            ),
+            "kw": args_to_list(
+                [
+                    param
+                    for param in ctr_signature.parameters.values()
+                    if is_optional(param) and not is_bad(param)
+                ]
+            ),
         }
     else:
         ctr = {}
-    if forward_signature:
+    if fwd_signature:
         fwd = {
-            "pos": args_to_list(forward_signature.get_positional_arguments()),
-            "kw": args_to_list(forward_signature.get_keyword_arguments()),
+            "pos": args_to_list(
+                [
+                    param
+                    for param in fwd_signature.parameters.values()
+                    if is_positional(param) and not is_bad(param)
+                ]
+            ),
+            "kw": args_to_list(
+                [
+                    param
+                    for param in fwd_signature.parameters.values()
+                    if is_optional(param) and not is_bad(param)
+                ]
+            ),
         }
     else:
         fwd = {}
@@ -277,9 +248,9 @@ def create_jinja_env():
     )
 
     def type_name(value):
-        if value == "string":
-            return "str"
-        return value
+        value = str(value)
+        assert value.startswith("<class '"), f"expected {value} to start with <class '"
+        return value[8:-2]
 
     env.globals.update(type_name=type_name)
     return env
@@ -351,8 +322,8 @@ if __name__ == "__main__":
     if template == "component":
         compnames = sys.argv[2:]
         for compname in compnames:
-            print(generate(compname))
+            print(generatev2(compname))
     elif template == "base":
-        bundle = generate_bundle()
+        bundle = generate_bundlev2()
         print(bundle)
         sys.exit(0)
