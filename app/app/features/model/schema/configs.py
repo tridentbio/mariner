@@ -1,5 +1,5 @@
 from ast import literal_eval
-from typing import Dict, List, Optional, Union, get_args, get_type_hints
+from typing import Dict, List, Optional, Union, get_args, get_type_hints, Literal
 
 import networkx as nx
 import yaml
@@ -22,28 +22,7 @@ from app.features.model.schema.layers_schema import (
 from app.schemas.api import ApiBaseModel
 
 
-class Tuple(str):
-    val: tuple
-
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(examples=["(1,)", "(1,1,0)"])
-
-    @classmethod
-    def validate(cls, v):
-        try:
-            t = literal_eval(v)
-            if not isinstance(t, tuple):
-                raise ValueError("Tuple(s), s should evaluate to a tuple")
-            return cls(v)
-        except Exception:
-            raise
-
-
+# TODO: make data_type optional
 class ColumnConfig(ApiBaseModel):
     name: str
     data_type: Union[
@@ -55,27 +34,46 @@ class ColumnConfig(ApiBaseModel):
     ] = Field(...)
 
 
+# TODO: move featurizers to feature_columns
 class DatasetConfig(ApiBaseModel):
     name: str
     target_column: ColumnConfig
     feature_columns: List[ColumnConfig]
 
 
-class LayerAnnotation(ApiBaseModel):
+class ComponentAnnotation(ApiBaseModel):
+    """
+    Gives extra information about the layer/featurizer
+
+    """
+
     docs_link: Optional[str]
     docs: Optional[str]
     positional_inputs: Dict[str, str]
     output_type: Optional[str]
     class_path: str
+    type: Literal["featurizer", "layer"]
 
 
-class ModelOptions(ApiBaseModel):
-    layers: List[LayersArgsType]
-    featurizers: List[FeaturizersArgsType]
-    component_annotations: List[LayerAnnotation]
+class ComponentOption(ComponentAnnotation):
+    """
+    Describes an option to be used in the ModelSchema.layers or ModelSchema.featurizers
+    """
+
+    component: Union[LayersArgsType, FeaturizersArgsType]
+
+
+ModelOptions = List[ComponentOption]
 
 
 class UnknownComponentType(ValueError):
+    """
+    Raised when an unknown component type is detected
+
+    Attributes:
+        component_name: The id of the component with bad type
+    """
+
     component_name: str
 
     def __init__(self, *args, component_name: str):
@@ -84,6 +82,18 @@ class UnknownComponentType(ValueError):
 
 
 class MissingComponentArgs(ValueError):
+    """
+    Raised when there are missing arguments for a component.
+
+    It's used by the frontend editor to provide accurate user feedback
+    on what layer/featurizer went wrong (using the layer/featurizer id instead of json
+    location)
+
+    Attributes:
+        component_name: component id that failed
+        missing: list of fields that are missing
+    """
+
     component_name: str
     missing: List[Union[str, int]]
 
@@ -93,7 +103,13 @@ class MissingComponentArgs(ValueError):
         self.missing = missing
 
 
-class ModelConfig(ApiBaseModel):
+class ModelSchema(ApiBaseModel):
+    """
+    A serializable model architecture
+
+
+    """
+
     @root_validator(pre=True)
     def check_types_defined(cls, values):
         layers = values.get("layers")
@@ -184,8 +200,8 @@ class ModelConfig(ApiBaseModel):
     @classmethod
     def from_yaml(cls, yamlstr):
         config_dict = yaml.safe_load(yamlstr)
-        return ModelConfig.parse_obj(config_dict)
+        return ModelSchema.parse_obj(config_dict)
 
 
 if __name__ == "__main__":
-    print(ModelConfig.schema_json())
+    print(ModelSchema.schema_json())

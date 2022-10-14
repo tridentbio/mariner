@@ -14,7 +14,7 @@ from app.features.experiments.crud import ExperimentCreateRepo
 from app.features.experiments.crud import repo as experiments_repo
 from app.features.experiments.model import Experiment as ExperimentEntity
 from app.features.experiments.schema import Experiment
-from app.features.model.schema.configs import ModelConfig
+from app.features.model.schema.configs import ModelSchema
 from app.features.model.schema.model import Model, ModelVersion
 from app.features.user.crud import repo as user_repo
 from app.features.user.model import User
@@ -176,10 +176,10 @@ def dataset_sample():
 
 
 @pytest.fixture(scope="module")
-def model_config() -> Generator[ModelConfig, None, None]:
+def model_config() -> Generator[ModelSchema, None, None]:
     path = "app/tests/data/test_model_hard.yaml"
     with open(path, "rb") as f:
-        yield ModelConfig.from_yaml(f.read())
+        yield ModelSchema.from_yaml(f.read())
 
 
 def mock_experiment(

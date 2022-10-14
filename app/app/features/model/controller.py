@@ -1,5 +1,5 @@
 import traceback
-from typing import Any, List, Optional, get_type_hints
+from typing import Any, List, Optional, Union, get_type_hints
 
 import mlflow
 import mlflow.exceptions
@@ -29,8 +29,9 @@ from app.features.model.exceptions import (
 )
 from app.features.model.schema import layers_schema
 from app.features.model.schema.configs import (
-    LayerAnnotation,
-    ModelConfig,
+    ComponentAnnotation,
+    ComponentOption,
+    ModelSchema,
     ModelOptions,
 )
 from app.features.model.schema.model import (
@@ -49,7 +50,7 @@ from torch_geometric.loader import DataLoader
 
 
 def get_model_and_dataloader(
-    db: Session, config: ModelConfig
+    db: Session, config: ModelSchema
 ) -> tuple[pl.LightningModule, DataLoader]:
     dataset = dataset_repo.get_by_name(db, config.dataset.name)
     assert dataset
@@ -69,7 +70,7 @@ class ForwardCheck(ApiBaseModel):
     output: Optional[Any] = None
 
 
-def naive_check_forward_exception(db: Session, config: ModelConfig) -> ForwardCheck:
+def naive_check_forward_exception(db: Session, config: ModelSchema) -> ForwardCheck:
     """Given a model config, run it through a small set of the dataset
     and return the exception if any. It does not mean the training will
     run smoothly for all examples of the dataset, but it gives some
@@ -264,7 +265,9 @@ def remove_section_by_identation(text: str, section_title: str) -> str:
     return "\n".join(lines[:start_idx] + lines[end_idx + 1 :])
 
 
-def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
+def get_annotations_from_cls(
+    cls_path: str, type=None, component=None
+) -> ComponentOption:
     """Gives metadata information of the component implemented by `cls_path`
     Current metadata includes:
         - Docs and Docs' link
@@ -276,39 +279,42 @@ def get_annotations_from_cls(cls_path: str) -> LayerAnnotation:
     docs = remove_section_by_identation(cls.__doc__, "Examples:")
     type_hints = {key: str(value) for key, value in get_type_hints(cls).items()}
     output_type_hint = str(type_hints.pop("return", None))
-    return LayerAnnotation(
+    return ComponentOption.construct(
         docs_link=docs_link,
         docs=docs,
         positional_inputs=type_hints,
         output_type=output_type_hint,
         class_path=cls_path,
+        type=type,
+        component=component,
     )
 
 
 def get_model_options() -> ModelOptions:
     """Gets all component (featurizers and layer) options supported by the system,
     along with metadata about each"""
-    layers = []
-    featurizers = []
     layer_types = [layer.name for layer in generate.layers]
     featurizer_types = [f.name for f in generate.featurizers]
-    component_annotations = []
-    for class_name in dir(layers_schema):
-        if class_name.endswith("ArgsTemplate"):
-            cls = getattr(layers_schema, class_name)
-            instance = cls()
-            if instance.type in layer_types:
-                layers.append(cls())
-            if instance.type in featurizer_types:
-                featurizers.append(cls())
-    for class_path in layer_types + featurizer_types:
-        annotation = get_annotations_from_cls(class_path)
-        component_annotations.append(annotation)
-    return ModelOptions(
-        layers=layers,
-        featurizers=featurizers,
-        component_annotations=component_annotations,
-    )
+
+    def get_summary(
+        cls_path: str,
+    ) -> Union[layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType, None]:
+        for l in dir(layers_schema):
+            class_def = getattr(layers_schema, l)
+            if l.endswith("Summary") and class_def.type == cls_path:
+                return class_def
+
+    component_annotations: ModelOptions = []
+    for type, class_path in zip(
+        ["layer"] * len(layer_types) + ["featurizer"] * len(featurizer_types),
+        layer_types + featurizer_types,
+    ):
+        summary = get_summary(class_path)
+        assert summary, f"class Summary of {class_path} should not be None"
+        component_annotations.append(
+            get_annotations_from_cls(class_path, type=type, component=summary)
+        )
+    return component_annotations
 
 
 class PredictRequest(ApiBaseModel):
