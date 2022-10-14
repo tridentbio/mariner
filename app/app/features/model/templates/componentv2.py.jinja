@@ -16,6 +16,31 @@ class {{ component["prefix"] }}ConstructorArgsSummary(ApiBaseModel):
     {{ key }} = "{{ value }}?"
     {%- endfor %}
 
+{% if fwd_count > 0 %}
+
+class {{ component["prefix"] }}ForwardArgsSummary(ApiBaseModel):
+    """
+    Maps to references for the the arguments of {{ component["path"] }}.forward or {{ component["path"]}}.__call__
+
+    References can be names of layers/featurizers defined in the same model config or reference an attribute
+    of the same component
+
+    Generated code
+    """
+
+    {%- for key, value in component["fwd"]["pos"] %}
+    {{ key }}: "{{ value }}"
+    {%- endfor %}
+    {%- for key, value in component["fwd"]["kw"] %}
+    {{ key }}: "{{ value }}?"
+    {%- endfor %}
+
+{% endif %}
+
+class {{component["prefix"]}}Summary(ApiBaseModel):
+    constructor_args_summary: {{component["prefix"]}}ConstructorArgsSummary
+    forward_args_summary: {{component["prefix"]}}ForwardArgsSummary
+
 {% if ctr_count > 0 %}
 
 class {{ component["prefix"] }}ConstructorArgs(ApiBaseModel):
@@ -34,26 +59,6 @@ class {{ component["prefix"] }}ConstructorArgs(ApiBaseModel):
 
 {% endif %}
 
-{% if fwd_count > 0 %}
-
-class {{ component["prefix"] }}ForwardArgs(ApiBaseModel):
-    """
-    Maps to references for the the arguments of {{ component["path"] }}.forward or {{ component["path"]}}.__call__
-
-    References can be names of layers/featurizers defined in the same model config or reference an attribute
-    of the same component
-
-    Generated code
-    """
-
-    {%- for key, value in component["fwd"]["pos"] %}
-    {{ key }}: str
-    {%- endfor %}
-    {%- for key, value in component["fwd"]["kw"] %}
-    {{ key }}: Optional[str] = None
-    {%- endfor %}
-
-{% endif %}
 
 class {{ component["prefix"] }}LayerConfig(BaseLayerConfig):
     """
