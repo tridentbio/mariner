@@ -6,7 +6,7 @@ from pydantic.main import BaseModel
 
 from app.builder.model import CustomModel
 from app.features.dataset.schema import Dataset
-from app.features.model.schema.configs import ModelConfig
+from app.features.model.schema.configs import ModelSchema
 from app.features.user.schema import User
 from app.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 
@@ -21,7 +21,7 @@ class ModelVersion(ApiBaseModel):
     name: str
     mlflow_version: str
     mlflow_model_name: str
-    config: ModelConfig
+    config: ModelSchema
     created_at: utc_datetime
     updated_at: datetime
 
@@ -109,7 +109,7 @@ class ModelCreate(ApiBaseModel):
     name: str
     model_description: Optional[str] = None
     model_version_description: Optional[str] = None
-    config: ModelConfig
+    config: ModelSchema
 
 
 class ModelVersionCreateRepo(BaseModel):
@@ -117,7 +117,7 @@ class ModelVersionCreateRepo(BaseModel):
     mlflow_model_name: str
     model_id: int
     name: str
-    config: ModelConfig
+    config: ModelSchema
 
 
 class ModelVersionUpdateRepo(BaseModel):

@@ -32,9 +32,7 @@ class ApponehotConstructorArgsSummary(ApiBaseModel):
 
 
 
-
-
-class ApponehotForwardArgs(ApiBaseModel):
+class ApponehotForwardArgsSummary(ApiBaseModel):
     """
     Maps to references for the the arguments of app.features.model.layers.OneHot.forward or app.features.model.layers.OneHot.__call__
 
@@ -43,7 +41,14 @@ class ApponehotForwardArgs(ApiBaseModel):
 
     Generated code
     """
-    x1: str
+    x1: "typing.Union[list[str], list[int]]"
+
+
+
+class ApponehotSummary(ApiBaseModel):
+    constructor_args_summary: ApponehotConstructorArgsSummary
+    forward_args_summary: ApponehotForwardArgsSummary
+
 
 
 
@@ -79,19 +84,7 @@ class AppglobalpoolingConstructorArgsSummary(ApiBaseModel):
 
 
 
-class AppglobalpoolingConstructorArgs(ApiBaseModel):
-    """
-    Maps to the arguments of app.features.model.layers.GlobalPooling
-
-    Generated code
-    """
-    aggr: str
-
-
-
-
-
-class AppglobalpoolingForwardArgs(ApiBaseModel):
+class AppglobalpoolingForwardArgsSummary(ApiBaseModel):
     """
     Maps to references for the the arguments of app.features.model.layers.GlobalPooling.forward or app.features.model.layers.GlobalPooling.__call__
 
@@ -100,9 +93,26 @@ class AppglobalpoolingForwardArgs(ApiBaseModel):
 
     Generated code
     """
-    x: str
-    batch: str
-    size: Optional[str] = None
+    x: "<class 'torch.Tensor'>"
+    batch: "typing.Optional[torch.Tensor]"
+    size: "typing.Optional[int]?"
+
+
+
+class AppglobalpoolingSummary(ApiBaseModel):
+    constructor_args_summary: AppglobalpoolingConstructorArgsSummary
+    forward_args_summary: AppglobalpoolingForwardArgsSummary
+
+
+
+class AppglobalpoolingConstructorArgs(ApiBaseModel):
+    """
+    Maps to the arguments of app.features.model.layers.GlobalPooling
+
+    Generated code
+    """
+    aggr: str
+
 
 
 
@@ -138,9 +148,7 @@ class AppconcatConstructorArgsSummary(ApiBaseModel):
 
 
 
-
-
-class AppconcatForwardArgs(ApiBaseModel):
+class AppconcatForwardArgsSummary(ApiBaseModel):
     """
     Maps to references for the the arguments of app.features.model.layers.Concat.forward or app.features.model.layers.Concat.__call__
 
@@ -149,8 +157,15 @@ class AppconcatForwardArgs(ApiBaseModel):
 
     Generated code
     """
-    x1: str
-    x2: str
+    x1: "<class 'torch.Tensor'>"
+    x2: "<class 'torch.Tensor'>"
+
+
+
+class AppconcatSummary(ApiBaseModel):
+    constructor_args_summary: AppconcatConstructorArgsSummary
+    forward_args_summary: AppconcatForwardArgsSummary
+
 
 
 
@@ -188,6 +203,25 @@ class TorchlinearConstructorArgsSummary(ApiBaseModel):
 
 
 
+class TorchlinearForwardArgsSummary(ApiBaseModel):
+    """
+    Maps to references for the the arguments of torch.nn.Linear.forward or torch.nn.Linear.__call__
+
+    References can be names of layers/featurizers defined in the same model config or reference an attribute
+    of the same component
+
+    Generated code
+    """
+    input: "<class 'torch.Tensor'>"
+
+
+
+class TorchlinearSummary(ApiBaseModel):
+    constructor_args_summary: TorchlinearConstructorArgsSummary
+    forward_args_summary: TorchlinearForwardArgsSummary
+
+
+
 class TorchlinearConstructorArgs(ApiBaseModel):
     """
     Maps to the arguments of torch.nn.Linear
@@ -198,20 +232,6 @@ class TorchlinearConstructorArgs(ApiBaseModel):
     out_features: int
     bias: Optional[bool] = None
 
-
-
-
-
-class TorchlinearForwardArgs(ApiBaseModel):
-    """
-    Maps to references for the the arguments of torch.nn.Linear.forward or torch.nn.Linear.__call__
-
-    References can be names of layers/featurizers defined in the same model config or reference an attribute
-    of the same component
-
-    Generated code
-    """
-    input: str
 
 
 
@@ -247,9 +267,7 @@ class TorchsigmoidConstructorArgsSummary(ApiBaseModel):
 
 
 
-
-
-class TorchsigmoidForwardArgs(ApiBaseModel):
+class TorchsigmoidForwardArgsSummary(ApiBaseModel):
     """
     Maps to references for the the arguments of torch.nn.Sigmoid.forward or torch.nn.Sigmoid.__call__
 
@@ -258,7 +276,14 @@ class TorchsigmoidForwardArgs(ApiBaseModel):
 
     Generated code
     """
-    input: str
+    input: "<class 'torch.Tensor'>"
+
+
+
+class TorchsigmoidSummary(ApiBaseModel):
+    constructor_args_summary: TorchsigmoidConstructorArgsSummary
+    forward_args_summary: TorchsigmoidForwardArgsSummary
+
 
 
 
@@ -294,19 +319,7 @@ class TorchreluConstructorArgsSummary(ApiBaseModel):
 
 
 
-class TorchreluConstructorArgs(ApiBaseModel):
-    """
-    Maps to the arguments of torch.nn.ReLU
-
-    Generated code
-    """
-    inplace: Optional[bool] = None
-
-
-
-
-
-class TorchreluForwardArgs(ApiBaseModel):
+class TorchreluForwardArgsSummary(ApiBaseModel):
     """
     Maps to references for the the arguments of torch.nn.ReLU.forward or torch.nn.ReLU.__call__
 
@@ -315,7 +328,24 @@ class TorchreluForwardArgs(ApiBaseModel):
 
     Generated code
     """
-    input: str
+    input: "<class 'torch.Tensor'>"
+
+
+
+class TorchreluSummary(ApiBaseModel):
+    constructor_args_summary: TorchreluConstructorArgsSummary
+    forward_args_summary: TorchreluForwardArgsSummary
+
+
+
+class TorchreluConstructorArgs(ApiBaseModel):
+    """
+    Maps to the arguments of torch.nn.ReLU
+
+    Generated code
+    """
+    inplace: Optional[bool] = None
+
 
 
 
@@ -358,6 +388,27 @@ class TorchgeometricgcnconvConstructorArgsSummary(ApiBaseModel):
 
 
 
+class TorchgeometricgcnconvForwardArgsSummary(ApiBaseModel):
+    """
+    Maps to references for the the arguments of torch_geometric.nn.GCNConv.forward or torch_geometric.nn.GCNConv.__call__
+
+    References can be names of layers/featurizers defined in the same model config or reference an attribute
+    of the same component
+
+    Generated code
+    """
+    x: "<class 'torch.Tensor'>"
+    edge_index: "typing.Union[torch.Tensor, torch_sparse.tensor.SparseTensor]"
+    edge_weight: "typing.Optional[torch.Tensor]?"
+
+
+
+class TorchgeometricgcnconvSummary(ApiBaseModel):
+    constructor_args_summary: TorchgeometricgcnconvConstructorArgsSummary
+    forward_args_summary: TorchgeometricgcnconvForwardArgsSummary
+
+
+
 class TorchgeometricgcnconvConstructorArgs(ApiBaseModel):
     """
     Maps to the arguments of torch_geometric.nn.GCNConv
@@ -372,22 +423,6 @@ class TorchgeometricgcnconvConstructorArgs(ApiBaseModel):
     normalize: Optional[bool] = None
     bias: Optional[bool] = None
 
-
-
-
-
-class TorchgeometricgcnconvForwardArgs(ApiBaseModel):
-    """
-    Maps to references for the the arguments of torch_geometric.nn.GCNConv.forward or torch_geometric.nn.GCNConv.__call__
-
-    References can be names of layers/featurizers defined in the same model config or reference an attribute
-    of the same component
-
-    Generated code
-    """
-    x: str
-    edge_index: str
-    edge_weight: Optional[str] = None
 
 
 
@@ -426,6 +461,25 @@ class AppmoleculefeaturizerConstructorArgsSummary(ApiBaseModel):
 
 
 
+class AppmoleculefeaturizerForwardArgsSummary(ApiBaseModel):
+    """
+    Maps to references for the the arguments of app.features.model.featurizers.MoleculeFeaturizer.forward or app.features.model.featurizers.MoleculeFeaturizer.__call__
+
+    References can be names of layers/featurizers defined in the same model config or reference an attribute
+    of the same component
+
+    Generated code
+    """
+    mol: "typing.Union[rdkit.Chem.rdchem.Mol, str]"
+
+
+
+class AppmoleculefeaturizerSummary(ApiBaseModel):
+    constructor_args_summary: AppmoleculefeaturizerConstructorArgsSummary
+    forward_args_summary: AppmoleculefeaturizerForwardArgsSummary
+
+
+
 class AppmoleculefeaturizerConstructorArgs(ApiBaseModel):
     """
     Maps to the arguments of app.features.model.featurizers.MoleculeFeaturizer
@@ -436,20 +490,6 @@ class AppmoleculefeaturizerConstructorArgs(ApiBaseModel):
     sym_bond_list: bool
     per_atom_fragmentation: bool
 
-
-
-
-
-class AppmoleculefeaturizerForwardArgs(ApiBaseModel):
-    """
-    Maps to references for the the arguments of app.features.model.featurizers.MoleculeFeaturizer.forward or app.features.model.featurizers.MoleculeFeaturizer.__call__
-
-    References can be names of layers/featurizers defined in the same model config or reference an attribute
-    of the same component
-
-    Generated code
-    """
-    mol: str
 
 
 
@@ -491,17 +531,17 @@ FeaturizersType = Union[
 ]
 
 LayersArgsType = Union[
-    ApponehotConstructorArgsSummary,
-    AppglobalpoolingConstructorArgsSummary,
-    AppconcatConstructorArgsSummary,
-    TorchlinearConstructorArgsSummary,
-    TorchsigmoidConstructorArgsSummary,
-    TorchreluConstructorArgsSummary,
-    TorchgeometricgcnconvConstructorArgsSummary,
+    ApponehotSummary,
+    AppglobalpoolingSummary,
+    AppconcatSummary,
+    TorchlinearSummary,
+    TorchsigmoidSummary,
+    TorchreluSummary,
+    TorchgeometricgcnconvSummary,
     
 ]
 
 FeaturizersArgsType = Union[
-    AppmoleculefeaturizerConstructorArgsSummary,
+    AppmoleculefeaturizerSummary,
 ]
 

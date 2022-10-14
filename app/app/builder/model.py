@@ -10,7 +10,7 @@ import torch_geometric.nn as geom_nn
 from app.features.dataset.schema import CategoricalDataType
 from app.features.model.layers import Concat, GlobalPooling
 from app.features.model.layers.one_hot import OneHot
-from app.features.model.schema.configs import ModelConfig
+from app.features.model.schema.configs import ModelSchema
 from torch_geometric.data.data import Data
 
 edge_index_classes = geom_nn.MessagePassing
@@ -56,7 +56,7 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
 
 
 class CustomModel(LightningModule):
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelSchema):
         super().__init__()
 
         self.config = config
