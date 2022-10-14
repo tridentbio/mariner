@@ -43,13 +43,13 @@ FeaturizersType = Union[
 
 LayersArgsType = Union[
     {% for component in layer_components: -%}
-    {{ component['prefix'] + "ConstructorArgsSummary" }},
+    {{ component['prefix'] + "Summary" }},
     {% endfor %}
 ]
 
 FeaturizersArgsType = Union[
     {% for component in featurizer_components: -%}
-    {{ component['prefix'] + "ConstructorArgsSummary" }},
+    {{ component['prefix'] + "Summary" }},
     {%- endfor %}
 ]
 
