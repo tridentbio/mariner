@@ -1,0 +1,5 @@
+Mariner
+=======
+
+.. automodule:: app.features.model
+    :members:

@@ -1,0 +1,78 @@
+[tool.poetry]
+name = "mariner"
+version = "0.1.0"
+description = "MLOps tools for biochem scientists"
+authors = ["Tyler Shimko <tyler@trident.bio>"]
+packages = [
+  { include = "api" },
+  { include = "model_builder" },
+  { include = "mariner" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+uvicorn = "^0.16.0"
+fastapi = "==0.76.0"
+python-multipart = "^0.0.5"
+email-validator = "^1.0.5"
+celery = "^4.4.2"
+passlib = {extras = ["bcrypt"], version = "^1.7.2"}
+tenacity = "^6.1.0"
+pydantic = {extras = ["dotenv"], version = "^1.9.1"}
+psycopg2-binary = "^2.8.5"
+alembic = "^1.4.2"
+sqlalchemy = "^1.3.16"
+python-jose = {extras = ["cryptography"], version = "^3.1.0"}
+boto3 = "<1.23.2"
+uuid = "^1.30"
+pandas = "^1.4.2"
+humps = "^0.2.2"
+PyYAML = "^6.0"
+torchsummary = "^1.5.1"
+mlflow = {version = "1.27.0", extras = ["extras"]}
+ray = {extras = ["serve"], version = "^1.13.0"}
+mlflow-ray-serve = "^0.2.0"
+networkx = "^2.8.4"
+rdkit = "^2022.3.3"
+Jinja2 = "3.1.2"
+emails = "^0.6"
+pytorch-lightning = "^1.6.4"
+websockets = "^10.3"
+torch = "^1.12.1"
+Pint = "0.19.1"
+click = "8.0.4"
+wonderwords = "^2.2.0"
+fastapi-utils = "^0.2.1"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^2.20.0"
+mypy = "^0.971"
+mockito = "^1.4.0"
+black = "^21.10b0"
+isort = "^4.3.21"
+autoflake = "^1.3.1"
+flake8 = "^3.7.9"
+sqlalchemy-stubs = "^0.3"
+matplotlib = "^3.5.2"
+pytest = "^7.1.2"
+pytest-asyncio = "^0.19.0"
+pytest-cov = "^3.0.0"
+pytest-dotenv = "^0.5.2"
+pytest-timeout = "^2.1.0"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+line_length = 80
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+# pyproject.toml
+
+[tool.poetry.scripts]
+install_deps_cpu = "deps:install_deps_cpu"
+install_deps_cu101 = "deps:install_deps_cu101"
+install_deps_cu102 = "deps:install_deps_cu102"
+install_deps_cu110 = "deps:install_deps_cu110"
