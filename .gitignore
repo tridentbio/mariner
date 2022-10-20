@@ -1,10 +1,4 @@
-.vscode
 .mypy_cache
-docker-stack.yml
+.coverage
+htmlcov
 __pycache__/
-.env
-.ipynb_checkpoints/
-dev-mariner-datasets/
-lightning_logs/
-configmaps
-**configmaps**
