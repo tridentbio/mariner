@@ -7,6 +7,7 @@ packages = [
   { include = "api" },
   { include = "model_builder" },
   { include = "mariner" },
+  { include = "tests" },
 ]
 
 [tool.poetry.dependencies]
