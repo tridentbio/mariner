@@ -2,8 +2,8 @@ from typing import List
 
 import pytest
 from sqlalchemy.orm import Session
-from mariner.entities.event import EventEntity
 
+from mariner.entities.event import EventEntity
 from mariner.schemas.experiment_schemas import Experiment
 from mariner.stores.event_sql import event_store
 from tests.conftest import get_test_events, get_test_user, teardown_events

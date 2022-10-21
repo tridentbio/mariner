@@ -3,7 +3,6 @@ from typing import List, Optional
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
-from mariner.stores.base_sql import CRUDBase
 from mariner.entities.model import Model, ModelFeaturesAndTarget, ModelVersion
 from mariner.schemas.model_schemas import (
     ModelCreateRepo,
@@ -11,6 +10,7 @@ from mariner.schemas.model_schemas import (
     ModelVersionCreateRepo,
     ModelVersionUpdateRepo,
 )
+from mariner.stores.base_sql import CRUDBase
 
 
 class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):

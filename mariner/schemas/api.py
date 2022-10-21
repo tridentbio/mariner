@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from typing import Generic, List, TypeVar
+
 from humps import camel
+from pydantic.datetime_parse import parse_datetime
 from pydantic.generics import GenericModel
 from pydantic.main import BaseModel
-from pydantic.datetime_parse import parse_datetime
 
 
 class ApiBaseModel(BaseModel):

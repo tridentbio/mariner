@@ -4,13 +4,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from mariner import experiments as experiments_ctl
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import EventEntity
-from mariner import experiments as experiments_ctl
 from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
-from mariner.tasks import get_exp_manager
 from mariner.schemas.model_schemas import Model
+from mariner.tasks import get_exp_manager
 from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string
 
@@ -53,7 +53,7 @@ async def test_post_read_notifications(
 ):
     assert len(events_fixture) == 1
     print(experiments_fixture)
-    result = await experiments_fixture
+    await experiments_fixture
     res = client.get(
         f"{settings.API_V1_STR}/events/report",
         headers=normal_user_token_headers,
@@ -130,7 +130,7 @@ async def experiments_fixture(db: Session, some_model: Model):
             ),
         )
     ]
-    tasks = [await exp.task for exp in get_exp_manager().get_from_user(user.id)]
+    [await exp.task for exp in get_exp_manager().get_from_user(user.id)]
     return experiments
 
 

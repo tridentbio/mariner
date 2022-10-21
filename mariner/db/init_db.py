@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
-from mariner.core.config import settings
 from mariner import entities  # noqa: F401
-from mariner.stores.user_sql import user_store
+from mariner.core.config import settings
 from mariner.schemas.user_schemas import UserCreate
+from mariner.stores.user_sql import user_store
 
 # make sure all SQL Alchemy models are imported (app.db.base) before initializing DB
 # otherwise, SQL Alchemy might fail to initialize relationships properly

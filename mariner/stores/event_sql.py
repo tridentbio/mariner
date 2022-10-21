@@ -5,12 +5,8 @@ from pydantic import BaseModel
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query, Session
 
+from mariner.entities.event import EventEntity, EventReadEntity, EventSource
 from mariner.stores.base_sql import CRUDBase
-from mariner.entities.event import (
-    EventEntity,
-    EventReadEntity,
-    EventSource,
-)
 
 
 class EventCreateRepo(BaseModel):

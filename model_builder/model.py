@@ -2,14 +2,13 @@ from typing import List, Union
 
 import networkx as nx
 import torch
+import torch_geometric.nn as geom_nn
 from pytorch_lightning.core.lightning import LightningModule
 from torch.nn import ReLU, Sigmoid
 from torch.optim.adam import Adam
-
-import torch_geometric.nn as geom_nn
-from model_builder.layers import Concat, GlobalPooling, OneHot
 from torch_geometric.data.data import Data
 
+from model_builder.layers import Concat, GlobalPooling, OneHot
 from model_builder.schemas import ModelSchema
 
 edge_index_classes = geom_nn.MessagePassing

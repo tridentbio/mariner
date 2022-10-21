@@ -1,20 +1,20 @@
 from typing import Any, List, Optional
-from fastapi import Query
 
+from fastapi import Query
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
 
-from api import deps
 import mariner.experiments as experiments_ctl
+from api import deps
+from mariner.entities.user import User
+from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
     TrainingRequest,
 )
-from mariner.entities.user import User
-from mariner.schemas.api import ApiBaseModel
 
 router = APIRouter()
 

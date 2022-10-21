@@ -1,8 +1,15 @@
 # Temporary file to hold all extracted mariner schemas
-from typing import Dict, List, Literal, Union, get_args, get_type_hints
+from typing import List, Literal, Union, get_args, get_type_hints
+
 import networkx as nx
-from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 import yaml
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationError,
+    root_validator,
+    validator,
+)
 
 from model_builder.components_query import get_component_args_by_type
 from model_builder.layers_schema import FeaturizersType, LayersType

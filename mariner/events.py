@@ -3,11 +3,11 @@ from typing import Any, Dict, List, Literal, Optional
 
 from sqlalchemy.orm import Session
 
-from mariner.stores.event_sql import EventCreateRepo, event_store
 from mariner.entities.event import EventEntity, EventSource
-from mariner.schemas.event_schemas import Event
 from mariner.entities.user import User as UserEntity
 from mariner.schemas.api import ApiBaseModel
+from mariner.schemas.event_schemas import Event
+from mariner.stores.event_sql import EventCreateRepo, event_store
 
 
 class EventsbySource(ApiBaseModel):

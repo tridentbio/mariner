@@ -1,9 +1,11 @@
 from typing import Any, Dict, Optional, Union
+
 from sqlalchemy.orm import Session
+
 from mariner.core.security import get_password_hash, verify_password
+from mariner.entities.user import User
 from mariner.schemas.user_schemas import UserCreate, UserUpdate
 from mariner.stores.base_sql import CRUDBase
-from mariner.entities.user import User
 
 
 class _CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):

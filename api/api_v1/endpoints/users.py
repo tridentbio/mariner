@@ -5,14 +5,14 @@ from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
-from mariner import schemas
-from api import deps
-from mariner.core.config import settings
 import mariner.users as controller
-from mariner.stores.user_sql import user_store
-from mariner.exceptions import UserAlreadyExists
+from api import deps
+from mariner import schemas
+from mariner.core.config import settings
 from mariner.entities.user import User
+from mariner.exceptions import UserAlreadyExists
 from mariner.schemas.user_schemas import UserCreate
+from mariner.stores.user_sql import user_store
 
 router = APIRouter()
 

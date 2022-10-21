@@ -15,10 +15,9 @@ import pkg_resources
 from pydantic.main import BaseModel
 
 import mariner.entities  # noqa
+from mariner import events as events_ctl
 from mariner.db.session import SessionLocal
 from mariner.stores.event_sql import event_store
-from mariner import events as events_ctl
-from mariner import events as events_ctl
 
 version_pattern = re.compile(r"^## \[[\d\.]+] - \d\d\d\d-\d\d-\d\d$")
 type_pattern = re.compile(r"^### (Added|Changed|Deprecated|Removed|Fixed|Security)$")

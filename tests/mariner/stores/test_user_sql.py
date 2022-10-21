@@ -1,10 +1,10 @@
 from fastapi.encoders import jsonable_encoder
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
+
 from mariner.core.security import verify_password
 from mariner.schemas.user_schemas import UserCreate, UserUpdate
 from mariner.stores.user_sql import user_store
-
 from tests.utils.utils import random_email, random_lower_string
 
 

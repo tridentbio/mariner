@@ -11,21 +11,15 @@ from starlette.testclient import TestClient
 
 from mariner.core.config import settings
 from mariner.core.mlflowapi import get_deployment_plugin
-from mariner.entities import (
-    Dataset as DatasetEntity,
-    Model as ModelEntity,
-    ModelVersion,
-)
+from mariner.entities import Dataset as DatasetEntity
+from mariner.entities import Model as ModelEntity
+from mariner.entities import ModelVersion
 from mariner.schemas.dataset_schemas import QuantityDataType
+from mariner.schemas.model_schemas import Model, ModelCreate
 from model_builder import generate
 from model_builder import layers_schema as layers
-from model_builder.schemas import (
-    ColumnConfig,
-    DatasetConfig,
-    ModelSchema,
-)
-from mariner.schemas.model_schemas import Model, ModelCreate
-from tests.conftest import mock_model, setup_create_model, get_test_user
+from model_builder.schemas import ColumnConfig, DatasetConfig, ModelSchema
+from tests.conftest import get_test_user, mock_model, setup_create_model
 from tests.utils.utils import random_lower_string
 
 
@@ -387,4 +381,3 @@ def test_model_versioning():
     Checks if the model versioning mapping between mariner
     models and MLFlow Registry is correct
     """
-    pass
