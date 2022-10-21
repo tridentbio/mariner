@@ -8,21 +8,24 @@ RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python
     ln -s /opt/poetry/bin/poetry && \
     poetry config virtualenvs.create false
 
-# Copy poetry.lock* in case it doesn't exist in the repo
-COPY ./app/pyproject.toml ./app/poetry.lock ./app/deps.py /app/
-COPY ./app/app/__init__.py /app/app/__init__.py
+# Copy dependency related files
+COPY ./pyproject.toml ./poetry.lock ./deps.py /app/
+
+# Copy entrypoint of each package, otherwise poetry fails to run install_deps_* script
+COPY ./mariner/__init__.py /app/mariner/__init__.py
+COPY ./api/__init__.py /app/api/__init__.py
+COPY ./model_builder/__init__.py /app/model_builder/__init__.py
 
 RUN poetry run  pip install --upgrade pip
 RUN poetry run pip install --upgrade requests
 RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
-RUN poetry install
+RUN poetry install --no-root
 
-# Using inside the container:
-# jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
-RUN bash -c "pip install jupyterlab"
-
-COPY ./app /app
+COPY ./mariner /app/mariner
+COPY ./api /app/api
+COPY ./model_builder /app/model_builder
+COPY ./scripts /scripts
 ENV PYTHONPATH=/app
 
-CMD [ "sh", "prestart.sh", "&&", "sh", "-c", "poetry run python app.main"]
+CMD [ "sh", "app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]
 

@@ -46,10 +46,10 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: ./Dockerfile.local
+      dockerfile: ./dockerfiles/Dockerfile.local
     networks:
       - ray_net
-    command: bash -c 'poetry run sh prestart.sh && poetry run python -m app.main'
+    command: bash -c 'poetry run sh /app/scripts/prestart.sh && poetry run python -m api.main'
 
   mlflowdb:
     image: postgres:12
@@ -79,7 +79,7 @@ services:
         condition: service_healthy
     build:
       context: .
-      dockerfile: ./Dockerfile.local
+      dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
       - .env.local.mlflow
     environment:
@@ -93,7 +93,6 @@ services:
       timeout: 60s
       retries: 3
       start_period: 90s
-
     restart: unless-stopped
     command: bash -c 'echo $AWS_MODELS_BUCKET && poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
       #command: bash -c 'while true; do sleep 1; done;'
@@ -105,7 +104,7 @@ services:
   ray-head:
     build:
       context: .
-      dockerfile: ./Dockerfile.local
+      dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
       .env.local.ray
     ports:
@@ -131,9 +130,9 @@ services:
   ray-worker:
     build:
       context: .
-      dockerfile: ./Dockerfile.local
+      dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.local.ray2
+      .env.local.ray
     depends_on: 
       - ray-head
     env_file:

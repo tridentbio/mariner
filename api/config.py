@@ -69,7 +69,6 @@ class Settings(BaseSettings):
 
     @validator("EMAILS_FROM_NAME")
     def get_project_name(cls, v: Optional[str], values: Dict[str, Any]) -> str:
-        print(values)
         if not v:
             return values["PROJECT_NAME"]
         return v
@@ -106,4 +105,4 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
-settings = Settings(_env_file="../.env.local")
+settings = Settings()

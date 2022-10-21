@@ -1,6 +1,4 @@
 import logging
-import warnings
-from requests.exceptions import RequestsDependencyWarning
 
 from tenacity import retry
 from tenacity.after import after_log
@@ -8,9 +6,8 @@ from tenacity.before import before_log
 from tenacity.stop import stop_after_attempt
 from tenacity.wait import wait_fixed
 
-from app.db.session import SessionLocal
+from mariner.db.session import SessionLocal
 
-warnings.filterwarnings("ignore", category=RequestsDependencyWarning)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
