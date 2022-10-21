@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from sqlalchemy.orm import Session
 
-from mariner.stores.event_sql import EventCreateRepo, events_repo
+from mariner.stores.event_sql import EventCreateRepo, event_store
 from mariner.entities.event import EventEntity, EventSource
 from mariner.schemas.event_schemas import Event
 from mariner.entities.user import User as UserEntity
@@ -34,7 +34,7 @@ def build_message(source: EventSource, events: List[EventEntity]) -> str:
 
 def get_events_from_user(db: Session, user: UserEntity):
     """Get unread all events from the user grouped by source"""
-    events_grouped = events_repo.get_events_by_source(db, user.id)
+    events_grouped = event_store.get_events_by_source(db, user.id)
     payload: List[EventsbySource] = [
         EventsbySource(
             source=key,
@@ -51,9 +51,9 @@ def set_events_read(db: Session, user: UserEntity, event_ids: List[int]) -> int:
     """Sets the read flag on the notifications.
     Returns a list of succesfully updated events"""
     events = [
-        event for event in events_repo.get_to_user(db, user.id) if event.id in event_ids
+        event for event in event_store.get_to_user(db, user.id) if event.id in event_ids
     ]
-    updated_count = events_repo.update_read(db, events, user.id)
+    updated_count = event_store.update_read(db, events, user.id)
     return updated_count
 
 
@@ -71,7 +71,7 @@ def create_event(db: Session, event: EventCreate):
     """Used by other controllers to register some event"""
     values = event.dict()
     creation_obj = EventCreateRepo.construct(**values)
-    newevent = events_repo.create(db, obj_in=creation_obj)
+    newevent = event_store.create(db, obj_in=creation_obj)
     if not event:
         raise RuntimeError("event was not created")
     return Event.from_orm(newevent)

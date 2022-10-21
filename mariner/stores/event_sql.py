@@ -93,4 +93,4 @@ class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, EventUpdateRepo]):
         return query.all()
 
 
-events_repo = EventCRUD(EventEntity)
+event_store = EventCRUD(EventEntity)

@@ -14,11 +14,11 @@ import click
 import pkg_resources
 from pydantic.main import BaseModel
 
-import app.db.base  # noqa
-from app.db.session import SessionLocal
-from app.features.events import events_ctl
-from app.features.events.event_crud import events_repo
-from app.features.events.events_ctl import EventCreate
+import mariner.entities  # noqa
+from mariner.db.session import SessionLocal
+from mariner.stores.event_sql import event_store
+from mariner import events as events_ctl
+from mariner import events as events_ctl
 
 version_pattern = re.compile(r"^## \[[\d\.]+] - \d\d\d\d-\d\d-\d\d$")
 type_pattern = re.compile(r"^### (Added|Changed|Deprecated|Removed|Fixed|Security)$")
@@ -142,7 +142,7 @@ def release_greater_or_equal(version: str, lower_bound_version: str) -> bool:
 
 
 def get_version_from_pyproject() -> str:
-    return pkg_resources.get_distribution("app").version
+    return pkg_resources.get_distribution("mariner").version
 
 
 logger = logging.getLogger("mariner.changelog")
@@ -160,7 +160,7 @@ def cli():
 def publish(from_version: str, force_resend: bool):
     try:
         with SessionLocal() as db:
-            changelog_events = events_repo.get(db, from_source="changelog")
+            changelog_events = event_store.get(db, from_source="changelog")
             versions_published = [
                 changelog_event.payload["version"]
                 for changelog_event in changelog_events
