@@ -2,8 +2,8 @@ import weakref
 from collections.abc import MutableMapping
 from copy import copy
 from typing import Any, Callable, Dict, Iterable, List, Optional
-from model_builder.utils import recursive_apply
 
+from model_builder.utils import recursive_apply
 from model_builder.views import ItemsView, KeysView, ValuesView
 
 

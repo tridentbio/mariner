@@ -1,37 +1,31 @@
 import datetime
-import mlflow.tracking
 import json
 from typing import Dict, Generator, List, Literal, Optional
-from mlflow import mlflow
 
+import mlflow.tracking
 import pytest
+import yaml
 from fastapi.testclient import TestClient
+from mlflow import mlflow
 from sqlalchemy.orm import Session
 from starlette import status
-import yaml
 
+from api.fastapi_app import app
 from mariner.core.aws import Bucket, delete_s3_file
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
-from mariner.entities import (
-    Dataset,
-    Experiment as ExperimentEntity,
-    User,
-    Model as ModelEntity,
-    EventEntity,
-)
+from mariner.entities import Dataset, EventEntity
+from mariner.entities import Experiment as ExperimentEntity
+from mariner.entities import Model as ModelEntity
+from mariner.entities import User
 from mariner.schemas.experiment_schemas import Experiment
-from mariner.stores.event_sql import EventCreateRepo, event_store
-from model_builder.schemas import ModelSchema
 from mariner.schemas.model_schemas import Model, ModelCreate, ModelVersion
-from mariner.stores.user_sql import user_store
+from mariner.stores.event_sql import EventCreateRepo, event_store
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
-from api.fastapi_app import app
+from mariner.stores.user_sql import user_store
+from model_builder.schemas import ModelSchema
 from tests.utils.user import authentication_token_from_email
-from tests.utils.utils import (
-    get_superuser_token_headers,
-    random_lower_string,
-)
+from tests.utils.utils import get_superuser_token_headers, random_lower_string
 
 
 @pytest.fixture(scope="session")

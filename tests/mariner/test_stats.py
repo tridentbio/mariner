@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from fastapi import UploadFile
 from fastapi.encoders import jsonable_encoder
-from mariner.datasets import get_entity_info_from_csv
 
+from mariner.datasets import get_entity_info_from_csv
 from mariner.stats import get_metadata
 
 

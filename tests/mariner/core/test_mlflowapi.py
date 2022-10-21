@@ -3,11 +3,11 @@ import mlflow.tracking
 import pytest
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 
-from model_builder.schemas import ModelSchema
 from mariner.core.mlflowapi import (
     create_deployment_with_endpoint,
     create_model_version,
 )
+from model_builder.schemas import ModelSchema
 from tests.conftest import mock_model
 from tests.utils.utils import random_lower_string
 

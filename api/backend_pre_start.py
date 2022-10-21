@@ -8,7 +8,6 @@ from tenacity.wait import wait_fixed
 
 from mariner.db.session import SessionLocal
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

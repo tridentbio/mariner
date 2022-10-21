@@ -1,8 +1,8 @@
 from sqlalchemy.orm.session import Session
 
-from mariner.stores.dataset_sql import dataset_store
 from mariner.entities import Dataset
 from mariner.schemas.dataset_schemas import DatasetUpdateRepo
+from mariner.stores.dataset_sql import dataset_store
 from tests.utils.utils import random_lower_string
 
 

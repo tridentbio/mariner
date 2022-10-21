@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
-from mariner.entities.dataset import ColumnsMetadata, Dataset
 
-from mariner.stores.base_sql import CRUDBase
+from mariner.entities.dataset import ColumnsMetadata, Dataset
 from mariner.schemas.dataset_schemas import (
     DatasetCreateRepo,
     DatasetsQuery,
     DatasetUpdateRepo,
 )
+from mariner.stores.base_sql import CRUDBase
 
 
 class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):

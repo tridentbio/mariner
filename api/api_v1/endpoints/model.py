@@ -8,19 +8,23 @@ from pandas.core.frame import DataFrame
 from sqlalchemy.orm.session import Session
 from starlette import status
 
+import mariner.models as controller
 from api import deps
 from api.api_v1.endpoints.datasets import Paginated
-import mariner.models as controller
-from mariner.exceptions import DatasetNotFound, ModelNameAlreadyUsed, ModelNotFound
+from mariner.entities.user import User
+from mariner.exceptions import (
+    DatasetNotFound,
+    ModelNameAlreadyUsed,
+    ModelNotFound,
+)
+from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
-    ModelSchema,
-    ModelOptions,
     Model,
     ModelCreate,
+    ModelOptions,
+    ModelSchema,
     ModelsQuery,
 )
-from mariner.entities.user import User
-from mariner.schemas.api import ApiBaseModel
 from mariner.utils import random_pretty_name
 
 router = APIRouter()

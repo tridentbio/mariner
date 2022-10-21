@@ -9,18 +9,14 @@ from fastapi.encoders import jsonable_encoder
 from rdkit import Chem
 from sqlalchemy.orm.session import Session
 
-from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 from mariner.core.aws import Bucket, upload_s3_file
 from mariner.core.config import settings
+from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetAlreadyExists,
     DatasetNotFound,
     NotCreatorOfDataset,
 )
-from mariner.utils import hash_md5
-
-from mariner.entities.user import User
-from mariner.stores.dataset_sql import dataset_store
 from mariner.schemas.dataset_schemas import (
     CategoricalDataType,
     ColumnsMeta,
@@ -34,7 +30,11 @@ from mariner.schemas.dataset_schemas import (
     SmileDataType,
     StringDataType,
 )
-from mariner.stats import get_stats as get_summary, get_metadata as get_stats
+from mariner.stats import get_metadata as get_stats
+from mariner.stats import get_stats as get_summary
+from mariner.stores.dataset_sql import dataset_store
+from mariner.utils import hash_md5
+from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
 DATASET_BUCKET = settings.AWS_DATASETS
 

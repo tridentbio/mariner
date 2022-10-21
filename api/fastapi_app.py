@@ -2,11 +2,10 @@ from fastapi.applications import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi_utils.openapi import simplify_operation_ids
 from starlette.middleware.cors import CORSMiddleware
-from api.config import settings
 
 from api.api_v1.api import api_router
+from api.config import settings
 from api.websocket import ws_router
-
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"

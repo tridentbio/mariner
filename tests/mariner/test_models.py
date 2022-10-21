@@ -5,10 +5,11 @@ from mockito import patch
 from sqlalchemy.orm.session import Session
 
 from mariner import models as model_ctl
+from mariner.entities import Dataset as DatasetEntity
+from mariner.entities import Model as ModelEntity
+from mariner.schemas.model_schemas import Model
 from mariner.stores.dataset_sql import dataset_store
 from model_builder.schemas import ModelSchema
-from mariner.entities import Dataset as DatasetEntity, Model as ModelEntity
-from mariner.schemas.model_schemas import Model
 from tests.conftest import get_test_user
 
 

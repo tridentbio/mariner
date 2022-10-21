@@ -4,11 +4,10 @@ import pandas as pd
 import pytorch_lightning as pl
 from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import random_split
-from model_builder.layers_schema import AppmoleculefeaturizerLayerConfig
-
-from model_builder.schemas import ColumnConfig, DatasetConfig
 from torch_geometric.loader import DataLoader
 
+from model_builder.layers_schema import AppmoleculefeaturizerLayerConfig
+from model_builder.schemas import ColumnConfig, DatasetConfig
 from model_builder.utils import size_repr
 
 from .storage import BaseStorage

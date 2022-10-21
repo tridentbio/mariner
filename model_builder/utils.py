@@ -1,11 +1,8 @@
-from typing import Any, Dict
-
 from collections.abc import Mapping
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Dict, Sequence
 
 import numpy as np
 import torch
-
 from torch_sparse import SparseTensor
 
 

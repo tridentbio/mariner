@@ -9,13 +9,10 @@ from pydantic.main import BaseModel
 from mariner.core.aws import Bucket, download_file_as_dataframe
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from model_builder.schemas import CategoricalDataType as BuilderCategoricalDT
-from model_builder.schemas import (
-    CategoricalDataType as BuilderCategoricalDT,
-    NumericalDataType as BuilderNumericalDT,
-    StringDataType as BuilderStringDT,
-    SmileDataType as BuilderSmilesDT,
-    QuantityDataType as BuilderQuantityDT,
-)
+from model_builder.schemas import NumericalDataType as BuilderNumericalDT
+from model_builder.schemas import QuantityDataType as BuilderQuantityDT
+from model_builder.schemas import SmileDataType as BuilderSmilesDT
+from model_builder.schemas import StringDataType as BuilderStringDT
 
 SplitType = Literal["scaffold", "random"]
 

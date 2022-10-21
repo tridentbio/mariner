@@ -5,9 +5,9 @@ from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
 from mariner.core.config import settings
-from mariner.stores.user_sql import user_store
 from mariner.entities import User
 from mariner.schemas.user_schemas import UserCreate, UserUpdate
+from mariner.stores.user_sql import user_store
 from tests.utils.utils import random_email, random_lower_string
 
 

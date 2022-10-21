@@ -3,13 +3,13 @@ from typing import Dict, List, Literal, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic.main import BaseModel
-from model_builder.layers_schema import FeaturizersArgsType, LayersArgsType
 
-from model_builder.model import CustomModel
-from model_builder.schemas import ModelSchema
+from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
-from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
+from model_builder.layers_schema import FeaturizersArgsType, LayersArgsType
+from model_builder.model import CustomModel
+from model_builder.schemas import ModelSchema
 
 
 class ModelDeployment(ApiBaseModel):

@@ -3,8 +3,8 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
-from mariner.entities import EventEntity
 from mariner import events as events_ctl
+from mariner.entities import EventEntity
 from tests.conftest import get_test_user
 
 

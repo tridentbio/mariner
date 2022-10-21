@@ -3,8 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from api import deps
 import mariner.events as events_ctl
+from api import deps
 from mariner.entities.user import User
 from mariner.schemas.api import ApiBaseModel
 

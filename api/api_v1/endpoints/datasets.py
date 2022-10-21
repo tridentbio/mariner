@@ -7,8 +7,9 @@ from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
 from starlette import status
 
-from api import deps
 import mariner.datasets as controller
+from api import deps
+from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetAlreadyExists,
     DatasetNotFound,
@@ -20,13 +21,12 @@ from mariner.schemas.dataset_schemas import (
     ColumnsMeta,
     Dataset,
     DatasetCreate,
-    DatasetSummary,
     DatasetsQuery,
+    DatasetSummary,
     DatasetUpdate,
     Split,
     SplitType,
 )
-from mariner.entities.user import User
 
 router = APIRouter()
 

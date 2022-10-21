@@ -7,38 +7,36 @@ import pandas as pd
 import pytorch_lightning as pl
 import torch
 from sqlalchemy.orm.session import Session
-from mariner.logger import logger
+from torch_geometric.loader import DataLoader
 
-from model_builder.dataset import CustomDataset
-from model_builder.model import CustomModel
 from mariner.core import mlflowapi
-
-from mariner.stores.dataset_sql import dataset_store
-from mariner.stores.model_sql import model_store
-from mariner.exceptions import DatasetNotFound
-from model_builder import generate
+from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
+    DatasetNotFound,
     ModelNameAlreadyUsed,
     ModelNotFound,
     ModelVersionNotFound,
 )
-from model_builder import layers_schema
-from model_builder.utils import get_class_from_path_string
+from mariner.logger import logger
+from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     ComponentOption,
-    ModelSchema,
-    ModelOptions,
     Model,
     ModelCreate,
     ModelCreateRepo,
     ModelFeaturesAndTarget,
+    ModelOptions,
+    ModelSchema,
     ModelsQuery,
     ModelVersion,
     ModelVersionCreateRepo,
 )
-from mariner.entities.user import User as UserEntity
-from mariner.schemas.api import ApiBaseModel
-from torch_geometric.loader import DataLoader
+from mariner.stores.dataset_sql import dataset_store
+from mariner.stores.model_sql import model_store
+from model_builder import generate, layers_schema
+from model_builder.dataset import CustomDataset
+from model_builder.model import CustomModel
+from model_builder.utils import get_class_from_path_string
 
 
 def get_model_and_dataloader(

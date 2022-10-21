@@ -1,4 +1,3 @@
-from wonderwords import RandomWord
 import hashlib
 import logging
 from datetime import datetime, timedelta
@@ -9,6 +8,7 @@ import emails
 from emails.template import JinjaTemplate
 from fastapi.datastructures import UploadFile
 from jose import JWTError, jwt
+from wonderwords import RandomWord
 
 from mariner.core.config import settings
 

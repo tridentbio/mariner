@@ -5,18 +5,18 @@ from fastapi import UploadFile
 from pytorch_lightning import Trainer
 from sqlalchemy.orm.session import Session
 
-from model_builder.dataset import DataModule
-from model_builder.model import CustomModel
 from mariner import datasets as dataset_ctl
 from mariner.schemas.dataset_schemas import (
-    Split,
+    CategoricalDataType,
     ColumnsDescription,
     Dataset,
     DatasetCreate,
-    CategoricalDataType,
     QuantityDataType,
     SmileDataType,
+    Split,
 )
+from model_builder.dataset import DataModule
+from model_builder.model import CustomModel
 from model_builder.schemas import ModelSchema
 from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string

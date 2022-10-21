@@ -10,9 +10,22 @@ from mlflow.tracking.client import MlflowClient
 from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketMessage, get_websockets_manager
-from mariner.events import EventCreate  # BAD DEPENDENCY
-from model_builder.dataset import DataModule
 from mariner.core.config import settings
+from mariner.entities.user import User as UserEntity
+from mariner.events import EventCreate  # BAD DEPENDENCY
+from mariner.exceptions import (
+    ExperimentNotFound,
+    ModelNotFound,
+    ModelVersionNotFound,
+)
+from mariner.schemas.api import ApiBaseModel
+from mariner.schemas.experiment_schemas import (
+    Experiment,
+    ListExperimentsQuery,
+    RunningHistory,
+    TrainingRequest,
+)
+from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.experiment_sql import (
     ExperimentCreateRepo,
@@ -20,20 +33,10 @@ from mariner.stores.experiment_sql import (
     experiment_store,
 )
 from mariner.stores.model_sql import model_store
-from mariner.exceptions import ExperimentNotFound
-from mariner.schemas.experiment_schemas import (
-    Experiment,
-    ListExperimentsQuery,
-    RunningHistory,
-    TrainingRequest,
-)
 from mariner.tasks import ExperimentView, get_exp_manager
 from mariner.train.custom_logger import AppLogger
 from mariner.train.run import start_training
-from mariner.exceptions import ModelNotFound, ModelVersionNotFound
-from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
-from mariner.entities.user import User as UserEntity
-from mariner.schemas.api import ApiBaseModel
+from model_builder.dataset import DataModule
 
 
 def log_error(msg: str):

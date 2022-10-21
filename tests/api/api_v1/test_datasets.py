@@ -8,9 +8,9 @@ from sqlalchemy.orm.session import Session
 from starlette import status
 
 from mariner.core.config import settings
-from mariner.stores.dataset_sql import dataset_store
 from mariner.entities import Dataset as DatasetModel
 from mariner.schemas.dataset_schemas import DatasetCreateRepo, Split
+from mariner.stores.dataset_sql import dataset_store
 from tests.conftest import get_test_user, mock_dataset
 from tests.utils.utils import random_lower_string
 
