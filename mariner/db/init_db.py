@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
-from app.db import base  # noqa: F401
-from app.features.user.crud import repo
-from app.features.user.schema import UserCreate
+from mariner.core.config import settings
+from mariner import entities  # noqa: F401
+from mariner.stores.user_sql import user_store
+from mariner.schemas.user_schemas import UserCreate
 
 # make sure all SQL Alchemy models are imported (app.db.base) before initializing DB
 # otherwise, SQL Alchemy might fail to initialize relationships properly
@@ -16,11 +16,11 @@ def init_db(db: Session) -> None:
     # the tables un-commenting the next line
     # Base.metadata.create_all(bind=engine)
 
-    user = repo.get_by_email(db, email=settings.FIRST_SUPERUSER)
+    user = user_store.get_by_email(db, email=settings.FIRST_SUPERUSER)
     if not user:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
             password=settings.FIRST_SUPERUSER_PASSWORD,
             is_superuser=True,
         )
-        user = repo.create(db, obj_in=user_in)  # noqa: F841
+        user = user_store.create(db, obj_in=user_in)  # noqa: F841
