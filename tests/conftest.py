@@ -17,10 +17,10 @@ from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import Dataset, EventEntity
 from mariner.entities import Experiment as ExperimentEntity
-from mariner.entities import Model as ModelEntity
+from mariner.entities import Model as ModelEntity, ModelVersion
 from mariner.entities import User
 from mariner.schemas.experiment_schemas import Experiment
-from mariner.schemas.model_schemas import Model, ModelCreate, ModelVersion
+from mariner.schemas.model_schemas import Model, ModelCreate
 from mariner.stores.event_sql import EventCreateRepo, event_store
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from mariner.stores.user_sql import user_store

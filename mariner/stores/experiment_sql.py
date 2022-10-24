@@ -4,9 +4,8 @@ import pydantic
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 
-from mariner.entities.experiment import Experiment
+from mariner.entities import Experiment, ModelVersion
 from mariner.schemas.experiment_schemas import ListExperimentsQuery
-from mariner.schemas.model_schemas import ModelVersion
 from mariner.stores.base_sql import CRUDBase
 
 
