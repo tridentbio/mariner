@@ -48,9 +48,9 @@ class {{ component["prefix"] }}ForwardArgsReferences(ApiBaseModel):
 
 class {{component["prefix"]}}Summary(ApiBaseModel):
     type = '{{ component["path"] }}'
-    constructor_args_summary: {{component["prefix"]}}ConstructorArgsSummary
+    constructor_args_summary = {{component["prefix"]}}ConstructorArgsSummary()
     {% if fwd_count > 0 %}
-    forward_args_summary: {{component["prefix"]}}ForwardArgsSummary
+    forward_args_summary = {{component["prefix"]}}ForwardArgsSummary()
     {% endif %}
 
 {% if ctr_count > 0 %}

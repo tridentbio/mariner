@@ -9,7 +9,7 @@ from torch.optim.adam import Adam
 from torch_geometric.data.data import Data
 
 from model_builder.layers import Concat, GlobalPooling, OneHot
-from model_builder.schemas import ModelSchema
+from model_builder.schemas import CategoricalDataType, ModelSchema
 
 edge_index_classes = geom_nn.MessagePassing
 pooling_classes = GlobalPooling

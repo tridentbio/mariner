@@ -11,7 +11,8 @@ from mariner.schemas.msg import Msg
 from mariner.schemas.token import Token
 from mariner.core import security
 from mariner.core.security import get_password_hash
-from mariner.entities.user import User
+from mariner.entities.user import User as UserEntity
+from mariner.schemas.user_schemas import User
 from mariner.stores.user_sql import user_store
 from mariner.utils import (
     generate_password_reset_token,
@@ -46,7 +47,7 @@ def login_access_token(
 
 
 @router.post("/login/test-token", response_model=User)
-def test_token(current_user: User = Depends(deps.get_current_user)) -> Any:
+def test_token(current_user: UserEntity = Depends(deps.get_current_user)) -> Any:
     """
     Test access token
     """

@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from api.config import settings
-from mariner import schemas
+from mariner.schemas.token import TokenPayload
 from mariner.core import security
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User
@@ -33,7 +33,7 @@ def get_current_user(
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
-        token_data = schemas.TokenPayload(**payload)
+        token_data = TokenPayload(**payload)
     except (JWTError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

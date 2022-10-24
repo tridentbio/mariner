@@ -17,7 +17,7 @@ class OneHot(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, x1: Union[list[str], list[int]]):
+    def forward(self, x1: Union[list[str], list[int]]) -> torch.Tensor:
         assert self.classes, "OneHot layer is missing the classes property set"
         longs = torch.Tensor([self.classes[x] for x in x1]).long()
         return F.one_hot(longs, num_classes=len(self.classes)).float()

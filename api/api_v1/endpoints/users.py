@@ -7,11 +7,9 @@ from sqlalchemy.orm import Session
 
 import mariner.users as controller
 from api import deps
-from mariner import schemas
+from mariner.schemas import user_schemas as schemas
 from mariner.core.config import settings
 from mariner.entities.user import User
-from mariner.exceptions import UserAlreadyExists
-from mariner.schemas.user_schemas import UserCreate
 from mariner.stores.user_sql import user_store
 
 router = APIRouter()
@@ -32,29 +30,6 @@ def read_users(
     """
     users = controller.get_users(db, skip=skip, limit=limit)
     return users
-
-
-@router.post(
-    "/",
-    response_model=schemas.User,
-    dependencies=[Depends(deps.get_current_active_superuser)],
-)
-def create_user(
-    *,
-    user_in: UserCreate,
-    db: Session = Depends(deps.get_db),
-) -> Any:
-    """
-    Create new user.
-    """
-    try:
-        user = controller.create_user(db, user_in=user_in)
-        return user
-    except (UserAlreadyExists):
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this username already exists in the system.",
-        )
 
 
 # TODO: pass to MVC layer structure
