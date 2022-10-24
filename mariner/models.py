@@ -225,9 +225,7 @@ def remove_section_by_identation(text: str, section_title: str) -> str:
     return "\n".join(lines[:start_idx] + lines[end_idx + 1 :])
 
 
-def get_annotations_from_cls(
-    cls_path: str, type=None, component=None
-) -> ComponentOption:
+def get_annotations_from_cls(cls_path: str) -> ComponentOption:
     """Gives metadata information of the component implemented by `cls_path`
     Current metadata includes:
         - Docs and Docs' link
@@ -248,8 +246,6 @@ def get_annotations_from_cls(
         docs=docs,
         output_type=str(output_type_hint) if output_type_hint else None,
         class_path=cls_path,
-        type=type,
-        component=component,
     )
 
 
@@ -263,20 +259,29 @@ def get_model_options() -> ModelOptions:
         cls_path: str,
     ) -> Union[layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType, None]:
         for l in dir(layers_schema):
-            class_def = getattr(layers_schema, l)
-            if l.endswith("Summary") and getattr(class_def.construct(), "type"):
-                return class_def()
+            if (
+                l.endswith("Summary")
+                and not l.endswith("ForwardArgsSummary")
+                and not l.endswith("ConstructorArgsSummary")
+            ):
+                class_def = getattr(layers_schema, l)
+                instance = class_def()
+                print(instance, cls_path)
+                if instance.type and instance.type == cls_path:
+                    return instance
 
-    component_annotations: ModelOptions = []
+    component_annotations = []
     for type, class_path in zip(
         ["layer"] * len(layer_types) + ["featurizer"] * len(featurizer_types),
         layer_types + featurizer_types,
     ):
         summary = get_summary(class_path)
         assert summary, f"class Summary of {class_path} should not be None"
-        component_annotations.append(
-            get_annotations_from_cls(class_path, type=type, component=summary)
-        )
+        option = get_annotations_from_cls(class_path)
+        assert type
+        option.type = type
+        option.component = summary
+        component_annotations.append(option)
     return component_annotations
 
 
