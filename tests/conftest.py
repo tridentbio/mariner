@@ -3,6 +3,7 @@ import json
 from typing import Dict, Generator, List, Literal, Optional
 
 import mlflow.tracking
+from pydantic.error_wrappers import ValidationError
 import pytest
 import yaml
 from fastapi.testclient import TestClient
@@ -177,7 +178,10 @@ def dataset_sample():
 def model_config() -> Generator[ModelSchema, None, None]:
     path = "tests/data/test_model_hard.yaml"
     with open(path, "rb") as f:
-        yield ModelSchema.from_yaml(f.read())
+        try:
+            yield ModelSchema.from_yaml(f.read())
+        except ValidationError:
+            raise Exception("Failed to parse " + path)
 
 
 def mock_experiment(
@@ -209,6 +213,7 @@ def mock_model(name=None, dataset_name=None) -> ModelCreate:
     model_path = "tests/data/test_model_hard.yaml"
     with open(model_path, "rb") as f:
         config_dict = yaml.unsafe_load(f.read())
+        print("DICT", config_dict)
         config = ModelSchema.parse_obj(config_dict)
         if dataset_name:
             config.dataset.name = dataset_name
