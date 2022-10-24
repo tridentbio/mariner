@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic.main import BaseModel
@@ -143,7 +143,7 @@ class ComponentOption(ComponentAnnotation):
     Describes an option to be used in the ModelSchema.layers or ModelSchema.featurizers
     """
 
-    component: Union[LayersArgsType, FeaturizersArgsType]
+    component: Any
 
 
 ModelOptions = List[ComponentOption]

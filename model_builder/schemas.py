@@ -10,6 +10,7 @@ from pydantic import (
     root_validator,
     validator,
 )
+from model_builder import generate
 
 from model_builder.components_query import get_component_args_by_type
 from model_builder.layers_schema import FeaturizersType, LayersType
@@ -119,10 +120,8 @@ class ModelSchema(BaseModel):
     def check_types_defined(cls, values):
         layers = values.get("layers")
         featurizers = values.get("featurizers")
-        layer_types = [getattr(cls.construct(), "type") for cls in get_args(LayersType)]
-        featurizer_types = [
-            getattr(cls.construct(), "type") for cls in get_args(FeaturizersType)
-        ]
+        layer_types = [layer.name for layer in generate.layers]
+        featurizer_types = [featurizer.name for featurizer in generate.featurizers]
         for layer in layers:
             if not isinstance(layer, dict):
                 layer = layer.dict()
@@ -135,7 +134,8 @@ class ModelSchema(BaseModel):
                 featurizer = featurizer.dict()
             if featurizer["type"] not in featurizer_types:
                 raise UnknownComponentType(
-                    "A featurizer has unknown type", component_name=featurizer["name"]
+                    f"A featurizer has unknown type: {featurizer['type']}",
+                    component_name=featurizer["name"],
                 )
         return values
 

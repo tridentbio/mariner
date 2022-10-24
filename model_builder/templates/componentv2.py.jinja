@@ -7,7 +7,6 @@ class {{ component["prefix"] }}ConstructorArgsSummary(ApiBaseModel):
     
     Generated code
     """
-    type = '{{ component["path"] }}'
     {%- for key, value in component["ctr"]["pos"] %}
     {{ key }} = "{{ value }}"
     {%- endfor %}
