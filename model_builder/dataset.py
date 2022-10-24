@@ -6,7 +6,9 @@ from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
-from model_builder.layers_schema import AppmoleculefeaturizerLayerConfig
+from model_builder.layers_schema import (
+    FeaturizersType,
+)
 from model_builder.schemas import ColumnConfig, DatasetConfig
 from model_builder.utils import size_repr
 
@@ -201,7 +203,7 @@ class DataModule(pl.LightningDataModule):
         data: pd.DataFrame,
         split_type: str,
         split_target: str,
-        featurizers_config: List[AppmoleculefeaturizerLayerConfig],
+        featurizers_config: FeaturizersType,
         dataset_config: DatasetConfig,
         batch_size: int = 32,
     ):

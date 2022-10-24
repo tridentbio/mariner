@@ -119,10 +119,10 @@ class ModelSchema(BaseModel):
     def check_types_defined(cls, values):
         layers = values.get("layers")
         featurizers = values.get("featurizers")
-        layer_types = [
-            get_args(get_type_hints(cls)["type"])[0] for cls in get_args(LayersType)
+        layer_types = [getattr(cls.construct(), "type") for cls in get_args(LayersType)]
+        featurizer_types = [
+            getattr(cls.construct(), "type") for cls in get_args(FeaturizersType)
         ]
-        featurizer_types = [get_args(get_type_hints(FeaturizersType)["type"])[0]]
         for layer in layers:
             if not isinstance(layer, dict):
                 layer = layer.dict()

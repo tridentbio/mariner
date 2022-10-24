@@ -125,7 +125,7 @@ class ModelVersionUpdateRepo(BaseModel):
     mlflow_version: str
 
 
-class ComponentAnnotation(BaseModel):
+class ComponentAnnotation(ApiBaseModel):
     """
     Gives extra information about the layer/featurizer
 
@@ -133,7 +133,6 @@ class ComponentAnnotation(BaseModel):
 
     docs_link: Optional[str]
     docs: Optional[str]
-    positional_inputs: Dict[str, str]
     output_type: Optional[str]
     class_path: str
     type: Literal["featurizer", "layer"]

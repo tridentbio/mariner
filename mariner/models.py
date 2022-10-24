@@ -237,13 +237,16 @@ def get_annotations_from_cls(
     docs_link = get_documentation_link(cls_path)
     cls = get_class_from_path_string(cls_path)
     docs = remove_section_by_identation(cls.__doc__, "Examples:")
-    type_hints = {key: str(value) for key, value in get_type_hints(cls).items()}
-    output_type_hint = str(type_hints.pop("return", None))
+    forward_type_hints = {}
+    if "forward" in dir(cls):
+        forward_type_hints = get_type_hints(getattr(cls, "forward"))
+    elif "__call__" in dir(cls):
+        forward_type_hints = get_type_hints(getattr(cls, "__call__"))
+    output_type_hint = forward_type_hints.pop("return", None)
     return ComponentOption.construct(
         docs_link=docs_link,
         docs=docs,
-        positional_inputs=type_hints,
-        output_type=output_type_hint,
+        output_type=str(output_type_hint) if output_type_hint else None,
         class_path=cls_path,
         type=type,
         component=component,
@@ -261,8 +264,8 @@ def get_model_options() -> ModelOptions:
     ) -> Union[layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType, None]:
         for l in dir(layers_schema):
             class_def = getattr(layers_schema, l)
-            if l.endswith("Summary") and class_def.type == cls_path:
-                return class_def
+            if l.endswith("Summary") and getattr(class_def.construct(), "type"):
+                return class_def()
 
     component_annotations: ModelOptions = []
     for type, class_path in zip(

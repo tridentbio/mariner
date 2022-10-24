@@ -14,16 +14,14 @@ class Layer:
     name: str
 
 
-featurizers = [
-    Layer(name) for name in ["app.features.model.featurizers.MoleculeFeaturizer"]
-]
+featurizers = [Layer(name) for name in ["model_builder.featurizers.MoleculeFeaturizer"]]
 
 layers = [
     Layer(name)
     for name in [
-        "app.features.model.layers.OneHot",
-        "app.features.model.layers.GlobalPooling",
-        "app.features.model.layers.Concat",
+        "model_builder.layers.OneHot",
+        "model_builder.layers.GlobalPooling",
+        "model_builder.layers.Concat",
         "torch.nn.Linear",
         "torch.nn.Sigmoid",
         "torch.nn.ReLU",
@@ -243,7 +241,7 @@ def get_component_template_args_v2(path: str):
 
 def create_jinja_env():
     env = Environment(
-        loader=PackageLoader("app.features.model"), autoescape=select_autoescape()
+        loader=PackageLoader("model_builder"), autoescape=select_autoescape()
     )
 
     def type_name(value):
