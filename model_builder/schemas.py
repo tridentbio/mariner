@@ -13,7 +13,7 @@ from pydantic import (
 from mariner.schemas.api import ApiBaseModel  # BAD DEP
 from model_builder import generate
 
-from model_builder.components_query import get_component_args_by_type
+from model_builder.components_query import get_component_constructor_args_by_type
 from model_builder.layers_schema import FeaturizersType, LayersType
 
 
@@ -146,11 +146,11 @@ class ModelSchema(ApiBaseModel):
         for layer in layers:
             if not isinstance(layer, dict):
                 layer = layer.dict()
-            args_cls = get_component_args_by_type(layer["type"])
-            if not args_cls:
+            args_cls = get_component_constructor_args_by_type(layer["type"])
+            if not args_cls or "constructorArgs" not in layer:
                 continue
             try:
-                args_cls.validate(layer["args"])
+                args_cls.validate(layer["constructorArgs"])
             except ValidationError as exp:
                 errors += [
                     MissingComponentArgs(
@@ -163,11 +163,11 @@ class ModelSchema(ApiBaseModel):
         for featurizer in featurizers:
             if not isinstance(featurizer, dict):
                 featurizer = featurizer.dict()
-            args_cls = get_component_args_by_type(featurizer["type"])
-            if not args_cls:
+            args_cls = get_component_constructor_args_by_type(featurizer["type"])
+            if not args_cls or "constructorArgs" not in featurizer:
                 continue
             try:
-                args_cls.validate(featurizer["args"])
+                args_cls.validate(featurizer["constructorArgs"])
             except ValidationError as exp:
                 errors += [
                     MissingComponentArgs(
