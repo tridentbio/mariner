@@ -46,7 +46,7 @@ def test_check_if_user_is_active(db: Session) -> None:
 def test_check_if_user_is_active_inactive(db: Session) -> None:
     email = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=email, password=password)
+    user_in = UserCreate(email=EmailStr(email), password=password)
     user = user_store.create(db, obj_in=user_in)
     is_active = user_store.is_active(user)
     assert is_active

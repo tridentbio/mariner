@@ -10,6 +10,7 @@ from pydantic import (
     root_validator,
     validator,
 )
+from mariner.schemas.api import ApiBaseModel  # BAD DEP
 from model_builder import generate
 
 from model_builder.components_query import get_component_args_by_type
@@ -54,7 +55,7 @@ class SmileDataType(BaseModel):
 
 
 # TODO: make data_type optional
-class ColumnConfig(BaseModel):
+class ColumnConfig(ApiBaseModel):
     name: str
     data_type: Union[
         QuantityDataType,
@@ -66,7 +67,7 @@ class ColumnConfig(BaseModel):
 
 
 # TODO: move featurizers to feature_columns
-class DatasetConfig(BaseModel):
+class DatasetConfig(ApiBaseModel):
     name: str
     target_column: ColumnConfig
     feature_columns: List[ColumnConfig]
@@ -109,11 +110,9 @@ class MissingComponentArgs(ValueError):
         self.missing = missing
 
 
-class ModelSchema(BaseModel):
+class ModelSchema(ApiBaseModel):
     """
     A serializable model architecture
-
-
     """
 
     @root_validator(pre=True)
@@ -194,12 +193,7 @@ class ModelSchema(BaseModel):
             g.add_node(feat.name)
         for layer in self.layers:
             g.add_node(layer.name)
-        for layer in self.layers:
-            if isinstance(layer.input, str):
-                g.add_edge(layer.input, layer.name)
-            else:
-                for input_value in layer.input:
-                    g.add_edge(input_value, layer.name)
+        # TODO: update how we do graphs
         return g
 
     @classmethod

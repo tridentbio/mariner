@@ -3,6 +3,7 @@
 ############################################################################
 
 from typing import Optional, Literal, Union, List, Any
+from pydantic import BaseModel
 from model_builder.utils import get_class_from_path_string
 from mariner.schemas.api import ApiBaseModel
 {% block imports %}
@@ -17,9 +18,17 @@ def is_func(obj):
 
 class BaseLayerConfig(ApiBaseModel):
     name: str
-    input: Union[str, List[str]]
     def create(self):
       pass
+
+class PythonArgsBaseModel(BaseModel):
+    class Config:
+        alias_generator = None
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+        orm_mode = True
+        underscore_attrs_are_private = True
+
 
 {%- for component in layer_components -%}
 {%- include "componentv2.py.jinja" -%}

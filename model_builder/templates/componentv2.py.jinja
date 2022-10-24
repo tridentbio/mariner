@@ -1,7 +1,7 @@
 {% set ctr_count=component["ctr"]["pos"]|length + component["ctr"]["kw"]|length %}
 {% set fwd_count=component["fwd"]["pos"]|length + component["fwd"]["kw"]|length %}
 
-class {{ component["prefix"] }}ConstructorArgsSummary(ApiBaseModel):
+class {{ component["prefix"] }}ConstructorArgsSummary(PythonArgsBaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate {{ component["path"] }}
     
@@ -17,7 +17,7 @@ class {{ component["prefix"] }}ConstructorArgsSummary(ApiBaseModel):
 
 {% if fwd_count > 0 %}
 
-class {{ component["prefix"] }}ForwardArgsSummary(ApiBaseModel):
+class {{ component["prefix"] }}ForwardArgsSummary(PythonArgsBaseModel):
     """
     Maps to references for the the arguments of {{ component["path"] }}.forward or {{ component["path"]}}.__call__
 
@@ -34,7 +34,7 @@ class {{ component["prefix"] }}ForwardArgsSummary(ApiBaseModel):
     {{ key }} =  "{{ value }}?"
     {%- endfor %}
 
-class {{ component["prefix"] }}ForwardArgsReferences(ApiBaseModel):
+class {{ component["prefix"] }}ForwardArgsReferences(PythonArgsBaseModel):
     {%- for key, value in component["fwd"]["pos"] %}
     {{ key }}: str
     {%- endfor %}
@@ -54,7 +54,7 @@ class {{component["prefix"]}}Summary(ApiBaseModel):
 
 {% if ctr_count > 0 %}
 
-class {{ component["prefix"] }}ConstructorArgs(ApiBaseModel):
+class {{ component["prefix"] }}ConstructorArgs(PythonArgsBaseModel):
     """
     Maps to the arguments of {{ component["path"] }}
 
@@ -67,6 +67,7 @@ class {{ component["prefix"] }}ConstructorArgs(ApiBaseModel):
     {%- for key, value in component["ctr"]["kw"] %}
     {{ key }}: Optional[{{ type_name(value) }}] = None
     {%- endfor %}
+
 
 {% endif %}
 
@@ -82,12 +83,12 @@ class {{ component["prefix"] }}LayerConfig(BaseLayerConfig):
     """
     type = '{{ component["path"] }}'
     {% if ctr_count > 0 %}
-    constructorArgs: {{ component["prefix"] }}ConstructorArgs
+    constructor_args: {{ component["prefix"] }}ConstructorArgs
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
           return lib_cls
-        return lib_cls(**self.constructorArgs.dict())
+        return lib_cls(**self.constructor_args.dict())
     {% else %}
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
@@ -96,7 +97,7 @@ class {{ component["prefix"] }}LayerConfig(BaseLayerConfig):
         return lib_cls()
     {% endif %}
     {% if fwd_count > 0 %}
-    forwardArgs: {{ component["prefix"] }}ForwardArgsReferences
+    forward_args: {{ component["prefix"] }}ForwardArgsReferences
 
     {% endif %}
 
