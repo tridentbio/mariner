@@ -181,6 +181,14 @@ For example, to stop on first error:
 docker-compose exec backend bash /app/tests-start.sh -x
 ```
 
+#### Running Benchmarks
+
+When implementing a benchmark, place it along other tests, and name your test function as `test_benchmark_name-of-benchmarking-target`, and mark it with `@pytest.mark.benchmark`
+
+To execute a set of benchmarks, use the following pytest options:
+- `-s` pytest option to capture the test stdout
+- `-m benchmark` otherwise the benchmarks collected will be deselected by the pytest.ini `adopts`
+
 #### Test Coverage
 
 Because the test scripts forward arguments to `pytest`, you can enable test coverage HTML report generation by passing `--cov-report=html`.
