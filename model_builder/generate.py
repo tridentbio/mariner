@@ -324,12 +324,14 @@ class EmptySphinxException(Exception):
 @functools.cache
 def sphinxfy(classpath: str) -> str:
     """
-    Takes a classpath, such as `torch.nn.Linear`, and process it's docstring into HTML
+    Takes a classpath and process it's docstring into HTML
     strings
 
     Args:
         classpath (str):
 
+    Raises:
+        EmptySphinxException: when the sphinxfy task does not produce any output
     """
     SPHINX_CONF = r"""
 extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autodoc', 'sphinx.ext.mathjax']

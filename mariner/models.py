@@ -1,5 +1,6 @@
 import traceback
 from typing import Any, Optional, Union, get_type_hints
+from warnings import warn
 
 import mlflow
 import mlflow.exceptions
@@ -194,15 +195,13 @@ def get_documentation_link(class_path: str) -> Optional[str]:
 
 
 def get_annotations_from_cls(cls_path: str) -> ComponentOption:
-    """Gives metadata information of the component implemented by `cls_path`
-    Current metadata includes:
-        - Docs and Docs' link
-        - Number of inputs and outputs the component expects
-        - Known rules for the component
-    """
+    """Gives metadata information of the component implemented by `cls_path`"""
     docs_link = get_documentation_link(cls_path)
     cls = get_class_from_path_string(cls_path)
-    docs = generate.sphinxfy(cls_path)
+    try:
+        docs = generate.sphinxfy(cls_path)
+    except generate.EmptySphinxException:
+        docs = cls_path
     forward_type_hints = {}
     if "forward" in dir(cls):
         forward_type_hints = get_type_hints(getattr(cls, "forward"))
@@ -234,7 +233,6 @@ def get_model_options() -> ModelOptions:
             ):
                 class_def = getattr(layers_schema, l)
                 instance = class_def()
-                print(instance, cls_path)
                 if instance.type and instance.type == cls_path:
                     return instance
 
@@ -246,7 +244,6 @@ def get_model_options() -> ModelOptions:
         summary = get_summary(class_path)
         assert summary, f"class Summary of {class_path} should not be None"
         option = get_annotations_from_cls(class_path)
-        assert type
         option.type = type
         option.component = summary
         component_annotations.append(option)
