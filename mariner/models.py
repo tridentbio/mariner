@@ -193,38 +193,6 @@ def get_documentation_link(class_path: str) -> Optional[str]:
     return None
 
 
-def remove_section_by_identation(text: str, section_title: str) -> str:
-    def count_tabs(line: str) -> int:
-        total = 0
-        for c in line:
-            if c == " ":
-                total += 1
-            elif c == "\t":
-                total += 2
-            else:
-                break
-        return total
-
-    lines = text.split("\n")
-    start_idx = None
-    tab_size = None
-    end_idx = None
-    for idx, line in enumerate(lines):
-        if section_title in line:
-            start_idx = idx
-            end_idx = start_idx
-            tab_size = count_tabs(line) + 4
-            continue
-        if tab_size is not None and count_tabs(line) >= tab_size:
-            assert end_idx is not None
-            end_idx = end_idx + 1
-        elif start_idx is not None:
-            break
-    if start_idx is None or end_idx is None:
-        return text
-    return "\n".join(lines[:start_idx] + lines[end_idx + 1 :])
-
-
 def get_annotations_from_cls(cls_path: str) -> ComponentOption:
     """Gives metadata information of the component implemented by `cls_path`
     Current metadata includes:
@@ -234,7 +202,7 @@ def get_annotations_from_cls(cls_path: str) -> ComponentOption:
     """
     docs_link = get_documentation_link(cls_path)
     cls = get_class_from_path_string(cls_path)
-    docs = remove_section_by_identation(cls.__doc__, "Examples:")
+    docs = generate.sphinxfy(cls_path)
     forward_type_hints = {}
     if "forward" in dir(cls):
         forward_type_hints = get_type_hints(getattr(cls, "forward"))

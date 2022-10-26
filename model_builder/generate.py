@@ -1,10 +1,15 @@
+import sys
 import inspect
+import os
 from dataclasses import dataclass
 from inspect import Parameter, Signature, signature
+import tempfile
+import functools
 from typing import Any, List, Optional
 
 from humps import camel
 from jinja2 import Environment, PackageLoader, select_autoescape
+from sphinx.application import Sphinx
 
 from model_builder.utils import get_class_from_path_string
 
@@ -310,6 +315,84 @@ def generate_bundlev2() -> str:
         layer_components=layer_template_args,
         featurizer_components=featurizer_template_args,
     )
+
+
+class EmptySphinxException(Exception):
+    pass
+
+
+@functools.cache
+def sphinxfy(classpath: str) -> str:
+    """
+    Takes a classpath, such as `torch.nn.Linear`, and process it's docstring into HTML
+    strings
+
+    Args:
+        classpath (str):
+
+    """
+    SPHINX_CONF = r"""
+extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autodoc', 'sphinx.ext.mathjax']
+
+templates_path = ['templates']
+html_static_path = ['static']
+
+html_use_modindex = False
+html_use_index = False
+html_split_index = False
+html_copy_source = False
+
+todo_include_todos = True"""
+    HTML_TEMPLATE = r"""<div class="docstring">
+    {% block body %} {% endblock %}
+</div>"""
+
+    srcdir, outdir = tempfile.mkdtemp(), tempfile.mkdtemp()
+    src_base_name, out_base_name = os.path.join(srcdir, "docstring"), os.path.join(
+        outdir, "docstring"
+    )
+    rst_name, out_name = src_base_name + ".rst", out_base_name + ".html"
+    docstring = get_class_from_path_string(classpath).__doc__
+    with open(rst_name, "w") as filed:
+        filed.write(docstring)
+
+    # Setup sphinx configuratio
+    confdir = os.path.join(srcdir, "en", "introspect")
+    os.makedirs(confdir)
+    with open(os.path.join(confdir, "conf.py"), "w") as filed:
+        filed.write(SPHINX_CONF)
+
+    # Setup sphixn templates dir
+    templatesdir = os.path.join(confdir, "templates")
+    os.makedirs(templatesdir)
+    with open(os.path.join(templatesdir, "layout.html"), "w") as filed:
+        filed.write(HTML_TEMPLATE)
+    doctreedir = os.path.join(srcdir, "doctrees")
+    confoverrides = {"html_context": {}, "master_doc": "docstring"}
+    old_sys_path = list(sys.path)  # Sphinx modifies sys.path
+    # Secret Sphinx reference
+    # https://www.sphinx-doc.org/en/master/_modules/sphinx/application.html#Sphinx
+    sphinx_app = Sphinx(
+        srcdir=srcdir,
+        confdir=confdir,
+        outdir=outdir,
+        doctreedir=doctreedir,
+        buildername="html",
+        freshenv=True,
+        confoverrides=confoverrides,
+        status=None,  # defines where to log, default was os.stdout
+        warning=None,  # defines where to log errors, default was os.stderr
+        warningiserror=False,
+    )
+    sphinx_app.build(False, [rst_name])
+    sys.path = old_sys_path
+
+    if os.path.exists(out_name):
+        with open(out_name, "r") as f:
+            output = f.read()
+        return output
+    else:
+        raise EmptySphinxException()
 
 
 if __name__ == "__main__":
