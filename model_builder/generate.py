@@ -1,5 +1,6 @@
 import sys
 import inspect
+import re
 import os
 from dataclasses import dataclass
 from inspect import Parameter, Signature, signature
@@ -399,6 +400,7 @@ todo_include_todos = True"""
                 .replace(r"\[", "")
                 .replace(r"\]", "")
             )
+            output = re.sub('<img[^>]*>', '', output)
         return output
     else:
         raise EmptySphinxException()
