@@ -104,7 +104,7 @@ class GlobalPooling(torch.nn.Module):
         assert len(set(self.aggrs) | {"sum", "add", "mean", "max"}) == 4
 
     def forward(
-        self, x: Tensor, batch: Optional[Tensor], size: Optional[int] = None
+        self, x: Tensor, batch: Optional[Tensor] = None, size: Optional[int] = None
     ) -> Tensor:
         """"""
         xs: List[Tensor] = []
