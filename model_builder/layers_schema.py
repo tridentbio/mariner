@@ -111,12 +111,12 @@ class ModelbuilderglobalpoolingForwardArgsSummary(PythonArgsBaseModel):
     Generated code
     """
     x = "<class 'torch.Tensor'>"
-    batch = "typing.Optional[torch.Tensor]"
+    batch =  "typing.Optional[torch.Tensor]?"
     size =  "typing.Optional[int]?"
 
 class ModelbuilderglobalpoolingForwardArgsReferences(PythonArgsBaseModel):
     x: str
-    batch: str
+    batch: Optional[str] = None
     size: Optional[str] = None
 
 
