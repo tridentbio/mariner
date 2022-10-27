@@ -392,6 +392,13 @@ todo_include_todos = True"""
     if os.path.exists(out_name):
         with open(out_name, "r") as f:
             output = f.read()
+            # Remove spurious \(, \), \[, \].
+            output = (
+                output.replace(r"\(", "")
+                .replace(r"\)", "")
+                .replace(r"\[", "")
+                .replace(r"\]", "")
+            )
         return output
     else:
         raise EmptySphinxException()
