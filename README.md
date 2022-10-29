@@ -31,7 +31,7 @@ poetry run pre-commit install
 4. Use the virtualenv as appropriate. As long as in the virtualenv, all dependencies should be found, and editor support should have autocompletion working:
 
 ```bash
-poetry shell # starts shell with the virtualenv loaded
+poetry shell # starts shell with the virtualenv loaded or ...
 poetry run code . # starts vscode in this folder
 ```
 
