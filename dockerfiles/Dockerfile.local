@@ -22,6 +22,7 @@ RUN poetry run pip install --upgrade requests
 RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
 RUN poetry install
 
+COPY ../alembic.ini /pytest.ini /app
 COPY ./mariner /app/mariner
 COPY ./api /app/api
 COPY ./model_builder /app/model_builder
