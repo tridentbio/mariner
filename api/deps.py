@@ -8,7 +8,7 @@ from jose import JWTError, jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from api.config import settings
+from mariner.core.config import settings
 from mariner.schemas.token import TokenPayload
 from mariner.core import security
 from mariner.db.session import SessionLocal

@@ -15,7 +15,7 @@ from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetAlreadyExists,
     DatasetNotFound,
-    NotCreatorOfDataset,
+    NotCreatorOwner,
 )
 from mariner.schemas.dataset_schemas import (
     CategoricalDataType,
@@ -54,7 +54,7 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     if dataset is None:
         raise DatasetNotFound()
     if current_user.id != dataset.created_by_id:
-        raise NotCreatorOfDataset()
+        raise NotCreatorOwner()
     return dataset
 
 
@@ -174,7 +174,7 @@ def update_dataset(
         raise DatasetNotFound(f"Dataset with id {dataset_id} not found")
 
     if existingdataset.created_by_id != current_user.id:
-        raise NotCreatorOfDataset("Should be creator of dataset")
+        raise NotCreatorOwner("Should be creator of dataset")
 
     existingdataset.stats = jsonable_encoder(existingdataset.stats)
     dataset_dict = jsonable_encoder(existingdataset)
@@ -280,7 +280,7 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
     if not dataset:
         raise DatasetNotFound(f"Dataset with {dataset_id} not found")
     if dataset.created_by_id != current_user.id:
-        raise NotCreatorOfDataset("Should be creator of dataset")
+        raise NotCreatorOwner("Should be creator of dataset")
     dataset = dataset_store.remove(db, dataset.id)
     json.dumps(dataset.stats)
     return Dataset.from_orm(dataset)

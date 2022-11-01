@@ -25,9 +25,13 @@ class UserInDBBase(UserBase):
         orm_mode = True
 
 
-class UserCreate(UserBase):
+class UserCreateBasic(UserBase):
     email: EmailStr
     password: str
+
+
+class UserCreateOAuth(UserBase):
+    email: EmailStr
 
 
 # Properties to receive via API on update

@@ -13,7 +13,7 @@ from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetAlreadyExists,
     DatasetNotFound,
-    NotCreatorOfDataset,
+    NotCreatorOwner,
 )
 from mariner.schemas.api import Paginated
 from mariner.schemas.dataset_schemas import (
@@ -153,7 +153,7 @@ def update_dateset(
         return dataset
     except DatasetNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    except NotCreatorOfDataset:
+    except NotCreatorOwner:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
