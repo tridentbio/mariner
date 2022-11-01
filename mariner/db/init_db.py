@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from mariner import entities  # noqa: F401
 from mariner.core.config import settings
-from mariner.schemas.user_schemas import UserCreate
+from mariner.schemas.user_schemas import UserCreateBasic
 from mariner.stores.user_sql import user_store
 
 # make sure all SQL Alchemy models are imported (app.db.base) before initializing DB
@@ -18,7 +18,7 @@ def init_db(db: Session) -> None:
 
     user = user_store.get_by_email(db, email=settings.FIRST_SUPERUSER)
     if not user:
-        user_in = UserCreate(
+        user_in = UserCreateBasic(
             email=settings.FIRST_SUPERUSER,
             password=settings.FIRST_SUPERUSER_PASSWORD,
             is_superuser=True,

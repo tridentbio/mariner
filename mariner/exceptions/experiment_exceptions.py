@@ -1,0 +1,2 @@
+class ExperimentNotFound(Exception):
+    pass

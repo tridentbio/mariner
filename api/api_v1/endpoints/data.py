@@ -4,7 +4,7 @@ from fastapi.routing import APIRouter
 from starlette.responses import StreamingResponse
 
 from api import deps
-from api.config import settings
+from mariner.core.config import settings
 
 router = APIRouter()
 

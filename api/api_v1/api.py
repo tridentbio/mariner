@@ -9,6 +9,7 @@ from api.api_v1.endpoints import (
     model,
     units,
     users,
+    oauth,
 )
 
 api_router = APIRouter()
@@ -23,3 +24,4 @@ api_router.include_router(
 )
 api_router.include_router(units.router, prefix="/units", tags=["units"])
 api_router.include_router(events.router, prefix="/events", tags=["events"])
+api_router.include_router(oauth.router, tags=["oauth"])

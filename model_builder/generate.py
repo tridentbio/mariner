@@ -400,7 +400,7 @@ todo_include_todos = True"""
                 .replace(r"\[", "")
                 .replace(r"\]", "")
             )
-            output = re.sub('<img[^>]*>', '', output)
+            output = re.sub("<img[^>]*>", "", output)
         return output
     else:
         raise EmptySphinxException()

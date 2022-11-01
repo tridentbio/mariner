@@ -1,21 +1,27 @@
 from typing import Any, Dict, Optional, Union
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, class_mapper
 
 from mariner.core.security import get_password_hash, verify_password
 from mariner.entities.user import User
-from mariner.schemas.user_schemas import UserCreate, UserUpdate
+from mariner.schemas.user_schemas import UserCreateBasic, UserCreateOAuth, UserUpdate
 from mariner.stores.base_sql import CRUDBase
 
 
-class _CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
+class _CRUDUser(CRUDBase[User, UserCreateBasic, UserUpdate]):
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
         return db.query(User).filter(User.email == email).first()
 
-    def create(self, db: Session, *, obj_in: UserCreate) -> User:
+    def create(
+        self, db: Session, *, obj_in: Union[UserCreateBasic, UserCreateOAuth]
+    ) -> User:
         db_obj = User(
             email=obj_in.email,
-            hashed_password=get_password_hash(obj_in.password),
+            hashed_password=(
+                get_password_hash(obj_in.password)
+                if isinstance(obj_in, UserCreateBasic)
+                else None
+            ),
             full_name=obj_in.full_name,
             is_superuser=obj_in.is_superuser,
         )
