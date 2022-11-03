@@ -16,21 +16,21 @@ from mariner.schemas.dataset_schemas import (
     Split,
 )
 from model_builder.dataset import DataModule
-from model_builder.model import CustomModel
+from model_builder.model import CustomModel, CustomModelV2
 from model_builder.schemas import ModelSchema
 from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string
 
 # model configuration to be tested
 mlflow_yamls = [
-    "app/tests/data/test_model_hard.yaml",
-    "app/tests/data/categorical_features_model.yaml",
+    "tests/data/test_model_hard.yaml",
+    # "app/tests/data/categorical_features_model.yaml",
 ]
 
 
 @pytest.fixture()
 def zinc_extra_dataset(db: Session) -> Generator[Dataset, None, None]:
-    zinc_extra_path = "app/tests/data/zinc_extra.csv"
+    zinc_extra_path = "tests/data/zinc_extra.csv"
     columns_metadata = [
         ColumnsDescription(
             pattern="smiles",
@@ -74,7 +74,7 @@ def zinc_extra_dataset(db: Session) -> Generator[Dataset, None, None]:
 def test_model_building(zinc_extra_dataset: Dataset, model_config_path: str):
     with open(model_config_path, "rb") as f:
         model_config = ModelSchema.from_yaml(f.read())
-    model = CustomModel(model_config)
+    model = CustomModelV2(model_config)
     featurizers_config = model_config.featurizers
     data_module = DataModule(
         featurizers_config=featurizers_config,

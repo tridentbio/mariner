@@ -6,7 +6,7 @@ from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
 from mariner.core.config import settings
-from mariner.schemas.user_schemas import UserCreate
+from mariner.schemas.user_schemas import UserCreateBasic
 from mariner.stores.user_sql import user_store
 from tests.utils.utils import random_email, random_lower_string
 
@@ -46,7 +46,7 @@ def test_get_existing_user(
 ) -> None:
     username = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=EmailStr(username), password=password)
+    user_in = UserCreateBasic(email=EmailStr(username), password=password)
     user = user_store.create(db, obj_in=user_in)
     user_id = user.id
     r = client.get(
@@ -66,7 +66,7 @@ def test_create_user_existing_username(
     username = random_email()
     # username = email
     password = random_lower_string()
-    user_in = UserCreate(email=EmailStr(username), password=password)
+    user_in = UserCreateBasic(email=EmailStr(username), password=password)
     user_store.create(db, obj_in=user_in)
     data = {"email": username, "password": password}
     r = client.post(
@@ -98,12 +98,12 @@ def test_retrieve_users(
 ) -> None:
     username = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=EmailStr(username), password=password)
+    user_in = UserCreateBasic(email=EmailStr(username), password=password)
     user_store.create(db, obj_in=user_in)
 
     username2 = random_email()
     password2 = random_lower_string()
-    user_in2 = UserCreate(email=EmailStr(username2), password=password2)
+    user_in2 = UserCreateBasic(email=EmailStr(username2), password=password2)
     user_store.create(db, obj_in=user_in2)
 
     r = client.get(f"{settings.API_V1_STR}/users/", headers=superuser_token_headers)

@@ -21,12 +21,13 @@ from mariner.entities import Model as ModelEntity, ModelVersion
 from mariner.entities import User
 from mariner.schemas.experiment_schemas import Experiment
 from mariner.schemas.model_schemas import Model, ModelCreate
+from mariner.schemas.user_schemas import UserCreateBasic
 from mariner.stores.event_sql import EventCreateRepo, event_store
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from mariner.stores.user_sql import user_store
 from model_builder.schemas import ModelSchema
 from tests.utils.user import authentication_token_from_email
-from tests.utils.utils import get_superuser_token_headers, random_lower_string
+from tests.utils.utils import random_lower_string
 
 
 @pytest.fixture(scope="session")
@@ -42,11 +43,6 @@ def client() -> Generator:
 
 
 @pytest.fixture(scope="module")
-def superuser_token_headers(client: TestClient) -> Dict[str, str]:
-    return get_superuser_token_headers(client)
-
-
-@pytest.fixture(scope="module")
 def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]:
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
@@ -55,6 +51,11 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
 
 def get_test_user(db: Session) -> User:
     user = user_store.get_by_email(db, email=settings.EMAIL_TEST_USER)
+    if not user:
+        user = user_store.create(
+            db,
+            obj_in=UserCreateBasic(email=settings.EMAIL_TEST_USER, password="123456"),
+        )
     assert user is not None
     return user
 
