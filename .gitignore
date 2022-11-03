@@ -4,3 +4,4 @@ htmlcov
 __pycache__/
 .env
 dist/
+.ipynb_checkpoints
