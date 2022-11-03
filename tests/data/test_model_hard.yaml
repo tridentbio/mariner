@@ -81,7 +81,7 @@ layers:
     forward_args:
       x: ${GCN3_Activation}
       edge_index: ${MolToGraphFeaturizer.edge_index}
-      batch: ${batch}
+      batch: ${MolToGraphFeaturizer.batch}
     constructor_args:
       aggr: 'sum'
   # End of fst branch
