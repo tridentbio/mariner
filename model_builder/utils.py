@@ -1,9 +1,69 @@
 from collections.abc import Mapping
-from typing import Any, Callable, Dict, Sequence
+from typing import Any, Callable, Dict, Sequence, Union
 
 import numpy as np
 import torch
 from torch_sparse import SparseTensor
+
+from model_builder.storage import BaseStorage
+
+
+class DataInstance(BaseStorage):
+    """DataInstance basically works like a map/storage. It works
+    through a structure similar to a python dict with some more
+    features to support pytorch operations. This way it is possible
+    to support types such as tensors, `pytorch_geometric.Data` and
+    other data types used in models.
+
+    For information about the methods see:
+    https://docs.python.org/3/reference/datamodel.html
+
+    Args:
+        y (Any): The target value for that instance.
+        **kwargs: Any arg passed via kwargs will become an
+            attribute of the instance.
+
+    Example:
+    >>> data = DataInstance()
+    >>> data.x = torch.tensor([1.76])
+    """
+
+    def __init__(self, y=None, **kwargs):
+
+        self.__dict__["_store"] = BaseStorage(_parent=self)
+
+        if y is not None:
+            self.y = y
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def __getitem__(self, key: str) -> Any:
+        return self._store[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self._store[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        if key in self._store:
+            del self._store[key]
+
+    def __getattr__(self, key: str) -> Any:
+        if "_store" not in self.__dict__:
+            raise RuntimeError
+        return getattr(self._store, key)
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        setattr(self._store, key, value)
+
+    def __delattr__(self, key: str, value: Any) -> None:
+        delattr(self._store, key)
+
+    def __repr__(self) -> str:
+        cls = self.__class__.__name__
+        info = [size_repr(k, v, indent=2) for k, v in self._store.items()]
+        info = ",\n".join(info)
+        return f"{cls}(\n{info}\n)"
 
 
 def recursive_apply_(data: Any, function: Callable) -> None:
@@ -37,38 +97,6 @@ def recursive_apply_(data: Any, function: Callable) -> None:
         function(data)
     except:
         pass
-
-
-def recursive_apply(data: Any, function: Callable) -> Any:
-    """Recursively applies a function to the passed data structure and
-    returns the equivalent type resulting from applying the function.
-
-    Args:
-        data (Any): Data structure to apply the function.
-        function (Callable): Function that will be applied to the data.
-
-    Returns:
-        Any: Data resulting from the application function.
-    """
-    if isinstance(data, torch.Tensor):
-        return function(data)
-
-    if isinstance(data, torch.nn.utils.rnn.PackedSequence):
-        return function(data)
-
-    if isinstance(data, tuple) and hasattr(data, "_fields"):
-        return type(data)(*(recursive_apply(d, function) for d in data))
-
-    if isinstance(data, Sequence) and not isinstance(data, str):
-        return [recursive_apply(d, function) for d in data]
-
-    if isinstance(data, Mapping):
-        return {key: recursive_apply(data[key], function) for key in data}
-
-    try:
-        return function(data)
-    except:
-        return data
 
 
 def size_repr(key: Any, value: Any, indent: int = 0) -> str:
@@ -142,3 +170,45 @@ references['cls'] = {export}
     references: Dict[str, Any] = {}
     exec(code, globals(), {"references": references})
     return references["cls"]
+
+
+def unwrap_dollar(value: str) -> tuple[str, bool]:
+    """
+    Takes a string and remove it's reference indicators: $ or ${...}
+    Returns the string unwrapped (if it was a reference) and `is_reference` boolean
+    """
+    if value.startswith("${") and value.endswith("}"):
+        return value[2:-1], True
+    elif value.startswith("$"):
+        return value[1:], True
+    return value, False
+
+
+def get_references_dict(forward_args_dict: dict[str, Any]) -> dict[str, str]:
+    result = {}
+    for key, value in forward_args_dict.items():
+        ref, is_ref = unwrap_dollar(value)
+        if is_ref:
+            result[key] = ref
+    return result
+
+
+def collect_args(
+    input: DataInstance, args_dict: dict[str, Any]
+) -> Union[list, dict, Any]:
+    result = {}
+    for key, value in args_dict.items():
+        print(f"acessing {key} in {input}")
+        value, is_ref = unwrap_dollar(value)
+        if is_ref:
+            attribute, attribute_accessors = (
+                value.split(".")[0],
+                value.split(".")[1:],
+            )
+            value = input[attribute]
+            for attr in attribute_accessors:
+                value = value[attr]
+            result[key] = value
+        else:
+            result[key] = value
+    return result

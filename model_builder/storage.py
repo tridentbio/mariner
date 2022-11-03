@@ -1,10 +1,42 @@
+import torch
 import weakref
 from collections.abc import MutableMapping
 from copy import copy
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
-from model_builder.utils import recursive_apply
 from model_builder.views import ItemsView, KeysView, ValuesView
+
+
+def recursive_apply(data: Any, function: Callable) -> Any:
+    """Recursively applies a function to the passed data structure and
+    returns the equivalent type resulting from applying the function.
+
+    Args:
+        data (Any): Data structure to apply the function.
+        function (Callable): Function that will be applied to the data.
+
+    Returns:
+        Any: Data resulting from the application function.
+    """
+    if isinstance(data, torch.Tensor):
+        return function(data)
+
+    if isinstance(data, torch.nn.utils.rnn.PackedSequence):
+        return function(data)
+
+    if isinstance(data, tuple) and hasattr(data, "_fields"):
+        return type(data)(*(recursive_apply(d, function) for d in data))
+
+    if isinstance(data, Sequence) and not isinstance(data, str):
+        return [recursive_apply(d, function) for d in data]
+
+    if isinstance(data, Mapping):
+        return {key: recursive_apply(data[key], function) for key in data}
+
+    try:
+        return function(data)
+    except:
+        return data
 
 
 class BaseStorage(MutableMapping):
