@@ -5,3 +5,4 @@ __pycache__/
 .env
 dist/
 .ipynb_checkpoints
+lightning_logs/
