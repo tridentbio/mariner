@@ -23,8 +23,8 @@ def get_s3_data(
     s3 = boto3.client(
         "s3",
         region_name=settings.AWS_REGION,
-        aws_access_key_id=settings.AWS_SECRET_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_KEY,
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     )
     s3_res = s3.get_object(Bucket=settings.AWS_DATASETS, Key=object_key)
     return StreamingResponse(s3_res["Body"].iter_chunks(), media_type="text/csv")

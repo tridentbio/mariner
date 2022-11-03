@@ -11,17 +11,6 @@ from mariner.stores.user_sql import user_store
 from tests.utils.utils import random_email, random_lower_string
 
 
-def test_get_users_superuser_me(
-    client: TestClient, superuser_token_headers: Dict[str, str]
-) -> None:
-    r = client.get(f"{settings.API_V1_STR}/users/me", headers=superuser_token_headers)
-    current_user = r.json()
-    assert current_user
-    assert current_user["isActive"] is True
-    assert current_user["isSuperuser"]
-    assert current_user["email"] == settings.FIRST_SUPERUSER
-
-
 def test_get_users_normal_user_me(
     client: TestClient, normal_user_token_headers: Dict[str, str]
 ) -> None:
