@@ -1,5 +1,6 @@
 # Temporary file to hold all extracted mariner schemas
-from typing import List, Literal, Union, get_args, get_type_hints
+from typing import List, Literal, Union
+from humps import camel
 
 import networkx as nx
 import yaml
@@ -10,11 +11,23 @@ from pydantic import (
     root_validator,
     validator,
 )
-from mariner.schemas.api import ApiBaseModel  # BAD DEP
 from model_builder import generate
 
 from model_builder.components_query import get_component_constructor_args_by_type
-from model_builder.layers_schema import FeaturizersType, LayersType
+from model_builder.layers_schema import (
+    BaseLayerConfig,
+    FeaturizersType,
+    LayersType,
+    PythonArgsBaseModel,
+)
+
+
+class CamelCaseModel(BaseModel):
+    class Config:
+        alias_generator = camel.case
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+        underscore_attrs_are_private = True
 
 
 class NumericalDataType(BaseModel):
@@ -55,7 +68,7 @@ class SmileDataType(BaseModel):
 
 
 # TODO: make data_type optional
-class ColumnConfig(ApiBaseModel):
+class ColumnConfig(CamelCaseModel):
     name: str
     data_type: Union[
         QuantityDataType,
@@ -67,7 +80,7 @@ class ColumnConfig(ApiBaseModel):
 
 
 # TODO: move featurizers to feature_columns
-class DatasetConfig(ApiBaseModel):
+class DatasetConfig(CamelCaseModel):
     name: str
     target_column: ColumnConfig
     feature_columns: List[ColumnConfig]
@@ -110,7 +123,19 @@ class MissingComponentArgs(ValueError):
         self.missing = missing
 
 
-class ModelSchema(ApiBaseModel):
+def _unwrap_dollar(value: str) -> tuple[str, bool]:
+    """
+    Takes a string and remove it's reference indicators: $ or ${...}
+    Returns the string unwrapped (if it was a reference) and `is_reference` boolean
+    """
+    if value.startswith("${") and value.endswith("}"):
+        return value[2:-1], True
+    elif value.startswith("$"):
+        return value[1:], True
+    return value, False
+
+
+class ModelSchema(CamelCaseModel):
     """
     A serializable model architecture
     """
@@ -193,7 +218,22 @@ class ModelSchema(ApiBaseModel):
             g.add_node(feat.name)
         for layer in self.layers:
             g.add_node(layer.name)
-        # TODO: update how we do graphs
+
+        def _to_dict(arr: List[BaseModel]):
+            return [item.dict() for item in arr]
+
+        layers_and_featurizers = _to_dict(self.layers) + _to_dict(self.featurizers)
+        for feat in layers_and_featurizers:
+            for value in feat["constructor_args"].values():
+                assert isinstance(
+                    value, str
+                ), "constructor_args values should be strings"
+                reference, is_reference = _unwrap_dollar(value)
+                if not is_reference and reference != "inputs":
+                    continue
+                reference = reference.split(".")[0]
+                g.add_edge(feat["name"], reference)
+
         return g
 
     @classmethod

@@ -19,7 +19,7 @@ services:
     networks:
       - ray_net
   backend:
-    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    image: 'image:latest'
     depends_on:
       db:
         condition: service_healthy
@@ -29,14 +29,6 @@ services:
       - 80:80
     env_file:
       - .env
-    environment:
-      - POSTGRES_SERVER=db
-      - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
-      - SERVER_NAME=${DOMAIN?Variable not set}
-      - SERVER_HOST=https://${DOMAIN?Variable not set}
-      - SMTP_HOST=${SMTP_HOST}
-      - WEBAPP_URL=${WEBAPP_URL}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 5s
@@ -85,8 +77,8 @@ services:
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
-      - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
@@ -115,11 +107,11 @@ services:
     env_file:
       - .env.local.ray
     environment:
-      - SERVER_NAME=${DOMAIN?Variable not set}
-      - SERVER_HOST=http://${DOMAIN?Variable not set}
+      - SERVER_NAME=${SERVER_NAME?Variable not set}
+      - SERVER_HOST=http://${SERVER_HOST?Variable not set}
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - APPLICATION_SECRET=${APPLICATION_SECRET?Variable not set}
       - WEBAPP_URL=${WEBAPP_URL}
 
@@ -138,13 +130,14 @@ services:
     env_file:
       - .env
     environment:
-      - WEBAPP_URL=${WEBAPP_URL}
+      - SERVER_NAME=${SERVER_NAME?Variable not set}
+      - SERVER_HOST=http://${SERVER_HOST?Variable not set}
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - SERVER_NAME=${DOMAIN?Variable not set}
-      - SERVER_HOST=http://${DOMAIN?Variable not set}
-      - AWS_ACCESS_KEY_ID=${AWS_SECRET_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - APPLICATION_SECRET=${APPLICATION_SECRET?Variable not set}
+      - WEBAPP_URL=${WEBAPP_URL}
+
     command: bash -c "poetry run ray start --address=ray-head:6379 --num-cpus=1 --block" 
     shm_size: 3g
     networks:
