@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, List, Union
 
 import networkx as nx
 import torch
@@ -7,9 +7,12 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.nn import ReLU, Sigmoid
 from torch.optim.adam import Adam
 from torch_geometric.data.data import Data
+from model_builder.dataset import DataInstance
 
 from model_builder.layers import Concat, GlobalPooling, OneHot
+from model_builder.layers_schema import LayersType
 from model_builder.schemas import CategoricalDataType, ModelSchema
+from model_builder.utils import collect_args
 
 edge_index_classes = geom_nn.MessagePassing
 pooling_classes = GlobalPooling
@@ -79,35 +82,12 @@ class CustomModel(LightningModule):
             layers_dict[layer.name] = layer_instance
 
         self.layers = torch.nn.ModuleDict(layers_dict)
-
         self.layer_configs = {layer.name: layer for layer in config.layers}
 
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
 
         self.loss_fn = torch.nn.MSELoss()
-
-    def configure_optimizers(self):
-        return Adam(self.parameters(), lr=1e-3)
-
-    def test_step(self, batch, batch_idx):
-        prediction = self(batch).squeeze()
-        loss = self.loss_fn(prediction, batch["y"])
-        # self.logger.log('test_loss', loss)
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        prediction = self(batch).squeeze()
-        loss = self.loss_fn(prediction, batch["y"])
-        return loss
-
-    def training_step(self, batch, batch_idx):
-        prediction = self(batch).squeeze()
-        loss = self.loss_fn(prediction, batch["y"])
-        self.log(
-            "train_loss", loss, batch_size=len(batch["y"]), on_epoch=True, on_step=False
-        )
-        return loss
 
     def forward(self, input_):
         storage = input_.copy()
@@ -201,3 +181,57 @@ class CustomModel(LightningModule):
                 storage[layer_name] = x_
             last = storage[layer_name]
         return last
+
+
+class CustomModelV2(LightningModule):
+    def __init__(self, config: ModelSchema):
+        super().__init__()
+        layers_dict = {}
+        self.config = config
+        self.layer_configs = {layer.name: layer for layer in config.layers}
+        for layer in config.layers:
+            layer_instance = layer.create()
+            layers_dict[layer.name] = layer_instance
+        self._model = torch.nn.ModuleDict(layers_dict)
+        self.graph = config.make_graph()
+        self.topo_sorting = list(nx.topological_sort(self.graph))
+        self.loss_fn = torch.nn.MSELoss()
+
+    def forward(self, input: DataInstance):
+        last = input
+        for node_name in self.topo_sorting:
+            if node_name not in self.layer_configs:
+                continue  # is a featurizer, already evaluated by dataset
+            layer = self.layer_configs[node_name]
+            args = collect_args(input, layer.forward_args.dict())
+            if isinstance(args, dict):
+                input[layer.name] = self._model[node_name](**args)
+            elif isinstance(args, list):
+                input[layer.name] = self._model[node_name](*args)
+            else:
+                input[layer.name] = self._model[node_name](args)
+            print(f"Saved {layer.name} :", input[layer.name])
+            last = input[layer.name]
+        return last
+
+    def configure_optimizers(self):
+        return Adam(self.parameters(), lr=1e-3)
+
+    def test_step(self, batch, batch_idx):
+        prediction = self(batch).squeeze()
+        loss = self.loss_fn(prediction, batch["y"])
+        # self.logger.log('test_loss', loss)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        prediction = self(batch).squeeze()
+        loss = self.loss_fn(prediction, batch["y"])
+        return loss
+
+    def training_step(self, batch, batch_idx):
+        prediction = self(batch).squeeze()
+        loss = self.loss_fn(prediction, batch["y"])
+        self.log(
+            "train_loss", loss, batch_size=len(batch["y"]), on_epoch=True, on_step=False
+        )
+        return loss

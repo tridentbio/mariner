@@ -1,4 +1,5 @@
 # Temporary file to hold all extracted mariner schemas
+from typing_extensions import Annotated
 from typing import List, Literal, Union
 from humps import camel
 
@@ -15,11 +16,10 @@ from model_builder import generate
 
 from model_builder.components_query import get_component_constructor_args_by_type
 from model_builder.layers_schema import (
-    BaseLayerConfig,
     FeaturizersType,
     LayersType,
-    PythonArgsBaseModel,
 )
+from model_builder.utils import unwrap_dollar
 
 
 class CamelCaseModel(BaseModel):
@@ -123,16 +123,7 @@ class MissingComponentArgs(ValueError):
         self.missing = missing
 
 
-def _unwrap_dollar(value: str) -> tuple[str, bool]:
-    """
-    Takes a string and remove it's reference indicators: $ or ${...}
-    Returns the string unwrapped (if it was a reference) and `is_reference` boolean
-    """
-    if value.startswith("${") and value.endswith("}"):
-        return value[2:-1], True
-    elif value.startswith("$"):
-        return value[1:], True
-    return value, False
+AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
 
 
 class ModelSchema(CamelCaseModel):
@@ -209,7 +200,7 @@ class ModelSchema(CamelCaseModel):
 
     name: str
     dataset: DatasetConfig
-    layers: List[LayersType]
+    layers: List[AnnotatedLayersType]
     featurizers: List[FeaturizersType]
 
     def make_graph(self):
@@ -224,16 +215,23 @@ class ModelSchema(CamelCaseModel):
 
         layers_and_featurizers = _to_dict(self.layers) + _to_dict(self.featurizers)
         for feat in layers_and_featurizers:
-            for value in feat["constructor_args"].values():
+            if feat["name"] == "Combiner":
+                print(feat)
+            if "forward_args" not in feat:
+                continue
+            for key, value in feat["forward_args"].items():
+                # Pooling batch and size fall in here
+                if not value:  # optional forward_arg that was not set
+                    continue
                 assert isinstance(
                     value, str
-                ), "constructor_args values should be strings"
-                reference, is_reference = _unwrap_dollar(value)
+                ), f"[{feat['name']}:{key}]: forward_args values should be strings but got {value.__class__}"
+                reference, is_reference = unwrap_dollar(value)
                 if not is_reference and reference != "inputs":
+                    print(f"Skipping {key}-{value} edge")
                     continue
                 reference = reference.split(".")[0]
-                g.add_edge(feat["name"], reference)
-
+                g.add_edge(reference, feat["name"], attr=key)
         return g
 
     @classmethod

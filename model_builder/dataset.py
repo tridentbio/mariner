@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 import pandas as pd
 import pytorch_lightning as pl
+import torch
 from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
@@ -10,67 +11,7 @@ from model_builder.layers_schema import (
     FeaturizersType,
 )
 from model_builder.schemas import ColumnConfig, DatasetConfig
-from model_builder.utils import size_repr
-
-from .storage import BaseStorage
-
-
-class DataInstance(BaseStorage):
-    """DataInstance basically works like a map/storage. It works
-    through a structure similar to a python dict with some more
-    features to support pytorch operations. This way it is possible
-    to support types such as tensors, `pytorch_geometric.Data` and
-    other data types used in models.
-
-    For information about the methods see:
-    https://docs.python.org/3/reference/datamodel.html
-
-    Args:
-        y (Any): The target value for that instance.
-        **kwargs: Any arg passed via kwargs will become an
-            attribute of the instance.
-
-    Example:
-    >>> data = DataInstance()
-    >>> data.x = torch.tensor([1.76])
-    """
-
-    def __init__(self, y=None, **kwargs):
-
-        self.__dict__["_store"] = BaseStorage(_parent=self)
-
-        if y is not None:
-            self.y = y
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def __getitem__(self, key: str) -> Any:
-        return self._store[key]
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        self._store[key] = value
-
-    def __delitem__(self, key: str) -> None:
-        if key in self._store:
-            del self._store[key]
-
-    def __getattr__(self, key: str) -> Any:
-        if "_store" not in self.__dict__:
-            raise RuntimeError
-        return getattr(self._store, key)
-
-    def __setattr__(self, key: str, value: Any) -> None:
-        setattr(self._store, key, value)
-
-    def __delattr__(self, key: str, value: Any) -> None:
-        delattr(self._store, key)
-
-    def __repr__(self) -> str:
-        cls = self.__class__.__name__
-        info = [size_repr(k, v, indent=2) for k, v in self._store.items()]
-        info = ",\n".join(info)
-        return f"{cls}(\n{info}\n)"
+from model_builder.utils import DataInstance, get_references_dict
 
 
 class CustomDataset(TorchDataset):
@@ -133,11 +74,10 @@ class CustomDataset(TorchDataset):
         raise AttributeError("Unsupported target type for prediction.")
 
     def setup(self):
-        # First we need to determine the type of the task
+        # Determine the type of the task
         if self.target:
             self._task_type = self._determine_task_type()
-        # After that we can instanciate all of the featurizers used to transform
-        # the columns
+        # Instanciate all featurizers
         self._featurizers = {}
         for featurizer_config in self._featurizers_config:
             self._featurizers[featurizer_config.name] = featurizer_config.create()
@@ -148,28 +88,29 @@ class CustomDataset(TorchDataset):
     def __getitem__(self, index) -> DataInstance:
         d = DataInstance()
         sample = dict(self.data.iloc[index, :])
-
         columns_to_include = self.columns.copy()
-        # We need to featurize all of the columns that pass into a
+        # Featurize all of the columns that pass into a
         # featurizer before include in the data instance
         for featurizer in self._featurizers_config:
-            d[featurizer.name] = self._featurizers[featurizer.name](
-                sample[featurizer.input[0]]
-            )
-
+            references = get_references_dict(featurizer.forward_args.dict())
+            assert len(references) == 1, "only 1 forward arg for featurizers for now"
+            col_name = list(references.values())[0]
+            d[featurizer.name] = [self._featurizers[featurizer.name](sample[col_name])]
             # Remove featurized columns from columsn_to_include
             # since it's featurized value was already included
             for index, col in enumerate(columns_to_include):
-                if col.name == featurizer.input[0]:
+                if col.name == col_name:
                     columns_to_include.pop(index)
-                    break
 
-        # After that we can include all of the columns that remains from the featurizers
+        # include all unfeaturized columns
         for column in columns_to_include:
-            d[column.name] = sample[column.name]
+            d[column.name] = torch.Tensor([sample[column.name]])
 
         if self.target:
-            d.y = sample[self.target.name]
+            d.y = torch.Tensor([sample[self.target.name]])
+
+        assert "MolToGraphFeaturizer" in d
+        assert "mwt" in d
 
         return d
 
@@ -247,6 +188,8 @@ class DataModule(pl.LightningDataModule):
         train_dataset, val_dataset, test_dataset = random_split(
             self.dataset, [train_size, val_size, test_size]
         )
+
+        print(train_dataset, val_dataset, test_dataset)
 
         self.train_dataset = train_dataset
         self.val_dataset = val_dataset

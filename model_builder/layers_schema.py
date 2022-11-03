@@ -5,42 +5,27 @@
 from typing import Optional, Literal, Union, List, Any
 from pydantic import BaseModel
 from model_builder.utils import get_class_from_path_string
-from mariner.schemas.api import ApiBaseModel
+
+
 
 
 def get_module_name(classpath: str) -> str:
-    return ".".join(classpath.split(".")[:-1])
-
+    return '.'.join(classpath.split('.')[:-1])
 
 def is_func(obj):
-    return str(type(obj)) == "<class 'function'>"
+  return str(type(obj)) == "<class 'function'>"
 
 
-class BaseLayerConfig(ApiBaseModel):
-    name: str
-
-    def create(self):
-        pass
-
-
-class PythonArgsBaseModel(BaseModel):
-    class Config:
-        alias_generator = None
-        allow_population_by_field_name = True
-        allow_population_by_alias = True
-        orm_mode = True
-        underscore_attrs_are_private = True
-
-
-class ModelbuilderonehotConstructorArgsSummary(PythonArgsBaseModel):
+class ModelbuilderonehotConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.layers.OneHot
-
+    
     Generated code
     """
 
 
-class ModelbuilderonehotForwardArgsSummary(PythonArgsBaseModel):
+
+class ModelbuilderonehotForwardArgsSummary(BaseModel):
     """
     Maps to references for the the arguments of model_builder.layers.OneHot.forward or model_builder.layers.OneHot.__call__
 
@@ -49,22 +34,25 @@ class ModelbuilderonehotForwardArgsSummary(PythonArgsBaseModel):
 
     Generated code
     """
-
     x1 = "typing.Union[list[str], list[int]]"
 
-
-class ModelbuilderonehotForwardArgsReferences(PythonArgsBaseModel):
+class ModelbuilderonehotForwardArgsReferences(BaseModel):
     x1: str
 
 
-class ModelbuilderonehotSummary(ApiBaseModel):
-    type = "model_builder.layers.OneHot"
+
+
+class ModelbuilderonehotSummary(BaseModel):
+    type: Literal["model_builder.layers.OneHot"] = 'model_builder.layers.OneHot'
     constructor_args_summary = ModelbuilderonehotConstructorArgsSummary()
-
+    
     forward_args_summary = ModelbuilderonehotForwardArgsSummary()
+    
 
 
-class ModelbuilderonehotLayerConfig(BaseLayerConfig):
+
+
+class ModelbuilderonehotLayerConfig(BaseModel):
     """
     Layer configuration.
 
@@ -73,29 +61,34 @@ class ModelbuilderonehotLayerConfig(BaseLayerConfig):
 
     Generated code
     """
-
-    type = "model_builder.layers.OneHot"
-
+    type: Literal["model_builder.layers.OneHot"] = 'model_builder.layers.OneHot'
+    name: str
+    
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-            return lib_cls
+          return lib_cls
         return lib_cls()
-
+    
+    
     forward_args: ModelbuilderonehotForwardArgsReferences
 
+    
 
-class ModelbuilderglobalpoolingConstructorArgsSummary(PythonArgsBaseModel):
+
+
+
+class ModelbuilderglobalpoolingConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.layers.GlobalPooling
-
+    
     Generated code
     """
-
     aggr = "<class 'str'>"
 
 
-class ModelbuilderglobalpoolingForwardArgsSummary(PythonArgsBaseModel):
+
+class ModelbuilderglobalpoolingForwardArgsSummary(BaseModel):
     """
     Maps to references for the the arguments of model_builder.layers.GlobalPooling.forward or model_builder.layers.GlobalPooling.__call__
 
@@ -104,36 +97,40 @@ class ModelbuilderglobalpoolingForwardArgsSummary(PythonArgsBaseModel):
 
     Generated code
     """
-
     x = "<class 'torch.Tensor'>"
-    batch = "typing.Optional[torch.Tensor]?"
-    size = "typing.Optional[int]?"
+    batch =  "typing.Optional[torch.Tensor]?"
+    size =  "typing.Optional[int]?"
 
-
-class ModelbuilderglobalpoolingForwardArgsReferences(PythonArgsBaseModel):
+class ModelbuilderglobalpoolingForwardArgsReferences(BaseModel):
     x: str
     batch: Optional[str] = None
     size: Optional[str] = None
 
 
-class ModelbuilderglobalpoolingSummary(ApiBaseModel):
-    type = "model_builder.layers.GlobalPooling"
+
+
+class ModelbuilderglobalpoolingSummary(BaseModel):
+    type: Literal["model_builder.layers.GlobalPooling"] = 'model_builder.layers.GlobalPooling'
     constructor_args_summary = ModelbuilderglobalpoolingConstructorArgsSummary()
-
+    
     forward_args_summary = ModelbuilderglobalpoolingForwardArgsSummary()
+    
 
 
-class ModelbuilderglobalpoolingConstructorArgs(PythonArgsBaseModel):
+
+class ModelbuilderglobalpoolingConstructorArgs(BaseModel):
     """
     Maps to the arguments of model_builder.layers.GlobalPooling
 
     Generated code
     """
-
     aggr: str
 
 
-class ModelbuilderglobalpoolingLayerConfig(BaseLayerConfig):
+
+
+
+class ModelbuilderglobalpoolingLayerConfig(BaseModel):
     """
     Layer configuration.
 
@@ -142,29 +139,34 @@ class ModelbuilderglobalpoolingLayerConfig(BaseLayerConfig):
 
     Generated code
     """
-
-    type = "model_builder.layers.GlobalPooling"
-
+    type: Literal["model_builder.layers.GlobalPooling"] = 'model_builder.layers.GlobalPooling'
+    name: str
+    
     constructor_args: ModelbuilderglobalpoolingConstructorArgs
-
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-            return lib_cls
+          return lib_cls
         return lib_cls(**self.constructor_args.dict())
-
+    
+    
     forward_args: ModelbuilderglobalpoolingForwardArgsReferences
 
+    
 
-class ModelbuilderconcatConstructorArgsSummary(PythonArgsBaseModel):
+
+
+
+class ModelbuilderconcatConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.layers.Concat
-
+    
     Generated code
     """
 
 
-class ModelbuilderconcatForwardArgsSummary(PythonArgsBaseModel):
+
+class ModelbuilderconcatForwardArgsSummary(BaseModel):
     """
     Maps to references for the the arguments of model_builder.layers.Concat.forward or model_builder.layers.Concat.__call__
 
@@ -173,24 +175,27 @@ class ModelbuilderconcatForwardArgsSummary(PythonArgsBaseModel):
 
     Generated code
     """
-
     x1 = "<class 'torch.Tensor'>"
     x2 = "<class 'torch.Tensor'>"
 
-
-class ModelbuilderconcatForwardArgsReferences(PythonArgsBaseModel):
+class ModelbuilderconcatForwardArgsReferences(BaseModel):
     x1: str
     x2: str
 
 
-class ModelbuilderconcatSummary(ApiBaseModel):
-    type = "model_builder.layers.Concat"
+
+
+class ModelbuilderconcatSummary(BaseModel):
+    type: Literal["model_builder.layers.Concat"] = 'model_builder.layers.Concat'
     constructor_args_summary = ModelbuilderconcatConstructorArgsSummary()
-
+    
     forward_args_summary = ModelbuilderconcatForwardArgsSummary()
+    
 
 
-class ModelbuilderconcatLayerConfig(BaseLayerConfig):
+
+
+class ModelbuilderconcatLayerConfig(BaseModel):
     """
     Layer configuration.
 
@@ -199,31 +204,36 @@ class ModelbuilderconcatLayerConfig(BaseLayerConfig):
 
     Generated code
     """
-
-    type = "model_builder.layers.Concat"
-
+    type: Literal["model_builder.layers.Concat"] = 'model_builder.layers.Concat'
+    name: str
+    
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-            return lib_cls
+          return lib_cls
         return lib_cls()
-
+    
+    
     forward_args: ModelbuilderconcatForwardArgsReferences
 
+    
 
-class TorchlinearConstructorArgsSummary(PythonArgsBaseModel):
+
+
+
+class TorchlinearConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch.nn.Linear
-
+    
     Generated code
     """
-
     in_features = "<class 'int'>"
     out_features = "<class 'int'>"
     bias = "<class 'bool'>?"
 
 
-class TorchlinearForwardArgsSummary(PythonArgsBaseModel):
+
+class TorchlinearForwardArgsSummary(BaseModel):
     """
     Maps to references for the the arguments of torch.nn.Linear.forward or torch.nn.Linear.__call__
 
@@ -232,34 +242,38 @@ class TorchlinearForwardArgsSummary(PythonArgsBaseModel):
 
     Generated code
     """
-
     input = "<class 'torch.Tensor'>"
 
-
-class TorchlinearForwardArgsReferences(PythonArgsBaseModel):
+class TorchlinearForwardArgsReferences(BaseModel):
     input: str
 
 
-class TorchlinearSummary(ApiBaseModel):
-    type = "torch.nn.Linear"
+
+
+class TorchlinearSummary(BaseModel):
+    type: Literal["torch.nn.Linear"] = 'torch.nn.Linear'
     constructor_args_summary = TorchlinearConstructorArgsSummary()
-
+    
     forward_args_summary = TorchlinearForwardArgsSummary()
+    
 
 
-class TorchlinearConstructorArgs(PythonArgsBaseModel):
+
+class TorchlinearConstructorArgs(BaseModel):
     """
     Maps to the arguments of torch.nn.Linear
 
     Generated code
     """
-
     in_features: int
     out_features: int
     bias: Optional[bool] = None
 
 
-class TorchlinearLayerConfig(BaseLayerConfig):
+
+
+
+class TorchlinearLayerConfig(BaseModel):
     """
     Layer configuration.
 
@@ -268,29 +282,34 @@ class TorchlinearLayerConfig(BaseLayerConfig):
 
     Generated code
     """
-
-    type = "torch.nn.Linear"
-
+    type: Literal["torch.nn.Linear"] = 'torch.nn.Linear'
+    name: str
+    
     constructor_args: TorchlinearConstructorArgs
-
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-            return lib_cls
+          return lib_cls
         return lib_cls(**self.constructor_args.dict())
-
+    
+    
     forward_args: TorchlinearForwardArgsReferences
 
+    
 
-class TorchsigmoidConstructorArgsSummary(PythonArgsBaseModel):
+
+
+
+class TorchsigmoidConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch.nn.Sigmoid
-
+    
     Generated code
     """
 
 
-class TorchsigmoidForwardArgsSummary(PythonArgsBaseModel):
+
+class TorchsigmoidForwardArgsSummary(BaseModel):
     """
     Maps to references for the the arguments of torch.nn.Sigmoid.forward or torch.nn.Sigmoid.__call__
 
@@ -299,22 +318,25 @@ class TorchsigmoidForwardArgsSummary(PythonArgsBaseModel):
 
     Generated code
     """
-
     input = "<class 'torch.Tensor'>"
 
-
-class TorchsigmoidForwardArgsReferences(PythonArgsBaseModel):
+class TorchsigmoidForwardArgsReferences(BaseModel):
     input: str
 
 
-class TorchsigmoidSummary(ApiBaseModel):
-    type = "torch.nn.Sigmoid"
+
+
+class TorchsigmoidSummary(BaseModel):
+    type: Literal["torch.nn.Sigmoid"] = 'torch.nn.Sigmoid'
     constructor_args_summary = TorchsigmoidConstructorArgsSummary()
-
+    
     forward_args_summary = TorchsigmoidForwardArgsSummary()
+    
 
 
-class TorchsigmoidLayerConfig(BaseLayerConfig):
+
+
+class TorchsigmoidLayerConfig(BaseModel):
     """
     Layer configuration.
 
@@ -323,29 +345,34 @@ class TorchsigmoidLayerConfig(BaseLayerConfig):
 
     Generated code
     """
-
-    type = "torch.nn.Sigmoid"
-
+    type: Literal["torch.nn.Sigmoid"] = 'torch.nn.Sigmoid'
+    name: str
+    
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-            return lib_cls
+          return lib_cls
         return lib_cls()
-
+    
+    
     forward_args: TorchsigmoidForwardArgsReferences
 
+    
 
-class TorchreluConstructorArgsSummary(PythonArgsBaseModel):
+
+
+
+class TorchreluConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch.nn.ReLU
-
+    
     Generated code
     """
-
     inplace = "<class 'bool'>?"
 
 
-class TorchreluForwardArgsSummary(PythonArgsBaseModel):
+
+class TorchreluForwardArgsSummary(BaseModel):
     """
     Maps to references for the the arguments of torch.nn.ReLU.forward or torch.nn.ReLU.__call__
 
@@ -354,32 +381,36 @@ class TorchreluForwardArgsSummary(PythonArgsBaseModel):
 
     Generated code
     """
-
     input = "<class 'torch.Tensor'>"
 
-
-class TorchreluForwardArgsReferences(PythonArgsBaseModel):
+class TorchreluForwardArgsReferences(BaseModel):
     input: str
 
 
-class TorchreluSummary(ApiBaseModel):
-    type = "torch.nn.ReLU"
+
+
+class TorchreluSummary(BaseModel):
+    type: Literal["torch.nn.ReLU"] = 'torch.nn.ReLU'
     constructor_args_summary = TorchreluConstructorArgsSummary()
-
+    
     forward_args_summary = TorchreluForwardArgsSummary()
+    
 
 
-class TorchreluConstructorArgs(PythonArgsBaseModel):
+
+class TorchreluConstructorArgs(BaseModel):
     """
     Maps to the arguments of torch.nn.ReLU
 
     Generated code
     """
-
     inplace: Optional[bool] = None
 
 
-class TorchreluLayerConfig(BaseLayerConfig):
+
+
+
+class TorchreluLayerConfig(BaseModel):
     """
     Layer configuration.
 
@@ -388,27 +419,30 @@ class TorchreluLayerConfig(BaseLayerConfig):
 
     Generated code
     """
-
-    type = "torch.nn.ReLU"
-
+    type: Literal["torch.nn.ReLU"] = 'torch.nn.ReLU'
+    name: str
+    
     constructor_args: TorchreluConstructorArgs
-
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-            return lib_cls
+          return lib_cls
         return lib_cls(**self.constructor_args.dict())
-
+    
+    
     forward_args: TorchreluForwardArgsReferences
 
+    
 
-class TorchgeometricgcnconvConstructorArgsSummary(PythonArgsBaseModel):
+
+
+
+class TorchgeometricgcnconvConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch_geometric.nn.GCNConv
-
+    
     Generated code
     """
-
     in_channels = "<class 'int'>"
     out_channels = "<class 'int'>"
     improved = "<class 'bool'>?"
@@ -418,7 +452,8 @@ class TorchgeometricgcnconvConstructorArgsSummary(PythonArgsBaseModel):
     bias = "<class 'bool'>?"
 
 
-class TorchgeometricgcnconvForwardArgsSummary(PythonArgsBaseModel):
+
+class TorchgeometricgcnconvForwardArgsSummary(BaseModel):
     """
     Maps to references for the the arguments of torch_geometric.nn.GCNConv.forward or torch_geometric.nn.GCNConv.__call__
 
@@ -427,32 +462,33 @@ class TorchgeometricgcnconvForwardArgsSummary(PythonArgsBaseModel):
 
     Generated code
     """
-
     x = "<class 'torch.Tensor'>"
     edge_index = "typing.Union[torch.Tensor, torch_sparse.tensor.SparseTensor]"
-    edge_weight = "typing.Optional[torch.Tensor]?"
+    edge_weight =  "typing.Optional[torch.Tensor]?"
 
-
-class TorchgeometricgcnconvForwardArgsReferences(PythonArgsBaseModel):
+class TorchgeometricgcnconvForwardArgsReferences(BaseModel):
     x: str
     edge_index: str
     edge_weight: Optional[str] = None
 
 
-class TorchgeometricgcnconvSummary(ApiBaseModel):
-    type = "torch_geometric.nn.GCNConv"
+
+
+class TorchgeometricgcnconvSummary(BaseModel):
+    type: Literal["torch_geometric.nn.GCNConv"] = 'torch_geometric.nn.GCNConv'
     constructor_args_summary = TorchgeometricgcnconvConstructorArgsSummary()
-
+    
     forward_args_summary = TorchgeometricgcnconvForwardArgsSummary()
+    
 
 
-class TorchgeometricgcnconvConstructorArgs(PythonArgsBaseModel):
+
+class TorchgeometricgcnconvConstructorArgs(BaseModel):
     """
     Maps to the arguments of torch_geometric.nn.GCNConv
 
     Generated code
     """
-
     in_channels: int
     out_channels: int
     improved: Optional[bool] = None
@@ -462,7 +498,10 @@ class TorchgeometricgcnconvConstructorArgs(PythonArgsBaseModel):
     bias: Optional[bool] = None
 
 
-class TorchgeometricgcnconvLayerConfig(BaseLayerConfig):
+
+
+
+class TorchgeometricgcnconvLayerConfig(BaseModel):
     """
     Layer configuration.
 
@@ -471,33 +510,37 @@ class TorchgeometricgcnconvLayerConfig(BaseLayerConfig):
 
     Generated code
     """
-
-    type = "torch_geometric.nn.GCNConv"
-
+    type: Literal["torch_geometric.nn.GCNConv"] = 'torch_geometric.nn.GCNConv'
+    name: str
+    
     constructor_args: TorchgeometricgcnconvConstructorArgs
-
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-            return lib_cls
+          return lib_cls
         return lib_cls(**self.constructor_args.dict())
-
+    
+    
     forward_args: TorchgeometricgcnconvForwardArgsReferences
 
+    
 
-class ModelbuildermoleculefeaturizerConstructorArgsSummary(PythonArgsBaseModel):
+
+
+
+class ModelbuildermoleculefeaturizerConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.featurizers.MoleculeFeaturizer
-
+    
     Generated code
     """
-
     allow_unknown = "<class 'bool'>"
     sym_bond_list = "<class 'bool'>"
     per_atom_fragmentation = "<class 'bool'>"
 
 
-class ModelbuildermoleculefeaturizerForwardArgsSummary(PythonArgsBaseModel):
+
+class ModelbuildermoleculefeaturizerForwardArgsSummary(BaseModel):
     """
     Maps to references for the the arguments of model_builder.featurizers.MoleculeFeaturizer.forward or model_builder.featurizers.MoleculeFeaturizer.__call__
 
@@ -506,34 +549,38 @@ class ModelbuildermoleculefeaturizerForwardArgsSummary(PythonArgsBaseModel):
 
     Generated code
     """
-
     mol = "typing.Union[rdkit.Chem.rdchem.Mol, str]"
 
-
-class ModelbuildermoleculefeaturizerForwardArgsReferences(PythonArgsBaseModel):
+class ModelbuildermoleculefeaturizerForwardArgsReferences(BaseModel):
     mol: str
 
 
-class ModelbuildermoleculefeaturizerSummary(ApiBaseModel):
-    type = "model_builder.featurizers.MoleculeFeaturizer"
+
+
+class ModelbuildermoleculefeaturizerSummary(BaseModel):
+    type: Literal["model_builder.featurizers.MoleculeFeaturizer"] = 'model_builder.featurizers.MoleculeFeaturizer'
     constructor_args_summary = ModelbuildermoleculefeaturizerConstructorArgsSummary()
-
+    
     forward_args_summary = ModelbuildermoleculefeaturizerForwardArgsSummary()
+    
 
 
-class ModelbuildermoleculefeaturizerConstructorArgs(PythonArgsBaseModel):
+
+class ModelbuildermoleculefeaturizerConstructorArgs(BaseModel):
     """
     Maps to the arguments of model_builder.featurizers.MoleculeFeaturizer
 
     Generated code
     """
-
     allow_unknown: bool
     sym_bond_list: bool
     per_atom_fragmentation: bool
 
 
-class ModelbuildermoleculefeaturizerLayerConfig(BaseLayerConfig):
+
+
+
+class ModelbuildermoleculefeaturizerLayerConfig(BaseModel):
     """
     Layer configuration.
 
@@ -542,18 +589,21 @@ class ModelbuildermoleculefeaturizerLayerConfig(BaseLayerConfig):
 
     Generated code
     """
-
-    type = "model_builder.featurizers.MoleculeFeaturizer"
-
+    type: Literal["model_builder.featurizers.MoleculeFeaturizer"] = 'model_builder.featurizers.MoleculeFeaturizer'
+    name: str
+    
     constructor_args: ModelbuildermoleculefeaturizerConstructorArgs
-
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-            return lib_cls
+          return lib_cls
         return lib_cls(**self.constructor_args.dict())
-
+    
+    
     forward_args: ModelbuildermoleculefeaturizerForwardArgsReferences
+
+    
+
 
 
 LayersType = Union[
@@ -564,10 +614,12 @@ LayersType = Union[
     TorchsigmoidLayerConfig,
     TorchreluLayerConfig,
     TorchgeometricgcnconvLayerConfig,
+    
 ]
 
 FeaturizersType = Union[
     ModelbuildermoleculefeaturizerLayerConfig,
+    
 ]
 
 LayersArgsType = Union[
@@ -578,8 +630,10 @@ LayersArgsType = Union[
     TorchsigmoidSummary,
     TorchreluSummary,
     TorchgeometricgcnconvSummary,
+    
 ]
 
 FeaturizersArgsType = Union[
     ModelbuildermoleculefeaturizerSummary,
 ]
+
