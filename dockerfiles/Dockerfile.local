@@ -27,6 +27,7 @@ COPY ./api /app/api
 COPY ./model_builder /app/model_builder
 COPY ./scripts /app/scripts
 COPY ./tests /app/tests
+COPY ./alembic.ini /app/alembic.ini
 ENV PYTHONPATH=/app
 
 CMD [ "sh", "/app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]
