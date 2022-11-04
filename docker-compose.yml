@@ -29,6 +29,8 @@ services:
       - 80:80
     env_file:
       - .env
+    environment:
+      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 5s
@@ -108,7 +110,7 @@ services:
       - .env.local.ray
     environment:
       - SERVER_NAME=${SERVER_NAME?Variable not set}
-      - SERVER_HOST=http://${SERVER_HOST?Variable not set}
+      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -131,7 +133,7 @@ services:
       - .env
     environment:
       - SERVER_NAME=${SERVER_NAME?Variable not set}
-      - SERVER_HOST=http://${SERVER_HOST?Variable not set}
+      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
