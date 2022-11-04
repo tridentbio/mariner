@@ -1,6 +1,5 @@
 import traceback
 from typing import Any, Optional, Union, get_type_hints
-from warnings import warn
 
 import mlflow
 import mlflow.exceptions

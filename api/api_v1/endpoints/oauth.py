@@ -1,13 +1,15 @@
-from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from api import deps
 from mariner import oauth
-from mariner.exceptions import InvalidGithubCode, InvalidOAuthState, UserNotActive
+from mariner.exceptions import (
+    InvalidGithubCode,
+    InvalidOAuthState,
+    UserNotActive,
+)
 from mariner.users import GithubAuth, authenticate
-
 
 router = APIRouter()
 

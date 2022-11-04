@@ -1,10 +1,14 @@
 from typing import Any, Dict, Optional, Union
 
-from sqlalchemy.orm import Session, class_mapper
+from sqlalchemy.orm import Session
 
 from mariner.core.security import get_password_hash, verify_password
 from mariner.entities.user import User
-from mariner.schemas.user_schemas import UserCreateBasic, UserCreateOAuth, UserUpdate
+from mariner.schemas.user_schemas import (
+    UserCreateBasic,
+    UserCreateOAuth,
+    UserUpdate,
+)
 from mariner.stores.base_sql import CRUDBase
 
 

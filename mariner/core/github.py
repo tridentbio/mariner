@@ -1,6 +1,7 @@
 from logging import error
-from pydantic import BaseModel
+
 import requests
+from pydantic import BaseModel
 
 from mariner.core.config import settings
 from mariner.exceptions.auth_exceptions import InvalidGithubCode

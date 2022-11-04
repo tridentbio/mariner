@@ -1,16 +1,11 @@
-from fastapi import Depends, HTTPException, status
 from fastapi.applications import FastAPI
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import RedirectResponse, Response
 from fastapi_utils.openapi import simplify_operation_ids
-from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
-from api import deps
 
 from api.api_v1.api import api_router
-from mariner.core.config import settings
-from mariner import oauth
 from api.websocket import ws_router
+from mariner.core.config import settings
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"

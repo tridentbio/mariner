@@ -1,8 +1,9 @@
 import os
 from typing import Any, Optional
+
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.mapper import class_mapper
+
 from mariner.entities import OAuthState
 from mariner.stores.base_sql import CRUDBase
 

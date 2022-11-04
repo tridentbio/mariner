@@ -1,8 +1,7 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from mariner.db.base_class import Base
-
 
 # class OAuthIntegration(Base):
 #    __table__ = "oauth_integrations"
