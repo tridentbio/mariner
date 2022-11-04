@@ -1,10 +1,9 @@
 # Temporary file to hold all extracted mariner schemas
-from typing_extensions import Annotated
 from typing import List, Literal, Union
-from humps import camel
 
 import networkx as nx
 import yaml
+from humps import camel
 from pydantic import (
     BaseModel,
     Field,
@@ -12,13 +11,13 @@ from pydantic import (
     root_validator,
     validator,
 )
-from model_builder import generate
+from typing_extensions import Annotated
 
-from model_builder.components_query import get_component_constructor_args_by_type
-from model_builder.layers_schema import (
-    FeaturizersType,
-    LayersType,
+from model_builder import generate
+from model_builder.components_query import (
+    get_component_constructor_args_by_type,
 )
+from model_builder.layers_schema import FeaturizersType, LayersType
 from model_builder.utils import unwrap_dollar
 
 
@@ -215,8 +214,6 @@ class ModelSchema(CamelCaseModel):
 
         layers_and_featurizers = _to_dict(self.layers) + _to_dict(self.featurizers)
         for feat in layers_and_featurizers:
-            if feat["name"] == "Combiner":
-                print(feat)
             if "forward_args" not in feat:
                 continue
             for key, value in feat["forward_args"].items():
@@ -228,7 +225,6 @@ class ModelSchema(CamelCaseModel):
                 ), f"[{feat['name']}:{key}]: forward_args values should be strings but got {value.__class__}"
                 reference, is_reference = unwrap_dollar(value)
                 if not is_reference and reference != "inputs":
-                    print(f"Skipping {key}-{value} edge")
                     continue
                 reference = reference.split(".")[0]
                 g.add_edge(reference, feat["name"], attr=key)

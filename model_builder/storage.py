@@ -1,8 +1,18 @@
-import torch
 import weakref
 from collections.abc import MutableMapping
 from copy import copy
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+)
+
+import torch
 
 from model_builder.views import ItemsView, KeysView, ValuesView
 

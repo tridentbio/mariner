@@ -196,18 +196,40 @@ def get_references_dict(forward_args_dict: dict[str, Any]) -> dict[str, str]:
 def collect_args(
     input: DataInstance, args_dict: dict[str, Any]
 ) -> Union[list, dict, Any]:
+    """
+    Takes a DataInstance object and a dictionary of args to retrive
+    and returns a dictinoraty of resolved arguments.
+    Each arg value may be a reference. in such case, the arg value must be
+    retrieved from `input`. Otherwise, it's raw value that can be returned as is
+    """
     result = {}
     for key, value in args_dict.items():
-        print(f"acessing {key} in {input}")
+        if value is None:
+            continue
         value, is_ref = unwrap_dollar(value)
         if is_ref:
             attribute, attribute_accessors = (
                 value.split(".")[0],
                 value.split(".")[1:],
             )
+            if attribute == "input":
+                result[key] = input["".join(attribute_accessors)]
+                continue
             value = input[attribute]
+            if len(attribute_accessors) == 0:
+                result[key] = value
+                continue
+            # TODO: fix edges_weight and edge_attr usage
+            if (
+                "edge_weight" in attribute_accessors
+                or "edge_attr" in attribute_accessors
+            ):
+                continue
+            value = value[
+                0
+            ]  # hack to flatten array of DataBatches (output of Featurizer)
             for attr in attribute_accessors:
-                value = value[attr]
+                value = getattr(value, attr)
             result[key] = value
         else:
             result[key] = value

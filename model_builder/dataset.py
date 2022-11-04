@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import pandas as pd
 import pytorch_lightning as pl
@@ -7,9 +7,7 @@ from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
-from model_builder.layers_schema import (
-    FeaturizersType,
-)
+from model_builder.layers_schema import FeaturizersType
 from model_builder.schemas import ColumnConfig, DatasetConfig
 from model_builder.utils import DataInstance, get_references_dict
 
