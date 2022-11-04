@@ -1,13 +1,8 @@
-from pydantic.main import BaseModel
 import pytest
 import yaml
 
-from model_builder.layers_schema import (
-    LayersType,
-    ModelbuilderconcatForwardArgsReferences,
-    TorchreluLayerConfig,
-)
-from model_builder.schemas import AnnotatedLayersType, ModelSchema
+from model_builder.layers_schema import ModelbuilderconcatForwardArgsReferences
+from model_builder.schemas import ModelSchema
 
 
 def test_concat_forward_args():
@@ -30,24 +25,6 @@ forwardArgs:
 def schema_yaml_fixture():
     with open("tests/data/test_model_hard.yaml") as f:
         yield f.read()
-
-
-class LayersTypeModel(BaseModel):
-    __root__: AnnotatedLayersType
-
-
-def test_relu_schema():
-    yaml_str = """
-name: GCN1_Activation
-type: torch.nn.ReLU
-constructor_args:
-  inplace: false
-forward_args: 
-  input: ${GCN1}
-"""
-    json = yaml.unsafe_load(yaml_str)
-    obj = LayersTypeModel.parse_obj(json)
-    assert obj.__class__ == TorchreluLayerConfig
 
 
 def test_schema(schema_yaml_fixture: str):

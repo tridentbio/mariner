@@ -1,6 +1,6 @@
 from model_builder.components_query import (
-    get_component_constructor_args_by_type,
     get_component_config_by_type,
+    get_component_constructor_args_by_type,
 )
 from model_builder.layers_schema import (
     TorchlinearConstructorArgs,

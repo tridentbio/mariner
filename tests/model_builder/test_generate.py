@@ -1,8 +1,8 @@
+import time
+import xml.etree.ElementTree as ET
 from subprocess import CalledProcessError, check_output
 
 import pytest
-import time
-import xml.etree.ElementTree as ET
 
 from model_builder import generate
 
