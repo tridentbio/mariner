@@ -84,22 +84,23 @@ async def test_experiment_has_stacktrace_when_training_fails(
     with patch(
         mariner.train.run.train_run_sync.remote,
         mariner.train.run.train_run,
-    ), patch(model_builder.model.CustomModel.forward, lambda x: _raise(x)):
-        exp = await experiments_ctl.create_model_traning(db, user, request)
-        assert exp.model_version_id == version.id
-        assert exp.model_version.name == version.name
-        task = get_exp_manager().get_task(exp.id)
-        assert task
-        # Await for tas
-        with pytest.raises(Exception):
-            await task
+    ):
+        with patch(model_builder.model.CustomModel.forward, lambda x: _raise(x)):
+            exp = await experiments_ctl.create_model_traning(db, user, request)
+            assert exp.model_version_id == version.id
+            assert exp.model_version.name == version.name
+            task = get_exp_manager().get_task(exp.id)
+            assert task
+            # Await for tas
+            with pytest.raises(Exception):
+                await task
 
-        db.commit()
-        # Assertions over task outcome
-        db_exp = (
-            db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
-        )
-        db_exp = Experiment.from_orm(db_exp)
-        assert db_exp.stack_trace
-        assert len(db_exp.stack_trace) > 0
-        assert db_exp.stage == "FAILED"
+            db.commit()
+            # Assertions over task outcome
+            db_exp = (
+                db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
+            )
+            db_exp = Experiment.from_orm(db_exp)
+            assert db_exp.stack_trace
+            assert len(db_exp.stack_trace) > 0
+            assert db_exp.stage == "FAILED"

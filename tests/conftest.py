@@ -3,11 +3,11 @@ import json
 from typing import Dict, Generator, List, Literal, Optional
 
 import mlflow.tracking
-from pydantic.error_wrappers import ValidationError
 import pytest
 import yaml
 from fastapi.testclient import TestClient
 from mlflow import mlflow
+from pydantic.error_wrappers import ValidationError
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -17,8 +17,9 @@ from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import Dataset, EventEntity
 from mariner.entities import Experiment as ExperimentEntity
-from mariner.entities import Model as ModelEntity, ModelVersion
-from mariner.entities import User
+from mariner.entities import Model as ModelEntity
+from mariner.entities import ModelVersion, User
+from mariner.entities.event import EventReadEntity
 from mariner.schemas.experiment_schemas import Experiment
 from mariner.schemas.model_schemas import Model, ModelCreate
 from mariner.schemas.user_schemas import UserCreateBasic
@@ -26,7 +27,7 @@ from mariner.stores.event_sql import EventCreateRepo, event_store
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from mariner.stores.user_sql import user_store
 from model_builder.schemas import ModelSchema
-from tests.utils.user import authentication_token_from_email
+from tests.utils.user import authentication_token_from_email, create_random_user
 from tests.utils.utils import random_lower_string
 
 
@@ -129,6 +130,20 @@ def teardown_create_dataset(db: Session, dataset: Dataset):
 
 
 @pytest.fixture(scope="module")
+def user_fixture(db: Session):
+    return create_random_user(db)
+
+
+@pytest.fixture(scope="module")
+def randomuser_token_headers(
+    client: TestClient, db: Session, user_fixture: User
+) -> Dict[str, str]:
+    return authentication_token_from_email(
+        client=client, email=user_fixture.email, db=db
+    )
+
+
+@pytest.fixture(scope="module")
 def some_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):
@@ -214,7 +229,6 @@ def mock_model(name=None, dataset_name=None) -> ModelCreate:
     model_path = "tests/data/test_model_hard.yaml"
     with open(model_path, "rb") as f:
         config_dict = yaml.unsafe_load(f.read())
-        print("DICT", config_dict)
         config = ModelSchema.parse_obj(config_dict)
         if dataset_name:
             config.dataset.name = dataset_name
@@ -297,10 +311,12 @@ def teardown_events(db: Session, events: List[EventEntity]):
 
 @pytest.fixture(scope="module")
 def events_fixture(db: Session, some_experiments: List[Experiment]):
-    user = get_test_user(db)
-    db.query(EventEntity).filter(EventEntity.user_id == user.id).delete()
+    db.query(EventReadEntity).delete()
+    db.query(EventEntity).delete()
     db.flush()
+    assert len(some_experiments) == 3
     events = get_test_events(db, some_experiments)
+    assert len(events) == 3
     yield events
     teardown_events(db, events)
 
@@ -336,20 +352,20 @@ def some_cmoplete_experiment(
     db.commit()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def some_experiments(
     db: Session, some_model: Model
 ) -> Generator[List[Experiment], None, None]:
     user = get_test_user(db)
     version = some_model.versions[-1]
-
-    user = get_test_user(db)
-    version = some_model.versions[-1]
     exps = [
         experiment_store.create(
-            db, obj_in=mock_experiment(version, user.id, stage="started")
+            db,
+            obj_in=mock_experiment(
+                version, user.id, stage="started" if i % 2 == 1 else "success"
+            ),
         )
-        for _ in range(0, 3)
+        for i in range(0, 3)
     ]
     exps = [Experiment.from_orm(exp) for exp in exps]
     yield exps

@@ -16,7 +16,7 @@ from tests.utils.utils import random_lower_string
 
 
 def test_create_dataset(db: Session):
-    with open("app/tests/data/Lipophilicity.csv", "rb") as f:
+    with open("tests/data/Lipophilicity.csv", "rb") as f:
         colsdescription = [
             ColumnsDescription(
                 pattern="CMPD_CHEM.*",

@@ -49,9 +49,9 @@ def test_get_experiments_by_stage(
     )
     assert res.status_code == HTTP_200_OK
     exps = res.json()
+    assert len(exps) == 2
     for exp in exps:
         assert exp["stage"] == "SUCCESS"
-    assert len(exps) == 2
 
 
 def test_post_update_metrics_unauthorized(

@@ -26,7 +26,7 @@ def user_authentication_headers(
 def create_random_user(db: Session) -> User:
     email = random_email()
     password = random_lower_string()
-    user_in = UserCreate(email=EmailStr(email), password=password)
+    user_in = UserCreateBasic(email=EmailStr(email), password=password)
     user = user_store.create(db=db, obj_in=user_in)
     return user
 
@@ -42,7 +42,7 @@ def authentication_token_from_email(
     password = random_lower_string()
     user = user_store.get_by_email(db, email=email)
     if not user:
-        user_in_create = UserCreate(email=EmailStr(email), password=password)
+        user_in_create = UserCreateBasic(email=EmailStr(email), password=password)
         user = user_store.create(db, obj_in=user_in_create)
     else:
         user_in_update = UserUpdate(password=password)

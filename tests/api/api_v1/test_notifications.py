@@ -1,4 +1,5 @@
-from typing import Coroutine, List
+from asyncio.events import AbstractEventLoop
+from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,6 +14,37 @@ from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
 from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string
+
+
+@pytest.fixture(scope="module")
+async def experiments_fixture(db: Session, some_model: Model):
+    user = get_test_user(db)
+    db.query(EventEntity).delete()
+    db.flush()
+    version = some_model.versions[-1]
+    experiments = [
+        await experiments_ctl.create_model_traning(
+            db,
+            user,
+            TrainingRequest(
+                name=random_lower_string(),
+                epochs=1,
+                learning_rate=0.1,
+                model_version_id=version.id,
+            ),
+        )
+    ]
+    tasks = get_exp_manager().get_from_user(user.id)
+    for task in tasks:
+        await task.task
+    return experiments
+
+
+@pytest.fixture(scope="module")
+async def events_fixture(db: Session, experiments_fixture):
+    user = get_test_user(db)
+    events_ents = db.query(EventEntity).filter(EventEntity.user_id == user.id).all()
+    return events_ents
 
 
 @pytest.mark.asyncio
@@ -48,28 +80,24 @@ async def test_post_read_notifications(
     db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    experiments_fixture: Coroutine[List[Experiment], None, None],
     events_fixture: List[EventEntity],
+    event_loop: AbstractEventLoop,
 ):
-    assert len(events_fixture) == 1
-    print(experiments_fixture)
-    await experiments_fixture
     res = client.get(
         f"{settings.API_V1_STR}/events/report",
         headers=normal_user_token_headers,
     )
+    events_fixture = await events_fixture
     assert res.status_code == 200
     body = res.json()
     assert len(body) == 1
     assert body[0]["total"] == 1
-    print("repor", body)
 
     res = client.post(
         f"{settings.API_V1_STR}/events/read",
         headers=normal_user_token_headers,
         json={"eventIds": [event.id for event in events_fixture]},
     )
-    print("read", res.json())
     assert res.status_code == 200
     assert res.json() == {"total": 1}, "POST /events/read doesn't update any event"
 
@@ -110,31 +138,3 @@ def teardown_module():
     db.query(EventEntity).filter(EventEntity.user_id == user.id).delete()
     db.flush()
     db.close()
-
-
-@pytest.fixture(scope="module")
-async def experiments_fixture(db: Session, some_model: Model):
-    user = get_test_user(db)
-    db.query(EventEntity).filter(EventEntity.user_id == user.id).delete()
-    db.flush()
-    version = some_model.versions[-1]
-    experiments = [
-        await experiments_ctl.create_model_traning(
-            db,
-            user,
-            TrainingRequest(
-                name=random_lower_string(),
-                epochs=1,
-                learning_rate=0.1,
-                model_version_id=version.id,
-            ),
-        )
-    ]
-    [await exp.task for exp in get_exp_manager().get_from_user(user.id)]
-    return experiments
-
-
-@pytest.fixture(scope="module")
-def events_fixture(db: Session, experiments_fixture: List[Experiment]):
-    user = get_test_user(db)
-    return db.query(EventEntity).filter(EventEntity.user_id == user.id).all()
