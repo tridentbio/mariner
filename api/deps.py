@@ -8,11 +8,11 @@ from jose import JWTError, jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from mariner.core.config import settings
-from mariner.schemas.token import TokenPayload
 from mariner.core import security
+from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User
+from mariner.schemas.token import TokenPayload
 from mariner.stores.user_sql import user_store
 
 reusable_oauth2 = OAuth2PasswordBearer(

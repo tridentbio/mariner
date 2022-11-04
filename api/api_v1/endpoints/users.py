@@ -2,13 +2,11 @@ from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from mariner.exceptions import UserNotSuperUser
 
 import mariner.users as controller
 from api import deps
-from mariner.schemas import user_schemas as schemas
-from mariner.core.config import settings
 from mariner.entities.user import User
+from mariner.schemas import user_schemas as schemas
 from mariner.stores.user_sql import user_store
 
 router = APIRouter()

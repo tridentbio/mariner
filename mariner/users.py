@@ -1,9 +1,12 @@
 from datetime import timedelta
 from typing import Optional
+
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+
 from mariner.core import github, security
+from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -12,16 +15,9 @@ from mariner.exceptions import (
     UserNotFound,
     UserNotSuperUser,
 )
-from mariner.core.config import settings
 from mariner.schemas.token import Token
-from mariner.schemas.user_schemas import (
-    UserCreateOAuth,
-    UserUpdate,
-    User,
-    UserUpdate,
-)
+from mariner.schemas.user_schemas import User, UserCreateOAuth, UserUpdate
 from mariner.stores.oauth_state_sql import oauth_state_store
-
 from mariner.stores.user_sql import user_store
 
 

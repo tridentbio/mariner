@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, UniqueConstraint
+from sqlalchemy import Column, Integer, String
+
 from mariner.db.base_class import Base
 
 

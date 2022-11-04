@@ -7,9 +7,9 @@ from api.api_v1.endpoints import (
     experiments,
     login,
     model,
+    oauth,
     units,
     users,
-    oauth,
 )
 
 api_router = APIRouter()
