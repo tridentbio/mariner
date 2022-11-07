@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from api import deps
+from mariner.core.config import settings
 from mariner import oauth
 from mariner.exceptions import (
     InvalidGithubCode,
@@ -29,7 +30,9 @@ def get_oauth_provider_redirect(provider: str, db: Session = Depends(deps.get_db
 def receive_github_code(code: str, state: str):
     try:
         token = authenticate(github_oauth=GithubAuth.construct(code=code, state=state))
-        return token
+        return RedirectResponse(
+            url=f"{settings.WEBAPP_URL}/login?tk={token.access_token}&tk_type={token.token_type}"
+        )
     except InvalidGithubCode:
         return HTTPException(status_code=400, detail="Invalid github code")
     except InvalidOAuthState:
