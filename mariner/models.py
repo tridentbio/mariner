@@ -71,7 +71,7 @@ def naive_check_forward_exception(db: Session, config: ModelSchema) -> ForwardCh
         output = model(sample)
         return ForwardCheck(output=output)
     except:  # noqa E722
-        lines = traceback.format_exc(limit=5)
+        lines = traceback.format_exc()
         return ForwardCheck(stack_trace=lines)
 
 
