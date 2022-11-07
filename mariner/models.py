@@ -50,7 +50,7 @@ def get_model_and_dataloader(
         feature_columns=config.dataset.feature_columns,
         featurizers_config=config.featurizers,
     )
-    dataloader = DataLoader(dataset, batch_size=len(df))
+    dataloader = DataLoader(dataset, batch_size=1)
     model = CustomModel(config)
     return model, dataloader
 
