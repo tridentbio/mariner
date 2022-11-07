@@ -1,5 +1,6 @@
 import traceback
 from typing import Any, Optional, Union, get_type_hints
+from uuid import uuid4
 
 import mlflow
 import mlflow.exceptions
@@ -93,18 +94,25 @@ def create_model(
         raise DatasetNotFound()
     torchmodel = CustomModel(model_create.config)
     existingmodel = model_store.get_by_name(db, model_create.name)
-    mlflow_name = f"{user.id}-{model_create.name}"
+    mlflow_name = f"{user.id}-{model_create.name}-{uuid4()}"
     if existingmodel and existingmodel.created_by_id != user.id:
         raise ModelNameAlreadyUsed()
 
     if not existingmodel:
-        regmodel, version = mlflowapi.create_registered_model(
-            client,
-            mlflow_name,
-            torchmodel,
-            description=model_create.model_description,
-            version_description=model_create.model_version_description,
-        )
+        try:
+            regmodel, version = mlflowapi.create_registered_model(
+                client,
+                mlflow_name,
+                torchmodel,
+                description=model_create.model_description,
+                version_description=model_create.model_version_description,
+            )
+        except mlflow.exceptions.MlflowException as exp:
+            if exp.error_code == mlflow.exceptions.RESOURCE_ALREADY_EXISTS:
+                raise ModelNameAlreadyUsed(
+                    "A model with that name is already in use by mlflow"
+                )
+            raise
     else:
         regmodel = mlflowapi.get_registry_model(mlflow_name, client=client)
         version = mlflowapi.create_model_version(
