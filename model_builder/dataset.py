@@ -107,9 +107,6 @@ class CustomDataset(TorchDataset):
         if self.target:
             d.y = torch.Tensor([sample[self.target.name]])
 
-        assert "MolToGraphFeaturizer" in d
-        assert "mwt" in d
-
         return d
 
 
