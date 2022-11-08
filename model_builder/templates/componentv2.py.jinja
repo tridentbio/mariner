@@ -36,7 +36,11 @@ class {{ component["prefix"] }}ForwardArgsSummary(BaseModel):
 
 class {{ component["prefix"] }}ForwardArgsReferences(BaseModel):
     {%- for key, value in component["fwd"]["pos"] %}
+    {% if 'typing.List' in value %}
+    {{ key }}: List[str]
+    {% else %}
     {{ key }}: str
+    {% endif %}
     {%- endfor %}
     {%- for key, value in component["fwd"]["kw"] %}
     {{ key }}: Optional[str] = None

@@ -85,7 +85,7 @@ def test_model_building(zinc_extra_dataset: Dataset, model_config_path: str):
     )
     data_module.setup(stage="fit")
     trainer = Trainer(
-        max_epochs=2,
+        max_epochs=1,
         enable_progress_bar=False,
         enable_checkpointing=False,
     )

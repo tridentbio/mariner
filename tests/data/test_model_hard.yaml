@@ -97,9 +97,12 @@ layers:
 
   - name: Combiner
     type: model_builder.layers.Concat
+    constructor_args:
+      dim: -1
     forward_args: 
-      x1: "${AddPool}"
-      x2: "${Linear1}"
+      xs:
+        - "${AddPool}"
+        - "${Linear1}"
 
   - name: LinearJoined
     type: torch.nn.Linear

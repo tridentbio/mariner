@@ -184,13 +184,43 @@ def unwrap_dollar(value: str) -> tuple[str, bool]:
     return value, False
 
 
-def get_references_dict(forward_args_dict: dict[str, Any]) -> dict[str, str]:
+def get_references_dict(
+    forward_args_dict: dict[str, Any]
+) -> dict[str, Union[str, list[str]]]:
     result = {}
     for key, value in forward_args_dict.items():
-        ref, is_ref = unwrap_dollar(value)
-        if is_ref:
-            result[key] = ref
+        if isinstance(value, list):
+            result[key] = []
+            for item in value:
+                ref, is_ref = unwrap_dollar(item)
+                if is_ref:
+                    result[key].append(ref)
+        elif isinstance(value, str):
+            ref, is_ref = unwrap_dollar(value)
+            if is_ref:
+                result[key] = ref
+        else:
+            continue
     return result
+
+
+def get_ref_from_input(value: str, input: DataInstance):
+    attribute, attribute_accessors = (
+        value.split(".")[0],
+        value.split(".")[1:],
+    )
+    if attribute == "input":
+        return input["".join(attribute_accessors)]  # $inputs.x is accessed as data['x']
+    value = input[attribute]
+    if len(attribute_accessors) == 0:
+        return value
+    # TODO: fix edges_weight and edge_attr usage
+    if "edge_weight" in attribute_accessors or "edge_attr" in attribute_accessors:
+        return None
+    value = value[0]  # hack to flatten array of DataBatches (output of Featurizer)
+    for attr in attribute_accessors:
+        value = getattr(value, attr)
+    return value
 
 
 def collect_args(
@@ -206,31 +236,21 @@ def collect_args(
     for key, value in args_dict.items():
         if value is None:
             continue
-        value, is_ref = unwrap_dollar(value)
-        if is_ref:
-            attribute, attribute_accessors = (
-                value.split(".")[0],
-                value.split(".")[1:],
-            )
-            if attribute == "input":
-                result[key] = input["".join(attribute_accessors)]
-                continue
-            value = input[attribute]
-            if len(attribute_accessors) == 0:
+        if isinstance(value, list):
+            value_ = []
+            for item in value:
+                item_value, item_is_ref = unwrap_dollar(item)
+                if item_is_ref:
+                    value_.append(get_ref_from_input(item_value, input))
+                else:
+                    value_.append(item_value)
+            result[key] = value_
+        elif isinstance(value, str):
+            value, is_ref = unwrap_dollar(value)
+            if is_ref:
+                result[key] = get_ref_from_input(value, input)
+            else:
                 result[key] = value
-                continue
-            # TODO: fix edges_weight and edge_attr usage
-            if (
-                "edge_weight" in attribute_accessors
-                or "edge_attr" in attribute_accessors
-            ):
-                continue
-            value = value[
-                0
-            ]  # hack to flatten array of DataBatches (output of Featurizer)
-            for attr in attribute_accessors:
-                value = getattr(value, attr)
-            result[key] = value
         else:
-            result[key] = value
+            raise ValueError("args_dict must be list or str")
     return result
