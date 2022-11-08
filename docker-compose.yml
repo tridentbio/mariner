@@ -50,7 +50,7 @@ services:
     volumes:
       - app-mlflow-data:/var/lib/postgresql/data/pgdata
     env_file:
-      - .env.local.mlflow
+      - .env.local
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_SERVER=mlflowdb
@@ -75,7 +75,7 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      - .env.local.mlflow
+      - .env.local
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
@@ -100,14 +100,12 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.local.ray
+      .env.local
     ports:
       - "6379:6379"
       - "8265:8265"
       - "10001:10001"
       - "8000:8000"
-    env_file:
-      - .env.local.ray
     environment:
       - SERVER_NAME=${SERVER_NAME?Variable not set}
       - SERVER_HOST=http://${SERVER_NAME?Variable not set}
@@ -126,11 +124,9 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.local.ray
+      .env.local
     depends_on: 
       - ray-head
-    env_file:
-      - .env
     environment:
       - SERVER_NAME=${SERVER_NAME?Variable not set}
       - SERVER_HOST=http://${SERVER_NAME?Variable not set}
