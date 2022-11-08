@@ -9,23 +9,23 @@ normal_deploy:
 
 version: mlflow-v1
 
-port: 5000
+port: 4180
 
 image:
   repository: mlflow
   pullPolicy: Always
   tag: latest
-  containerPort: 5000
+  containerPort: 4180
   # livenessProbe:
   #   path: /
-  #   port: 5000
+  #   port: 4180
   #   periodSeconds: 30
   #   successThreshold: 1
   #   failureThreshold: 3
   #   timeoutSeconds: 1
   # readinessProbe:
   #   path: /
-  #   port: 5000
+  #   port: 4180
   #   periodSeconds: 30
   #   successThreshold: 1
   #   failureThreshold: 3
@@ -60,7 +60,7 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 5000
+  port: 4180
   annotations:
     alb.ingress.kubernetes.io/target-type: ip
 
