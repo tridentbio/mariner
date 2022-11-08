@@ -1,3 +1,4 @@
+from typing import List
 import torch
 from torch import nn
 
@@ -7,8 +8,9 @@ class Concat(nn.Module):
     A helper layer that concatenates the outputs of 2 other layers
     """
 
-    def __init__(self):
+    def __init__(self, dim: int = 0):
         super().__init__()
+        self.dim = dim
 
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
-        return torch.cat([x1, x2], dim=-1)
+    def forward(self, xs: List[torch.Tensor]) -> torch.Tensor:
+        return torch.cat(xs, dim=self.dim)

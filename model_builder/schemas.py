@@ -18,7 +18,7 @@ from model_builder.components_query import (
     get_component_constructor_args_by_type,
 )
 from model_builder.layers_schema import FeaturizersType, LayersType
-from model_builder.utils import unwrap_dollar
+from model_builder.utils import get_references_dict, unwrap_dollar
 
 
 class CamelCaseModel(BaseModel):
@@ -216,18 +216,20 @@ class ModelSchema(CamelCaseModel):
         for feat in layers_and_featurizers:
             if "forward_args" not in feat:
                 continue
-            for key, value in feat["forward_args"].items():
-                # Pooling batch and size fall in here
+            references = get_references_dict(feat["forward_args"])
+            for key, value in references.items():
                 if not value:  # optional forward_arg that was not set
                     continue
-                assert isinstance(
-                    value, str
-                ), f"[{feat['name']}:{key}]: forward_args values should be strings but got {value.__class__}"
-                reference, is_reference = unwrap_dollar(value)
-                if not is_reference and reference != "inputs":
+                if isinstance(value, str):
+                    reference = value.split(".")[0]
+                    g.add_edge(reference, feat["name"], attr=key)
+                elif isinstance(value, list):
+                    for reference in value:
+                        reference = reference.split(".")[0]
+                        g.add_edge(reference, feat["name"], attr=key)
+
+                else:
                     continue
-                reference = reference.split(".")[0]
-                g.add_edge(reference, feat["name"], attr=key)
         return g
 
     @classmethod

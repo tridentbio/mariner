@@ -54,7 +54,7 @@ async def test_start_training(
     version = some_model.versions[-1]
     exp_name = random_lower_string()
     request = TrainingRequest(
-        epochs=5,
+        epochs=1,
         learning_rate=1e-3,
         name=exp_name,
         model_version_id=version.id,

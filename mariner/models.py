@@ -114,7 +114,9 @@ def create_model(
                 )
             raise
     else:
-        regmodel = mlflowapi.get_registry_model(mlflow_name, client=client)
+        regmodel = mlflowapi.get_registry_model(
+            existingmodel.mlflow_name, client=client
+        )
         version = mlflowapi.create_model_version(
             client,
             existingmodel.mlflow_name,
