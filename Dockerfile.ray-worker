@@ -9,10 +9,14 @@ COPY ./app/pyproject.toml ./app/poetry.lock /app/
 RUN /usr/local/bin/python3 -m pip install --upgrade pip
 
 # Install Poetry
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_HOME=/opt/poetry python && \
-    cd /usr/local/bin && \
-    ln -s /opt/poetry/bin/poetry && \
-    poetry config virtualenvs.create false
+ENV POETRY_VERSION=1.2.0a2
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VENV=/opt/poetry-venv
+ENV POETRY_CACHE_DIR=/opt/.cache
+RUN pip install -U pip setuptools
+RUN pip install poetry
+ENV PATH="${PATH}:${POETRY_VENV}/bin"
+
 # Allow installing dev dependencies to run tests
 RUN ["poetry", "install", "--no-root"]
 # Using inside the container:
