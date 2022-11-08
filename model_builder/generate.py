@@ -20,7 +20,13 @@ class Layer:
     name: str
 
 
-featurizers = [Layer(name) for name in ["model_builder.featurizers.MoleculeFeaturizer"]]
+featurizers = [
+    Layer(name)
+    for name in [
+        "model_builder.featurizers.MoleculeFeaturizer",
+        "model_builder.featurizers.FromSmiles",
+    ]
+]
 
 layers = [
     Layer(name)

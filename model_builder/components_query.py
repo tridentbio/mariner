@@ -7,7 +7,7 @@ from model_builder.layers_schema import FeaturizersType, LayersType
 
 def get_component_config_by_type(name: str) -> Optional[BaseModel]:
     layer_types = [c for c in get_args(LayersType)]
-    featurizer_types = [FeaturizersType]
+    featurizer_types = [c for c in get_args(FeaturizersType)]
     for component in layer_types + featurizer_types:
         if component.construct().type == name:
             return component

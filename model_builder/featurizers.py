@@ -9,6 +9,22 @@ from rdkit.Chem.rdchem import Bond as RDKitBond
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from torch_geometric.data import Batch as PyGBatch
 from torch_geometric.data import Data as PyGData
+from torch import nn
+from torch_geometric.utils.smiles import from_smiles
+
+
+class FromSmiles:
+    def __init__(self, kekulize: bool = False, with_hydrogen: bool = False):
+        self.kekulize = kekulize or False
+        self.with_hydrogen = with_hydrogen or False
+
+    def __call__(self, x: str):
+        return from_smiles(x, kekulize=self.kekulize, with_hydrogen=self.with_hydrogen)
+
+
+FromSmiles.__doc__ = "(Based off torch_geometric.utils.from_smiles)\n" + (
+    from_smiles.__doc__ or ""
+)
 
 
 class MoleculeFeaturizer:
