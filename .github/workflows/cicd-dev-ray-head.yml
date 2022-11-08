@@ -52,26 +52,26 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile.ray-head . 
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
-    - name: Deploy - Setup Credentials
-      id: setup-kubeconfig
-      run: |
-        aws eks --region $AWS_REGION update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
-    - name: Deploy - Update Kubernetes Deployment
-      id: deploy-to-eks
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL }}
-        CONFIGMAP: ${{ secrets.CONFIGMAP }}
-        REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
-      run: |
-        curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
-        chmod +x ./kubectl &&\
-        mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$CONFIGMAP"
-        helm upgrade -i "$DEPLOYMENT_NAME" helm-ray-head/. \
-          --set "replicaCount=$REPLICA_COUNT" \
-          --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
-          --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
-          --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-          --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
-        kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+    # - name: Deploy - Setup Credentials
+    #   id: setup-kubeconfig
+    #   run: |
+    #     aws eks --region $AWS_REGION update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+    # - name: Deploy - Update Kubernetes Deployment
+    #   id: deploy-to-eks
+    #   env:
+    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #     HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL }}
+    #     CONFIGMAP: ${{ secrets.CONFIGMAP }}
+    #     REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
+    #   run: |
+    #     curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
+    #     chmod +x ./kubectl &&\
+    #     mv ./kubectl /usr/local/bin/kubectl &&\
+    #     kubectl apply -f - <<< "$CONFIGMAP"
+    #     helm upgrade -i "$DEPLOYMENT_NAME" helm-ray-head/. \
+    #       --set "replicaCount=$REPLICA_COUNT" \
+    #       --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
+    #       --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
+    #       --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
+    #       --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
+    #     kubectl rollout status "deployment/$DEPLOYMENT_NAME"
