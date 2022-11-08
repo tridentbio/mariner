@@ -347,7 +347,7 @@ def test_get_name_suggestion(
     body = res.json()
     assert "name" in body
     assert type(body["name"]) == str
-    assert len(body["name"]) > 4
+    assert len(body["name"]) >= 4
 
 
 def test_model_versioning():

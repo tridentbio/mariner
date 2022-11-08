@@ -14,3 +14,6 @@ class Concat(nn.Module):
 
     def forward(self, xs: List[torch.Tensor]) -> torch.Tensor:
         return torch.cat(xs, dim=self.dim)
+
+
+Concat.__doc__ = "(Based on torch.cat)\n" + (torch.cat.__doc__ or "")
