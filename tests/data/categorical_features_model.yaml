@@ -1,0 +1,93 @@
+name: GNNE
+name: GNNExamplleWithCategoricalINput
+dataset:
+  name: Zinc Extra
+  targetColumn: 
+    name: mwt
+    dataType:
+      domainKind: numeric
+  featureColumns:
+    - name: smiles
+      dataType:
+        domainKind: smiles
+    - name: mwt_group
+      dataType:
+        domainKind: categorical
+        classes:
+          mwt_small: 0
+          mwt_big: 1
+
+featurizers:
+  - name: MolToGraphFeaturizer
+    type: app.features.model.featurizers.MoleculeFeaturizer
+    input:
+      - smiles
+    args:
+      allow_unknown: false
+      sym_bond_list: true
+      per_atom_fragmentation: false
+
+layers:
+
+  # Start fst branch (from featurizer)
+  - name: GCN1
+    type: torch_geometric.nn.GCNConv
+    args:
+      in_channels: 26
+      out_channels: 64
+    input: MolToGraphFeaturizer
+
+  - name: GCN1_Activation
+    type: torch.nn.ReLU
+    input: GCN1
+
+  - name: GCN2 
+    type: torch_geometric.nn.GCNConv
+    input: GCN1_Activation
+    args:
+      in_channels: 64
+      out_channels: 64
+
+  - name: GCN2_Activation
+    type: torch.nn.ReLU
+    input: GCN2
+
+  - name: GCN3
+    type: torch_geometric.nn.GCNConv
+    input: GCN2_Activation
+    args:
+      in_channels: 64
+      out_channels: 64
+
+  - name: GCN3_Activation
+    type: torch.nn.ReLU
+    input: GCN3
+
+  - name: AddPool
+    type: app.features.model.layers.GlobalPooling
+    input: GCN3_Activation
+    args:
+      aggr: 'sum'
+  # End of fst branch
+
+  # Second branch would simply be linear layers in mwt
+  - name: OneHotEncoded
+    type: app.features.model.layers.OneHot
+    input: mwt_group
+  - name: Linear1
+    type: torch.nn.Linear
+    args:
+      in_features: 2
+      out_features: 10
+    input: OneHotEncoded
+  - name: Combiner
+    type: app.features.model.layers.Concat
+    input: ['AddPool', 'Linear1']
+
+  - name: LinearJoined
+    type: torch.nn.Linear
+    input: Combiner
+    args:
+      in_features: 74
+      out_features: 1
+
