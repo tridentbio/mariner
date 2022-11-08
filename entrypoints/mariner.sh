@@ -1,5 +1,4 @@
 #!/bin/sh
 
-poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 80
-
+sh /app/scripts/prestart.sh && poetry run python -m api.main
 

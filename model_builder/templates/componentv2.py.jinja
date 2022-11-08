@@ -1,0 +1,109 @@
+{% set ctr_count=component["ctr"]["pos"]|length + component["ctr"]["kw"]|length %}
+{% set fwd_count=component["fwd"]["pos"]|length + component["fwd"]["kw"]|length %}
+
+class {{ component["prefix"] }}ConstructorArgsSummary(BaseModel):
+    """
+    Summarizes what types are the arguments necessary to instantiate {{ component["path"] }}
+    
+    Generated code
+    """
+    {%- for key, value in component["ctr"]["pos"] %}
+    {{ key }} = "{{ value }}"
+    {%- endfor %}
+
+    {%- for key, value in component["ctr"]["kw"] %}
+    {{ key }} = "{{ value }}?"
+    {%- endfor %}
+
+{% if fwd_count > 0 %}
+
+class {{ component["prefix"] }}ForwardArgsSummary(BaseModel):
+    """
+    Maps to references for the the arguments of {{ component["path"] }}.forward or {{ component["path"]}}.__call__
+
+    References can be names of layers/featurizers defined in the same model config or reference an attribute
+    of the same component
+
+    Generated code
+    """
+
+    {%- for key, value in component["fwd"]["pos"] %}
+    {{ key }} = "{{ value }}"
+    {%- endfor %}
+    {%- for key, value in component["fwd"]["kw"] %}
+    {{ key }} =  "{{ value }}?"
+    {%- endfor %}
+
+class {{ component["prefix"] }}ForwardArgsReferences(BaseModel):
+    {%- for key, value in component["fwd"]["pos"] %}
+    {% if 'typing.List' in value %}
+    {{ key }}: List[str]
+    {% else %}
+    {{ key }}: str
+    {% endif %}
+    {%- endfor %}
+    {%- for key, value in component["fwd"]["kw"] %}
+    {{ key }}: Optional[str] = None
+    {%- endfor %}
+
+
+{% endif %}
+
+class {{component["prefix"]}}Summary(BaseModel):
+    type: Literal["{{component["path"]}}"] = '{{ component["path"] }}'
+    constructor_args_summary = {{component["prefix"]}}ConstructorArgsSummary()
+    {% if fwd_count > 0 %}
+    forward_args_summary = {{component["prefix"]}}ForwardArgsSummary()
+    {% endif %}
+
+{% if ctr_count > 0 %}
+
+class {{ component["prefix"] }}ConstructorArgs(BaseModel):
+    """
+    Maps to the arguments of {{ component["path"] }}
+
+    Generated code
+    """
+
+    {%- for key, value in component["ctr"]["pos"] %}
+    {{ key }}: {{ type_name(value) }}
+    {%- endfor %}
+    {%- for key, value in component["ctr"]["kw"] %}
+    {{ key }}: Optional[{{ type_name(value) }}] = None
+    {%- endfor %}
+
+
+{% endif %}
+
+
+class {{ component["prefix"] }}LayerConfig(BaseModel):
+    """
+    Layer configuration.
+
+    "type" is a discriminator field, and each possible value for it the
+    args type will be mapped to the arguments of the respective class
+
+    Generated code
+    """
+    type: Literal["{{ component["path"] }}"] = '{{ component["path"] }}'
+    name: str
+    {% if ctr_count > 0 %}
+    constructor_args: {{ component["prefix"] }}ConstructorArgs
+    def create(self):
+        lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+          return lib_cls
+        return lib_cls(**self.constructor_args.dict())
+    {% else %}
+    def create(self):
+        lib_cls = get_class_from_path_string(self.type)
+        if is_func(lib_cls):
+          return lib_cls
+        return lib_cls()
+    {% endif %}
+    {% if fwd_count > 0 %}
+    forward_args: {{ component["prefix"] }}ForwardArgsReferences
+
+    {% endif %}
+
+
