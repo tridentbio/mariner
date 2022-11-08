@@ -13,10 +13,15 @@ ENV POETRY_VENV=/opt/poetry-venv
 ENV POETRY_CACHE_DIR=/opt/.cache
 
 # Install Poetry
-RUN pip install -U pip setuptools \
-    pip install poetry
+ENV POETRY_VERSION=1.2.0a2
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VENV=/opt/poetry-venv
+ENV POETRY_CACHE_DIR=/opt/.cache
+RUN pip install -U pip setuptools
+RUN pip install poetry
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 RUN poetry config virtualenvs.create false
+
 # Allow installing dev dependencies to run tests
 # RUN ["poetry", "install", "--no-root"]
 RUN poetry install --no-root
