@@ -7,11 +7,11 @@ class {{ component["prefix"] }}ConstructorArgsSummary(BaseModel):
     
     Generated code
     """
-    {%- for key, value in component["ctr"]["pos"] %}
+    {%- for key, value, def_ in component["ctr"]["pos"] %}
     {{ key }} = "{{ value }}"
     {%- endfor %}
 
-    {%- for key, value in component["ctr"]["kw"] %}
+    {%- for key, value, def_ in component["ctr"]["kw"] %}
     {{ key }} = "{{ value }}?"
     {%- endfor %}
 
@@ -27,22 +27,22 @@ class {{ component["prefix"] }}ForwardArgsSummary(BaseModel):
     Generated code
     """
 
-    {%- for key, value in component["fwd"]["pos"] %}
+    {%- for key, value, def_ in component["fwd"]["pos"] %}
     {{ key }} = "{{ value }}"
     {%- endfor %}
-    {%- for key, value in component["fwd"]["kw"] %}
+    {%- for key, value, def_ in component["fwd"]["kw"] %}
     {{ key }} =  "{{ value }}?"
     {%- endfor %}
 
 class {{ component["prefix"] }}ForwardArgsReferences(BaseModel):
-    {%- for key, value in component["fwd"]["pos"] %}
+    {%- for key, value, def_ in component["fwd"]["pos"] %}
     {% if 'typing.List' in value %}
     {{ key }}: List[str]
     {% else %}
     {{ key }}: str
     {% endif %}
     {%- endfor %}
-    {%- for key, value in component["fwd"]["kw"] %}
+    {%- for key, value, def_ in component["fwd"]["kw"] %}
     {{ key }}: Optional[str] = None
     {%- endfor %}
 
@@ -65,11 +65,11 @@ class {{ component["prefix"] }}ConstructorArgs(BaseModel):
     Generated code
     """
 
-    {%- for key, value in component["ctr"]["pos"] %}
+    {%- for (key, value, default) in component["ctr"]["pos"] %}
     {{ key }}: {{ type_name(value) }}
     {%- endfor %}
-    {%- for key, value in component["ctr"]["kw"] %}
-    {{ key }}: Optional[{{ type_name(value) }}] = None
+    {%- for (key, value, default) in component["ctr"]["kw"] %}
+    {{ key }}: Optional[{{ type_name(value) }}] = {{ default }}
     {%- endfor %}
 
 

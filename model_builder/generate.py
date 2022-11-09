@@ -179,8 +179,8 @@ def is_optional(parameter: Parameter):
     )
 
 
-def args_to_list(params: List[Parameter]) -> List[tuple[str, Any]]:
-    return [(param.name, str(param.annotation)) for param in params]
+def args_to_list(params: List[Parameter]) -> List[tuple[str, Any, Any]]:
+    return [(param.name, str(param.annotation), param.default) for param in params]
 
 
 def get_component_template_args_v2(path: str):
@@ -192,8 +192,8 @@ def get_component_template_args_v2(path: str):
         - "prefix"
         - "path"
         - "ctr": A description of the constructor signature of the class referenced by path
-            - "pos": The positional (required) arguments. A list of tuple[str, Any] composed of (arg_name, arg_type)
-            - "kw": The keyword (presumably optional) arguments. Same as pos.
+            - "pos": The positional (required) arguments. A list of tuple[str, Any, None] composed of (arg_name, arg_type, None)
+            - "kw": The keyword (presumably optional) arguments. tuple[str, Any, Any] composed of (arg_name, arg_type, arg_default)
         - "fwd": The same as ctr, but for the forward. If class referenced does not have a forward, we look the __call__ method instead
             - "pos":
             - "kw":
@@ -265,48 +265,11 @@ def create_jinja_env():
     return env
 
 
-def generate(path: str) -> str:
-    prefix, arg_types = get_component_template_args(path)
-    env = create_jinja_env()
-    template = env.get_template("component.py.jinja")
-    return template.render(
-        component={"prefix": prefix, "path": path, "arg_types": arg_types}
-    )
-
-
 def generatev2(path: str) -> str:
     template_args = get_component_template_args_v2(path)
     env = create_jinja_env()
     template = env.get_template("componentv2.py.jinja")
     return template.render(**template_args)
-
-
-def generate_bundle() -> str:
-    env = create_jinja_env()
-    schemas_template = env.get_template("base.py.jinja")
-    args = [get_component_template_args(layer.name) for layer in layers]
-    layer_components = [
-        {
-            "prefix": prefix,
-            "arg_types": arg_types,
-            "path": layer.name,
-        }
-        for (prefix, arg_types), layer in zip(args, layers)
-    ]
-    args = [get_component_template_args(featurizer.name) for featurizer in featurizers]
-    featurizer_components = [
-        {
-            "prefix": prefix,
-            "arg_types": arg_types,
-            "path": layer.name,
-        }
-        for (prefix, arg_types), layer in zip(args, featurizers)
-    ]
-
-    bundled_schema = schemas_template.render(
-        layer_components=layer_components, featurizer_components=featurizer_components
-    )
-    return bundled_schema
 
 
 def generate_bundlev2() -> str:
