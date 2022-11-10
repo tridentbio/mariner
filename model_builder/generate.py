@@ -24,7 +24,9 @@ featurizers = [
     Layer(name)
     for name in [
         "model_builder.featurizers.MoleculeFeaturizer",
-        "model_builder.featurizers.FromSmiles",
+        # PyG's from_smiles only outputs Long tensors for node_features
+        # Waiting for issue ... to be resolved
+        # "model_builder.featurizers.FromSmiles",
     ]
 ]
 
