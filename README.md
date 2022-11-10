@@ -32,7 +32,7 @@ poetry run pre-commit install
 
 ```bash
 poetry shell # starts shell with the virtualenv loaded or ...
-poetry run code . # starts vscode in this folder
+poetry run code . # starts vscode with the virtualenv loaded in this folder
 ```
 
 ### Running the code in docker-compose
@@ -109,15 +109,22 @@ To execute a set of benchmarks, use the following pytest options:
 
 ### Live development with Python Jupyter Notebooks
 
-> TODO!
-
 To run jupyterlab withing the docker-compose networks (in order to access services such as the db and ray), run:
 
 ```bash
-docker-compose up -d jupyterlab
+docker-compose exec backend bash # get a shell in container
+$JUPYTER # use JUPYTER variable defined in docker-compose.override.yml
+```
+If calling $JUPYTER fails, possible causes are:
+
+1. Docker-compose.override.yml was not used, in such case you can run in the backend container shell:
+```bash
+jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
 ```
 
-jupyterlab is a service defined in the docker-compose that uses the same environment as the backend, by installs and runs jupyterlab on top of it
+2. Development dependencies were not installed, in such case you should 
+get a shell in the container and run `poetry add jupyter`. The default
+development image (Dockerfile.local) already has jupyter as a dev dependency
 
 ### Migrations
 
