@@ -23,8 +23,9 @@ from tests.utils.utils import random_lower_string
 
 # model configuration to be tested
 mlflow_yamls = [
-    "tests/data/test_model_with_from_smiles.yaml",
     "tests/data/test_model_hard.yaml",
+    # "tests/data/test_model_with_from_smiles.yaml",
+    #"tests/data/categorical_features_model.yaml",
 ]
 
 
