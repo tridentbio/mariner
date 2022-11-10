@@ -18,7 +18,7 @@ class FromSmiles:
         self.kekulize = kekulize or False
         self.with_hydrogen = with_hydrogen or False
 
-    def __call__(self, x: str):
+    def __call__(self, x: str) -> PyGData:
         return from_smiles(x, kekulize=self.kekulize, with_hydrogen=self.with_hydrogen)
 
 
