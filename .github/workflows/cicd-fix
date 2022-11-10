@@ -5,7 +5,7 @@ on:
       branch:
         description: 'Branch to deploy'
         required: true
-        default: 'fix-dockerfile'
+        default: 'develop'
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: mariner-dev
