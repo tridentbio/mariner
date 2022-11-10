@@ -1,4 +1,4 @@
-name: Deploy to Develop - Tests
+name: Tests and Deploy
 
 on:
   workflow_dispatch:
