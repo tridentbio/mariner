@@ -18,7 +18,6 @@ def test_post_experiments(
         json=mocked_experiment_payload,
         headers=normal_user_token_headers,
     )
-    print(res.json())
     assert res.status_code == HTTP_200_OK
 
 

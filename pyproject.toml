@@ -45,6 +45,7 @@ click = "8.0.4"
 wonderwords = "^2.2.0"
 fastapi-utils = "^0.2.1"
 Sphinx = "^5.3.0"
+torchmetrics = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.20.0"

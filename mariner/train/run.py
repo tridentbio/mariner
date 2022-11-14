@@ -1,5 +1,7 @@
 import asyncio
 from asyncio.tasks import Task
+from typing import List, Union
+from pytorch_lightning.loggers.base import LightningLoggerBase
 
 import ray
 from pytorch_lightning.core.lightning import LightningModule
@@ -44,7 +46,7 @@ async def start_training(
     model: LightningModule,
     training_request: TrainingRequest,
     data_module: DataModule,
-    loggers: AppLogger,
+    loggers: Union[List[LightningLoggerBase], LightningLoggerBase],
 ) -> Task:
     data_module.setup(stage="fit")
     trainer = Trainer(
