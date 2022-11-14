@@ -60,7 +60,7 @@ jobs:
     #   id: deploy-to-eks
     #   env:
     #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL }}
+    #     HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL_RAY_WORKER }}
     #     CONFIGMAP: ${{ secrets.CONFIGMAP }}
     #     REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
     #   run: |
