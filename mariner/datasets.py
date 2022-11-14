@@ -69,6 +69,7 @@ def get_entity_info_from_csv(
 
 
 def _upload_s3(file: UploadFile):
+    file.file.seek(0)
     file_md5 = make_key(file)
     key = f"datasets/{file_md5}.csv"
     file.file.seek(0)
