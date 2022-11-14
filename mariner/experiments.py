@@ -85,7 +85,7 @@ async def create_model_traning(
         AppLogger(
             experiment.id, experiment_name=training_request.name, user_id=user.id
         ),
-        MLFlowLogger(experiment_name=experiment.experiment_name),
+        MLFlowLogger(experiment_name=mlflow_experiment_name),
     ]
     task = await start_training(
         torchmodel, training_request, data_module, loggers=logger
