@@ -12,10 +12,6 @@ COPY ./pyproject.toml ./poetry.lock ./deps.py /app/
 
 RUN /usr/local/bin/python3 -m pip install --upgrade pip
 
-ENV POETRY_HOME=/opt/poetry
-ENV POETRY_VENV=/opt/poetry-venv
-ENV POETRY_CACHE_DIR=/opt/.cache
-
 # Install Poetry
 ENV POETRY_VERSION=1.2.0a2
 ENV POETRY_HOME=/opt/poetry
@@ -29,7 +25,6 @@ RUN poetry config virtualenvs.create false
 # Allow installing dev dependencies to run tests
 RUN poetry install --no-root
 
-
 COPY ./mariner /app/mariner
 COPY ./api /app/api
 COPY ./model_builder /app/model_builder
@@ -37,14 +32,13 @@ COPY ./scripts /app/scripts
 COPY ./tests /app/tests
 COPY ./alembic.ini /app/alembic.ini
 ENV PYTHONPATH=/app
-# Using inside the container:
-# jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
+
 RUN bash -c "pip install jupyterlab"
 RUN apt-get install libpq-dev -y
 RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
 
 COPY --from=quay.io/oauth2-proxy/oauth2-proxy:v7.3.0-amd64 /bin/oauth2-proxy /usr/local/bin/oauth2-proxy
 
-COPY ./entrypoints/mariner.sh ./
-RUN chmod +x ./mariner.sh
+COPY ./entrypoints/mariner.sh /app/mariner.sh
+RUN chmod +x /app/mariner.sh
 ENTRYPOINT ["/app/mariner.sh"]
