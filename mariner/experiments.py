@@ -128,7 +128,7 @@ async def create_model_traning(
             stack_trace = str(exception)
             experiment_store.update(
                 db,
-                obj_in=ExperimentUpdateRepo(stage="FAILED", stack_trace=stack_trace),
+                obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
                 db_obj=experiment,
             )
             logging.error(exception)
