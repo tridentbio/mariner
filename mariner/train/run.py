@@ -1,6 +1,7 @@
 import asyncio
 from asyncio.tasks import Task
 
+import logging
 import ray
 from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.trainer.trainer import Trainer
@@ -9,11 +10,8 @@ from mariner.schemas.experiment_schemas import TrainingRequest
 from mariner.train.custom_logger import AppLogger
 from model_builder.dataset import DataModule
 
-# try:
-#     if not ray.is_initialized():
-#         ray.init(address=settings.RAY_ADDRESS, logging_level=logging.ERROR)
-# except ConnectionError:
-#     logging.warning(__file__, "Failed to initialize ray.")
+if not ray.is_initialized():
+    ray.init(address=settings.RAY_ADDRESS, logging_level=logging.ERROR)
 
 
 async def train_run(
