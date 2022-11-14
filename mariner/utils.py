@@ -2,13 +2,14 @@ import hashlib
 from pathlib import Path
 from typing import BinaryIO, Optional, Union
 
-from fastapi.datastructures import UploadFile
+from fastapi.datastructures import UploadFile as FAUploadFile
+from starlette.datastructures import UploadFile as SUploadFile
 from wonderwords import RandomWord
 
 
 def hash_md5(
     data: Optional[bytes] = None,
-    file: Optional[Union[str, Path, BinaryIO, UploadFile]] = None,
+    file: Optional[Union[str, Path, BinaryIO, FAUploadFile]] = None,
     chunk_size=4096,
 ) -> str:
     hash_md5 = hashlib.md5()
@@ -19,14 +20,13 @@ def hash_md5(
             with open(file, "rb") as f:
                 for chunk in iter(lambda: f.read(chunk_size), b""):
                     hash_md5.update(chunk)
-        elif isinstance(file, UploadFile):
+        elif isinstance(file, (FAUploadFile, SUploadFile)):
             for chunk in iter(lambda: file.file.read(chunk_size), b""):
                 hash_md5.update(bytes(chunk))
-        elif isinstance(file, BinaryIO):
-            for chunk in iter(lambda: file.read(chunk_size), b""):
-                hash_md5.update(chunk)
+        else:
+            raise TypeError("file must be UploadFile")
     else:
-        raise TypeError('Either "content" or "fname" should be provided')
+        raise TypeError('Either "file" or "data" should be provided')
     return hash_md5.hexdigest()
 
 
