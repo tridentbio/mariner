@@ -68,7 +68,7 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$CONFIGMAP"
-        helm upgrade -i "$DEPLOYMENT_NAME" helm-mlflow/. \
+        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mlflow/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
