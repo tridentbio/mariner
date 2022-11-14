@@ -27,7 +27,7 @@ class ExperimentCreateRepo(pydantic.BaseModel):
 
 class ExperimentUpdateRepo(pydantic.BaseModel):
     stage: Optional[
-        Literal["NOT RUNNING", "STARTED", "RUNNING", "FAILED", "SUCCESS"]
+        Literal["NOT RUNNING", "STARTED", "RUNNING", "ERROR", "SUCCESS"]
     ] = None
     train_metrics: Optional[Dict[str, float]] = None
     hyperparams: Optional[Dict[str, Any]] = None
