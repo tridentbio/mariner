@@ -2,8 +2,10 @@ import logging
 from asyncio.tasks import Task
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
+from uuid import uuid4
 
 import mlflow
+from pytorch_lightning.loggers import MLFlowLogger
 from mlflow.tracking._tracking_service.utils import get_tracking_uri
 from mlflow.tracking.artifact_utils import get_artifact_uri
 from mlflow.tracking.client import MlflowClient
@@ -66,7 +68,8 @@ async def create_model_traning(
         split_type=dataset.split_type,
         batch_size=training_request.batch_size or 32,
     )
-    mlflow_experiment_id = mlflow.create_experiment(training_request.name)
+    mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
+    mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     experiment = experiment_store.create(
         db,
         obj_in=ExperimentCreateRepo(
@@ -78,9 +81,12 @@ async def create_model_traning(
             stage="RUNNING",
         ),
     )
-    logger = AppLogger(
-        experiment.id, experiment_name=training_request.name, user_id=user.id
-    )
+    logger = [
+        AppLogger(
+            experiment.id, experiment_name=training_request.name, user_id=user.id
+        ),
+        MLFlowLogger(experiment_name=experiment.experiment_name),
+    ]
     task = await start_training(
         torchmodel, training_request, data_module, loggers=logger
     )
@@ -93,7 +99,9 @@ async def create_model_traning(
         if done and not exception:
             client = MlflowClient()
             model = task.result()
-            run = client.create_run(experiment.mlflow_id)
+            runs = client.search_runs(experiment_ids=[experiment.mlflow_id])
+            assert len(runs) == 1
+            run = runs[0]
             run_id = run.info.run_id
             model_info = mlflow.pytorch.log_model(
                 model,
@@ -102,7 +110,7 @@ async def create_model_traning(
             )
             mlflow_model = client.get_registered_model(model_version.mlflow_model_name)
             assert (
-                mlflow_model.latest_versions and mlflow_model.latest_versions >= 1
+                mlflow_model.latest_versions and len(mlflow_model.latest_versions) > 0
             ), "runtime error: latest_versions should have at least a version"
             latest_version = mlflow_model.latest_versions[-1]
             assert latest_version

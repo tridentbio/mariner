@@ -1,3 +1,4 @@
+from mlflow.tracking.client import MlflowClient
 import pytest
 from mockito import patch
 from sqlalchemy.orm.session import Session
@@ -59,6 +60,33 @@ async def test_create_model_training(db: Session, some_model: Model):
     assert db_exp.history
     assert "train_loss" in db_exp.train_metrics
     assert len(db_exp.history["train_loss"]) == request.epochs
+    collected_regression_metrics = [
+        "train_mse",
+        "train_mae",
+        "train_ev",
+        "train_mape",
+        "train_R2",
+        "train_pearson",
+        "train_spearman",
+        "val_mse",
+        "val_mae",
+        "val_ev",
+        "val_mape",
+        "val_R2",
+        "val_pearson",
+        "val_spearman",
+    ]
+    for metric in collected_regression_metrics:
+        assert len(db_exp.history[metric]) == request.epochs
+    client = MlflowClient()
+    experiment = client.get_experiment(db_exp.mlflow_id)
+    runs = client.search_runs([experiment.experiment_id])
+    assert len(runs) == 1
+    run = runs[0]
+    for metric_key in collected_regression_metrics:
+        metric = client.get_metric_history(run_id=run.info.run_id, key=metric_key)
+        assert metric
+        assert len(metric) == request.epochs
 
 
 @pytest.mark.asyncio
