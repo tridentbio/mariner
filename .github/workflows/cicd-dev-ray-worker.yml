@@ -49,7 +49,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile.ray-worker . 
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile.ray-worker . 
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
     - name: Deploy - Setup Credentials
@@ -60,7 +60,7 @@ jobs:
     #   id: deploy-to-eks
     #   env:
     #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL }}
+    #     HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL_RAY_WORKER }}
     #     CONFIGMAP: ${{ secrets.CONFIGMAP }}
     #     REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
     #   run: |
@@ -68,7 +68,7 @@ jobs:
     #     chmod +x ./kubectl &&\
     #     mv ./kubectl /usr/local/bin/kubectl &&\
     #     kubectl apply -f - <<< "$CONFIGMAP"
-    #     helm upgrade -i "$DEPLOYMENT_NAME" helm-ray-worker/. \
+    #     helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/. \
     #       --set "replicaCount=$REPLICA_COUNT" \
     #       --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
     #       --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
