@@ -16,3 +16,7 @@ class UserNotFound(Exception):
 
 class UserAlreadyExists(Exception):
     pass
+
+
+class UserEmailNotAllowed(Exception):
+    pass
