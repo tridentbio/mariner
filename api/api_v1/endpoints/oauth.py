@@ -1,4 +1,5 @@
 import logging
+import traceback
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
@@ -59,6 +60,8 @@ def receive_github_code(
                 url=f"{settings.WEBAPP_URL}/login?error=Invalid auth attempt"
             )
         except Exception:
+            lines = traceback.format_exc()
+            LOG.error("Unexpected auth error: %s", lines)
             return RedirectResponse(
                 url=f"{settings.WEBAPP_URL}/login?error=Internal Error"
             )
