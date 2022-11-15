@@ -13,9 +13,6 @@ from mariner.schemas.experiment_schemas import TrainingRequest
 from mariner.train.custom_logger import AppLogger
 from model_builder.dataset import DataModule
 
-if not ray.is_initialized():
-    ray.init(address=settings.RAY_ADDRESS, logging_level=logging.ERROR)
-
 
 async def train_run(
     trainer: Trainer,
@@ -55,7 +52,11 @@ async def start_training(
         enable_progress_bar=False,
         enable_checkpointing=False,
     )
-    module_ray_ref = train_run_sync.remote(trainer, model, data_module)
+    conn_ray = ray.init(
+        address=settings.RAY_ADDRESS, logging_level=logging.ERROR, allow_multiple=True
+    )
+    with conn_ray:
+        module_ray_ref = train_run_sync.remote(trainer, model, data_module)
     coroutine = unwrap_ref(module_ray_ref)
     task = asyncio.create_task(coroutine)
     return task
