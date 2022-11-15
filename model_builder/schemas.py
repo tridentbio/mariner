@@ -132,10 +132,12 @@ class ModelSchema(CamelCaseModel):
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
+        print("Check if types are defined")
         layers = values.get("layers")
         featurizers = values.get("featurizers")
+        print(layers, featurizers)
         layer_types = [layer.name for layer in generate.layers]
-        featurizer_types = [featurizer.name for featurizer in generate.featurizers]
+        print(layer_types)
         for layer in layers:
             if not isinstance(layer, dict):
                 layer = layer.dict()
@@ -143,18 +145,24 @@ class ModelSchema(CamelCaseModel):
                 raise UnknownComponentType(
                     "A layer has unknown type", component_name=layer["name"]
                 )
-        for featurizer in featurizers:
-            if not isinstance(featurizer, dict):
-                featurizer = featurizer.dict()
-            if featurizer["type"] not in featurizer_types:
-                raise UnknownComponentType(
-                    f"A featurizer has unknown type: {featurizer['type']}",
-                    component_name=featurizer["name"],
-                )
+        print("layers done")
+        if featurizers:
+            featurizer_types = [featurizer.name for featurizer in generate.featurizers]
+            for featurizer in featurizers:
+                if not isinstance(featurizer, dict):
+                    featurizer = featurizer.dict()
+                if featurizer["type"] not in featurizer_types:
+                    raise UnknownComponentType(
+                        f"A featurizer has unknown type: {featurizer['type']}",
+                        component_name=featurizer["name"],
+                    )
+        else:
+            print("Not featurizer")
         return values
 
     @root_validator(pre=True)
     def check_no_missing_args(cls, values):
+        print("Checking for missing args")
         layers = values.get("layers")
         featurizers = values.get("featurizers")
         errors = []
@@ -175,32 +183,36 @@ class ModelSchema(CamelCaseModel):
                     for error in exp.errors()
                     if error["type"] == "value_error.missing"
                 ]
-        for featurizer in featurizers:
-            if not isinstance(featurizer, dict):
-                featurizer = featurizer.dict()
-            args_cls = get_component_constructor_args_by_type(featurizer["type"])
-            if not args_cls or "constructorArgs" not in featurizer:
-                continue
-            try:
-                args_cls.validate(featurizer["constructorArgs"])
-            except ValidationError as exp:
-                errors += [
-                    MissingComponentArgs(
-                        missing=[missing_arg_name for missing_arg_name in error["loc"]],
-                        component_name=featurizer["name"],
-                    )
-                    for error in exp.errors()
-                    if error["type"] == "value_error.missing"
-                ]
+        if featurizers:
+            for featurizer in featurizers:
+                if not isinstance(featurizer, dict):
+                    featurizer = featurizer.dict()
+                args_cls = get_component_constructor_args_by_type(featurizer["type"])
+                if not args_cls or "constructorArgs" not in featurizer:
+                    continue
+                try:
+                    args_cls.validate(featurizer["constructorArgs"])
+                except ValidationError as exp:
+                    errors += [
+                        MissingComponentArgs(
+                            missing=[
+                                missing_arg_name for missing_arg_name in error["loc"]
+                            ],
+                            component_name=featurizer["name"],
+                        )
+                        for error in exp.errors()
+                        if error["type"] == "value_error.missing"
+                    ]
 
+        print(errors)
         if len(errors) > 0:
             raise errors[0]
         return values
 
     name: str
     dataset: DatasetConfig
-    layers: List[AnnotatedLayersType]
-    featurizers: List[FeaturizersType]
+    layers: List[AnnotatedLayersType] = []
+    featurizers: List[FeaturizersType] = []
 
     def make_graph(self):
         g = nx.DiGraph()

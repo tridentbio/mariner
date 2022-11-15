@@ -12,17 +12,15 @@ dataset:
     - name: mwt
       dataType:
         domain_kind: numeric
-    - name: "Linear1"
-      type: torch.nn.Linear
-      constructor_args:
-        in_features: 1
-        out_features: 1
-      forward_args:
-        input: $mwt
-    - name: "Sigmoid1"
-      type: torch.nn.Sigmoid
-      constructor_args:
-        in_features: 1
-        out_features: 1
-      forward_args:
-        input: $Linear1
+layers:
+  - name: "Linear1"
+    type: torch.nn.Linear
+    constructor_args:
+      in_features: 1
+      out_features: 1
+    forward_args:
+      input: $mwt
+  - name: "Sigmoid1"
+    type: torch.nn.Sigmoid
+    forward_args:
+      input: $Linear1
