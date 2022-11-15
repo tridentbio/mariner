@@ -93,10 +93,7 @@ def recursive_apply_(data: Any, function: Callable) -> None:
             recursive_apply_(value, function)
         return
 
-    try:
-        function(data)
-    except:
-        pass
+    function(data)
 
 
 def size_repr(key: Any, value: Any, indent: int = 0) -> str:

@@ -1,5 +1,4 @@
 from typing import Generator
-import mlflow
 
 import pytest
 from fastapi import UploadFile

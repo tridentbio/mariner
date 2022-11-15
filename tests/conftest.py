@@ -1,6 +1,6 @@
 import datetime
 import json
-from typing import Any, Dict, Generator, List, Literal, Optional
+from typing import Dict, Generator, List, Literal, Optional
 
 import mlflow.tracking
 import pytest
@@ -26,14 +26,7 @@ from mariner.schemas.user_schemas import UserCreateBasic
 from mariner.stores.event_sql import EventCreateRepo, event_store
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from mariner.stores.user_sql import user_store
-from model_builder.layers_schema import (
-    ModelbuildermoleculefeaturizerConstructorArgs,
-    ModelbuildermoleculefeaturizerForwardArgsReferences,
-    ModelbuildermoleculefeaturizerLayerConfig,
-)
-from model_builder.schemas import (
-    ModelSchema,
-)
+from model_builder.schemas import ModelSchema
 from tests.utils.user import authentication_token_from_email, create_random_user
 from tests.utils.utils import random_lower_string
 
@@ -47,7 +40,7 @@ def get_config_path_for_model_type(model_type: ModelType) -> str:
     elif model_type == "classifier":
         model_path = "tests/data/small_classifier_schema.yaml"
     else:
-        raise NotImplemented(f"No model config yaml for model type {model_type}")
+        raise NotImplementedError(f"No model config yaml for model type {model_type}")
     return model_path
 
 

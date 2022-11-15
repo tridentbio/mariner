@@ -78,12 +78,16 @@ class CustomModel(LightningModule):
     def validation_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()
         loss = self.loss_fn(prediction, batch["y"])
+        metrics_dict = {}
         for metric in self.metrics:
             if not metric.startswith("val"):
                 continue
             metrics_dict[metric] = self.metrics[metric](
                 prediction.squeeze(), batch["y"].squeeze()
             )
+        self.log_dict(
+            metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
+        )
         return loss
 
     def training_step(self, batch, batch_idx):

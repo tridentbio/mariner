@@ -5,10 +5,10 @@ from typing import Any, Dict, List, Literal, Optional
 from uuid import uuid4
 
 import mlflow
-from pytorch_lightning.loggers import MLFlowLogger
 from mlflow.tracking._tracking_service.utils import get_tracking_uri
 from mlflow.tracking.artifact_utils import get_artifact_uri
 from mlflow.tracking.client import MlflowClient
+from pytorch_lightning.loggers import MLFlowLogger
 from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketMessage, get_websockets_manager
