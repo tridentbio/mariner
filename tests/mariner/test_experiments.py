@@ -131,4 +131,4 @@ async def test_experiment_has_stacktrace_when_training_fails(
             db_exp = Experiment.from_orm(db_exp)
             assert db_exp.stack_trace
             assert len(db_exp.stack_trace) > 0
-            assert db_exp.stage == "FAILED"
+            assert db_exp.stage == "ERROR"
