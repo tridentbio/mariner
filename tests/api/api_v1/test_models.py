@@ -123,7 +123,7 @@ def test_post_models_on_existing_model_creates_new_version(
 def test_post_models_dataset_not_found(
     client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
 ):
-    model = mock_model(some_model.name)
+    model = mock_model(name=some_model.name)
     model.name = random_lower_string()
     datasetname = "a dataset name that is not registered"
     model.config.dataset.name = datasetname
@@ -139,7 +139,7 @@ def test_post_models_dataset_not_found(
 def test_post_models_check_model_name_is_unique(
     client: TestClient, randomuser_token_headers: dict[str, str], some_model: Model
 ):
-    model = mock_model(some_model.name)
+    model = mock_model(name=some_model.name)
     res = client.post(
         f"{settings.API_V1_STR}/models/",
         json=model.dict(),
@@ -207,7 +207,9 @@ def test_delete_model(
     normal_user_token_headers: dict[str, str],
     some_dataset: DatasetEntity,
 ):
-    model = setup_create_model(client, normal_user_token_headers, some_dataset)
+    model = setup_create_model(
+        client, normal_user_token_headers, dataset_name=some_dataset.name
+    )
     res = client.delete(
         f"{settings.API_V1_STR}/models/{model.id}", headers=normal_user_token_headers
     )

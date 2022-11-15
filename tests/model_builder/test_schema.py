@@ -7,7 +7,7 @@ from model_builder.schemas import ModelSchema
 
 @pytest.fixture(scope="module")
 def schema_yaml_fixture():
-    with open("tests/data/test_model_hard.yaml") as f:
+    with open("tests/data/small_regressor_schema.yaml") as f:
         yield f.read()
 
 
