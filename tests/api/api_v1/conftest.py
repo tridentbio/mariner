@@ -8,7 +8,6 @@ from mariner.entities import EventEntity
 from mariner.entities import Experiment as ExperimentEntity
 from mariner.entities import Model
 from mariner.schemas.experiment_schemas import Experiment
-from mariner.schemas.model_schemas import Model
 from mariner.stores.experiment_sql import experiment_store
 from tests.conftest import (
     get_test_events,

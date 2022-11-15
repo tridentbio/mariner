@@ -1,6 +1,6 @@
 import torch
 
-from model_builder.layers import Concat, OneHot
+from model_builder.layers import OneHot
 
 
 def test_OneHot_int():
