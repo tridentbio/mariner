@@ -1,3 +1,5 @@
+import logging
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -10,9 +12,11 @@ from mariner.exceptions import (
     InvalidOAuthState,
     UserNotActive,
 )
+from mariner.exceptions.user_exceptions import UserEmailNotAllowed
 from mariner.users import GithubAuth, authenticate
 
 router = APIRouter()
+LOG = logging.getLogger(__name__)
 
 
 @router.get("/oauth")
@@ -27,15 +31,40 @@ def get_oauth_provider_redirect(provider: str, db: Session = Depends(deps.get_db
 
 
 @router.get("/oauth-callback")
-def receive_github_code(code: str, state: str):
-    try:
-        token = authenticate(github_oauth=GithubAuth.construct(code=code, state=state))
-        return RedirectResponse(
-            url=f"{settings.WEBAPP_URL}/login?tk={token.access_token}&tk_type={token.token_type}"
-        )
-    except InvalidGithubCode:
-        return HTTPException(status_code=400, detail="Invalid github code")
-    except InvalidOAuthState:
-        return HTTPException(status_code=400, detail="Invalid state")
-    except UserNotActive:
-        return HTTPException(status_code=400, detail="Inactive user")
+def receive_github_code(
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+    error_uri: Optional[str] = None,
+    error_description: Optional[str] = None,
+):
+    if code and state:
+        try:
+            token = authenticate(
+                github_oauth=GithubAuth.construct(code=code, state=state)
+            )
+            return RedirectResponse(
+                url=f"{settings.WEBAPP_URL}/login?tk={token.access_token}&tk_type={token.token_type}"
+            )
+        except UserEmailNotAllowed:
+            return RedirectResponse(
+                url=f"{settings.WEBAPP_URL}/login?error=Email not cleared for github oauth"
+            )
+        except UserNotActive:
+            return RedirectResponse(
+                url=f"{settings.WEBAPP_URL}/login?error=Inactive user"
+            )
+        except (InvalidGithubCode, InvalidOAuthState):
+            return RedirectResponse(
+                url=f"{settings.WEBAPP_URL}/login?error=Invalid auth attempt"
+            )
+        except Exception:
+            return RedirectResponse(
+                url=f"{settings.WEBAPP_URL}/login?error=Internal Error"
+            )
+    elif error or error_description:
+        LOG.error("Github auth error: %s: %s", error, error_description)
+        return RedirectResponse(url=f"{settings.WEBAPP_URL}/login?error=Internal Error")
+
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
