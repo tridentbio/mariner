@@ -50,19 +50,20 @@ def test_check_forward_exception_good_regressor(
 def test_check_forward_exception_good_classifier(
     db: Session, some_dataset: DatasetEntity
 ):
-    classifier = model_config(model_type="classifier")
+    classifier = model_config(dataset_name=some_dataset.name, model_type="classifier")
     check = model_ctl.naive_check_forward_exception(db, classifier)
     assert check.stack_trace is None
     assert check.output is not None
 
 
-def test_check_forward_exception_bad_model(db: Session, model_config: ModelSchema):
+def test_check_forward_exception_bad_model(db: Session, some_dataset: DatasetEntity):
+    broken_model: ModelSchema = model_config(dataset_name=some_dataset.name)
     import model_builder.model
 
     def raise_(x: Any):
         raise Exception("bad bad model")
 
     with patch(model_builder.model.CustomModel.forward, raise_):
-        check = model_ctl.naive_check_forward_exception(db, model_config)
+        check = model_ctl.naive_check_forward_exception(db, broken_model)
         assert check.output is None
         assert check.stack_trace is not None

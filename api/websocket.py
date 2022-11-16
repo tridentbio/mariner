@@ -1,3 +1,6 @@
+"""
+Package defines all websocket related funcionality
+"""
 from typing import Any, Dict, Literal
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -11,11 +14,15 @@ from mariner.schemas.api import ApiBaseModel
 
 
 class WebSocketMessage(ApiBaseModel):
+    """
+    Base class for messages exchanged with client
+    """
+
     type: Literal["pong", "update-running-metrics"]
     data: Any
 
 
-def is_closed(ws: WebSocket):
+def _is_closed(ws: WebSocket):
     return ws.application_state == WebSocketState.DISCONNECTED
 
 
@@ -24,14 +31,27 @@ class ConnectionManager:
         self.active_connections: Dict[int, WebSocket] = {}
 
     async def connect(self, user_id: int, websocket: WebSocket):
+        """ "Accepts the connection and track the user id associated with it
+
+
+        Args:
+            user_id: id from user on connected
+            websocket: instance of the server's socket keeping
+            the connection
+        """
         if user_id in self.active_connections:
-            ws = self.active_connections[user_id]
-            if ws and not is_closed(ws):
-                await ws.close()
+            existing_websocket = self.active_connections[user_id]
+            if existing_websocket and not _is_closed(existing_websocket):
+                await existing_websocket.close()
         await websocket.accept()
         self.active_connections[user_id] = websocket
 
     def disconnect_session(self, user_id: int):
+        """Removes the connection from an user
+
+        Args:
+            user_id: id from user to have websocket disconnected
+        """
         self.active_connections.pop(user_id)
 
     async def send_message(self, user_id: int, message: WebSocketMessage):

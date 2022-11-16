@@ -168,9 +168,8 @@ def some_dataset(
 # MODEL GLOBAL FIXTURES
 
 
-@pytest.fixture(scope="module", params=["regressor", "classifier"])
+@pytest.fixture(scope="module")
 def some_model(
-    model_type: str,
     db: Session,
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -180,18 +179,21 @@ def some_model(
         client,
         normal_user_token_headers,
         dataset_name=some_dataset.name,
-        model_type=model_type,
+        model_type="classifier",
     )
     yield model
     teardown_create_model(db, model)
 
 
 def model_config(
-    model_type: ModelType = "regressor",
+    model_type: ModelType = "regressor", dataset_name: Optional[str] = None
 ) -> ModelSchema:
     path = get_config_path_for_model_type(model_type)
     with open(path, "rb") as f:
-        return ModelSchema.from_yaml(f.read())
+        schema = ModelSchema.from_yaml(f.read())
+        if dataset_name:
+            schema.dataset.name = dataset_name
+        return schema
 
 
 def mock_experiment(
@@ -265,21 +267,18 @@ def teardown_create_model(db: Session, model: Model):
         mlflowclient.delete_registered_model(model.mlflow_name)
 
 
-@pytest.fixture(scope="function", params=["regressor", "classifier"])
+@pytest.fixture
 def model(
     db: Session,
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
-    model_type,
 ):
-    print(model_type)
     db.commit()
     model = setup_create_model(
         client,
         normal_user_token_headers,
         dataset_name=some_dataset.name,
-        model_type=model_type,
     )
     yield model
     dbobj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()

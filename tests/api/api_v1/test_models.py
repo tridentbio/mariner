@@ -1,9 +1,12 @@
+"""
+Tests the mariner.models package
+"""
 from typing import Any
 
 import mlflow.pyfunc
 import pytest
 from mockito import patch
-from pydantic.networks import AnyHttpUrl
+from pydantic import AnyHttpUrl
 from sqlalchemy.orm.session import Session
 from starlette import status
 from starlette.status import HTTP_200_OK
@@ -17,12 +20,20 @@ from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from model_builder import layers_schema as layers
 from model_builder.schemas import ColumnConfig, DatasetConfig, ModelSchema
-from tests.conftest import get_test_user, mock_model, setup_create_model
+from tests.conftest import (
+    get_test_user,
+    mock_model,
+    model_config,
+    setup_create_model,
+)
 from tests.utils.utils import random_lower_string
 
 
 @pytest.fixture(scope="function")
 def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
+    """
+    Fixture of an invalid model
+    """
     config = ModelSchema(
         name=random_lower_string(),
         dataset=DatasetConfig(
@@ -301,12 +312,12 @@ def test_post_check_config_good_model(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
     client: TestClient,
-    model_config: ModelSchema,
 ):
+    regressor: ModelSchema = model_config(dataset_name=some_dataset.name)
     res = client.post(
         f"{settings.API_V1_STR}/models/check-config",
         headers=normal_user_token_headers,
-        json=model_config.dict(),
+        json=regressor.dict(),
     )
     assert res.status_code == 200
     body = res.json()
@@ -317,8 +328,8 @@ def test_post_check_config_bad_model(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
     client: TestClient,
-    model_config: ModelSchema,
 ):
+    regressor: ModelSchema = model_config(dataset_name=some_dataset.name)
     import model_builder.model
 
     def raise_(x: Any):
@@ -328,7 +339,7 @@ def test_post_check_config_bad_model(
         res = client.post(
             f"{settings.API_V1_STR}/models/check-config",
             headers=normal_user_token_headers,
-            json=model_config.dict(),
+            json=regressor.dict(),
         )
         assert res.status_code == 200
         body = res.json()

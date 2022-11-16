@@ -132,12 +132,9 @@ class ModelSchema(CamelCaseModel):
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
-        print("Check if types are defined")
         layers = values.get("layers")
         featurizers = values.get("featurizers")
-        print(layers, featurizers)
         layer_types = [layer.name for layer in generate.layers]
-        print(layer_types)
         for layer in layers:
             if not isinstance(layer, dict):
                 layer = layer.dict()
@@ -145,7 +142,6 @@ class ModelSchema(CamelCaseModel):
                 raise UnknownComponentType(
                     "A layer has unknown type", component_name=layer["name"]
                 )
-        print("layers done")
         if featurizers:
             featurizer_types = [featurizer.name for featurizer in generate.featurizers]
             for featurizer in featurizers:
@@ -156,13 +152,10 @@ class ModelSchema(CamelCaseModel):
                         f"A featurizer has unknown type: {featurizer['type']}",
                         component_name=featurizer["name"],
                     )
-        else:
-            print("Not featurizer")
         return values
 
     @root_validator(pre=True)
     def check_no_missing_args(cls, values):
-        print("Checking for missing args")
         layers = values.get("layers")
         featurizers = values.get("featurizers")
         errors = []
@@ -204,7 +197,6 @@ class ModelSchema(CamelCaseModel):
                         if error["type"] == "value_error.missing"
                     ]
 
-        print(errors)
         if len(errors) > 0:
             raise errors[0]
         return values
