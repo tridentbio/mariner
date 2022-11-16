@@ -44,7 +44,7 @@ def get_model_and_dataloader(
     db: Session, config: ModelSchema
 ) -> tuple[pl.LightningModule, DataLoader]:
     dataset = dataset_store.get_by_name(db, config.dataset.name)
-    assert dataset
+    assert dataset, f"No dataset found with name {config.dataset.name}"
     df = dataset.get_dataframe()
     dataset = CustomDataset(
         data=df,

@@ -28,6 +28,11 @@ class CustomModel(LightningModule):
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
+        # TODO: Allow to configure loss from model config
+        # model config should validate if the task is compatible with the loss
+        # task type can be determined from target_column data type (if it's numeric or categorical)
+        # if no loss is provided, model_config should use a default one
+        # based on the determined task type
         self.loss_fn = torch.nn.MSELoss()
 
         # Set up metrics for training and validation

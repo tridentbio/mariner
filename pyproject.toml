@@ -63,6 +63,8 @@ pytest-dotenv = "^0.5.2"
 pytest-timeout = "^2.1.0"
 jupyterlab = "^3.5.0"
 isort = "^5.10.1"
+pylint = "^2.15.5"
+pylint-pydantic = "^0.1.4"
 
 [tool.isort]
 multi_line_output = 3

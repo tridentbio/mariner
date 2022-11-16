@@ -1,3 +1,6 @@
+"""
+Exports a router with all /api/v1 prefix routes
+"""
 from fastapi.routing import APIRouter
 
 from api.api_v1.endpoints import (

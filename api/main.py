@@ -1,3 +1,6 @@
+"""
+Entrypoint to run the mariner API
+"""
 import uvicorn
 
 if __name__ == "__main__":
