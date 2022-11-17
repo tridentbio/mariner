@@ -15,6 +15,7 @@ from mariner.exceptions import (
     UserNotFound,
     UserNotSuperUser,
 )
+from mariner.exceptions.user_exceptions import UserEmailNotAllowed
 from mariner.schemas.token import Token
 from mariner.schemas.user_schemas import User, UserCreateOAuth, UserUpdate
 from mariner.stores.oauth_state_sql import oauth_state_store
@@ -73,6 +74,10 @@ def _authenticate_github(code: str, state: str) -> User:
 
         token = github.get_access_token(code)
         github_user = github.get_user(token.access_token)
+        if github_user.email not in settings.ALLOWED_GITHUB_AUTH_EMAILS:
+            raise UserEmailNotAllowed(
+                "Email should be cleared in the ALLOWED_GITHUB_AUTH_EMAILS env var"
+            )
 
         user = user_store.get_by_email(db, email=github_user.email)
         if not user:
