@@ -1,5 +1,5 @@
 # Temporary file to hold all extracted mariner schemas
-from typing import List, Literal, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import networkx as nx
 import yaml
@@ -123,12 +123,33 @@ class MissingComponentArgs(ValueError):
 
 
 AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
+LossType = Literal["torch.nn.MSELoss", "torch.nn.CrossEntropyLoss"]
+
+ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss"]
+ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
+
+
+def is_regression(target_columns: ColumnConfig):
+    return target_columns.data_type.domain_kind in [
+        NumericalDataType.domain_kind,
+        QuantityDataType.domain_kind,
+    ]
+
+
+def is_classifier(target_column: ColumnConfig):
+    return target_column.data_type.domain_kind in [CategoricalDataType.domain_kind]
 
 
 class ModelSchema(CamelCaseModel):
     """
     A serializable model architecture
     """
+
+    def is_regressor(self) -> bool:
+        return is_regression(self.dataset.target_column)
+
+    def is_classifier(self) -> bool:
+        return is_classifier(self.dataset.target_column)
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
@@ -198,13 +219,38 @@ class ModelSchema(CamelCaseModel):
                     ]
 
         if len(errors) > 0:
+            # TODO: raise all errors grouped in a single validation error
             raise errors[0]
+        return values
+
+    @root_validator
+    def autofill_loss_gn(cls, values: Dict[str, Any]) -> Any:
+        target_column = values["dataset"].target_column
+        if is_classifier(target_column):
+            if not values["loss_fn"]:
+                values["loss_fn"] = "torch.nn.CrossEntropyLoss"
+            else:
+                assert (
+                    values["loss_fn"] in ALLOWED_CLASSIFIYNG_LOSSES
+                ), "loss is not valid for classifiers"
+        elif is_regression(target_column):
+            if not values["loss_fn"]:
+                values["loss_fn"] = "torch.nn.MSELoss"
+            else:
+                assert (
+                    values["loss_fn"] in ALLOWED_REGRESSOR_LOSSES
+                ), "loss is not valid for regressors"
+        else:
+            raise ValueError(
+                f"Invalid target_column {target_column}-- should never be thrown!!!"
+            )
         return values
 
     name: str
     dataset: DatasetConfig
     layers: List[AnnotatedLayersType] = []
     featurizers: List[FeaturizersType] = []
+    loss_fn: LossType
 
     def make_graph(self):
         g = nx.DiGraph()
