@@ -43,9 +43,7 @@ class ConnectionManager:
         self.active_connections.pop(user_id)
 
     async def send_message(self, user_id: int, message: WebSocketMessage):
-        print("[ConnectionManager] active connections", user_id, message)
         if user_id not in self.active_connections:
-            print("NO USER FOUND")
             return
         await self.active_connections[user_id].send_text(message.json())
 
