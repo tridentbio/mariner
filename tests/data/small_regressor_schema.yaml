@@ -4,7 +4,7 @@ dataset:
   target_column: 
     name: tpsa
     dataType:
-      domain_kind: smiles
+      domain_kind: numeric 
   featureColumns:
     - name: smiles
       dataType:

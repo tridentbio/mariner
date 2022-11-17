@@ -17,7 +17,7 @@ layers:
     type: torch.nn.Linear
     constructor_args:
       in_features: 1
-      out_features: 1
+      out_features: 2
     forward_args:
       input: $mwt
   - name: "Sigmoid1"

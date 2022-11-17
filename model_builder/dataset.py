@@ -55,26 +55,7 @@ class CustomDataset(TorchDataset):
 
         self.setup()
 
-    def _determine_task_type(self) -> str:
-        """Determine the task type based on the column selected as
-        target.
-
-        Returns:
-            str: String "regression" or "classification".
-        """
-        assert self.target, "cannot auto determine task type when target = None"
-        target_type = self.data.dtypes[self.target.name]
-
-        if "float" in target_type.name:
-            # If it is a float target, we treat the task as a regression
-            return "regression"
-
-        raise AttributeError("Unsupported target type for prediction.")
-
     def setup(self):
-        # Determine the type of the task
-        if self.target:
-            self._task_type = self._determine_task_type()
         # Instanciate all featurizers
         self._featurizers = {}
         for featurizer_config in self._featurizers_config:
