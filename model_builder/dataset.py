@@ -184,8 +184,6 @@ class DataModule(pl.LightningDataModule):
             self.dataset, [train_size, val_size, test_size]
         )
 
-        print(train_dataset, val_dataset, test_dataset)
-
         self.train_dataset = train_dataset
         self.val_dataset = val_dataset
         self.test_dataset = test_dataset

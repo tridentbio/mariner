@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, Literal
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -8,6 +9,8 @@ from starlette.websockets import WebSocketState
 from api import deps
 from mariner.entities import User
 from mariner.schemas.api import ApiBaseModel
+
+LOG = logging.getLogger(__name__)
 
 
 class WebSocketMessage(ApiBaseModel):
@@ -27,7 +30,12 @@ class ConnectionManager:
         if user_id in self.active_connections:
             ws = self.active_connections[user_id]
             if ws and not is_closed(ws):
-                await ws.close()
+                try:
+                    await ws.close()
+                except Exception:
+                    # Error raised before: "Trying to send a websocket.close'
+                    # after sending a 'websocket.close'"
+                    LOG.error("Error while closing socket.")
         await websocket.accept()
         self.active_connections[user_id] = websocket
 
@@ -35,7 +43,9 @@ class ConnectionManager:
         self.active_connections.pop(user_id)
 
     async def send_message(self, user_id: int, message: WebSocketMessage):
+        print("[ConnectionManager] active connections", user_id, message)
         if user_id not in self.active_connections:
+            print("NO USER FOUND")
             return
         await self.active_connections[user_id].send_text(message.json())
 
