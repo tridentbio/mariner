@@ -1,6 +1,7 @@
 """
 Package defines all websocket related funcionality
 """
+import logging
 from typing import Any, Dict, Literal
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -11,6 +12,8 @@ from starlette.websockets import WebSocketState
 from api import deps
 from mariner.entities import User
 from mariner.schemas.api import ApiBaseModel
+
+LOG = logging.getLogger(__name__)
 
 
 class WebSocketMessage(ApiBaseModel):
@@ -40,9 +43,14 @@ class ConnectionManager:
             the connection
         """
         if user_id in self.active_connections:
-            existing_websocket = self.active_connections[user_id]
-            if existing_websocket and not _is_closed(existing_websocket):
-                await existing_websocket.close()
+            existing_ws = self.active_connections[user_id]
+            if existing_ws and not _is_closed(existing_ws):
+                try:
+                    await existing_ws.close()
+                except Exception:
+                    # Error raised before: "Trying to send a websocket.close'
+                    # after sending a 'websocket.close'"
+                    LOG.error("Error while closing socket.")
         await websocket.accept()
         self.active_connections[user_id] = websocket
 
@@ -55,7 +63,9 @@ class ConnectionManager:
         self.active_connections.pop(user_id)
 
     async def send_message(self, user_id: int, message: WebSocketMessage):
+        print("[ConnectionManager] active connections", user_id, message)
         if user_id not in self.active_connections:
+            print("NO USER FOUND")
             return
         await self.active_connections[user_id].send_text(message.json())
 
