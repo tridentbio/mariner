@@ -29,7 +29,7 @@ def build_message(source: EventSource, events: List[EventEntity]) -> str:
         return f'Training "{experiment_name}"{and_others} completed'
     elif source == "changelog":
         return "Checkout what's new!"
-    raise NotImplemented(f'No message building for source = "{source}"')
+    raise NotImplementedError(f'No message building for source = "{source}"')
 
 
 def get_events_from_user(db: Session, user: UserEntity):

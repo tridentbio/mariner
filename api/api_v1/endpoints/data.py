@@ -1,3 +1,6 @@
+"""
+Routes for users to manage S3 resources
+"""
 import boto3
 from fastapi.param_functions import Depends, Query
 from fastapi.routing import APIRouter
@@ -20,11 +23,11 @@ def get_s3_data(
     """
     Proxy to AWS bucket resource after applying access control
     """
-    s3 = boto3.client(
+    client = boto3.client(
         "s3",
         region_name=settings.AWS_REGION,
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     )
-    s3_res = s3.get_object(Bucket=settings.AWS_DATASETS, Key=object_key)
+    s3_res = client.get_object(Bucket=settings.AWS_DATASETS, Key=object_key)
     return StreamingResponse(s3_res["Body"].iter_chunks(), media_type="text/csv")

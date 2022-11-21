@@ -44,7 +44,7 @@ def get_model_and_dataloader(
     db: Session, config: ModelSchema
 ) -> tuple[pl.LightningModule, DataLoader]:
     dataset = dataset_store.get_by_name(db, config.dataset.name)
-    assert dataset
+    assert dataset, f"No dataset found with name {config.dataset.name}"
     df = dataset.get_dataframe()
     dataset = CustomDataset(
         data=df,
@@ -234,13 +234,13 @@ def get_model_options() -> ModelOptions:
     def get_summary(
         cls_path: str,
     ) -> Union[layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType, None]:
-        for l in dir(layers_schema):
+        for schema_exported in dir(layers_schema):
             if (
-                l.endswith("Summary")
-                and not l.endswith("ForwardArgsSummary")
-                and not l.endswith("ConstructorArgsSummary")
+                schema_exported.endswith("Summary")
+                and not schema_exported.endswith("ForwardArgsSummary")
+                and not schema_exported.endswith("ConstructorArgsSummary")
             ):
-                class_def = getattr(layers_schema, l)
+                class_def = getattr(layers_schema, schema_exported)
                 instance = class_def()
                 if instance.type and instance.type == cls_path:
                     return instance

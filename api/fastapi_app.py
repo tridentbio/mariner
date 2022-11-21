@@ -1,3 +1,6 @@
+"""
+Assembles the fastapi app instance
+"""
 from fastapi.applications import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi_utils.openapi import simplify_operation_ids
@@ -14,11 +17,17 @@ app = FastAPI(
 
 @app.get("/health", response_model=str)
 def healthcheck():
+    """
+    Server health check
+    """
     return ""
 
 
 @app.get("/openapi.json", include_in_schema=False)
 def openapijson():
+    """
+    Returns our openapi's json
+    """
     return get_openapi(title=app.title, version=app.version, routes=app.routes)
 
 

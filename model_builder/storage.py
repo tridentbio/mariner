@@ -43,10 +43,7 @@ def recursive_apply(data: Any, function: Callable) -> Any:
     if isinstance(data, Mapping):
         return {key: recursive_apply(data[key], function) for key in data}
 
-    try:
-        return function(data)
-    except:
-        return data
+    return function(data)
 
 
 class BaseStorage(MutableMapping):

@@ -14,7 +14,7 @@ def test_get_events_from_user(db: Session, events_fixture: List[EventEntity]):
         events_ctl.EventsbySource(
             source="training:completed",
             total=3,
-            message=f"",
+            message="",
             events=[],
         )
     ]
@@ -33,7 +33,7 @@ def test_set_events_read(events_fixture: List[EventEntity], db: Session):
     count = events_ctl.set_events_read(db, user, to_read_ids)
     assert count == len(
         to_read_ids
-    ), '# of events set as read "{count}" does not match # of unreads frmo input "{len(to_read_ids)}"'
+    ), '# of events set as read "{count}" does not match # of unreads frmo input "{len(to_read_ids)}"'  # noqa: E501
     to_read_ids = [evt.id for evt in events_fixture[:2]]
     count = events_ctl.set_events_read(db, user, to_read_ids)
     assert (

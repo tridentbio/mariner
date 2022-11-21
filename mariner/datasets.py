@@ -64,7 +64,7 @@ def get_entity_info_from_csv(
     file_bytes = file.file.read()
     df = pd.read_csv(io.BytesIO(file_bytes))
     assert isinstance(df, pd.DataFrame)
-    stats = get_stats(df).to_dict()
+    stats: Mapping[Any, Any] = get_stats(df).to_dict(orient="dict")
     return len(df), len(df.columns), len(file_bytes), stats
 
 
