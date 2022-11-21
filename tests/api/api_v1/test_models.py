@@ -196,7 +196,7 @@ def test_get_model_options(
         assert "outputType" in component_dict
         assert "component" in component_dict
         assert "forwardArgsSummary" in component_dict["component"]
-        assert "construct
+        assert "constructorArgsSummary" in component_dict["component"]
         assert isinstance(component_dict["docs"], str)
         assert AnyHttpUrl(component_dict["docs"], scheme="https") is not None
 
