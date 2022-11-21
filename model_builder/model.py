@@ -110,7 +110,6 @@ class CustomModel(LightningModule):
         if config.is_regressor():
             self.metrics = Metrics("regressor")
         elif config.is_classifier():
-            print(config.dataset.target_column.data_type)
             assert isinstance(
                 config.dataset.target_column.data_type, CategoricalDataType
             )
