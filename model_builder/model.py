@@ -72,13 +72,9 @@ class Metrics:
             if not metric.startswith("val"):
                 continue
             if isinstance(self.metrics[metric], (metrics.Accuracy)):
-                try:
-                    metrics_dict[metric] = self.metrics[metric](
-                        prediction.squeeze().long(), batch["y"].squeeze().long()
-                    )
-                except ValueError:
-                    print("Failed to metric " + metric)
-                    raise
+                metrics_dict[metric] = self.metrics[metric](
+                    prediction.squeeze().long(), batch["y"].squeeze().long()
+                )
         return metrics_dict
 
     def get_validation_metrics(self, prediction: torch.Tensor, batch: DataInstance):
