@@ -1,5 +1,5 @@
 # Temporary file to hold all extracted mariner schemas
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Union
 
 import networkx as nx
 import yaml
@@ -212,7 +212,7 @@ class ModelSchema(CamelCaseModel):
             raise errors[0]
         return values
 
-    @validator("loss_fn", pre=True)
+    @validator("loss_fn", pre=True, always=True)
     def autofill_loss_gn(cls, value: str, values: Dict[str, Any]) -> Any:
         print("GETTING LOSS FN")
         print(value)
@@ -244,7 +244,7 @@ class ModelSchema(CamelCaseModel):
     dataset: DatasetConfig
     layers: List[AnnotatedLayersType] = []
     featurizers: List[FeaturizersType] = []
-    loss_fn: Optional[LossType] = None
+    loss_fn: LossType = None
 
     def make_graph(self):
         g = nx.DiGraph()
@@ -281,7 +281,7 @@ class ModelSchema(CamelCaseModel):
     @classmethod
     def from_yaml(cls, yamlstr):
         config_dict = yaml.safe_load(yamlstr)
-        return ModelSchema.parse_obj(config_dict)
+        return ModelSchema(**config_dict)
 
 
 if __name__ == "__main__":
