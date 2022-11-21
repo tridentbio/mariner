@@ -62,12 +62,14 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL }}
         CONFIGMAP: ${{ secrets.CONFIGMAP }}
+        SECRETS: ${{ secrets.SECRETS }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$CONFIGMAP"
+        kubectl apply -f - <<< "$CONFIGMAP" \
+        kubectl apply -f - <<< "$SECRETS"
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
