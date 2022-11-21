@@ -54,8 +54,8 @@ class Settings(BaseSettings):
     RAY_ADDRESS: str = "ray://ray-head:10001"
     APPLICATION_SECRET: str
 
-    GITHUB_CLIENT_ID = "0d7051348b1af9e4fc53"
-    GITHUB_CLIENT_SECRET = "bb9c8038376d56a77932d879113da16ef62dcdd5"
+    GITHUB_CLIENT_ID: str
+    GITHUB_CLIENT_SECRET: str
 
     class Config:
         # env_file = str(path.join('..', '.env.local'))

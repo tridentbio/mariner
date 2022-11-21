@@ -230,7 +230,7 @@ def mock_model(
     model_path = get_config_path_for_model_type(model_type)
     with open(model_path, "rb") as f:
         config_dict = yaml.unsafe_load(f.read())
-        config = ModelSchema.parse_obj(config_dict)
+        config = ModelSchema(**config_dict)
         if dataset_name:
             config.dataset.name = dataset_name
         model = ModelCreate(

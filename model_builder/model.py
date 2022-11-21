@@ -1,4 +1,4 @@
-from typing import List, Literal, Union
+from typing import List, Literal, Optional, Union
 
 import networkx as nx
 import torch
@@ -8,7 +8,7 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.optim.adam import Adam
 
 from model_builder.dataset import DataInstance
-from model_builder.schemas import ModelSchema
+from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import collect_args
 
 
@@ -19,7 +19,11 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
 
 
 class Metrics:
-    def __init__(self, type: Literal["regressor", "classification"]):
+    def __init__(
+        self,
+        type: Literal["regressor", "classification"],
+        num_classes: Optional[int] = None,
+    ):
         if type == "regressor":
             self.metrics = torch.nn.ModuleDict(
                 {
@@ -40,23 +44,25 @@ class Metrics:
                 }
             )
         else:
+            if not num_classes:
+                raise ValueError("num_classes must be provided to classifier metrics")
             # https://torchmetrics.readthedocs.io/en/latest/
             self.metrics = torch.nn.ModuleDict(
                 {
-                    "train_acc": metrics.Accuracy(),
-                    "train_auroc": metrics.AUROC(),
-                    "train_avgprec": metrics.AveragePrecision(),
-                    "train_calibration": metrics.CalibrationError(),
-                    "train_dice": metrics.Dice(),
+                    "train_accuracy": metrics.Accuracy(mdmc_reduce="global"),
+                    "train_precision": metrics.Precision(),
+                    "train_recall": metrics.Recall(),
                     "train_f1": metrics.F1Score(),
-                    "train_fbeta": metrics.FBetaScore(),
-                    "val_acc": metrics.Accuracy(),
-                    "val_auroc": metrics.AUROC(),
-                    "val_avgprec": metrics.AveragePrecision(),
-                    "val_calibration": metrics.CalibrationError(),
-                    "val_dice": metrics.Dice(),
+                    "train_confusion_matrix": metrics.ConfusionMatrix(
+                        num_classes=num_classes
+                    ),
+                    "val_accuracy": metrics.Accuracy(mdmc_reduce="global"),
+                    "val_precision": metrics.Precision(),
+                    "val_recall": metrics.Recall(),
                     "val_f1": metrics.F1Score(),
-                    "val_fbeta": metrics.FBetaScore(),
+                    "val_confusion_matrix": metrics.ConfusionMatrix(
+                        num_classes=num_classes
+                    ),
                 }
             )
 
@@ -65,9 +71,14 @@ class Metrics:
         for metric in self.metrics:
             if not metric.startswith("val"):
                 continue
-            metrics_dict[metric] = self.metrics[metric](
-                prediction.squeeze(), batch["y"].squeeze()
-            )
+            if isinstance(self.metrics[metric], (metrics.Accuracy)):
+                try:
+                    metrics_dict[metric] = self.metrics[metric](
+                        prediction.squeeze().long(), batch["y"].squeeze().long()
+                    )
+                except ValueError:
+                    print("Failed to metric " + metric)
+                    raise
         return metrics_dict
 
     def get_validation_metrics(self, prediction: torch.Tensor, batch: DataInstance):
@@ -96,13 +107,21 @@ class CustomModel(LightningModule):
         # This is safe as long ModelSchema was validated
         if not config.loss_fn:
             raise ValueError("config.loss_fn cannot be None")
-        self.loss_fn = eval(config.loss_fn)
+        loss_fn_class = eval(config.loss_fn)
+        self.loss_fn = loss_fn_class()
 
         # Set up metrics for training and validation
         if config.is_regressor():
             self.metrics = Metrics("regressor")
         elif config.is_classifier():
-            self.metrics = Metrics("classification")
+            print(config.dataset.target_column.data_type)
+            assert isinstance(
+                config.dataset.target_column.data_type, CategoricalDataType
+            )
+            self.metrics = Metrics(
+                "classification",
+                num_classes=len(config.dataset.target_column.data_type.classes),
+            )
 
     def forward(self, input: DataInstance):
         last = input
