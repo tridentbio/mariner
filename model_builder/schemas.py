@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 import networkx as nx
 import yaml
-from humps import camel
 from pydantic import (
     BaseModel,
     Field,
@@ -18,18 +17,10 @@ from model_builder.components_query import (
     get_component_constructor_args_by_type,
 )
 from model_builder.layers_schema import FeaturizersType, LayersType
-from model_builder.utils import get_references_dict
+from model_builder.utils import CamelCaseModel, get_references_dict
 
 
-class CamelCaseModel(BaseModel):
-    class Config:
-        alias_generator = camel.case
-        allow_population_by_field_name = True
-        allow_population_by_alias = True
-        underscore_attrs_are_private = True
-
-
-class NumericalDataType(BaseModel):
+class NumericalDataType(CamelCaseModel):
     domain_kind: Literal["numeric"] = Field("numeric")
 
     @validator("domain_kind")
@@ -41,7 +32,7 @@ class QuantityDataType(NumericalDataType):
     unit: str
 
 
-class StringDataType(BaseModel):
+class StringDataType(CamelCaseModel):
     domain_kind: Literal["string"] = Field("string")
 
     @validator("domain_kind")
@@ -49,7 +40,7 @@ class StringDataType(BaseModel):
         return "string"
 
 
-class CategoricalDataType(BaseModel):
+class CategoricalDataType(CamelCaseModel):
     domain_kind: Literal["categorical"] = Field("categorical")
     classes: dict[Union[str, int], int]
 
@@ -58,7 +49,7 @@ class CategoricalDataType(BaseModel):
         return "categorical"
 
 
-class SmileDataType(BaseModel):
+class SmileDataType(CamelCaseModel):
     domain_kind: Literal["smiles"] = Field("smiles")
 
     @validator("domain_kind")
@@ -129,20 +120,18 @@ ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss"]
 ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
 
 
-def is_regression(target_columns: ColumnConfig):
-    return target_columns.data_type.domain_kind in [
-        NumericalDataType.domain_kind,
-        QuantityDataType.domain_kind,
-    ]
+def is_regression(target_column: ColumnConfig):
+    return target_column.data_type.domain_kind == "numeric"
 
 
 def is_classifier(target_column: ColumnConfig):
-    return target_column.data_type.domain_kind in [CategoricalDataType.domain_kind]
+    print(target_column)
+    return target_column.data_type.domain_kind == "categorical"
 
 
 class ModelSchema(CamelCaseModel):
     """
-    A serializable model architecture
+    A serializable neural net architecture
     """
 
     def is_regressor(self) -> bool:
@@ -223,34 +212,39 @@ class ModelSchema(CamelCaseModel):
             raise errors[0]
         return values
 
-    @root_validator
-    def autofill_loss_gn(cls, values: Dict[str, Any]) -> Any:
+    @validator("loss_fn", pre=True)
+    def autofill_loss_gn(cls, value: str, values: Dict[str, Any]) -> Any:
+        print("GETTING LOSS FN")
+        print(value)
         target_column = values["dataset"].target_column
+        print(target_column)
         if is_classifier(target_column):
-            if not values["loss_fn"]:
-                values["loss_fn"] = "torch.nn.CrossEntropyLoss"
+            if not value:
+                return "torch.nn.CrossEntropyLoss"
             else:
-                assert (
-                    values["loss_fn"] in ALLOWED_CLASSIFIYNG_LOSSES
-                ), "loss is not valid for classifiers"
+                if value not in ALLOWED_CLASSIFIYNG_LOSSES:
+                    raise ValidationError(
+                        "loss is not valid for classifiers", model=ModelSchema
+                    )
+                return value
         elif is_regression(target_column):
-            if not values["loss_fn"]:
-                values["loss_fn"] = "torch.nn.MSELoss"
+            if not value:
+                return "torch.nn.MSELoss"
             else:
-                assert (
-                    values["loss_fn"] in ALLOWED_REGRESSOR_LOSSES
-                ), "loss is not valid for regressors"
-        else:
-            raise ValueError(
-                f"Invalid target_column {target_column}-- should never be thrown!!!"
-            )
-        return values
+                if value not in ALLOWED_REGRESSOR_LOSSES:
+                    raise ValidationError(
+                        "loss is not valid for regressors", model=ModelSchema
+                    )
+                return value
+        raise ValueError(
+            f"Invalid target_column {target_column}-- should never be thrown!!!"
+        )
 
     name: str
     dataset: DatasetConfig
     layers: List[AnnotatedLayersType] = []
     featurizers: List[FeaturizersType] = []
-    loss_fn: LossType
+    loss_fn: Optional[LossType] = None
 
     def make_graph(self):
         g = nx.DiGraph()
@@ -262,7 +256,9 @@ class ModelSchema(CamelCaseModel):
         def _to_dict(arr: List[BaseModel]):
             return [item.dict() for item in arr]
 
-        layers_and_featurizers = _to_dict(self.layers) + _to_dict(self.featurizers)
+        layers_and_featurizers = _to_dict(self.layers)
+        if self.featurizers:
+            layers_and_featurizers += _to_dict(self.featurizers)
         for feat in layers_and_featurizers:
             if "forward_args" not in feat:
                 continue

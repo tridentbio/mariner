@@ -3,6 +3,8 @@ from typing import Any, Callable, Dict, Sequence, Union
 
 import numpy as np
 import torch
+from humps import camel
+from pydantic import BaseModel
 from torch_sparse import SparseTensor
 
 from model_builder.storage import BaseStorage
@@ -251,3 +253,11 @@ def collect_args(
         else:
             raise ValueError("args_dict must be list or str")
     return result
+
+
+class CamelCaseModel(BaseModel):
+    class Config:
+        alias_generator = camel.case
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+        underscore_attrs_are_private = True
