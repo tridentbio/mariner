@@ -34,7 +34,7 @@ class ConnectionManager:
         self.active_connections: Dict[int, WebSocket] = {}
 
     async def connect(self, user_id: int, websocket: WebSocket):
-        """ "Accepts the connection and track the user id associated with it
+        """Accepts the connection and track the user id associated with it
 
 
         Args:
