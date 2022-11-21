@@ -125,7 +125,6 @@ def is_regression(target_column: ColumnConfig):
 
 
 def is_classifier(target_column: ColumnConfig):
-    print(target_column)
     return target_column.data_type.domain_kind == "categorical"
 
 
@@ -214,10 +213,7 @@ class ModelSchema(CamelCaseModel):
 
     @validator("loss_fn", pre=True, always=True)
     def autofill_loss_gn(cls, value: str, values: Dict[str, Any]) -> Any:
-        print("GETTING LOSS FN")
-        print(value)
         target_column = values["dataset"].target_column
-        print(target_column)
         if is_classifier(target_column):
             if not value:
                 return "torch.nn.CrossEntropyLoss"
