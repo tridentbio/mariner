@@ -165,12 +165,18 @@ def publish(from_version: str, force_resend: bool):
             changelog_event.payload["version"] for changelog_event in changelog_events
         ]
         if not force_resend:
-            filter_fn = (
-                lambda x: release_greater_or_equal(x, from_version)
-                and x not in versions_published
-            )
+
+            def filter_fn(x):
+                return (
+                    release_greater_or_equal(x, from_version)
+                    and x not in versions_published
+                )
+
         else:
-            filter_fn = lambda x: release_greater_or_equal(x, from_version)
+
+            def filter_fn(x):
+                return release_greater_or_equal(x, from_version)
+
         releases = [
             release for release in parse_text(sys.stdin) if filter_fn(release.version)
         ]
