@@ -46,11 +46,11 @@ def receive_github_code(
                 github_oauth=GithubAuth.construct(code=code, state=state)
             )
             return RedirectResponse(
-                url=f"{settings.WEBAPP_URL}/login?tk={token.access_token}&tk_type={token.token_type}"
+                url=f"{settings.WEBAPP_URL}/login?tk={token.access_token}&tk_type={token.token_type}"  # noqa: E501
             )
         except UserEmailNotAllowed:
             return RedirectResponse(
-                url=f"{settings.WEBAPP_URL}/login?error=Email not cleared for github oauth"
+                url=f"{settings.WEBAPP_URL}/login?error=Email not cleared for github oauth"  # noqa: E501
             )
         except UserNotActive:
             return RedirectResponse(
