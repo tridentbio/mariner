@@ -44,14 +44,14 @@ jobs:
     - name: Build - Login to ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
-    # - name: Build - Build and push image
-    #   id: build-image
-    #   env:
-    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #   run: |
-    #     docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile .
-    #     docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-    #     docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
+    - name: Build - Build and push image
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile .
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
@@ -70,10 +70,10 @@ jobs:
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$CONFIGMAP" 
         kubectl apply -f - <<< "$SECRETS" 
-        # helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
-        #   --set "replicaCount=$REPLICA_COUNT" \
-        #   --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
-        #   --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "istio_url=backend.${{ secrets.HOST_ZONE }}"
-        # kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
+          --set "replicaCount=$REPLICA_COUNT" \
+          --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
+          --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
+          --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
+          --set "istio_url=backend.${{ secrets.HOST_ZONE }}"
+        kubectl rollout status "deployment/$DEPLOYMENT_NAME"
