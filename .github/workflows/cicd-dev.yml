@@ -69,7 +69,6 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$CONFIGMAP" 
-        kubectl apply -f - <<< "$SECRETS" 
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
