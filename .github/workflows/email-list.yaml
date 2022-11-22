@@ -1,0 +1,37 @@
+name: Deploy to Develop - Manual
+on:
+  workflow_dispatch:
+    inputs:
+      emails:
+        description: 'List of emails'
+        required: true
+        default: '["tshimko@trident.bio"]'
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: mariner-dev
+  DEPLOYMENT_NAME: mariner-backend
+  IMAGE_TAG: ${{ github.sha }}
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Build - Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    - name: Deploy - Setup Credentials
+      id: setup-kubeconfig
+      run: |
+        aws eks --region $AWS_REGION update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+    - name: Deploy - Update Kubernetes Deployment
+      id: deploy-to-eks
+      run: |
+        curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
+        chmod +x ./kubectl &&\
+        mv ./kubectl /usr/local/bin/kubectl &&\
+        EMAILS=$(echo -n ${{ github.event.inputs.emails }} | base64)
+        kubectl create secret generic mariner-test -n default --from-literal=ALLOWED_GITHUB_AUTH_EMAILS=$EMAILS
+
