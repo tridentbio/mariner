@@ -32,6 +32,5 @@ jobs:
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        EMAILS=$(echo -n ${{ github.event.inputs.emails }} | base64)
+        EMAILS=$(echo -n '${{ github.event.inputs.emails }}' | base64)
         kubectl create secret generic mariner-test -n default --from-literal=ALLOWED_GITHUB_AUTH_EMAILS=$EMAILS
-
