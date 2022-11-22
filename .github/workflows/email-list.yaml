@@ -5,7 +5,7 @@ on:
       emails:
         description: 'List of emails'
         required: true
-        default: '["tshimko@trident.bio"]'
+        default: "'["tshimko@trident.bio","tshimko@trident.bio"]'"
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: mariner-dev
