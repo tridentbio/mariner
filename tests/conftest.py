@@ -7,7 +7,6 @@ import pytest
 import yaml
 from fastapi.testclient import TestClient
 from mlflow import mlflow
-from pydantic.error_wrappers import ValidationError
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -29,6 +28,19 @@ from mariner.stores.user_sql import user_store
 from model_builder.schemas import ModelSchema
 from tests.utils.user import authentication_token_from_email, create_random_user
 from tests.utils.utils import random_lower_string
+
+# Type alias for model task type
+ModelType = Literal["regressor", "classifier"]
+
+
+def get_config_path_for_model_type(model_type: ModelType) -> str:
+    if model_type == "regressor":
+        model_path = "tests/data/small_regressor_schema.yaml"
+    elif model_type == "classifier":
+        model_path = "tests/data/small_classifier_schema.yaml"
+    else:
+        raise NotImplementedError(f"No model config yaml for model type {model_type}")
+    return model_path
 
 
 @pytest.fixture(scope="session")
@@ -163,41 +175,25 @@ def some_model(
     normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
 ):
-    model = setup_create_model(client, normal_user_token_headers, some_dataset)
+    model = setup_create_model(
+        client,
+        normal_user_token_headers,
+        dataset_name=some_dataset.name,
+        model_type="classifier",
+    )
     yield model
     teardown_create_model(db, model)
 
 
-def mock_dataset_item():
-    import torch
-    from torch_geometric.data import Data
-
-    x = torch.ones(21, 26, dtype=torch.float)
-    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)
-    mwt = torch.tensor([[230.0]], dtype=torch.float)
-
-    dataset_input = {
-        "MolToGraphFeaturizer": Data(x=x, edge_index=edge_index, batch=None),
-        "mwt": mwt,
-        "tpsa": mwt,
-    }
-
-    return dataset_input
-
-
-@pytest.fixture(scope="module")
-def dataset_sample():
-    return mock_dataset_item()
-
-
-@pytest.fixture(scope="module")
-def model_config() -> Generator[ModelSchema, None, None]:
-    path = "tests/data/test_model_hard.yaml"
+def model_config(
+    model_type: ModelType = "regressor", dataset_name: Optional[str] = None
+) -> ModelSchema:
+    path = get_config_path_for_model_type(model_type)
     with open(path, "rb") as f:
-        try:
-            yield ModelSchema.from_yaml(f.read())
-        except ValidationError:
-            raise Exception("Failed to parse " + path)
+        schema = ModelSchema.from_yaml(f.read())
+        if dataset_name:
+            schema.dataset.name = dataset_name
+        return schema
 
 
 def mock_experiment(
@@ -225,11 +221,16 @@ def mock_experiment(
     return create_obj
 
 
-def mock_model(name=None, dataset_name=None) -> ModelCreate:
-    model_path = "tests/data/test_model_hard.yaml"
+def mock_model(
+    *,
+    name: Optional[str] = None,
+    dataset_name: Optional[str] = None,
+    model_type: ModelType = "regressor",
+) -> ModelCreate:
+    model_path = get_config_path_for_model_type(model_type)
     with open(model_path, "rb") as f:
         config_dict = yaml.unsafe_load(f.read())
-        config = ModelSchema.parse_obj(config_dict)
+        config = ModelSchema(**config_dict)
         if dataset_name:
             config.dataset.name = dataset_name
         model = ModelCreate(
@@ -241,12 +242,10 @@ def mock_model(name=None, dataset_name=None) -> ModelCreate:
         return model
 
 
-def setup_create_model(client: TestClient, headers, dataset: Optional[Dataset] = None):
-    model = None
-    if dataset:
-        model = mock_model(dataset_name=dataset.name)
-    else:
-        model = mock_model()
+def setup_create_model(
+    client: TestClient, headers: dict[str, str], **mock_model_kwargs
+):
+    model = mock_model(**mock_model_kwargs)
     data = model.dict()
     res = client.post(
         f"{settings.API_V1_STR}/models/",
@@ -268,7 +267,7 @@ def teardown_create_model(db: Session, model: Model):
         mlflowclient.delete_registered_model(model.mlflow_name)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def model(
     db: Session,
     client: TestClient,
@@ -276,7 +275,32 @@ def model(
     some_dataset: Dataset,
 ):
     db.commit()
-    model = setup_create_model(client, normal_user_token_headers, some_dataset)
+    model = setup_create_model(
+        client,
+        normal_user_token_headers,
+        dataset_name=some_dataset.name,
+    )
+    yield model
+    dbobj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
+    if dbobj:
+        db.delete(dbobj)
+        db.flush()
+
+
+@pytest.fixture(scope="function")
+def classifier_model(
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: Dict[str, str],
+    some_dataset: Dataset,
+):
+    db.commit()
+    model = setup_create_model(
+        client,
+        normal_user_token_headers,
+        dataset_name=some_dataset.name,
+        model_type="classifier",
+    )
     yield model
     dbobj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
     if dbobj:

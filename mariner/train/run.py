@@ -1,16 +1,15 @@
 import asyncio
+import logging
 from asyncio.tasks import Task
 from typing import List, Union
-from pytorch_lightning.loggers.base import LightningLoggerBase
 
-import logging
 import ray
 from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning.loggers.base import LightningLoggerBase
 from pytorch_lightning.trainer.trainer import Trainer
 
 from mariner.core.config import settings
 from mariner.schemas.experiment_schemas import TrainingRequest
-from mariner.train.custom_logger import AppLogger
 from model_builder.dataset import DataModule
 
 

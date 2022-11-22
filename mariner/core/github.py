@@ -50,7 +50,8 @@ class GithubAccessCode(BaseModel):
     token_type: str
 
 
-# Complete payload: https://docs.github.com/en/rest/users/users#get-the-authenticated-user
+# Complete payload:
+# https://docs.github.com/en/rest/users/users#get-the-authenticated-user
 class GithubUser(BaseModel):
     id: int
     login: str

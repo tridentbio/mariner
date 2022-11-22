@@ -1,5 +1,5 @@
 """
-Script for taking a RELEASE.md file and generating 
+Script for taking a RELEASE.md file and generating
 events, that will end up as user notifications.
 """
 
@@ -78,9 +78,11 @@ def parse_text(text: TextIO):
             current_messages.clear()
         elif new_type:
             if current_version and current_type:
-                assert (
-                    ALLOWED_TYPES.index(current_type) >= 0
-                ), f"Type must be one of {repr(ALLOWED_TYPES)} but got {current_type} in {no}"
+                if not (ALLOWED_TYPES.index(current_type) >= 0):
+                    allowed = repr(ALLOWED_TYPES)
+                    raise Exception(
+                        f"Type must be one of {allowed} but got {current_type} in {no}"
+                    )
                 releases[current_version].changes += [
                     ReleaseChange.construct(type=current_type, message=msg)
                     for msg in current_messages
@@ -110,12 +112,12 @@ def log_new_release_events(releases: List[Release]):
     db = SessionLocal()
     with SessionLocal() as db:
         # Later something like:
-        # events = [ EventCreate(source='changelog', timestamp=datetime.datetime.now(), payload=release.dict()) for release in releases ]
+        # events = [ EventCreate(...) for release in releases ]
         # events_ctl.create_events(db, events)
         for release in releases:
             events_ctl.create_event(
                 db,
-                EventCreate(
+                events_ctl.EventCreate(
                     source="changelog",
                     timestamp=datetime.datetime.now(),
                     payload=release.dict(),
@@ -157,32 +159,31 @@ def cli():
 @click.option("--from-version", default=get_version_from_pyproject())
 @click.option("--force-resend", default=False)
 def publish(from_version: str, force_resend: bool):
-    try:
-        with SessionLocal() as db:
-            changelog_events = event_store.get(db, from_source="changelog")
-            versions_published = [
-                changelog_event.payload["version"]
-                for changelog_event in changelog_events
-            ]
-            if not force_resend:
-                filter_fn = (
-                    lambda x: release_greater_or_equal(x, from_version)
+    with SessionLocal() as db:
+        changelog_events = event_store.get(db, from_source="changelog")
+        versions_published = [
+            changelog_event.payload["version"] for changelog_event in changelog_events
+        ]
+        if not force_resend:
+
+            def filter_fn(x):
+                return (
+                    release_greater_or_equal(x, from_version)
                     and x not in versions_published
                 )
-            else:
-                filter_fn = lambda x: release_greater_or_equal(x, from_version)
-            releases = [
-                release
-                for release in parse_text(sys.stdin)
-                if filter_fn(release.version)
-            ]
-            logger.info("Logging events starting from %s", from_version)
-            logger.info("Releases: %s", [release.version for release in releases])
-            log_new_release_events(releases)
-            logger.info("Success!")
-    except:
-        logger.error("Failed to create release events from changelog")
-        raise
+
+        else:
+
+            def filter_fn(x):
+                return release_greater_or_equal(x, from_version)
+
+        releases = [
+            release for release in parse_text(sys.stdin) if filter_fn(release.version)
+        ]
+        logger.info("Logging events starting from %s", from_version)
+        logger.info("Releases: %s", [release.version for release in releases])
+        log_new_release_events(releases)
+        logger.info("Success!")
 
 
 if __name__ == "__main__":

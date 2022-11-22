@@ -1,5 +1,4 @@
 from typing import Generator
-import mlflow
 
 import pytest
 from fastapi import UploadFile
@@ -24,7 +23,7 @@ from tests.utils.utils import random_lower_string
 
 # model configuration to be tested
 mlflow_yamls = [
-    "tests/data/test_model_hard.yaml",
+    "tests/data/small_regressor_schema.yaml",
     # "tests/data/test_model_with_from_smiles.yaml",
     # "tests/data/categorical_features_model.yaml",
 ]
