@@ -1,4 +1,4 @@
-name: Deploy to Develop - Manual
+name: Email List - Secret
 on:
   workflow_dispatch:
     inputs:
