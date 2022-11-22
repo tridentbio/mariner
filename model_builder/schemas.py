@@ -233,7 +233,7 @@ class ModelSchema(CamelCaseModel):
                     )
                 return value
         raise ValueError(
-            f"Invalid target_column {target_column}-- should never be thrown!!!"
+            f"Can't determine task for output {target_column}. Accepted output types are numeric or categorical."
         )
 
     name: str
