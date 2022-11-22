@@ -1,12 +1,14 @@
-from typing import List, Union
+from typing import List, Literal, Optional, Union
 
 import networkx as nx
 import torch
+import torch.nn
 import torchmetrics as metrics
 from pytorch_lightning.core.lightning import LightningModule
 from torch.optim.adam import Adam
 
 from model_builder.dataset import DataInstance
+from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import collect_args
 
 
@@ -16,8 +18,78 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
     return x
 
 
+class Metrics:
+    def __init__(
+        self,
+        type: Literal["regressor", "classification"],
+        num_classes: Optional[int] = None,
+    ):
+        if type == "regressor":
+            self.metrics = torch.nn.ModuleDict(
+                {
+                    "train_mse": metrics.MeanSquaredError(),
+                    "train_mae": metrics.MeanAbsoluteError(),
+                    "train_ev": metrics.ExplainedVariance(),
+                    "train_mape": metrics.MeanAbsolutePercentageError(),
+                    "train_R2": metrics.R2Score(),
+                    "train_pearson": metrics.PearsonCorrCoef(),
+                    "train_spearman": metrics.SpearmanCorrCoef(),
+                    "val_mse": metrics.MeanSquaredError(),
+                    "val_mae": metrics.MeanAbsoluteError(),
+                    "val_ev": metrics.ExplainedVariance(),
+                    "val_mape": metrics.MeanAbsolutePercentageError(),
+                    "val_R2": metrics.R2Score(),
+                    "val_pearson": metrics.PearsonCorrCoef(),
+                    "val_spearman": metrics.SpearmanCorrCoef(),
+                }
+            )
+        else:
+            if not num_classes:
+                raise ValueError("num_classes must be provided to classifier metrics")
+            # https://torchmetrics.readthedocs.io/en/latest/
+            self.metrics = torch.nn.ModuleDict(
+                {
+                    "train_accuracy": metrics.Accuracy(mdmc_reduce="global"),
+                    "train_precision": metrics.Precision(),
+                    "train_recall": metrics.Recall(),
+                    "train_f1": metrics.F1Score(),
+                    "train_confusion_matrix": metrics.ConfusionMatrix(
+                        num_classes=num_classes
+                    ),
+                    "val_accuracy": metrics.Accuracy(mdmc_reduce="global"),
+                    "val_precision": metrics.Precision(),
+                    "val_recall": metrics.Recall(),
+                    "val_f1": metrics.F1Score(),
+                    "val_confusion_matrix": metrics.ConfusionMatrix(
+                        num_classes=num_classes
+                    ),
+                }
+            )
+
+    def get_training_metrics(self, prediction: torch.Tensor, batch: DataInstance):
+        metrics_dict = {}
+        for metric in self.metrics:
+            if not metric.startswith("val"):
+                continue
+            if isinstance(self.metrics[metric], (metrics.Accuracy)):
+                metrics_dict[metric] = self.metrics[metric](
+                    prediction.squeeze().long(), batch["y"].squeeze().long()
+                )
+        return metrics_dict
+
+    def get_validation_metrics(self, prediction: torch.Tensor, batch: DataInstance):
+        metrics_dict = {}
+        for metric in self.metrics:
+            if not metric.startswith("val"):
+                continue
+            metrics_dict[metric] = self.metrics[metric](
+                prediction.squeeze(), batch["y"].squeeze()
+            )
+        return metrics_dict
+
+
 class CustomModel(LightningModule):
-    def __init__(self, config):
+    def __init__(self, config: ModelSchema):
         super().__init__()
         layers_dict = {}
         self.config = config
@@ -28,27 +100,23 @@ class CustomModel(LightningModule):
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
-        self.loss_fn = torch.nn.MSELoss()
+        # This is safe as long ModelSchema was validated
+        if not config.loss_fn:
+            raise ValueError("config.loss_fn cannot be None")
+        loss_fn_class = eval(config.loss_fn)
+        self.loss_fn = loss_fn_class()
 
         # Set up metrics for training and validation
-        self.metrics = torch.nn.ModuleDict(
-            {
-                "train_mse": metrics.MeanSquaredError(),
-                "train_mae": metrics.MeanAbsoluteError(),
-                "train_ev": metrics.ExplainedVariance(),
-                "train_mape": metrics.MeanAbsolutePercentageError(),
-                "train_R2": metrics.R2Score(),
-                "train_pearson": metrics.PearsonCorrCoef(),
-                "train_spearman": metrics.SpearmanCorrCoef(),
-                "val_mse": metrics.MeanSquaredError(),
-                "val_mae": metrics.MeanAbsoluteError(),
-                "val_ev": metrics.ExplainedVariance(),
-                "val_mape": metrics.MeanAbsolutePercentageError(),
-                "val_R2": metrics.R2Score(),
-                "val_pearson": metrics.PearsonCorrCoef(),
-                "val_spearman": metrics.SpearmanCorrCoef(),
-            }
-        )
+        if config.is_regressor():
+            self.metrics = Metrics("regressor")
+        elif config.is_classifier():
+            assert isinstance(
+                config.dataset.target_column.data_type, CategoricalDataType
+            )
+            self.metrics = Metrics(
+                "classification",
+                num_classes=len(config.dataset.target_column.data_type.classes),
+            )
 
     def forward(self, input: DataInstance):
         last = input
@@ -78,12 +146,10 @@ class CustomModel(LightningModule):
     def validation_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()
         loss = self.loss_fn(prediction, batch["y"])
-        for metric in self.metrics:
-            if not metric.startswith("val"):
-                continue
-            metrics_dict[metric] = self.metrics[metric](
-                prediction.squeeze(), batch["y"].squeeze()
-            )
+        metrics_dict = self.metrics.get_validation_metrics(prediction, batch)
+        self.log_dict(
+            metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
+        )
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -91,13 +157,7 @@ class CustomModel(LightningModule):
         loss = self.loss_fn(prediction.squeeze(), batch["y"].squeeze())
         metrics_dict = {
             "train_loss": loss,
-        }
-        for metric in self.metrics:
-            if not metric.startswith("train"):
-                continue
-            metrics_dict[metric] = self.metrics[metric](
-                prediction.squeeze(), batch["y"].squeeze()
-            )
+        } | self.metrics.get_training_metrics(prediction, batch)
         self.log_dict(
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
         )

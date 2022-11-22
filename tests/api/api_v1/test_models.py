@@ -1,9 +1,12 @@
+"""
+Tests the mariner.models package
+"""
 from typing import Any
 
 import mlflow.pyfunc
 import pytest
 from mockito import patch
-from pydantic.networks import AnyHttpUrl
+from pydantic import AnyHttpUrl
 from sqlalchemy.orm.session import Session
 from starlette import status
 from starlette.status import HTTP_200_OK
@@ -17,12 +20,20 @@ from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from model_builder import layers_schema as layers
 from model_builder.schemas import ColumnConfig, DatasetConfig, ModelSchema
-from tests.conftest import get_test_user, mock_model, setup_create_model
+from tests.conftest import (
+    get_test_user,
+    mock_model,
+    model_config,
+    setup_create_model,
+)
 from tests.utils.utils import random_lower_string
 
 
 @pytest.fixture(scope="function")
 def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
+    """
+    Fixture of an invalid model
+    """
     config = ModelSchema(
         name=random_lower_string(),
         dataset=DatasetConfig(
@@ -123,7 +134,7 @@ def test_post_models_on_existing_model_creates_new_version(
 def test_post_models_dataset_not_found(
     client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
 ):
-    model = mock_model(some_model.name)
+    model = mock_model(name=some_model.name)
     model.name = random_lower_string()
     datasetname = "a dataset name that is not registered"
     model.config.dataset.name = datasetname
@@ -139,7 +150,7 @@ def test_post_models_dataset_not_found(
 def test_post_models_check_model_name_is_unique(
     client: TestClient, randomuser_token_headers: dict[str, str], some_model: Model
 ):
-    model = mock_model(some_model.name)
+    model = mock_model(name=some_model.name)
     res = client.post(
         f"{settings.API_V1_STR}/models/",
         json=model.dict(),
@@ -184,8 +195,8 @@ def test_get_model_options(
         assert "classPath" in component_dict
         assert "outputType" in component_dict
         assert "component" in component_dict
-        assert "forward_args_summary" in component_dict["component"]
-        assert "constructor_args_summary" in component_dict["component"]
+        assert "forwardArgsSummary" in component_dict["component"]
+        assert "constructorArgsSummary" in component_dict["component"]
         assert isinstance(component_dict["docs"], str)
         assert AnyHttpUrl(component_dict["docs"], scheme="https") is not None
 
@@ -207,7 +218,9 @@ def test_delete_model(
     normal_user_token_headers: dict[str, str],
     some_dataset: DatasetEntity,
 ):
-    model = setup_create_model(client, normal_user_token_headers, some_dataset)
+    model = setup_create_model(
+        client, normal_user_token_headers, dataset_name=some_dataset.name
+    )
     res = client.delete(
         f"{settings.API_V1_STR}/models/{model.id}", headers=normal_user_token_headers
     )
@@ -299,12 +312,12 @@ def test_post_check_config_good_model(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
     client: TestClient,
-    model_config: ModelSchema,
 ):
+    regressor: ModelSchema = model_config(dataset_name=some_dataset.name)
     res = client.post(
         f"{settings.API_V1_STR}/models/check-config",
         headers=normal_user_token_headers,
-        json=model_config.dict(),
+        json=regressor.dict(),
     )
     assert res.status_code == 200
     body = res.json()
@@ -315,8 +328,8 @@ def test_post_check_config_bad_model(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
     client: TestClient,
-    model_config: ModelSchema,
 ):
+    regressor: ModelSchema = model_config(dataset_name=some_dataset.name)
     import model_builder.model
 
     def raise_(x: Any):
@@ -326,7 +339,7 @@ def test_post_check_config_bad_model(
         res = client.post(
             f"{settings.API_V1_STR}/models/check-config",
             headers=normal_user_token_headers,
-            json=model_config.dict(),
+            json=regressor.dict(),
         )
         assert res.status_code == 200
         body = res.json()

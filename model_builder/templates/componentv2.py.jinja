@@ -49,7 +49,7 @@ class {{ component["prefix"] }}ForwardArgsReferences(BaseModel):
 
 {% endif %}
 
-class {{component["prefix"]}}Summary(BaseModel):
+class {{component["prefix"]}}Summary(CamelCaseModel):
     type: Literal["{{component["path"]}}"] = '{{ component["path"] }}'
     constructor_args_summary = {{component["prefix"]}}ConstructorArgsSummary()
     {% if fwd_count > 0 %}
@@ -76,7 +76,7 @@ class {{ component["prefix"] }}ConstructorArgs(BaseModel):
 {% endif %}
 
 
-class {{ component["prefix"] }}LayerConfig(BaseModel):
+class {{ component["prefix"] }}LayerConfig(CamelCaseModel):
     """
     Layer configuration.
 

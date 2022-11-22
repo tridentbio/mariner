@@ -1,5 +1,5 @@
-from mlflow.tracking.client import MlflowClient
 import pytest
+from mlflow.tracking.client import MlflowClient
 from mockito import patch
 from sqlalchemy.orm.session import Session
 
@@ -102,8 +102,8 @@ async def test_experiment_has_stacktrace_when_training_fails(
         learning_rate=0.05,
     )
     # Mock CustomLogger forward to raise an Exception
-    import model_builder.model
     import mariner.train.run
+    import model_builder.model
 
     def _raise(_):
         raise Exception("bad bad model")

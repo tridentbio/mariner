@@ -1,9 +1,8 @@
 # Temporary file to hold all extracted mariner schemas
-from typing import List, Literal, Union
+from typing import Any, Dict, List, Literal, Union
 
 import networkx as nx
 import yaml
-from humps import camel
 from pydantic import (
     BaseModel,
     Field,
@@ -18,18 +17,10 @@ from model_builder.components_query import (
     get_component_constructor_args_by_type,
 )
 from model_builder.layers_schema import FeaturizersType, LayersType
-from model_builder.utils import get_references_dict, unwrap_dollar
+from model_builder.utils import CamelCaseModel, get_references_dict
 
 
-class CamelCaseModel(BaseModel):
-    class Config:
-        alias_generator = camel.case
-        allow_population_by_field_name = True
-        allow_population_by_alias = True
-        underscore_attrs_are_private = True
-
-
-class NumericalDataType(BaseModel):
+class NumericalDataType(CamelCaseModel):
     domain_kind: Literal["numeric"] = Field("numeric")
 
     @validator("domain_kind")
@@ -41,7 +32,7 @@ class QuantityDataType(NumericalDataType):
     unit: str
 
 
-class StringDataType(BaseModel):
+class StringDataType(CamelCaseModel):
     domain_kind: Literal["string"] = Field("string")
 
     @validator("domain_kind")
@@ -49,7 +40,7 @@ class StringDataType(BaseModel):
         return "string"
 
 
-class CategoricalDataType(BaseModel):
+class CategoricalDataType(CamelCaseModel):
     domain_kind: Literal["categorical"] = Field("categorical")
     classes: dict[Union[str, int], int]
 
@@ -58,7 +49,7 @@ class CategoricalDataType(BaseModel):
         return "categorical"
 
 
-class SmileDataType(BaseModel):
+class SmileDataType(CamelCaseModel):
     domain_kind: Literal["smiles"] = Field("smiles")
 
     @validator("domain_kind")
@@ -123,19 +114,36 @@ class MissingComponentArgs(ValueError):
 
 
 AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
+LossType = Literal["torch.nn.MSELoss", "torch.nn.CrossEntropyLoss"]
+
+ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss"]
+ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
+
+
+def is_regression(target_column: ColumnConfig):
+    return target_column.data_type.domain_kind == "numeric"
+
+
+def is_classifier(target_column: ColumnConfig):
+    return target_column.data_type.domain_kind == "categorical"
 
 
 class ModelSchema(CamelCaseModel):
     """
-    A serializable model architecture
+    A serializable neural net architecture
     """
+
+    def is_regressor(self) -> bool:
+        return is_regression(self.dataset.target_column)
+
+    def is_classifier(self) -> bool:
+        return is_classifier(self.dataset.target_column)
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
         layers = values.get("layers")
         featurizers = values.get("featurizers")
         layer_types = [layer.name for layer in generate.layers]
-        featurizer_types = [featurizer.name for featurizer in generate.featurizers]
         for layer in layers:
             if not isinstance(layer, dict):
                 layer = layer.dict()
@@ -143,14 +151,16 @@ class ModelSchema(CamelCaseModel):
                 raise UnknownComponentType(
                     "A layer has unknown type", component_name=layer["name"]
                 )
-        for featurizer in featurizers:
-            if not isinstance(featurizer, dict):
-                featurizer = featurizer.dict()
-            if featurizer["type"] not in featurizer_types:
-                raise UnknownComponentType(
-                    f"A featurizer has unknown type: {featurizer['type']}",
-                    component_name=featurizer["name"],
-                )
+        if featurizers:
+            featurizer_types = [featurizer.name for featurizer in generate.featurizers]
+            for featurizer in featurizers:
+                if not isinstance(featurizer, dict):
+                    featurizer = featurizer.dict()
+                if featurizer["type"] not in featurizer_types:
+                    raise UnknownComponentType(
+                        f"A featurizer has unknown type: {featurizer['type']}",
+                        component_name=featurizer["name"],
+                    )
         return values
 
     @root_validator(pre=True)
@@ -175,32 +185,62 @@ class ModelSchema(CamelCaseModel):
                     for error in exp.errors()
                     if error["type"] == "value_error.missing"
                 ]
-        for featurizer in featurizers:
-            if not isinstance(featurizer, dict):
-                featurizer = featurizer.dict()
-            args_cls = get_component_constructor_args_by_type(featurizer["type"])
-            if not args_cls or "constructorArgs" not in featurizer:
-                continue
-            try:
-                args_cls.validate(featurizer["constructorArgs"])
-            except ValidationError as exp:
-                errors += [
-                    MissingComponentArgs(
-                        missing=[missing_arg_name for missing_arg_name in error["loc"]],
-                        component_name=featurizer["name"],
-                    )
-                    for error in exp.errors()
-                    if error["type"] == "value_error.missing"
-                ]
+        if featurizers:
+            for featurizer in featurizers:
+                if not isinstance(featurizer, dict):
+                    featurizer = featurizer.dict()
+                args_cls = get_component_constructor_args_by_type(featurizer["type"])
+                if not args_cls or "constructorArgs" not in featurizer:
+                    continue
+                try:
+                    args_cls.validate(featurizer["constructorArgs"])
+                except ValidationError as exp:
+                    errors += [
+                        MissingComponentArgs(
+                            missing=[
+                                missing_arg_name for missing_arg_name in error["loc"]
+                            ],
+                            component_name=featurizer["name"],
+                        )
+                        for error in exp.errors()
+                        if error["type"] == "value_error.missing"
+                    ]
 
         if len(errors) > 0:
+            # TODO: raise all errors grouped in a single validation error
             raise errors[0]
         return values
 
+    @validator("loss_fn", pre=True, always=True)
+    def autofill_loss_gn(cls, value: str, values: Dict[str, Any]) -> Any:
+        target_column = values["dataset"].target_column
+        if is_classifier(target_column):
+            if not value:
+                return "torch.nn.CrossEntropyLoss"
+            else:
+                if value not in ALLOWED_CLASSIFIYNG_LOSSES:
+                    raise ValidationError(
+                        "loss is not valid for classifiers", model=ModelSchema
+                    )
+                return value
+        elif is_regression(target_column):
+            if not value:
+                return "torch.nn.MSELoss"
+            else:
+                if value not in ALLOWED_REGRESSOR_LOSSES:
+                    raise ValidationError(
+                        "loss is not valid for regressors", model=ModelSchema
+                    )
+                return value
+        raise ValueError(
+            f"Invalid target_column {target_column}-- should never be thrown!!!"
+        )
+
     name: str
     dataset: DatasetConfig
-    layers: List[AnnotatedLayersType]
-    featurizers: List[FeaturizersType]
+    layers: List[AnnotatedLayersType] = []
+    featurizers: List[FeaturizersType] = []
+    loss_fn: LossType = None
 
     def make_graph(self):
         g = nx.DiGraph()
@@ -212,7 +252,9 @@ class ModelSchema(CamelCaseModel):
         def _to_dict(arr: List[BaseModel]):
             return [item.dict() for item in arr]
 
-        layers_and_featurizers = _to_dict(self.layers) + _to_dict(self.featurizers)
+        layers_and_featurizers = _to_dict(self.layers)
+        if self.featurizers:
+            layers_and_featurizers += _to_dict(self.featurizers)
         for feat in layers_and_featurizers:
             if "forward_args" not in feat:
                 continue
@@ -235,7 +277,7 @@ class ModelSchema(CamelCaseModel):
     @classmethod
     def from_yaml(cls, yamlstr):
         config_dict = yaml.safe_load(yamlstr)
-        return ModelSchema.parse_obj(config_dict)
+        return ModelSchema(**config_dict)
 
 
 if __name__ == "__main__":

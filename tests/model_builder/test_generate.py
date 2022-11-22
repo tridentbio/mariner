@@ -43,7 +43,7 @@ def test_benchmark_sphinxfy():
     mx = times.max()
     mn = times.min()
     print(
-        f"""
+        """
 Benchmarking the model_builder.generate.sphinxfy
 ## TIME
     Number of docstrings transformed into HTML: %d

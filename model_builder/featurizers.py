@@ -9,7 +9,6 @@ from rdkit.Chem.rdchem import Bond as RDKitBond
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from torch_geometric.data import Batch as PyGBatch
 from torch_geometric.data import Data as PyGData
-from torch import nn
 from torch_geometric.utils.smiles import from_smiles
 
 

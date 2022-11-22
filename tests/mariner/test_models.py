@@ -10,7 +10,7 @@ from mariner.entities import Model as ModelEntity
 from mariner.schemas.model_schemas import Model
 from mariner.stores.dataset_sql import dataset_store
 from model_builder.schemas import ModelSchema
-from tests.conftest import get_test_user
+from tests.conftest import get_test_user, model_config
 
 
 def test_get_model_prediction(db: Session, model: Model):
@@ -38,21 +38,34 @@ def test_delete_model(db: Session, model: Model):
     assert not model_db
 
 
-def test_check_forward_exception_good_model(
-    db: Session, some_dataset: DatasetEntity, model_config: ModelSchema
+def test_check_forward_exception_good_regressor(
+    db: Session, some_dataset: DatasetEntity
 ):
-    check = model_ctl.naive_check_forward_exception(db, model_config)
+    regressor = model_config(model_type="regressor")
+    assert regressor.loss_fn
+    check = model_ctl.naive_check_forward_exception(db, regressor)
     assert check.stack_trace is None
     assert check.output is not None
 
 
-def test_check_forward_exception_bad_model(db: Session, model_config: ModelSchema):
+def test_check_forward_exception_good_classifier(
+    db: Session, some_dataset: DatasetEntity
+):
+    classifier = model_config(dataset_name=some_dataset.name, model_type="classifier")
+    assert classifier.loss_fn
+    check = model_ctl.naive_check_forward_exception(db, classifier)
+    assert check.stack_trace is None
+    assert check.output is not None
+
+
+def test_check_forward_exception_bad_model(db: Session, some_dataset: DatasetEntity):
+    broken_model: ModelSchema = model_config(dataset_name=some_dataset.name)
     import model_builder.model
 
     def raise_(x: Any):
         raise Exception("bad bad model")
 
     with patch(model_builder.model.CustomModel.forward, raise_):
-        check = model_ctl.naive_check_forward_exception(db, model_config)
+        check = model_ctl.naive_check_forward_exception(db, broken_model)
         assert check.output is None
         assert check.stack_trace is not None

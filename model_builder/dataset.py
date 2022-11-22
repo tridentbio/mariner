@@ -3,12 +3,17 @@ from typing import List, Optional
 import pandas as pd
 import pytorch_lightning as pl
 import torch
+from torch.nn import functional as F
 from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
 from model_builder.layers_schema import FeaturizersType
-from model_builder.schemas import ColumnConfig, DatasetConfig
+from model_builder.schemas import (
+    CategoricalDataType,
+    ColumnConfig,
+    DatasetConfig,
+)
 from model_builder.utils import DataInstance, get_references_dict
 
 
@@ -55,26 +60,7 @@ class CustomDataset(TorchDataset):
 
         self.setup()
 
-    def _determine_task_type(self) -> str:
-        """Determine the task type based on the column selected as
-        target.
-
-        Returns:
-            str: String "regression" or "classification".
-        """
-        assert self.target, "cannot auto determine task type when target = None"
-        target_type = self.data.dtypes[self.target.name]
-
-        if "float" in target_type.name:
-            # If it is a float target, we treat the task as a regression
-            return "regression"
-
-        raise AttributeError("Unsupported target type for prediction.")
-
     def setup(self):
-        # Determine the type of the task
-        if self.target:
-            self._task_type = self._determine_task_type()
         # Instanciate all featurizers
         self._featurizers = {}
         for featurizer_config in self._featurizers_config:
@@ -105,7 +91,12 @@ class CustomDataset(TorchDataset):
             d[column.name] = torch.Tensor([sample[column.name]])
 
         if self.target:
-            d.y = torch.Tensor([sample[self.target.name]])
+            if isinstance(self.target.data_type, CategoricalDataType):
+                classes = self.target.data_type.classes
+                idx = classes[sample[self.target.name]]
+                d.y = F.one_hot(torch.tensor(idx), num_classes=len(classes)).float()
+            else:
+                d.y = torch.Tensor([sample[self.target.name]])
 
         return d
 
