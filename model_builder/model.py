@@ -69,12 +69,17 @@ class Metrics:
     def get_training_metrics(self, prediction: torch.Tensor, batch: DataInstance):
         metrics_dict = {}
         for metric in self.metrics:
-            if not metric.startswith("val"):
+            if not metric.startswith("train"):
                 continue
             if isinstance(self.metrics[metric], (metrics.Accuracy)):
                 metrics_dict[metric] = self.metrics[metric](
                     prediction.squeeze().long(), batch["y"].squeeze().long()
                 )
+            else:
+                metrics_dict[metric] = self.metrics[metric](
+                    prediction.squeeze(), batch["y"].squeeze()
+                )
+
         return metrics_dict
 
     def get_validation_metrics(self, prediction: torch.Tensor, batch: DataInstance):
@@ -100,9 +105,9 @@ class CustomModel(LightningModule):
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
-        # This is safe as long ModelSchema was validated
         if not config.loss_fn:
             raise ValueError("config.loss_fn cannot be None")
+        # This is safe as long ModelSchema was validated
         loss_fn_class = eval(config.loss_fn)
         self.loss_fn = loss_fn_class()
 
@@ -154,6 +159,8 @@ class CustomModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
         prediction = self(batch)
+        print("prediction size:", prediction.squeeze().size())
+        print("y size:         ", batch["y"].squeeze().size())
         loss = self.loss_fn(prediction.squeeze(), batch["y"].squeeze())
         metrics_dict = {
             "train_loss": loss,
