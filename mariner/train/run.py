@@ -50,6 +50,7 @@ async def start_training(
         log_every_n_steps=1,
         enable_progress_bar=False,
         enable_checkpointing=False,
+        progress_bar_refresh_rate=0,
     )
     conn_ray = ray.init(
         address=settings.RAY_ADDRESS, logging_level=logging.ERROR, allow_multiple=True
