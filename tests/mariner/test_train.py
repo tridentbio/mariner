@@ -11,7 +11,7 @@ from mariner.tasks import ExperimentManager, ExperimentView
 from mariner.train.custom_logger import AppLogger
 from mariner.train.run import start_training
 from model_builder.dataset import DataModule
-from tests.conftest import get_test_user
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 

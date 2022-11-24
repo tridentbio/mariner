@@ -12,7 +12,7 @@ from mariner.schemas.experiment_schemas import (
 )
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
-from tests.conftest import get_test_user
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 
@@ -68,13 +68,6 @@ async def test_create_model_training(db: Session, some_model: Model):
         "train_R2",
         "train_pearson",
         "train_spearman",
-        "val_mse",
-        "val_mae",
-        "val_ev",
-        "val_mape",
-        "val_R2",
-        "val_pearson",
-        "val_spearman",
     ]
     for metric in collected_regression_metrics:
         assert len(db_exp.history[metric]) == request.epochs

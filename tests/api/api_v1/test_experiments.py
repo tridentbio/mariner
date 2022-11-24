@@ -6,7 +6,7 @@ from starlette.testclient import TestClient
 
 from mariner.core.config import settings
 from mariner.schemas.experiment_schemas import Experiment
-from tests.conftest import get_test_user
+from tests.fixtures.user import get_test_user
 
 
 @pytest.mark.long

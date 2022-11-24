@@ -12,7 +12,7 @@ from mariner.entities import EventEntity
 from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
-from tests.conftest import get_test_user
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 

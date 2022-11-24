@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from mariner.entities.event import EventEntity
 from mariner.schemas.experiment_schemas import Experiment
 from mariner.stores.event_sql import event_store
-from tests.conftest import get_test_events, get_test_user, teardown_events
+from tests.fixtures.events import get_test_events, teardown_events
+from tests.fixtures.user import get_test_user
 
 
 class TestEventCrud:
