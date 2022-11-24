@@ -33,5 +33,6 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         EMAILS=$(echo -n '${{ github.event.inputs.emails }}' | base64)
-        kubectl create secret generic mariner-test -n default --from-literal=ALLOWED_GITHUB_AUTH_EMAILS=$EMAILS --dry-run=client -o yaml | kubectl apply -f -
+        sed -i 's/#EMAILS/'"$EMAILS"'/g' secrets-example.yaml
+        kubectl apply -f secrets-example.yaml
         kubectl delete pod -l app=mariner-backend
