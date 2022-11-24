@@ -17,7 +17,12 @@ from mariner.exceptions import (
 )
 from mariner.exceptions.user_exceptions import UserEmailNotAllowed
 from mariner.schemas.token import Token
-from mariner.schemas.user_schemas import User, UserCreateOAuth, UserUpdate
+from mariner.schemas.user_schemas import (
+    User,
+    UserCreateBasic,
+    UserCreateOAuth,
+    UserUpdate,
+)
 from mariner.stores.oauth_state_sql import oauth_state_store
 from mariner.stores.user_sql import user_store
 
@@ -28,6 +33,11 @@ def get_users(
     limit: int = 100,
 ):
     return user_store.get_multi(db, skip=skip, limit=limit)
+
+
+def create_user_basic(db: Session, request: UserCreateBasic):
+    user = user_store.create(db, obj_in=request)
+    return User.from_orm(user)
 
 
 def update_user(db: Session, request: UserUpdate, user: UserEntity) -> User:
