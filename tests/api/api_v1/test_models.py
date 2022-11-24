@@ -20,12 +20,8 @@ from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from model_builder import layers_schema as layers
 from model_builder.schemas import ColumnConfig, DatasetConfig, ModelSchema
-from tests.conftest import (
-    get_test_user,
-    mock_model,
-    model_config,
-    setup_create_model,
-)
+from tests.fixtures.model import mock_model, model_config, setup_create_model
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 
