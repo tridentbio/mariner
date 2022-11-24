@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from mariner.core.config import settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
-from mariner.entities.model import ModelVersion
 from mariner.schemas.model_schemas import Model, ModelCreate
 from model_builder.schemas import ModelSchema
 from tests.utils.utils import random_lower_string
