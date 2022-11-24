@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 import mlflow
@@ -18,7 +19,7 @@ def create_model_version(
     client: mlflow.tracking.MlflowClient,
     name: str,
     model: torch.nn.Module,
-    artifact_path="s3://dev-mariner-datasets",
+    artifact_path: Optional[str] = None,
     desc: Optional[str] = None,
 ) -> ModelVersion:
     if not artifact_path:
@@ -27,6 +28,7 @@ def create_model_version(
     if active_run is not None:
         mlflow.end_run()
     with mlflow.start_run() as run:
+        logging.error("artifact_path = %s", artifact_path)
         mlflow.pytorch.log_model(
             model,
             artifact_path=artifact_path,
