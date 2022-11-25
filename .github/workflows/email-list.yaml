@@ -5,12 +5,9 @@ on:
       emails:
         description: 'List of emails'
         required: true
-        default: '["tshimko@trident.bio"]'
+        default: '["tshimko@trident.bio","vitor.albuquerque@shawandpartners.com"]'
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: mariner-dev
-  DEPLOYMENT_NAME: mariner-backend
-  IMAGE_TAG: ${{ github.sha }}
 jobs:
   build-and-deploy:
     name: Build and Deploy
@@ -38,6 +35,6 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         EMAILS=$(echo -n '${{ github.event.inputs.emails }}' | base64)
-        sed -i 's/#EMAILS/'"$EMAILS"'/g' secrets-example.yaml
+        python3 scripts/email-list.py $EMAILS
         kubectl apply -f secrets-example.yaml
         kubectl delete pod -l app=mariner-backend
