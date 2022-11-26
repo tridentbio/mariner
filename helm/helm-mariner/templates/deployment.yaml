@@ -50,6 +50,11 @@ spec:
       serviceAccountName: {{ include "chart.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: {{ .Release.Name }}
+          secret:
+            secretName: {{ .Release.Name }}
+            optional: true
       containers:
         - name: {{ .Release.Name }}
           securityContext:
@@ -80,8 +85,6 @@ spec:
             timeoutSeconds: {{ .Values.image.readinessProbe.timeoutSeconds }}
           envFrom:
             - configMapRef:
-                name: {{ .Release.Name }}
-            - secretRef:
                 name: {{ .Release.Name }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
