@@ -58,6 +58,7 @@ async def test_create_model_training(db: Session, some_model: Model):
     db_exp = Experiment.from_orm(db_exp)
     assert db_exp.train_metrics
     assert db_exp.history
+    assert db_exp.stage == "SUCCESS"
     assert "train_loss" in db_exp.train_metrics
     assert len(db_exp.history["train_loss"]) == request.epochs
     collected_regression_metrics = [
