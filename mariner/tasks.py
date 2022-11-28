@@ -1,14 +1,9 @@
 from asyncio.tasks import Task
 from ctypes import ArgumentError
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 
 class ExperimentView:
-    experiment_id: int
-    user_id: int
-    task: Task
-    running_history: Dict[str, List[float]]
-
     def __init__(self, experiment_id: int, user_id: int, task: Task):
         self.experiment_id = experiment_id
         self.user_id = user_id

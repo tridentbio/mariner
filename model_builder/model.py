@@ -8,6 +8,8 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.optim.adam import Adam
 
 from model_builder.dataset import DataInstance
+from model_builder.layers.one_hot import OneHot
+from model_builder.layers_schema import ModelbuilderonehotLayerConfig
 from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import collect_args
 
@@ -33,14 +35,12 @@ class Metrics:
                     "train_mape": metrics.MeanAbsolutePercentageError(),
                     "train_R2": metrics.R2Score(),
                     "train_pearson": metrics.PearsonCorrCoef(),
-                    "train_spearman": metrics.SpearmanCorrCoef(),
                     "val_mse": metrics.MeanSquaredError(),
                     "val_mae": metrics.MeanAbsoluteError(),
                     "val_ev": metrics.ExplainedVariance(),
                     "val_mape": metrics.MeanAbsolutePercentageError(),
                     "val_R2": metrics.R2Score(),
                     "val_pearson": metrics.PearsonCorrCoef(),
-                    "val_spearman": metrics.SpearmanCorrCoef(),
                 }
             )
         else:
@@ -101,6 +101,18 @@ class CustomModel(LightningModule):
         self.layer_configs = {layer.name: layer for layer in config.layers}
         for layer in config.layers:
             layer_instance = layer.create()
+            if isinstance(layer_instance, OneHot) and isinstance(
+                layer, ModelbuilderonehotLayerConfig
+            ):
+                input = layer.forward_args.x1.replace("$", "")
+                for column in config.dataset.feature_columns:
+                    if column.name == input and isinstance(
+                        column.data_type, CategoricalDataType
+                    ):
+                        print("FOUND classes", column.data_type.classes)
+                        layer_instance.classes = column.data_type.classes
+                if not layer_instance.classes:
+                    raise ValueError("Failed to find OneHot classes")
             layers_dict[layer.name] = layer_instance
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
@@ -159,8 +171,6 @@ class CustomModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
         prediction = self(batch)
-        print("prediction size:", prediction.squeeze().size())
-        print("y size:         ", batch["y"].squeeze().size())
         loss = self.loss_fn(prediction.squeeze(), batch["y"].squeeze())
         metrics_dict = {
             "train_loss": loss,
