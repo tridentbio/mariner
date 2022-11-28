@@ -88,7 +88,11 @@ class CustomDataset(TorchDataset):
 
         # include all unfeaturized columns
         for column in columns_to_include:
-            d[column.name] = torch.Tensor([sample[column.name]])
+            val = sample[column.name]
+            if isinstance(val, (float, int)):
+                d[column.name] = torch.Tensor([val])
+            else:
+                d[column.name] = val
 
         if self.target:
             if isinstance(self.target.data_type, CategoricalDataType):

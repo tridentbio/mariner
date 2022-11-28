@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Literal, Optional
 from uuid import uuid4
 
 import mlflow
-from mlflow.tracking._tracking_service.utils import get_tracking_uri
 from mlflow.tracking.artifact_utils import get_artifact_uri
 from mlflow.tracking.client import MlflowClient
 from pytorch_lightning.loggers import MLFlowLogger
@@ -27,7 +26,7 @@ from mariner.schemas.experiment_schemas import (
     RunningHistory,
     TrainingRequest,
 )
-from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
+from mariner.schemas.model_schemas import ModelVersion
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.experiment_sql import (
     ExperimentCreateRepo,
@@ -40,9 +39,7 @@ from mariner.train.custom_logger import AppLogger
 from mariner.train.run import start_training
 from model_builder.dataset import DataModule
 
-
-def log_error(msg: str):
-    logging.error("[experiments_ctl]: %s " % msg)
+LOG = logging.getLogger(__name__)
 
 
 async def create_model_traning(
@@ -97,32 +94,40 @@ async def create_model_traning(
         exception = task.exception()
         done = task.done()
         if done and not exception:
-            client = MlflowClient()
-            model = task.result()
-            runs = client.search_runs(experiment_ids=[experiment.mlflow_id])
-            assert len(runs) == 1
-            run = runs[0]
-            run_id = run.info.run_id
-            model_info = mlflow.pytorch.log_model(
-                model,
-                get_artifact_uri(run_id, tracking_uri=get_tracking_uri()),
-                registered_model_name=model_version.mlflow_model_name,
-            )
-            mlflow_model = client.get_registered_model(model_version.mlflow_model_name)
-            assert (
-                mlflow_model.latest_versions and len(mlflow_model.latest_versions) > 0
-            ), "runtime error: latest_versions should have at least a version"
-            latest_version = mlflow_model.latest_versions[-1]
-            assert latest_version
-            model_info.mlflow_version
-            experiment_store.update(
-                db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
-            )
-            model_store.update_model_version(
-                db,
-                experiment.model_version_id,
-                ModelVersionUpdateRepo(mlflow_version=latest_version.version),
-            )
+            try:
+                client = MlflowClient()
+                model = task.result()
+                runs = client.search_runs(experiment_ids=[experiment.mlflow_id])
+                assert len(runs) == 1
+                run = runs[0]
+                run_id = run.info.run_id
+                mlflow.pytorch.log_model(
+                    model,
+                    get_artifact_uri(run_id, artifact_path="model"),
+                    registered_model_name=model_version.mlflow_model_name,
+                )
+            except Exception as exception:
+                stack_trace = str(exception)
+                experiment_store.update(
+                    db,
+                    obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
+                    db_obj=experiment,
+                )
+            finally:
+                experiment_store.update(
+                    db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
+                )
+                get_websockets_manager().send_message(  # noqa
+                    type="update-running-metrics",
+                    data=UpdateRunningData(
+                        experiment_id=experiment_id,
+                        experiment_name=experiment.experiment_name,
+                        stage="SUCCESS",
+                        running_history=get_exp_manager().get_running_history(
+                            experiment.id
+                        ),
+                    ),
+                )
 
         elif done and exception:
             stack_trace = str(exception)
@@ -130,6 +135,20 @@ async def create_model_traning(
                 db,
                 obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
                 db_obj=experiment,
+            )
+            get_websockets_manager().send_message(  # noqa
+                user_id=experiment.created_by_id,
+                message=WebSocketMessage(
+                    type="update-running-metrics",
+                    data=UpdateRunningData(
+                        experiment_id=experiment_id,
+                        experiment_name=experiment.experiment_name,
+                        stage="ERROR",
+                        running_history=get_exp_manager().get_running_history(
+                            experiment.id
+                        ),
+                    ),
+                ),
             )
             logging.error(exception)
         else:
@@ -194,7 +213,9 @@ def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]
     experiment_store.update(db, db_obj=experiment_db, obj_in=update_obj)
 
 
-def get_running_histories(user: UserEntity) -> List[RunningHistory]:
+def get_running_histories(
+    user: UserEntity, experiment_id: Optional[int] = None
+) -> List[RunningHistory]:
     experiments = get_exp_manager().get_from_user(user.id)
     return [
         RunningHistory(
@@ -203,15 +224,17 @@ def get_running_histories(user: UserEntity) -> List[RunningHistory]:
             running_history=exp.running_history,
         )
         for exp in experiments
+        if experiment_id is not None or exp.experiment_id == experiment_id
     ]
 
 
 class UpdateRunningData(ApiBaseModel):
-    metrics: Dict[str, float]
+    metrics: Optional[Dict[str, float]] = None
     epoch: Optional[int] = None
     experiment_id: int
     experiment_name: str
     stage: Optional[str] = None
+    running_history: Optional[Dict[str, List[float]]] = None
 
 
 async def send_ws_epoch_update(
