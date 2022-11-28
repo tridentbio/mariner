@@ -320,6 +320,24 @@ def test_post_check_config_good_model(
     assert "output" in body
 
 
+def test_post_check_config_good_model2(
+    some_dataset: DatasetEntity,
+    normal_user_token_headers: dict[str, str],
+    client: TestClient,
+):
+    regressor: ModelSchema = model_config(
+        dataset_name=some_dataset.name, model_type="regressor-with-categorical"
+    )
+    res = client.post(
+        f"{settings.API_V1_STR}/models/check-config",
+        headers=normal_user_token_headers,
+        json=regressor.dict(),
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert "output" in body
+
+
 def test_post_check_config_bad_model(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],

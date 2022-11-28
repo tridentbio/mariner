@@ -13,7 +13,7 @@ from mariner.schemas.model_schemas import Model, ModelCreate
 from model_builder.schemas import ModelSchema
 from tests.utils.utils import random_lower_string
 
-ModelType = Literal["regressor", "classifier"]
+ModelType = Literal["regressor", "regressor-with-categorical", "classifier"]
 
 
 def model_config(
@@ -21,7 +21,14 @@ def model_config(
 ) -> ModelSchema:
     path = get_config_path_for_model_type(model_type)
     with open(path, "rb") as f:
-        schema = ModelSchema.from_yaml(f.read())
+        if path.endswith("yaml") or path.endswith("yml"):
+            schema = ModelSchema.from_yaml(f.read())
+        elif path.endswith("json"):
+            schema = ModelSchema.parse_raw(f.read())
+        else:
+            raise NotImplementedError(
+                f"Only know how to read json or yaml model configs, got file: {path}"
+            )
         if dataset_name:
             schema.dataset.name = dataset_name
         return schema
@@ -32,6 +39,8 @@ def get_config_path_for_model_type(model_type: ModelType) -> str:
         model_path = "tests/data/small_regressor_schema.yaml"
     elif model_type == "classifier":
         model_path = "tests/data/small_classifier_schema.yaml"
+    elif model_type == "regressor-with-categorical":
+        model_path = "tests/data/small_regressor_schema2.json"
     else:
         raise NotImplementedError(f"No model config yaml for model type {model_type}")
     return model_path
