@@ -79,6 +79,12 @@ spec:
             successThreshold: {{ .Values.image.readinessProbe.successThreshold }}
             failureThreshold: {{ .Values.image.readinessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.image.readinessProbe.timeoutSeconds }}
+          env: 
+            - name: ALLOWED_GITHUB_AUTH_EMAILS 
+              valueFrom: 
+                secretKeyRef: 
+                  name: {{ .Release.Name }} 
+                  key: ALLOWED_GITHUB_AUTH_EMAILS             
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}

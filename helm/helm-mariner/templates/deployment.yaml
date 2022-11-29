@@ -50,11 +50,11 @@ spec:
       serviceAccountName: {{ include "chart.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      volumes:
-        - name: {{ .Release.Name }}
-          secret:
-            secretName: {{ .Release.Name }}
-            optional: true
+      # volumes:
+      #   - name: {{ .Release.Name }}
+      #     secret:
+      #       secretName: {{ .Release.Name }}
+      #       optional: true
       containers:
         - name: {{ .Release.Name }}
           securityContext:
@@ -83,6 +83,12 @@ spec:
             successThreshold: {{ .Values.image.readinessProbe.successThreshold }}
             failureThreshold: {{ .Values.image.readinessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.image.readinessProbe.timeoutSeconds }}
+          env: 
+            - name: ALLOWED_GITHUB_AUTH_EMAILS 
+              valueFrom: 
+                secretKeyRef: 
+                  name: {{ .Release.Name }} 
+                  key: ALLOWED_GITHUB_AUTH_EMAILS 
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}
