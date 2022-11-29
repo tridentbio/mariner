@@ -11,6 +11,7 @@ from starlette import status
 import mariner.models as controller
 from api import deps
 from api.api_v1.endpoints.datasets import Paginated
+from mariner import nn_validation as validation
 from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetNotFound,
@@ -149,3 +150,12 @@ def delete_model(
 )
 def post_check_config(model_config: ModelSchema, db: Session = Depends(deps.get_db)):
     return controller.naive_check_forward_exception(db, model_config)
+
+
+@router.post(
+    "/check-type",
+    response_model=bool,
+    dependencies=[Depends(deps.get_current_active_user)],
+)
+def post_check_type(type_check_req: validation.CheckTypeHints):
+    return True
