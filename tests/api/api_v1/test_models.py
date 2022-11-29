@@ -20,12 +20,8 @@ from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from model_builder import layers_schema as layers
 from model_builder.schemas import ColumnConfig, DatasetConfig, ModelSchema
-from tests.conftest import (
-    get_test_user,
-    mock_model,
-    model_config,
-    setup_create_model,
-)
+from tests.fixtures.model import mock_model, model_config, setup_create_model
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 
@@ -314,6 +310,24 @@ def test_post_check_config_good_model(
     client: TestClient,
 ):
     regressor: ModelSchema = model_config(dataset_name=some_dataset.name)
+    res = client.post(
+        f"{settings.API_V1_STR}/models/check-config",
+        headers=normal_user_token_headers,
+        json=regressor.dict(),
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert "output" in body
+
+
+def test_post_check_config_good_model2(
+    some_dataset: DatasetEntity,
+    normal_user_token_headers: dict[str, str],
+    client: TestClient,
+):
+    regressor: ModelSchema = model_config(
+        dataset_name=some_dataset.name, model_type="regressor-with-categorical"
+    )
     res = client.post(
         f"{settings.API_V1_STR}/models/check-config",
         headers=normal_user_token_headers,

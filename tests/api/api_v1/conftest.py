@@ -9,12 +9,9 @@ from mariner.entities import Experiment as ExperimentEntity
 from mariner.entities import Model
 from mariner.schemas.experiment_schemas import Experiment
 from mariner.stores.experiment_sql import experiment_store
-from tests.conftest import (
-    get_test_events,
-    get_test_user,
-    mock_experiment,
-    teardown_events,
-)
+from tests.fixtures.events import get_test_events, teardown_events
+from tests.fixtures.experiments import mock_experiment
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 

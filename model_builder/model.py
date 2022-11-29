@@ -8,6 +8,8 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.optim.adam import Adam
 
 from model_builder.dataset import DataInstance
+from model_builder.layers.one_hot import OneHot
+from model_builder.layers_schema import ModelbuilderonehotLayerConfig
 from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import collect_args
 
@@ -33,14 +35,12 @@ class Metrics:
                     "train_mape": metrics.MeanAbsolutePercentageError(),
                     "train_R2": metrics.R2Score(),
                     "train_pearson": metrics.PearsonCorrCoef(),
-                    "train_spearman": metrics.SpearmanCorrCoef(),
                     "val_mse": metrics.MeanSquaredError(),
                     "val_mae": metrics.MeanAbsoluteError(),
                     "val_ev": metrics.ExplainedVariance(),
                     "val_mape": metrics.MeanAbsolutePercentageError(),
                     "val_R2": metrics.R2Score(),
                     "val_pearson": metrics.PearsonCorrCoef(),
-                    "val_spearman": metrics.SpearmanCorrCoef(),
                 }
             )
         else:
@@ -69,12 +69,17 @@ class Metrics:
     def get_training_metrics(self, prediction: torch.Tensor, batch: DataInstance):
         metrics_dict = {}
         for metric in self.metrics:
-            if not metric.startswith("val"):
+            if not metric.startswith("train"):
                 continue
             if isinstance(self.metrics[metric], (metrics.Accuracy)):
                 metrics_dict[metric] = self.metrics[metric](
                     prediction.squeeze().long(), batch["y"].squeeze().long()
                 )
+            else:
+                metrics_dict[metric] = self.metrics[metric](
+                    prediction.squeeze(), batch["y"].squeeze()
+                )
+
         return metrics_dict
 
     def get_validation_metrics(self, prediction: torch.Tensor, batch: DataInstance):
@@ -96,13 +101,25 @@ class CustomModel(LightningModule):
         self.layer_configs = {layer.name: layer for layer in config.layers}
         for layer in config.layers:
             layer_instance = layer.create()
+            if isinstance(layer_instance, OneHot) and isinstance(
+                layer, ModelbuilderonehotLayerConfig
+            ):
+                input = layer.forward_args.x1.replace("$", "")
+                for column in config.dataset.feature_columns:
+                    if column.name == input and isinstance(
+                        column.data_type, CategoricalDataType
+                    ):
+                        print("FOUND classes", column.data_type.classes)
+                        layer_instance.classes = column.data_type.classes
+                if not layer_instance.classes:
+                    raise ValueError("Failed to find OneHot classes")
             layers_dict[layer.name] = layer_instance
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
-        # This is safe as long ModelSchema was validated
         if not config.loss_fn:
             raise ValueError("config.loss_fn cannot be None")
+        # This is safe as long ModelSchema was validated
         loss_fn_class = eval(config.loss_fn)
         self.loss_fn = loss_fn_class()
 

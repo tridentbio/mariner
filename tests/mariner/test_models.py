@@ -10,7 +10,8 @@ from mariner.entities import Model as ModelEntity
 from mariner.schemas.model_schemas import Model
 from mariner.stores.dataset_sql import dataset_store
 from model_builder.schemas import ModelSchema
-from tests.conftest import get_test_user, model_config
+from tests.fixtures.model import model_config
+from tests.fixtures.user import get_test_user
 
 
 def test_get_model_prediction(db: Session, model: Model):

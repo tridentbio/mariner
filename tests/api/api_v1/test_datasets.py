@@ -11,7 +11,8 @@ from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetModel
 from mariner.schemas.dataset_schemas import DatasetCreateRepo, Split
 from mariner.stores.dataset_sql import dataset_store
-from tests.conftest import get_test_user, mock_dataset
+from tests.fixtures.dataset import mock_dataset
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 
