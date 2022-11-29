@@ -71,10 +71,7 @@ def get_origin_type_and_args(annotation: typing.Any, memo: Memo):
     if origin_type is typing.Annotated:
         annotation, *extras = typing.get_args(annotation)
         origin_type = typing.get_origin(annotation)
-    else:
-        return None, None
-
-    if origin_type is not None:
+    elif origin_type is not None:
         args = typing.get_args(annotation)
     else:
         origin_type = annotation
