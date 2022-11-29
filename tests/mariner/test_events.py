@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from mariner import events as events_ctl
 from mariner.entities import EventEntity
-from tests.conftest import get_test_user
+from tests.fixtures.user import get_test_user
 
 
 def test_get_events_from_user(db: Session, events_fixture: List[EventEntity]):

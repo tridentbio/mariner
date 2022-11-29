@@ -18,7 +18,7 @@ def create_model_version(
     client: mlflow.tracking.MlflowClient,
     name: str,
     model: torch.nn.Module,
-    artifact_path="s3://dev-mariner-datasets",
+    artifact_path: Optional[str] = None,
     desc: Optional[str] = None,
 ) -> ModelVersion:
     if not artifact_path:

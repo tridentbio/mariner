@@ -13,7 +13,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
 uvicorn = "^0.16.0"
-fastapi = "==0.76.0"
+fastapi = "0.86.0"
 python-multipart = "^0.0.5"
 email-validator = "^1.0.5"
 celery = "^4.4.2"
@@ -46,6 +46,7 @@ wonderwords = "^2.2.0"
 fastapi-utils = "^0.2.1"
 Sphinx = "^5.3.0"
 torchmetrics = "^0.10.2"
+requests = "^2.28.1"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.20.0"

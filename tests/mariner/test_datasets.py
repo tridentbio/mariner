@@ -14,7 +14,7 @@ from mariner.schemas.dataset_schemas import (
     Split,
     StringDataType,
 )
-from tests.conftest import get_test_user
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 

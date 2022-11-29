@@ -1,7 +1,7 @@
 import pytest
 
 from model_builder.schemas import ModelSchema
-from tests.conftest import model_config
+from tests.fixtures.model import model_config
 
 
 @pytest.fixture(scope="module")
