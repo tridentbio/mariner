@@ -17,6 +17,7 @@ from mariner.exceptions import (
     ModelNameAlreadyUsed,
     ModelNotFound,
 )
+from mariner.exceptions.model_exceptions import InvalidDataframe
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     Model,
@@ -109,6 +110,11 @@ def post_predict(
                 model_version_id=model_version_id,
                 model_input=model_input,
             ),
+        )
+    except InvalidDataframe as exp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Payload failed following checks:{','.join(exp.reasons)}",
         )
     except ModelNotFound:
         raise HTTPException(

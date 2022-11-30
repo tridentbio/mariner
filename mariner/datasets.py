@@ -34,6 +34,7 @@ from mariner.stats import get_metadata as get_stats
 from mariner.stats import get_stats as get_summary
 from mariner.stores.dataset_sql import dataset_store
 from mariner.utils import hash_md5
+from mariner.validation import validate_smiles_series
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
 DATASET_BUCKET = settings.AWS_DATASETS
@@ -285,32 +286,6 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
     dataset = dataset_store.remove(db, dataset.id)
     json.dumps(dataset.stats)
     return Dataset.from_orm(dataset)
-
-
-def validate_smiles(smiles: str) -> str:
-    try:
-        mol = Chem.MolFromSmiles(smiles, sanitize=False)
-    except Exception:
-        raise ValueError(f"Type of SMILES {type(smiles)} must be a string.")
-
-    if mol is None:
-        raise ValueError(f'SMILES "{smiles}" is not syntacticaly valid.')
-    else:
-        try:
-            Chem.SanitizeMol(mol)
-        except:  # noqa: E722
-            raise ValueError(f'SMILES "{smiles}" does not have valid chemistry.')
-
-    return smiles
-
-
-def validate_smiles_series(smiles_series: pd.Series) -> bool:
-    for val in smiles_series:
-        try:
-            validate_smiles(val)
-        except ValueError:
-            return False
-    return True
 
 
 def infer_domain_type_from_series(series: pd.Series):
