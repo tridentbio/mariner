@@ -1,5 +1,5 @@
 import traceback
-from typing import Any, Optional, Union, get_type_hints
+from typing import Any, List, Literal, Optional, Tuple, Union, get_type_hints
 from uuid import uuid4
 
 import mlflow
@@ -18,6 +18,7 @@ from mariner.exceptions import (
     ModelNotFound,
     ModelVersionNotFound,
 )
+from mariner.exceptions.model_exceptions import InvalidDataframe
 from mariner.logger import logger
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
@@ -34,9 +35,11 @@ from mariner.schemas.model_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
+from mariner.validation import is_valid_smiles_series
 from model_builder import generate, layers_schema
 from model_builder.dataset import CustomDataset
 from model_builder.model import CustomModel
+from model_builder.schemas import DatasetConfig, SmileDataType
 from model_builder.utils import get_class_from_path_string
 
 
@@ -265,14 +268,56 @@ class PredictRequest(ApiBaseModel):
     model_input: Any
 
 
+InvalidReason = Literal["invalid-smiles-series"]
+
+
+def _check_dataframe_conforms_dataset(
+    df: pd.DataFrame, dataset_config: DatasetConfig
+) -> List[Tuple[str, InvalidReason]]:
+    """Checks if dataframe conforms to data types specified in dataset_config
+
+    Args:
+        df: dataframe to be checked
+        dataset_config: model builder dataset configuration used in model building
+    """
+    column_configs = dataset_config.feature_columns + [dataset_config.target_column]
+    result = []
+    for column_config in column_configs:
+        data_type = column_config.data_type
+        if isinstance(data_type, SmileDataType):
+            series = df[column_config.name]
+            if not is_valid_smiles_series(series):
+                result.append((column_config.name, "invalid-smiles-series"))
+    return result
+
+
 def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
-    """(Slowly) Loads a model version and apply it to a sample input"""
+    """(Slowly) Loads a model version and apply it to a sample input
+
+    Args:
+        db: Session with the database
+        request: prediction request data
+
+    Returns:
+        torch.Tensor: model output
+
+    Raises:
+        ModelVersionNotFound: If the version from request.model_version_id
+        is not in the database
+        InvalidDataframe: If the dataframe fails one or more checks
+    """
     modelversion = ModelVersion.from_orm(
         model_store.get_model_version(db, request.model_version_id)
     )
     if not modelversion:
         raise ModelVersionNotFound()
     df = pd.DataFrame.from_dict(request.model_input)
+    broken_checks = _check_dataframe_conforms_dataset(df, modelversion.config.dataset)
+    if len(broken_checks) > 0:
+        raise InvalidDataframe(
+            f"dataframe failed {len(broken_checks)} checks",
+            reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
+        )
     dataset = CustomDataset(
         data=df,
         feature_columns=modelversion.config.dataset.feature_columns,
