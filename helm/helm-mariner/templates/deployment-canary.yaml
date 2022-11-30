@@ -78,16 +78,12 @@ spec:
             periodSeconds: {{ .Values.image.readinessProbe.periodSeconds }}
             successThreshold: {{ .Values.image.readinessProbe.successThreshold }}
             failureThreshold: {{ .Values.image.readinessProbe.failureThreshold }}
-            timeoutSeconds: {{ .Values.image.readinessProbe.timeoutSeconds }}
-          env: 
-            - name: ALLOWED_GITHUB_AUTH_EMAILS 
-              valueFrom: 
-                secretKeyRef: 
-                  name: {{ .Release.Name }} 
-                  key: ALLOWED_GITHUB_AUTH_EMAILS             
+            timeoutSeconds: {{ .Values.image.readinessProbe.timeoutSeconds }}       
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}
+            - configMapRef:
+                name: {{ .Release.Name }}-emails
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
