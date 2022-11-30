@@ -35,7 +35,7 @@ from mariner.schemas.model_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
-from mariner.validation import validate_smiles_series
+from mariner.validation import is_valid_smiles_series
 from model_builder import generate, layers_schema
 from model_builder.dataset import CustomDataset
 from model_builder.model import CustomModel
@@ -286,7 +286,7 @@ def _check_dataframe_conforms_dataset(
         data_type = column_config.data_type
         if isinstance(data_type, SmileDataType):
             series = df[column_config.name]
-            if not validate_smiles_series(series):
+            if not is_valid_smiles_series(series):
                 result.append((column_config.name, "invalid-smiles-series"))
     return result
 

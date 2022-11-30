@@ -1,5 +1,6 @@
 """
-This module is responsible to defined validatores for datasets and dataframes
+This module is responsible for data validation. It has functions to validate
+single values and dataframes.
 """
 
 
@@ -9,7 +10,7 @@ from rdkit import Chem
 Mol = Chem.rdchem.Mol
 
 
-def validate_smiles(smiles: str) -> Mol:
+def make_mol(smiles: str) -> Mol:
     """Transforms smiles to rdkit Mol
 
     Args:
@@ -34,10 +35,8 @@ def validate_smiles(smiles: str) -> Mol:
     return mol
 
 
-def validate_smiles_series(smiles_series: pd.Series) -> bool:
+def is_valid_smiles_series(smiles_series: pd.Series) -> bool:
     """Validates a pandas string series checking if all elements are valid smiles
-
-    [TODO:description]
 
     Args:
         smiles_series: pd.Series of strings
@@ -47,7 +46,7 @@ def validate_smiles_series(smiles_series: pd.Series) -> bool:
     """
     for val in smiles_series:
         try:
-            validate_smiles(val)
+            make_mol(val)
         except ValueError:
             return False
     return True
