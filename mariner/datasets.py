@@ -34,7 +34,7 @@ from mariner.stats import get_metadata as get_stats
 from mariner.stats import get_stats as get_summary
 from mariner.stores.dataset_sql import dataset_store
 from mariner.utils import hash_md5
-from mariner.validation import validate_smiles_series
+from mariner.validation import is_valid_smiles_series
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
 DATASET_BUCKET = settings.AWS_DATASETS
@@ -134,7 +134,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     smiles_column = None
 
     for col in df.columns:
-        if validate_smiles_series(df[col]):
+        if is_valid_smiles_series(df[col]):
             smiles_column = col
             break
 
@@ -261,7 +261,7 @@ def update_dataset(
         smiles_column = None
 
         for col in df.columns:
-            if validate_smiles_series(df[col]):
+            if is_valid_smiles_series(df[col]):
                 smiles_column = col
                 break
 
@@ -293,7 +293,7 @@ def infer_domain_type_from_series(series: pd.Series):
         return NumericalDataType(domain_kind="numeric")
     elif series.dtype == object:
         # check if it is smiles
-        if validate_smiles_series(series):
+        if is_valid_smiles_series(series):
             return SmileDataType(domain_kind="smiles")
         # check if it is likely to be categorical
         series = series.sort_values()
