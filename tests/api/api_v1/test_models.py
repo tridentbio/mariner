@@ -248,6 +248,28 @@ def test_post_predict(
     assert len(body) == 3
 
 
+def test_post_predict_validates_smiles(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_model: Model,
+):
+    model_version = some_model.versions[-1].id
+    route = f"{settings.API_V1_STR}/models/{model_version}/predict"
+    res = client.post(
+        route,
+        json={
+            "smiles": [
+                "abc",
+                "abdc",
+                "aebdc",
+            ],
+            "mwt": [0.3, 0.1, 0.9],
+        },
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == 400
+
+
 def test_get_model_version(
     client: TestClient, some_model: Model, normal_user_token_headers: dict[str, str]
 ):
