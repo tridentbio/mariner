@@ -67,7 +67,7 @@ jobs:
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl delete pod -l component=ray-worker
+        kubectl delete pod -l component=ray-worker -n ray
         # kubectl apply -f - <<< "$CONFIGMAP"
         # helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/. \
         #   --set "replicaCount=$REPLICA_COUNT" \
