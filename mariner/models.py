@@ -311,7 +311,7 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
     )
     if not modelversion:
         raise ModelVersionNotFound()
-    df = pd.DataFrame.from_dict(request.model_input)
+    df = pd.DataFrame.from_dict(request.model_input, dtype=float)
     broken_checks = _check_dataframe_conforms_dataset(df, modelversion.config.dataset)
     if len(broken_checks) > 0:
         raise InvalidDataframe(

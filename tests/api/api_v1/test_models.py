@@ -239,7 +239,7 @@ def test_post_predict(
                 "CCCCC",
                 "CCCCCCC",
             ],
-            "mwt": [0.3, 0.1, 0.9],
+            "mwt": [3, 1, 9],
         },
         headers=normal_user_token_headers,
     )
