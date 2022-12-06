@@ -19,7 +19,7 @@ class ModelVersion(ApiBaseModel):
     id: int
     model_id: int
     name: str
-    description: Optional[str]
+    description: Union[str, None]
     mlflow_version: str
     mlflow_model_name: str
     config: ModelSchema
