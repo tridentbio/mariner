@@ -35,16 +35,19 @@ def make_mol(smiles: str) -> Mol:
     return mol
 
 
-def is_valid_smiles_series(smiles_series: pd.Series) -> bool:
+def is_valid_smiles_series(smiles_series: pd.Series, weak_check=False) -> bool:
     """Validates a pandas string series checking if all elements are valid smiles
+
+    if weak_check is True, only check first 20 rows
 
     Args:
         smiles_series: pd.Series of strings
+        weak_check: Flag to skip checking the whole data series
 
     Returns:
         bool: True if series is a of valid smile strings
     """
-    for val in smiles_series:
+    for val in smiles_series[: 20 if weak_check else len(smiles_series)]:
         try:
             make_mol(val)
         except ValueError:

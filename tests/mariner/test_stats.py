@@ -1,3 +1,4 @@
+import io
 from pathlib import Path
 
 import pandas as pd
@@ -43,7 +44,9 @@ def dataset_file(tmp_path: Path):
 
 
 def test_get_entity_info_from_csv(dataset_file: UploadFile):
-    nrows, ncols, fsize, stats = get_entity_info_from_csv(dataset_file)
+    df_file = io.BytesIO(dataset_file.file.read())
+    df = pd.read_csv(df_file)
+    nrows, ncols, stats = get_entity_info_from_csv(df)
     assert nrows == 5
     assert "a" in stats
     assert "b" in stats
