@@ -93,6 +93,8 @@ def test_post_models_success(
     mlflow_version = version["mlflowVersion"]
     model_version = version["name"]
     assert version["config"]["name"] is not None
+    assert "description" in body
+    assert version["description"] == model.model_version_description
     model = mlflow.pyfunc.load_model(
         model_uri=f"models:/{mlflow_model_name}/{mlflow_version}"
     )

@@ -161,6 +161,7 @@ def create_model(
                     name=model_create.config.name,
                     mlflow_model_name=regmodel.name,
                     config=model_create.config,
+                    description=model_create.model_version_description,
                 ),
             )
         )

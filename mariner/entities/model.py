@@ -24,6 +24,7 @@ class ModelVersion(Base):
     model_id = Column(
         Integer, ForeignKey("model.id", ondelete="CASCADE"), nullable=False
     )
+    description = Column(String, nullable=True)
     model = relationship("Model", back_populates="versions")
     name = Column(String, nullable=False)
     mlflow_version = Column(String, nullable=False)
