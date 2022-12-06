@@ -80,10 +80,7 @@ def _get_df_with_split_indexs(
     split_target: str,
     split_column: Union[str, None] = None,
 ):
-    train_size, val_size, test_size = map(int, split_target.split("-"))
-    train_size = train_size / 100
-    val_size = val_size / 100
-    test_size = test_size / 100
+    train_size, val_size, test_size = map(lambda x: int(x)/100, split_target.split("-"))
     if split_type == "random":
         splitter = RandomSplitter()
         df = splitter.split(df, train_size, test_size, val_size)
