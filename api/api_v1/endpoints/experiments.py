@@ -8,7 +8,7 @@ from sqlalchemy.orm.session import Session
 import mariner.experiments as experiments_ctl
 from api import deps
 from mariner.entities.user import User
-from mariner.schemas.api import ApiBaseModel
+from mariner.schemas.api import ApiBaseModel, Paginated
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
@@ -29,16 +29,17 @@ async def post_experiments(
     return result
 
 
-@router.get("/", response_model=List[Experiment])
+@router.get("/", response_model=Paginated[Experiment])
 def get_experiments(
     experiments_query: ListExperimentsQuery = Depends(ListExperimentsQuery),
     stage: Optional[List[str]] = Query(default=None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
-) -> List[Experiment]:
+) -> Paginated[Experiment]:
+    print("Experiments query %r" % experiments_query)
     experiments_query.stage = stage
-    result = experiments_ctl.get_experiments(db, current_user, experiments_query)
-    return result
+    data, total = experiments_ctl.get_experiments(db, current_user, experiments_query)
+    return Paginated(data=data, total=total)
 
 
 @router.get("/running-history", response_model=List[RunningHistory])

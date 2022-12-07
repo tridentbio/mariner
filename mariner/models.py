@@ -1,5 +1,5 @@
 import traceback
-from typing import Any, List, Literal, Optional, Tuple, Union, get_type_hints
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, get_type_hints
 from uuid import uuid4
 
 import mlflow
@@ -23,6 +23,7 @@ from mariner.logger import logger
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     ComponentOption,
+    LossOption,
     Model,
     ModelCreate,
     ModelCreateRepo,

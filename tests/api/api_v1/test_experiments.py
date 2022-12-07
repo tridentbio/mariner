@@ -32,22 +32,30 @@ def test_get_experiments(
         headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK
-    exps = res.json()
+    body = res.json()
+    exps, total = body["data"], body["total"]
     assert len(exps) > 1
+    assert total == 1
 
 
 # FAILING
 def test_get_experiments_by_stage(
     client: TestClient, some_model, some_experiments, normal_user_token_headers
 ):
-    params = {"modelId": some_model.id, "stage": ["SUCCESS", "FAILED"]}
+    # params = {
+    #     "modelId": some_model.id,
+    #     "page": 0,
+    #     "perPage": 15,
+    #     "stage": ["SUCCESS", "FAILED"],
+    # }
+    page, perPage = 0, 15
     res = client.get(
-        f"{settings.API_V1_STR}/experiments/?modelId={some_model.id}&stage[]=SUCCESS",
-        params=params,
+        f"{settings.API_V1_STR}/experiments?modelId={some_model.id}&page={page}&perPage={perPage}&stage=SUCCESS",
         headers=normal_user_token_headers,
     )
+    body = res.json()
     assert res.status_code == HTTP_200_OK
-    exps = res.json()
+    exps, total = body["data"], body["total"]
     assert len(exps) == 2
     for exp in exps:
         assert exp["stage"] == "SUCCESS"
