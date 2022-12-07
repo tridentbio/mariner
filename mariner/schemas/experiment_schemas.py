@@ -2,7 +2,7 @@ from typing import Dict, List, Literal, Optional
 
 from fastapi import Query
 
-from mariner.schemas.api import ApiBaseModel, utc_datetime
+from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
 
@@ -38,10 +38,10 @@ class Experiment(ApiBaseModel):
     stack_trace: Optional[str]
 
 
-class ListExperimentsQuery(ApiBaseModel):
-    stage: Optional[List[str]] = Query(default=None)
+class ListExperimentsQuery(PaginatedApiQuery):
+    stage: Optional[List[str]] = None
     model_id: int
-    model_version_ids: Optional[List[int]] = Query(default=None)
+    model_version_ids: Optional[List[int]] = None
 
 
 class RunningHistory(ApiBaseModel):

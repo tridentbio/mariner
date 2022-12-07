@@ -163,12 +163,14 @@ async def create_model_traning(
 
 def get_experiments(
     db: Session, user: UserEntity, query: ListExperimentsQuery
-) -> List[Experiment]:
+) -> tuple[List[Experiment], int]:
     model = model_store.get(db, query.model_id)
     if model and model.created_by_id != user.id:
         raise ModelNotFound()
-    exps = experiment_store.get_many(db, query)
-    return [Experiment.from_orm(exp) for exp in exps]
+    exps, total = experiment_store.get_experiments_paginated(
+        db, model_id=query.model_id, page=query.page, per_page=query.per_page
+    )
+    return Experiment.from_orm_array(exps), total
 
 
 def log_metrics(

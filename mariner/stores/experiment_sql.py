@@ -5,6 +5,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 
 from mariner.entities import Experiment, ModelVersion
+from mariner.entities.model import Model
 from mariner.schemas.experiment_schemas import ListExperimentsQuery
 from mariner.stores.base_sql import CRUDBase
 
@@ -57,6 +58,32 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
         if q.stage:
             query = self.filter_by_stages(query, q.stage)
         return query.all()
+
+    def _by_creator(self, query: Query, creator_id: int) -> Query:
+        query = query.filter(Experiment.created_by_id == creator_id)
+        return query
+
+    def get_experiments_paginated(
+        self,
+        db: Session,
+        model_id: Optional[int] = None,
+        created_by_id: Optional[int] = None,
+        stages: List[str] = [],
+        page: int = 1,
+        per_page: int = 15,
+    ) -> tuple[List[Experiment], int]:
+        sql_query = db.query(Experiment)
+        if model_id:
+            sql_query = self.filter_by_model_id(sql_query, model_id)
+        if created_by_id:
+            sql_query = self._by_creator(sql_query, created_by_id)
+        if len(stages):
+            sql_query = self.filter_by_stages(query=sql_query, stages=stages)
+        total = sql_query.count()
+        sql_query = sql_query.limit(per_page)
+        sql_query = sql_query.offset(per_page * page)
+        result = sql_query.all()
+        return result, total
 
     def get(self, db: Session, experiment_id: int) -> Experiment:
         return db.query(Experiment).filter(Experiment.id == experiment_id).first()
