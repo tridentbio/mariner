@@ -1,6 +1,5 @@
-from typing import Any, List, Optional
+from typing import Any, List
 
-from fastapi import Query
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
@@ -31,13 +30,10 @@ async def post_experiments(
 
 @router.get("/", response_model=Paginated[Experiment])
 def get_experiments(
-    experiments_query: ListExperimentsQuery = Depends(ListExperimentsQuery),
-    stage: Optional[List[str]] = Query(default=None),
+    experiments_query: ListExperimentsQuery = Depends(),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Paginated[Experiment]:
-    print("Experiments query %r" % experiments_query)
-    experiments_query.stage = stage
     data, total = experiments_ctl.get_experiments(db, current_user, experiments_query)
     return Paginated(data=data, total=total)
 

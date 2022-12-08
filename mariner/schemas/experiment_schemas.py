@@ -1,6 +1,9 @@
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional, Union
 
-from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
+from fastapi import Query
+from pydantic import Required
+
+from mariner.schemas.api import ApiBaseModel, utc_datetime
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
 
@@ -36,10 +39,22 @@ class Experiment(ApiBaseModel):
     stack_trace: Optional[str]
 
 
-class ListExperimentsQuery(PaginatedApiQuery):
-    stage: Optional[List[str]] = None
-    model_id: int
-    model_version_ids: Optional[List[int]] = None
+class ListExperimentsQuery:
+    def __init__(
+        self,
+        stage: Union[list[str], None] = Query(default=None),
+        model_id: Union[int, None] = Query(default=Required, alias="modelId"),
+        model_version_ids: Union[list[int], None] = Query(
+            default=None, alias="modelVersionIds"
+        ),
+        page: int = Query(default=0),
+        per_page: int = Query(default=15, alias="perPage"),
+    ):
+        self.stage = stage
+        self.model_id = model_id
+        self.page = page
+        self.per_page = per_page
+        self.model_version_ids = model_version_ids
 
 
 class RunningHistory(ApiBaseModel):

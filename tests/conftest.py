@@ -174,6 +174,7 @@ def some_experiments(
 ) -> Generator[List[Experiment], None, None]:
     user = get_test_user(db)
     version = some_model.versions[-1]
+    # creates 1 started experiment and 2 successful
     exps = [
         experiment_store.create(
             db,
@@ -184,6 +185,7 @@ def some_experiments(
         for i in range(0, 3)
     ]
     exps = [Experiment.from_orm(exp) for exp in exps]
+    assert len(exps) == 3, "failed in setup of some_experiments fixture"
     yield exps
     db.query(ExperimentEntity).filter(
         ExperimentEntity.id.in_([exp.id for exp in exps])

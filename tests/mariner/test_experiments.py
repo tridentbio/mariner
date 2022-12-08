@@ -19,9 +19,13 @@ from tests.utils.utils import random_lower_string
 @pytest.mark.asyncio
 async def test_get_experiments(db: Session, some_model: Model, some_experiments):
     user = get_test_user(db)
-    query = ListExperimentsQuery(model_id=some_model.id)
-    experiments = experiments_ctl.get_experiments(db, user, query)
-    assert len(experiments) == len(some_experiments) == 3
+    query = ListExperimentsQuery(
+        model_id=some_model.id, stage=None, page=0, per_page=15, model_version_ids=None
+    )
+    experiments, total = experiments_ctl.get_experiments(db, user, query)
+    assert (
+        len(experiments) == len(some_experiments) == total == 3
+    ), "query gets all experiments"
 
 
 @pytest.mark.asyncio
