@@ -153,7 +153,7 @@ async def create_model_traning(
                     ),
                 ),
             )
-            logging.error(exception)
+            LOG.error(exception)
         else:
             raise Exception("Task is not done")
 
@@ -171,7 +171,11 @@ def get_experiments(
     if model and model.created_by_id != user.id:
         raise ModelNotFound()
     exps, total = experiment_store.get_experiments_paginated(
-        db, model_id=query.model_id, page=query.page, per_page=query.per_page
+        db,
+        model_id=query.model_id,
+        page=query.page,
+        per_page=query.per_page,
+        stages=query.stage or [],
     )
     return Experiment.from_orm_array(exps), total
 

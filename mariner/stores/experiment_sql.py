@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import pydantic
 from sqlalchemy.orm import Query
@@ -67,7 +67,7 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
         db: Session,
         model_id: Optional[int] = None,
         created_by_id: Optional[int] = None,
-        stages: List[str] = [],
+        stages: Union[List[str], None] = None,
         page: int = 1,
         per_page: int = 15,
     ) -> tuple[List[Experiment], int]:
@@ -76,7 +76,7 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
             sql_query = self.filter_by_model_id(sql_query, model_id)
         if created_by_id:
             sql_query = self._by_creator(sql_query, created_by_id)
-        if len(stages):
+        if stages:
             sql_query = self.filter_by_stages(query=sql_query, stages=stages)
         total = sql_query.count()
         sql_query = sql_query.limit(per_page)
