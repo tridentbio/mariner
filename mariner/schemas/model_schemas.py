@@ -149,8 +149,7 @@ class ComponentOption(ComponentAnnotation):
 
 ModelOptions = List[ComponentOption]
 
+
 class LossOption(ApiBaseModel):
     key: LossType
     label: str
-
-

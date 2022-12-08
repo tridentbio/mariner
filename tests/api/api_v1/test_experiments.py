@@ -50,12 +50,12 @@ def test_get_experiments_by_stage(
     # }
     page, perPage = 0, 15
     res = client.get(
-        f"{settings.API_V1_STR}/experiments?modelId={some_model.id}&page={page}&perPage={perPage}&stage=SUCCESS",
+        f"{settings.API_V1_STR}/experiments?modelId={some_model.id}&page={page}&perPage={perPage}&stage=SUCCESS",  # noqa
         headers=normal_user_token_headers,
     )
     body = res.json()
     assert res.status_code == HTTP_200_OK
-    exps, total = body["data"], body["total"]
+    exps = body["data"]
     assert len(exps) == 2
     for exp in exps:
         assert exp["stage"] == "SUCCESS"

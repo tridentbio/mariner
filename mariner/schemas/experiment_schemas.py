@@ -1,7 +1,5 @@
 from typing import Dict, List, Literal, Optional
 
-from fastapi import Query
-
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
