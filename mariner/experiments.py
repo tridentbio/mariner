@@ -118,13 +118,16 @@ async def create_model_traning(
                     db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
                 )
                 get_websockets_manager().send_message(  # noqa
-                    type="update-running-metrics",
-                    data=UpdateRunningData(
-                        experiment_id=experiment_id,
-                        experiment_name=experiment.experiment_name,
-                        stage="SUCCESS",
-                        running_history=get_exp_manager().get_running_history(
-                            experiment.id
+                    user_id=experiment.created_by_id,
+                    message=WebSocketMessage(
+                        type="update-running-metrics",
+                        data=UpdateRunningData(
+                            experiment_id=experiment_id,
+                            experiment_name=experiment.experiment_name,
+                            stage="SUCCESS",
+                            running_history=get_exp_manager().get_running_history(
+                                experiment.id
+                            ),
                         ),
                     ),
                 )
