@@ -58,7 +58,7 @@ def from_frame(depth: int = 0) -> Memo:
 def get_origin_type_and_args(annotation: typing.Any, memo: Memo):
     """Get's the origin_type and args from a type object, respects typing.ForwardRef
 
-    Inspired by https://github.com/agronholm/typeguard/blob/833c371792d2a5e65b5a48ce65b52c5916a02ab6/src/typeguard/_checkers.py#L528 noqa
+    Inspired by https://github.com/agronholm/typeguard/blob/833c371792d2a5e65b5a48ce65b52c5916a02ab6/src/typeguard/_checkers.py#L528 # noqa
 
     Args:
         annotation: type object
