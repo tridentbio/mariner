@@ -8,7 +8,7 @@ from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
 from model_builder.model import CustomModel
-from model_builder.schemas import ModelSchema
+from model_builder.schemas import LossType, ModelSchema
 
 
 class ModelDeployment(ApiBaseModel):
@@ -148,3 +148,8 @@ class ComponentOption(ComponentAnnotation):
 
 
 ModelOptions = List[ComponentOption]
+
+
+class LossOption(ApiBaseModel):
+    key: LossType
+    label: str

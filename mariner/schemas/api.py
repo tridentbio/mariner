@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Generic, List, TypeVar
+from typing import Any, Generic, List, TypeVar
 
 from humps import camel
 from pydantic.datetime_parse import parse_datetime
@@ -14,6 +14,10 @@ class ApiBaseModel(BaseModel):
         allow_population_by_alias = True
         orm_mode = True
         underscore_attrs_are_private = True
+
+    @classmethod
+    def from_orm_array(cls, entities: List[Any]):
+        return [cls.from_orm(entity) for entity in entities]
 
 
 DataT = TypeVar("DataT")

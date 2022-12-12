@@ -118,13 +118,16 @@ async def create_model_traning(
                     db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
                 )
                 get_websockets_manager().send_message(  # noqa
-                    type="update-running-metrics",
-                    data=UpdateRunningData(
-                        experiment_id=experiment_id,
-                        experiment_name=experiment.experiment_name,
-                        stage="SUCCESS",
-                        running_history=get_exp_manager().get_running_history(
-                            experiment.id
+                    user_id=experiment.created_by_id,
+                    message=WebSocketMessage(
+                        type="update-running-metrics",
+                        data=UpdateRunningData(
+                            experiment_id=experiment_id,
+                            experiment_name=experiment.experiment_name,
+                            stage="SUCCESS",
+                            running_history=get_exp_manager().get_running_history(
+                                experiment.id
+                            ),
                         ),
                     ),
                 )
@@ -150,7 +153,7 @@ async def create_model_traning(
                     ),
                 ),
             )
-            logging.error(exception)
+            LOG.error(exception)
         else:
             raise Exception("Task is not done")
 
@@ -163,12 +166,18 @@ async def create_model_traning(
 
 def get_experiments(
     db: Session, user: UserEntity, query: ListExperimentsQuery
-) -> List[Experiment]:
+) -> tuple[List[Experiment], int]:
     model = model_store.get(db, query.model_id)
     if model and model.created_by_id != user.id:
         raise ModelNotFound()
-    exps = experiment_store.get_many(db, query)
-    return [Experiment.from_orm(exp) for exp in exps]
+    exps, total = experiment_store.get_experiments_paginated(
+        db,
+        model_id=query.model_id,
+        page=query.page,
+        per_page=query.per_page,
+        stages=query.stage or [],
+    )
+    return Experiment.from_orm_array(exps), total
 
 
 def log_metrics(

@@ -1,8 +1,6 @@
 version: "3.3"
 services:
   backend:
-    ports:
-      - "8888:8888"
     volumes:
       - ./:/app:z
     environment:

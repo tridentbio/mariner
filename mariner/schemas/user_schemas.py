@@ -31,6 +31,7 @@ class UserCreateBasic(UserBase):
 
 
 class UserCreateOAuth(UserBase):
+    image_url: Optional[str]
     email: EmailStr
 
 

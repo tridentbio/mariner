@@ -134,7 +134,7 @@ class DataModule(pl.LightningDataModule):
         data: pd.DataFrame,
         split_type: str,
         split_target: str,
-        featurizers_config: FeaturizersType,
+        featurizers_config: List[FeaturizersType],
         dataset_config: DatasetConfig,
         batch_size: int = 32,
     ):

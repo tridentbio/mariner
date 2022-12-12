@@ -1,6 +1,5 @@
-from typing import Any, List, Optional
+from typing import Any, List
 
-from fastapi import Query
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
@@ -8,7 +7,7 @@ from sqlalchemy.orm.session import Session
 import mariner.experiments as experiments_ctl
 from api import deps
 from mariner.entities.user import User
-from mariner.schemas.api import ApiBaseModel
+from mariner.schemas.api import ApiBaseModel, Paginated
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
@@ -29,16 +28,14 @@ async def post_experiments(
     return result
 
 
-@router.get("/", response_model=List[Experiment])
+@router.get("/", response_model=Paginated[Experiment])
 def get_experiments(
-    experiments_query: ListExperimentsQuery = Depends(ListExperimentsQuery),
-    stage: Optional[List[str]] = Query(default=None),
+    experiments_query: ListExperimentsQuery = Depends(),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
-) -> List[Experiment]:
-    experiments_query.stage = stage
-    result = experiments_ctl.get_experiments(db, current_user, experiments_query)
-    return result
+) -> Paginated[Experiment]:
+    data, total = experiments_ctl.get_experiments(db, current_user, experiments_query)
+    return Paginated(data=data, total=total)
 
 
 @router.get("/running-history", response_model=List[RunningHistory])
