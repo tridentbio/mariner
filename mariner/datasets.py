@@ -74,7 +74,7 @@ def _upload_s3(file: UploadFile):
     return key
 
 
-def _get_df_with_split_indexs(
+def _get_df_with_split_indexes(
     df: pd.DataFrame,
     split_type: Literal["random", "scaffold"],
     split_target: str,
@@ -119,7 +119,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     df = pd.read_csv(io.BytesIO(file_bytes))
     rows, columns, stats = get_entity_info_from_csv(df)
 
-    df_with_split_indexs = _get_df_with_split_indexs(
+    df_with_split_indexs = _get_df_with_split_indexes(
         df,
         split_type=data.split_type,
         split_target=data.split_target,
