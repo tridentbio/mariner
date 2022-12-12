@@ -1,8 +1,9 @@
-from typing import Any, Dict
+from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
 import rdkit.Chem as Chem
+from pandas.core.frame import DataFrame
 from rdkit.Chem import Descriptors
 
 
@@ -119,67 +120,78 @@ def create_int_histogram(data: pd.Series, bins: int) -> Dict[str, Any]:
     return histogram_data
 
 
-def get_dataset_summary(dataset: pd.DataFrame, smiles_column: str):
+def get_dataset_summary(
+    dataset: pd.DataFrame, smiles_columns: List[str] = []
+) -> dict[str, Union[pd.Series, dict[str, pd.Series]]]:
+    """Computes the dataset histograms
+
+    Creates a dictionary to hold histograms of float/int dtype columns
+    and histograms of mol properties computed by rdkit
+
+    :param dataset pd.DataFrame: original dataset
+    :param smiles_columns List[str]: Optional array of smiles column to
+    compute mol props
+    :return dict[str, Union[pd.Series, dict[str, pd.Series]]
+    """
 
     statistics = {}
 
-    # Iterate over column and calculate the
-    # distributions for each int or float column
-    # If the column is of any other type, an empty
-    # stats obj is created, because the keys of
-    # the stats summary object is used to get the
-    # complete array of colums of the dataset
     for column, dtype in dataset.dtypes.items():
         if np.issubdtype(dtype, float):
             statistics[column] = {"hist": create_float_histogram(dataset[column], 15)}
         elif np.issubdtype(dtype, int):
             statistics[column] = {"hist": create_int_histogram(dataset[column], 15)}
         else:
-            statistics[column] = {}
+            statistics[column] = {}  # The key is used to recover all columns
 
-    # Calculate and compute chemical stats for smile column
-    (
-        dataset["mwt"],
-        dataset["tpsa"],
-        dataset["atom_count"],
-        dataset["ring_count"],
-        dataset["has_chiral_centers"],
-    ) = zip(*dataset[smiles_column].apply(get_chemical_props))
+    for smiles_column in smiles_columns:
+        # Get chemical stats for smile column
+        (mwts, tpsas, atom_counts, ring_counts, has_chiral_centers_arr) = zip(
+            *dataset[smiles_column].apply(get_chemical_props)
+        )
 
-    chem_dataset = dataset[
-        ["mwt", "tpsa", "atom_count", "ring_count", "has_chiral_centers"]
-    ]
-
-    # Convert boolean column to 0 and 1
-    chem_dataset["has_chiral_centers"] = chem_dataset["has_chiral_centers"].apply(
-        lambda x: 1 if x else 0
-    )
-
-    statistics[smiles_column] = {}
-    for column, dtype in chem_dataset.dtypes.items():
-        if np.issubdtype(dtype, float):
-            statistics[smiles_column][column] = {
-                "hist": create_float_histogram(chem_dataset[column], 15)
+        chem_dataset = DataFrame(
+            {
+                "mwt": mwts,
+                "tpsa": tpsas,
+                "atom_count": atom_counts,
+                "ring_count": ring_counts,
+                "has_chiral_centers": has_chiral_centers_arr,
             }
-        elif np.issubdtype(dtype, int):
-            statistics[smiles_column][column] = {
-                "hist": create_int_histogram(chem_dataset[column], 15)
-            }
+        )
+
+        # Convert boolean column to 0 and 1
+        chem_dataset["has_chiral_centers"] = chem_dataset["has_chiral_centers"].apply(
+            lambda x: 1 if x else 0,
+        )
+
+        statistics[smiles_column] = {}
+        for column, dtype in chem_dataset.dtypes.items():
+            if np.issubdtype(dtype, float):
+                statistics[smiles_column][column] = {
+                    "hist": create_float_histogram(chem_dataset[column], 15)
+                }
+            elif np.issubdtype(dtype, int):
+                statistics[smiles_column][column] = {
+                    "hist": create_int_histogram(chem_dataset[column], 15)
+                }
 
     return statistics
 
 
-def get_stats(dataset: pd.DataFrame, smiles_column: str):
+def get_stats(dataset: pd.DataFrame, smiles_columns: List[str]):
     stats = {}
 
-    stats["full"] = get_dataset_summary(dataset, smiles_column)
+    stats["full"] = get_dataset_summary(dataset, smiles_columns)
     stats["train"] = get_dataset_summary(
-        dataset[dataset["step"] == "train"], smiles_column
+        dataset[dataset["step"] == "train"], smiles_columns
     )
     stats["test"] = get_dataset_summary(
-        dataset[dataset["step"] == "test"], smiles_column
+        dataset[dataset["step"] == "test"], smiles_columns
     )
-    stats["val"] = get_dataset_summary(dataset[dataset["step"] == "val"], smiles_column)
+    stats["val"] = get_dataset_summary(
+        dataset[dataset["step"] == "val"], smiles_columns
+    )
 
     return stats
 

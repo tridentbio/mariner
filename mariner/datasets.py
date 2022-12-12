@@ -1,12 +1,11 @@
 import datetime
 import io
 import json
-from typing import Any, List, Mapping, Union
+from typing import Any, List, Literal, Mapping, Union
 
 import pandas as pd
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
-from rdkit import Chem
 from sqlalchemy.orm.session import Session
 
 from mariner.core.aws import Bucket, upload_s3_file
@@ -60,13 +59,10 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
 
 
 def get_entity_info_from_csv(
-    file: UploadFile,
-) -> tuple[int, int, int, Mapping[Any, Any]]:
-    file_bytes = file.file.read()
-    df = pd.read_csv(io.BytesIO(file_bytes))
-    assert isinstance(df, pd.DataFrame)
+    df: pd.DataFrame,
+) -> tuple[int, int, Mapping[Any, Any]]:
     stats: Mapping[Any, Any] = get_stats(df).to_dict(orient="dict")
-    return len(df), len(df.columns), len(file_bytes), stats
+    return len(df), len(df.columns), stats
 
 
 def _upload_s3(file: UploadFile):
@@ -78,68 +74,68 @@ def _upload_s3(file: UploadFile):
     return key
 
 
-def create_dataset(db: Session, current_user: User, data: DatasetCreate):
-    existing_dataset = dataset_store.get_by_name(db, data.name)
+def _get_df_with_split_indexs(
+    df: pd.DataFrame,
+    split_type: Literal["random", "scaffold"],
+    split_target: str,
+    split_column: Union[str, None] = None,
+):
+    train_size, val_size, test_size = map(lambda x: int(x)/100, split_target.split("-"))
+    if split_type == "random":
+        splitter = RandomSplitter()
+        df = splitter.split(df, train_size, test_size, val_size)
+        return df
+    elif split_type == "scaffold":
+        splitter = ScaffoldSplitter()
+        assert (
+            split_column is not None
+        ), "split column can't be none when split_type is scaffold"
+        df = splitter.split(df, split_column, train_size, test_size, val_size)
+        return df
+    else:
+        raise NotImplementedError(f"{split_type} splitting is not implemented")
 
+
+def create_dataset(db: Session, current_user: User, data: DatasetCreate):
+    """
+    Domain function that creates a dataset for the user.
+
+    :param db Session: Connection to the database
+    :param current_user User: request owner
+    :param data DatasetCreate: dataset attributes
+    :raises DatasetAlreadyExists: when there is a name clash between the user datasets
+    :raises ValueError: When data.split_column is not provided and data.split_type is
+    scaffold
+    """
+    existing_dataset = dataset_store.get_by_name(db, data.name)
     if existing_dataset:
         raise DatasetAlreadyExists()
-    rows, columns, bytes, stats = get_entity_info_from_csv(data.file)
-    data.file.file.seek(0)
 
-    # Before upload we need to do the split
-    if data.split_type == "random":
-        splitter = RandomSplitter()
+    # All dataset is loaded into memory
+    file_bytes = data.file.file.read()
+    filesize = data.file.file.tell()
+    df = pd.read_csv(io.BytesIO(file_bytes))
+    rows, columns, stats = get_entity_info_from_csv(df)
 
-        file_bytes = data.file.file.read()
-        df = pd.read_csv(io.BytesIO(file_bytes))
-
-        split_target = data.split_target.split("-")
-        train_size, val_size, test_size = split_target
-        train_size = int(train_size) / 100
-        val_size = int(val_size) / 100
-        test_size = int(test_size) / 100
-
-        df = splitter.split(df, train_size, test_size, val_size)
-
-        dataset_file = io.BytesIO()
-        df.to_csv(dataset_file, index=False)
-
-        data.file.file = dataset_file
-    else:
-
-        if data.split_column is None:
-            raise ValueError("Split Column cannot be none due to ScaffoldSplitter")
-
-        splitter = ScaffoldSplitter()
-
-        file_bytes = data.file.file.read()
-        df = pd.read_csv(io.BytesIO(file_bytes))
-
-        split_target = data.split_target.split("-")
-        train_size, val_size, test_size = split_target
-        train_size = int(train_size) / 100
-        val_size = int(val_size) / 100
-        test_size = int(test_size) / 100
-
-        df = splitter.split(df, data.split_column, train_size, test_size, val_size)
-
-        dataset_file = io.BytesIO()
-        df.to_csv(dataset_file, index=False)
-
-        data.file.file = dataset_file
+    df_with_split_indexs = _get_df_with_split_indexs(
+        df,
+        split_type=data.split_type,
+        split_target=data.split_target,
+        split_column=data.split_column,
+    )
+    dataset_file = io.BytesIO()
+    df_with_split_indexs.to_csv(dataset_file, index=False)
+    data.file.file = dataset_file
 
     data_url = _upload_s3(data.file)
 
     # Detect the smiles column name
-    smiles_column = None
-
+    smiles_columns = []
     for col in df.columns:
-        if is_valid_smiles_series(df[col]):
-            smiles_column = col
-            break
+        if is_valid_smiles_series(df[col], weak_check=True):
+            smiles_columns.append(col)
 
-    if smiles_column:
-        stats = get_summary(df, smiles_column)
+    stats = get_summary(df, smiles_columns)
 
     create_obj = DatasetCreateRepo(
         columns=columns,
@@ -149,7 +145,7 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         split_type=data.split_type,
         name=data.name,
         description=data.description,
-        bytes=bytes,
+        bytes=filesize,
         created_at=datetime.datetime.now(),
         updated_at=datetime.datetime.now(),
         stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
@@ -158,11 +154,9 @@ def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         columns_metadata=data.columns_metadata,
     )
 
-    if smiles_column:
-        create_obj.stats = stats
+    create_obj.stats = stats
 
     dataset = dataset_store.create(db, create_obj)
-    dataset = dataset_store.get(db, dataset.id)
 
     return dataset
 
@@ -199,77 +193,6 @@ def update_dataset(
 
     if data.split_column:
         update.split_column = data.split_column
-
-    if data.file:
-        file_bytes = data.file.file.read()
-        (
-            update.rows,
-            update.columns,
-            update.bytes,
-            update.stats,
-        ) = get_entity_info_from_csv(data.file)
-        data.file.file.seek(0)
-
-        # Before upload we need to do the split
-        if data.split_type == "random":
-            data.file.file.seek(0)
-
-            splitter = RandomSplitter()
-
-            file_bytes = data.file.file.read()
-            df = pd.read_csv(io.BytesIO(file_bytes))
-
-            split_target = data.split_target.split("-")
-            train_size, val_size, test_size = split_target
-            train_size = int(train_size) / 100
-            val_size = int(val_size) / 100
-            test_size = int(test_size) / 100
-
-            dataset = splitter.split(df, train_size, test_size, val_size)
-
-            dataset_file = io.BytesIO()
-            dataset.to_csv(dataset_file, index=False)
-            dataset_file.seek(0)
-
-            data.file.file = dataset_file
-
-        else:
-
-            if data.split_column is None:
-                raise ValueError("Split Column cannot be none due to ScaffoldSplitter")
-
-            splitter = ScaffoldSplitter()
-            file_bytes = data.file.file.read()
-            df = pd.read_csv(io.BytesIO(file_bytes))
-            split_target = data.split_target.split("-")
-            train_size, val_size, test_size = split_target
-            train_size = int(train_size) / 100
-            val_size = int(val_size) / 100
-            test_size = int(test_size) / 100
-            dataset = splitter.split(
-                df, data.split_column, train_size, test_size, val_size
-            )
-
-            dataset_file = io.BytesIO()
-            dataset.to_csv(dataset_file, index=False)
-            dataset_file.seek(0)
-            data.file.file = dataset_file
-
-        update.data_url = _upload_s3(data.file)
-
-        # Detect the smiles column name
-        smiles_column = None
-
-        for col in df.columns:
-            if is_valid_smiles_series(df[col]):
-                smiles_column = col
-                break
-
-        if smiles_column:
-            stats = get_summary(dataset, smiles_column)
-
-        if smiles_column:
-            update.stats = stats
 
     update.id = dataset_id
     saved = dataset_store.update(db, existingdataset, update)
