@@ -32,25 +32,35 @@ def test_get_experiments(
         headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK
-    exps = res.json()
-    assert len(exps) > 1
+    body = res.json()
+    exps, total = body["data"], body["total"]
+    assert len(exps) == len(some_experiments) == total == 3, "gets all experiments"
 
 
 # FAILING
 def test_get_experiments_by_stage(
     client: TestClient, some_model, some_experiments, normal_user_token_headers
 ):
-    params = {"modelId": some_model.id, "stage": ["SUCCESS", "FAILED"]}
+    params = {
+        "modelId": some_model.id,
+        "page": 0,
+        "perPage": 15,
+        "stage": ["SUCCESS"],
+    }
     res = client.get(
-        f"{settings.API_V1_STR}/experiments/?modelId={some_model.id}&stage[]=SUCCESS",
+        f"{settings.API_V1_STR}/experiments",
         params=params,
         headers=normal_user_token_headers,
     )
-    assert res.status_code == HTTP_200_OK
-    exps = res.json()
-    assert len(exps) == 2
+    body = res.json()
+    assert res.status_code == HTTP_200_OK, "Request failed with body: %r" % body
+    exps, total = body["data"], body["total"]
     for exp in exps:
-        assert exp["stage"] == "SUCCESS"
+        assert exp["stage"] == "SUCCESS", "experiment out of stage filter"
+
+    assert (
+        len(exps) == total == 2
+    ), "request failed to get the 2 out 3 successfull experiments"
 
 
 def test_post_update_metrics_unauthorized(
