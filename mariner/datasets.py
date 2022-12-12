@@ -6,7 +6,6 @@ from typing import Any, List, Mapping, Union
 import pandas as pd
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
-from rdkit import Chem
 from sqlalchemy.orm.session import Session
 
 from mariner.core.aws import Bucket, upload_s3_file
