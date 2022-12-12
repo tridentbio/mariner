@@ -19,6 +19,7 @@ class ModelVersion(ApiBaseModel):
     id: int
     model_id: int
     name: str
+    description: Union[str, None]
     mlflow_version: str
     mlflow_model_name: str
     config: ModelSchema
@@ -114,6 +115,7 @@ class ModelCreate(ApiBaseModel):
 
 class ModelVersionCreateRepo(BaseModel):
     mlflow_version: str
+    description: Union[str, None]
     mlflow_model_name: str
     model_id: int
     name: str
