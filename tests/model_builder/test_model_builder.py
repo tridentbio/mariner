@@ -1,11 +1,11 @@
-from typing import Generator
-
 import pytest
+import pytest_asyncio
 from fastapi import UploadFile
 from pytorch_lightning import Trainer
 from sqlalchemy.orm.session import Session
 
 from mariner import datasets as dataset_ctl
+from mariner.entities import Dataset as DatasetEntity
 from mariner.schemas.dataset_schemas import (
     CategoricalDataType,
     ColumnsDescription,
@@ -22,15 +22,15 @@ from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string
 
 # model configuration to be tested
-mlflow_yamls = [
+model_config_yamls = [
     "tests/data/small_regressor_schema.yaml",
     # "tests/data/test_model_with_from_smiles.yaml",
     # "tests/data/categorical_features_model.yaml",
 ]
 
 
-@pytest.fixture()
-def zinc_extra_dataset(db: Session) -> Generator[Dataset, None, None]:
+@pytest_asyncio.fixture
+async def zinc_extra_dataset(db: Session) -> Dataset:
     zinc_extra_path = "tests/data/zinc_extra.csv"
     columns_metadata = [
         ColumnsDescription(
@@ -65,14 +65,20 @@ def zinc_extra_dataset(db: Session) -> Generator[Dataset, None, None]:
             file=UploadFile("file", f),
             columns_metadata=columns_metadata,
         )
-        dataset = dataset_ctl.create_dataset(db, get_test_user(db), dataset_create_obj)
-        assert dataset, "creation of fixture dataset from zinc_extra.csv failed"
+        dataset = await dataset_ctl.create_dataset(
+            db, get_test_user(db), dataset_create_obj
+        )
+        assert isinstance(
+            dataset, DatasetEntity
+        ), "creation of fixture dataset from zinc_extra.csv failed"
         dataset = Dataset.from_orm(dataset)
-        yield dataset
+    assert dataset.id >= 1, "failed to create dataset"
+    return dataset
 
 
-@pytest.mark.parametrize("model_config_path", mlflow_yamls)
-def test_model_building(zinc_extra_dataset: Dataset, model_config_path: str):
+@pytest.mark.parametrize("model_config_path", model_config_yamls)
+@pytest.mark.asyncio
+async def test_model_building(zinc_extra_dataset: Dataset, model_config_path: str):
     with open(model_config_path, "rb") as f:
         model_config = ModelSchema.from_yaml(f.read())
     model = CustomModel(model_config)

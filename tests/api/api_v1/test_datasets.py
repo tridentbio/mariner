@@ -36,7 +36,7 @@ def test_post_datasets(
         {
             "pattern": "exp",
             "data_type": {"domain_kind": "numeric", "unit": "mole"},
-            "description": "speriment measurement",
+            "description": "experiment measurement",
             "unit": "mole",
         },
         {
