@@ -176,6 +176,7 @@ def get_experiments(
         page=query.page,
         per_page=query.per_page,
         stages=query.stage or [],
+        order_by=query.order_by,
     )
     return Experiment.from_orm_array(exps), total
 

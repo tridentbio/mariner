@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from fastapi import status
 from sqlalchemy.orm import Session
@@ -35,6 +37,27 @@ def test_get_experiments(
     body = res.json()
     exps, total = body["data"], body["total"]
     assert len(exps) == len(some_experiments) == total == 3, "gets all experiments"
+
+
+def test_get_experiments_ordered_by_createdAt_desc(
+    client: TestClient, some_model, some_experiments, normal_user_token_headers
+):
+    params = {"modelId": some_model.id, "orderBy": "-createdAt"}
+
+    res = client.get(
+        f"{settings.API_V1_STR}/experiments/",
+        params=params,
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == HTTP_200_OK
+    body = res.json()
+    exps, total = body["data"], body["total"]
+    assert len(exps) == len(some_experiments) == total == 3, "gets all experiments"
+    for i in range(len(exps[:-1])):
+        current, next = exps[i], exps[i + 1]
+        assert datetime.fromisoformat(next["createdAt"]) < datetime.fromisoformat(
+            current["createdAt"]
+        ), "createdAt descending order is not respected"
 
 
 # FAILING

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
-from typing import Any, Generic, List, TypeVar
+from typing import Any, Generic, List, Literal, TypeVar, Union
 
+from fastapi import Query
 from humps import camel
 from pydantic.datetime_parse import parse_datetime
 from pydantic.generics import GenericModel
@@ -48,3 +49,52 @@ class utc_datetime(datetime):
     @staticmethod
     def to_str(dt: datetime) -> str:
         return dt.isoformat()
+
+
+class OrderByClause(ApiBaseModel):
+    field: str
+    order: Literal["asc", "desc"]
+
+
+class OrderByQuery(ApiBaseModel):
+    clauses: List[OrderByClause]
+
+
+def get_order_by_query(
+    order_by: Union[str, None] = Query(
+        default=None,
+        alias="orderBy",
+        description="Describes how the query is to be sorted",
+        examples={
+            "normal": {
+                "summary": "Example of orderBy usage",
+                "description": (
+                    "Order is applied by createdAt in ascending order and"
+                    "then by name on descending order if createdAt are the same"
+                ),
+                "value": "+createdAt,-name",
+            },
+        },
+    )
+):
+    """Maps the order_by query string into pydantic model describing the
+    requested order
+
+    Splits the querystring by comma and maps elements to ordering clause
+    :class:`OrderByQuery`
+
+    Args:
+        order_by: string to be parsed (gotten by fastapi from the request's
+                                       querystring order_by or orderBy)
+    """
+    if not isinstance(order_by, str):
+        return None
+    result = []
+    for order_clause in order_by.split(","):
+        field = order_clause[1:]
+        if order_clause.startswith("+"):
+            result.append(OrderByClause.construct(field=field, order="asc"))
+        else:
+            result.append(OrderByClause.construct(field=field, order="desc"))
+
+    return OrderByClause.construct(clauses=result)
