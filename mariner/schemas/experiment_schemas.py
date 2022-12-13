@@ -1,9 +1,14 @@
 from typing import Dict, List, Literal, Optional, Union
 
-from fastapi import Query
+from fastapi import Depends, Query
 from pydantic import Required
 
-from mariner.schemas.api import ApiBaseModel, utc_datetime
+from mariner.schemas.api import (
+    ApiBaseModel,
+    OrderByQuery,
+    get_order_by_query,
+    utc_datetime,
+)
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
 
@@ -49,12 +54,14 @@ class ListExperimentsQuery:
         ),
         page: int = Query(default=0),
         per_page: int = Query(default=15, alias="perPage"),
+        order_by: Union[OrderByQuery, None] = Depends(get_order_by_query),
     ):
         self.stage = stage
         self.model_id = model_id
         self.page = page
         self.per_page = per_page
         self.model_version_ids = model_version_ids
+        self.order_by = order_by
 
 
 class RunningHistory(ApiBaseModel):
