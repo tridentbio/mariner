@@ -60,8 +60,9 @@ def setup_create_dataset(
             files={"file": ("zinc_extra.csv", f.read())},
             headers=normal_user_token_headers,
         )
-        assert res.status_code == status.HTTP_200_OK
+        assert res.status_code == status.HTTP_200_OK, "dataset fixture creation failed"
         body = res.json()
+        assert body["id"] >= 1, "dataset fixture creation failed"
         return db.query(Dataset).get(body["id"])
 
 
