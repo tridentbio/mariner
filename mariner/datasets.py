@@ -46,7 +46,6 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
 # TODO: Allow early creation of the dataset, and when possible update:
 # columns, rows, split_actual, bytes, stats and columns_metadata
 # Dataset should also have flag attribute saying if it's ready to use
-# This allow for allowing usage immediatly after critical updates
 async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     """
     Domain function that creates a dataset for the user.
