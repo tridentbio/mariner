@@ -48,7 +48,7 @@ class ListExperimentsQuery:
     def __init__(
         self,
         stage: Union[list[str], None] = Query(default=None),
-        model_id: Union[int, None] = Query(default=Required, alias="modelId"),
+        model_id: Union[int, None] = Query(default=None, alias="modelId"),
         model_version_ids: Union[list[int], None] = Query(
             default=None, alias="modelVersionIds"
         ),

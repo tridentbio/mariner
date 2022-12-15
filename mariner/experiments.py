@@ -172,6 +172,7 @@ def get_experiments(
         raise ModelNotFound()
     exps, total = experiment_store.get_experiments_paginated(
         db,
+        created_by_id=user.id,
         model_id=query.model_id,
         page=query.page,
         per_page=query.per_page,
