@@ -1,13 +1,11 @@
 import datetime
 import json
-from typing import Any, List, Literal, Mapping, Union
+from typing import List
 
-import pandas as pd
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
-from mariner.core.aws import Bucket, upload_s3_file
 from mariner.core.config import settings
 from mariner.entities.user import User
 from mariner.exceptions import (
@@ -25,16 +23,9 @@ from mariner.schemas.dataset_schemas import (
     DatasetUpdate,
     DatasetUpdateRepo,
 )
-from mariner.stats import get_metadata as get_stats
 from mariner.stores.dataset_sql import dataset_store
-from mariner.utils import hash_md5
-from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
 DATASET_BUCKET = settings.AWS_DATASETS
-
-
-def make_key(filename: Union[str, UploadFile]):
-    return hash_md5(file=filename)
 
 
 def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
@@ -52,46 +43,6 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     return dataset
 
 
-def get_entity_info_from_csv(
-    df: pd.DataFrame,
-) -> tuple[int, int, Mapping[Any, Any]]:
-    stats: Mapping[Any, Any] = get_stats(df).to_dict(orient="dict")
-    return len(df), len(df.columns), stats
-
-
-def _upload_s3(file: UploadFile):
-    file.file.seek(0)
-    file_md5 = make_key(file)
-    key = f"datasets/{file_md5}.csv"
-    file.file.seek(0)
-    upload_s3_file(file, Bucket.Datasets, key)
-    return key
-
-
-def _get_df_with_split_indexes(
-    df: pd.DataFrame,
-    split_type: Literal["random", "scaffold"],
-    split_target: str,
-    split_column: Union[str, None] = None,
-):
-    train_size, val_size, test_size = map(
-        lambda x: int(x) / 100, split_target.split("-")
-    )
-    if split_type == "random":
-        splitter = RandomSplitter()
-        df = splitter.split(df, train_size, test_size, val_size)
-        return df
-    elif split_type == "scaffold":
-        splitter = ScaffoldSplitter()
-        assert (
-            split_column is not None
-        ), "split column can't be none when split_type is scaffold"
-        df = splitter.split(df, split_column, train_size, test_size, val_size)
-        return df
-    else:
-        raise NotImplementedError(f"{split_type} splitting is not implemented")
-
-
 async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     """
     Domain function that creates a dataset for the user.
@@ -106,7 +57,12 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     existing_dataset = dataset_store.get_by_name(db, data.name)
     if existing_dataset:
         raise DatasetAlreadyExists()
-    dataset_ray_transformer = DatasetTransforms.remote(file_input=data.file.file)
+
+    chunk_size = settings.APPLICATION_CHUNK_SIZE
+    dataset_ray_transformer = DatasetTransforms.remote()
+    for chunk in iter(lambda: data.file.file.read(chunk_size), b""):
+        await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
+    await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
     (
         rows,
         columns,
@@ -192,6 +148,10 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
 
 # Candidate for going to dataset actor
 async def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
-    dataset_actor = DatasetTransforms.remote(file_input=csv_file.file)
+    dataset_actor = DatasetTransforms.remote()
+    chunk_size = settings.APPLICATION_CHUNK_SIZE
+    for chunk in iter(lambda: csv_file.file.read(chunk_size), b""):
+        await dataset_actor.write_dataset_buffer.remote(chunk)
+    await dataset_actor.set_is_dataset_fully_loaded.remote(True)
     metadata = await dataset_actor.get_columns_metadata.remote()
     return metadata

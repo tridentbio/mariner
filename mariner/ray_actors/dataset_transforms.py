@@ -1,5 +1,7 @@
+import io
+import logging
 from io import BytesIO
-from typing import BinaryIO, List, Literal, Union
+from typing import List, Literal, Union
 
 import pandas as pd
 import ray
@@ -17,6 +19,8 @@ from mariner.utils import hash_md5
 from mariner.validation import is_valid_smiles_series
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
+LOG = logging.getLogger(__name__)
+
 
 @ray.remote
 class DatasetTransforms:
@@ -24,16 +28,41 @@ class DatasetTransforms:
 
     def __init__(
         self,
-        file_input: BinaryIO,
     ):
-        print("this is runned inside ray")
-        self.file_input = file_input
+        self._file_input = io.BytesIO()
+        self._is_dataset_fully_loaded = False
         self._df = None
+
+    def write_dataset_buffer(self, chunk: bytes):
+        self._file_input.write(chunk)
+
+    @property
+    def is_dataset_fully_loaded(self):
+        return self._is_dataset_fully_loaded
+
+    @is_dataset_fully_loaded.setter
+    def is_dataset_fully_loaded(self, value: bool):
+        if self._is_dataset_fully_loaded:
+            LOG.warning("Can't update a dataset already loaded into dataframe'")
+            return
+        self._is_dataset_fully_loaded = value
+        if value:
+            self._file_input.seek(0)
+            self.df = self._df = pd.read_csv(self._file_input)
+
+    def get_dataframe(self):
+        return self.df
+
+    def set_is_dataset_fully_loaded(self, val: bool):
+        self.is_dataset_fully_loaded = val
+
+    def get_is_dataset_fully_loaded(self):
+        return self.is_dataset_fully_loaded
 
     @property
     def df(self) -> pd.DataFrame:
-        if self._df is None:
-            self._df = pd.read_csv(BytesIO(self.file_input.read()))
+        if not self._is_dataset_fully_loaded:
+            raise RuntimeError("Must set dataset as loaded before using dataframe")
         return self._df
 
     @df.setter
@@ -101,9 +130,6 @@ class DatasetTransforms:
         stats = get_metadata(self.df)
         filesize = self.df.memory_usage(deep=True).sum()
         return len(self.df), len(self.df.columns), filesize, stats
-
-    def get_dataframe(self) -> pd.DataFrame:
-        return self.df
 
     def get_dataset_summary(self):
         # Detect the smiles column name

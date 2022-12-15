@@ -1,7 +1,7 @@
 import hashlib
 import io
 from pathlib import Path
-from typing import BinaryIO, Optional, Union
+from typing import BinaryIO, Union
 
 from fastapi.datastructures import UploadFile as FAUploadFile
 from starlette.datastructures import UploadFile as SUploadFile
@@ -9,8 +9,8 @@ from wonderwords import RandomWord
 
 
 def hash_md5(
-    data: Optional[bytes] = None,
-    file: Optional[Union[str, Path, BinaryIO, FAUploadFile]] = None,
+    data: Union[bytes, None] = None,
+    file: Union[str, Path, BinaryIO, FAUploadFile, None] = None,
     chunk_size=4096,
 ) -> str:
     hash_md5 = hashlib.md5()
