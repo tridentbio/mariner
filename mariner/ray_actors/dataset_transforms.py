@@ -12,7 +12,6 @@ from mariner.schemas.dataset_schemas import (
     ColumnsMeta,
     NumericalDataType,
     SmileDataType,
-    StringDataType,
 )
 from mariner.stats import get_metadata, get_stats
 from mariner.utils import hash_md5
@@ -24,7 +23,17 @@ LOG = logging.getLogger(__name__)
 
 @ray.remote
 class DatasetTransforms:
-    """Dataset transformations and queries to be performed by ray cluster"""
+    """Dataset transformations and queries to be performed by ray cluster
+
+    Each instance of this class is responsible for a single dataset file
+    transformations. To use the actor, the programmer should write the dataset
+    to the remote ray actors by chunks using.
+
+    This implementation uses :class:`pandas.Dataframe` for operating on the dataset
+    :func:`DatasetTransforms.write_dataset_buffer` and
+    :func:`DatasetTransforms.set_is_dataset_fully_loaded(True)` once the dataset
+    is fully loaded
+    """
 
     def __init__(
         self,
@@ -34,6 +43,18 @@ class DatasetTransforms:
         self._df = None
 
     def write_dataset_buffer(self, chunk: bytes):
+        """Writes to the underlying csv file
+
+        Bytes are written in sequence
+
+        TODO: Could be optimized like the following:
+            1. Create buffer with the size of the file input
+            2. Change signature of this method to have have offset of type int
+            3. Parellize writing of chunks to the buffer
+
+        Args:
+            chunk: bytes to write on the buffer
+        """
         self._file_input.write(chunk)
 
     @property
@@ -63,16 +84,25 @@ class DatasetTransforms:
     def df(self) -> pd.DataFrame:
         if not self._is_dataset_fully_loaded:
             raise RuntimeError("Must set dataset as loaded before using dataframe")
+        assert self._df is not None, "loading dataset as dataframe failed"
         return self._df
 
     @df.setter
     def df(self, value: pd.DataFrame):
         self._df = value
 
-    def get_columns_metadata(self) -> List[ColumnsMeta]:
+    def get_columns_metadata(self, first_n_rows=20) -> List[ColumnsMeta]:
+        """Returns data type about columns based on the underlying dataframe types
+
+        Returns:
+            List[ColumnsMeta]
+        """
         metadata = [
             ColumnsMeta(
-                name=key, dtype=self._infer_domain_type_from_series(self.df[key])
+                name=key,
+                dtype=self._infer_domain_type_from_series(
+                    self.df[key][: min(first_n_rows, len(self.df))]
+                ),
             )
             for key in self.df
         ]
@@ -84,6 +114,20 @@ class DatasetTransforms:
         split_target: str,
         split_column: Union[str, None] = None,
     ):
+        """Separates dataframe row into training, testing and validation
+
+        Adds a 'step' column to the current dataframe, associating the row to
+        some data science model stage, i.e. training, testing or validation
+
+        Args:
+            split_type: "random" or "scaffold", strategy used to to split examples
+            split_target: The wanted distribution of training/validation/testing
+            split_column: Only required for scaffold, must be a columns of Smiles
+            data type
+
+        Raises:
+            NotImplementedError: in case the split_type is not recognized
+        """
         train_size, val_size, test_size = map(
             lambda x: int(x) / 100, split_target.split("-")
         )
@@ -111,12 +155,11 @@ class DatasetTransforms:
             # check if it is likely to be categorical
             series = series.sort_values()
             uniques = series.unique()
-            if len(uniques) <= 100:
-                return CategoricalDataType(
-                    domain_kind="categorical",
-                    classes={val: idx for idx, val in enumerate(uniques)},
-                )
-            return StringDataType(domain_kind="string")
+            return CategoricalDataType(
+                domain_kind="categorical",
+                # Classes will need to be overwritten by complete data type checking
+                classes={val: idx for idx, val in enumerate(uniques)},
+            )
         elif series.dtype == int:
             series = series.sort_values()
             uniques = series.unique()
@@ -127,11 +170,20 @@ class DatasetTransforms:
                 )
 
     def get_entity_info_from_csv(self):
+        """Gets the row count, column count, dataset file size, and a dictionary
+        with basic statistics for each columns data series (median, percentiles,
+                                                            max, min, ...)
+        """
         stats = get_metadata(self.df)
         filesize = self.df.memory_usage(deep=True).sum()
         return len(self.df), len(self.df.columns), filesize, stats
 
     def get_dataset_summary(self):
+        """Get's histogram for dataset columns according to it's inferred type
+
+        Columns for which histograms are generated must be of type int or float,
+        or must be valid smiles columns
+        """
         # Detect the smiles column name
         smiles_columns = []
         for col in self.df.columns:
@@ -143,6 +195,11 @@ class DatasetTransforms:
         return stats
 
     def upload_s3(self):
+        """Uploads transformed dataframe to s3 in the csv format
+
+        TODO: Compress data and adjust dataframe getter methods in the
+        dataset
+        """
         file = BytesIO()
         self.df.to_csv(file)
         file.seek(0)
@@ -151,3 +208,16 @@ class DatasetTransforms:
         file.seek(0)
         upload_s3_file(file=file, bucket=Bucket.Datasets, key=key)
         return key
+
+    # TODO: implement
+    def check_data_types(self, columns: ColumnsMeta):
+        """Checks if underlying dataset conforms to columns data types
+
+        If validation succeeds, updates categorical data types to the right
+        number of classes
+
+
+        Args:
+            columns: objects containing information about data types
+        """
+        return columns

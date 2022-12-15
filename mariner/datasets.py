@@ -43,6 +43,10 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     return dataset
 
 
+# TODO: Allow early creation of the dataset, and when possible update:
+# columns, rows, split_actual, bytes, stats and columns_metadata
+# Dataset should also have flag attribute saying if it's ready to use
+# This allow for allowing usage immediatly after critical updates
 async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     """
     Domain function that creates a dataset for the user.
@@ -76,6 +80,9 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     )
     data_url = await dataset_ray_transformer.upload_s3.remote()
     stats = await dataset_ray_transformer.get_dataset_summary.remote()
+    columns_metadata = await dataset_ray_transformer.check_data_types.remote(
+        data.columns_metadata
+    )
     create_obj = DatasetCreateRepo(
         columns=columns,
         rows=rows,
@@ -90,7 +97,7 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
         data_url=data_url,
         created_by_id=current_user.id,
-        columns_metadata=data.columns_metadata,
+        columns_metadata=columns_metadata,
     )
     dataset = dataset_store.create(db, create_obj)
     return dataset

@@ -161,12 +161,6 @@ def test_get_csv_metadata(
         assert res.status_code == status.HTTP_200_OK
         cols = res.json()
         assert {
-            "name": "CMPD_CHEMBLID",
-            "dtype": {
-                "domainKind": "string",
-            },
-        } in cols
-        assert {
             "name": "exp",
             "dtype": {
                 "domainKind": "numeric",
