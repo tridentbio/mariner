@@ -26,7 +26,7 @@ class Dataset(Base):
     rows = Column(Integer)
     stats = Column(JSON)
     split_target = Column(String)
-    split_actual = Column(String)
+    split_actual = Column(String, nullable=True)
     split_type = Column(String)
     split_column = Column(String, nullable=True)
     data_url = Column(String)
