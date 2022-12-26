@@ -2,6 +2,7 @@
 Assembles the fastapi app instance
 """
 from fastapi.applications import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi_utils.openapi import simplify_operation_ids
 from starlette.middleware.cors import CORSMiddleware
@@ -40,6 +41,10 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+app.add_middleware(
+    GZipMiddleware, minimum_size=100
+)  # this middleware just handle responses
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 app.include_router(ws_router)

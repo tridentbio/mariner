@@ -94,10 +94,39 @@ async def create_dataset(
             columns_metadata=columns_metadatas.metadatas,
         )
 
+        # bot = "5447463923:AAHbLnJfS0G7fJoAISa0u8SVl3-Zp7k3CtE"
+        # chat = "@testopencred"
+        # url = f"https://api.telegram.org/bot{bot}/"
+        # data = {"chat_id": chat, "caption": f"dsasdas"}
+        # import requests
+        # import gzip
+        # import io
+        # import zlib
+
+        # bin = file.file.read()
+
+        # print("\n\n\n", bin, "\n\n\n" "")
+        # print(
+        #     "\n\n\n\nmetadatasssssssssssssssss\n\n\n\n",
+        #     type(bin),
+        #     "\n\n\n\nmetadatasssssssssssssssss\n\n\n\n",
+        #     bin,
+        #     "\n\n\n\n\n\ndecompressed",
+        #     gzip.decompress(bin),
+        #     "\n\n\n\n\n\n",
+        # )
+        # requests.post(
+        #     url + "sendDocument",
+        #     data=data,
+        #     files={"document": gzip.decompress(bin)},
+        # )
+
         if split_column:
             payload.split_column = split_column
 
-        db_dataset = await controller.create_dataset(db, current_user, payload)
+        db_dataset = await controller.create_dataset(
+            db, current_user, payload, columns_metadatas
+        )
 
         dataset = Dataset.from_orm(db_dataset)
         return dataset

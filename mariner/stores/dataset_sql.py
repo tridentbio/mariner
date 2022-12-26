@@ -45,8 +45,11 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
     def create(self, db: Session, obj_in: DatasetCreateRepo):
         obj_in_dict = obj_in.dict()
         relations_key = ["columns_metadata"]
-        ds_data = {k: obj_in_dict[k] for k in obj_in_dict if k not in relations_key}
+        ds_data = {
+            k: obj_in_dict[k] for k in obj_in_dict.keys() if k not in relations_key
+        }
         db_obj = Dataset(**ds_data)
+
         if obj_in.columns_metadata:
             db_obj.columns_metadata = [
                 ColumnsMetadata(**cd_me) for cd_me in obj_in_dict["columns_metadata"]

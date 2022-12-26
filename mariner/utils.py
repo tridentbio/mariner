@@ -1,8 +1,10 @@
 import hashlib
 import io
+from gzip import decompress
 from pathlib import Path
 from typing import BinaryIO, Union
 
+import pandas as pd
 from fastapi.datastructures import UploadFile as FAUploadFile
 from starlette.datastructures import UploadFile as SUploadFile
 from wonderwords import RandomWord
@@ -36,3 +38,11 @@ def hash_md5(
 
 def random_pretty_name() -> str:
     return RandomWord().word(word_min_length=4)
+
+
+def read_compressed_csv(fileBytes: bytes) -> pd.DataFrame:
+    if fileBytes[0:2] == b"\x1f\x8b":
+        fileBytes = decompress(fileBytes)
+        return pd.read_csv(io.BytesIO(fileBytes), dtype=str)
+    else:
+        raise TypeError("file must be UploadFile")
