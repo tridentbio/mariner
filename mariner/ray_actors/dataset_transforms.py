@@ -5,6 +5,8 @@ from typing import List, Literal, Union
 
 import pandas as pd
 import ray
+from fastapi.exceptions import HTTPException
+from starlette import status
 
 from mariner.core.aws import Bucket, upload_s3_file
 from mariner.schemas.dataset_schemas import (
@@ -14,8 +16,8 @@ from mariner.schemas.dataset_schemas import (
     SmileDataType,
 )
 from mariner.stats import get_metadata, get_stats
-from mariner.utils import hash_md5
-from mariner.validation import is_valid_smiles_series
+from mariner.utils import decompress_file, hash_md5
+from mariner.validation import check_is_compatible, is_valid_smiles_series
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
 LOG = logging.getLogger(__name__)
@@ -37,10 +39,12 @@ class DatasetTransforms:
 
     def __init__(
         self,
+        is_compressed: bool = False,
     ):
         self._file_input = io.BytesIO()
         self._is_dataset_fully_loaded = False
         self._df = None
+        self.is_compressed = is_compressed
 
     def write_dataset_buffer(self, chunk: bytes):
         """Writes to the underlying csv file
@@ -69,7 +73,11 @@ class DatasetTransforms:
         self._is_dataset_fully_loaded = value
         if value:
             self._file_input.seek(0)
-            self.df = self._df = pd.read_csv(self._file_input)
+            self.df = self._df = pd.read_csv(
+                decompress_file(self._file_input)
+                if self.is_compressed
+                else self._file_input
+            )
 
     def get_dataframe(self):
         return self.df
@@ -106,6 +114,7 @@ class DatasetTransforms:
             )
             for key in self.df
         ]
+
         return metadata
 
     def apply_split_indexes(
@@ -209,7 +218,6 @@ class DatasetTransforms:
         upload_s3_file(file=file, bucket=Bucket.Datasets, key=key)
         return key
 
-    # TODO: implement
     def check_data_types(self, columns: ColumnsMeta):
         """Checks if underlying dataset conforms to columns data types
 
@@ -220,4 +228,12 @@ class DatasetTransforms:
         Args:
             columns: objects containing information about data types
         """
+        errors = check_is_compatible(self.df, columns)
+
+        if len(errors):
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                detail=f"Dataset is not compatible with columns: {errors}",
+            )
+
         return columns
