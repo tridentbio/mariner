@@ -40,9 +40,31 @@ def random_pretty_name() -> str:
     return RandomWord().word(word_min_length=4)
 
 
+def is_compressed(file: FAUploadFile) -> bool:
+    try:
+        result = file.read(2) == b"\x1f\x8b"
+        file.seek(0)
+        return result
+    except AttributeError:
+        raise TypeError("file must be instance of file")
+
+
 def read_compressed_csv(fileBytes: bytes) -> pd.DataFrame:
-    if fileBytes[0:2] == b"\x1f\x8b":
+    if is_compressed(fileBytes):
         fileBytes = decompress(fileBytes)
         return pd.read_csv(io.BytesIO(fileBytes), dtype=str)
     else:
         raise TypeError("file must be UploadFile")
+
+
+def decompress_file(file: io.BytesIO) -> io.BytesIO:
+    try:
+        file = io.BytesIO(decompress(file.read()))
+        file.seek(0)
+        return file
+
+    except AttributeError:
+        raise TypeError("file must be instance of file")
+
+    except Exception as e:
+        raise e

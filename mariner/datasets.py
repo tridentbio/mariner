@@ -24,6 +24,7 @@ from mariner.schemas.dataset_schemas import (
     DatasetUpdateRepo,
 )
 from mariner.stores.dataset_sql import dataset_store
+from mariner.utils import is_compressed
 
 DATASET_BUCKET = settings.AWS_DATASETS
 
@@ -62,7 +63,8 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         raise DatasetAlreadyExists()
 
     chunk_size = settings.APPLICATION_CHUNK_SIZE
-    dataset_ray_transformer = DatasetTransforms.remote()
+    dataset_ray_transformer = DatasetTransforms.remote(is_compressed(data.file.file))
+
     for chunk in iter(lambda: data.file.file.read(chunk_size), b""):
         await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
     await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
