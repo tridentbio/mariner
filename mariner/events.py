@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -62,7 +62,7 @@ class EventCreate(ApiBaseModel):
 
     user_id: Optional[int] = None
     timestamp: datetime
-    source: Literal["training:completed", "changelog"]
+    source: EventSource
     payload: Dict[str, Any]
     url: Optional[str] = None
 

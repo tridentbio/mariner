@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, get_args
 
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship, validates
@@ -6,7 +6,9 @@ from sqlalchemy.sql.functions import current_timestamp
 
 from mariner.db.base_class import Base
 
-EventSource = Literal["training:completed", "changelog"]
+EventSource = Literal[
+    "training:completed", "changelog", "dataset:created", "dataset:failed"
+]
 
 
 class EventReadEntity(Base):
@@ -40,7 +42,7 @@ class EventEntity(Base):
 
     @validates("source")
     def validate_source(self, key, source):
-        valid_event_sources = ["changelog", "training:completed"]
+        valid_event_sources = get_args(EventSource)
         if source not in valid_event_sources:
             raise ValueError(f"Invalid source for EventEntity {source}")
         return source
