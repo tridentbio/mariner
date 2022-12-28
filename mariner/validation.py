@@ -3,7 +3,7 @@ This module is responsible for data validation. It has functions to validate
 single values and dataframes.
 """
 from re import search
-from typing import List, NewType, Tuple, Union
+from typing import List, NewType, Optional, Tuple, Union
 
 import pandas as pd
 from rdkit import Chem, RDLogger
@@ -76,10 +76,13 @@ def is_valid_smiles_series(smiles_series: pd.Series, weak_check=False) -> bool:
     return True
 
 
-def _is_instance(type: type, msg: str, nullable=True) -> Tuple[callable, str]:
+def _is_instance(
+    type: type, msg: Optional[str] = None, nullable=True
+) -> Tuple[callable, str]:
     """
     Function validator creator
     """
+    msg = f"column $ should be {type.__name__}" if not msg else msg
 
     def func(x):
         return isinstance(x, type) or (nullable and not x)
@@ -106,16 +109,16 @@ SchemaType = NewType(
 )
 
 VALIDATION_SCHEMA: SchemaType = {
-    "categorical": [_is_instance(str, "column $ should be str")],
+    "categorical": _is_instance(str),
     "numeric": (
-        lambda x: not x or search(r"^\d[\.,\d]*$", x) is not None,
+        lambda x: not x or search(r"^\d[\.,\d]*$", str(x)) is not None,
         "column $ should be numeric",
     ),
     "smiles": [
-        _is_instance(str, "smile column $ should be str"),
+        _is_instance(str, msg="smile column $ should be str"),
         (is_valid_smiles_value, "column $ should be a valid smiles"),
     ],
-    "string": _is_instance(str, "column $ should be str"),
+    "string": _is_instance(str),
 }
 
 
@@ -126,7 +129,6 @@ def check_is_compatible(df: pd.DataFrame, columns_metadata: List[ColumnsMeta]):
     :param df DataFrame: dataset
     :param columns_metadata List[ColumnsMeta]: columns metadata
     """
-
     errors = []
     for column_metadata in columns_metadata:
         i = find_column_i(df, column_metadata.pattern)
@@ -142,9 +144,15 @@ def check_is_compatible(df: pd.DataFrame, columns_metadata: List[ColumnsMeta]):
 
             for validation in validations:
                 func, msg = validation
-                is_valid = df.iloc[:, i].apply(func).all()
+                is_valid = None
+
+                try:
+                    is_valid = df.iloc[:, i].apply(func).all()
+                except Exception as e:
+                    print(f"Error validating column {df.columns[i]}: {e}")
+
                 if not is_valid:
-                    errors.append(msg.replace("$", df.columns[i]))
+                    errors.append(msg.replace("$", f'"{df.columns[i]}"'))
                     break
 
     return errors
