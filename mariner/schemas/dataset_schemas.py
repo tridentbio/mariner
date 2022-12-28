@@ -200,3 +200,8 @@ class DatasetUpdateRepo(BaseModel):
     split_column: Optional[str] = None
     split_type: Optional[SplitType] = None
     columns_metadata: Optional[List[ColumnsDescription]] = None
+
+
+class DatasetEventPayload(BaseModel):
+    dataset_id: Optional[int] = None
+    message: Optional[str] = "success on dataset creation"
