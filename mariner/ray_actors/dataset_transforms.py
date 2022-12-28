@@ -1,12 +1,10 @@
 import io
 import logging
 from io import BytesIO
-from typing import List, Literal, Union
+from typing import List, Literal, Tuple, Union
 
 import pandas as pd
 import ray
-from fastapi.exceptions import HTTPException
-from starlette import status
 
 from mariner.core.aws import Bucket, upload_s3_file
 from mariner.schemas.dataset_schemas import (
@@ -218,7 +216,7 @@ class DatasetTransforms:
         upload_s3_file(file=file, bucket=Bucket.Datasets, key=key)
         return key
 
-    def check_data_types(self, columns: ColumnsMeta):
+    def check_data_types(self, columns: ColumnsMeta) -> Tuple[ColumnsMeta, List[str]]:
         """Checks if underlying dataset conforms to columns data types
 
         If validation succeeds, updates categorical data types to the right
@@ -229,11 +227,4 @@ class DatasetTransforms:
             columns: objects containing information about data types
         """
         errors = check_is_compatible(self.df, columns)
-
-        if len(errors):
-            raise HTTPException(
-                status.HTTP_400_BAD_REQUEST,
-                detail=f"Dataset is not compatible with columns: {errors}",
-            )
-
-        return columns
+        return columns, errors

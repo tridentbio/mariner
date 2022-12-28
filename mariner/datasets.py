@@ -6,10 +6,12 @@ from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
+import mariner.events as events_ctl
 from mariner.core.config import settings
 from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetAlreadyExists,
+    DatasetColumnTypeError,
     DatasetNotFound,
     NotCreatorOwner,
 )
@@ -19,6 +21,7 @@ from mariner.schemas.dataset_schemas import (
     Dataset,
     DatasetCreate,
     DatasetCreateRepo,
+    DatasetEventPayload,
     DatasetsQuery,
     DatasetUpdate,
     DatasetUpdateRepo,
@@ -42,6 +45,21 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     if current_user.id != dataset.created_by_id:
         raise NotCreatorOwner()
     return dataset
+
+
+def create_dataset_event(db: Session, current_user: User, payload: DatasetEventPayload):
+    success = payload.dataset_id is not None
+
+    events_ctl.create_event(
+        db,
+        events_ctl.EventCreate(
+            user_id=current_user.id,
+            source="dataset:created" if success else "dataset:failed",
+            timestamp=datetime.datetime.now(),
+            payload=payload.dict(),
+            # url=f"{settings.WEBAPP_URL}/datasets/{payload['id']}",
+        ),
+    )
 
 
 # TODO: Allow early creation of the dataset, and when possible update:
@@ -81,9 +99,22 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     )
     data_url = await dataset_ray_transformer.upload_s3.remote()
     stats = await dataset_ray_transformer.get_dataset_summary.remote()
-    columns_metadata = await dataset_ray_transformer.check_data_types.remote(
+    columns_metadata, errors = await dataset_ray_transformer.check_data_types.remote(
         data.columns_metadata
     )
+
+    if errors:
+        error_str = "; ".join(errors)
+        create_dataset_event(
+            db,
+            current_user,
+            DatasetEventPayload(
+                message=f"error on dataset creation while checking column types:\
+                             {error_str}"
+            ),
+        )
+        raise DatasetColumnTypeError(error_str)
+
     create_obj = DatasetCreateRepo(
         columns=columns,
         rows=rows,
@@ -101,6 +132,7 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         columns_metadata=columns_metadata,
     )
     dataset = dataset_store.create(db, create_obj)
+    create_dataset_event(db, current_user, DatasetEventPayload(dataset_id=dataset.id))
     return dataset
 
 
