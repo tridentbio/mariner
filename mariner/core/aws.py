@@ -7,6 +7,7 @@ import pandas as pd
 from fastapi.datastructures import UploadFile
 
 from mariner.core.config import settings
+from mariner.utils import is_compressed, read_compressed_csv
 
 
 class Bucket(enum.Enum):
@@ -36,9 +37,8 @@ def download_file_as_dataframe(bucket: Bucket, key: str) -> pd.DataFrame:
     s3 = create_s3_client()
     s3_res = s3.get_object(Bucket=bucket.value, Key=key)
     s3body = s3_res["Body"].read()
-    print("Here is the file: %r", s3body)
     data = io.BytesIO(s3body)
-    df = pd.read_csv(data)
+    df = pd.read_csv(data) if not is_compressed(data) else read_compressed_csv(s3body)
     return df
 
 

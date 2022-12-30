@@ -86,18 +86,19 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     for chunk in iter(lambda: data.file.file.read(chunk_size), b""):
         await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
     await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
+
     (
         rows,
         columns,
-        filesize,
         stats,
     ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
+
     await dataset_ray_transformer.apply_split_indexes.remote(
         split_type=data.split_type,
         split_target=data.split_target,
         split_column=data.split_column,
     )
-    data_url = await dataset_ray_transformer.upload_s3.remote()
+    data_url, filesize = await dataset_ray_transformer.upload_s3.remote()
     stats = await dataset_ray_transformer.get_dataset_summary.remote()
     columns_metadata, errors = await dataset_ray_transformer.check_data_types.remote(
         data.columns_metadata
