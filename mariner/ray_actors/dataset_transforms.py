@@ -14,7 +14,7 @@ from mariner.schemas.dataset_schemas import (
     SmileDataType,
 )
 from mariner.stats import get_metadata, get_stats
-from mariner.utils import decompress_file, hash_md5
+from mariner.utils import compress_file, decompress_file, get_size, hash_md5
 from mariner.validation import check_is_compatible, is_valid_smiles_series
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
@@ -182,8 +182,7 @@ class DatasetTransforms:
                                                             max, min, ...)
         """
         stats = get_metadata(self.df)
-        filesize = self.df.memory_usage(deep=True).sum()
-        return len(self.df), len(self.df.columns), filesize, stats
+        return len(self.df), len(self.df.columns), stats
 
     def get_dataset_summary(self):
         """Get's histogram for dataset columns according to it's inferred type
@@ -208,13 +207,14 @@ class DatasetTransforms:
         dataset
         """
         file = BytesIO()
-        self.df.to_csv(file)
-        file.seek(0)
+        self.df.to_csv(file, index=False)
+        file_size = get_size(file)
+        file = compress_file(file)
         file_md5 = hash_md5(file=file)
-        key = f"datasets/{file_md5}.csv"
         file.seek(0)
+        key = f"datasets/{file_md5}.csv"
         upload_s3_file(file=file, bucket=Bucket.Datasets, key=key)
-        return key
+        return key, file_size
 
     def check_data_types(self, columns: ColumnsMeta) -> Tuple[ColumnsMeta, List[str]]:
         """Checks if underlying dataset conforms to columns data types
