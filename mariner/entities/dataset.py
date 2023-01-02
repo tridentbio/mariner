@@ -15,21 +15,24 @@ class ColumnsMetadata(Base):
     dataset_id = Column(
         Integer, ForeignKey("dataset.id", ondelete="CASCADE"), primary_key=True
     )
-    dataset = relationship("Dataset", back_populates="columns_metadata")
+    dataset = relationship(
+        "Dataset",
+        back_populates="columns_metadata",
+    )
 
 
 class Dataset(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, unique=True)
     description = Column(String)
-    bytes = Column(Integer)
+    bytes = Column(Integer, nullable=True)
     rows = Column(Integer)
     stats = Column(JSON)
     split_target = Column(String)
     split_actual = Column(String, nullable=True)
     split_type = Column(String)
     split_column = Column(String, nullable=True)
-    data_url = Column(String)
+    data_url = Column(String, nullable=True)
     columns = Column(Integer)
     created_at = Column(DateTime, server_default=current_timestamp())
     updated_at = Column(DateTime, server_default=current_timestamp())
@@ -38,6 +41,7 @@ class Dataset(Base):
     columns_metadata = relationship(
         "ColumnsMetadata", back_populates="dataset", cascade="all,delete"
     )
+    ready_status = Column(String, nullable=True)
 
     def get_dataframe(self):
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)

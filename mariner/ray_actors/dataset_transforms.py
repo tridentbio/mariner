@@ -82,6 +82,7 @@ class DatasetTransforms:
 
     def set_is_dataset_fully_loaded(self, val: bool):
         self.is_dataset_fully_loaded = val
+        return get_size(self._file_input)
 
     def get_is_dataset_fully_loaded(self):
         return self.is_dataset_fully_loaded
@@ -177,7 +178,7 @@ class DatasetTransforms:
                 )
 
     def get_entity_info_from_csv(self):
-        """Gets the row count, column count, dataset file size, and a dictionary
+        """Gets the row count, column count, and a dictionary
         with basic statistics for each columns data series (median, percentiles,
                                                             max, min, ...)
         """

@@ -111,7 +111,7 @@ SchemaType = NewType(
 VALIDATION_SCHEMA: SchemaType = {
     "categorical": _is_instance(str),
     "numeric": (
-        lambda x: not x or search(r"^\d[\.,\d]*$", str(x)) is not None,
+        lambda x: not x or search(r"^[-\d][\.,\d]*$", str(x)) is not None,
         "column $ should be numeric",
     ),
     "smiles": [
