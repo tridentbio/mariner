@@ -29,6 +29,8 @@ def build_message(source: EventSource, events: List[EventEntity]) -> str:
         return f'Training "{experiment_name}"{and_others} completed'
     elif source == "changelog":
         return "Checkout what's new!"
+    elif "dataset" in source:
+        return f"New dataset available. result: {source.split(':')[1]}"
     raise NotImplementedError(f'No message building for source = "{source}"')
 
 
