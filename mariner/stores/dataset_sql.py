@@ -1,3 +1,5 @@
+from typing import Union
+
 from sqlalchemy.orm import Session
 
 from mariner.entities.dataset import ColumnsMetadata, Dataset
@@ -63,9 +65,12 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
     def update(
         self,
         db: Session,
-        db_obj: Dataset,
+        db_obj: Union[Dataset, DatasetCreateRepo],
         obj_in: DatasetUpdateRepo,
     ):
+        if isinstance(db_obj, DatasetCreateRepo):
+            db_obj = db.query(Dataset).filter(Dataset.id == db_obj.id).first()
+
         if obj_in.columns_metadata:
             db.query(ColumnsMetadata).filter(
                 ColumnsMetadata.dataset_id == db_obj.id

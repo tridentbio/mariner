@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 from typing import List
@@ -11,7 +12,6 @@ from mariner.core.config import settings
 from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetAlreadyExists,
-    DatasetColumnTypeError,
     DatasetNotFound,
     NotCreatorOwner,
 )
@@ -27,6 +27,7 @@ from mariner.schemas.dataset_schemas import (
     DatasetUpdateRepo,
 )
 from mariner.stores.dataset_sql import dataset_store
+from mariner.tasks import TaskView, get_manager
 from mariner.utils import is_compressed
 
 DATASET_BUCKET = settings.AWS_DATASETS
@@ -47,13 +48,13 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     return dataset
 
 
-def create_dataset_event(db: Session, current_user: User, payload: DatasetEventPayload):
+def create_dataset_event(db: Session, user_id: int, payload: DatasetEventPayload):
     success = payload.dataset_id is not None
 
     events_ctl.create_event(
         db,
         events_ctl.EventCreate(
-            user_id=current_user.id,
+            user_id=user_id,
             source="dataset:created" if success else "dataset:failed",
             timestamp=datetime.datetime.now(),
             payload=payload.dict(),
@@ -62,37 +63,12 @@ def create_dataset_event(db: Session, current_user: User, payload: DatasetEventP
     )
 
 
-# TODO: Allow early creation of the dataset, and when possible update:
-# columns, rows, split_actual, bytes, stats and columns_metadata
-# Dataset should also have flag attribute saying if it's ready to use
-async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
-    """
-    Domain function that creates a dataset for the user.
-
-    :param db Session: Connection to the database
-    :param current_user User: request owner
-    :param data DatasetCreate: dataset attributes
-    :raises DatasetAlreadyExists: when there is a name clash between the user datasets
-    :raises ValueError: When data.split_column is not provided and data.split_type is
-    scaffold
-    """
-    existing_dataset = dataset_store.get_by_name(db, data.name)
-    if existing_dataset:
-        raise DatasetAlreadyExists()
-
-    chunk_size = settings.APPLICATION_CHUNK_SIZE
-    dataset_ray_transformer = DatasetTransforms.remote(is_compressed(data.file.file))
-
-    for chunk in iter(lambda: data.file.file.read(chunk_size), b""):
-        await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
-    await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
-
-    (
-        rows,
-        columns,
-        stats,
-    ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
-
+async def process_dataset(
+    db: Session,
+    dataset: DatasetCreateRepo,
+    data: DatasetCreate,
+    dataset_ray_transformer: DatasetTransforms,
+):
     await dataset_ray_transformer.apply_split_indexes.remote(
         split_type=data.split_type,
         split_target=data.split_target,
@@ -103,20 +79,58 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     columns_metadata, errors = await dataset_ray_transformer.check_data_types.remote(
         data.columns_metadata
     )
-
     if errors:
         error_str = "; ".join(errors)
         create_dataset_event(
             db,
-            current_user,
+            dataset.created_by_id,
             DatasetEventPayload(
                 message=f"error on dataset creation while checking column types:\
                              {error_str}"
             ),
         )
-        raise DatasetColumnTypeError(error_str)
+        dataset_update = DatasetUpdateRepo(
+            ready_status="failed",
+        )
+        dataset = dataset_store.update(db, dataset, dataset_update)
+        return dataset
+
+    dataset_update = DatasetUpdateRepo(
+        id=dataset.id,
+        bytes=filesize,
+        data_url=data_url,
+        columns_metadata=columns_metadata,
+        stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+        ready_status="ready",
+    )
+
+    dataset = dataset_store.update(db, dataset, dataset_update)
+    create_dataset_event(
+        db, dataset.created_by_id, DatasetEventPayload(dataset_id=dataset.id)
+    )
+    return dataset
+
+
+async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
+    existing_dataset = dataset_store.get_by_name(db, data.name)
+    if existing_dataset:
+        raise DatasetAlreadyExists()
+
+    chunk_size = settings.APPLICATION_CHUNK_SIZE
+    dataset_ray_transformer = DatasetTransforms.remote(is_compressed(data.file.file))
+
+    for chunk in iter(lambda: data.file.file.read(chunk_size), b""):
+        await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
+    filesize = await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
+
+    (
+        rows,
+        columns,
+        _,
+    ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
 
     create_obj = DatasetCreateRepo(
+        bytes=filesize,
         columns=columns,
         rows=rows,
         split_actual=None,
@@ -124,16 +138,29 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         split_type=data.split_type,
         name=data.name,
         description=data.description,
-        bytes=filesize,
         created_at=datetime.datetime.now(),
         updated_at=datetime.datetime.now(),
-        stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
-        data_url=data_url,
         created_by_id=current_user.id,
-        columns_metadata=columns_metadata,
     )
     dataset = dataset_store.create(db, create_obj)
-    create_dataset_event(db, current_user, DatasetEventPayload(dataset_id=dataset.id))
+    create_obj.id = dataset.id
+    task = asyncio.create_task(
+        process_dataset(
+            db=db,
+            dataset=create_obj,
+            data=data,
+            dataset_ray_transformer=dataset_ray_transformer,
+        )
+    )
+
+    def finish_task(dataset: Dataset, id: int):
+        print("Task finished", dataset, "\ntask id:\n", id)
+
+    get_manager("dataset").add_new_task(
+        TaskView(id=dataset.id, user_id=dataset.created_by_id, task=task),
+        finish_task,
+    )
+
     return dataset
 
 
