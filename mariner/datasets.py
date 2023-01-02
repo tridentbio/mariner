@@ -8,6 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
 import mariner.events as events_ctl
+from api.websocket import WebSocketMessage, get_websockets_manager
 from mariner.core.config import settings
 from mariner.entities.user import User
 from mariner.exceptions import (
@@ -49,7 +50,7 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
 
 
 def create_dataset_event(db: Session, user_id: int, payload: DatasetEventPayload):
-    success = payload.dataset_id is not None
+    success = not payload.message.startswith("error")
 
     events_ctl.create_event(
         db,
@@ -68,7 +69,7 @@ async def process_dataset(
     dataset: DatasetCreateRepo,
     data: DatasetCreate,
     dataset_ray_transformer: DatasetTransforms,
-):
+) -> DatasetEventPayload:
     await dataset_ray_transformer.apply_split_indexes.remote(
         split_type=data.split_type,
         split_target=data.split_target,
@@ -81,19 +82,18 @@ async def process_dataset(
     )
     if errors:
         error_str = "; ".join(errors)
-        create_dataset_event(
-            db,
-            dataset.created_by_id,
-            DatasetEventPayload(
-                message=f"error on dataset creation while checking column types:\
-                             {error_str}"
-            ),
+        event = DatasetEventPayload(
+            dataset_id=dataset.id,
+            message=f'error on dataset creation while checking column types of dataset "{dataset.name}":\
+                                {error_str}',
         )
+        create_dataset_event(db, dataset.created_by_id, event)
         dataset_update = DatasetUpdateRepo(
+            id=dataset.id,
             ready_status="failed",
         )
         dataset = dataset_store.update(db, dataset, dataset_update)
-        return dataset
+        return event
 
     dataset_update = DatasetUpdateRepo(
         id=dataset.id,
@@ -105,10 +105,11 @@ async def process_dataset(
     )
 
     dataset = dataset_store.update(db, dataset, dataset_update)
-    create_dataset_event(
-        db, dataset.created_by_id, DatasetEventPayload(dataset_id=dataset.id)
+    event = DatasetEventPayload(
+        dataset_id=dataset.id, message=f'dataset "{dataset.name}" created successfully'
     )
-    return dataset
+    create_dataset_event(db, dataset.created_by_id, event)
+    return event
 
 
 async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
@@ -153,8 +154,16 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         )
     )
 
-    def finish_task(dataset: Dataset, id: int):
-        print("Task finished", dataset, "\ntask id:\n", id)
+    def finish_task(task: asyncio.Task, _):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(
+            get_websockets_manager().send_message(
+                user_id=dataset.created_by_id,
+                message=WebSocketMessage(
+                    data=task.result(), type="dataset-process-finish"
+                ),
+            )
+        )
 
     get_manager("dataset").add_new_task(
         TaskView(id=dataset.id, user_id=dataset.created_by_id, task=task),
