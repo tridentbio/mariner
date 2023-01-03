@@ -155,15 +155,18 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     )
 
     def finish_task(task: asyncio.Task, _):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(
-            get_websockets_manager().send_message(
-                user_id=dataset.created_by_id,
-                message=WebSocketMessage(
-                    data=task.result(), type="dataset-process-finish"
-                ),
+        try:
+            # loop = asyncio.get_event_loop()
+            asyncio.ensure_future(
+                get_websockets_manager().send_message(
+                    user_id=dataset.created_by_id,
+                    message=WebSocketMessage(
+                        data=task.result(), type="dataset-process-finish"
+                    ),
+                )
             )
-        )
+        except Exception as e:
+            raise e
 
     get_manager("dataset").add_new_task(
         TaskView(id=dataset.id, user_id=dataset.created_by_id, task=task),

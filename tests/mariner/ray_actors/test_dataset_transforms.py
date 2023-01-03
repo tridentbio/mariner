@@ -70,12 +70,12 @@ class TestDatasetTransforms:
         (
             rows_count,
             cols_count,
-            filesize_bytes,
+            # filesize_bytes,
             stats,
         ) = await hiv_transformer_fixture.get_entity_info_from_csv.remote()
         assert rows_count == 41_127
         assert cols_count == 3
-        assert filesize_bytes == 6_964_675
+        # assert filesize_bytes == 6_964_675
 
         # check stats colulmns
         expected_stats_cols = ["smiles", "activity", "HIV_active"]
