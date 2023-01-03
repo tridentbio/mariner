@@ -48,7 +48,7 @@ def test_post_datasets(
         },
     ]
 
-    with open("tests/data/HIV.csv", "rb") as f:
+    with open("tests/data/Lipophilicity.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
             data={
@@ -64,7 +64,17 @@ def test_post_datasets(
         assert res.status_code == status.HTTP_200_OK
         response = res.json()
         id = response["id"]
-        assert len(response["columnsMetadata"]) == 2
+        assert response["readyStatus"] == "processing"
+
+        with client.websocket_connect(
+            "/ws?token=" + normal_user_token_headers["Authorization"].split(" ")[1],
+            timeout=60,
+        ) as ws:
+            message = ws.receive_json()
+            assert message is not None
+            assert message["type"] == "dataset-process-finish"
+            assert "created successfully" in message["data"].get("message", "")
+
         ds = dataset_store.get(db, id)
         assert ds is not None
         assert ds.name == response["name"]
