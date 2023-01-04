@@ -82,6 +82,7 @@ async def process_dataset(
     )
     if errors:
         error_str = "; ".join(errors)
+        # PR improve message error
         event = DatasetEventPayload(
             dataset_id=dataset.id,
             message=f'error on dataset creation while checking column types of dataset "{dataset.name}":\
@@ -117,6 +118,7 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     if existing_dataset:
         raise DatasetAlreadyExists()
 
+    # PR needs to be async
     chunk_size = settings.APPLICATION_CHUNK_SIZE
     dataset_ray_transformer = DatasetTransforms.remote(is_compressed(data.file.file))
 
@@ -155,18 +157,14 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     )
 
     def finish_task(task: asyncio.Task, _):
-        try:
-            # loop = asyncio.get_event_loop()
-            asyncio.ensure_future(
-                get_websockets_manager().send_message(
-                    user_id=dataset.created_by_id,
-                    message=WebSocketMessage(
-                        data=task.result(), type="dataset-process-finish"
-                    ),
-                )
+        asyncio.ensure_future(
+            get_websockets_manager().send_message(
+                user_id=dataset.created_by_id,
+                message=WebSocketMessage(
+                    data=task.result(), type="dataset-process-finish"
+                ),
             )
-        except Exception as e:
-            raise e
+        )
 
     get_manager("dataset").add_new_task(
         TaskView(id=dataset.id, user_id=dataset.created_by_id, task=task),

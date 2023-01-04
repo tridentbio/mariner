@@ -8,7 +8,3 @@ class DatasetAlreadyExists(Exception):
 
 class DatasetNotFound(Exception):
     pass
-
-
-class DatasetColumnTypeError(Exception):
-    pass

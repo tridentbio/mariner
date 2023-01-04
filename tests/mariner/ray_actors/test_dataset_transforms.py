@@ -42,7 +42,6 @@ class TestDatasetTransforms:
         with open(csvpath, "rb") as f:
             for chunk in iter(lambda: f.read(settings.APPLICATION_CHUNK_SIZE), b""):
                 await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
-            # dataset_ray_transformer.is_dataset_fully_loaded = True
             await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
             return dataset_ray_transformer
 

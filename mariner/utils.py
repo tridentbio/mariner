@@ -41,6 +41,12 @@ def random_pretty_name() -> str:
 
 
 def is_compressed(file: Union[FAUploadFile, bytes]) -> bool:
+    """
+    Check if file is compressed by checking the first two bytes
+    gzip compressed files start with b'\x1f\x8b'
+
+    :param file: file to check
+    """
     try:
         if isinstance(file, bytes):
             return file[0:2] == b"\x1f\x8b"
@@ -54,6 +60,12 @@ def is_compressed(file: Union[FAUploadFile, bytes]) -> bool:
 
 
 def read_compressed_csv(fileBytes: bytes) -> pd.DataFrame:
+    """
+    Read a compressed csv file into a pandas dataframe
+
+    :param fileBytes: bytes of the file
+    :raise TypeError if file is not compressed
+    """
     if is_compressed(fileBytes):
         fileBytes = decompress(fileBytes)
         return pd.read_csv(io.BytesIO(fileBytes), dtype=str)
@@ -62,6 +74,11 @@ def read_compressed_csv(fileBytes: bytes) -> pd.DataFrame:
 
 
 def decompress_file(file: io.BytesIO) -> io.BytesIO:
+    """
+    Decompress a gziped file
+
+    :param file (io.BytesIO)
+    """
     try:
         file = io.BytesIO(decompress(file.read()))
         file.seek(0)
@@ -75,13 +92,19 @@ def decompress_file(file: io.BytesIO) -> io.BytesIO:
 
 
 def get_size(file: io.BytesIO):
-    file.seek(0, 2)  # move the cursor to the end of the file
+    """
+    Get the size of a file in bytes
+    """
+    file.seek(0, 2)
     size = file.tell()
     file.seek(0)
     return size
 
 
 def compress_file(file: io.BytesIO) -> io.BytesIO:
+    """
+    Compress a file into gzip format
+    """
     try:
         file.seek(0)
         file = io.BytesIO(compress(file.read()))
