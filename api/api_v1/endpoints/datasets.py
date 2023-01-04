@@ -12,7 +12,6 @@ from api import deps
 from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetAlreadyExists,
-    DatasetColumnTypeError,
     DatasetNotFound,
     NotCreatorOwner,
 )
@@ -109,12 +108,6 @@ async def create_dataset(
     except DatasetAlreadyExists:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Dataset name already in use"
-        )
-
-    except DatasetColumnTypeError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Column type not supported. Errors: { e }",
         )
 
 
