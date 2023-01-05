@@ -42,6 +42,7 @@ class Dataset(Base):
         "ColumnsMetadata", back_populates="dataset", cascade="all,delete"
     )
     ready_status = Column(String, nullable=True)
+    errors = Column(JSON, nullable=True)
 
     def get_dataframe(self):
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)

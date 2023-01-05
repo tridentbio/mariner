@@ -94,6 +94,7 @@ async def process_dataset(
             stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
             updated_at=datetime.datetime.now(),
             ready_status="failed",
+            errors=errors,
         )
         dataset = dataset_store.update(db, dataset, dataset_update)
 
@@ -119,6 +120,7 @@ async def process_dataset(
         stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
         updated_at=datetime.datetime.now(),
         ready_status="ready",
+        errors=None,
     )
 
     dataset = dataset_store.update(db, dataset, dataset_update)
