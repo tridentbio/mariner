@@ -6,7 +6,7 @@ from typing import List, Literal, Tuple, Union
 import pandas as pd
 import ray
 
-from mariner.core.aws import Bucket, upload_s3_file
+from mariner.core.aws import Bucket, upload_s3_compressed
 from mariner.schemas.dataset_schemas import (
     CategoricalDataType,
     ColumnsMeta,
@@ -14,8 +14,8 @@ from mariner.schemas.dataset_schemas import (
     SmileDataType,
 )
 from mariner.stats import get_metadata, get_stats
-from mariner.utils import compress_file, decompress_file, get_size, hash_md5
-from mariner.validation import check_is_compatible, is_valid_smiles_series
+from mariner.utils import decompress_file
+from mariner.validation import CompatibilityChecker, is_valid_smiles_series
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
 LOG = logging.getLogger(__name__)
@@ -82,7 +82,6 @@ class DatasetTransforms:
 
     def set_is_dataset_fully_loaded(self, val: bool):
         self.is_dataset_fully_loaded = val
-        return get_size(self._file_input)
 
     def get_is_dataset_fully_loaded(self):
         return self.is_dataset_fully_loaded
@@ -201,20 +200,20 @@ class DatasetTransforms:
         stats = get_stats(self.df, smiles_columns)
         return stats
 
-    def upload_s3(self):
-        """Uploads transformed dataframe to s3 in the csv format
-
-        TODO: Compress data and adjust dataframe getter methods in the
-        dataset
+    def upload_s3(self, old_data_url=None):
+        """
+        Uploads transformed dataframe to s3 in the csv format compressed with gzip
+        Deletes old dataset if it exists
         """
         file = BytesIO()
         self.df.to_csv(file, index=False)
-        file_size = get_size(file)
-        file = compress_file(file)
-        file_md5 = hash_md5(file=file)
         file.seek(0)
-        key = f"datasets/{file_md5}.csv"
-        upload_s3_file(file=file, bucket=Bucket.Datasets, key=key)
+        key, file_size = upload_s3_compressed(file, bucket=Bucket.Datasets)
+
+        # TODO check why it is not working (permission denied error)
+        # if old_data_url:
+        #     delete_s3_file(key=old_data_url, bucket=Bucket.Datasets)
+
         return key, file_size
 
     def check_data_types(self, columns: ColumnsMeta) -> Tuple[ColumnsMeta, List[str]]:
@@ -223,9 +222,19 @@ class DatasetTransforms:
         If validation succeeds, updates categorical data types to the right
         number of classes
 
-
         Args:
             columns: objects containing information about data types
         """
-        errors = check_is_compatible(self.df, columns)
-        return columns, errors
+        checker = CompatibilityChecker(columns_metadata=columns, df=self.df)
+        checker.check_is_compatible()
+
+        if checker.has_error:
+            checker.generate_errors_dataset()
+        else:
+            for i, col in enumerate(columns):
+                if col.data_type.domain_kind == "categorical":
+                    columns[i].data_type = self._infer_domain_type_from_series(
+                        self.df[col.pattern]
+                    )
+
+        return columns, checker.errors if checker.has_error else None

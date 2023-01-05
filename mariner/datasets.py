@@ -7,8 +7,8 @@ from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
-import mariner.events as events_ctl
 from api.websocket import WebSocketMessage, get_websockets_manager
+from mariner.core.aws import download_s3, upload_s3_compressed
 from mariner.core.config import settings
 from mariner.entities.user import User
 from mariner.exceptions import (
@@ -22,10 +22,10 @@ from mariner.schemas.dataset_schemas import (
     Dataset,
     DatasetCreate,
     DatasetCreateRepo,
-    DatasetEventPayload,
     DatasetsQuery,
     DatasetUpdate,
     DatasetUpdateRepo,
+    DatasetValidationErrorEventPayload,
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.tasks import TaskView, get_manager
@@ -49,67 +49,82 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     return dataset
 
 
-def create_dataset_event(db: Session, user_id: int, payload: DatasetEventPayload):
-    success = not payload.message.startswith("error")
-
-    events_ctl.create_event(
-        db,
-        events_ctl.EventCreate(
-            user_id=user_id,
-            source="dataset:created" if success else "dataset:failed",
-            timestamp=datetime.datetime.now(),
-            payload=payload.dict(),
-            # url=f"{settings.WEBAPP_URL}/datasets/{payload['id']}",
-        ),
-    )
-
-
 async def process_dataset(
     db: Session,
-    dataset: DatasetCreateRepo,
+    dataset_id: int,
     data: DatasetCreate,
-    dataset_ray_transformer: DatasetTransforms,
-) -> DatasetEventPayload:
+) -> DatasetValidationErrorEventPayload:
+    dataset = dataset_store.get(db, dataset_id)
+    file = download_s3(key=dataset.data_url, bucket=DATASET_BUCKET)
+
+    chunk_size = settings.APPLICATION_CHUNK_SIZE
+    dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))
+    for chunk in iter(lambda: file.read(chunk_size), b""):
+        await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
+    await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
+
+    (
+        rows,
+        columns,
+        _,
+    ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
+
     await dataset_ray_transformer.apply_split_indexes.remote(
         split_type=data.split_type,
         split_target=data.split_target,
         split_column=data.split_column,
     )
-    data_url, filesize = await dataset_ray_transformer.upload_s3.remote()
+
+    data_url, filesize = await dataset_ray_transformer.upload_s3.remote(
+        old_data_url=dataset.data_url
+    )
     stats = await dataset_ray_transformer.get_dataset_summary.remote()
     columns_metadata, errors = await dataset_ray_transformer.check_data_types.remote(
         data.columns_metadata
     )
+
     if errors:
-        error_str = "; ".join(errors)
-        # PR improve message error
-        event = DatasetEventPayload(
-            dataset_id=dataset.id,
-            message=f'error on dataset creation while checking column types of dataset "{dataset.name}":\
-                                {error_str}',
-        )
-        create_dataset_event(db, dataset.created_by_id, event)
         dataset_update = DatasetUpdateRepo(
             id=dataset.id,
+            bytes=filesize,
+            columns=columns,
+            rows=rows,
+            data_url=data_url,
+            columns_metadata=columns_metadata,
+            stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+            updated_at=datetime.datetime.now(),
             ready_status="failed",
         )
         dataset = dataset_store.update(db, dataset, dataset_update)
+
+        error_str = "; ".join(errors["columns"])
+        event = DatasetValidationErrorEventPayload(
+            dataset_id=dataset.id,
+            message=(
+                f"error on dataset creation while checking"
+                f' column types of dataset "{dataset.name}": {error_str}'
+            ),
+            error_details=errors,
+        )
+
         return event
 
     dataset_update = DatasetUpdateRepo(
         id=dataset.id,
         bytes=filesize,
+        columns=columns,
+        rows=rows,
         data_url=data_url,
         columns_metadata=columns_metadata,
         stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+        updated_at=datetime.datetime.now(),
         ready_status="ready",
     )
 
     dataset = dataset_store.update(db, dataset, dataset_update)
-    event = DatasetEventPayload(
+    event = DatasetValidationErrorEventPayload(
         dataset_id=dataset.id, message=f'dataset "{dataset.name}" created successfully'
     )
-    create_dataset_event(db, dataset.created_by_id, event)
     return event
 
 
@@ -118,24 +133,11 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     if existing_dataset:
         raise DatasetAlreadyExists()
 
-    # PR needs to be async
-    chunk_size = settings.APPLICATION_CHUNK_SIZE
-    dataset_ray_transformer = DatasetTransforms.remote(is_compressed(data.file.file))
-
-    for chunk in iter(lambda: data.file.file.read(chunk_size), b""):
-        await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
-    filesize = await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
-
-    (
-        rows,
-        columns,
-        _,
-    ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
+    data_url, filesize = upload_s3_compressed(data.file)
 
     create_obj = DatasetCreateRepo(
         bytes=filesize,
-        columns=columns,
-        rows=rows,
+        data_url=data_url,
         split_actual=None,
         split_target=data.split_target,
         split_type=data.split_type,
@@ -147,12 +149,12 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     )
     dataset = dataset_store.create(db, create_obj)
     create_obj.id = dataset.id
+
     task = asyncio.create_task(
         process_dataset(
             db=db,
-            dataset=create_obj,
+            dataset_id=dataset.id,
             data=data,
-            dataset_ray_transformer=dataset_ray_transformer,
         )
     )
 

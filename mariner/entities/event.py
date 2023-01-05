@@ -6,9 +6,7 @@ from sqlalchemy.sql.functions import current_timestamp
 
 from mariner.db.base_class import Base
 
-EventSource = Literal[
-    "training:completed", "changelog", "dataset:created", "dataset:failed"
-]
+EventSource = Literal["training:completed", "changelog"]
 
 
 class EventReadEntity(Base):
