@@ -140,6 +140,7 @@ class DatasetBase(ApiBaseModel):
     created_by_id: int
     columns_metadata: List[ColumnsDescription] = []
     ready_status: Optional[Literal["failed", "processing", "ready"]] = "processing"
+    errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 
 class ColumnsMeta(BaseModel):
@@ -203,6 +204,7 @@ class DatasetUpdateRepo(BaseModel):
     split_type: Optional[SplitType] = None
     columns_metadata: Optional[List[ColumnsDescription]] = None
     ready_status: Optional[str] = None
+    errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 
 class DatasetValidationErrorEventPayload(BaseModel):

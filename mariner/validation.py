@@ -198,7 +198,7 @@ class CompatibilityChecker:
                                 invalid_rows[: self.row_error_limit]
                             ):
                                 self.add_error(
-                                    self.row_message(index, self.df.columns[i], val),
+                                    self.row_message(index, val, self.df.columns[i]),
                                     "rows",
                                     new_log=False,
                                 )
