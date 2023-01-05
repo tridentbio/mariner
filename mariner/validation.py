@@ -2,12 +2,14 @@
 This module is responsible for data validation. It has functions to validate
 single values and dataframes.
 """
+from io import BytesIO
 from re import search
-from typing import List, NewType, Optional, Tuple, Union
+from typing import List, Literal, NewType, Optional, Tuple, Union
 
 import pandas as pd
 from rdkit import Chem, RDLogger
 
+from mariner.core.aws import Bucket, upload_s3_compressed
 from mariner.schemas.dataset_schemas import ColumnsMeta
 
 Mol = Chem.rdchem.Mol
@@ -111,7 +113,7 @@ SchemaType = NewType(
 VALIDATION_SCHEMA: SchemaType = {
     "categorical": _is_instance(str),
     "numeric": (
-        lambda x: not x or search(r"^[-\d][\.,\d]*$", str(x)) is not None,
+        lambda x: not x or search(r"^[-\d\.][\.,\d]*$", str(x)) is not None,
         "column $ should be numeric",
     ),
     "smiles": [
@@ -122,37 +124,113 @@ VALIDATION_SCHEMA: SchemaType = {
 }
 
 
-def check_is_compatible(df: pd.DataFrame, columns_metadata: List[ColumnsMeta]):
+class CompatibilityChecker:
     """
-    Checks if the columns metadata is compatible with the dataset
-
-    :param df DataFrame: dataset
-    :param columns_metadata List[ColumnsMeta]: columns metadata
+    Class to check if the columns metadata is compatible with the dataset provided
+    Validations will be based on the validate_schema
     """
-    errors = []
-    for column_metadata in columns_metadata:
-        i = find_column_i(df, column_metadata.pattern)
 
-        if i == -1:
-            errors.append(f"Column {column_metadata.pattern} not found in dataset")
-        else:
-            validations = VALIDATION_SCHEMA.get(
-                column_metadata.data_type.domain_kind, []
-            )
-            if isinstance(validations, tuple):
-                validations = [validations]
+    def __init__(
+        self,
+        columns_metadata: List[ColumnsMeta],
+        df: pd.DataFrame,
+        validate_schema: SchemaType = VALIDATION_SCHEMA,
+    ):
+        self.df = df
+        self.columns_metadata = columns_metadata
+        self.validate_schema = validate_schema
+        self.errors = {"columns": [], "rows": [], "logs": [], "dataset_error_key": None}
+        self.row_error_limit = 10
+        self.has_error = False
+        self.error_column = pd.Series(data=[""] * len(self.df.index), dtype=str)
 
-            for validation in validations:
-                func, msg = validation
-                is_valid = None
+    def add_error(
+        self,
+        msg: str,
+        type: Optional[Literal["columns", "rows"]] = None,
+        new_log: bool = True,
+    ):
+        """
+        Add an new error to the errors dict
+        """
+        if type:
+            self.errors[type].append(msg)
+        if new_log:
+            self.errors["logs"].append(msg)
 
-                try:
-                    is_valid = df.iloc[:, i].apply(func).all()
-                except Exception as e:
-                    print(f"Error validating column {df.columns[i]}: {e}")
+    def check_is_compatible(self):
+        """
+        Checks if the columns metadata is compatible with the dataset
 
-                if not is_valid:
-                    errors.append(msg.replace("$", f'"{df.columns[i]}"'))
-                    break
+        :param df DataFrame: dataset
+        :param columns_metadata List[ColumnsMeta]: columns metadata
+        """
+        for column_metadata in self.columns_metadata:
+            i = find_column_i(self.df, column_metadata.pattern)
 
-    return errors
+            if i == -1:
+                self.add_error(
+                    f"Column {column_metadata.pattern} not found in dataset", "columns"
+                )
+            else:
+                validations = self.validate_schema.get(
+                    column_metadata.data_type.domain_kind, []
+                )
+                if isinstance(validations, tuple):
+                    validations = [validations]
+
+                for validation in validations:
+
+                    func, msg = validation
+                    is_valid = None
+
+                    try:
+                        valid_row_serie = self.df.iloc[:, i].apply(func)
+                        is_valid = valid_row_serie.all()
+                        if not is_valid:
+                            invalid_rows: list = self.df.loc[
+                                ~valid_row_serie, self.df.columns[i]
+                            ].to_list()
+                            self.error_column.loc[~valid_row_serie] += (
+                                self.column_message(self.df.columns[i], msg) + " | "
+                            )
+                            for index, val in enumerate(
+                                invalid_rows[: self.row_error_limit]
+                            ):
+                                self.add_error(
+                                    self.row_message(index, self.df.columns[i], val),
+                                    "rows",
+                                    new_log=False,
+                                )
+
+                    except Exception as e:
+                        self.errors["logs"].append(
+                            (f"Error validating column {self.df.columns[i]}: {e}")
+                        )
+
+                    if not is_valid:
+                        self.errors["columns"].append(
+                            self.column_message(self.df.columns[i], msg)
+                        )
+                        self.has_error = True
+
+    def generate_errors_dataset(self):
+        """
+        Generate a new dataset with a column with the errors
+        upload the dataset to s3 and add the key to the errors dict
+        """
+        df = self.df.copy()
+        df["errors"] = self.error_column
+        file = BytesIO()
+        df.to_csv(file, index=False)
+        file.seek(0)
+        file_key, _ = upload_s3_compressed(file, Bucket.Datasets)
+        self.errors["dataset_error_key"] = file_key
+
+    @staticmethod
+    def column_message(column: str, msg: str):
+        return msg.replace("$", f'"{column}"')
+
+    @staticmethod
+    def row_message(index: int, row: str, column: str):
+        return f"Value {row} in row '{index}' of column" f" '{column}' is invalid"

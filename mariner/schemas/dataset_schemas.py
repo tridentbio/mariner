@@ -127,8 +127,8 @@ class DatasetBase(ApiBaseModel):
     id: Optional[int] = None
     name: str
     description: str
-    rows: int
-    columns: int
+    rows: Optional[int]
+    columns: Optional[int]
     bytes: Optional[int]
     stats: Optional[Any]
     data_url: Optional[str]
@@ -205,6 +205,7 @@ class DatasetUpdateRepo(BaseModel):
     ready_status: Optional[str] = None
 
 
-class DatasetEventPayload(BaseModel):
+class DatasetValidationErrorEventPayload(BaseModel):
     dataset_id: Optional[int] = None
     message: Optional[str] = "success on dataset creation"
+    error_details: Optional[Dict[str, Union[List[str], str]]] = None
