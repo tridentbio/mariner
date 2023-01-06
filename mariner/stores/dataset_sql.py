@@ -70,6 +70,9 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
             db.query(ColumnsMetadata).filter(
                 ColumnsMetadata.dataset_id == db_obj.id
             ).delete()
+            db.commit()
+            db_obj = db.query(Dataset).filter(Dataset.id == db_obj.id).first()
+
             db_obj.columns_metadata = [
                 ColumnsMetadata(**cd_me.dict()) for cd_me in obj_in.columns_metadata
             ]

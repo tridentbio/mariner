@@ -18,6 +18,7 @@ from mariner.exceptions import (
 )
 from mariner.ray_actors.dataset_transforms import DatasetTransforms
 from mariner.schemas.dataset_schemas import (
+    ColumnsDescription,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
@@ -50,9 +51,7 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
 
 
 async def process_dataset(
-    db: Session,
-    dataset_id: int,
-    data: DatasetCreate,
+    db: Session, dataset_id: int, columns_metadata: List[ColumnsDescription]
 ) -> DatasetValidationErrorEventPayload:
     dataset = dataset_store.get(db, dataset_id)
     file = download_s3(key=dataset.data_url, bucket=DATASET_BUCKET)
@@ -70,9 +69,9 @@ async def process_dataset(
     ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
 
     await dataset_ray_transformer.apply_split_indexes.remote(
-        split_type=data.split_type,
-        split_target=data.split_target,
-        split_column=data.split_column,
+        split_type=dataset.split_type,
+        split_target=dataset.split_target,
+        split_column=dataset.split_column,
     )
 
     data_url, filesize = await dataset_ray_transformer.upload_s3.remote(
@@ -80,7 +79,7 @@ async def process_dataset(
     )
     stats = await dataset_ray_transformer.get_dataset_summary.remote()
     columns_metadata, errors = await dataset_ray_transformer.check_data_types.remote(
-        data.columns_metadata
+        columns_metadata
     )
 
     if errors:
@@ -97,6 +96,7 @@ async def process_dataset(
             errors=errors,
         )
         dataset = dataset_store.update(db, dataset, dataset_update)
+        db.flush()
 
         error_str = "; ".join(errors["columns"])
         event = DatasetValidationErrorEventPayload(
@@ -124,40 +124,18 @@ async def process_dataset(
     )
 
     dataset = dataset_store.update(db, dataset, dataset_update)
+    db.flush()
     event = DatasetValidationErrorEventPayload(
         dataset_id=dataset.id, message=f'dataset "{dataset.name}" created successfully'
     )
     return event
 
 
-async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
-    existing_dataset = dataset_store.get_by_name(db, data.name)
-    if existing_dataset:
-        raise DatasetAlreadyExists()
-
-    data_url, filesize = upload_s3_compressed(data.file)
-
-    create_obj = DatasetCreateRepo(
-        bytes=filesize,
-        data_url=data_url,
-        split_actual=None,
-        split_target=data.split_target,
-        split_type=data.split_type,
-        name=data.name,
-        description=data.description,
-        created_at=datetime.datetime.now(),
-        updated_at=datetime.datetime.now(),
-        created_by_id=current_user.id,
-    )
-    dataset = dataset_store.create(db, create_obj)
-    create_obj.id = dataset.id
-
+def start_process(
+    db: Session, dataset: Dataset, columns_metadata: List[ColumnsDescription]
+):
     task = asyncio.create_task(
-        process_dataset(
-            db=db,
-            dataset_id=dataset.id,
-            data=data,
-        )
+        process_dataset(db=db, dataset_id=dataset.id, columns_metadata=columns_metadata)
     )
 
     def finish_task(task: asyncio.Task, _):
@@ -175,10 +153,36 @@ async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
         finish_task,
     )
 
+
+async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
+    existing_dataset = dataset_store.get_by_name(db, data.name)
+    if existing_dataset:
+        raise DatasetAlreadyExists()
+
+    data_url, filesize = upload_s3_compressed(data.file)
+
+    create_obj = DatasetCreateRepo(
+        bytes=filesize,
+        data_url=data_url,
+        split_actual=None,
+        split_target=data.split_target,
+        split_type=data.split_type,
+        columns_metadata=data.columns_metadata,
+        name=data.name,
+        description=data.description,
+        created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
+        created_by_id=current_user.id,
+    )
+    dataset = dataset_store.create(db, create_obj)
+    create_obj.id = dataset.id
+
+    start_process(db, dataset, data.columns_metadata)
+
     return dataset
 
 
-def update_dataset(
+async def update_dataset(
     db: Session, current_user: User, dataset_id: int, data: DatasetUpdate
 ):
     existingdataset = dataset_store.get(db, dataset_id)
@@ -192,6 +196,7 @@ def update_dataset(
     existingdataset.stats = jsonable_encoder(existingdataset.stats)
     dataset_dict = jsonable_encoder(existingdataset)
     update = DatasetUpdateRepo(**dataset_dict)
+    needs_processing = False
 
     if data.name:
         update.name = data.name
@@ -207,6 +212,8 @@ def update_dataset(
 
     if data.columns_metadata:
         update.columns_metadata = data.columns_metadata
+        update.ready_status = "processing"
+        needs_processing = True
 
     if data.split_column:
         update.split_column = data.split_column
@@ -214,6 +221,8 @@ def update_dataset(
     update.id = dataset_id
     saved = dataset_store.update(db, existingdataset, update)
     db.flush()
+    if needs_processing:
+        start_process(db, saved, data.columns_metadata)
     return Dataset.from_orm(saved)
 
 
