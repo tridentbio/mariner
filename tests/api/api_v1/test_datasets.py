@@ -26,6 +26,10 @@ def test_get_my_datasets(
     assert isinstance(payload["data"], list)
 
 
+def is_close(val1: float, val2: float):
+    return abs(val1 - val2) < 0.02
+
+
 @pytest.mark.long
 def test_post_datasets(
     client: TestClient,
@@ -76,9 +80,10 @@ def test_post_datasets(
             assert "created successfully" in message["data"].get("message", "")
 
         ds = dataset_store.get(db, id)
+        assert is_close(ds.bytes, 287_750)
         assert ds is not None
         assert ds.name == response["name"]
-        assert response["columns"] == 3
+        assert ds.columns == 3
         assert len(ds.columns_metadata) == 2
 
 

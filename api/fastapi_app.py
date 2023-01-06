@@ -42,9 +42,7 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
-app.add_middleware(
-    GZipMiddleware, minimum_size=100
-)  # this middleware just handle responses
+app.add_middleware(GZipMiddleware, minimum_size=100)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 app.include_router(ws_router)

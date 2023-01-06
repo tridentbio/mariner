@@ -5,7 +5,7 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
 
-from .constants import TEST, TRAIN, VAL
+from .constants import TrainingStep
 
 
 class RandomSplitter:
@@ -40,9 +40,9 @@ class RandomSplitter:
         # Create an empty column to be used as a marker
         dataset["step"] = None
         # Fill the step column with each equivalent step
-        dataset.loc[train_ids, "step"] = TRAIN
-        dataset.loc[val_ids, "step"] = VAL
-        dataset.loc[test_ids, "step"] = TEST
+        dataset.loc[train_ids, "step"] = TrainingStep.TRAIN.value
+        dataset.loc[val_ids, "step"] = TrainingStep.VAL.value
+        dataset.loc[test_ids, "step"] = TrainingStep.TEST.value
 
         return dataset
 
@@ -111,8 +111,8 @@ class ScaffoldSplitter:
         # Create an empty column to be used as a marker
         dataset["step"] = None
         # Fill the step column with each equivalent step
-        dataset.loc[train_ids, "step"] = TRAIN
-        dataset.loc[val_ids, "step"] = VAL
-        dataset.loc[test_ids, "step"] = TEST
+        dataset.loc[train_ids, "step"] = TrainingStep.TRAIN.value
+        dataset.loc[val_ids, "step"] = TrainingStep.VAL.value
+        dataset.loc[test_ids, "step"] = TrainingStep.TEST.value
 
         return dataset
