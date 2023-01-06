@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from typing import Dict
 
@@ -13,6 +12,7 @@ from mariner.schemas.dataset_schemas import DatasetCreateRepo, Split
 from mariner.stores.dataset_sql import dataset_store
 from tests.fixtures.dataset import mock_dataset
 from tests.fixtures.user import get_test_user
+from tests.utils.dataset import get_post_dataset_data
 from tests.utils.utils import random_lower_string
 
 
@@ -36,32 +36,11 @@ def test_post_datasets(
     normal_user_token_headers: Dict[str, str],
     db: Session,
 ) -> None:
-    metadatas = [
-        {
-            "pattern": "exp",
-            "data_type": {"domain_kind": "numeric", "unit": "mole"},
-            "description": "experiment measurement",
-            "unit": "mole",
-        },
-        {
-            "pattern": "smiles",
-            "data_type": {
-                "domain_kind": "smiles",
-            },
-            "description": "SMILES representaion of molecule",
-        },
-    ]
 
     with open("tests/data/Lipophilicity.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
-            data={
-                "name": random_lower_string(),
-                "description": "Test description",
-                "splitType": "random",
-                "splitTarget": "60-20-20",
-                "columnsMetadata": json.dumps(metadatas),
-            },
+            data=get_post_dataset_data(),
             files={"file": ("dataset.csv", f.read())},
             headers=normal_user_token_headers,
         )
@@ -85,6 +64,42 @@ def test_post_datasets(
         assert ds.name == response["name"]
         assert ds.columns == 3
         assert len(ds.columns_metadata) == 2
+
+
+@pytest.mark.long
+def test_post_datasets_invalid(
+    client: TestClient,
+    normal_user_token_headers: Dict[str, str],
+    db: Session,
+) -> None:
+
+    with open("tests/data/bad_dataset.csv", "rb") as f:
+        res = client.post(
+            f"{settings.API_V1_STR}/datasets/",
+            data=get_post_dataset_data(),
+            files={"file": ("dataset.csv", f.read())},
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == status.HTTP_200_OK
+        response = res.json()
+        id = response["id"]
+        assert response["readyStatus"] == "processing"
+
+        with client.websocket_connect(
+            "/ws?token=" + normal_user_token_headers["Authorization"].split(" ")[1],
+            timeout=60,
+        ) as ws:
+            message = ws.receive_json()
+            assert message is not None
+            assert message["type"] == "dataset-process-finish"
+            assert "error on dataset creation" in message["data"].get("message", "")
+
+        ds = dataset_store.get(db, id)
+        assert ds.name == response["name"]
+        assert ds.errors is not None
+        assert len(ds.errors["columns"]) == 2
+        assert len(ds.errors["rows"]) == 18
+        assert isinstance(ds.errors["dataset_error_key"], str)
 
 
 def test_post_datasets_name_conflict(
