@@ -139,6 +139,16 @@ def test_put_datasets(
     response = r.json()
     assert response is not None
     assert response["name"] == new_name
+
+    with client.websocket_connect(
+        "/ws?token=" + normal_user_token_headers["Authorization"].split(" ")[1],
+        timeout=60,
+    ) as ws:
+        message = ws.receive_json()
+        assert message is not None
+        assert message["type"] == "dataset-process-finish"
+        assert "created successfully" in message["data"].get("message", "")
+
     db.commit()
     updated = dataset_store.get(db, response["id"])
     updated = db.query(DatasetModel).filter(DatasetModel.id == some_dataset.id).first()
