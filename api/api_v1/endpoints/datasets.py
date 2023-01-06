@@ -116,7 +116,7 @@ async def create_dataset(
     response_model=Dataset,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def update_dateset(
+async def update_dateset(
     dataset_id: int,
     name: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
@@ -134,7 +134,7 @@ def update_dateset(
     db: Session = Depends(deps.get_db),
 ):
     try:
-        dataset = controller.update_dataset(
+        dataset = await controller.update_dataset(
             db,
             current_user,
             dataset_id,
