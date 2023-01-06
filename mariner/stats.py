@@ -6,7 +6,7 @@ import rdkit.Chem as Chem
 from pandas.core.frame import DataFrame
 from rdkit.Chem import Descriptors
 
-from model_builder.constants import TEST, TRAIN, VAL
+from model_builder.constants import TrainingStep
 
 
 def get_chemical_props(smiles: str) -> tuple:
@@ -186,12 +186,14 @@ def get_stats(dataset: pd.DataFrame, smiles_columns: List[str]):
 
     stats["full"] = get_dataset_summary(dataset, smiles_columns)
     stats["train"] = get_dataset_summary(
-        dataset[dataset["step"] == TRAIN], smiles_columns
+        dataset[dataset["step"] == TrainingStep.TRAIN.value], smiles_columns
     )
     stats["test"] = get_dataset_summary(
-        dataset[dataset["step"] == TEST], smiles_columns
+        dataset[dataset["step"] == TrainingStep.TEST.value], smiles_columns
     )
-    stats["val"] = get_dataset_summary(dataset[dataset["step"] == VAL], smiles_columns)
+    stats["val"] = get_dataset_summary(
+        dataset[dataset["step"] == TrainingStep.VAL.value], smiles_columns
+    )
 
     return stats
 
