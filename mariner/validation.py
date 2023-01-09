@@ -92,7 +92,7 @@ def _is_instance(
     return (func, msg)
 
 
-def find_column_i(df: pd.DataFrame, column_name: str) -> int:
+def find_column_by_name(df: pd.DataFrame, column_name: str) -> int:
     def compare_insensitive(x, y):
         return x.lower() == y.lower()
 
@@ -166,7 +166,7 @@ class CompatibilityChecker:
         :param columns_metadata List[ColumnsMeta]: columns metadata
         """
         for column_metadata in self.columns_metadata:
-            i = find_column_i(self.df, column_metadata.pattern)
+            i = find_column_by_name(self.df, column_metadata.pattern)
 
             if i == -1:
                 self.add_error(
