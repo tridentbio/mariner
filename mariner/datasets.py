@@ -105,7 +105,7 @@ async def process_dataset(
                 f"error on dataset creation while checking"
                 f' column types of dataset "{dataset.name}": {error_str}'
             ),
-            error_details=errors,
+            dataset=dataset,
         )
 
         return event
@@ -126,7 +126,9 @@ async def process_dataset(
     dataset = dataset_store.update(db, dataset, dataset_update)
     db.flush()
     event = DatasetProcessStatusEventPayload(
-        dataset_id=dataset.id, message=f'dataset "{dataset.name}" created successfully'
+        dataset_id=dataset.id,
+        message=f'dataset "{dataset.name}" created successfully',
+        dataset=dataset,
     )
     return event
 

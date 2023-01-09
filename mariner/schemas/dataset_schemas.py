@@ -210,4 +210,4 @@ class DatasetUpdateRepo(BaseModel):
 class DatasetProcessStatusEventPayload(BaseModel):
     dataset_id: Optional[int] = None
     message: Optional[str] = "success on dataset creation"
-    error_details: Optional[Dict[str, Union[List[str], str]]] = None
+    dataset: Dataset = None
