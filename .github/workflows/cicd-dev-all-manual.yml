@@ -52,7 +52,7 @@ jobs:
       run: |
         docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile .
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
+        #docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
@@ -66,17 +66,18 @@ jobs:
         SECRETS: ${{ secrets.SECRETS }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
-        curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
-        chmod +x ./kubectl &&\
-        mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$CONFIGMAP" 
-        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
-          --set "replicaCount=$REPLICA_COUNT" \
-          --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
-          --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
-          --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-          --set "istio_url=backend.${{ secrets.HOST_ZONE }}"
-        kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+        ls
+        #curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
+        #chmod +x ./kubectl &&\
+        #mv ./kubectl /usr/local/bin/kubectl &&\
+        #kubectl apply -f - <<< "$CONFIGMAP" 
+        #helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
+        #  --set "replicaCount=$REPLICA_COUNT" \
+        #  --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
+        #  --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
+        #  --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
+        #  --set "istio_url=backend.${{ secrets.HOST_ZONE }}"
+        #kubectl rollout status "deployment/$DEPLOYMENT_NAME"
 
   mlflow:
     name: MLFlow
@@ -120,7 +121,7 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile.mlflow . 
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
+        #docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
@@ -133,17 +134,18 @@ jobs:
         CONFIGMAP: ${{ secrets.CONFIGMAP }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
-        curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
-        chmod +x ./kubectl &&\
-        mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$CONFIGMAP"
-        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mlflow/. \
-          --set "replicaCount=$REPLICA_COUNT" \
-          --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
-          --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
-          --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-          --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
-        kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+        ls
+        #curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
+        #chmod +x ./kubectl &&\
+        #mv ./kubectl /usr/local/bin/kubectl &&\
+        #kubectl apply -f - <<< "$CONFIGMAP"
+        #helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mlflow/. \
+        #  --set "replicaCount=$REPLICA_COUNT" \
+        #  --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
+        #  --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
+        #  --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
+        #  --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
+        #kubectl rollout status "deployment/$DEPLOYMENT_NAME"
   ray-head:
     name: Ray Head
     runs-on: ubuntu-20.04
@@ -186,7 +188,7 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile.ray-head . 
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
+        #docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
@@ -199,18 +201,19 @@ jobs:
         CONFIGMAP: ${{ secrets.CONFIGMAP }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
-        curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
-        chmod +x ./kubectl &&\
-        mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl delete pod -l component=ray-cluster -n ray 
-        # kubectl apply -f - <<< "$CONFIGMAP"
-        # helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-head/. \
-        #   --set "replicaCount=$REPLICA_COUNT" \
-        #   --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
-        #   --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
-        # kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+        ls
+        #curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
+        #chmod +x ./kubectl &&\
+        #mv ./kubectl /usr/local/bin/kubectl &&\
+        #kubectl delete pod -l component=ray-cluster -n ray 
+        ## kubectl apply -f - <<< "$CONFIGMAP"
+        ## helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-head/. \
+        ##   --set "replicaCount=$REPLICA_COUNT" \
+        ##   --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
+        ##   --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
+        ##   --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
+        ##   --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
+        ## kubectl rollout status "deployment/$DEPLOYMENT_NAME"
   ray-worker:
     name: Ray Worker
     runs-on: ubuntu-20.04
@@ -253,7 +256,7 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile.ray-worker . 
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
+        #docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
@@ -266,15 +269,16 @@ jobs:
         CONFIGMAP: ${{ secrets.CONFIGMAP }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
-        curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
-        chmod +x ./kubectl &&\
-        mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl delete pod -l component=ray-worker -n ray
-        # kubectl apply -f - <<< "$CONFIGMAP"
-        # helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/. \
-        #   --set "replicaCount=$REPLICA_COUNT" \
-        #   --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
-        #   --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
-        # kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+        ls
+        #curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
+        #chmod +x ./kubectl &&\
+        #mv ./kubectl /usr/local/bin/kubectl &&\
+        #kubectl delete pod -l component=ray-worker -n ray
+        ## kubectl apply -f - <<< "$CONFIGMAP"
+        ## helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/. \
+        ##   --set "replicaCount=$REPLICA_COUNT" \
+        ##   --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
+        ##   --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
+        ##   --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
+        ##   --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
+        ## kubectl rollout status "deployment/$DEPLOYMENT_NAME"
