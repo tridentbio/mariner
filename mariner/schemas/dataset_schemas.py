@@ -207,7 +207,7 @@ class DatasetUpdateRepo(BaseModel):
     errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 
-class DatasetValidationErrorEventPayload(BaseModel):
+class DatasetProcessStatusEventPayload(BaseModel):
     dataset_id: Optional[int] = None
     message: Optional[str] = "success on dataset creation"
     error_details: Optional[Dict[str, Union[List[str], str]]] = None

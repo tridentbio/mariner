@@ -23,10 +23,10 @@ from mariner.schemas.dataset_schemas import (
     Dataset,
     DatasetCreate,
     DatasetCreateRepo,
+    DatasetProcessStatusEventPayload,
     DatasetsQuery,
     DatasetUpdate,
     DatasetUpdateRepo,
-    DatasetValidationErrorEventPayload,
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.tasks import TaskView, get_manager
@@ -52,7 +52,7 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
 
 async def process_dataset(
     db: Session, dataset_id: int, columns_metadata: List[ColumnsDescription]
-) -> DatasetValidationErrorEventPayload:
+) -> DatasetProcessStatusEventPayload:
     dataset = dataset_store.get(db, dataset_id)
     file = download_s3(key=dataset.data_url, bucket=DATASET_BUCKET)
 
@@ -99,7 +99,7 @@ async def process_dataset(
         db.flush()
 
         error_str = "; ".join(errors["columns"])
-        event = DatasetValidationErrorEventPayload(
+        event = DatasetProcessStatusEventPayload(
             dataset_id=dataset.id,
             message=(
                 f"error on dataset creation while checking"
@@ -125,7 +125,7 @@ async def process_dataset(
 
     dataset = dataset_store.update(db, dataset, dataset_update)
     db.flush()
-    event = DatasetValidationErrorEventPayload(
+    event = DatasetProcessStatusEventPayload(
         dataset_id=dataset.id, message=f'dataset "{dataset.name}" created successfully'
     )
     return event
