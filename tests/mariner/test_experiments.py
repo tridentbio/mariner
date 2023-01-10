@@ -5,6 +5,7 @@ from sqlalchemy.orm.session import Session
 
 from mariner import experiments as experiments_ctl
 from mariner.entities import Experiment as ExperimentEntity
+from mariner.schemas.api import OrderByClause, OrderByQuery
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
@@ -17,15 +18,51 @@ from tests.utils.utils import random_lower_string
 
 
 @pytest.mark.asyncio
-async def test_get_experiments(db: Session, some_model: Model, some_experiments):
+async def test_get_experiments_ordered_by_createdAt_asceding(
+    db: Session, some_model: Model, some_experiments
+):
     user = get_test_user(db)
     query = ListExperimentsQuery(
-        model_id=some_model.id, stage=None, page=0, per_page=15, model_version_ids=None
+        model_id=some_model.id,
+        stage=None,
+        page=0,
+        per_page=15,
+        model_version_ids=None,
+        order_by=OrderByQuery(clauses=[OrderByClause(field="createdAt", order="asc")]),
     )
     experiments, total = experiments_ctl.get_experiments(db, user, query)
     assert (
         len(experiments) == len(some_experiments) == total == 3
     ), "query gets all experiments"
+    for i in range(len(experiments[:-1])):
+        current, next = experiments[i], experiments[i + 1]
+        assert (
+            next.created_at > current.created_at
+        ), "createdAt asceding order is not respected"
+
+
+@pytest.mark.asyncio
+async def test_get_experiments_ordered_by_createdAt_desceding(
+    db: Session, some_model: Model, some_experiments
+):
+    user = get_test_user(db)
+    query = ListExperimentsQuery(
+        model_id=some_model.id,
+        stage=None,
+        page=0,
+        per_page=15,
+        model_version_ids=None,
+        order_by=OrderByQuery(clauses=[OrderByClause(field="createdAt", order="desc")]),
+    )
+    experiments, total = experiments_ctl.get_experiments(db, user, query)
+    assert (
+        len(experiments) == len(some_experiments) == total == 3
+    ), "query gets all experiments"
+    for i in range(len(experiments[:-1])):
+        current, next = experiments[i], experiments[i + 1]
+        assert (
+            next.created_at < current.created_at
+        ), "createdAt descending order is not respected"
 
 
 @pytest.mark.asyncio

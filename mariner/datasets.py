@@ -1,14 +1,14 @@
+import asyncio
 import datetime
-import io
 import json
-from typing import Any, List, Literal, Mapping, Union
+from typing import List
 
-import pandas as pd
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 
-from mariner.core.aws import Bucket, upload_s3_file
+from api.websocket import WebSocketMessage, get_websockets_manager
+from mariner.core.aws import download_s3, upload_s3_compressed
 from mariner.core.config import settings
 from mariner.entities.user import User
 from mariner.exceptions import (
@@ -16,31 +16,23 @@ from mariner.exceptions import (
     DatasetNotFound,
     NotCreatorOwner,
 )
+from mariner.ray_actors.dataset_transforms import DatasetTransforms
 from mariner.schemas.dataset_schemas import (
-    CategoricalDataType,
+    ColumnsDescription,
     ColumnsMeta,
     Dataset,
     DatasetCreate,
     DatasetCreateRepo,
+    DatasetProcessStatusEventPayload,
     DatasetsQuery,
     DatasetUpdate,
     DatasetUpdateRepo,
-    NumericalDataType,
-    SmileDataType,
-    StringDataType,
 )
-from mariner.stats import get_metadata as get_stats
-from mariner.stats import get_stats as get_summary
 from mariner.stores.dataset_sql import dataset_store
-from mariner.utils import hash_md5
-from mariner.validation import is_valid_smiles_series
-from model_builder.splitters import RandomSplitter, ScaffoldSplitter
+from mariner.tasks import TaskView, get_manager
+from mariner.utils import is_compressed
 
 DATASET_BUCKET = settings.AWS_DATASETS
-
-
-def make_key(filename: Union[str, UploadFile]):
-    return hash_md5(file=filename)
 
 
 def get_my_datasets(db: Session, current_user: User, query: DatasetsQuery):
@@ -58,112 +50,141 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int):
     return dataset
 
 
-def get_entity_info_from_csv(
-    df: pd.DataFrame,
-) -> tuple[int, int, Mapping[Any, Any]]:
-    stats: Mapping[Any, Any] = get_stats(df).to_dict(orient="dict")
-    return len(df), len(df.columns), stats
+async def process_dataset(
+    db: Session, dataset_id: int, columns_metadata: List[ColumnsDescription]
+) -> DatasetProcessStatusEventPayload:
+    dataset = dataset_store.get(db, dataset_id)
+    file = download_s3(key=dataset.data_url, bucket=DATASET_BUCKET)
 
+    chunk_size = settings.APPLICATION_CHUNK_SIZE
+    dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))
+    for chunk in iter(lambda: file.read(chunk_size), b""):
+        await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
+    await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
 
-def _upload_s3(file: UploadFile):
-    file.file.seek(0)
-    file_md5 = make_key(file)
-    key = f"datasets/{file_md5}.csv"
-    file.file.seek(0)
-    upload_s3_file(file, Bucket.Datasets, key)
-    return key
+    (
+        rows,
+        columns,
+        _,
+    ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
 
-
-def _get_df_with_split_indexes(
-    df: pd.DataFrame,
-    split_type: Literal["random", "scaffold"],
-    split_target: str,
-    split_column: Union[str, None] = None,
-):
-    train_size, val_size, test_size = map(
-        lambda x: int(x) / 100, split_target.split("-")
+    await dataset_ray_transformer.apply_split_indexes.remote(
+        split_type=dataset.split_type,
+        split_target=dataset.split_target,
+        split_column=dataset.split_column,
     )
-    if split_type == "random":
-        splitter = RandomSplitter()
-        df = splitter.split(df, train_size, test_size, val_size)
-        return df
-    elif split_type == "scaffold":
-        splitter = ScaffoldSplitter()
-        assert (
-            split_column is not None
-        ), "split column can't be none when split_type is scaffold"
-        df = splitter.split(df, split_column, train_size, test_size, val_size)
-        return df
-    else:
-        raise NotImplementedError(f"{split_type} splitting is not implemented")
+
+    data_url, filesize = await dataset_ray_transformer.upload_s3.remote(
+        old_data_url=dataset.data_url
+    )
+    stats = await dataset_ray_transformer.get_dataset_summary.remote()
+    columns_metadata, errors = await dataset_ray_transformer.check_data_types.remote(
+        columns_metadata
+    )
+
+    if errors:
+        dataset_update = DatasetUpdateRepo(
+            id=dataset.id,
+            bytes=filesize,
+            columns=columns,
+            rows=rows,
+            data_url=data_url,
+            columns_metadata=columns_metadata,
+            stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+            updated_at=datetime.datetime.now(),
+            ready_status="failed",
+            errors=errors,
+        )
+        dataset = dataset_store.update(db, dataset, dataset_update)
+        db.flush()
+
+        error_str = "; ".join(errors["columns"])
+        event = DatasetProcessStatusEventPayload(
+            dataset_id=dataset.id,
+            message=(
+                f"error on dataset creation while checking"
+                f' column types of dataset "{dataset.name}": {error_str}'
+            ),
+            dataset=dataset,
+        )
+
+        return event
+
+    dataset_update = DatasetUpdateRepo(
+        id=dataset.id,
+        bytes=filesize,
+        columns=columns,
+        rows=rows,
+        data_url=data_url,
+        columns_metadata=columns_metadata,
+        stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+        updated_at=datetime.datetime.now(),
+        ready_status="ready",
+        errors=None,
+    )
+
+    dataset = dataset_store.update(db, dataset, dataset_update)
+    db.flush()
+    event = DatasetProcessStatusEventPayload(
+        dataset_id=dataset.id,
+        message=f'dataset "{dataset.name}" created successfully',
+        dataset=dataset,
+    )
+    return event
 
 
-def create_dataset(db: Session, current_user: User, data: DatasetCreate):
-    """
-    Domain function that creates a dataset for the user.
+def start_process(
+    db: Session, dataset: Dataset, columns_metadata: List[ColumnsDescription]
+):
+    task = asyncio.create_task(
+        process_dataset(db=db, dataset_id=dataset.id, columns_metadata=columns_metadata)
+    )
 
-    :param db Session: Connection to the database
-    :param current_user User: request owner
-    :param data DatasetCreate: dataset attributes
-    :raises DatasetAlreadyExists: when there is a name clash between the user datasets
-    :raises ValueError: When data.split_column is not provided and data.split_type is
-    scaffold
-    """
+    def finish_task(task: asyncio.Task, _):
+        asyncio.ensure_future(
+            get_websockets_manager().send_message(
+                user_id=dataset.created_by_id,
+                message=WebSocketMessage(
+                    data=task.result(), type="dataset-process-finish"
+                ),
+            )
+        )
+
+    get_manager("dataset").add_new_task(
+        TaskView(id=dataset.id, user_id=dataset.created_by_id, task=task),
+        finish_task,
+    )
+
+
+async def create_dataset(db: Session, current_user: User, data: DatasetCreate):
     existing_dataset = dataset_store.get_by_name(db, data.name)
     if existing_dataset:
         raise DatasetAlreadyExists()
 
-    # All dataset is loaded into memory
-    file_bytes = data.file.file.read()
-    filesize = data.file.file.tell()
-    df = pd.read_csv(io.BytesIO(file_bytes))
-    rows, columns, stats = get_entity_info_from_csv(df)
-
-    df_with_split_indexs = _get_df_with_split_indexes(
-        df,
-        split_type=data.split_type,
-        split_target=data.split_target,
-        split_column=data.split_column,
-    )
-    dataset_file = io.BytesIO()
-    df_with_split_indexs.to_csv(dataset_file, index=False)
-    data.file.file = dataset_file
-
-    data_url = _upload_s3(data.file)
-
-    # Detect the smiles column name
-    smiles_columns = []
-    for col in df.columns:
-        if is_valid_smiles_series(df[col], weak_check=True):
-            smiles_columns.append(col)
-
-    stats = get_summary(df, smiles_columns)
+    data_url, filesize = upload_s3_compressed(data.file)
 
     create_obj = DatasetCreateRepo(
-        columns=columns,
-        rows=rows,
+        bytes=filesize,
+        data_url=data_url,
         split_actual=None,
         split_target=data.split_target,
         split_type=data.split_type,
+        columns_metadata=data.columns_metadata,
         name=data.name,
         description=data.description,
-        bytes=filesize,
         created_at=datetime.datetime.now(),
         updated_at=datetime.datetime.now(),
-        stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
-        data_url=data_url,
         created_by_id=current_user.id,
-        columns_metadata=data.columns_metadata,
     )
-
-    create_obj.stats = stats
-
     dataset = dataset_store.create(db, create_obj)
+    create_obj.id = dataset.id
+
+    start_process(db, dataset, data.columns_metadata)
 
     return dataset
 
 
-def update_dataset(
+async def update_dataset(
     db: Session, current_user: User, dataset_id: int, data: DatasetUpdate
 ):
     existingdataset = dataset_store.get(db, dataset_id)
@@ -177,6 +198,7 @@ def update_dataset(
     existingdataset.stats = jsonable_encoder(existingdataset.stats)
     dataset_dict = jsonable_encoder(existingdataset)
     update = DatasetUpdateRepo(**dataset_dict)
+    needs_processing = False
 
     if data.name:
         update.name = data.name
@@ -192,6 +214,8 @@ def update_dataset(
 
     if data.columns_metadata:
         update.columns_metadata = data.columns_metadata
+        update.ready_status = "processing"
+        needs_processing = True
 
     if data.split_column:
         update.split_column = data.split_column
@@ -199,6 +223,8 @@ def update_dataset(
     update.id = dataset_id
     saved = dataset_store.update(db, existingdataset, update)
     db.flush()
+    if needs_processing:
+        start_process(db, saved, data.columns_metadata)
     return Dataset.from_orm(saved)
 
 
@@ -213,37 +239,12 @@ def delete_dataset(db: Session, current_user: User, dataset_id: int):
     return Dataset.from_orm(dataset)
 
 
-def infer_domain_type_from_series(series: pd.Series):
-    if series.dtype == float:
-        return NumericalDataType(domain_kind="numeric")
-    elif series.dtype == object:
-        # check if it is smiles
-        if is_valid_smiles_series(series):
-            return SmileDataType(domain_kind="smiles")
-        # check if it is likely to be categorical
-        series = series.sort_values()
-        uniques = series.unique()
-        if len(uniques) <= 100:
-            return CategoricalDataType(
-                domain_kind="categorical",
-                classes={val: idx for idx, val in enumerate(uniques)},
-            )
-        return StringDataType(domain_kind="string")
-    elif series.dtype == int:
-        series = series.sort_values()
-        uniques = series.unique()
-        if len(uniques) <= 100:
-            return CategoricalDataType(
-                domain_kind="categorical",
-                classes={val: idx for idx, val in enumerate(uniques)},
-            )
-
-
-def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
-    file_bytes = csv_file.file.read()
-    df = pd.read_csv(io.BytesIO(file_bytes))
-    metadata = [
-        ColumnsMeta(name=key, dtype=infer_domain_type_from_series(df[key]))
-        for key in df
-    ]
+# Candidate for going to dataset actor
+async def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
+    dataset_actor = DatasetTransforms.remote()
+    chunk_size = settings.APPLICATION_CHUNK_SIZE
+    for chunk in iter(lambda: csv_file.file.read(chunk_size), b""):
+        await dataset_actor.write_dataset_buffer.remote(chunk)
+    await dataset_actor.set_is_dataset_fully_loaded.remote(True)
+    metadata = await dataset_actor.get_columns_metadata.remote()
     return metadata
