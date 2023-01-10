@@ -9,3 +9,4 @@ lightning_logs/
 docker-compose.override.yml
 secrets.yaml
 configmap.yaml
+configmaps
