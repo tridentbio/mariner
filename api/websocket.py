@@ -21,7 +21,7 @@ class WebSocketMessage(ApiBaseModel):
     Base class for messages exchanged with client
     """
 
-    type: Literal["pong", "update-running-metrics"]
+    type: Literal["pong", "update-running-metrics", "dataset-process-finish"]
     data: Any
 
 

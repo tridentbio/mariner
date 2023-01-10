@@ -1,10 +1,12 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import pydantic
+from sqlalchemy import Column
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 
 from mariner.entities import Experiment, ModelVersion
+from mariner.schemas.api import OrderByQuery
 from mariner.schemas.experiment_schemas import ListExperimentsQuery
 from mariner.stores.base_sql import CRUDBase
 
@@ -62,6 +64,32 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
         query = query.filter(Experiment.created_by_id == creator_id)
         return query
 
+    def _validate_order_by(self, query: OrderByQuery):
+        ACCEPTED_ORDER_COLUMNS = [
+            "createdAt",
+        ]
+        for clause in query.clauses:
+            if clause.field not in ACCEPTED_ORDER_COLUMNS:
+                raise ValueError(
+                    f"{clause.field} is not accepted as orderBy."
+                    f" Must be one of {', '.join(ACCEPTED_ORDER_COLUMNS)}"
+                )
+
+    def _add_order_by(self, sql_query: Query, query: OrderByQuery):
+        for clause in query.clauses:
+            col: Union[Column, None] = None
+            if clause.field == "createdAt":
+                col = Experiment.created_at
+
+            if not col:
+                continue
+
+            if clause.order == "desc":
+                sql_query = sql_query.order_by(col.desc())
+            else:
+                sql_query = sql_query.order_by(col)
+        return sql_query
+
     def get_experiments_paginated(
         self,
         db: Session,
@@ -69,6 +97,7 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
         created_by_id: Optional[int] = None,
         stages: Union[List[str], None] = None,
         page: int = 1,
+        order_by: Union[OrderByQuery, None] = None,
         per_page: int = 15,
     ) -> tuple[List[Experiment], int]:
         sql_query = db.query(Experiment)
@@ -78,6 +107,9 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
             sql_query = self._by_creator(sql_query, created_by_id)
         if stages:
             sql_query = self.filter_by_stages(query=sql_query, stages=stages)
+        if order_by:
+            self._validate_order_by(order_by)
+            sql_query = self._add_order_by(sql_query, query=order_by)
         total = sql_query.count()
         sql_query = sql_query.limit(per_page)
         sql_query = sql_query.offset(per_page * page)

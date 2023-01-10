@@ -124,13 +124,14 @@ class ColumnMetadataFromJSONStr(str):
 
 
 class DatasetBase(ApiBaseModel):
+    id: Optional[int] = None
     name: str
     description: str
-    rows: int
-    columns: int
-    bytes: int
-    stats: Any
-    data_url: str
+    rows: Optional[int]
+    columns: Optional[int]
+    bytes: Optional[int]
+    stats: Optional[Any]
+    data_url: Optional[str]
     split_target: Split
     split_actual: Optional[Split]
     split_type: SplitType
@@ -138,6 +139,8 @@ class DatasetBase(ApiBaseModel):
     updated_at: utc_datetime
     created_by_id: int
     columns_metadata: List[ColumnsDescription] = []
+    ready_status: Optional[Literal["failed", "processing", "ready"]] = "processing"
+    errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 
 class ColumnsMeta(BaseModel):
@@ -200,3 +203,11 @@ class DatasetUpdateRepo(BaseModel):
     split_column: Optional[str] = None
     split_type: Optional[SplitType] = None
     columns_metadata: Optional[List[ColumnsDescription]] = None
+    ready_status: Optional[str] = None
+    errors: Optional[Dict[str, Union[List[str], str]]] = None
+
+
+class DatasetProcessStatusEventPayload(BaseModel):
+    dataset_id: Optional[int] = None
+    message: Optional[str] = "success on dataset creation"
+    dataset: Dataset = None
