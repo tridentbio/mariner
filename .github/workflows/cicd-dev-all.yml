@@ -206,7 +206,6 @@ jobs:
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
           --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
           --set "istio_url=ray.${{ secrets.HOST_ZONE }}"
-        kubectl rollout status "deployment/$DEPLOYMENT_NAME"
   ray-worker:
     name: Ray Worker
     runs-on: ubuntu-20.04
@@ -272,4 +271,3 @@ jobs:
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
           --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
           --set "istio_url=ray-worker.${{ secrets.HOST_ZONE }}"
-        kubectl rollout status "deployment/$DEPLOYMENT_NAME"
