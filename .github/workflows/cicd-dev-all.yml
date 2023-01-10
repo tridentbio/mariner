@@ -193,21 +193,20 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL_RAY_HEAD }}
-        CONFIGMAP: ${{ secrets.CONFIGMAP }}
+        CONFIGMAP: ${{ secrets.CONFIGMAP_RAY_HEAD }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl delete pod -l component=ray-cluster -n ray 
-        # kubectl apply -f - <<< "$CONFIGMAP"
-        # helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-head/. \
-        #   --set "replicaCount=$REPLICA_COUNT" \
-        #   --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
-        #   --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
-        # kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+        kubectl apply -f - <<< "$CONFIGMAP"
+        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-head/.  -n ray \
+          --set "replicaCount=$REPLICA_COUNT" \
+          --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
+          --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
+          --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
+          --set "istio_url=ray.${{ secrets.HOST_ZONE }}"
+        kubectl rollout status "deployment/$DEPLOYMENT_NAME"
   ray-worker:
     name: Ray Worker
     runs-on: ubuntu-20.04
@@ -260,18 +259,17 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL_RAY_WORKER }}
-        CONFIGMAP: ${{ secrets.CONFIGMAP }}
+        CONFIGMAP: ${{ secrets.CONFIGMAP_RAY_WORKER }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl delete pod -l component=ray-worker -n ray
-        # kubectl apply -f - <<< "$CONFIGMAP"
-        # helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/. \
-        #   --set "replicaCount=$REPLICA_COUNT" \
-        #   --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
-        #   --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
-        #   --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
-        # kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+        kubectl apply -f - <<< "$CONFIGMAP"
+        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/.  -n ray \
+          --set "replicaCount=$REPLICA_COUNT" \
+          --set "image.repository=$ECR_REGISTRY/$ECR_REPOSITORY" \
+          --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
+          --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
+          --set "istio_url=ray-worker.${{ secrets.HOST_ZONE }}"
+        kubectl rollout status "deployment/$DEPLOYMENT_NAME"
