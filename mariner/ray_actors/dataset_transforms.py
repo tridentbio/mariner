@@ -1,7 +1,7 @@
 import io
 import logging
 from io import BytesIO
-from typing import List, Literal, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
 import ray
@@ -65,6 +65,17 @@ class DatasetTransforms:
 
     @is_dataset_fully_loaded.setter
     def is_dataset_fully_loaded(self, value: bool):
+        """Sets the dataset as fully loaded
+
+        Once the dataset is fully loaded, self.df will be populated
+        with the dataset
+        If the dataset is already loaded, this method will do nothing
+        If the dataset is compressed, it will be decompressed before
+        loading into the dataframe
+
+        Args:
+            value (bool): True if the dataset is fully loaded
+        """
         if self._is_dataset_fully_loaded:
             LOG.warning("Can't update a dataset already loaded into dataframe'")
             return
@@ -77,17 +88,41 @@ class DatasetTransforms:
                 else self._file_input
             )
 
-    def get_dataframe(self):
+    def get_dataframe(self) -> pd.DataFrame:
+        """Returns the underlying dataframe
+
+        Returns:
+            pd.DataFrame: the underlying dataframe
+        """
         return self.df
 
     def set_is_dataset_fully_loaded(self, val: bool):
+        """Sets the dataset as fully loaded
+
+        Args:
+            val (bool): True if the dataset is fully loaded
+        """
         self.is_dataset_fully_loaded = val
 
-    def get_is_dataset_fully_loaded(self):
+    def get_is_dataset_fully_loaded(self) -> bool:
+        """Returns if the dataset is fully loaded
+
+        Returns:
+            bool: True if the dataset is fully loaded
+        """
         return self.is_dataset_fully_loaded
 
     @property
     def df(self) -> pd.DataFrame:
+        """Checks if the dataframe exists before returning it
+
+        Raises:
+            RuntimeError: If the dataset is not fully loaded
+            AssertionError: If the dataframe is None
+
+        Returns:
+            pd.DataFrame: the underlying dataframe
+        """
         if not self._is_dataset_fully_loaded:
             raise RuntimeError("Must set dataset as loaded before using dataframe")
         assert self._df is not None, "loading dataset as dataframe failed"
@@ -95,6 +130,11 @@ class DatasetTransforms:
 
     @df.setter
     def df(self, value: pd.DataFrame):
+        """Sets the underlying dataframe
+
+        Args:
+            value (pd.DataFrame): the dataframe to set
+        """
         self._df = value
 
     def get_columns_metadata(self, first_n_rows=20) -> List[ColumnsMeta]:
@@ -152,7 +192,25 @@ class DatasetTransforms:
         else:
             raise NotImplementedError(f"{split_type} splitting is not implemented")
 
-    def _infer_domain_type_from_series(self, series: pd.Series):
+    def _infer_domain_type_from_series(self, series: pd.Series) -> Any:
+        """Infers the domain type from a pd.Series
+
+        Checks some type of series and returns the corresponding
+        domain type based on the priority:
+            1. If the series is a float:
+                it will be considered as a numerical data type
+            2. If the series is an object:
+                it will be checked if it is a smiles first, then if it is a
+                categorical data type
+            3. If the series is an int:
+                it will be checked if it is a categorical data type
+
+        Args:
+            series (pd.Series): the series to infer the domain type from
+
+        Returns:
+            Any: inferred domain type
+        """
         if series.dtype == float:
             return NumericalDataType(domain_kind="numeric")
         elif series.dtype == object:
@@ -216,14 +274,21 @@ class DatasetTransforms:
 
         return key, file_size
 
-    def check_data_types(self, columns: ColumnsMeta) -> Tuple[ColumnsMeta, List[str]]:
+    def check_data_types(
+        self, columns: ColumnsMeta
+    ) -> Tuple[ColumnsMeta, Optional[List[str]]]:
         """Checks if underlying dataset conforms to columns data types
 
         If validation succeeds, updates categorical data types to the right
         number of classes
+        If validation fails, generates a dataset with the errors details
 
         Args:
             columns: objects containing information about data types
+
+        Returns:
+            Tuple[ColumnsMeta, Optional[List[str]]]:
+                updated columns and errors if has error
         """
         checker = CompatibilityChecker(columns_metadata=columns, df=self.df)
         checker.check_is_compatible()
