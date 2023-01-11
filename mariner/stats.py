@@ -6,6 +6,7 @@ import rdkit.Chem as Chem
 from pandas.core.frame import DataFrame
 from rdkit.Chem import Descriptors
 
+from mariner.schemas.dataset_schemas import StatsType
 from model_builder.constants import TrainingStep
 
 
@@ -181,8 +182,20 @@ def get_dataset_summary(
     return statistics
 
 
-def get_stats(dataset: pd.DataFrame, smiles_columns: List[str]):
-    stats = {}
+def get_stats(dataset: pd.DataFrame, smiles_columns: List[str]) -> StatsType:
+    """Computes the dataset histograms
+
+    Args:
+        dataset (pd.DataFrame): _description_
+        smiles_columns (List[str]): _description_
+
+    Returns:
+        Stats:
+            Histogram of the columns where it is calculable.
+            It is separated by the step of the dataset, possible
+            keys are: full, train, test, val
+    """
+    stats: StatsType = {}
 
     stats["full"] = get_dataset_summary(dataset, smiles_columns)
     stats["train"] = get_dataset_summary(
@@ -199,9 +212,14 @@ def get_stats(dataset: pd.DataFrame, smiles_columns: List[str]):
 
 
 def get_metadata(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Extracts metadata from the dataset to be cached on
+    """Extracts metadata from the dataset to be cached on
     the entity
+
+    Args:
+        df (pd.DataFrame): Dataset to extract metadata from
+
+    Returns:
+        pd.DataFrame: Metadata dataframe
     """
     dtypes: pd.Series = pd.Series(
         list(map(str, df.dtypes)), name="types", index=df.columns

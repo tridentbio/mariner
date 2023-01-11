@@ -1,9 +1,10 @@
 import enum
 import io
-from typing import Union
+from typing import Tuple, Union
 
 import boto3
 import pandas as pd
+from botocore.client import BaseClient
 from fastapi.datastructures import UploadFile
 
 from mariner.core.config import settings
@@ -17,11 +18,18 @@ from mariner.utils import (
 
 
 class Bucket(enum.Enum):
+    """S3 buckets available to the application"""
+
     Datasets = settings.AWS_DATASETS
     Models = settings.AWS_MODELS
 
 
-def create_s3_client():
+def create_s3_client() -> BaseClient:
+    """Create a boto3 s3 client
+
+    Returns:
+        BaseClient: boto3 s3 client
+    """
     s3 = boto3.client(
         "s3",
         region_name=settings.AWS_REGION,
@@ -32,6 +40,13 @@ def create_s3_client():
 
 
 def upload_s3_file(file: Union[UploadFile, io.BytesIO], bucket: Bucket, key):
+    """Upload a file to S3
+
+    Args:
+        file (Union[UploadFile, io.BytesIO]): file to upload
+        bucket (Bucket): s3 bucket
+        key (_type_): s3 key
+    """
     s3 = create_s3_client()
     if not isinstance(file, UploadFile):
         s3.upload_fileobj(file, bucket.value, key)
@@ -54,8 +69,14 @@ def delete_s3_file(key: str, bucket: Bucket):
 
 
 def download_s3(key: str, bucket: str) -> io.BytesIO:
-    """
-    Downloads a file from S3 and returns a BytesIO object
+    """Download a file from S3
+
+    Args:
+        key (str): s3 file key
+        bucket (str): s3 bucket
+
+    Returns:
+        io.BytesIO: downloaded file
     """
     s3 = create_s3_client()
     s3_res = s3.get_object(Bucket=bucket, Key=key)
@@ -65,9 +86,15 @@ def download_s3(key: str, bucket: str) -> io.BytesIO:
 
 def upload_s3_compressed(
     file: Union[UploadFile, io.BytesIO], bucket: str = Bucket.Datasets
-):
-    """
-    Uploads a file to S3 and returns the key and size of the file
+) -> Tuple[str, int]:
+    """Upload a file to S3 and compress it if it's not already compressed
+
+    Args:
+        file (Union[UploadFile, io.BytesIO]): file to upload
+        bucket (str, optional): s3 bucket. Defaults to Bucket.Datasets.
+
+    Returns:
+        Tuple[str, int]: s3 key and file size in bytes
     """
     file_instance = file if isinstance(file, io.BytesIO) else file.file
 
