@@ -1,9 +1,18 @@
 from asyncio.tasks import Task
 from ctypes import ArgumentError
-from typing import Any, Callable, Dict, Literal, Optional
+from typing import Any, Callable, Dict, List, Literal, Optional
 
 
 class TaskView:
+    """TaskView class to type tasks.
+
+    Attributes:
+        id (int): Task id.
+        user_id (int): User id.
+        task (Task): Task object.
+        running_history (Dict[str, Any]): Dictionary of running history.
+    """
+
     def __init__(self, id: int, user_id: int, task: Task):
         self.id = id
         self.user_id = user_id
@@ -12,6 +21,14 @@ class TaskView:
 
 
 class AbstractManager:
+    """Abstract class for managing tasks.
+
+    Attributes:
+        all_tasks (Dict[int, TaskView]): Dictionary of all tasks being managed.
+        handle_finish (Callable[[Task, int, Optional[Callable[[Task, int], Any]]]]):
+            Function to be called when a task finishes.
+    """
+
     def __init__(self):
         self.all_tasks: Dict[int, TaskView] = {}
 
@@ -21,6 +38,13 @@ class AbstractManager:
         id: int,
         done_callback: Optional[Callable[[Task, int], Any]],
     ):
+        """Function to be called when a task finishes.
+
+        Args:
+            task (Task): Task object.
+            id (int): Task id.
+            done_callback (Optional[Callable[[Task, int], Any]]): Callback function.
+        """
         if done_callback:
             done_callback(task, id)
         self.all_tasks.pop(id)
@@ -30,6 +54,16 @@ class AbstractManager:
         new_task: TaskView,
         done_callback: Optional[Callable[[Task, int], Any]] = None,
     ):
+        """Adds a new task to the manager.
+
+        Args:
+            new_task (TaskView): TaskView object.
+            done_callback (Optional[Callable[[Task, int], Any]], optional):
+                Callback function. Defaults to None.
+
+        Raises:
+            ArgumentError: If the task id already exists.
+        """
         id = new_task.id
         task = new_task.task
         if id in self.all_tasks:
@@ -37,15 +71,41 @@ class AbstractManager:
         self.all_tasks[id] = new_task
         task.add_done_callback(lambda task: self.handle_finish(task, id, done_callback))
 
-    def get_running_history(self, id: int):
+    def get_running_history(self, id: int) -> Dict[str, Any]:
+        """Returns the running history of a task.
+
+        Args:
+            id (int): Task id.
+
+        Returns:
+            Dict[str, Any]: Dictionary of running history.
+        """
         if id in self.all_tasks:
             return self.all_tasks[id].running_history
 
-    def get_from_user(self, user_id: int):
+    def get_from_user(self, user_id: int) -> List[TaskView]:
+        """Returns all tasks from a user.
+
+        Args:
+            user_id (int): User id.
+
+        Returns:
+            List[TaskView]: List of TaskView objects.
+        """
         tasks = [task for task in self.all_tasks.values() if task.user_id == user_id]
         return tasks
 
-    def get_task(self, id: int):
+    def get_task(self, id: int) -> Optional[Task]:
+        """Returns the task object.
+
+        If the task id does not exist, returns None.
+
+        Args:
+            id (int): Task id.
+
+        Returns:
+            Task: Task object.
+        """
         if id in self.all_tasks:
             return self.all_tasks[id].task
 
@@ -113,11 +173,16 @@ def get_exp_manager():
 
 
 class DatasetManager(AbstractManager):
+    """DatasetManager class."""
+
     def __init__(self):
         super().__init__()
 
 
+# singleton instances of managers
 tasks_manager: Optional[Dict[str, AbstractManager]] = {}
+
+# map of option to manager
 manager_map: Dict[str, AbstractManager] = {
     "dataset": DatasetManager,
     "experiment": ExperimentManager,
@@ -125,9 +190,10 @@ manager_map: Dict[str, AbstractManager] = {
 
 
 def get_manager(option: Literal["dataset", "experiment"]) -> AbstractManager:
-    """
-    Returns the manager for the given option.
-    this options needs to be in the manager_map
+    """Returns a singleton instance of manager for the given option.
+
+    Args:
+        option (str): The option for which to get the manager.
     """
     global tasks_manager, manager_map
 

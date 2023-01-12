@@ -15,6 +15,24 @@ def hash_md5(
     file: Union[str, Path, BinaryIO, FAUploadFile, None] = None,
     chunk_size=4096,
 ) -> str:
+    """Calculate md5 hash of a file
+
+    Need to provide either data or file
+
+    Args:
+        data (Union[bytes, None], optional):
+            file instance. Defaults to None.
+        file (Union[str, Path, BinaryIO, FAUploadFile, None], optional):
+            file instance. Defaults to None.
+        chunk_size (int, optional):
+            chunk to calculate hash by iteration. Defaults to 4096.
+
+    Raises:
+        TypeError: if neither data nor file is provided
+
+    Returns:
+        str: md5 hash as a string
+    """
     hash_md5 = hashlib.md5()
     if data:
         hash_md5.update(data)
@@ -37,15 +55,24 @@ def hash_md5(
 
 
 def random_pretty_name() -> str:
+    """Generate a random name"""
     return RandomWord().word(word_min_length=4)
 
 
 def is_compressed(file: Union[FAUploadFile, bytes, io.BytesIO]) -> bool:
-    """
-    Check if file is compressed by checking the first two bytes
-    gzip compressed files start with b'\x1f\x8b'
+    """Check if file is compressed by checking the first two bytes
 
-    :param file: file to check
+    Gzip compressed files start with b'\x1f\x8b'
+
+    Args:
+        file (Union[FAUploadFile, bytes, io.BytesIO]):
+            file to check if it is compressed
+
+    Raises:
+        TypeError: if the file param is not a file
+
+    Returns:
+        bool: True if file is compressed, False otherwise
     """
     try:
         if isinstance(file, bytes):
@@ -60,11 +87,19 @@ def is_compressed(file: Union[FAUploadFile, bytes, io.BytesIO]) -> bool:
 
 
 def read_compressed_csv(fileBytes: bytes) -> pd.DataFrame:
-    """
-    Read a compressed csv file into a pandas dataframe
+    """Read csv file in bytes compressed by gzip
 
-    :param fileBytes: bytes of the file
-    :raise TypeError if file is not compressed
+    First check if the file is compressed
+    if it is then decompress it and read it as a csv file
+
+    Args:
+        fileBytes (bytes): bytes of the file to read
+
+    Raises:
+        TypeError: if the file is not compressed
+
+    Returns:
+        pd.DataFrame: dataframe of the csv file
     """
     if is_compressed(fileBytes):
         fileBytes = decompress(fileBytes)
@@ -91,9 +126,14 @@ def decompress_file(file: io.BytesIO) -> io.BytesIO:
         raise e
 
 
-def get_size(file: io.BytesIO):
-    """
-    Get the size of a file in bytes
+def get_size(file: io.BytesIO) -> int:
+    """Get the size of a file in bytes
+
+    Args:
+        file (io.BytesIO): file to get size of
+
+    Returns:
+        int: size of file in bytes
     """
     file.seek(0, 2)
     size = file.tell()
@@ -102,8 +142,17 @@ def get_size(file: io.BytesIO):
 
 
 def compress_file(file: io.BytesIO) -> io.BytesIO:
-    """
-    Compress a file into gzip format
+    """Compress a file using gzip
+
+    Args:
+        file (io.BytesIO): file to compress
+
+    Raises:
+        TypeError: raised if file param is not instance of file
+        e: raised if any other error occurs
+
+    Returns:
+        io.BytesIO: compressed file
     """
     try:
         file.seek(0)
