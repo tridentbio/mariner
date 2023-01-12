@@ -65,7 +65,7 @@ class ConnectionManager:
     async def send_message(self, user_id: int, message: WebSocketMessage):
         if user_id not in self.active_connections:
             return
-        await self.active_connections[user_id].send_text(message.json())
+        await self.active_connections[user_id].send_text(message.json(by_alias=True))
 
     async def broadcast(self, message: str):
         for connection in self.active_connections.values():
