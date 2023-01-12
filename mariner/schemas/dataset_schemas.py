@@ -207,7 +207,13 @@ class DatasetUpdateRepo(BaseModel):
     errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 
-class DatasetProcessStatusEventPayload(BaseModel):
+class DatasetProcessStatusEventPayload(ApiBaseModel):
+    """Dataset process status event payload type.
+
+    Used in the dataset process to send the status of the
+    dataset processing to the frontend.
+    """
+
     dataset_id: Optional[int] = None
     message: Optional[str] = "success on dataset creation"
     dataset: Dataset = None
