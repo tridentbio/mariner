@@ -294,7 +294,7 @@ class DatasetUpdateRepo(BaseModel):
     errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 
-class DatasetProcessStatusEventPayload(BaseModel):
+class DatasetProcessStatusEventPayload(ApiBaseModel):
     """Dataset process status event payload type.
 
     Used in the dataset process to send the status of the
