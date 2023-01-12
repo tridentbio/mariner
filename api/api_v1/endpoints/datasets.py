@@ -50,6 +50,9 @@ def get_my_dataset_summary(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
+    """
+    Retrieve dataset stats by id
+    """
     dataset = controller.get_my_dataset_by_id(db, current_user, dataset_id)
     summary = dataset.stats
 
@@ -133,6 +136,9 @@ async def update_dateset(
     current_user=Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
+    """
+    Update a dataset and process again if it is needed
+    """
     try:
         dataset = await controller.update_dataset(
             db,
@@ -163,6 +169,7 @@ def delete_dataset(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
+    """Delete a dataset by id"""
     dataset = controller.delete_dataset(db, current_user, dataset_id)
     return dataset
 

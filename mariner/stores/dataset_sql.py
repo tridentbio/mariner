@@ -10,7 +10,26 @@ from mariner.stores.base_sql import CRUDBase
 
 
 class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
+    """CRUD for :any:`Dataset model<mariner.entities.dataset.Dataset>`
+
+    Responsible to handle all communication with the database for the Dataset model.
+    """
+
     def get_many_paginated(self, db: Session, query: DatasetsQuery):
+        """Get many datasets based on the query parameters
+
+        Args:
+            db (Session): database session
+            query (DatasetsQuery): query parameters:
+                sort_by_rows
+                sort_by_cols
+                sort_by_created_at
+                search_by_name
+                created_by_id
+
+        Returns:
+            A tuple with the list of datasets and the total number of datasets
+        """
         sql_query = db.query(Dataset)
 
         # sorting
@@ -43,6 +62,15 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
         return result, total
 
     def create(self, db: Session, obj_in: DatasetCreateRepo):
+        """Create a new dataset
+
+        Args:
+            db (Session): database session
+            obj_in (DatasetCreateRepo): dataset to be created
+
+        Returns:
+            Created dataset
+        """
         obj_in_dict = obj_in.dict()
         relations_key = ["columns_metadata"]
         ds_data = {
@@ -66,6 +94,16 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
         db_obj: Dataset,
         obj_in: DatasetUpdateRepo,
     ):
+        """Update a dataset
+
+        Args:
+            db (Session): database session
+            db_obj (Dataset): dataset to be updated
+            obj_in (DatasetUpdateRepo): dataset data to be updated
+
+        Returns:
+            Updated dataset
+        """
         if obj_in.columns_metadata:
             db.query(ColumnsMetadata).filter(
                 ColumnsMetadata.dataset_id == db_obj.id
@@ -82,6 +120,15 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
         return db_obj
 
     def get_by_name(self, db: Session, name: str) -> Dataset:
+        """Get a dataset by name
+
+        Args:
+            db (Session): database session
+            name (str): dataset name
+
+        Returns:
+            Found dataset
+        """
         return db.query(Dataset).filter(Dataset.name == name).first()
 
 
