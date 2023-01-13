@@ -119,7 +119,7 @@ async def create_dataset(
     response_model=Dataset,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-async def update_dateset(
+async def update_dataset(
     dataset_id: int,
     name: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
@@ -179,7 +179,7 @@ def delete_dataset(
     response_model=List[ColumnsMeta],
     dependencies=[Depends(deps.get_current_active_user)],
 )
-async def get_columns_metadata(file: UploadFile = File(None)):
+async def get_dataset_columns_metadata(file: UploadFile = File(None)):
     """Extracts column metadata for a given csv file"""
     metadata = await controller.parse_csv_headers(file)
     return metadata
