@@ -173,7 +173,7 @@ def check_biological_sequence_series(
         if at least one seq is invalid, return invalid
         if at least one seq is protein, return protein
         if at least one seq is dna and other is rna, return protein
-        if at least one seq is unambiguous, return unambiguous
+        if at least one seq is ambiguous, return ambiguous
 
     Args:
         series: pd.Series of strings
