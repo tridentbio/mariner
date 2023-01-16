@@ -8,14 +8,22 @@ import ray
 
 from mariner.core.aws import Bucket, upload_s3_compressed
 from mariner.schemas.dataset_schemas import (
+    BiologicalDataType,
     CategoricalDataType,
     ColumnsMeta,
+    DNADataType,
     NumericalDataType,
+    ProteinDataType,
+    RNADataType,
     SmileDataType,
 )
 from mariner.stats import get_metadata, get_stats
 from mariner.utils import decompress_file
-from mariner.validation import CompatibilityChecker, is_valid_smiles_series
+from mariner.validation import (
+    CompatibilityChecker,
+    check_biological_sequence,
+    is_valid_smiles_series,
+)
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
 LOG = logging.getLogger(__name__)
@@ -214,6 +222,16 @@ class DatasetTransforms:
         if series.dtype == float:
             return NumericalDataType(domain_kind="numeric")
         elif series.dtype == object:
+            # check if it is a biological sequence
+            bio_info = check_biological_sequence(series)
+            if bio_info["valid"]:
+                TypeClass: BiologicalDataType = {
+                    "dna": DNADataType,
+                    "rna": RNADataType,
+                    "protein": ProteinDataType,
+                }[bio_info["type"]]
+                return TypeClass(**bio_info["kwargs"])
+
             # check if it is smiles
             if is_valid_smiles_series(series):
                 return SmileDataType(domain_kind="smiles")
