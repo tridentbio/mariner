@@ -191,7 +191,11 @@ class ColumnsDescription(ApiBaseModel):
     """
 
     data_type: Union[
-        QuantityDataType, StringDataType, CategoricalDataType, SmileDataType
+        QuantityDataType,
+        StringDataType,
+        CategoricalDataType,
+        SmileDataType,
+        BiologicalDataType,
     ] = Field(...)
     description: str
     pattern: str
@@ -249,7 +253,13 @@ class ColumnsMeta(BaseModel):
 
     name: str
     dtype: Optional[
-        Union[CategoricalDataType, NumericalDataType, StringDataType, SmileDataType]
+        Union[
+            CategoricalDataType,
+            NumericalDataType,
+            StringDataType,
+            SmileDataType,
+            BiologicalDataType,
+        ]
     ]
 
 

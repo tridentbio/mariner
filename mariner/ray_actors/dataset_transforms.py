@@ -21,7 +21,7 @@ from mariner.stats import get_metadata, get_stats
 from mariner.utils import decompress_file
 from mariner.validation import (
     CompatibilityChecker,
-    check_biological_sequence,
+    check_biological_sequence_series,
     is_valid_smiles_series,
 )
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
@@ -223,7 +223,7 @@ class DatasetTransforms:
             return NumericalDataType(domain_kind="numeric")
         elif series.dtype == object:
             # check if it is a biological sequence
-            bio_info = check_biological_sequence(series)
+            bio_info = check_biological_sequence_series(series)
             if bio_info["valid"]:
                 TypeClass: BiologicalDataType = {
                     "dna": DNADataType,
