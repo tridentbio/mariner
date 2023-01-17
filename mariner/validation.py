@@ -195,7 +195,9 @@ def check_biological_sequence_series(
                 raise ValueError("Invalid sequence")
 
             types_found.add(seq_result["type"])
-            ambiguity.add("ambiguous" if seq_result["is_ambiguous"] else "unanbiguous")
+            ambiguity.add(
+                "ambiguous" if seq_result.get("is_ambiguous") else "unanbiguous"
+            )
 
         if len(types_found) > 1 or "protein" in types_found:
             return {
