@@ -16,7 +16,7 @@ class BiologicalValidChars(Enum):
     """
 
     AMBIGUOUS_DNA_RNA = ["R", "Y", "S", "W", "K", "M", "B", "D", "H", "V", "N"]
-    UNAMBIGUOUS_DNA_RNA = ["A", "C", "G", "T", "U"]
+    UNAMBIGUOUS_DNA_RNA = ["A", "C", "G", "T", "U", "-"]
     ONLY_DNA = "T"
     ONLY_RNA = "U"
     PROTEIN = [
