@@ -85,7 +85,7 @@ def download_s3(key: str, bucket: str) -> io.BytesIO:
 
 
 def upload_s3_compressed(
-    file: Union[UploadFile, io.BytesIO], bucket: str = Bucket.Datasets.value
+    file: Union[UploadFile, io.BytesIO], bucket: Bucket = Bucket.Datasets
 ) -> Tuple[str, int]:
     """Upload a file to S3 and compress it if it's not already compressed
 

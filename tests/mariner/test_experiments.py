@@ -95,7 +95,7 @@ async def test_create_model_training(db: Session, some_model: Model):
     assert db_exp.created_by_id == user.id
     assert db_exp.epochs == request.epochs
 
-    # Await for tas
+    # Await for task
     await task
 
     db.commit()

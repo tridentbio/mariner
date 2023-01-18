@@ -137,7 +137,7 @@ class SmileDataType(ApiBaseModel, BuilderSmilesDT):
     domain_kind: Literal["smiles"] = Field("smiles")
 
     @validator("domain_kind")
-    def check_domain_kind(cls):
+    def check_domain_kind(cls, v):
         return "smiles"
 
 
