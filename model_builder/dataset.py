@@ -100,7 +100,12 @@ class CustomDataset(TorchDataset):
                 idx = classes[sample[self.target.name]]
                 d.y = F.one_hot(torch.tensor(idx), num_classes=len(classes)).float()
             else:
+                print("SETTING Y")
+                print(self.target.name)
+                print(sample)
+                print(sample[self.target.name])
                 d.y = torch.Tensor([sample[self.target.name]])
+                print("d.y = %f" % d.y)
 
         return d
 

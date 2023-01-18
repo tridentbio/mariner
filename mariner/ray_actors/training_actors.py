@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import ray
@@ -6,14 +7,16 @@ from pytorch_lightning.loggers.logger import Logger
 from pytorch_lightning.loggers.mlflow import MLFlowLogger
 from pytorch_lightning.trainer.trainer import Trainer
 
-from mariner.entities.dataset import Dataset
 from mariner.entities.experiment import Experiment
-from mariner.entities.model import ModelVersion
+from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import TrainingRequest
+from mariner.schemas.model_schemas import ModelVersion
 from mariner.train.custom_logger import AppLogger
 from model_builder.dataset import DataModule
 from model_builder.model import CustomModel
-from model_builder.schemas import ModelSchema
+
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 
 @ray.remote
@@ -43,6 +46,7 @@ class TrainingActor:
             ),
             MLFlowLogger(experiment_name=mlflow_experiment_name),
         ]
+        LOG.info("Torch lightning loggers setup %s", self.loggers)
 
     def setup_callbacks(
         self,
@@ -52,10 +56,13 @@ class TrainingActor:
             monitor=monitoring_config.metric_key,
             mode=monitoring_config.mode,
         )
+        LOG.info("Checkpoint monitoring callback setup %s", self.checkpoint_callback)
 
     def train(self):
-        modelconfig = ModelSchema.parse_raw(str(self.modelversion.config))
+        LOG.info("Starting training %s", self.request)
+        modelconfig = self.modelversion.config
         model = CustomModel(config=modelconfig)
+        LOG.error("Dataset config: %r", modelconfig.dataset)
         df = self.dataset.get_dataframe()
         datamodule = DataModule(
             featurizers_config=modelconfig.featurizers,
@@ -70,8 +77,9 @@ class TrainingActor:
             logger=self.loggers,
             log_every_n_steps=1,
             enable_progress_bar=False,
-            enable_checkpointing=False,
             callbacks=[self.checkpoint_callback],
         )
+        datamodule.setup("train")
         trainer.fit(model, datamodule.train_dataloader())
+        LOG.info("Finished training")
         return model

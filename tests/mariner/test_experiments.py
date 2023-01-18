@@ -9,6 +9,7 @@ from mariner.schemas.api import OrderByClause, OrderByQuery
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
+    MonitoringConfig,
     TrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
@@ -75,6 +76,10 @@ async def test_create_model_training(db: Session, some_model: Model):
         epochs=1,
         name=random_lower_string(),
         learning_rate=0.05,
+        monitoring_config=MonitoringConfig(
+            mode="min",
+            metric_key="val_mse",
+        ),
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
     assert exp.model_version_id == version.id
