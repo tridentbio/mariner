@@ -245,6 +245,8 @@ def collect_args(
                     value_.append(item_value)
             result[key] = value_
         elif isinstance(value, str):
+            if not value:
+                continue
             value, is_ref = unwrap_dollar(value)
             if is_ref:
                 result[key] = get_ref_from_input(value, input)
