@@ -13,12 +13,22 @@ from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
 
 
+class MonitoringConfig(ApiBaseModel):
+    """
+    Configures model checkpointing
+    """
+
+    metric_key: str
+    mode: str
+
+
 class TrainingRequest(ApiBaseModel):
     name: str
     model_version_id: int
     learning_rate: float
     epochs: int
     batch_size: Optional[int] = None
+    monitoring_config: MonitoringConfig
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]

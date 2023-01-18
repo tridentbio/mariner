@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from asyncio.tasks import Task
 from datetime import datetime
@@ -5,13 +6,14 @@ from typing import Any, Dict, List, Literal, Optional
 from uuid import uuid4
 
 import mlflow
-from mlflow.tracking.artifact_utils import get_artifact_uri
+import ray
 from mlflow.tracking.client import MlflowClient
-from pytorch_lightning.loggers import MLFlowLogger
+from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketMessage, get_websockets_manager
 from mariner.core.config import settings
+from mariner.core.mlflowapi import log_models_and_create_version
 from mariner.entities.user import User as UserEntity
 from mariner.events import EventCreate  # BAD DEPENDENCY
 from mariner.exceptions import (
@@ -19,6 +21,7 @@ from mariner.exceptions import (
     ModelNotFound,
     ModelVersionNotFound,
 )
+from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.experiment_schemas import (
     Experiment,
@@ -26,7 +29,7 @@ from mariner.schemas.experiment_schemas import (
     RunningHistory,
     TrainingRequest,
 )
-from mariner.schemas.model_schemas import ModelVersion
+from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.experiment_sql import (
     ExperimentCreateRepo,
@@ -35,11 +38,14 @@ from mariner.stores.experiment_sql import (
 )
 from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
-from mariner.train.custom_logger import AppLogger
-from mariner.train.run import start_training
-from model_builder.dataset import DataModule
+from model_builder.model import CustomModel
 
 LOG = logging.getLogger(__name__)
+
+
+async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
+    result = await ref
+    return result
 
 
 async def create_model_traning(
@@ -51,20 +57,10 @@ async def create_model_traning(
 
     if not model_version:
         raise ModelVersionNotFound()
-    model_version = ModelVersion.from_orm(model_version)
 
-    dataset = dataset_store.get_by_name(db, model_version.config.dataset.name)
-    torchmodel = model_version.build_torch_model()
-    featurizers_config = model_version.config.featurizers
-    df = dataset.get_dataframe()
-    data_module = DataModule(
-        featurizers_config=featurizers_config,
-        data=df,
-        dataset_config=model_version.config.dataset,
-        split_target=dataset.split_target,
-        split_type=dataset.split_type,
-        batch_size=training_request.batch_size or 32,
-    )
+    model_version_parsed = ModelVersion.from_orm(model_version)
+    dataset = dataset_store.get_by_name(db, model_version_parsed.config.dataset.name)
+
     mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
     mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     experiment = experiment_store.create(
@@ -78,17 +74,20 @@ async def create_model_traning(
             stage="RUNNING",
         ),
     )
-    logger = [
-        AppLogger(
-            experiment.id, experiment_name=training_request.name, user_id=user.id
-        ),
-        MLFlowLogger(experiment_name=mlflow_experiment_name),
-    ]
-    task = await start_training(
-        torchmodel, training_request, data_module, loggers=logger
+
+    training_actor = TrainingActor.remote(dataset, model_version)
+    training_actor.setup_loggers.remote(  # noqa
+        mariner_experiment=experiment, mlflow_experiment_name=mlflow_experiment_name
+    )
+    training_actor.setup_callbacks.remote()  # noqa
+
+    # ExperimentManager expect tasks
+    task = asyncio.create_task(
+        make_coroutine_from_ray_objectref(training_actor.train.remote())
     )
 
-    def finish_task(task: Task, experiment_id: int):
+    # TODO: move memory intensive training teardown to training_actor
+    async def finish_task(task: Task, experiment_id: int):
         experiment = experiment_store.get(db, experiment_id)
         assert experiment
         exception = task.exception()
@@ -96,15 +95,30 @@ async def create_model_traning(
         if done and not exception:
             try:
                 client = MlflowClient()
-                model = task.result()
+                checkpoint_callback: ModelCheckpoint = await (
+                    training_actor.checkpoint_callback.remote()
+                )
+                best_model_path = checkpoint_callback.best_model_path
+                best_model = CustomModel.load_from_checkpoint(best_model_path)
+                last_model_path = checkpoint_callback.last_model_path
+                last_model = CustomModel.load_from_checkpoint(last_model_path)
                 runs = client.search_runs(experiment_ids=[experiment.mlflow_id])
                 assert len(runs) == 1
                 run = runs[0]
                 run_id = run.info.run_id
-                mlflow.pytorch.log_model(
-                    model,
-                    get_artifact_uri(run_id, artifact_path="model"),
-                    registered_model_name=model_version.mlflow_model_name,
+                mlflow_model_version = log_models_and_create_version(
+                    model_version.mlflow_model_name,
+                    best_model,
+                    last_model,
+                    run_id,
+                    client=client,
+                )
+                model_store.update_model_version(
+                    db,
+                    version_id=model_version.id,
+                    obj_in=ModelVersionUpdateRepo(
+                        mlflow_version=mlflow_model_version.version
+                    ),
                 )
             except Exception as exception:
                 stack_trace = str(exception)
@@ -275,3 +289,38 @@ async def send_ws_epoch_update(
             ),
         ),
     )
+
+
+class MonitorableMetric(ApiBaseModel):
+    key: str
+    label: str
+    type: Literal["regressor", "classification"]
+
+
+def get_metrics_for_monitoring() -> List[MonitorableMetric]:
+    """Get's options available for model checkpoint metric monitoring
+
+    Returns:
+        List[MonitorableMetric]: Description of the metric
+    """
+    return [
+        MonitorableMetric(
+            key="val_mse", label="(MSE) Mean Squared Error", type="regressor"
+        ),
+        MonitorableMetric(
+            key="val_mae", label="(MAE) Mean Absolute Error", type="regressor"
+        ),
+        MonitorableMetric(key="val_ev", label="EV", type="regressor"),
+        MonitorableMetric(key="val_mape", label="MAPE", type="regressor"),
+        MonitorableMetric(key="val_R2", label="R2", type="regressor"),
+        MonitorableMetric(key="val_pearson", label="Pearson", type="regressor"),
+        MonitorableMetric(key="val_accuracy", label="Accuracy", type="classification"),
+        MonitorableMetric(
+            key="val_precision", label="Precision", type="classification"
+        ),
+        MonitorableMetric(key="val_recall", label="Recall", type="classification"),
+        MonitorableMetric(key="val_f1", label="F1", type="classification"),
+        MonitorableMetric(
+            key="val_confusion_matrix", label="Confusion MAtrix", type="classification"
+        ),
+    ]
