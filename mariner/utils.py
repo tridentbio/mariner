@@ -103,7 +103,7 @@ def read_compressed_csv(fileBytes: bytes) -> pd.DataFrame:
     """
     if is_compressed(fileBytes):
         fileBytes = decompress(fileBytes)
-        return pd.read_csv(io.BytesIO(fileBytes), dtype=str)
+        return pd.read_csv(io.BytesIO(fileBytes))
     else:
         raise TypeError("file must be UploadFile")
 
