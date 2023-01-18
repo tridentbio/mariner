@@ -161,6 +161,14 @@ def split_module_export(classpath: str) -> tuple[str, str]:
 
 
 def get_class_from_path_string(pathstring: str) -> Any:
+    """Dynamically import a class from a string path.
+
+    Args:
+        pathstring (str): String path to the class.
+
+    Returns:
+        Any: The class.
+    """
     module_name, export = split_module_export(pathstring)
     code = f"""
 from {module_name} import {export}
