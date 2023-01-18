@@ -23,6 +23,7 @@ from mariner.exceptions import (
 )
 from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.api import ApiBaseModel
+from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
@@ -75,11 +76,20 @@ async def create_model_traning(
         ),
     )
 
-    training_actor = TrainingActor.remote(dataset, model_version)
+    training_actor = TrainingActor.remote(
+        Dataset.from_orm(dataset),
+        model_version_parsed,
+        training_request,
+    )
     training_actor.setup_loggers.remote(  # noqa
-        mariner_experiment=experiment, mlflow_experiment_name=mlflow_experiment_name
+        user_id=user.id,
+        mariner_experiment=experiment,
+        mlflow_experiment_name=mlflow_experiment_name,
     )
     training_actor.setup_callbacks.remote()  # noqa
+
+    db.refresh(model_version)
+    db.flush()
 
     # ExperimentManager expect tasks
     task = asyncio.create_task(

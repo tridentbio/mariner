@@ -4,13 +4,13 @@ single values and dataframes.
 """
 from io import BytesIO
 from re import search
-from typing import List, Literal, Optional, Tuple
+from typing import Callable, List, Literal, Optional, Tuple
 
 import pandas as pd
 from rdkit import Chem, RDLogger
 
 from mariner.core.aws import Bucket, upload_s3_compressed
-from mariner.schemas.dataset_schemas import ColumnsMeta, SchemaType
+from mariner.schemas.dataset_schemas import ColumnsDescription, SchemaType
 
 Mol = Chem.rdchem.Mol
 
@@ -80,7 +80,7 @@ def is_valid_smiles_series(smiles_series: pd.Series, weak_check=False) -> bool:
 
 def _is_instance(
     type: type, msg: Optional[str] = None, nullable=True
-) -> Tuple[callable, str]:
+) -> Tuple[Callable, str]:
     """Function factory to create a function that checks if a value is an instance of a type
 
     Can be used in validation schema to create a validator based on "isinstance" check
@@ -166,7 +166,7 @@ class CompatibilityChecker:
 
     def __init__(
         self,
-        columns_metadata: List[ColumnsMeta],
+        columns_metadata: List[ColumnsDescription],
         df: pd.DataFrame,
         validate_schema: SchemaType = VALIDATION_SCHEMA,
     ):
@@ -287,7 +287,7 @@ class CompatibilityChecker:
         file = BytesIO()
         df.to_csv(file, index=False)
         file.seek(0)
-        file_key, _ = upload_s3_compressed(file, Bucket.Datasets)
+        file_key, _ = upload_s3_compressed(file, Bucket.Datasets.value)
         self.errors["dataset_error_key"] = file_key
 
     @staticmethod

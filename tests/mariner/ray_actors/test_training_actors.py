@@ -2,6 +2,11 @@
 
 
 class TestTrainingActor:
+    def test_train(self):
+        """Checks if training is performed succesfully by training
+        actor on valid dataset and model configuration"""
+        ...
+
     def test_persists_metrics(self):
         """Checks wheter metrics can be found in expected
         mlflow location (db) and mariner (db)"""
