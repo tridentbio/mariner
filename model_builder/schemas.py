@@ -90,6 +90,9 @@ class ColumnConfig(CamelCaseModel):
         StringDataType,
         SmileDataType,
         CategoricalDataType,
+        DNADataType,
+        RNADataType,
+        ProteinDataType,
     ] = Field(...)
 
 
