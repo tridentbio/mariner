@@ -81,12 +81,12 @@ async def create_model_traning(
         model_version_parsed,
         training_request,
     )
-    training_actor.setup_loggers.remote(  # noqa
+    await training_actor.setup_loggers.remote(  # noqa
         user_id=user.id,
         mariner_experiment=experiment,
         mlflow_experiment_name=mlflow_experiment_name,
     )
-    training_actor.setup_callbacks.remote()  # noqa
+    await training_actor.setup_callbacks.remote()  # noqa
 
     db.refresh(model_version)
     db.flush()
@@ -97,7 +97,7 @@ async def create_model_traning(
     )
 
     # TODO: move memory intensive training teardown to training_actor
-    async def finish_task(task: Task, experiment_id: int):
+    def finish_task(task: Task, experiment_id: int):
         experiment = experiment_store.get(db, experiment_id)
         assert experiment
         exception = task.exception()
@@ -105,7 +105,7 @@ async def create_model_traning(
         if done and not exception:
             try:
                 client = MlflowClient()
-                checkpoint_callback: ModelCheckpoint = await (
+                checkpoint_callback: ModelCheckpoint = ray.get(
                     training_actor.checkpoint_callback.remote()
                 )
                 best_model_path = checkpoint_callback.best_model_path

@@ -100,12 +100,7 @@ class CustomDataset(TorchDataset):
                 idx = classes[sample[self.target.name]]
                 d.y = F.one_hot(torch.tensor(idx), num_classes=len(classes)).float()
             else:
-                print("SETTING Y")
-                print(self.target.name)
-                print(sample)
-                print(sample[self.target.name])
                 d.y = torch.Tensor([sample[self.target.name]])
-                print("d.y = %f" % d.y)
 
         return d
 
@@ -210,7 +205,7 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in test steps.
         """
-        return DataLoader(self.test_dataset, self.batch_size, shuffle=False)
+        return DataLoader(self.test_dataset, self.batch_size)
 
     def val_dataloader(self) -> DataLoader:
         """Return the DataLoader used to validate the custom model.
@@ -218,4 +213,4 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in validation steps.
         """
-        return DataLoader(self.test_dataset, self.batch_size, shuffle=True)
+        return DataLoader(self.val_dataset, self.batch_size)

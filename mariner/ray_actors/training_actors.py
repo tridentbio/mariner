@@ -16,7 +16,6 @@ from model_builder.dataset import DataModule
 from model_builder.model import CustomModel
 
 LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
 
 
 @ray.remote
@@ -79,7 +78,6 @@ class TrainingActor:
             enable_progress_bar=False,
             callbacks=[self.checkpoint_callback],
         )
-        datamodule.setup("train")
-        trainer.fit(model, datamodule.train_dataloader())
-        LOG.info("Finished training")
+        datamodule.setup()
+        trainer.fit(model, datamodule)
         return model
