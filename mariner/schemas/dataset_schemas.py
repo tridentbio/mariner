@@ -310,6 +310,16 @@ class DatasetUpdate(ApiBaseModel):
     columns_metadata: Optional[List[ColumnsDescription]] = None
 
 
+class DatasetUpdateInput(ApiBaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    split_column: Optional[str] = None
+    split_target: Optional[Split] = None
+    split_type: Optional[SplitType] = None
+    file: Optional[UploadFile] = None
+    columns_metadata: Optional[ColumnMetadataFromJSONStr] = None
+
+
 class DatasetSummary(BaseModel):
     """Dataset summary type."""
 
