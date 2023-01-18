@@ -214,7 +214,7 @@ def check_biological_sequence_series(
             "type": domain_kind,
             "kwargs": {"domain_kind": domain_kind, "is_ambiguous": is_ambiguous},
         }
-    except (AttributeError, ValueError):
+    except Exception:
         return {"valid": False}
 
 
@@ -243,6 +243,26 @@ def _is_instance(
     return (func, msg)
 
 
+def validate_column_pattern(column: str, pattern: str) -> bool:
+    """Validates if a column name matches a pattern
+
+    Args:
+        column (str): column name
+        pattern (str): column pattern
+
+    Returns:
+        bool: True if column matches the pattern
+    """
+
+    def compare_insensitive(x, y):
+        return x.lower() == y.lower()
+
+    def compare_regex(x, y):
+        return search(y, x) is not None
+
+    return compare_insensitive(column, pattern) or compare_regex(column, pattern)
+
+
 def find_column_by_name(df: pd.DataFrame, column_name: str) -> int:
     """Finds the index of a column in a dataframe by its name
 
@@ -255,15 +275,8 @@ def find_column_by_name(df: pd.DataFrame, column_name: str) -> int:
     Returns:
         int: index of the column
     """
-
-    def compare_insensitive(x, y):
-        return x.lower() == y.lower()
-
-    def compare_regex(x, y):
-        return search(y, x) is not None
-
     for i, col in enumerate(df.columns):
-        if compare_insensitive(col, column_name) or compare_regex(col, column_name):
+        if validate_column_pattern(col, column_name):
             return i
 
     return -1
