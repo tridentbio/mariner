@@ -50,6 +50,9 @@ def get_my_dataset_summary(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
+    """
+    Retrieve dataset stats by id
+    """
     dataset = controller.get_my_dataset_by_id(db, current_user, dataset_id)
     summary = dataset.stats
 
@@ -70,7 +73,7 @@ def get_my_dataset(
 
 
 @router.post("/", response_model=Dataset)
-def create_dataset(
+async def create_dataset(
     current_user: User = Depends(deps.get_current_active_user),
     name: str = Form(...),
     description: str = Form(...),
@@ -97,7 +100,7 @@ def create_dataset(
         if split_column:
             payload.split_column = split_column
 
-        db_dataset = controller.create_dataset(db, current_user, payload)
+        db_dataset = await controller.create_dataset(db, current_user, payload)
 
         dataset = Dataset.from_orm(db_dataset)
         return dataset
@@ -116,7 +119,7 @@ def create_dataset(
     response_model=Dataset,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def update_dateset(
+async def update_dataset(
     dataset_id: int,
     name: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
@@ -133,8 +136,11 @@ def update_dateset(
     current_user=Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
+    """
+    Update a dataset and process again if it is needed
+    """
     try:
-        dataset = controller.update_dataset(
+        dataset = await controller.update_dataset(
             db,
             current_user,
             dataset_id,
@@ -163,6 +169,7 @@ def delete_dataset(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
+    """Delete a dataset by id"""
     dataset = controller.delete_dataset(db, current_user, dataset_id)
     return dataset
 
@@ -172,7 +179,7 @@ def delete_dataset(
     response_model=List[ColumnsMeta],
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def get_columns_metadata(file: UploadFile = File(None)):
+async def get_dataset_columns_metadata(file: UploadFile = File(None)):
     """Extracts column metadata for a given csv file"""
-    metadata = controller.parse_csv_headers(file)
+    metadata = await controller.parse_csv_headers(file)
     return metadata

@@ -237,7 +237,7 @@ def get_model_options() -> ModelOptions:
 
     def get_summary(
         cls_path: str,
-    ) -> Union[layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType, None]:
+    ) -> Union[None, layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType]:
         for schema_exported in dir(layers_schema):
             if (
                 schema_exported.endswith("Summary")
@@ -249,17 +249,22 @@ def get_model_options() -> ModelOptions:
                 if instance.type and instance.type == cls_path:
                     return instance
 
-    component_annotations = []
-    for type, class_path in zip(
-        ["layer"] * len(layer_types) + ["featurizer"] * len(featurizer_types),
-        layer_types + featurizer_types,
-    ):
+    component_annotations: List[ComponentOption] = []
+
+    def make_component(class_path: str, type: Literal["layer", "featurizer"]):
         summary = get_summary(class_path)
         assert summary, f"class Summary of {class_path} should not be None"
         option = get_annotations_from_cls(class_path)
         option.type = type
         option.component = summary
-        component_annotations.append(option)
+        return option
+
+    for class_path in layer_types:
+        component_annotations.append(make_component(class_path, "layer"))
+
+    for class_path in featurizer_types:
+        component_annotations.append(make_component(class_path, "featurizer"))
+
     return component_annotations
 
 

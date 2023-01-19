@@ -1,7 +1,19 @@
 import json
 from json.decoder import JSONDecodeError
-from typing import Any, Dict, List, Literal, Optional, Union, no_type_check
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    NewType,
+    Optional,
+    Tuple,
+    Union,
+    no_type_check,
+)
 
+import pandas as pd
 from fastapi.datastructures import UploadFile
 from pydantic import Field, validator
 from pydantic.main import BaseModel
@@ -16,8 +28,33 @@ from model_builder.schemas import StringDataType as BuilderStringDT
 
 SplitType = Literal["scaffold", "random"]
 
+StatsType = NewType(
+    "stats_type",
+    Dict[
+        Literal["full", "train", "test", "val"],
+        Dict[str, Union[pd.Series, Dict[str, pd.Series]]],
+    ],
+)
+
+SchemaType = NewType(
+    "schema_type",
+    dict[
+        str,
+        Union[Tuple[Callable[..., bool], str], List[Tuple[Callable[..., bool], str]]],
+    ],
+)
+
 
 class Split(str):
+    """Split class. This class is used to validate and type the split string.
+
+    Attributes:
+        string (str): split string
+        train_percents (int): train percents
+        test_percents (int): test percents
+        val_percents (int): val percents
+    """
+
     string: str
     train_percents: int
     test_percents: int
@@ -61,6 +98,16 @@ class Split(str):
 
 
 class DatasetsQuery(PaginatedApiQuery):
+    """Query for datasets.
+
+    Attributes:
+        sort_by_rows (Optional[str]): sort by rows
+        sort_by_cols (Optional[str]): sort by cols
+        sort_by_created_at (Optional[str]): sort by created at
+        search_by_name (Optional[str]): search by name
+        created_by_id (Optional[int]): created by id
+    """
+
     sort_by_rows: Optional[str]
     sort_by_cols: Optional[str]
     sort_by_created_at: Optional[str]
@@ -69,22 +116,24 @@ class DatasetsQuery(PaginatedApiQuery):
 
 
 class NumericalDataType(ApiBaseModel, BuilderNumericalDT):
-    pass
+    """Numerical data type."""
 
 
 class QuantityDataType(ApiBaseModel, BuilderQuantityDT):
-    pass
+    """Quantity data type."""
 
 
 class StringDataType(ApiBaseModel, BuilderStringDT):
-    pass
+    """String data type."""
 
 
 class CategoricalDataType(BuilderCategoricalDT, ApiBaseModel):
-    pass
+    """Categorical data type."""
 
 
 class SmileDataType(ApiBaseModel, BuilderSmilesDT):
+    """Smile data type."""
+
     domain_kind: Literal["smiles"] = Field("smiles")
 
     @validator("domain_kind")
@@ -93,6 +142,16 @@ class SmileDataType(ApiBaseModel, BuilderSmilesDT):
 
 
 class ColumnsDescription(ApiBaseModel):
+    """Columns description.
+
+    Attributes:
+        data_type (AnyDataType):
+        column data type
+        description (str): column description
+        pattern (str): column pattern
+        dataset_id (Optional[int]): dataset id
+    """
+
     data_type: Union[
         QuantityDataType, StringDataType, CategoricalDataType, SmileDataType
     ] = Field(...)
@@ -102,6 +161,8 @@ class ColumnsDescription(ApiBaseModel):
 
 
 class ColumnMetadataFromJSONStr(str):
+    """Type for raw column metadata comming from a json request."""
+
     metadatas: List[ColumnsDescription] = []
 
     @classmethod
@@ -124,13 +185,16 @@ class ColumnMetadataFromJSONStr(str):
 
 
 class DatasetBase(ApiBaseModel):
+    """Dataset base type."""
+
+    id: Optional[int] = None
     name: str
     description: str
-    rows: int
-    columns: int
-    bytes: int
-    stats: Any
-    data_url: str
+    rows: Optional[int]
+    columns: Optional[int]
+    bytes: Optional[int]
+    stats: Optional[Any]
+    data_url: Optional[str]
     split_target: Split
     split_actual: Optional[Split]
     split_type: SplitType
@@ -138,9 +202,13 @@ class DatasetBase(ApiBaseModel):
     updated_at: utc_datetime
     created_by_id: int
     columns_metadata: List[ColumnsDescription] = []
+    ready_status: Optional[Literal["failed", "processing", "ready"]] = "processing"
+    errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 
 class ColumnsMeta(BaseModel):
+    """Columns metadata parsed."""
+
     name: str
     dtype: Optional[
         Union[CategoricalDataType, NumericalDataType, StringDataType, SmileDataType]
@@ -148,6 +216,11 @@ class ColumnsMeta(BaseModel):
 
 
 class DatasetCreate(BaseModel):
+    """Dataset to create type.
+
+    Used in the dataset creation route.
+    """
+
     file: UploadFile
     name: str
     description: str
@@ -158,10 +231,15 @@ class DatasetCreate(BaseModel):
 
 
 class DatasetCreateRepo(DatasetBase):
-    pass
+    """Dataset to create type.
+
+    Used in the DatasetCRUD to create a dataset in the database.
+    """
 
 
 class Dataset(DatasetBase):
+    """Dataset model type."""
+
     id: int
 
     def get_dataframe(self):
@@ -170,6 +248,11 @@ class Dataset(DatasetBase):
 
 
 class DatasetUpdate(ApiBaseModel):
+    """Dataset to update type.
+
+    Used in the dataset update route.
+    """
+
     file: Optional[UploadFile] = None
     name: Optional[str] = None
     description: Optional[str] = None
@@ -180,6 +263,8 @@ class DatasetUpdate(ApiBaseModel):
 
 
 class DatasetSummary(BaseModel):
+    """Dataset summary type."""
+
     train: Dict[str, Any]
     val: Dict[str, Any]
     test: Dict[str, Any]
@@ -187,6 +272,11 @@ class DatasetSummary(BaseModel):
 
 
 class DatasetUpdateRepo(BaseModel):
+    """Dataset to update type.
+
+    Accepted by the DatasetCRUD to update a dataset in the database.
+    """
+
     id: int
     name: Optional[str] = None
     description: Optional[str] = None
@@ -200,3 +290,17 @@ class DatasetUpdateRepo(BaseModel):
     split_column: Optional[str] = None
     split_type: Optional[SplitType] = None
     columns_metadata: Optional[List[ColumnsDescription]] = None
+    ready_status: Optional[str] = None
+    errors: Optional[Dict[str, Union[List[str], str]]] = None
+
+
+class DatasetProcessStatusEventPayload(ApiBaseModel):
+    """Dataset process status event payload type.
+
+    Used in the dataset process to send the status of the
+    dataset processing to the frontend.
+    """
+
+    dataset_id: Optional[int] = None
+    message: Optional[str] = "success on dataset creation"
+    dataset: Dataset = None

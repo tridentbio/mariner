@@ -92,12 +92,12 @@ class GetNameSuggestionResponse(ApiBaseModel):
     dependencies=[Depends(deps.get_current_active_user)],
     response_model=GetNameSuggestionResponse,
 )
-def get_name_suggestion():
+def get_model_name_suggestion():
     return GetNameSuggestionResponse(name=random_pretty_name())
 
 
 @router.post("/{model_version_id}/predict", response_model=Any)
-def post_predict(
+def post_model_predict(
     model_version_id: int,
     model_input: Dict[str, List[Any]],  # Any json
     current_user: User = Depends(deps.get_current_active_user),
@@ -154,7 +154,9 @@ def delete_model(
     response_model=controller.ForwardCheck,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def post_check_config(model_config: ModelSchema, db: Session = Depends(deps.get_db)):
+def post_model_check_config(
+    model_config: ModelSchema, db: Session = Depends(deps.get_db)
+):
     return controller.naive_check_forward_exception(db, model_config)
 
 
