@@ -127,7 +127,7 @@ def test_put_datasets(
     new_name = random_lower_string()
     r = client.put(
         f"{settings.API_V1_STR}/datasets/{some_dataset.id}",
-        data={
+        json={
             "name": new_name,
             "description": new_name,
             "splitType": "random",

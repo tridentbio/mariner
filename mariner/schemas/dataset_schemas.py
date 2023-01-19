@@ -21,8 +21,11 @@ from pydantic.main import BaseModel
 from mariner.core.aws import Bucket, download_file_as_dataframe
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from model_builder.schemas import CategoricalDataType as BuilderCategoricalDT
+from model_builder.schemas import DNADataType as BuilderDNADT
 from model_builder.schemas import NumericalDataType as BuilderNumericalDT
+from model_builder.schemas import ProteinDataType as BuilderProteinDT
 from model_builder.schemas import QuantityDataType as BuilderQuantityDT
+from model_builder.schemas import RNADataType as BuilderRNADT
 from model_builder.schemas import SmileDataType as BuilderSmilesDT
 from model_builder.schemas import StringDataType as BuilderStringDT
 
@@ -141,6 +144,41 @@ class SmileDataType(ApiBaseModel, BuilderSmilesDT):
         return "smiles"
 
 
+class DNADataType(ApiBaseModel, BuilderDNADT):
+    """DNA data type."""
+
+    domain_kind: Literal["dna"] = Field("dna")
+    is_ambiguous: bool = Field(False)
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "dna"
+
+
+class RNADataType(ApiBaseModel, BuilderRNADT):
+    """RNA data type."""
+
+    domain_kind: Literal["rna"] = Field("rna")
+    is_ambiguous: bool = Field(False)
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "rna"
+
+
+class ProteinDataType(ApiBaseModel, BuilderProteinDT):
+    """Protein data type."""
+
+    domain_kind: Literal["protein"] = Field("protein")
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "protein"
+
+
+BiologicalDataType = Union[DNADataType, RNADataType, ProteinDataType]
+
+
 class ColumnsDescription(ApiBaseModel):
     """Columns description.
 
@@ -153,7 +191,11 @@ class ColumnsDescription(ApiBaseModel):
     """
 
     data_type: Union[
-        QuantityDataType, StringDataType, CategoricalDataType, SmileDataType
+        QuantityDataType,
+        StringDataType,
+        CategoricalDataType,
+        SmileDataType,
+        BiologicalDataType,
     ] = Field(...)
     description: str
     pattern: str
@@ -211,7 +253,13 @@ class ColumnsMeta(BaseModel):
 
     name: str
     dtype: Optional[
-        Union[CategoricalDataType, NumericalDataType, StringDataType, SmileDataType]
+        Union[
+            CategoricalDataType,
+            NumericalDataType,
+            StringDataType,
+            SmileDataType,
+            BiologicalDataType,
+        ]
     ]
 
 
@@ -261,6 +309,16 @@ class DatasetUpdate(ApiBaseModel):
     split_target: Optional[Split] = None
     split_type: Optional[SplitType] = None
     columns_metadata: Optional[List[ColumnsDescription]] = None
+
+
+class DatasetUpdateInput(ApiBaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    split_column: Optional[str] = None
+    split_target: Optional[Split] = None
+    split_type: Optional[SplitType] = None
+    file: Optional[UploadFile] = None
+    columns_metadata: Optional[ColumnMetadataFromJSONStr] = None
 
 
 class DatasetSummary(BaseModel):

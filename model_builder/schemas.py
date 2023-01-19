@@ -57,6 +57,30 @@ class SmileDataType(CamelCaseModel):
         return "smiles"
 
 
+class DNADataType(CamelCaseModel):
+    domain_kind: Literal["dna"] = Field("dna")
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "dna"
+
+
+class RNADataType(CamelCaseModel):
+    domain_kind: Literal["rna"] = Field("rna")
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "rna"
+
+
+class ProteinDataType(CamelCaseModel):
+    domain_kind: Literal["protein"] = Field("protein")
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "protein"
+
+
 # TODO: make data_type optional
 class ColumnConfig(CamelCaseModel):
     name: str
@@ -66,6 +90,9 @@ class ColumnConfig(CamelCaseModel):
         StringDataType,
         SmileDataType,
         CategoricalDataType,
+        DNADataType,
+        RNADataType,
+        ProteinDataType,
     ] = Field(...)
 
 
