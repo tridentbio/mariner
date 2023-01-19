@@ -4,13 +4,15 @@ single values and dataframes.
 """
 from io import BytesIO
 from re import search
-from typing import List, Literal, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Set, Tuple, Union
 
 import pandas as pd
 from rdkit import Chem, RDLogger
 
 from mariner.core.aws import Bucket, upload_s3_compressed
 from mariner.schemas.dataset_schemas import ColumnsMeta, SchemaType
+
+from .rules import BiologicalValidChars
 
 Mol = Chem.rdchem.Mol
 
@@ -76,6 +78,150 @@ def is_valid_smiles_series(smiles_series: pd.Series, weak_check=False) -> bool:
         except ValueError:
             return False
     return True
+
+
+def check_biological_sequence(seq: str) -> Dict[str, Union[str, bool]]:
+    """Check if a sequence is valid as DNA, RNA or Protein
+    Rules (ordered by priority):
+        DNA:
+            unanbiguous nucleotides: A, C, G, T, -
+            ambiguous nucleotides: R, Y, S, W, K, M, B, D, H, V, N
+                presence of A, C, G or T needs to be >50% of sequence
+        RNA:
+            unanbiguous nucleotides: A, C, G, U, -
+            ambiguous nucleotides: R, Y, S, W, K, M, B, D, H, V, N
+                presence of A, C, G or U needs to be >50% of sequence
+        Protein:
+            - not a DNA or RNA
+            - chars: - A, C, D, E, F, G, H, I, K, L, M, N, P, Q, R, S, T, V, W, Y, -, *
+    Args:
+        seq (str): sequence to check
+
+    Returns:
+        Dict[str, str]: dictionary with the following keys:
+            - valid: True if sequence is a valid biological sequence
+            - type?: dna, rna or protein
+            - is_ambiguous?: True if sequence contains ambiguous nucleotides
+    """
+    if len(seq) == 0:
+        return {"valid": False}
+
+    seq = seq.upper()
+    domain_kind: Literal["dna", "rna", "protein"] = "dna"  # priority
+    possible_ambiguous = False
+    count_unambiguous = 0
+
+    for i, char in enumerate(seq):
+        # check for unambiguous chars
+        if char in BiologicalValidChars.UNAMBIGUOUS_DNA_RNA.value and domain_kind in [
+            "dna",
+            "rna",
+        ]:
+            # need to have chars A, C, G or T >50% of sequence to be DNA or RNA
+            count_unambiguous += 1
+
+            # dna is priority so domain_kind can be changed to rna or protein
+            if char in BiologicalValidChars.ONLY_RNA.value and domain_kind == "dna":
+                # need to check if it has any only_dna value in checked values
+                domain_kind = (
+                    "rna"
+                    if BiologicalValidChars.ONLY_DNA.value not in set(seq[:i])
+                    else "protein"
+                )
+
+            # if domain_kind already changed to rna it's not a valid dna
+            if char in BiologicalValidChars.ONLY_DNA.value and domain_kind == "rna":
+                domain_kind = "protein"
+
+        # check if it's possible to be ambiguous or protein
+        else:
+            if (
+                char in BiologicalValidChars.AMBIGUOUS_DNA_RNA.value
+                and domain_kind in ["dna", "rna"]
+            ):
+                possible_ambiguous = True
+
+            elif char in BiologicalValidChars.PROTEIN.value:
+                domain_kind = "protein"
+
+            else:
+                # invalid char for any biological domain kind
+                return {"valid": False}
+
+    result = dict(valid=True)
+
+    if possible_ambiguous:
+        # Need to check possibility to be a protein
+        if count_unambiguous / len(seq) >= 0.5:
+            result.update({"type": domain_kind, "is_ambiguous": True})
+        else:
+            result.update({"type": "protein", "kwargs": {"domain_kind": "protein"}})
+
+    else:
+        result.update({"type": domain_kind, "is_ambiguous": False})
+
+    return result
+
+
+def check_biological_sequence_series(
+    series: pd.Series,
+) -> Dict[str, Union[str, Dict[str, str]]]:
+    """Makes a check if a sequence is valid as DNA, RNA
+    or Protein for each element in a series
+    Returns best result for sequence following the rules
+
+    Rules:
+        if at least one seq is invalid, return invalid
+        if at least one seq is protein, return protein
+        if at least one seq is dna and other is rna, return protein
+        if at least one seq is ambiguous, return ambiguous
+
+    Args:
+        series: pd.Series of strings
+
+    Returns:
+        dict: dictionary with the following keys:
+            - valid: True if sequence is a valid biological sequence
+            - type?: dna, rna or protein
+            - kwargs?:
+                dictionary with kwargs to pass to the biotype class constructor
+    """
+    types_found: Set[Literal["dna", "rna", "protein"]] = set()
+    ambiguity: Set[Literal["ambiguous", "unanbiguous"]] = set()
+
+    try:
+        for seq in series:
+            seq_result = check_biological_sequence(seq)
+            if not seq_result["valid"]:
+                raise ValueError("Invalid sequence")
+
+            # store all different types found in the series
+            types_found.add(seq_result["type"])
+            # store all different ambiguity found in the series
+            ambiguity.add(
+                "ambiguous" if seq_result.get("is_ambiguous") else "unanbiguous"
+            )
+
+        # if more than one type found or at least one protein, return protein
+        if len(types_found) > 1 or "protein" in types_found:
+            return {
+                "valid": True,
+                "type": "protein",
+                "kwargs": {"domain_kind": "protein"},
+            }
+
+        # if only one type found, return it
+        domain_kind = types_found.pop()
+        # if at least one ambiguous, return ambiguous
+        is_ambiguous = "ambiguous" in ambiguity
+
+        return {
+            "valid": True,
+            "type": domain_kind,
+            "kwargs": {"domain_kind": domain_kind, "is_ambiguous": is_ambiguous},
+        }
+    except (AttributeError, ValueError):
+        return {"valid": False}
 
 
 def _is_instance(
@@ -146,6 +292,18 @@ VALIDATION_SCHEMA: SchemaType = {
         (is_valid_smiles_value, "column $ should be a valid smiles"),
     ],
     "string": _is_instance(str),
+    "dna": (
+        lambda x: check_biological_sequence(x).get("type") == "dna",
+        "column $ should be a valid DNA sequence",
+    ),
+    "rna": (
+        lambda x: check_biological_sequence(x).get("type") == "rna",
+        "column $ should be a valid RNA sequence",
+    ),
+    "protein": (
+        lambda x: check_biological_sequence(x).get("valid"),
+        "column $ should be a valid protein sequence",
+    ),
 }
 
 
