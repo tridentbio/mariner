@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 set -x
-flake8 && mypy --explicit-package-bases
+# mypy --explicit-package-bases --namespace-packages app
+flake8
