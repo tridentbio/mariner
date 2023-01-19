@@ -1,7 +1,6 @@
 from typing import Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
-from pydantic import Required
 
 from mariner.schemas.api import (
     ApiBaseModel,
