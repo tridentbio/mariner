@@ -41,7 +41,7 @@ def get_biological_props(
     row: str,
     metadata: ColumnsDescription,
 ) -> Tuple[int, Optional[float], int, Optional[float]]:
-    sequence_lengh, gc_content, gaps_number, molecular_weight = None, None, None, None
+    sequence_lengh, gc_content, gaps_number, mwt = None, None, None, None
 
     sequence_lengh = len(re.sub(r"[-\*]", "", row))
     gaps_number = len(re.findall(r"-", row))
@@ -51,11 +51,11 @@ def get_biological_props(
         and not metadata.data_type.is_ambiguous
     ):
         gc_content = len(re.findall(r"[GC]", row)) / sequence_lengh
-        molecular_weight = calc_molecular_weight(
+        mwt = calc_molecular_weight(
             row, seq_type=metadata.data_type.domain_kind.upper()
         )
 
-    return sequence_lengh, gc_content, gaps_number, molecular_weight
+    return sequence_lengh, gc_content, gaps_number, mwt
 
 
 def create_float_histogram(data: pd.Series, bins: int = 15) -> Dict[str, Any]:
@@ -205,21 +205,19 @@ def get_dataset_summary(
                 }
 
     for biological_column in biological_columns:
-
-        (sequence_lengh, gc_content, gaps_number, molecular_weight) = zip(
+        (sequence_lengh, gc_content, gaps_number, mwt) = zip(
             *dataset[biological_column["col"]].apply(
                 lambda row: get_biological_props(
                     row, metadata=biological_column["metadata"]
                 )
             )
         )
-
         bio_dataset = DataFrame(
             {
                 "sequence_lengh": sequence_lengh,
                 "gc_content": gc_content,
                 "gaps_number": gaps_number,
-                "molecular_weight": molecular_weight,
+                "mwt": mwt,
             }
         )
 

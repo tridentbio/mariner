@@ -131,10 +131,6 @@ async def process_dataset(
             errors,
         ) = await dataset_ray_transformer.check_data_types.remote(columns_metadata)
 
-        stats = await dataset_ray_transformer.get_dataset_summary.remote(
-            columns_metadata
-        )
-
         if errors:
             # If there are errors, the dataset is updated with the errors
             # The errors are sent to the frontend by websocket
@@ -145,7 +141,7 @@ async def process_dataset(
                 rows=rows,
                 data_url=data_url,
                 columns_metadata=columns_metadata,
-                stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+                stats=[],
                 updated_at=datetime.datetime.now(),
                 ready_status="failed",
                 errors=errors,
@@ -164,6 +160,10 @@ async def process_dataset(
             )
 
             return event
+
+        stats = await dataset_ray_transformer.get_dataset_summary.remote(
+            columns_metadata
+        )
 
         # If there are no errors, the dataset is updated with the new columns_metadata
         # The dataset is ready to be used and a success message is sent to the frontend

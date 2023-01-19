@@ -295,7 +295,7 @@ VALIDATION_SCHEMA: SchemaType = {
     # The function should be applied to a pd.Series and return a boolean.
     #     True if the series is valid
     #     False if the series is invalid
-    "categorical": _is_instance(str),
+    "categorical": (lambda _: True, "categorical column is always valid"),
     "numeric": (
         lambda x: not x or search(r"^[-\d\.][\.,\d]*$", str(x)) is not None,
         "column $ should be numeric",

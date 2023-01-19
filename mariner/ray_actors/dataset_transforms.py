@@ -275,6 +275,7 @@ class DatasetTransforms:
             if is_valid_smiles_series(self.df[col], weak_check=True):
                 smiles_columns.append(col)
 
+        # Get the biological columns metadata
         biological_columns = []
         for metadata in columns_metadata:
             if type(metadata.data_type) in BiologicalDataType.__args__:
@@ -329,7 +330,7 @@ class DatasetTransforms:
             checker.generate_errors_dataset()
         else:
             for i, col in enumerate(columns):
-                if col.data_type.domain_kind["categorical", "dna", "rna"]:
+                if col.data_type.domain_kind in ["categorical", "dna", "rna"]:
                     columns[i].data_type = self._infer_domain_type_from_series(
                         self.df[col.pattern]
                     )
