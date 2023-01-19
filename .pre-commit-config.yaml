@@ -2,9 +2,19 @@ repos:
 - repo: local
   hooks:
     - id: format
-      name: Organizing code with scripts/format-single.sh
+      name: Format changed files
       entry: poetry run sh scripts/format-single.sh
       fail_fast: true
+      pass_filenames: true 
+      language: system
+      types: [python]
+      stages: 
+        - manual
+    - id: format-check
+      name: Checking code style (Possibly fixable with scripts/format.sh)
+      entry: poetry run sh scripts/check-format.sh
+      fail_fast: true
+      pass_filenames: true
       language: system
       types: [python]
     - id: lint 
@@ -12,6 +22,5 @@ repos:
       entry: poetry run sh scripts/lint.sh
       language: system
       types: [python]
-      require_serial: true
       pass_filenames: false
       fail_fast: true
