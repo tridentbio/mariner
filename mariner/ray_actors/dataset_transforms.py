@@ -262,8 +262,12 @@ class DatasetTransforms:
         stats = get_metadata(self.df)
         return len(self.df), len(self.df.columns), stats
 
-    def get_dataset_summary(self, columns_metadata: List[ColumnsDescription]):
+    def get_dataset_summary(self, columns_metadata: List[ColumnsDescription] = []):
         """Get's histogram for dataset columns according to it's inferred type
+
+        Args:
+            columns_metadata (List[ColumnsDescription], optional):
+                List of columns metadata. Only used with biological data types.
 
         Columns for which histograms are generated must be of type int or float,
         or must be valid smiles columns
