@@ -11,7 +11,8 @@ from rdkit import Chem, RDLogger
 
 from mariner.core.aws import Bucket, upload_s3_compressed
 from mariner.schemas.dataset_schemas import ColumnsMeta, SchemaType
-from model_builder.constants import BiologicalValidChars
+
+from .rules import BiologicalValidChars
 
 Mol = Chem.rdchem.Mol
 
@@ -177,13 +178,13 @@ def check_biological_sequence_series(
 
     Args:
         series: pd.Series of strings
-        weak_check: Flag to skip checking the whole data series
 
     Returns:
         dict: dictionary with the following keys:
             - valid: True if sequence is a valid biological sequence
             - type?: dna, rna or protein
-            - kwargs?: dictionary with kwargs to pass to the constructor
+            - kwargs?:
+                dictionary with kwargs to pass to the biotype class constructor
     """
     types_found: Set[Literal["dna", "rna", "protein"]] = set()
     ambiguity: Set[Literal["ambiguous", "unanbiguous"]] = set()
@@ -194,11 +195,14 @@ def check_biological_sequence_series(
             if not seq_result["valid"]:
                 raise ValueError("Invalid sequence")
 
+            # store all different types found in the series
             types_found.add(seq_result["type"])
+            # store all different ambiguity found in the series
             ambiguity.add(
                 "ambiguous" if seq_result.get("is_ambiguous") else "unanbiguous"
             )
 
+        # if more than one type found or at least one protein, return protein
         if len(types_found) > 1 or "protein" in types_found:
             return {
                 "valid": True,
@@ -206,8 +210,10 @@ def check_biological_sequence_series(
                 "kwargs": {"domain_kind": "protein"},
             }
 
+        # if only one type found, return it
         domain_kind = types_found.pop()
-        is_ambiguous = "ambiguous" in ambiguity if len(ambiguity) == 1 else True
+        # if at least one ambiguous, return ambiguous
+        is_ambiguous = "ambiguous" in ambiguity
 
         return {
             "valid": True,
