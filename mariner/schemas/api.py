@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any, Generic, List, Literal, TypeVar, Union
+from urllib.parse import unquote
 
 from fastapi import Query
 from humps import camel
@@ -90,6 +91,8 @@ def get_order_by_query(
     if not isinstance(order_by, str):
         return None
     result = []
+    order_by = unquote(order_by)
+
     for order_clause in order_by.split(","):
         field = order_clause[1:]
         if order_clause.startswith("+"):
