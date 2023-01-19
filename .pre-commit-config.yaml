@@ -20,12 +20,12 @@ repos:
       pass_filenames: true
       language: system
       types: [python]
-    - id: lint 
-      name: Linting code with scripts/lint.sh
-      entry: poetry run sh scripts/lint.sh
+    - id: lint-single
+      name: Linting code with scripts/lint-single.sh
+      entry: poetry run sh scripts/lint-single.sh
       language: system
       types: [python]
-      pass_filenames: false
+      pass_filenames: true
       fail_fast: true
     - id: test
       name: Test code with default tests (pytest.ini)
