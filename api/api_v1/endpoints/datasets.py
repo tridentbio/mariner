@@ -24,6 +24,7 @@ from mariner.schemas.dataset_schemas import (
     DatasetsQuery,
     DatasetSummary,
     DatasetUpdate,
+    DatasetUpdateInput,
     Split,
     SplitType,
 )
@@ -121,18 +122,7 @@ async def create_dataset(
 )
 async def update_dataset(
     dataset_id: int,
-    name: Optional[str] = Form(None),
-    description: Optional[str] = Form(None),
-    split_column: Optional[str] = Form(None, alias="splitOn"),
-    split_target: Optional[Split] = Form(None, alias="splitTarget"),
-    split_type: Optional[SplitType] = Form(
-        None,
-        alias="splitType",
-    ),
-    file: Optional[UploadFile] = File(None),
-    columns_metadatas: Optional[ColumnMetadataFromJSONStr] = Form(
-        None, alias="columnsMetadata"
-    ),
+    dataset_input: DatasetUpdateInput,
     current_user=Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
@@ -145,14 +135,14 @@ async def update_dataset(
             current_user,
             dataset_id,
             DatasetUpdate(
-                file=file,
-                name=name,
-                description=description,
-                split_column=split_column,
-                split_target=split_target,
-                split_type=split_type,
-                columns_metadata=columns_metadatas.metadatas
-                if columns_metadatas
+                file=dataset_input.file,
+                name=dataset_input.name,
+                description=dataset_input.description,
+                split_column=dataset_input.split_column,
+                split_target=dataset_input.split_target,
+                split_type=dataset_input.split_type,
+                columns_metadata=dataset_input.columns_metadata.metadatas
+                if dataset_input.columns_metadata
                 else None,
             ),
         )
