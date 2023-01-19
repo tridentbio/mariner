@@ -18,8 +18,7 @@ from model_builder.model import CustomModel
 LOG = logging.getLogger(__name__)
 
 
-@ray.remote
-class TrainingActor:
+class TrainingActorSync:
 
     checkpoint_callback: ModelCheckpoint
     dataset: Dataset
@@ -81,3 +80,8 @@ class TrainingActor:
         datamodule.setup()
         trainer.fit(model, datamodule)
         return model
+
+
+@ray.remote
+class TrainingActor(TrainingActorSync):
+    ...
