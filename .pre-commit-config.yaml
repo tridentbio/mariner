@@ -27,6 +27,15 @@ repos:
       types: [python]
       pass_filenames: true
       fail_fast: true
+    - id: lint
+      name: Linting code with scripts/lint.sh
+      entry: poetry run sh scripts/lint.sh
+      language: system
+      types: [python]
+      pass_filenames: false
+      fail_fast: true
+      stages:
+        - push
     - id: test
       name: Test code with default tests (pytest.ini)
       entry: docker-compose exec -T backend pytest
