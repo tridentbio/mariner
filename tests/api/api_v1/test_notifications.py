@@ -9,7 +9,11 @@ from mariner import experiments as experiments_ctl
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import EventEntity
-from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
+from mariner.schemas.experiment_schemas import (
+    Experiment,
+    MonitoringConfig,
+    TrainingRequest,
+)
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
 from tests.fixtures.user import get_test_user
@@ -122,6 +126,10 @@ async def experiment_fixture(db: Session, some_model: Model) -> Experiment:
         epochs=1,
         name=random_lower_string(),
         learning_rate=0.05,
+        monitoring_config=MonitoringConfig(
+            mode="min",
+            metric_key="val_mse",
+        ),
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
     task = get_exp_manager().get_task(exp.id)
