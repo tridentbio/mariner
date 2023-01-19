@@ -4,8 +4,7 @@ single values and dataframes.
 """
 from io import BytesIO
 from re import search
-from typing import Callable, List, Literal, Optional, Tuple
-from typing import Dict, List, Literal, Optional, Set, Tuple, Union
+from typing import Callable, Dict, List, Literal, Optional, Set, Tuple, Union
 
 import pandas as pd
 from rdkit import Chem, RDLogger
