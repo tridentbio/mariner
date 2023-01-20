@@ -6,13 +6,13 @@ from typing import Any, Dict, List, Literal, Optional
 from uuid import uuid4
 
 import mlflow
+import mlflow.entities.model_registry.model_version
 import ray
-from mlflow.tracking.client import MlflowClient
 from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketMessage, get_websockets_manager
 from mariner.core.config import settings
-from mariner.core.mlflowapi import log_models_and_create_version
+from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
 from mariner.events import EventCreate  # BAD DEPENDENCY
 from mariner.exceptions import (
@@ -38,7 +38,6 @@ from mariner.stores.experiment_sql import (
 )
 from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
-from model_builder.model import CustomModel
 
 LOG = logging.getLogger(__name__)
 
@@ -48,54 +47,8 @@ async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
     return result
 
 
-async def create_model_traning(
-    db: Session, user: UserEntity, training_request: TrainingRequest
-) -> Experiment:
-    model_version = model_store.get_model_version(
-        db, id=training_request.model_version_id
-    )
-
-    if not model_version:
-        raise ModelVersionNotFound()
-
-    model_version_parsed = ModelVersion.from_orm(model_version)
-    dataset = dataset_store.get_by_name(db, model_version_parsed.config.dataset.name)
-
-    mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
-    mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
-    experiment = experiment_store.create(
-        db,
-        obj_in=ExperimentCreateRepo(
-            mlflow_id=mlflow_experiment_id,
-            experiment_name=training_request.name,
-            created_by_id=user.id,
-            model_version_id=training_request.model_version_id,
-            epochs=training_request.epochs,
-            stage="RUNNING",
-        ),
-    )
-
-    training_actor = TrainingActor.remote(  # type: ignore
-        Dataset.from_orm(dataset),
-        model_version_parsed,
-        training_request,
-    )
-    await training_actor.setup_loggers.remote(  # noqa
-        user_id=user.id,
-        mariner_experiment=experiment,
-        mlflow_experiment_name=mlflow_experiment_name,
-    )
-    await training_actor.setup_callbacks.remote()  # noqa
-
-    # ExperimentManager expect tasks
-    task = asyncio.create_task(
-        make_coroutine_from_ray_objectref(training_actor.train.remote())
-    )
-
-    # TODO: move memory intensive training teardown to training_actor
-    def finish_task(task: Task, experiment_id: int):
-        if not model_version:
-            raise ModelVersionNotFound()
+def handle_training_complete(task: Task, experiment_id: int):
+    with SessionLocal() as db:
         experiment = experiment_store.get(db, experiment_id)
         assert experiment
         exception = task.exception()
@@ -104,36 +57,14 @@ async def create_model_traning(
             raise Exception("Task is not done")
         if not exception:
             try:
-                client = MlflowClient()
-                checkpoint_callback = ray.get(
-                    training_actor.get_checkpoint_callback.remote()
-                )
-                best_model_path = checkpoint_callback.best_model_path
-                best_model = CustomModel.load_from_checkpoint(best_model_path)
-                assert isinstance(
-                    best_model, CustomModel
-                ), "best_model failed to be logged"
-                last_model_path = checkpoint_callback.last_model_path
-                last_model = CustomModel.load_from_checkpoint(last_model_path)
-                assert isinstance(
-                    last_model, CustomModel
-                ), "last_model failed to be logged"
-                runs = client.search_runs(experiment_ids=[experiment.mlflow_id])
-                assert len(runs) == 1
-                run = runs[0]
-                run_id = run.info.run_id
-                mlflow_model_version = log_models_and_create_version(
-                    model_version.mlflow_model_name,
-                    best_model,
-                    last_model,
-                    run_id,
-                    client=client,
+                best_model_info: mlflow.entities.model_registry.model_version.ModelVersion = (
+                    task.result()
                 )
                 model_store.update_model_version(
                     db,
-                    version_id=model_version.id,
+                    version_id=experiment.model_version_id,
                     obj_in=ModelVersionUpdateRepo(
-                        mlflow_version=mlflow_model_version.version
+                        mlflow_version=best_model_info.version
                     ),
                 )
             except Exception as exception:
@@ -190,9 +121,63 @@ async def create_model_traning(
                 )
             )
 
+
+async def create_model_traning(
+    db: Session, user: UserEntity, training_request: TrainingRequest
+) -> Experiment:
+    """Creates an experiment associated with a model training
+
+    Creates a model training asynchronously through the training actor
+
+    Args:
+        db: Session
+        user: user that originated request
+        training_request: training hyperparams
+
+    Returns:
+        experiment created
+
+    Raises:
+        ModelVersionNotFound: when model version in training_request is missing
+    """
+    model_version = model_store.get_model_version(
+        db, id=training_request.model_version_id
+    )
+
+    if not model_version:
+        raise ModelVersionNotFound()
+
+    model_version_parsed = ModelVersion.from_orm(model_version)
+    dataset = dataset_store.get_by_name(db, model_version_parsed.config.dataset.name)
+
+    mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
+    mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
+    experiment = experiment_store.create(
+        db,
+        obj_in=ExperimentCreateRepo(
+            mlflow_id=mlflow_experiment_id,
+            experiment_name=training_request.name,
+            created_by_id=user.id,
+            model_version_id=training_request.model_version_id,
+            epochs=training_request.epochs,
+            stage="RUNNING",
+        ),
+    )
+
+    training_actor = TrainingActor.remote(  # type: ignore
+        experiment=Experiment.from_orm(experiment),
+        request=training_request,
+        user_id=user.id,
+        mlflow_experiment_name=mlflow_experiment_name,
+    )
+
+    # ExperimentManager expect tasks
+    training_ref = training_actor.train.remote(dataset=Dataset.from_orm(dataset))
+    task = asyncio.create_task(make_coroutine_from_ray_objectref(training_ref))
+
     get_exp_manager().add_experiment(
         ExperimentView(experiment_id=experiment.id, user_id=user.id, task=task),
-        finish_task,
+        handle_training_complete,
     )
     return Experiment.from_orm(experiment)
 
@@ -200,6 +185,23 @@ async def create_model_traning(
 def get_experiments(
     db: Session, user: UserEntity, query: ListExperimentsQuery
 ) -> tuple[List[Experiment], int]:
+    """Get's the experiments from ``user``
+
+    Args:
+        db: Session
+        user: user associated to the request
+        query: configures sort, filters and paginations applied
+
+    Returns:
+        Tuple where the first element is a list of experiments
+        resulted from the pagination and the second is the total
+        experiments found in that query (ignoring pagination)
+
+    Raises:
+        ModelNotFound: when the query contains a model version not listed
+        or not owned by that user
+
+    """
     model = model_store.get(db, query.model_id)
     if model and model.created_by_id != user.id:
         raise ModelNotFound()
