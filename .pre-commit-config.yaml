@@ -34,8 +34,6 @@ repos:
       types: [python]
       pass_filenames: false
       fail_fast: true
-      stages:
-        - push
     - id: test
       name: Test code with default tests (pytest.ini)
       entry: docker-compose exec -T backend pytest -m 'not long' --timeout 45
