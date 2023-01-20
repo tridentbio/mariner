@@ -1,6 +1,6 @@
 import enum
 import io
-from typing import Tuple, Union
+from typing import BinaryIO, Tuple, Union
 
 import boto3
 import pandas as pd
@@ -39,7 +39,16 @@ def create_s3_client() -> BaseClient:
     return s3
 
 
-def upload_s3_file(file: Union[UploadFile, io.BytesIO], bucket: Bucket, key):
+def list_s3_objects(bucket: Bucket, prefix: str):
+    client = create_s3_client()
+    response = client.list_objects_v2(
+        Bucket=bucket.value,
+        Prefix=prefix,
+    )
+    return response
+
+
+def upload_s3_file(file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket, key):
     """Upload a file to S3
 
     Args:
@@ -85,7 +94,7 @@ def download_s3(key: str, bucket: str) -> io.BytesIO:
 
 
 def upload_s3_compressed(
-    file: Union[UploadFile, io.BytesIO], bucket: Bucket = Bucket.Datasets
+    file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket = Bucket.Datasets
 ) -> Tuple[str, int]:
     """Upload a file to S3 and compress it if it's not already compressed
 
@@ -96,7 +105,7 @@ def upload_s3_compressed(
     Returns:
         Tuple[str, int]: s3 key and file size in bytes
     """
-    file_instance = file if isinstance(file, io.BytesIO) else file.file
+    file_instance = file if isinstance(file, (io.BytesIO, BinaryIO)) else file.file
 
     file_size = get_size(file_instance)
 
