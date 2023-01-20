@@ -12,3 +12,4 @@ secrets.yaml
 configmap.yaml
 .hypothesis/
 MarinerLogger/
+checkpoints/
