@@ -76,7 +76,7 @@ async def test_create_model_training(db: Session, some_model: Model):
         epochs=1,
         name=random_lower_string(),
         learning_rate=0.05,
-        monitoring_config=MonitoringConfig(
+        checkpoint_config=MonitoringConfig(
             mode="min",
             metric_key="val_mse",
         ),
@@ -140,7 +140,7 @@ async def test_experiment_has_stacktrace_when_training_fails(
         epochs=1,
         name=random_lower_string(),
         learning_rate=0.05,
-        monitoring_config=MonitoringConfig(
+        checkpoint_config=MonitoringConfig(
             mode="min",
             metric_key="val_mse",
         ),
