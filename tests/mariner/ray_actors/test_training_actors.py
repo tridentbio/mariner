@@ -1,11 +1,11 @@
 """Tests the training actor"""
 import mlflow
 import pytest
+import ray
 from sqlalchemy.orm import Session
 
 from mariner.entities.experiment import Experiment
-from mariner.ray_actors.training_actors import \
-    TrainingActorSync as TrainingActor
+from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import MonitoringConfig, TrainingRequest
 from mariner.schemas.model_schemas import Model, ModelVersion
@@ -16,27 +16,47 @@ from tests.utils.utils import random_lower_string
 
 
 class TestTrainingActor:
-    @pytest.mark.asyncio
-    @pytest.mark.long
-    async def test_train(
+    def test_train(
         self,
-        actor_fixture: TrainingActor,
+        db: Session,
+        experiment_fixture: Experiment,
+        dataset_fixture: Dataset,
+        modelversion_fixture: ModelVersion,
+        mlflow_experiment_name: str,
+        training_request_fixture: TrainingRequest,
     ):
-        model = actor_fixture.train()
+        user = get_test_user(db)
+        actor = TrainingActor.remote(  # noqa
+            dataset=dataset_fixture,
+            modelversion=modelversion_fixture,
+            request=training_request_fixture,
+        )
+        ray.get(
+            actor.setup_loggers.remote(
+                mariner_experiment=experiment_fixture,
+                user_id=user.id,
+                mlflow_experiment_name=mlflow_experiment_name,
+            )
+        )
+        ray.get(actor.setup_callbacks.remote())
+        model = ray.get(actor.train.remote())
         assert isinstance(
             model, CustomModel
         ), "training task does not return trained model"
-        best_model_path = actor_fixture.checkpoint_callback.best_model_path
-        last_model_path = actor_fixture.checkpoint_callback.last_model_path
-        best_model = model.load_from_checkpoint(best_model_path)
-        last_model = model.load_from_checkpoint(last_model_path)
+        checkpoint = ray.get(actor.get_checkpoint_callback.remote())
+        best_model_path = checkpoint.best_model_path
+        last_model_path = checkpoint.last_model_path
+        best_model = CustomModel.load_from_checkpoint(best_model_path)
         assert isinstance(best_model, CustomModel)
+        last_model = CustomModel.load_from_checkpoint(last_model_path)
         assert isinstance(last_model, CustomModel)
 
+    @pytest.mark.skip
     def test_persists_metrics(self):
         """Checks wheter metrics can be found in expected
         mlflow location (db) and mariner (db)"""
 
+    @pytest.mark.skip
     def test_persists_model(self):
         """Checks wheter model can be correctly loaded from mlflow
         registry (by model and model version). Checks if logged models
@@ -84,31 +104,7 @@ class TestTrainingActor:
             name="asdiasjd",
             model_version_id=modelversion_fixture.id,
             learning_rate=0.005,
-            epochs=1,
+            epochs=3,
             batch_size=32,
-            monitoring_config=MonitoringConfig(metric_key="val_mse", mode="min"),
+            checkpoint_config=MonitoringConfig(metric_key="val_mse", mode="min"),
         )
-
-    @pytest.fixture
-    def actor_fixture(
-        self,
-        db: Session,
-        experiment_fixture: Experiment,
-        dataset_fixture: Dataset,
-        modelversion_fixture: ModelVersion,
-        mlflow_experiment_name: str,
-        training_request_fixture: TrainingRequest,
-    ) -> TrainingActor:
-        actor = TrainingActor(
-            dataset=dataset_fixture,
-            modelversion=modelversion_fixture,
-            request=training_request_fixture,
-        )
-        user = get_test_user(db)
-        actor.setup_loggers(
-            mariner_experiment=experiment_fixture,
-            user_id=user.id,
-            mlflow_experiment_name=mlflow_experiment_name,
-        )
-        actor.setup_callbacks()
-        return actor

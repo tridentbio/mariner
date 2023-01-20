@@ -27,7 +27,7 @@ class TrainingRequest(ApiBaseModel):
     learning_rate: float
     epochs: int
     batch_size: Optional[int] = None
-    monitoring_config: MonitoringConfig
+    checkpoint_config: MonitoringConfig
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]

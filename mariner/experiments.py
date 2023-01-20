@@ -8,7 +8,6 @@ from uuid import uuid4
 import mlflow
 import ray
 from mlflow.tracking.client import MlflowClient
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketMessage, get_websockets_manager
@@ -76,7 +75,7 @@ async def create_model_traning(
         ),
     )
 
-    training_actor = TrainingActor.remote(
+    training_actor = TrainingActor.remote(  # type: ignore
         Dataset.from_orm(dataset),
         model_version_parsed,
         training_request,
@@ -88,9 +87,6 @@ async def create_model_traning(
     )
     await training_actor.setup_callbacks.remote()  # noqa
 
-    db.refresh(model_version)
-    db.flush()
-
     # ExperimentManager expect tasks
     task = asyncio.create_task(
         make_coroutine_from_ray_objectref(training_actor.train.remote())
@@ -98,20 +94,30 @@ async def create_model_traning(
 
     # TODO: move memory intensive training teardown to training_actor
     def finish_task(task: Task, experiment_id: int):
+        if not model_version:
+            raise ModelVersionNotFound()
         experiment = experiment_store.get(db, experiment_id)
         assert experiment
         exception = task.exception()
         done = task.done()
-        if done and not exception:
+        if not done:
+            raise Exception("Task is not done")
+        if not exception:
             try:
                 client = MlflowClient()
-                checkpoint_callback: ModelCheckpoint = ray.get(
-                    training_actor.checkpoint_callback.remote()
+                checkpoint_callback = ray.get(
+                    training_actor.get_checkpoint_callback.remote()
                 )
                 best_model_path = checkpoint_callback.best_model_path
                 best_model = CustomModel.load_from_checkpoint(best_model_path)
+                assert isinstance(
+                    best_model, CustomModel
+                ), "best_model failed to be logged"
                 last_model_path = checkpoint_callback.last_model_path
                 last_model = CustomModel.load_from_checkpoint(last_model_path)
+                assert isinstance(
+                    last_model, CustomModel
+                ), "last_model failed to be logged"
                 runs = client.search_runs(experiment_ids=[experiment.mlflow_id])
                 assert len(runs) == 1
                 run = runs[0]
@@ -131,6 +137,7 @@ async def create_model_traning(
                     ),
                 )
             except Exception as exception:
+                LOG.error(exception)
                 stack_trace = str(exception)
                 experiment_store.update(
                     db,
@@ -141,7 +148,7 @@ async def create_model_traning(
                 experiment_store.update(
                     db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
                 )
-                get_websockets_manager().send_message(  # noqa
+                return get_websockets_manager().send_message(  # noqa
                     user_id=experiment.created_by_id,
                     message=WebSocketMessage(
                         type="update-running-metrics",
@@ -156,30 +163,30 @@ async def create_model_traning(
                     ),
                 )
 
-        elif done and exception:
+        else:
+            LOG.error(exception)
             stack_trace = str(exception)
             experiment_store.update(
                 db,
                 obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
                 db_obj=experiment,
             )
-            get_websockets_manager().send_message(  # noqa
-                user_id=experiment.created_by_id,
-                message=WebSocketMessage(
-                    type="update-running-metrics",
-                    data=UpdateRunningData(
-                        experiment_id=experiment_id,
-                        experiment_name=experiment.experiment_name,
-                        stage="ERROR",
-                        running_history=get_exp_manager().get_running_history(
-                            experiment.id
+            asyncio.ensure_future(
+                get_websockets_manager().send_message(  # noqa
+                    user_id=experiment.created_by_id,
+                    message=WebSocketMessage(
+                        type="update-running-metrics",
+                        data=UpdateRunningData(
+                            experiment_id=experiment_id,
+                            experiment_name=experiment.experiment_name,
+                            stage="ERROR",
+                            running_history=get_exp_manager().get_running_history(
+                                experiment.id
+                            ),
                         ),
                     ),
-                ),
+                )
             )
-            LOG.error(exception)
-        else:
-            raise Exception("Task is not done")
 
     get_exp_manager().add_experiment(
         ExperimentView(experiment_id=experiment.id, user_id=user.id, task=task),

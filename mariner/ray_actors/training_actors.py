@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 import ray
@@ -15,10 +14,9 @@ from mariner.train.custom_logger import AppLogger
 from model_builder.dataset import DataModule
 from model_builder.model import CustomModel
 
-LOG = logging.getLogger(__name__)
 
-
-class TrainingActorSync:
+@ray.remote
+class TrainingActor:
 
     checkpoint_callback: ModelCheckpoint
     dataset: Dataset
@@ -33,6 +31,9 @@ class TrainingActorSync:
         self.request = request
         self.loggers: List[Logger] = []
 
+    def get_checkpoint_callback(self):
+        return self.checkpoint_callback
+
     def setup_loggers(
         self, mariner_experiment: Experiment, mlflow_experiment_name: str, user_id: int
     ):
@@ -44,23 +45,20 @@ class TrainingActorSync:
             ),
             MLFlowLogger(experiment_name=mlflow_experiment_name),
         ]
-        LOG.info("Torch lightning loggers setup %s", self.loggers)
 
     def setup_callbacks(
         self,
     ):
-        monitoring_config = self.request.monitoring_config
+        monitoring_config = self.request.checkpoint_config
         self.checkpoint_callback = ModelCheckpoint(
             monitor=monitoring_config.metric_key,
             mode=monitoring_config.mode,
+            save_last=True,
         )
-        LOG.info("Checkpoint monitoring callback setup %s", self.checkpoint_callback)
 
     def train(self):
-        LOG.info("Starting training %s", self.request)
         modelconfig = self.modelversion.config
         model = CustomModel(config=modelconfig)
-        LOG.error("Dataset config: %r", modelconfig.dataset)
         df = self.dataset.get_dataframe()
         datamodule = DataModule(
             featurizers_config=modelconfig.featurizers,
@@ -80,8 +78,3 @@ class TrainingActorSync:
         datamodule.setup()
         trainer.fit(model, datamodule)
         return model
-
-
-@ray.remote
-class TrainingActor(TrainingActorSync):
-    ...
