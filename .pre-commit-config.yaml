@@ -19,7 +19,7 @@ repos:
       pass_filenames: true
       fail_fast: true
     - id: test
-      name: Test code with default tests (pytest.ini)
+      name: Running short tests
       entry: docker-compose exec -T backend pytest -m 'not long' --timeout 45
       language: system
       pass_filenames: false
