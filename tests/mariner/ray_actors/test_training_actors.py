@@ -1,9 +1,15 @@
 """Tests the training actor"""
 import mlflow
+import mlflow.entities.model_registry.model_version
+import mlflow.pytorch
 import pytest
 import ray
+from mlflow.tracking import MlflowClient
+from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from sqlalchemy.orm import Session
 
+import mariner.schemas.experiment_schemas
+from mariner.core.aws import Bucket, list_s3_objects
 from mariner.entities.experiment import Experiment
 from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.dataset_schemas import Dataset
@@ -20,30 +26,26 @@ class TestTrainingActor:
         self,
         db: Session,
         experiment_fixture: Experiment,
-        dataset_fixture: Dataset,
-        modelversion_fixture: ModelVersion,
-        mlflow_experiment_name: str,
         training_request_fixture: TrainingRequest,
+        mlflow_experiment_name: str,
+        dataset_fixture: Dataset,
     ):
-        user = get_test_user(db)
-        actor = TrainingActor.remote(  # noqa
-            dataset=dataset_fixture,
-            modelversion=modelversion_fixture,
-            request=training_request_fixture,
+        experiment = mariner.schemas.experiment_schemas.Experiment.from_orm(
+            experiment_fixture
         )
-        ray.get(
-            actor.setup_loggers.remote(
-                mariner_experiment=experiment_fixture,
-                user_id=user.id,
-                mlflow_experiment_name=mlflow_experiment_name,
+        user = get_test_user(db)
+        actor = TrainingActor.remote(  # type: ignore
+            experiment=experiment,
+            request=training_request_fixture,
+            user_id=user.id,
+            mlflow_experiment_name=mlflow_experiment_name,
+        )
+        model: mlflow.entities.model_registry.model_version.ModelVersion = (
+            ray.get(  # type:ignore
+                actor.train.remote(dataset=dataset_fixture)
             )
         )
-        ray.get(actor.setup_callbacks.remote())
-        model = ray.get(actor.train.remote())
-        assert isinstance(
-            model, CustomModel
-        ), "training task does not return trained model"
-        checkpoint = ray.get(actor.get_checkpoint_callback.remote())
+        checkpoint: ModelCheckpoint = ray.get(actor.get_checkpoint_callback.remote())  # type: ignore
         best_model_path = checkpoint.best_model_path
         last_model_path = checkpoint.last_model_path
         best_model = CustomModel.load_from_checkpoint(best_model_path)
@@ -51,22 +53,49 @@ class TestTrainingActor:
         last_model = CustomModel.load_from_checkpoint(last_model_path)
         assert isinstance(last_model, CustomModel)
 
-    @pytest.mark.skip
-    def test_persists_metrics(self):
-        """Checks wheter metrics can be found in expected
-        mlflow location (db) and mariner (db)"""
+        # Checks wheter model can be correctly loaded from mlflow
+        # registry (by model and model version). Checks if logged models
+        # are in the expected s3 artifact path, and mariner model version
+        # entity is mapping to the trained mlflow model version"""
+        model_name = experiment.model_version.mlflow_model_name
+        version = model.version
+        model_uri = f"models:/{model_name}/{version}"
+        torch_model = mlflow.pytorch.load_model(model_uri)
 
-    @pytest.mark.skip
-    def test_persists_model(self):
-        """Checks wheter model can be correctly loaded from mlflow
-        registry (by model and model version). Checks if logged models
-        are in the expected s3 artifact path, and mariner model version
-        entity is mapping to the trained mlflow model version"""
-        ...
+        assert isinstance(torch_model, CustomModel)
+
+        # Checks wheter metrics can be found in expected mlflow location
+        # and models are correctly upload to s3
+        client = MlflowClient()
+        run = client.search_runs(experiment_ids=[experiment.mlflow_id])[0]
+        exp = client.get_experiment(experiment.mlflow_id)
+        location = exp.artifact_location
+        assert location.startswith(
+            f"s3://{Bucket.Datasets.value}/{experiment.mlflow_id}"
+        )
+        run_artifact_prefix = f"{experiment.mlflow_id}/{run.info.run_id}"
+        objs = list_s3_objects(Bucket.Datasets, run_artifact_prefix)
+        expected_artifacts = [
+            f"{run_artifact_prefix}/artifacts/last/data/model.pth",
+            f"{run_artifact_prefix}/artifacts/best/data/model.pth",
+        ]
+
+        object_keys = [
+            obj for obj in objs["Contents"] if obj["Key"] in expected_artifacts
+        ]
+        assert len(object_keys) == 2, "failed to trained model artifacts from s3"
+        loss_history = client.get_metric_history(
+            run_id=run.info.run_id, key="train_loss"
+        )
+        assert len(loss_history) > 0
+        val_loss_history = client.get_metric_history(
+            run_id=run.info.run_id, key="val_mse"
+        )
+        assert len(val_loss_history) > 0
 
     @pytest.fixture
     def mlflow_experiment_name(self):
-        return random_lower_string()
+        return f"Testing Experiment - {random_lower_string()}"
 
     @pytest.fixture
     def dataset_fixture(self, some_model: Model):
@@ -76,7 +105,7 @@ class TestTrainingActor:
     def modelversion_fixture(self, some_model: Model) -> ModelVersion:
         return some_model.versions[-1]
 
-    @pytest.fixture
+    @pytest.fixture(scope="function")
     def experiment_fixture(
         self,
         db: Session,
