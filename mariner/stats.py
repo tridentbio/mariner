@@ -216,7 +216,9 @@ def get_dataset_summary(
             {
                 "sequence_lengh": sequence_lengh,
                 "gc_content": gc_content,
-                "gaps_number": gaps_number,
+                "gaps_number": gaps_number
+                if not all(row == 0 for row in gaps_number)
+                else None,
                 "mwt": mwt,
             }
         )
