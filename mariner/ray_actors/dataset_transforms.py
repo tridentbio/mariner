@@ -7,6 +7,7 @@ import pandas as pd
 import ray
 
 from mariner.core.aws import Bucket, upload_s3_compressed
+from mariner.entities.dataset import ColumnsMetadata
 from mariner.schemas.dataset_schemas import (
     BiologicalDataType,
     CategoricalDataType,
@@ -34,11 +35,8 @@ class DatasetTransforms:
     """Dataset transformations and queries to be performed by ray cluster
 
     Each instance of this class is responsible for a single dataset file
-    transformations. To use the actor, the programmer should write the dataset
-    to the remote ray actors by chunks using.
-
-    This implementation uses :class:`pandas.Dataframe` for operating on the dataset
-    :func:`DatasetTransforms.write_dataset_buffer` and
+    transformations. This implementation uses :class:`pandas.Dataframe`
+    for operating on the dataset :func:`DatasetTransforms.write_dataset_buffer` and
     :func:`DatasetTransforms.set_is_dataset_fully_loaded(True)` once the dataset
     is fully loaded
     """
@@ -293,7 +291,7 @@ class DatasetTransforms:
         return key, file_size
 
     def check_data_types(
-        self, columns: ColumnsMeta
+        self, columns: List[ColumnsMetadata]
     ) -> Tuple[ColumnsMeta, Optional[List[str]]]:
         """Checks if underlying dataset conforms to columns data types
 

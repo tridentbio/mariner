@@ -24,6 +24,7 @@ def mocked_experiment_payload(some_model: Model):
         "learningRate": 0.05,
         "epochs": 1,
         "modelVersionId": version.id,
+        "checkpointConfig": {"metricKey": "val_mse", "mode": "min"},
     }
 
 

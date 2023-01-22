@@ -4,6 +4,8 @@ from sqlalchemy.sql.schema import Column, ForeignKey
 from sqlalchemy.sql.sqltypes import JSON, DateTime, Integer, String
 
 from mariner.db.base_class import Base
+from mariner.entities.model import ModelVersion
+from mariner.entities.user import User
 
 
 class Experiment(Base):
@@ -30,17 +32,18 @@ class Experiment(Base):
     """
 
     id = Column(Integer, primary_key=True, unique=True, index=True)
-    experiment_name = Column(String, nullable=True)
+    experiment_name = Column(String, nullable=False)
     mlflow_id = Column(String, nullable=False)
     model_version_id = Column(
         Integer, ForeignKey("modelversion.id", ondelete="CASCADE"), nullable=False
     )
     created_at = Column(DateTime, server_default=current_timestamp())
-    created_by_id = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"))
+    created_by_id = Column(
+        Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=False
+    )
     updated_at = Column(DateTime, server_default=current_timestamp())
-    stage = Column(String, server_default="RUNNING")
+    stage = Column(String, server_default="RUNNING", nullable=False)
     epochs = Column(Integer, nullable=False)
-
     history = Column(JSON)
     train_metrics = Column(JSON)
     val_metrics = Column(JSON)
@@ -49,8 +52,8 @@ class Experiment(Base):
     stack_trace = Column(String)
 
     created_by = relationship(
-        "User",
+        User,
     )
     model_version = relationship(
-        "ModelVersion",
+        ModelVersion,
     )
