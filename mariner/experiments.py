@@ -2,12 +2,13 @@ import asyncio
 import logging
 from asyncio.tasks import Task
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import uuid4
 
 import mlflow
-import mlflow.entities.model_registry.model_version
 import ray
+from mlflow.entities.model_registry.model_version import \
+    ModelVersion as MlflowModelVersion
 from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketMessage, get_websockets_manager
@@ -57,9 +58,7 @@ def handle_training_complete(task: Task, experiment_id: int):
             raise Exception("Task is not done")
         if not exception:
             try:
-                best_model_info: mlflow.entities.model_registry.model_version.ModelVersion = (
-                    task.result()
-                )
+                best_model_info: MlflowModelVersion = task.result()
                 model_store.update_model_version(
                     db,
                     version_id=experiment.model_version_id,
@@ -316,6 +315,7 @@ async def send_ws_epoch_update(
 class MonitorableMetric(ApiBaseModel):
     key: str
     label: str
+    tex_label: Union[str, None] = None
     type: Literal["regressor", "classification"]
 
 
@@ -334,7 +334,7 @@ def get_metrics_for_monitoring() -> List[MonitorableMetric]:
         ),
         MonitorableMetric(key="val_ev", label="EV", type="regressor"),
         MonitorableMetric(key="val_mape", label="MAPE", type="regressor"),
-        MonitorableMetric(key="val_R2", label="R2", type="regressor"),
+        MonitorableMetric(key="val_R2", label="R2", tex_label="R^2", type="regressor"),
         MonitorableMetric(key="val_pearson", label="Pearson", type="regressor"),
         MonitorableMetric(key="val_accuracy", label="Accuracy", type="classification"),
         MonitorableMetric(
@@ -343,6 +343,6 @@ def get_metrics_for_monitoring() -> List[MonitorableMetric]:
         MonitorableMetric(key="val_recall", label="Recall", type="classification"),
         MonitorableMetric(key="val_f1", label="F1", type="classification"),
         MonitorableMetric(
-            key="val_confusion_matrix", label="Confusion MAtrix", type="classification"
+            key="val_confusion_matrix", label="Confusion Matrix", type="classification"
         ),
     ]

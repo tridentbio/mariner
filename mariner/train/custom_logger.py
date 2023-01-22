@@ -83,8 +83,10 @@ class AppLogger(LightningLoggerBase):
                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
                 "the ray services, and that it points to the mariner backend"
             )
-
-        self.last_sent_at = time.time()
+        except Exception as exp:
+            logging.error(exp)
+        finally:
+            self.last_sent_at = time.time()
 
     @rank_zero_only
     def finalize(self, status):

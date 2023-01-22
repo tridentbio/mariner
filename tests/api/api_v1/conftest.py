@@ -25,6 +25,7 @@ def mocked_experiment_payload(some_model: Model):
         "epochs": 1,
         "modelVersionId": version.id,
         "checkpointConfig": {"metricKey": "val_mse", "mode": "min"},
+        "earlyStoppingConfig": {"metricKey": "val_mse", "mode": "min"},
     }
 
 

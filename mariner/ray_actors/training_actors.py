@@ -114,11 +114,16 @@ class TrainingActor:
         self,
     ):
         monitoring_config = self.request.checkpoint_config
+        early_stopping_config = self.request.early_stopping_config
         self.checkpoint_callback = ModelCheckpoint(
             monitor=monitoring_config.metric_key,
             mode=monitoring_config.mode,
             save_last=True,
         )
         self.early_stopping_callback = EarlyStopping(
-            **self.request.early_stopping_config.dict()
+            monitor=early_stopping_config.metric_key,
+            mode=early_stopping_config.mode,
+            min_delta=early_stopping_config.min_delta,
+            patience=early_stopping_config.patience,
+            check_finite=early_stopping_config.check_finite,
         )
