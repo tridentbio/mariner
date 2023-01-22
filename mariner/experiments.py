@@ -322,27 +322,23 @@ class MonitorableMetric(ApiBaseModel):
 def get_metrics_for_monitoring() -> List[MonitorableMetric]:
     """Get's options available for model checkpoint metric monitoring
 
+    The real metric keys have the stage prefixed, e.g.: ``train_mse``, ``val_f1``
+
     Returns:
         List[MonitorableMetric]: Description of the metric
     """
     return [
+        MonitorableMetric(key="mse", label="MSE", type="regressor"),
+        MonitorableMetric(key="mae", label="MAE", type="regressor"),
+        MonitorableMetric(key="ev", label="EV", type="regressor"),
+        MonitorableMetric(key="mape", label="MAPE", type="regressor"),
+        MonitorableMetric(key="R2", label="R2", tex_label="R^2", type="regressor"),
+        MonitorableMetric(key="pearson", label="Pearson", type="regressor"),
+        MonitorableMetric(key="accuracy", label="Accuracy", type="classification"),
+        MonitorableMetric(key="precision", label="Precision", type="classification"),
+        MonitorableMetric(key="recall", label="Recall", type="classification"),
+        MonitorableMetric(key="f1", label="F1", type="classification"),
         MonitorableMetric(
-            key="val_mse", label="(MSE) Mean Squared Error", type="regressor"
-        ),
-        MonitorableMetric(
-            key="val_mae", label="(MAE) Mean Absolute Error", type="regressor"
-        ),
-        MonitorableMetric(key="val_ev", label="EV", type="regressor"),
-        MonitorableMetric(key="val_mape", label="MAPE", type="regressor"),
-        MonitorableMetric(key="val_R2", label="R2", tex_label="R^2", type="regressor"),
-        MonitorableMetric(key="val_pearson", label="Pearson", type="regressor"),
-        MonitorableMetric(key="val_accuracy", label="Accuracy", type="classification"),
-        MonitorableMetric(
-            key="val_precision", label="Precision", type="classification"
-        ),
-        MonitorableMetric(key="val_recall", label="Recall", type="classification"),
-        MonitorableMetric(key="val_f1", label="F1", type="classification"),
-        MonitorableMetric(
-            key="val_confusion_matrix", label="Confusion Matrix", type="classification"
+            key="confusion_matrix", label="Confusion Matrix", type="classification"
         ),
     ]
