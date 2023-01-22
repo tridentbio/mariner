@@ -1,7 +1,6 @@
 from typing import Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
-from pydantic import Required
 
 from mariner.schemas.api import (
     ApiBaseModel,
@@ -13,12 +12,22 @@ from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
 
 
+class MonitoringConfig(ApiBaseModel):
+    """
+    Configures model checkpointing
+    """
+
+    metric_key: str
+    mode: str
+
+
 class TrainingRequest(ApiBaseModel):
     name: str
     model_version_id: int
     learning_rate: float
     epochs: int
     batch_size: Optional[int] = None
+    checkpoint_config: MonitoringConfig
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]
@@ -48,7 +57,7 @@ class ListExperimentsQuery:
     def __init__(
         self,
         stage: Union[list[str], None] = Query(default=None),
-        model_id: Union[int, None] = Query(default=Required, alias="modelId"),
+        model_id: Union[int, None] = Query(default=None, alias="modelId"),
         model_version_ids: Union[list[int], None] = Query(
             default=None, alias="modelVersionIds"
         ),

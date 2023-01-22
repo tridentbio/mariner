@@ -11,3 +11,5 @@ docker-compose.override.yml
 secrets.yaml
 configmap.yaml
 .hypothesis/
+MarinerLogger/
+checkpoints/

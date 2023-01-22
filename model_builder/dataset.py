@@ -205,7 +205,7 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in test steps.
         """
-        return DataLoader(self.test_dataset, self.batch_size, shuffle=False)
+        return DataLoader(self.test_dataset, self.batch_size)
 
     def val_dataloader(self) -> DataLoader:
         """Return the DataLoader used to validate the custom model.
@@ -213,4 +213,4 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in validation steps.
         """
-        return DataLoader(self.test_dataset, self.batch_size, shuffle=True)
+        return DataLoader(self.val_dataset, self.batch_size)

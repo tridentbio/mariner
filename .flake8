@@ -1,5 +1,5 @@
 [flake8]
 max-line-length = 88
 extend-ignore = E203
-exclude = .git,__pycache__,__init__.py,.mypy_cache,.pytest_cache,alembic,notebooks,.env,.venv
+exclude = .git,__pycache__,__init__.py,.mypy_cache,.pytest_cache,mariner/alembic,notebooks,.env,.venv
 

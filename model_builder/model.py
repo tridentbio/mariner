@@ -94,8 +94,11 @@ class Metrics:
 
 
 class CustomModel(LightningModule):
-    def __init__(self, config: ModelSchema):
+    def __init__(self, config: Union[ModelSchema, str]):
         super().__init__()
+        if isinstance(config, str):
+            config = ModelSchema.parse_raw(config)
+
         layers_dict = {}
         self.config = config
         self.layer_configs = {layer.name: layer for layer in config.layers}
@@ -109,7 +112,6 @@ class CustomModel(LightningModule):
                     if column.name == input and isinstance(
                         column.data_type, CategoricalDataType
                     ):
-                        print("FOUND classes", column.data_type.classes)
                         layer_instance.classes = column.data_type.classes
                 if not layer_instance.classes:
                     raise ValueError("Failed to find OneHot classes")
@@ -123,6 +125,7 @@ class CustomModel(LightningModule):
         loss_fn_class = eval(config.loss_fn)
         self.loss_fn = loss_fn_class()
 
+        self.save_hyperparameters({"config": config.json()})
         # Set up metrics for training and validation
         if config.is_regressor():
             self.metrics = Metrics("regressor")
@@ -135,7 +138,7 @@ class CustomModel(LightningModule):
                 num_classes=len(config.dataset.target_column.data_type.classes),
             )
 
-    def forward(self, input: DataInstance):
+    def forward(self, input: DataInstance):  # type: ignore
         last = input
         for node_name in self.topo_sorting:
             if node_name not in self.layer_configs:
