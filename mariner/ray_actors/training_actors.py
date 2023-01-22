@@ -2,6 +2,7 @@ from typing import List
 
 import ray
 from mlflow.tracking import MlflowClient
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.loggers.logger import Logger
 from pytorch_lightning.loggers.mlflow import MLFlowLogger
@@ -21,6 +22,7 @@ class TrainingActor:
     """Runs training with needed mlflow and custom logging"""
 
     checkpoint_callback: ModelCheckpoint
+    early_stopping_callback: EarlyStopping
     dataset: Dataset
     modelversion: ModelVersion
     request: TrainingRequest
@@ -68,7 +70,7 @@ class TrainingActor:
             logger=self.loggers,
             log_every_n_steps=1,
             enable_progress_bar=False,
-            callbacks=[self.checkpoint_callback],
+            callbacks=[self.checkpoint_callback, self.early_stopping_callback],
         )
         datamodule.setup()
         trainer.fit(model, datamodule)
@@ -116,4 +118,7 @@ class TrainingActor:
             monitor=monitoring_config.metric_key,
             mode=monitoring_config.mode,
             save_last=True,
+        )
+        self.early_stopping_callback = EarlyStopping(
+            **self.request.early_stopping_config.dict()
         )
