@@ -1,3 +1,5 @@
+from typing import List
+
 import pandas as pd
 import pytest
 import pytest_asyncio
@@ -6,6 +8,7 @@ from mariner.core.config import settings
 from mariner.ray_actors.dataset_transforms import DatasetTransforms
 from mariner.schemas.dataset_schemas import ColumnsMeta
 
+BIO_DATASET_PATH = "tests/data/bio_rna_dna_protein.csv"
 ZINC_DATASET_PATH = "tests/data/zinc_extra.csv"
 HIV_DATASET_PATH = "tests/data/HIV.csv"
 DATASETS_TO_TEST = [ZINC_DATASET_PATH, HIV_DATASET_PATH]
@@ -44,6 +47,11 @@ class TestDatasetTransforms:
                 await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
             await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
             return dataset_ray_transformer
+
+    @pytest_asyncio.fixture
+    async def bio_transformer_fixture(self):
+        transformer = await self.make_transformer_fixture(BIO_DATASET_PATH)
+        return transformer
 
     @pytest_asyncio.fixture
     async def hiv_transformer_fixture(self):
@@ -97,6 +105,27 @@ class TestDatasetTransforms:
         ]
         got_stats_indexes = list(stats.index)
         assert got_stats_indexes == expected_stats_indexes
+
+    @pytest.mark.asyncio
+    async def test_get_columns_metadata_bio(self, bio_transformer_fixture):
+        metadata_list: List[
+            ColumnsMeta
+        ] = await bio_transformer_fixture.get_columns_metadata.remote()
+        assert len(metadata_list) == 4
+
+        expected_domain = ["categorical", "rna", "dna", "protein"]
+
+        for i, metadata in enumerate(metadata_list):
+            assert isinstance(metadata, ColumnsMeta)
+            domain_kind = metadata.dtype.domain_kind
+            assert (
+                domain_kind == expected_domain[i]
+            ), f"expected bio dataset column {i} domain kind to be {expected_domain[i]}"
+
+            if domain_kind in ["dna", "rna"]:
+                assert (
+                    metadata.dtype.is_ambiguous
+                ), f"expected bio dataset column {expected_domain[i]} to be ambiguous"
 
     @pytest.mark.asyncio
     async def test_apply_indexes_scaffold(self, hiv_transformer_fixture):

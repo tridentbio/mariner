@@ -11,6 +11,7 @@ from mariner.entities.dataset import ColumnsMetadata
 from mariner.schemas.dataset_schemas import (
     BiologicalDataType,
     CategoricalDataType,
+    ColumnsDescription,
     ColumnsMeta,
     DNADataType,
     NumericalDataType,
@@ -24,6 +25,7 @@ from mariner.validation import (
     CompatibilityChecker,
     check_biological_sequence_series,
     is_valid_smiles_series,
+    validate_column_pattern,
 )
 from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
@@ -258,8 +260,12 @@ class DatasetTransforms:
         stats = get_metadata(self.df)
         return len(self.df), len(self.df.columns), stats
 
-    def get_dataset_summary(self):
+    def get_dataset_summary(self, columns_metadata: List[ColumnsDescription] = []):
         """Get's histogram for dataset columns according to it's inferred type
+
+        Args:
+            columns_metadata (List[ColumnsDescription], optional):
+                List of columns metadata. Only used with biological data types.
 
         Columns for which histograms are generated must be of type int or float,
         or must be valid smiles columns
@@ -270,8 +276,21 @@ class DatasetTransforms:
             # Must go to dataset actor
             if is_valid_smiles_series(self.df[col], weak_check=True):
                 smiles_columns.append(col)
+
+        # Get the biological columns metadata
+        biological_columns = []
+        for metadata in columns_metadata:
+            if type(metadata.data_type) in BiologicalDataType.__args__:
+                biological_columns.extend(
+                    [
+                        {"col": col, "metadata": metadata}
+                        for col in self.df.columns
+                        if validate_column_pattern(col, metadata.pattern)
+                    ]
+                )
+
         # Must go to dataset actor
-        stats = get_stats(self.df, smiles_columns)
+        stats = get_stats(self.df, smiles_columns, biological_columns)
         return stats
 
     def upload_s3(self, old_data_url=None):
@@ -313,7 +332,7 @@ class DatasetTransforms:
             checker.generate_errors_dataset()
         else:
             for i, col in enumerate(columns):
-                if col.data_type.domain_kind == "categorical":
+                if col.data_type.domain_kind in ["categorical", "dna", "rna"]:
                     columns[i].data_type = self._infer_domain_type_from_series(
                         self.df[col.pattern]
                     )

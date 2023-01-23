@@ -249,6 +249,26 @@ def _is_instance(
     return (func, msg)
 
 
+def validate_column_pattern(column: str, pattern: str) -> bool:
+    """Validates if a column name matches a pattern
+
+    Args:
+        column (str): column name
+        pattern (str): column pattern
+
+    Returns:
+        bool: True if column matches the pattern
+    """
+
+    def compare_insensitive(x, y):
+        return x.lower() == y.lower()
+
+    def compare_regex(x, y):
+        return search(y, x) is not None
+
+    return compare_insensitive(column, pattern) or compare_regex(column, pattern)
+
+
 def find_column_by_name(df: pd.DataFrame, column_name: str) -> int:
     """Finds the index of a column in a dataframe by its name
 
@@ -261,18 +281,27 @@ def find_column_by_name(df: pd.DataFrame, column_name: str) -> int:
     Returns:
         int: index of the column
     """
-
-    def compare_insensitive(x, y):
-        return x.lower() == y.lower()
-
-    def compare_regex(x, y):
-        return search(y, x) is not None
-
     for i, col in enumerate(df.columns):
-        if compare_insensitive(col, column_name) or compare_regex(col, column_name):
+        if validate_column_pattern(col, column_name):
             return i
 
     return -1
+
+
+def is_not_float(x: str) -> bool:
+    """Checks if a string is not a float
+
+    Args:
+        x (str): string to check
+
+    Returns:
+        bool: False if string is a float
+    """
+    try:
+        x_float = float(x)
+        return x_float == int(x_float)
+    except Exception:
+        return True
 
 
 VALIDATION_SCHEMA: SchemaType = {
@@ -282,7 +311,7 @@ VALIDATION_SCHEMA: SchemaType = {
     # The function should be applied to a pd.Series and return a boolean.
     #     True if the series is valid
     #     False if the series is invalid
-    "categorical": _is_instance(str),
+    "categorical": (is_not_float, "columns $ is categorical and can not be a float"),
     "numeric": (
         lambda x: not x or search(r"^[-\d\.][\.,\d]*$", str(x)) is not None,
         "column $ should be numeric",

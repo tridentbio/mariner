@@ -1,12 +1,14 @@
-from typing import Any, Dict, List, Union
+import re
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import rdkit.Chem as Chem
+from Bio.SeqUtils import molecular_weight as calc_molecular_weight
 from pandas.core.frame import DataFrame
 from rdkit.Chem import Descriptors
 
-from mariner.schemas.dataset_schemas import StatsType
+from mariner.schemas.dataset_schemas import ColumnsDescription, StatsType
 from model_builder.constants import TrainingStep
 
 
@@ -33,6 +35,27 @@ def get_chemical_props(smiles: str) -> tuple:
     has_chiral_centers = True if len(Chem.FindMolChiralCenters(mol)) > 0 else False
 
     return mol_weight, mol_tpsa, atom_count, ring_count, has_chiral_centers
+
+
+def get_biological_props(
+    row: str,
+    metadata: ColumnsDescription,
+) -> Tuple[int, Optional[float], int, Optional[float]]:
+    sequence_lengh, gc_content, gaps_number, mwt = None, None, None, None
+
+    sequence_lengh = len(re.sub(r"[-\*]", "", row))
+    gaps_number = len(re.findall(r"-", row))
+
+    if (
+        metadata.data_type.domain_kind in ["dna", "rna"]
+        and not metadata.data_type.is_ambiguous
+    ):
+        gc_content = len(re.findall(r"[GC]", row)) / sequence_lengh
+        mwt = calc_molecular_weight(
+            row, seq_type=metadata.data_type.domain_kind.upper()
+        )
+
+    return sequence_lengh, gc_content, gaps_number, mwt
 
 
 def create_float_histogram(data: pd.Series, bins: int = 15) -> Dict[str, Any]:
@@ -124,7 +147,9 @@ def create_int_histogram(data: pd.Series, bins: int) -> Dict[str, Any]:
 
 
 def get_dataset_summary(
-    dataset: pd.DataFrame, smiles_columns: List[str] = []
+    dataset: pd.DataFrame,
+    smiles_columns: List[str] = [],
+    biological_columns: List[Dict[str, Any]] = [],
 ) -> dict[str, Union[pd.Series, dict[str, pd.Series]]]:
     """Computes the dataset histograms
 
@@ -179,10 +204,43 @@ def get_dataset_summary(
                     "hist": create_int_histogram(chem_dataset[column], 15)
                 }
 
+    for biological_column in biological_columns:
+        (sequence_lengh, gc_content, gaps_number, mwt) = zip(
+            *dataset[biological_column["col"]].apply(
+                lambda row: get_biological_props(
+                    row, metadata=biological_column["metadata"]
+                )
+            )
+        )
+        bio_dataset = DataFrame(
+            {
+                "sequence_lengh": sequence_lengh,
+                "gc_content": gc_content,
+                "gaps_number": gaps_number
+                if not all(row == 0 for row in gaps_number)
+                else None,
+                "mwt": mwt,
+            }
+        )
+
+        for column, dtype in bio_dataset.dtypes.items():
+            if np.issubdtype(dtype, float):
+                statistics[biological_column["col"]][column] = {
+                    "hist": create_float_histogram(bio_dataset[column], 15)
+                }
+            elif np.issubdtype(dtype, int):
+                statistics[biological_column["col"]][column] = {
+                    "hist": create_int_histogram(bio_dataset[column], 15)
+                }
+
     return statistics
 
 
-def get_stats(dataset: pd.DataFrame, smiles_columns: List[str]) -> StatsType:
+def get_stats(
+    dataset: pd.DataFrame,
+    smiles_columns: List[str],
+    biological_columns: List[Dict[str, Any]],
+) -> StatsType:
     """Computes the dataset histograms
 
     Args:
@@ -197,15 +255,21 @@ def get_stats(dataset: pd.DataFrame, smiles_columns: List[str]) -> StatsType:
     """
     stats: StatsType = {}
 
-    stats["full"] = get_dataset_summary(dataset, smiles_columns)
+    stats["full"] = get_dataset_summary(dataset, smiles_columns, biological_columns)
     stats["train"] = get_dataset_summary(
-        dataset[dataset["step"] == TrainingStep.TRAIN.value], smiles_columns
+        dataset[dataset["step"] == TrainingStep.TRAIN.value],
+        smiles_columns,
+        biological_columns,
     )
     stats["test"] = get_dataset_summary(
-        dataset[dataset["step"] == TrainingStep.TEST.value], smiles_columns
+        dataset[dataset["step"] == TrainingStep.TEST.value],
+        smiles_columns,
+        biological_columns,
     )
     stats["val"] = get_dataset_summary(
-        dataset[dataset["step"] == TrainingStep.VAL.value], smiles_columns
+        dataset[dataset["step"] == TrainingStep.VAL.value],
+        smiles_columns,
+        biological_columns,
     )
 
     return stats
