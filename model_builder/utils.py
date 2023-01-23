@@ -161,6 +161,14 @@ def split_module_export(classpath: str) -> tuple[str, str]:
 
 
 def get_class_from_path_string(pathstring: str) -> Any:
+    """Dynamically import a class from a string path.
+
+    Args:
+        pathstring (str): String path to the class.
+
+    Returns:
+        Any: The class.
+    """
     module_name, export = split_module_export(pathstring)
     code = f"""
 from {module_name} import {export}
@@ -245,6 +253,8 @@ def collect_args(
                     value_.append(item_value)
             result[key] = value_
         elif isinstance(value, str):
+            if not value:
+                continue
             value, is_ref = unwrap_dollar(value)
             if is_ref:
                 result[key] = get_ref_from_input(value, input)

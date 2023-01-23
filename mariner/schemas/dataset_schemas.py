@@ -291,6 +291,7 @@ class Dataset(DatasetBase):
     id: int
 
     def get_dataframe(self):
+        assert self.data_url
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
         return df
 
@@ -361,4 +362,4 @@ class DatasetProcessStatusEventPayload(ApiBaseModel):
 
     dataset_id: Optional[int] = None
     message: Optional[str] = "success on dataset creation"
-    dataset: Dataset = None
+    dataset: Optional[Dataset] = None

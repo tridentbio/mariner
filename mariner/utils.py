@@ -39,13 +39,16 @@ def hash_md5(
     elif file:
         if isinstance(file, (str, Path)):
             with open(file, "rb") as f:
+                # type: ignore
                 for chunk in iter(lambda: f.read(chunk_size), b""):
                     hash_md5.update(chunk)
         elif isinstance(file, io.BytesIO):
-            for chunk in iter(lambda: file.read(chunk_size), b""):
+
+            for chunk in iter(lambda: file.read(chunk_size), b""):  # type: ignore
                 hash_md5.update(chunk)
         elif isinstance(file, (FAUploadFile, SUploadFile)):
-            for chunk in iter(lambda: file.file.read(chunk_size), b""):
+
+            for chunk in iter(lambda: file.file.read(chunk_size), b""):  # type: ignore
                 hash_md5.update(bytes(chunk))
         else:
             raise TypeError("file must be UploadFile")
@@ -59,7 +62,7 @@ def random_pretty_name() -> str:
     return RandomWord().word(word_min_length=4)
 
 
-def is_compressed(file: Union[FAUploadFile, bytes, io.BytesIO]) -> bool:
+def is_compressed(file: Union[FAUploadFile, bytes, io.BytesIO, BinaryIO]) -> bool:
     """Check if file is compressed by checking the first two bytes
 
     Gzip compressed files start with b'\x1f\x8b'
@@ -103,7 +106,7 @@ def read_compressed_csv(fileBytes: bytes) -> pd.DataFrame:
     """
     if is_compressed(fileBytes):
         fileBytes = decompress(fileBytes)
-        return pd.read_csv(io.BytesIO(fileBytes), dtype=str)
+        return pd.read_csv(io.BytesIO(fileBytes))
     else:
         raise TypeError("file must be UploadFile")
 
@@ -126,7 +129,7 @@ def decompress_file(file: io.BytesIO) -> io.BytesIO:
         raise e
 
 
-def get_size(file: io.BytesIO) -> int:
+def get_size(file: Union[io.BytesIO, BinaryIO]) -> int:
     """Get the size of a file in bytes
 
     Args:
@@ -141,7 +144,7 @@ def get_size(file: io.BytesIO) -> int:
     return size
 
 
-def compress_file(file: io.BytesIO) -> io.BytesIO:
+def compress_file(file: Union[io.BytesIO, BinaryIO]) -> io.BytesIO:
     """Compress a file using gzip
 
     Args:
