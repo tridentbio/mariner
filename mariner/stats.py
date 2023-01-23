@@ -84,7 +84,7 @@ def create_categorical_histogram(
 
         histogram_data.append(data_point)
 
-    return {"values": histogram_data}
+    return {"values": histogram_data[:15]}
 
 
 def create_float_histogram(data: pd.Series, bins: int = 15) -> Dict[str, Any]:
