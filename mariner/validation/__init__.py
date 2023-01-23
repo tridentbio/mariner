@@ -103,7 +103,7 @@ def check_biological_sequence(seq: str) -> Dict[str, Union[str, bool]]:
             - type?: dna, rna or protein
             - is_ambiguous?: True if sequence contains ambiguous nucleotides
     """
-    if len(seq) == 0:
+    if len(seq) < 5: # at least 5 chars to be a valid sequence
         return {"valid": False}
 
     seq = seq.upper()
