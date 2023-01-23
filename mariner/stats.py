@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -56,6 +56,33 @@ def get_biological_props(
         )
 
     return sequence_lengh, gc_content, gaps_number, mwt
+
+
+def create_categorical_histogram(data: pd.Series) -> Dict[Literal['values'], List[dict]]:
+    """Creates the data used to generate a histogram from a pd.Series
+    (dataset column).
+
+    This method should only be used for columns with categorical data.
+
+    Args:
+        data (pd.Series): Dataset column used to generate the histogram.
+
+    Returns:
+        List[Dict[str, Any]]: List of dictionaries used to generate the
+            histogram in vega-lite format.
+    """
+
+    # Calculate the histogram bins
+    histogram = data.value_counts()
+
+    histogram_data = []
+
+    for index, count in enumerate(histogram):
+        data_point = {"label": str(histogram.index[index]), "count": int(count)}
+
+        histogram_data.append(data_point)
+
+    return {"values": histogram_data}
 
 
 def create_float_histogram(data: pd.Series, bins: int = 15) -> Dict[str, Any]:
@@ -131,7 +158,7 @@ def create_int_histogram(data: pd.Series, bins: int) -> Dict[str, Any]:
             "bin_end": histogram[1][index + 1],
             "count": int(count),
         }
-
+        data_point["label"] = str(int(data_point["bin_end"] - 0.5))
         histogram_data["values"].append(data_point)
 
     histogram_data["values"].append(
@@ -150,6 +177,7 @@ def get_dataset_summary(
     dataset: pd.DataFrame,
     smiles_columns: List[str] = [],
     biological_columns: List[Dict[str, Any]] = [],
+    categorical_columns: List[str] = []
 ) -> dict[str, Union[pd.Series, dict[str, pd.Series]]]:
     """Computes the dataset histograms
 
@@ -161,17 +189,17 @@ def get_dataset_summary(
     compute mol props
     :return dict[str, Union[pd.Series, dict[str, pd.Series]]
     """
-
     statistics = {}
-
     for column, dtype in dataset.dtypes.items():
         if np.issubdtype(dtype, float):
             statistics[column] = {"hist": create_float_histogram(dataset[column], 15)}
+        elif column in categorical_columns:
+            statistics[column] = {"hist": create_categorical_histogram(dataset[column])}
         elif np.issubdtype(dtype, int):
             statistics[column] = {"hist": create_int_histogram(dataset[column], 15)}
         else:
             statistics[column] = {}  # The key is used to recover all columns
-
+    
     for smiles_column in smiles_columns:
         # Get chemical stats for smile column
         (mwts, tpsas, atom_counts, ring_counts, has_chiral_centers_arr) = zip(
@@ -217,8 +245,8 @@ def get_dataset_summary(
                 "sequence_lengh": sequence_lengh,
                 "gc_content": gc_content,
                 "gaps_number": gaps_number
-                if not all(row == 0 for row in gaps_number)
-                else None,
+                    if not all(row == 0 for row in gaps_number)
+                    else None,
                 "mwt": mwt,
             }
         )
@@ -240,6 +268,7 @@ def get_stats(
     dataset: pd.DataFrame,
     smiles_columns: List[str],
     biological_columns: List[Dict[str, Any]],
+    categorical_columns: List[str]
 ) -> StatsType:
     """Computes the dataset histograms
 
@@ -255,21 +284,24 @@ def get_stats(
     """
     stats: StatsType = {}
 
-    stats["full"] = get_dataset_summary(dataset, smiles_columns, biological_columns)
+    stats["full"] = get_dataset_summary(dataset, smiles_columns, biological_columns, categorical_columns)
     stats["train"] = get_dataset_summary(
         dataset[dataset["step"] == TrainingStep.TRAIN.value],
         smiles_columns,
         biological_columns,
+        categorical_columns
     )
     stats["test"] = get_dataset_summary(
         dataset[dataset["step"] == TrainingStep.TEST.value],
         smiles_columns,
         biological_columns,
+        categorical_columns
     )
     stats["val"] = get_dataset_summary(
         dataset[dataset["step"] == TrainingStep.VAL.value],
         smiles_columns,
         biological_columns,
+        categorical_columns
     )
 
     return stats

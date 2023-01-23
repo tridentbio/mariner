@@ -277,8 +277,9 @@ class DatasetTransforms:
             if is_valid_smiles_series(self.df[col], weak_check=True):
                 smiles_columns.append(col)
 
-        # Get the biological columns metadata
+        # Get the biological and categorical columns
         biological_columns = []
+        categorical_columns = []
         for metadata in columns_metadata:
             if type(metadata.data_type) in BiologicalDataType.__args__:
                 biological_columns.extend(
@@ -288,9 +289,17 @@ class DatasetTransforms:
                         if validate_column_pattern(col, metadata.pattern)
                     ]
                 )
+            if isinstance(metadata.data_type, CategoricalDataType):
+                categorical_columns.extend(
+                    [
+                        col
+                        for col in self.df.columns
+                        if validate_column_pattern(col, metadata.pattern)
+                    ]
+                )
 
         # Must go to dataset actor
-        stats = get_stats(self.df, smiles_columns, biological_columns)
+        stats = get_stats(self.df, smiles_columns, biological_columns, categorical_columns)
         return stats
 
     def upload_s3(self, old_data_url=None):
