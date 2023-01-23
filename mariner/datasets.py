@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+import logging
 from typing import List, Tuple
 
 from fastapi.datastructures import UploadFile
@@ -33,6 +34,7 @@ from mariner.tasks import TaskView, get_manager
 from mariner.utils import is_compressed
 
 DATASET_BUCKET = settings.AWS_DATASETS
+LOG = logging.getLogger(__name__)
 
 
 def get_my_datasets(
@@ -190,8 +192,7 @@ async def process_dataset(
         return event
 
     except Exception as e:
-        # from dist.Log import logger
-        # logger.error(e)
+        LOG.error(f'Unexpected error while processing dataset "{dataset.name}":\n{e}')
         # Handle unexpected errors
         dataset_update = DatasetUpdateRepo(
             id=dataset.id,

@@ -220,7 +220,7 @@ def check_biological_sequence_series(
             "type": domain_kind,
             "kwargs": {"domain_kind": domain_kind, "is_ambiguous": is_ambiguous},
         }
-    except Exception:
+    except (AttributeError, ValueError):
         return {"valid": False}
 
 
@@ -288,6 +288,22 @@ def find_column_by_name(df: pd.DataFrame, column_name: str) -> int:
     return -1
 
 
+def is_not_float(x: str) -> bool:
+    """Checks if a string is not a float
+
+    Args:
+        x (str): string to check
+
+    Returns:
+        bool: False if string is a float
+    """
+    try:
+        x_float = float(x)
+        return x_float == int(x_float)
+    except Exception:
+        return True
+
+
 VALIDATION_SCHEMA: SchemaType = {
     # Schema to validate the dataset
     # Key is the column metadata pattern and the value is a list of validators.
@@ -295,7 +311,7 @@ VALIDATION_SCHEMA: SchemaType = {
     # The function should be applied to a pd.Series and return a boolean.
     #     True if the series is valid
     #     False if the series is invalid
-    "categorical": (lambda _: True, "categorical column is always valid"),
+    "categorical": (is_not_float, "columns $ is categorical and can not be a float"),
     "numeric": (
         lambda x: not x or search(r"^[-\d\.][\.,\d]*$", str(x)) is not None,
         "column $ should be numeric",
