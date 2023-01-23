@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
+from sqlalchemy.sql import and_
 
 from mariner.entities.model import Model, ModelFeaturesAndTarget, ModelVersion
 from mariner.schemas.model_schemas import (
@@ -14,8 +15,12 @@ from mariner.stores.base_sql import CRUDBase
 
 
 class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
-    def get_by_name(self, db: Session, name: str) -> Model:
-        return db.query(Model).filter(Model.name == name).first()
+    def get_by_name(self, db: Session, name: str, user_id: int) -> Model:
+        return (
+            db.query(Model)
+            .filter(and_(Model.name == name, Model.created_by_id == user_id))
+            .first()
+        )
 
     def remove_by_name(self, db: Session, name: str):
         obj = db.query(Model).filter(Model.name == name).first()
@@ -70,7 +75,10 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
 
         if obj_in.columns:
             db_obj.columns = [
-                ModelFeaturesAndTarget(**col.dict()) for col in obj_in.columns
+                ModelFeaturesAndTarget(
+                    column_name=col.column_name, column_type=col.column_type
+                )
+                for col in obj_in.columns
             ]
 
         db.add(db_obj)

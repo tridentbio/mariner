@@ -20,8 +20,8 @@ class ModelVersion(ApiBaseModel):
     id: int
     model_id: int
     name: str
-    description: Union[str, None]
-    mlflow_version: str
+    description: Union[str, None] = None
+    mlflow_version: Union[str, None] = None
     mlflow_model_name: str
     config: ModelSchema
     created_at: utc_datetime
@@ -41,7 +41,7 @@ class ModelVersion(ApiBaseModel):
 
 
 class ModelFeaturesAndTarget(ApiBaseModel):
-    model_id: int
+    model_id: Union[int, None] = None
     column_name: str
     column_type: Literal["feature", "target"]
 
@@ -101,6 +101,7 @@ class ModelCreateRepo(BaseModel):
     created_by_id: int
     columns: List[ModelFeaturesAndTarget]
     mlflow_name: str
+    description: Union[str, None] = None
 
 
 class ModelUpdateRepo(Model):
@@ -115,8 +116,8 @@ class ModelCreate(ApiBaseModel):
 
 
 class ModelVersionCreateRepo(BaseModel):
-    mlflow_version: str
-    description: Union[str, None]
+    mlflow_version: Union[str, None] = None
+    description: Union[str, None] = None
     mlflow_model_name: str
     model_id: int
     name: str
