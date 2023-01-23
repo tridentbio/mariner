@@ -32,7 +32,7 @@ from model_builder.schemas import StringDataType as BuilderStringDT
 SplitType = Literal["scaffold", "random"]
 
 StatsType = NewType(
-    "stats_type",
+    "StatsType",
     Dict[
         Literal["full", "train", "test", "val"],
         Dict[str, Union[pd.Series, Dict[str, pd.Series]]],
@@ -40,8 +40,8 @@ StatsType = NewType(
 )
 
 SchemaType = NewType(
-    "schema_type",
-    dict[
+    "SchemaType",
+    Dict[
         str,
         Union[Tuple[Callable[..., bool], str], List[Tuple[Callable[..., bool], str]]],
     ],

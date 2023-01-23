@@ -58,7 +58,9 @@ def get_biological_props(
     return sequence_lengh, gc_content, gaps_number, mwt
 
 
-def create_categorical_histogram(data: pd.Series) -> Dict[Literal['values'], List[dict]]:
+def create_categorical_histogram(
+    data: pd.Series,
+) -> Dict[Literal["values"], List[dict]]:
     """Creates the data used to generate a histogram from a pd.Series
     (dataset column).
 
@@ -177,7 +179,7 @@ def get_dataset_summary(
     dataset: pd.DataFrame,
     smiles_columns: List[str] = [],
     biological_columns: List[Dict[str, Any]] = [],
-    categorical_columns: List[str] = []
+    categorical_columns: List[str] = [],
 ) -> dict[str, Union[pd.Series, dict[str, pd.Series]]]:
     """Computes the dataset histograms
 
@@ -199,7 +201,7 @@ def get_dataset_summary(
             statistics[column] = {"hist": create_int_histogram(dataset[column], 15)}
         else:
             statistics[column] = {}  # The key is used to recover all columns
-    
+
     for smiles_column in smiles_columns:
         # Get chemical stats for smile column
         (mwts, tpsas, atom_counts, ring_counts, has_chiral_centers_arr) = zip(
@@ -245,8 +247,8 @@ def get_dataset_summary(
                 "sequence_lengh": sequence_lengh,
                 "gc_content": gc_content,
                 "gaps_number": gaps_number
-                    if not all(row == 0 for row in gaps_number)
-                    else None,
+                if not all(row == 0 for row in gaps_number)
+                else None,
                 "mwt": mwt,
             }
         )
@@ -268,7 +270,7 @@ def get_stats(
     dataset: pd.DataFrame,
     smiles_columns: List[str],
     biological_columns: List[Dict[str, Any]],
-    categorical_columns: List[str]
+    categorical_columns: List[str],
 ) -> StatsType:
     """Computes the dataset histograms
 
@@ -284,24 +286,26 @@ def get_stats(
     """
     stats: StatsType = {}
 
-    stats["full"] = get_dataset_summary(dataset, smiles_columns, biological_columns, categorical_columns)
+    stats["full"] = get_dataset_summary(
+        dataset, smiles_columns, biological_columns, categorical_columns
+    )
     stats["train"] = get_dataset_summary(
         dataset[dataset["step"] == TrainingStep.TRAIN.value],
         smiles_columns,
         biological_columns,
-        categorical_columns
+        categorical_columns,
     )
     stats["test"] = get_dataset_summary(
         dataset[dataset["step"] == TrainingStep.TEST.value],
         smiles_columns,
         biological_columns,
-        categorical_columns
+        categorical_columns,
     )
     stats["val"] = get_dataset_summary(
         dataset[dataset["step"] == TrainingStep.VAL.value],
         smiles_columns,
         biological_columns,
-        categorical_columns
+        categorical_columns,
     )
 
     return stats

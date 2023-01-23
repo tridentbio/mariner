@@ -7,7 +7,6 @@ import pandas as pd
 import ray
 
 from mariner.core.aws import Bucket, upload_s3_compressed
-from mariner.entities.dataset import ColumnsMetadata
 from mariner.schemas.dataset_schemas import (
     BiologicalDataType,
     CategoricalDataType,
@@ -21,8 +20,11 @@ from mariner.schemas.dataset_schemas import (
 )
 from mariner.stats import get_metadata, get_stats
 from mariner.utils import decompress_file
-from mariner.validation import (
+from mariner.validation.CompatibilityChecker import (
     CompatibilityChecker,
+    ErrorsType,
+)
+from mariner.validation.functions import (
     check_biological_sequence_series,
     is_valid_smiles_series,
     validate_column_pattern,
@@ -299,7 +301,9 @@ class DatasetTransforms:
                 )
 
         # Must go to dataset actor
-        stats = get_stats(self.df, smiles_columns, biological_columns, categorical_columns)
+        stats = get_stats(
+            self.df, smiles_columns, biological_columns, categorical_columns
+        )
         return stats
 
     def upload_s3(self, old_data_url=None):
@@ -319,8 +323,8 @@ class DatasetTransforms:
         return key, file_size
 
     def check_data_types(
-        self, columns: List[ColumnsMetadata]
-    ) -> Tuple[ColumnsMeta, Optional[List[str]]]:
+        self, columns: List[ColumnsDescription]
+    ) -> Tuple[List[ColumnsDescription], Optional[ErrorsType]]:
         """Checks if underlying dataset conforms to columns data types
 
         If validation succeeds, updates categorical data types to the right
