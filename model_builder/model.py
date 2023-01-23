@@ -94,10 +94,11 @@ class Metrics:
 
 
 class CustomModel(LightningModule):
-    def __init__(self, config: Union[ModelSchema, str]):
+    def __init__(self, config: Union[ModelSchema, str], lr=5e-3):
         super().__init__()
         if isinstance(config, str):
             config = ModelSchema.parse_raw(config)
+        self.lr = lr
 
         layers_dict = {}
         self.config = config
@@ -155,7 +156,7 @@ class CustomModel(LightningModule):
         return last
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr=1e-3)
+        return Adam(self.parameters(), lr=self.lr)
 
     def test_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()

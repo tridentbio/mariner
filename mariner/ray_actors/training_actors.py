@@ -53,7 +53,7 @@ class TrainingActor:
             dataset: dataset to perform the experiment
         """
         modelconfig = self.experiment.model_version.config
-        model = CustomModel(config=modelconfig)
+        model = CustomModel(config=modelconfig, lr=self.request.learning_rate)
         df = dataset.get_dataframe()
         datamodule = DataModule(
             featurizers_config=modelconfig.featurizers,
