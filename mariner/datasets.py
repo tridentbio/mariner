@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+import logging
 from typing import List, Tuple
 
 from fastapi.datastructures import UploadFile
@@ -34,6 +35,7 @@ from mariner.tasks import TaskView, get_manager
 from mariner.utils import is_compressed
 
 DATASET_BUCKET = settings.AWS_DATASETS
+LOG = logging.getLogger(__name__)
 
 
 def get_my_datasets(
@@ -99,43 +101,76 @@ async def process_dataset(
     """
     dataset = dataset_store.get(db, dataset_id)
     assert dataset
-    file = download_s3(key=dataset.data_url, bucket=DATASET_BUCKET)
+    try:
+        file = download_s3(key=dataset.data_url, bucket=DATASET_BUCKET)
 
-    # Send the file to the ray actor by chunks
-    chunk_size = settings.APPLICATION_CHUNK_SIZE
-    dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))
-    for chunk in iter(lambda: file.read(chunk_size), b""):
-        await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
-    await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
+        # Send the file to the ray actor by chunks
+        chunk_size = settings.APPLICATION_CHUNK_SIZE
+        dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))
+        for chunk in iter(lambda: file.read(chunk_size), b""):
+            await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
+        await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
 
-    (
-        rows,
-        columns,
-        _,
-    ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
+        (
+            rows,
+            columns,
+            _,
+        ) = await dataset_ray_transformer.get_entity_info_from_csv.remote()
 
-    # Apply split indexes in dataset
-    await dataset_ray_transformer.apply_split_indexes.remote(
-        split_type=dataset.split_type,
-        split_target=dataset.split_target,
-        split_column=dataset.split_column,
-    )
+        # Apply split indexes in dataset
+        await dataset_ray_transformer.apply_split_indexes.remote(
+            split_type=dataset.split_type,
+            split_target=dataset.split_target,
+            split_column=dataset.split_column,
+        )
 
-    # Upload dataset to s3 again with the new split indexes
-    data_url, filesize = await dataset_ray_transformer.upload_s3.remote(
-        old_data_url=dataset.data_url
-    )
-    stats = await dataset_ray_transformer.get_dataset_summary.remote()
+        # Upload dataset to s3 again with the new split indexes
+        data_url, filesize = await dataset_ray_transformer.upload_s3.remote(
+            old_data_url=dataset.data_url
+        )
+        # Check data types of columns and check if columns_metadata is valid
+        # If there is no errors, columns of type "categorical" are updated
+        (
+            columns_metadata,
+            errors,
+        ) = await dataset_ray_transformer.check_data_types.remote(columns_metadata)
 
-    # Check data types of columns and check if columns_metadata is valid
-    # If there is no errors, columns of type "categorical" are updated
-    columns_metadata, errors = await dataset_ray_transformer.check_data_types.remote(
-        columns_metadata
-    )
+        if errors:
+            # If there are errors, the dataset is updated with the errors
+            # The errors are sent to the frontend by websocket
+            dataset_update = DatasetUpdateRepo(
+                id=dataset.id,
+                bytes=filesize,
+                columns=columns,
+                rows=rows,
+                data_url=data_url,
+                columns_metadata=columns_metadata,
+                stats=[],
+                updated_at=datetime.datetime.now(),
+                ready_status="failed",
+                errors=errors,
+            )
+            dataset = dataset_store.update(db, dataset, dataset_update)
+            db.flush()
 
-    if errors:
-        # If there are errors, the dataset is updated with the errors
-        # The errors are sent to the frontend by websocket
+            error_str = "; ".join(errors["columns"])
+            event = DatasetProcessStatusEventPayload(
+                dataset_id=dataset.id,
+                message=(
+                    f"error on dataset creation while checking"
+                    f' column types of dataset "{dataset.name}": {error_str}'
+                ),
+                dataset=dataset,
+            )
+
+            return event
+
+        stats = await dataset_ray_transformer.get_dataset_summary.remote(
+            columns_metadata
+        )
+
+        # If there are no errors, the dataset is updated with the new columns_metadata
+        # The dataset is ready to be used and a success message is sent to the frontend
         dataset_update = DatasetUpdateRepo(
             id=dataset.id,
             bytes=filesize,
@@ -145,47 +180,37 @@ async def process_dataset(
             columns_metadata=columns_metadata,
             stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
             updated_at=datetime.datetime.now(),
-            ready_status="failed",
-            errors=errors,
+            ready_status="ready",
+            errors=None,
         )
+
+        dataset = dataset_store.update(db, dataset, dataset_update)
+        db.flush()
+        event = DatasetProcessStatusEventPayload(
+            dataset_id=dataset.id,
+            message=f'dataset "{dataset.name}" created successfully',
+            dataset=dataset,
+        )
+        return event
+
+    except Exception as e:
+        LOG.error(f'Unexpected error while processing dataset "{dataset.name}":\n{e}')
+        # Handle unexpected errors
+        dataset_update = DatasetUpdateRepo(
+            id=dataset.id,
+            ready_status="failed",
+            errors={"log": ["Unexpected error.", str(e)]},
+        )
+
         dataset = dataset_store.update(db, dataset, dataset_update)
         db.flush()
 
-        error_str = "; ".join(errors["columns"])
         event = DatasetProcessStatusEventPayload(
             dataset_id=dataset.id,
-            message=(
-                f"error on dataset creation while checking"
-                f' column types of dataset "{dataset.name}": {error_str}'
-            ),
+            message="Unexpected error while processing dataset.",
             dataset=dataset,
         )
-
         return event
-
-    # If there are no errors, the dataset is updated with the new columns_metadata
-    # The dataset is ready to be used and a success message is sent to the frontend
-    dataset_update = DatasetUpdateRepo(
-        id=dataset.id,
-        bytes=filesize,
-        columns=columns,
-        rows=rows,
-        data_url=data_url,
-        columns_metadata=columns_metadata,
-        stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
-        updated_at=datetime.datetime.now(),
-        ready_status="ready",
-        errors=None,
-    )
-
-    dataset = dataset_store.update(db, dataset, dataset_update)
-    db.flush()
-    event = DatasetProcessStatusEventPayload(
-        dataset_id=dataset.id,
-        message=f'dataset "{dataset.name}" created successfully',
-        dataset=dataset,
-    )
-    return event
 
 
 def start_process(
