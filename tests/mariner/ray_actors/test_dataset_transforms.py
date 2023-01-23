@@ -140,6 +140,7 @@ class TestDatasetTransforms:
             got_len == expected_len
         ), "Expected final dataframe to have one extra column"
 
+    @pytest.mark.long
     @pytest.mark.asyncio
     async def test_get_dataset_summary(self, hiv_transformer_fixture):
         await hiv_transformer_fixture.apply_split_indexes.remote(

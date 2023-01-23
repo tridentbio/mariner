@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from asyncio.tasks import Task
 from datetime import datetime
@@ -5,13 +6,13 @@ from typing import Any, Dict, List, Literal, Optional
 from uuid import uuid4
 
 import mlflow
-from mlflow.tracking.artifact_utils import get_artifact_uri
-from mlflow.tracking.client import MlflowClient
-from pytorch_lightning.loggers import MLFlowLogger
+import mlflow.entities.model_registry.model_version
+import ray
 from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketMessage, get_websockets_manager
 from mariner.core.config import settings
+from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
 from mariner.events import EventCreate  # BAD DEPENDENCY
 from mariner.exceptions import (
@@ -19,14 +20,16 @@ from mariner.exceptions import (
     ModelNotFound,
     ModelVersionNotFound,
 )
+from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.api import ApiBaseModel
+from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
     TrainingRequest,
 )
-from mariner.schemas.model_schemas import ModelVersion
+from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.experiment_sql import (
     ExperimentCreateRepo,
@@ -35,36 +38,118 @@ from mariner.stores.experiment_sql import (
 )
 from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
-from mariner.train.custom_logger import AppLogger
-from mariner.train.run import start_training
-from model_builder.dataset import DataModule
 
 LOG = logging.getLogger(__name__)
+
+
+async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
+    result = await ref
+    return result
+
+
+def handle_training_complete(task: Task, experiment_id: int):
+    with SessionLocal() as db:
+        experiment = experiment_store.get(db, experiment_id)
+        assert experiment
+        exception = task.exception()
+        done = task.done()
+        if not done:
+            raise Exception("Task is not done")
+        if not exception:
+            try:
+                best_model_info: mlflow.entities.model_registry.model_version.ModelVersion = (
+                    task.result()
+                )
+                model_store.update_model_version(
+                    db,
+                    version_id=experiment.model_version_id,
+                    obj_in=ModelVersionUpdateRepo(
+                        mlflow_version=best_model_info.version
+                    ),
+                )
+            except Exception as exception:
+                LOG.error(exception)
+                stack_trace = str(exception)
+                experiment_store.update(
+                    db,
+                    obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
+                    db_obj=experiment,
+                )
+            finally:
+                experiment_store.update(
+                    db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
+                )
+                asyncio.ensure_future(
+                    get_websockets_manager().send_message(  # noqa
+                        user_id=experiment.created_by_id,
+                        message=WebSocketMessage(
+                            type="update-running-metrics",
+                            data=UpdateRunningData(
+                                experiment_id=experiment_id,
+                                experiment_name=experiment.experiment_name,
+                                stage="SUCCESS",
+                                running_history=get_exp_manager().get_running_history(
+                                    experiment.id
+                                ),
+                            ),
+                        ),
+                    )
+                )
+
+        else:
+            LOG.error(exception)
+            stack_trace = str(exception)
+            experiment_store.update(
+                db,
+                obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
+                db_obj=experiment,
+            )
+            asyncio.ensure_future(
+                get_websockets_manager().send_message(  # noqa
+                    user_id=experiment.created_by_id,
+                    message=WebSocketMessage(
+                        type="update-running-metrics",
+                        data=UpdateRunningData(
+                            experiment_id=experiment_id,
+                            experiment_name=experiment.experiment_name,
+                            stage="ERROR",
+                            running_history=get_exp_manager().get_running_history(
+                                experiment.id
+                            ),
+                        ),
+                    ),
+                )
+            )
 
 
 async def create_model_traning(
     db: Session, user: UserEntity, training_request: TrainingRequest
 ) -> Experiment:
+    """Creates an experiment associated with a model training
+
+    Creates a model training asynchronously through the training actor
+
+    Args:
+        db: Session
+        user: user that originated request
+        training_request: training hyperparams
+
+    Returns:
+        experiment created
+
+    Raises:
+        ModelVersionNotFound: when model version in training_request is missing
+    """
     model_version = model_store.get_model_version(
         db, id=training_request.model_version_id
     )
 
     if not model_version:
         raise ModelVersionNotFound()
-    model_version = ModelVersion.from_orm(model_version)
 
-    dataset = dataset_store.get_by_name(db, model_version.config.dataset.name)
-    torchmodel = model_version.build_torch_model()
-    featurizers_config = model_version.config.featurizers
-    df = dataset.get_dataframe()
-    data_module = DataModule(
-        featurizers_config=featurizers_config,
-        data=df,
-        dataset_config=model_version.config.dataset,
-        split_target=dataset.split_target,
-        split_type=dataset.split_type,
-        batch_size=training_request.batch_size or 32,
-    )
+    model_version_parsed = ModelVersion.from_orm(model_version)
+    dataset = dataset_store.get_by_name(db, model_version_parsed.config.dataset.name)
+
     mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
     mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     experiment = experiment_store.create(
@@ -78,88 +163,21 @@ async def create_model_traning(
             stage="RUNNING",
         ),
     )
-    logger = [
-        AppLogger(
-            experiment.id, experiment_name=training_request.name, user_id=user.id
-        ),
-        MLFlowLogger(experiment_name=mlflow_experiment_name),
-    ]
-    task = await start_training(
-        torchmodel, training_request, data_module, loggers=logger
+
+    training_actor = TrainingActor.remote(  # type: ignore
+        experiment=Experiment.from_orm(experiment),
+        request=training_request,
+        user_id=user.id,
+        mlflow_experiment_name=mlflow_experiment_name,
     )
 
-    def finish_task(task: Task, experiment_id: int):
-        experiment = experiment_store.get(db, experiment_id)
-        assert experiment
-        exception = task.exception()
-        done = task.done()
-        if done and not exception:
-            try:
-                client = MlflowClient()
-                model = task.result()
-                runs = client.search_runs(experiment_ids=[experiment.mlflow_id])
-                assert len(runs) == 1
-                run = runs[0]
-                run_id = run.info.run_id
-                mlflow.pytorch.log_model(
-                    model,
-                    get_artifact_uri(run_id, artifact_path="model"),
-                    registered_model_name=model_version.mlflow_model_name,
-                )
-            except Exception as exception:
-                stack_trace = str(exception)
-                experiment_store.update(
-                    db,
-                    obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
-                    db_obj=experiment,
-                )
-            finally:
-                experiment_store.update(
-                    db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
-                )
-                get_websockets_manager().send_message(  # noqa
-                    user_id=experiment.created_by_id,
-                    message=WebSocketMessage(
-                        type="update-running-metrics",
-                        data=UpdateRunningData(
-                            experiment_id=experiment_id,
-                            experiment_name=experiment.experiment_name,
-                            stage="SUCCESS",
-                            running_history=get_exp_manager().get_running_history(
-                                experiment.id
-                            ),
-                        ),
-                    ),
-                )
-
-        elif done and exception:
-            stack_trace = str(exception)
-            experiment_store.update(
-                db,
-                obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
-                db_obj=experiment,
-            )
-            get_websockets_manager().send_message(  # noqa
-                user_id=experiment.created_by_id,
-                message=WebSocketMessage(
-                    type="update-running-metrics",
-                    data=UpdateRunningData(
-                        experiment_id=experiment_id,
-                        experiment_name=experiment.experiment_name,
-                        stage="ERROR",
-                        running_history=get_exp_manager().get_running_history(
-                            experiment.id
-                        ),
-                    ),
-                ),
-            )
-            LOG.error(exception)
-        else:
-            raise Exception("Task is not done")
+    # ExperimentManager expect tasks
+    training_ref = training_actor.train.remote(dataset=Dataset.from_orm(dataset))
+    task = asyncio.create_task(make_coroutine_from_ray_objectref(training_ref))
 
     get_exp_manager().add_experiment(
         ExperimentView(experiment_id=experiment.id, user_id=user.id, task=task),
-        finish_task,
+        handle_training_complete,
     )
     return Experiment.from_orm(experiment)
 
@@ -167,11 +185,29 @@ async def create_model_traning(
 def get_experiments(
     db: Session, user: UserEntity, query: ListExperimentsQuery
 ) -> tuple[List[Experiment], int]:
+    """Get's the experiments from ``user``
+
+    Args:
+        db: Session
+        user: user associated to the request
+        query: configures sort, filters and paginations applied
+
+    Returns:
+        Tuple where the first element is a list of experiments
+        resulted from the pagination and the second is the total
+        experiments found in that query (ignoring pagination)
+
+    Raises:
+        ModelNotFound: when the query contains a model version not listed
+        or not owned by that user
+
+    """
     model = model_store.get(db, query.model_id)
     if model and model.created_by_id != user.id:
         raise ModelNotFound()
     exps, total = experiment_store.get_experiments_paginated(
         db,
+        created_by_id=user.id,
         model_id=query.model_id,
         page=query.page,
         per_page=query.per_page,
@@ -275,3 +311,38 @@ async def send_ws_epoch_update(
             ),
         ),
     )
+
+
+class MonitorableMetric(ApiBaseModel):
+    key: str
+    label: str
+    type: Literal["regressor", "classification"]
+
+
+def get_metrics_for_monitoring() -> List[MonitorableMetric]:
+    """Get's options available for model checkpoint metric monitoring
+
+    Returns:
+        List[MonitorableMetric]: Description of the metric
+    """
+    return [
+        MonitorableMetric(
+            key="val_mse", label="(MSE) Mean Squared Error", type="regressor"
+        ),
+        MonitorableMetric(
+            key="val_mae", label="(MAE) Mean Absolute Error", type="regressor"
+        ),
+        MonitorableMetric(key="val_ev", label="EV", type="regressor"),
+        MonitorableMetric(key="val_mape", label="MAPE", type="regressor"),
+        MonitorableMetric(key="val_R2", label="R2", type="regressor"),
+        MonitorableMetric(key="val_pearson", label="Pearson", type="regressor"),
+        MonitorableMetric(key="val_accuracy", label="Accuracy", type="classification"),
+        MonitorableMetric(
+            key="val_precision", label="Precision", type="classification"
+        ),
+        MonitorableMetric(key="val_recall", label="Recall", type="classification"),
+        MonitorableMetric(key="val_f1", label="F1", type="classification"),
+        MonitorableMetric(
+            key="val_confusion_matrix", label="Confusion MAtrix", type="classification"
+        ),
+    ]

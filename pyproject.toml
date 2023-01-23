@@ -77,7 +77,6 @@ line_length = 80
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-# pyproject.toml
 
 [tool.poetry.scripts]
 install_deps_cpu = "deps:install_deps_cpu"

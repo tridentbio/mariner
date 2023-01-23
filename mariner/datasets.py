@@ -11,6 +11,7 @@ from sqlalchemy.orm.session import Session
 from api.websocket import WebSocketMessage, get_websockets_manager
 from mariner.core.aws import download_s3, upload_s3_compressed
 from mariner.core.config import settings
+from mariner.entities.dataset import Dataset as DatasetEntity
 from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetAlreadyExists,
@@ -78,7 +79,7 @@ def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int) -> Da
         raise DatasetNotFound()
     if current_user.id != dataset.created_by_id:
         raise NotCreatorOwner()
-    return dataset
+    return Dataset.from_orm(dataset)
 
 
 async def process_dataset(
@@ -99,6 +100,7 @@ async def process_dataset(
             object with the dataset and a message describing the result of the process
     """
     dataset = dataset_store.get(db, dataset_id)
+    assert dataset
     try:
         file = download_s3(key=dataset.data_url, bucket=DATASET_BUCKET)
 
@@ -212,7 +214,7 @@ async def process_dataset(
 
 
 def start_process(
-    db: Session, dataset: Dataset, columns_metadata: List[ColumnsDescription]
+    db: Session, dataset: DatasetEntity, columns_metadata: List[ColumnsDescription]
 ):
     """Triggers the processing of a dataset, adding it to the task manager
 
@@ -274,7 +276,7 @@ async def create_dataset(
 
     data_url, filesize = upload_s3_compressed(data.file)
 
-    create_obj = DatasetCreateRepo(
+    create_obj = DatasetCreateRepo.construct(
         bytes=filesize,
         data_url=data_url,
         split_actual=None,
@@ -288,7 +290,6 @@ async def create_dataset(
         created_by_id=current_user.id,
     )
     dataset = dataset_store.create(db, create_obj)
-    create_obj.id = dataset.id
 
     start_process(db, dataset, data.columns_metadata)
 
