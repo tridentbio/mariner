@@ -1,13 +1,12 @@
 import io
 import logging
 from io import BytesIO
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, TypeVar, Union
 
 import pandas as pd
 import ray
 
 from mariner.core.aws import Bucket, upload_s3_compressed
-from mariner.entities.dataset import ColumnsMetadata
 from mariner.schemas.dataset_schemas import (
     BiologicalDataType,
     CategoricalDataType,
@@ -18,11 +17,12 @@ from mariner.schemas.dataset_schemas import (
     ProteinDataType,
     RNADataType,
     SmileDataType,
+    StatsType,
 )
 from mariner.stats import get_metadata, get_stats
 from mariner.utils import decompress_file
-from mariner.validation import (
-    CompatibilityChecker,
+from mariner.validation.checker import CompatibilityChecker, ErrorsType
+from mariner.validation.functions import (
     check_biological_sequence_series,
     is_valid_smiles_series,
     validate_column_pattern,
@@ -260,25 +260,31 @@ class DatasetTransforms:
         stats = get_metadata(self.df)
         return len(self.df), len(self.df.columns), stats
 
-    def get_dataset_summary(self, columns_metadata: List[ColumnsDescription] = []):
+    def get_dataset_summary(
+        self, columns_metadata: List[ColumnsDescription] = []
+    ) -> StatsType:
         """Get's histogram for dataset columns according to it's inferred type
+
+        Columns for which histograms are generated must be of type int, float,
+        smiles, categorical or biological.
 
         Args:
             columns_metadata (List[ColumnsDescription], optional):
                 List of columns metadata. Only used with biological data types.
 
-        Columns for which histograms are generated must be of type int or float,
-        or must be valid smiles columns
+        Returns:
+            Dict[str, Dict[str, Any]]:
+                Dictionary with histograms for each column in the dataset
         """
         # Detect the smiles column name
         smiles_columns = []
         for col in self.df.columns:
-            # Must go to dataset actor
             if is_valid_smiles_series(self.df[col], weak_check=True):
                 smiles_columns.append(col)
 
-        # Get the biological columns metadata
+        # Get the biological and categorical columns
         biological_columns = []
+        categorical_columns = []
         for metadata in columns_metadata:
             if type(metadata.data_type) in BiologicalDataType.__args__:
                 biological_columns.extend(
@@ -288,15 +294,26 @@ class DatasetTransforms:
                         if validate_column_pattern(col, metadata.pattern)
                     ]
                 )
+            if isinstance(metadata.data_type, CategoricalDataType):
+                categorical_columns.extend(
+                    [
+                        col
+                        for col in self.df.columns
+                        if validate_column_pattern(col, metadata.pattern)
+                    ]
+                )
 
-        # Must go to dataset actor
-        stats = get_stats(self.df, smiles_columns, biological_columns)
+        stats = get_stats(
+            self.df, smiles_columns, biological_columns, categorical_columns
+        )
         return stats
 
     def upload_s3(self, old_data_url=None):
         """
         Uploads transformed dataframe to s3 in the csv format compressed with gzip
-        Deletes old dataset if it exists
+
+        TODO:
+            Delete old dataset if it exists
         """
         file = BytesIO()
         self.df.to_csv(file, index=False)
@@ -310,8 +327,8 @@ class DatasetTransforms:
         return key, file_size
 
     def check_data_types(
-        self, columns: List[ColumnsMetadata]
-    ) -> Tuple[ColumnsMeta, Optional[List[str]]]:
+        self, columns: List[ColumnsDescription]
+    ) -> Tuple[List[ColumnsDescription], Optional[ErrorsType]]:
         """Checks if underlying dataset conforms to columns data types
 
         If validation succeeds, updates categorical data types to the right
