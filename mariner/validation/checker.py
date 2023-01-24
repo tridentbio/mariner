@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Dict, List, Literal, NewType, Optional, Union
+from typing import Dict, List, Literal, NewType, Optional, Union, cast
 
 import pandas as pd
 
@@ -13,7 +13,7 @@ ErrorsType = NewType(
     "ErrorsType",
     Dict[
         Literal["rows", "columns", "logs", "dataset_error_key"],
-        Union[List[str], Optional[str]],
+        Union[list, str, None],
     ],
 )
 
@@ -42,12 +42,15 @@ class CompatibilityChecker:
         self.df = df
         self.columns_metadata = columns_metadata
         self.validate_schema = validate_schema
-        self.errors: ErrorsType = {
-            "columns": [],
-            "rows": [],
-            "logs": [],
-            "dataset_error_key": None,
-        }
+        self.errors = cast(
+            ErrorsType,
+            {
+                "columns": [],
+                "rows": [],
+                "logs": [],
+                "dataset_error_key": None,
+            },
+        )
         self.row_error_limit = 10
         self.has_error = False
         self.error_column = pd.Series(data=[""] * len(self.df.index), dtype=str)

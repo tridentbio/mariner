@@ -1,7 +1,7 @@
 import io
 import logging
 from io import BytesIO
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, TypeVar, Union
 
 import pandas as pd
 import ray
@@ -17,13 +17,11 @@ from mariner.schemas.dataset_schemas import (
     ProteinDataType,
     RNADataType,
     SmileDataType,
+    StatsType,
 )
 from mariner.stats import get_metadata, get_stats
 from mariner.utils import decompress_file
-from mariner.validation.CompatibilityChecker import (
-    CompatibilityChecker,
-    ErrorsType,
-)
+from mariner.validation.checker import CompatibilityChecker, ErrorsType
 from mariner.validation.functions import (
     check_biological_sequence_series,
     is_valid_smiles_series,
@@ -262,20 +260,25 @@ class DatasetTransforms:
         stats = get_metadata(self.df)
         return len(self.df), len(self.df.columns), stats
 
-    def get_dataset_summary(self, columns_metadata: List[ColumnsDescription] = []):
+    def get_dataset_summary(
+        self, columns_metadata: List[ColumnsDescription] = []
+    ) -> StatsType:
         """Get's histogram for dataset columns according to it's inferred type
+
+        Columns for which histograms are generated must be of type int, float,
+        smiles, categorical or biological.
 
         Args:
             columns_metadata (List[ColumnsDescription], optional):
                 List of columns metadata. Only used with biological data types.
 
-        Columns for which histograms are generated must be of type int or float,
-        or must be valid smiles columns
+        Returns:
+            Dict[str, Dict[str, Any]]:
+                Dictionary with histograms for each column in the dataset
         """
         # Detect the smiles column name
         smiles_columns = []
         for col in self.df.columns:
-            # Must go to dataset actor
             if is_valid_smiles_series(self.df[col], weak_check=True):
                 smiles_columns.append(col)
 
@@ -300,7 +303,6 @@ class DatasetTransforms:
                     ]
                 )
 
-        # Must go to dataset actor
         stats = get_stats(
             self.df, smiles_columns, biological_columns, categorical_columns
         )
@@ -309,7 +311,9 @@ class DatasetTransforms:
     def upload_s3(self, old_data_url=None):
         """
         Uploads transformed dataframe to s3 in the csv format compressed with gzip
-        Deletes old dataset if it exists
+
+        TODO:
+            Delete old dataset if it exists
         """
         file = BytesIO()
         self.df.to_csv(file, index=False)
