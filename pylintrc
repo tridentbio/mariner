@@ -48,7 +48,7 @@ ignore=CVS
 # ignore-list. The regex matches against paths and can be in Posix or Windows
 # format. Because '\' represents the directory delimiter on Windows systems, it
 # can't be used as an escape character.
-ignore-paths=
+ignore-paths=tests.*
 
 # Files or directories matching the regular expression patterns are skipped.
 # The regex matches against base names, not paths. The default value ignores
@@ -182,7 +182,7 @@ good-names=i,
            Run,
            _,
            db,
-           Df
+           df
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted
@@ -410,7 +410,7 @@ confidence=HIGH,
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=R,typecheck
+disable=R,typecheck,C0301
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
