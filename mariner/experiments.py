@@ -11,9 +11,6 @@ from uuid import uuid4
 
 import mlflow
 import ray
-from mlflow.entities.model_registry.model_version import (
-    ModelVersion as MlflowModelVersion,
-)
 from sqlalchemy.orm.session import Session
 
 import mariner.events as events_ctl
