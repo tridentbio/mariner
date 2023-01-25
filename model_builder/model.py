@@ -9,8 +9,6 @@ from torch.optim.adam import Adam
 
 from model_builder.component_builder import AutoBuilder
 from model_builder.dataset import DataInstance
-from model_builder.layers.one_hot import OneHot
-from model_builder.layers_schema import ModelbuilderonehotLayerConfig
 from model_builder.model_schema_query import get_dependencies
 from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import collect_args
