@@ -1,5 +1,5 @@
 """
-This module is the experiments controller. It's responsible for exposing training
+Experiments controller. Responsible for exposing training
 functions working under the defined business rules.
 """
 import asyncio
