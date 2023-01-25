@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 import pandas as pd
 import pytorch_lightning as pl
 import torch
@@ -8,12 +6,13 @@ from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
-from model_builder.layers_schema import FeaturizersType
-from model_builder.schemas import (
-    CategoricalDataType,
-    ColumnConfig,
-    DatasetConfig,
+from model_builder.component_builder import AutoBuilder
+from model_builder.model_schema_query import (
+    get_columns_configs,
+    get_dependencies,
+    get_target_columns,
 )
+from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import DataInstance, get_references_dict
 
 
@@ -45,26 +44,26 @@ class CustomDataset(TorchDataset):
     >>> dataset = CustomDataset(data, ['mwt', 'smiles'], featurizer_config, 'tpsa')
     """
 
-    def __init__(
-        self,
-        data: pd.DataFrame,
-        feature_columns: List[ColumnConfig],
-        featurizers_config,
-        target: Optional[ColumnConfig] = None,
-    ) -> None:
+    def __init__(self, data: pd.DataFrame, config: ModelSchema, target=True) -> None:
         super().__init__()
         self.data = data
+        self.config = config
         self.target = target
-        self.columns = feature_columns
-        self._featurizers_config = featurizers_config
-
         self.setup()
+
+    def get_featurizer_configs(self):
+        return self.config.featurizers
 
     def setup(self):
         # Instanciate all featurizers
         self._featurizers = {}
-        for featurizer_config in self._featurizers_config:
-            self._featurizers[featurizer_config.name] = featurizer_config.create()
+        for featurizer_config in self.get_featurizer_configs():
+            feat = featurizer_config.create()
+            if isinstance(feat, AutoBuilder):
+                feat.set_from_model_schema(
+                    self.config, list(get_dependencies(featurizer_config))
+                )
+            self._featurizers[featurizer_config.name] = feat
 
     def __len__(self) -> int:
         return len(self.data)
@@ -72,10 +71,10 @@ class CustomDataset(TorchDataset):
     def __getitem__(self, index) -> DataInstance:
         d = DataInstance()
         sample = dict(self.data.iloc[index, :])
-        columns_to_include = self.columns.copy()
+        columns_to_include = get_columns_configs(self.config).copy()
         # Featurize all of the columns that pass into a
         # featurizer before include in the data instance
-        for featurizer in self._featurizers_config:
+        for featurizer in self.get_featurizer_configs():
             references = get_references_dict(featurizer.forward_args.dict())
             assert len(references) == 1, "only 1 forward arg for featurizers for now"
             col_name = list(references.values())[0]
@@ -94,13 +93,16 @@ class CustomDataset(TorchDataset):
             else:
                 d[column.name] = val
 
+        # TODO: Fix this: d.y should be the featurized output of the target columns
         if self.target:
-            if isinstance(self.target.data_type, CategoricalDataType):
-                classes = self.target.data_type.classes
-                idx = classes[sample[self.target.name]]
+            targets = get_target_columns(self.config)
+            target = targets[0]  # Assume a single target
+            if isinstance(target.data_type, CategoricalDataType):
+                classes = target.data_type.classes
+                idx = classes[sample[target.name]]
                 d.y = F.one_hot(torch.tensor(idx), num_classes=len(classes)).float()
             else:
-                d.y = torch.Tensor([sample[self.target.name]])
+                d.y = torch.Tensor([sample[target.name]])
 
         return d
 
@@ -134,13 +136,12 @@ class DataModule(pl.LightningDataModule):
         data: pd.DataFrame,
         split_type: str,
         split_target: str,
-        featurizers_config: List[FeaturizersType],
-        dataset_config: DatasetConfig,
-        batch_size: int = 32,
+        config: ModelSchema,
+        batch_size=32,
     ):
         super().__init__()
-        self.dataset_config = dataset_config
-        self.featurizers_config = featurizers_config
+        self.dataset_config = config.dataset
+        self.featurizers_config = config.featurizers
 
         self.data = data
 
@@ -151,9 +152,7 @@ class DataModule(pl.LightningDataModule):
 
         self.dataset = CustomDataset(
             self.data,
-            self.dataset_config.feature_columns,
-            self.featurizers_config,
-            self.dataset_config.target_column,
+            config,
         )
 
     def setup(self, stage=None):
