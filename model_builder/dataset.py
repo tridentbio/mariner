@@ -2,8 +2,8 @@ import pandas as pd
 import pytorch_lightning as pl
 import torch
 from torch.nn import functional as F
-from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import random_split
+from torch_geometric.data import Dataset as PygDataset
 from torch_geometric.loader import DataLoader
 
 from model_builder.component_builder import AutoBuilder
@@ -16,7 +16,7 @@ from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import DataInstance, get_references_dict
 
 
-class CustomDataset(TorchDataset):
+class CustomDataset(PygDataset):
     """Class that implements a custom dataset to support multiple
     inputs from multiple different layers.
 
