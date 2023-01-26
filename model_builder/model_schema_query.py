@@ -4,9 +4,7 @@ schema, developers should prefer using this API over accessing attributes direct
 the schema in order to maintain a single point of change (as best as possible) on schema
 updates.
 """
-from typing import List, Set, Union
-
-from sqlalchemy.schema import ColumnCollectionConstraint
+from typing import Any, Callable, List, Literal, Set, Union
 
 from model_builder.layers_schema import FeaturizersType, LayersType
 from model_builder.schemas import ColumnConfig, ModelSchema
@@ -45,6 +43,17 @@ def get_column_config(
 
 
 def get_dependencies(component_config: Union[LayersType, FeaturizersType]) -> Set[str]:
+    """Get a layer or featurizer dependencies
+
+    Returns set of node names that are dependencies of ``component_config`` by looking
+    at it's ``forward_args `` attribute'
+
+    Args:
+        component_config: a config for a layer or featurizer
+
+    Returns:
+        Set[str]: a set of node names on which ``component_config`` depends
+    """
     deps = set()
     for input_str in component_config.forward_args.dict().values():
         if isinstance(input_str, str):
@@ -62,4 +71,37 @@ def get_dependencies(component_config: Union[LayersType, FeaturizersType]) -> Se
 
 
 def get_target_columns(model_schema: ModelSchema) -> List[ColumnConfig]:
+    """Get's the target columns in the model_schema
+
+    Args:
+        model_schema: model config
+
+    Returns:
+        List[ColumnConfig]: list of columns
+    """
     return [model_schema.dataset.target_column]
+
+
+Node = Union[LayersType, FeaturizersType, ColumnConfig]
+NodeType = Literal["layer", "featurizer", "input", "output"]
+
+
+def iterate_schema(config: ModelSchema, callback: Callable[[Node, NodeType], Any]):
+    """Walks the schema
+
+    Iterates the inputs, featurizers, layers and output nodes in the computational graph,
+    calling ``callback`` to each.
+
+    Args:
+        config: the model schema to iterate
+        callback: the function to be executed on the node
+
+
+    Examples:
+        >>> config = ModelSchema(...)
+        >>> def on_node(node: Node, type: NodeType):
+                print("at node %r of type %s" % (node, type))
+        >>> iterate_schema(config, on_node)
+
+    """
+    ...
