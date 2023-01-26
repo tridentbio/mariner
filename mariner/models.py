@@ -336,10 +336,7 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
             f"dataframe failed {len(broken_checks)} checks",
             reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
         )
-    dataset = CustomDataset(
-        data=df,
-        config=modelversion.config,
-    )
+    dataset = CustomDataset(data=df, config=modelversion.config, target=False)
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
@@ -363,5 +360,6 @@ def delete_model(db: Session, user: UserEntity, model_id: int) -> Model:
         raise ModelNotFound()
     client = mlflow.tracking.MlflowClient()
     client.delete_registered_model(model.mlflow_name)
+    parsed_model = Model.from_orm(model)
     model_store.delete_by_id(db, model_id)
-    return Model.from_orm(model)
+    return parsed_model
