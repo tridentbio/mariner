@@ -1,10 +1,11 @@
 """
-This package defines useful queries on a ModelSchema. When interacting with the model
-schema, developers should prefer using this API over accessing attributes directly from
-the schema in order to maintain a single point of change (as best as possible) on schema
-updates.
+This package defines useful queries on a ModelSchema.
+
+When interacting with the model schema, developers should prefer using this
+API over accessing attributes directly from the schema in order to maintain
+a single point of change (as best as possible) on schema updates.
 """
-from typing import Any, Callable, List, Literal, Set, Union
+from typing import List, Set, Union
 
 from model_builder.layers_schema import FeaturizersType, LayersType
 from model_builder.schemas import ColumnConfig, ModelSchema
@@ -80,28 +81,3 @@ def get_target_columns(model_schema: ModelSchema) -> List[ColumnConfig]:
         List[ColumnConfig]: list of columns
     """
     return [model_schema.dataset.target_column]
-
-
-Node = Union[LayersType, FeaturizersType, ColumnConfig]
-NodeType = Literal["layer", "featurizer", "input", "output"]
-
-
-def iterate_schema(config: ModelSchema, callback: Callable[[Node, NodeType], Any]):
-    """Walks the schema
-
-    Iterates the inputs, featurizers, layers and output nodes in the computational graph,
-    calling ``callback`` to each.
-
-    Args:
-        config: the model schema to iterate
-        callback: the function to be executed on the node
-
-
-    Examples:
-        >>> config = ModelSchema(...)
-        >>> def on_node(node: Node, type: NodeType):
-                print("at node %r of type %s" % (node, type))
-        >>> iterate_schema(config, on_node)
-
-    """
-    ...
