@@ -8,9 +8,12 @@ from torch_geometric.loader import DataLoader
 
 from model_builder.component_builder import AutoBuilder
 from model_builder.model_schema_query import (
+    Node,
+    NodeType,
     get_columns_configs,
     get_dependencies,
     get_target_columns,
+    iterate_schema,
 )
 from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import DataInstance, get_references_dict
@@ -94,6 +97,13 @@ class CustomDataset(PygDataset):
                 d[column.name] = val
 
         # TODO: Fix this: d.y should be the featurized output of the target columns
+        def make_targets(node: Node, type: NodeType):
+            if type != "featurizer":
+                return
+            # check if featurizes target
+
+        iterate_schema(self.config, make_targets)
+
         if self.target:
             targets = get_target_columns(self.config)
             target = targets[0]  # Assume a single target
