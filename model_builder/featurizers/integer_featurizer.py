@@ -1,3 +1,6 @@
+"""
+Defines the integer featurizer
+"""
 from typing import Union
 
 import torch
@@ -10,36 +13,45 @@ from model_builder.schemas import CategoricalDataType
 
 
 class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
+    """
+    The integer featurizer
+
+    Featurizes categorical data type columns to scalar tensors with dtype long
+    """
+
     classes: dict[Union[str, int], int]
+    reversed_classes: dict[int, Union[str, int]]
 
-    def __call__(self, input) -> torch.Tensor:
-        if input not in self.classes:
+    def __call__(self, input_) -> torch.Tensor:
+        if input_ not in self.classes:
             raise RuntimeError(
-                f"Element {input} is not defined in the classes dictionary {self.classes}"
+                f"Element {input_} is not defined in the"
+                "classes dictionary {self.classes}"
             )
-        return torch.Tensor([self.classes[input]]).long()
+        return torch.Tensor([self.classes[input_]]).long()
 
-    def undo(self, input: torch.Tensor):
-        idx = int(input.item())
+    def undo(self, input_: torch.Tensor):
+        idx = int(input_.item())
         if idx not in self.reversed_classes:
             raise RuntimeError(
-                f"Element {input} is not defined in the classes dictionary {self.classes}"
+                f"Element {input_} is not defined in the"
+                "classes dictionary {self.classes}"
             )
         return self.reversed_classes[idx]
 
-    def set_from_model_schema(self, config, inputs):
-        input = inputs[0]  # featurizer has a single argument to __call__
+    def set_from_model_schema(self, config, deps):
+        input_ = deps[0]  # featurizer has a single argument to __call__
         # Get column information from schema
-        column_info = get_column_config(config, input)
+        column_info = get_column_config(config, input_)
         # Handle missing column information
         if not column_info:
-            raise RuntimeError(f"Column {input} was not found in the config columns")
+            raise RuntimeError(f"Column {input_} was not found in the config columns")
         # Handle column info not being from categorical
-        if not isinstance(column_info, CategoricalDataType):
+        if not isinstance(column_info.data_type, CategoricalDataType):
             raise DataTypeMismatchException(
                 f"expecteing CategoricalDataType, but found {column_info.__class__}",
                 expected=CategoricalDataType,
                 got_item=column_info,
             )
-        self.classes = column_info.classes
+        self.classes = column_info.data_type.classes
         self.reversed_classes = {value: key for key, value in self.classes.items()}
