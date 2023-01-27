@@ -54,6 +54,7 @@ class TrainingActor:
         """
         modelconfig = self.experiment.model_version.config
         model = CustomModel(config=modelconfig)
+        model.set_training_parameters(self.request)
         df = dataset.get_dataframe()
         datamodule = DataModule(
             featurizers_config=modelconfig.featurizers,
