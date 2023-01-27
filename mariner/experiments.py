@@ -1,15 +1,19 @@
+"""
+Experiments controller. Responsible for exposing training
+functions working under the defined business rules.
+"""
 import asyncio
 import logging
 from asyncio.tasks import Task
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import uuid4
 
 import mlflow
-import mlflow.entities.model_registry.model_version
 import ray
 from sqlalchemy.orm.session import Session
 
+import mariner.events as events_ctl
 from api.websocket import WebSocketMessage, get_websockets_manager
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
@@ -38,66 +42,45 @@ from mariner.stores.experiment_sql import (
 )
 from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
-from model_builder.optimizers import AdamParamsSchema, SGDParamsSchema
+from model_builder.optimizers import (
+    AdamParamsSchema,
+    OptimizerSchema,
+    SGDParamsSchema,
+)
 
 LOG = logging.getLogger(__name__)
 
 
 async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
+    """Transforms the ray into a coroutine
+    Args:
+        ref: ray ObjectRef
+    """
     result = await ref
     return result
 
 
 def handle_training_complete(task: Task, experiment_id: int):
+    """Completes the training process making the needed db updates
+
+    Updates model version with resulting best model on validation metric
+    and experiment status as finished
+
+    Args:
+        task: asyncio.Task wrapping training result
+        experiment_id: id of the experiment that is being completed
+
+    Raises:
+        RuntimeError: when function is called on a task that is not finished
+    """
     with SessionLocal() as db:
         experiment = experiment_store.get(db, experiment_id)
         assert experiment
         exception = task.exception()
         done = task.done()
         if not done:
-            raise Exception("Task is not done")
-        if not exception:
-            try:
-                best_model_info: mlflow.entities.model_registry.model_version.ModelVersion = (
-                    task.result()
-                )
-                model_store.update_model_version(
-                    db,
-                    version_id=experiment.model_version_id,
-                    obj_in=ModelVersionUpdateRepo(
-                        mlflow_version=best_model_info.version
-                    ),
-                )
-            except Exception as exception:
-                LOG.error(exception)
-                stack_trace = str(exception)
-                experiment_store.update(
-                    db,
-                    obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
-                    db_obj=experiment,
-                )
-            finally:
-                experiment_store.update(
-                    db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
-                )
-                asyncio.ensure_future(
-                    get_websockets_manager().send_message(  # noqa
-                        user_id=experiment.created_by_id,
-                        message=WebSocketMessage(
-                            type="update-running-metrics",
-                            data=UpdateRunningData(
-                                experiment_id=experiment_id,
-                                experiment_name=experiment.experiment_name,
-                                stage="SUCCESS",
-                                running_history=get_exp_manager().get_running_history(
-                                    experiment.id
-                                ),
-                            ),
-                        ),
-                    )
-                )
-
-        else:
+            raise RuntimeError("Task is not done")
+        if exception:
             LOG.error(exception)
             stack_trace = str(exception)
             experiment_store.update(
@@ -121,6 +104,34 @@ def handle_training_complete(task: Task, experiment_id: int):
                     ),
                 )
             )
+            return
+        best_model_info: mlflow.entities.model_registry.model_version.ModelVersion = (
+            task.result()
+        )
+        model_store.update_model_version(
+            db,
+            version_id=experiment.model_version_id,
+            obj_in=ModelVersionUpdateRepo(mlflow_version=best_model_info.version),
+        )
+        experiment_store.update(
+            db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
+        )
+        asyncio.ensure_future(
+            get_websockets_manager().send_message(
+                user_id=experiment.created_by_id,
+                message=WebSocketMessage(
+                    type="update-running-metrics",
+                    data=UpdateRunningData(
+                        experiment_id=experiment_id,
+                        experiment_name=experiment.experiment_name,
+                        stage="SUCCESS",
+                        running_history=get_exp_manager().get_running_history(
+                            experiment.id
+                        ),
+                    ),
+                ),
+            )
+        )
 
 
 async def create_model_traning(
@@ -222,9 +233,24 @@ def log_metrics(
     db: Session,
     experiment_id: int,
     metrics: dict[str, float],
-    history: dict[str, list[float]] = {},
+    history: Union[dict[str, list[float]], None] = None,
     stage: Literal["train", "val", "test"] = "train",
 ) -> None:
+    """Saves the metrics reported of a modelversion being trained to the database
+
+    This function is used by the ``CustomLogger`` to make updates to the modelversion
+    metrics
+
+    Args:
+        db: connection with the database
+        experiment_id: id of the experiment
+        metrics: dict with metrics
+        history: history of the metrics
+        stage
+
+    Raises:
+        ExperimentNotFound: if no experiment is found with id ``experiment_id``
+    """
     experiment_db = experiment_store.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
@@ -234,7 +260,6 @@ def log_metrics(
         update_obj.train_metrics = metrics
 
     experiment_store.update(db, db_obj=experiment_db, obj_in=update_obj)
-    import mariner.events as events_ctl
 
     model = experiment_db.model_version.model
     events_ctl.create_event(
@@ -253,6 +278,16 @@ def log_metrics(
 
 
 def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]):
+    """Saves the hyperparameters logged by ``CustomLogger``
+
+    Args:
+        db: connection with the database
+        experiment_id: id of the experiment
+        hyperparams: dictionary with hyperparameter values
+
+    Raises:
+        ExperimentNotFound: when experiment with id ``experiment_id`` is missing
+    """
     experiment_db = experiment_store.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
@@ -263,6 +298,18 @@ def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]
 def get_running_histories(
     user: UserEntity, experiment_id: Optional[int] = None
 ) -> List[RunningHistory]:
+    """Get's metrics history from a users experiment that is running
+
+    Gets the metrics from ingoing trainings that are persisted to the
+    ``ExperimentManager`` singleton
+
+    Args:
+        user
+        experiment_id
+
+    Returns:
+        List[RunningHistory]
+    """
     experiments = get_exp_manager().get_from_user(user.id)
     return [
         RunningHistory(
@@ -276,6 +323,8 @@ def get_running_histories(
 
 
 class UpdateRunningData(ApiBaseModel):
+    """The metrics gathered in ``epoch`` training iteration"""
+
     metrics: Optional[Dict[str, float]] = None
     epoch: Optional[int] = None
     experiment_id: int
@@ -292,6 +341,20 @@ async def send_ws_epoch_update(
     epoch: Optional[int] = None,
     stage: Optional[str] = None,
 ):
+    """Streams the metrics updates to the user
+
+    Sends the metrics from the model being trained at a specific epoch
+    to the user with id ``user_id`` through websocket
+
+
+    Args:
+        user_id: id of the user that created the experiment
+        experiment_id: id of the experiment
+        experiment_name: name of the experiment
+        metrics: dicrtionary with epoch metrics
+        epoch: epoch
+        stage: train/val/test
+    """
     running_history = get_exp_manager().get_running_history(experiment_id)
     if running_history is None:
         return
@@ -315,41 +378,43 @@ async def send_ws_epoch_update(
 
 
 class MonitorableMetric(ApiBaseModel):
+    """
+    Metric that can be used as a monitoring argument for training
+    callbacks
+    """
+
     key: str
     label: str
+    tex_label: Union[str, None] = None
     type: Literal["regressor", "classification"]
 
 
 def get_metrics_for_monitoring() -> List[MonitorableMetric]:
     """Get's options available for model checkpoint metric monitoring
 
+    The real metric keys have the stage prefixed, e.g.: ``train_mse``, ``val_f1``
+
     Returns:
         List[MonitorableMetric]: Description of the metric
     """
     return [
+        MonitorableMetric(key="mse", label="MSE", type="regressor"),
+        MonitorableMetric(key="mae", label="MAE", type="regressor"),
+        MonitorableMetric(key="ev", label="EV", type="regressor"),
+        MonitorableMetric(key="mape", label="MAPE", type="regressor"),
+        MonitorableMetric(key="R2", label="R2", tex_label="R^2", type="regressor"),
+        MonitorableMetric(key="pearson", label="Pearson", type="regressor"),
+        MonitorableMetric(key="accuracy", label="Accuracy", type="classification"),
+        MonitorableMetric(key="precision", label="Precision", type="classification"),
+        MonitorableMetric(key="recall", label="Recall", type="classification"),
+        MonitorableMetric(key="f1", label="F1", type="classification"),
         MonitorableMetric(
-            key="val_mse", label="(MSE) Mean Squared Error", type="regressor"
-        ),
-        MonitorableMetric(
-            key="val_mae", label="(MAE) Mean Absolute Error", type="regressor"
-        ),
-        MonitorableMetric(key="val_ev", label="EV", type="regressor"),
-        MonitorableMetric(key="val_mape", label="MAPE", type="regressor"),
-        MonitorableMetric(key="val_R2", label="R2", type="regressor"),
-        MonitorableMetric(key="val_pearson", label="Pearson", type="regressor"),
-        MonitorableMetric(key="val_accuracy", label="Accuracy", type="classification"),
-        MonitorableMetric(
-            key="val_precision", label="Precision", type="classification"
-        ),
-        MonitorableMetric(key="val_recall", label="Recall", type="classification"),
-        MonitorableMetric(key="val_f1", label="F1", type="classification"),
-        MonitorableMetric(
-            key="val_confusion_matrix", label="Confusion MAtrix", type="classification"
+            key="confusion_matrix", label="Confusion Matrix", type="classification"
         ),
     ]
 
 
-def get_optimizer_options():
+def get_optimizer_options() -> List[OptimizerSchema]:
     """Gets optimizer configurations
 
     Returns what params are needed for each type of optimizer supported

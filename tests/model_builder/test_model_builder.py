@@ -84,12 +84,10 @@ async def test_model_building(zinc_extra_dataset: Dataset, model_config_path: st
     with open(model_config_path, "rb") as f:
         model_config = ModelSchema.from_yaml(f.read())
     model = CustomModel(model_config)
-    model.set_training_parameters(TrainingRequest(optimizer=AdamOptimizer()))
-    featurizers_config = model_config.featurizers
+    model.set_training_parameters(optimizer=AdamOptimizer())
     data_module = DataModule(
-        featurizers_config=featurizers_config,
+        config=model_config,
         data=zinc_extra_dataset.get_dataframe(),
-        dataset_config=model_config.dataset,
         split_target=zinc_extra_dataset.split_target,
         split_type=zinc_extra_dataset.split_type,
     )

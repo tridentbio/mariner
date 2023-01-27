@@ -1,7 +1,11 @@
+"""
+Training/validation/testing related actors
+"""
 from typing import List
 
 import ray
 from mlflow.tracking import MlflowClient
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.loggers.logger import Logger
 from pytorch_lightning.loggers.mlflow import MLFlowLogger
@@ -21,6 +25,7 @@ class TrainingActor:
     """Runs training with needed mlflow and custom logging"""
 
     checkpoint_callback: ModelCheckpoint
+    early_stopping_callback: EarlyStopping
     dataset: Dataset
     modelversion: ModelVersion
     request: TrainingRequest
@@ -54,12 +59,11 @@ class TrainingActor:
         """
         modelconfig = self.experiment.model_version.config
         model = CustomModel(config=modelconfig)
-        model.set_training_parameters(self.request)
+        model.set_training_parameters(self.request.optimizer)
         df = dataset.get_dataframe()
         datamodule = DataModule(
-            featurizers_config=modelconfig.featurizers,
+            config=modelconfig,
             data=df,
-            dataset_config=modelconfig.dataset,
             split_target=dataset.split_target,
             split_type=dataset.split_type,
             batch_size=self.request.batch_size or 32,
@@ -69,7 +73,7 @@ class TrainingActor:
             logger=self.loggers,
             log_every_n_steps=1,
             enable_progress_bar=False,
-            callbacks=[self.checkpoint_callback],
+            callbacks=[self.checkpoint_callback, self.early_stopping_callback],
         )
         datamodule.setup()
         trainer.fit(model, datamodule)
@@ -113,8 +117,16 @@ class TrainingActor:
         self,
     ):
         monitoring_config = self.request.checkpoint_config
+        early_stopping_config = self.request.early_stopping_config
         self.checkpoint_callback = ModelCheckpoint(
             monitor=monitoring_config.metric_key,
             mode=monitoring_config.mode,
             save_last=True,
+        )
+        self.early_stopping_callback = EarlyStopping(
+            monitor=early_stopping_config.metric_key,
+            mode=early_stopping_config.mode,
+            min_delta=early_stopping_config.min_delta,
+            patience=early_stopping_config.patience,
+            check_finite=early_stopping_config.check_finite,
         )

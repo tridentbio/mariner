@@ -71,12 +71,14 @@ def setup_create_model(
     client: TestClient, headers: dict[str, str], **mock_model_kwargs
 ):
     model = mock_model(**mock_model_kwargs)
-    data = model.dict()
+    data = model.dict(by_alias=True)
+    print("data is %r" % data)
     res = client.post(
         f"{settings.API_V1_STR}/models/",
         json=data,
         headers=headers,
     )
+    print(res.json())
     assert res.status_code == status.HTTP_200_OK
     return Model.parse_obj(res.json())
 

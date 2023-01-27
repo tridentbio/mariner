@@ -17,6 +17,7 @@ from model_builder.components_query import (
     get_component_constructor_args_by_type,
 )
 from model_builder.layers_schema import FeaturizersType, LayersType
+from model_builder.optimizers import Optimizer
 from model_builder.utils import CamelCaseModel, get_references_dict
 
 

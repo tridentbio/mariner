@@ -89,15 +89,10 @@ def test_post_models_success(
     assert "versions" in body
     assert len(body["versions"]) == 1
     version = body["versions"][0]
-    mlflow_model_name = version["mlflowModelName"]
-    mlflow_version = version["mlflowVersion"]
     model_version = version["name"]
     assert version["config"]["name"] is not None
-    assert "description" in body
+    assert "description" in version
     assert version["description"] == model.model_version_description
-    model = mlflow.pyfunc.load_model(
-        model_uri=f"models:/{mlflow_model_name}/{mlflow_version}"
-    )
     assert model is not None
     db_model_config = db.query(ModelVersion).filter(
         ModelVersion.id == version["id"] and ModelVersion.name == model_version
@@ -143,19 +138,6 @@ def test_post_models_dataset_not_found(
     )
     assert res.status_code == status.HTTP_404_NOT_FOUND
     assert res.json()["detail"] == f'Dataset "{datasetname}" not found'
-
-
-def test_post_models_check_model_name_is_unique(
-    client: TestClient, randomuser_token_headers: dict[str, str], some_model: Model
-):
-    model = mock_model(name=some_model.name)
-    res = client.post(
-        f"{settings.API_V1_STR}/models/",
-        json=model.dict(),
-        headers=randomuser_token_headers,
-    )
-    assert res.status_code == status.HTTP_409_CONFLICT
-    assert res.json()["detail"] == "Another model is already registered with that name"
 
 
 def test_get_models_success(
@@ -229,9 +211,9 @@ def test_delete_model(
 def test_post_predict(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_model: Model,
+    some_trained_model: Model,
 ):
-    model_version = some_model.versions[-1].id
+    model_version = some_trained_model.versions[-1].id
     route = f"{settings.API_V1_STR}/models/{model_version}/predict"
     res = client.post(
         route,
@@ -248,6 +230,30 @@ def test_post_predict(
     assert res.status_code == 200
     body = res.json()
     assert len(body) == 3
+
+
+def test_post_predict_fails_untrained_model(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_model: Model,
+):
+    model_version = some_model.versions[-1].id
+    route = f"{settings.API_V1_STR}/models/{model_version}/predict"
+    res = client.post(
+        route,
+        json={
+            "smiles": [
+                "CCCC",
+                "CCCCC",
+                "CCCCCCC",
+            ],
+            "mwt": [3, 1, 9],
+        },
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == status.HTTP_400_BAD_REQUEST
+    body = res.json()
+    assert body["detail"] == "Model version was not trained yet"
 
 
 def test_post_predict_validates_smiles(
@@ -399,10 +405,3 @@ def test_get_name_suggestion(
     assert "name" in body
     assert type(body["name"]) == str
     assert len(body["name"]) >= 4
-
-
-def test_model_versioning():
-    """
-    Checks if the model versioning mapping between mariner
-    models and MLFlow Registry is correct
-    """
