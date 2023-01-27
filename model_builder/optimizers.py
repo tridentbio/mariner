@@ -1,7 +1,7 @@
 """
 Package defines optimizers that can be used for model training
 """
-from typing import Any, Literal, Tuple, Union
+from typing import Any, Literal, Union
 
 from pydantic import BaseModel, Field
 
