@@ -7,11 +7,13 @@ import torchmetrics as metrics
 from pytorch_lightning.core.lightning import LightningModule
 from torch.optim.adam import Adam
 
+from mariner.schemas.experiment_schemas import TrainingRequest
 from model_builder.dataset import DataInstance
 from model_builder.layers.one_hot import OneHot
 from model_builder.layers_schema import ModelbuilderonehotLayerConfig
+from model_builder.optimizers import Optimizer
 from model_builder.schemas import CategoricalDataType, ModelSchema
-from model_builder.utils import collect_args
+from model_builder.utils import collect_args, get_class_from_path_string
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
@@ -94,6 +96,10 @@ class Metrics:
 
 
 class CustomModel(LightningModule):
+    """Neural network model encoded by a ModelSchema"""
+
+    optimizer: Optimizer
+
     def __init__(self, config: Union[ModelSchema, str]):
         super().__init__()
         if isinstance(config, str):
@@ -138,6 +144,17 @@ class CustomModel(LightningModule):
                 num_classes=len(config.dataset.target_column.data_type.classes),
             )
 
+    def set_training_parameters(self, training_request: TrainingRequest):
+        """Sets parameters that only are given in training configuration
+
+        Parameters that are set:
+            - optimizer
+
+        Args:
+            training_request:
+        """
+        self.optimizer = training_request.optimizer
+
     def forward(self, input: DataInstance):  # type: ignore
         last = input
         for node_name in self.topo_sorting:
@@ -155,12 +172,19 @@ class CustomModel(LightningModule):
         return last
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr=1e-3)
+        if not self.optimizer:
+            raise ValueError(
+                "using model without setting attributes from training request"
+            )
+        assert self.optimizer.class_path.startswith(
+            "torch.optim."
+        ), "invalid start string for optimizer class_path"
+        TorchOptimizer = get_class_from_path_string(self.optimizer.class_path)
+        return TorchOptimizer(**self.optimizer.params.dict())
 
     def test_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()
         loss = self.loss_fn(prediction, batch["y"])
-        # self.logger.log('test_loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
