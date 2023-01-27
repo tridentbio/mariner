@@ -1,3 +1,6 @@
+"""
+Custom pytorch lightning loggers
+"""
 import logging
 import time
 from typing import Dict, List
@@ -10,6 +13,12 @@ from mariner.core.config import settings
 
 
 class AppLogger(LightningLoggerBase):
+    """
+    Custom logger that sends the metrics collected to the mariner API
+    through HTTP requests. The API saves the metrics and forwards to the
+    user if online.
+    """
+
     running_history: Dict[str, List[float]]
     experiment_id: int
     experiment_name: str
@@ -31,6 +40,7 @@ class AppLogger(LightningLoggerBase):
         return "0.1"
 
     def make_contextualized_data(self):
+        """Creates base request payload based on instance members"""
         return {
             "experimentName": self.experiment_name,
             "experimentId": self.experiment_id,
@@ -39,10 +49,21 @@ class AppLogger(LightningLoggerBase):
 
     @rank_zero_only
     def log_hyperparams(self, params):
+        """Send hyperparams
+
+        Args:
+            params (Any): hyperparams to be send to the mariner API
+        """
         self.send(params, "hyperparams")
 
     @rank_zero_only
     def log_metrics(self, metrics, step):
+        """Send metrics
+
+        Args:
+            metrics (dict): dictionary with metrics
+            step (int): step
+        """
         data = {
             "metrics": {},
             "epoch": metrics["epoch"] if "epoch" in metrics else None,
@@ -59,6 +80,15 @@ class AppLogger(LightningLoggerBase):
         pass
 
     def send(self, msg, msg_type, force=False):
+        """Sends a message to the mariner API
+
+        Only sends message after 5 seconds from previously sent one
+
+        Args:
+            msg (dict): request payload
+            msg_type (str): type of the message
+            force (bool): if the request should be sent even under threshold time
+        """
         if not force and time.time() - self.last_sent_at < 5:
             return
         data = self.make_contextualized_data()

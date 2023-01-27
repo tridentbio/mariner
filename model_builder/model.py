@@ -1,3 +1,6 @@
+"""
+Torch and PytorchLightning build through from ModelSchema
+"""
 from typing import Iterable, List, Literal, Optional, Union
 
 import networkx as nx
@@ -15,12 +18,26 @@ from model_builder.utils import collect_args, get_class_from_path_string
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
+    """Treat something that can be either str of List[śtr] as List[str]
+
+    Converts str to single element lists
+
+    Args:
+        x: input'
+
+    Returns:
+        List[str]
+    """
     if isinstance(x, str):
         return [x]
     return x
 
 
 class Metrics:
+    """
+    Metrics operations that abstract the task type (regression/classification)
+    """
+
     def __init__(
         self,
         type: Literal["regressor", "classification"],
@@ -67,6 +84,15 @@ class Metrics:
             )
 
     def get_training_metrics(self, prediction: torch.Tensor, batch: DataInstance):
+        """Gets a dict with the training metrics
+
+        For each of the training metrics avaliable on the task type, return a dictionary
+        with the metrics value given the input ``batch`` and the model output ``prediction``
+
+        Args:
+            prediction: the model output
+            batch: object with target data (at batch['y'])
+        """
         metrics_dict = {}
         for metric in self.metrics:
             if not metric.startswith("train"):
@@ -83,6 +109,15 @@ class Metrics:
         return metrics_dict
 
     def get_validation_metrics(self, prediction: torch.Tensor, batch: DataInstance):
+        """Gets a dict with the validation metrics
+
+        For each of the training metrics avaliable on the task type, return a dictionary
+        with the metrics value given the input ``batch`` and the model output ``prediction``
+
+        Args:
+            prediction: the model output
+            batch: object with target data (at batch['y'])
+        """
         metrics_dict = {}
         for metric in self.metrics:
             if not metric.startswith("val"):
