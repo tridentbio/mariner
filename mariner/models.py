@@ -343,8 +343,8 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
     return pyfuncmodel(modelinput)
 
 
-def get_model_version(db: Session, user: UserEntity, model_id: int) -> Model:
-    """Gets a single model version"""
+def get_model(db: Session, user: UserEntity, model_id: int) -> Model:
+    """Gets a single model"""
     modeldb = model_store.get(db, model_id)
     if not modeldb or modeldb.created_by_id != user.id:
         raise ModelNotFound()
