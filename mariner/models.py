@@ -349,7 +349,6 @@ def get_model_version(db: Session, user: UserEntity, model_id: int) -> Model:
     if not modeldb or modeldb.created_by_id != user.id:
         raise ModelNotFound()
     model = Model.from_orm(modeldb)
-    model.load_from_mlflow()
     return model
 
 
