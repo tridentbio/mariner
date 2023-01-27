@@ -14,6 +14,7 @@ from mariner.schemas.experiment_schemas import (
 )
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
+from model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
@@ -75,11 +76,11 @@ async def test_create_model_training(db: Session, some_model: Model):
         model_version_id=version.id,
         epochs=1,
         name=random_lower_string(),
-        learning_rate=0.05,
         checkpoint_config=MonitoringConfig(
             mode="min",
             metric_key="val_mse",
         ),
+        optimizer=AdamOptimizer(),
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
     assert exp.model_version_id == version.id
@@ -139,7 +140,7 @@ async def test_experiment_has_stacktrace_when_training_fails(
         model_version_id=version.id,
         epochs=1,
         name=random_lower_string(),
-        learning_rate=0.05,
+        optimizer=AdamOptimizer(),
         checkpoint_config=MonitoringConfig(
             mode="min",
             metric_key="val_mse",

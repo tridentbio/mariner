@@ -16,6 +16,7 @@ from mariner.schemas.experiment_schemas import (
 )
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
+from model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
@@ -33,8 +34,8 @@ async def experiments_fixture(db: Session, some_model: Model):
             TrainingRequest(
                 name=random_lower_string(),
                 epochs=1,
-                learning_rate=0.1,
                 model_version_id=version.id,
+                optimizer=AdamOptimizer(),
             ),
         )
     ]
@@ -126,11 +127,11 @@ async def experiment_fixture(db: Session, some_model: Model) -> Experiment:
         model_version_id=version.id,
         epochs=1,
         name=random_lower_string(),
-        learning_rate=0.05,
         checkpoint_config=MonitoringConfig(
             mode="min",
             metric_key="val_mse",
         ),
+        optimizer=AdamOptimizer,
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
     task = get_exp_manager().get_task(exp.id)
