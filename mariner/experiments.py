@@ -38,6 +38,7 @@ from mariner.stores.experiment_sql import (
 )
 from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
+from model_builder.optimizers import AdamParamsSchema, SGDParamsSchema
 
 LOG = logging.getLogger(__name__)
 
@@ -345,4 +346,15 @@ def get_metrics_for_monitoring() -> List[MonitorableMetric]:
         MonitorableMetric(
             key="val_confusion_matrix", label="Confusion MAtrix", type="classification"
         ),
+    ]
+
+
+def get_optimizer_options():
+    """Gets optimizer configurations
+
+    Returns what params are needed for each type of optimizer supported
+    """
+    return [
+        AdamParamsSchema(),
+        SGDParamsSchema(),
     ]
