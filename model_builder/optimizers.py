@@ -1,9 +1,10 @@
 """
 Package defines optimizers that can be used for model training
 """
-from typing import Any, Literal, Union
+from typing import Annotated, Any, Iterable, Literal, Union
 
 from pydantic import BaseModel, Field
+from torch.optim import SGD, Adam
 
 from model_builder.utils import CamelCaseModel
 
@@ -50,8 +51,16 @@ class AdamOptimizer(CamelCaseModel):
     https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#adam
     """
 
-    classPath = "torch.optim.Adam"
+    class_path: Literal["torch.optim.Adam"] = "torch.optim.Adam"
     params: AdamParams = AdamParams()
+
+    def create(self, params: Iterable):
+        return Adam(
+            params,
+            lr=self.params.lr or 1e-3,
+            betas=(self.params.beta1 or 0.9, self.params.beta2 or 0.999),
+            eps=self.params.eps or 1e-8,
+        )
 
 
 class SGDParams(BaseModel):
@@ -87,8 +96,16 @@ class SGDOptimizer(CamelCaseModel):
     https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#sgd
     """
 
-    class_path = "torch.optim.SGD"
+    class_path: Literal["torch.optim.SGD"] = "torch.optim.SGD"
     params: SGDParams
 
+    def create(self, params: Iterable):
+        return SGD(params, lr=self.params.lr, momentum=self.params.momentum)
 
-Optimizer = Union[AdamOptimizer, SGDOptimizer]
+
+Optimizer = Annotated[
+    Union[AdamOptimizer, SGDOptimizer], Field(discriminator="class_path")
+]
+OptimizerSchema = Annotated[
+    Union[AdamParamsSchema, SGDParamsSchema], Field(discriminator="class_path")
+]

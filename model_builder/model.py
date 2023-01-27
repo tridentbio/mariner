@@ -1,16 +1,14 @@
-from typing import List, Literal, Optional, Union
+from typing import Iterable, List, Literal, Optional, Union
 
 import networkx as nx
 import torch
 import torch.nn
 import torchmetrics as metrics
 from pytorch_lightning.core.lightning import LightningModule
-from torch.optim.adam import Adam
 
-from mariner.schemas.experiment_schemas import TrainingRequest
+from model_builder.component_builder import AutoBuilder
 from model_builder.dataset import DataInstance
-from model_builder.layers.one_hot import OneHot
-from model_builder.layers_schema import ModelbuilderonehotLayerConfig
+from model_builder.model_schema_query import get_dependencies
 from model_builder.optimizers import Optimizer
 from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import collect_args, get_class_from_path_string
@@ -109,18 +107,11 @@ class CustomModel(LightningModule):
         self.config = config
         self.layer_configs = {layer.name: layer for layer in config.layers}
         for layer in config.layers:
-            layer_instance = layer.create()
-            if isinstance(layer_instance, OneHot) and isinstance(
-                layer, ModelbuilderonehotLayerConfig
-            ):
-                input = layer.forward_args.x1.replace("$", "")
-                for column in config.dataset.feature_columns:
-                    if column.name == input and isinstance(
-                        column.data_type, CategoricalDataType
-                    ):
-                        layer_instance.classes = column.data_type.classes
-                if not layer_instance.classes:
-                    raise ValueError("Failed to find OneHot classes")
+            layer_instance = layer.create()  # possibly pass schema here
+            if isinstance(layer_instance, AutoBuilder):
+                layer_instance.set_from_model_schema(
+                    config, list(get_dependencies(layer))
+                )
             layers_dict[layer.name] = layer_instance
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
@@ -144,7 +135,7 @@ class CustomModel(LightningModule):
                 num_classes=len(config.dataset.target_column.data_type.classes),
             )
 
-    def set_training_parameters(self, training_request: TrainingRequest):
+    def set_training_parameters(self, optimizer: Optimizer):
         """Sets parameters that only are given in training configuration
 
         Parameters that are set:
@@ -153,7 +144,7 @@ class CustomModel(LightningModule):
         Args:
             training_request:
         """
-        self.optimizer = training_request.optimizer
+        self.optimizer = optimizer
 
     def forward(self, input: DataInstance):  # type: ignore
         last = input
@@ -179,12 +170,12 @@ class CustomModel(LightningModule):
         assert self.optimizer.class_path.startswith(
             "torch.optim."
         ), "invalid start string for optimizer class_path"
-        TorchOptimizer = get_class_from_path_string(self.optimizer.class_path)
-        return TorchOptimizer(**self.optimizer.params.dict())
+        return self.optimizer.create(self.parameters())
 
     def test_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()
         loss = self.loss_fn(prediction, batch["y"])
+        self.log("test_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):

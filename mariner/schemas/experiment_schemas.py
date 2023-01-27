@@ -22,6 +22,18 @@ class MonitoringConfig(ApiBaseModel):
     mode: str
 
 
+class EarlyStoppingConfig(ApiBaseModel):
+    """
+    Configures earlystopping of training
+    """
+
+    metric_key: str
+    mode: str
+    min_delta: float = 5e-2
+    patience: int = 5
+    check_finite: bool = False
+
+
 class TrainingRequest(ApiBaseModel):
     name: str
     model_version_id: int
@@ -29,6 +41,7 @@ class TrainingRequest(ApiBaseModel):
     batch_size: Optional[int] = None
     checkpoint_config: MonitoringConfig
     optimizer: Optimizer
+    early_stopping_config: EarlyStoppingConfig
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]

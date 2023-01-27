@@ -10,6 +10,7 @@ from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import EventEntity
 from mariner.schemas.experiment_schemas import (
+    EarlyStoppingConfig,
     Experiment,
     MonitoringConfig,
     TrainingRequest,
@@ -36,6 +37,10 @@ async def experiments_fixture(db: Session, some_model: Model):
                 epochs=1,
                 model_version_id=version.id,
                 optimizer=AdamOptimizer(),
+                checkpoint_config=MonitoringConfig(metric_key="val_mse", mode="min"),
+                early_stopping_config=EarlyStoppingConfig(
+                    metric_key="val_mse", mode="min"
+                ),
             ),
         )
     ]
@@ -131,7 +136,8 @@ async def experiment_fixture(db: Session, some_model: Model) -> Experiment:
             mode="min",
             metric_key="val_mse",
         ),
-        optimizer=AdamOptimizer,
+        optimizer=AdamOptimizer(),
+        early_stopping_config=EarlyStoppingConfig(metric_key="val_mse", mode="min"),
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
     task = get_exp_manager().get_task(exp.id)

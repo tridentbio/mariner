@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 import mlflow
 import mlflow.pyfunc
@@ -92,6 +92,18 @@ def create_tracking_client():
 
 
 def create_registered_model(
+    client: mlflow.tracking.MlflowClient,
+    name: str,
+    description: Union[str, None] = None,
+    tags: Union[dict[str, str], None] = None,
+):
+    registered_model = client.create_registered_model(
+        name, tags=tags, description=description
+    )
+    return registered_model
+
+
+def create_registered_model_and_version(
     client: mlflow.tracking.MlflowClient,
     name: str,
     torchscript: Optional[torch.nn.Module] = None,

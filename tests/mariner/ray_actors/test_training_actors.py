@@ -13,7 +13,11 @@ from mariner.core.aws import Bucket, list_s3_objects
 from mariner.entities.experiment import Experiment
 from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.dataset_schemas import Dataset
-from mariner.schemas.experiment_schemas import MonitoringConfig, TrainingRequest
+from mariner.schemas.experiment_schemas import (
+    EarlyStoppingConfig,
+    MonitoringConfig,
+    TrainingRequest,
+)
 from mariner.schemas.model_schemas import Model, ModelVersion
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from model_builder.model import CustomModel
@@ -137,4 +141,5 @@ class TestTrainingActor:
             batch_size=32,
             checkpoint_config=MonitoringConfig(metric_key="val_mse", mode="min"),
             optimizer=AdamOptimizer(),
+            early_stopping_config=EarlyStoppingConfig(metric_key="val_mse", mode="min"),
         )
