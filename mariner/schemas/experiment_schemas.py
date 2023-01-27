@@ -10,6 +10,7 @@ from mariner.schemas.api import (
 )
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
+from model_builder.optimizers import Optimizer
 
 
 class MonitoringConfig(ApiBaseModel):
@@ -24,10 +25,10 @@ class MonitoringConfig(ApiBaseModel):
 class TrainingRequest(ApiBaseModel):
     name: str
     model_version_id: int
-    learning_rate: float
     epochs: int
     batch_size: Optional[int] = None
     checkpoint_config: MonitoringConfig
+    optimizer: Optimizer
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]
