@@ -7,9 +7,9 @@ import torchmetrics as metrics
 from pytorch_lightning.core.lightning import LightningModule
 from torch.optim.adam import Adam
 
+from model_builder.component_builder import AutoBuilder
 from model_builder.dataset import DataInstance
-from model_builder.layers.one_hot import OneHot
-from model_builder.layers_schema import ModelbuilderonehotLayerConfig
+from model_builder.model_schema_query import get_dependencies
 from model_builder.schemas import CategoricalDataType, ModelSchema
 from model_builder.utils import collect_args
 
@@ -104,18 +104,11 @@ class CustomModel(LightningModule):
         self.config = config
         self.layer_configs = {layer.name: layer for layer in config.layers}
         for layer in config.layers:
-            layer_instance = layer.create()
-            if isinstance(layer_instance, OneHot) and isinstance(
-                layer, ModelbuilderonehotLayerConfig
-            ):
-                input = layer.forward_args.x1.replace("$", "")
-                for column in config.dataset.feature_columns:
-                    if column.name == input and isinstance(
-                        column.data_type, CategoricalDataType
-                    ):
-                        layer_instance.classes = column.data_type.classes
-                if not layer_instance.classes:
-                    raise ValueError("Failed to find OneHot classes")
+            layer_instance = layer.create()  # possibly pass schema here
+            if isinstance(layer_instance, AutoBuilder):
+                layer_instance.set_from_model_schema(
+                    config, list(get_dependencies(layer))
+                )
             layers_dict[layer.name] = layer_instance
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
@@ -161,7 +154,7 @@ class CustomModel(LightningModule):
     def test_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()
         loss = self.loss_fn(prediction, batch["y"])
-        # self.logger.log('test_loss', loss)
+        self.log("test_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
