@@ -20,7 +20,7 @@ class AdamParams(BaseModel):
     eps: Union[float, None] = None
 
 
-class InputDescription(BaseModel):
+class InputDescription(CamelCaseModel):
     """
     Describes a parameter of some payload
     """
@@ -55,6 +55,11 @@ class AdamOptimizer(CamelCaseModel):
     params: AdamParams = AdamParams()
 
     def create(self, params: Iterable):
+        """Creates the torch Adam optimizer
+
+        Args:
+            params: model parameters
+        """
         return Adam(
             params,
             lr=self.params.lr or 1e-3,
@@ -85,7 +90,7 @@ class SGDParamsSchema(BaseModel):
     class_path: Literal["torch.optim.SGD"] = Field(
         default="torch.optim.SGD", alias="classPath"
     )
-    lr = InputDescription(param_type="float")
+    lr = InputDescription(param_type="float", default=0.001)
     momentum = InputDescription(param_type="float?", default=0)
 
 
@@ -100,7 +105,16 @@ class SGDOptimizer(CamelCaseModel):
     params: SGDParams
 
     def create(self, params: Iterable):
-        return SGD(params, lr=self.params.lr, momentum=self.params.momentum)
+        """Creates the torch SGD optimizer
+
+        Args:
+            params: model parameters
+        """
+        return SGD(
+            params,
+            lr=self.params.lr or SGDParamsSchema().lr.default,
+            momentum=self.params.momentum or SGDParamsSchema().momentum.default,
+        )
 
 
 Optimizer = Annotated[
