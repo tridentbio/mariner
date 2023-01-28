@@ -17,3 +17,7 @@ class InvalidDataframe(Exception):
     def __init__(self, message: str, reasons: List[str]):
         super().__init__(message)
         self.reasons = reasons
+
+
+class ModelVersionNotTrained(Exception):
+    pass
