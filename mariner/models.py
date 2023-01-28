@@ -1,3 +1,8 @@
+"""
+Models controller. Responsible for exposing model tracking
+functions working under the defined business rules.
+"""
+
 import traceback
 from typing import Any, List, Literal, Optional, Tuple, Union, get_type_hints
 from uuid import uuid4
@@ -22,7 +27,6 @@ from mariner.exceptions.model_exceptions import (
     InvalidDataframe,
     ModelVersionNotTrained,
 )
-from mariner.logger import logger
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     ComponentOption,
@@ -49,20 +53,28 @@ from model_builder.utils import get_class_from_path_string
 def get_model_and_dataloader(
     db: Session, config: ModelSchema
 ) -> tuple[pl.LightningModule, DataLoader]:
+    """Gets the CustomModel and the DataLoader needed to train
+    a model
+
+    Args:
+        db: connection to the database
+        config: model config
+
+    Returns:
+        tuple[pl.LightningModule, DataLoader]
+    """
     dataset_entity = dataset_store.get_by_name(db, config.dataset.name)
     assert dataset_entity, f"No dataset found with name {config.dataset.name}"
     df = dataset_entity.get_dataframe()
-    dataset = CustomDataset(
-        data=df,
-        feature_columns=config.dataset.feature_columns,
-        featurizers_config=config.featurizers,
-    )
+    dataset = CustomDataset(data=df, config=config)
     dataloader = DataLoader(dataset, batch_size=1)
     model = CustomModel(config)
     return model, dataloader
 
 
 class ForwardCheck(ApiBaseModel):
+    """Response to a request to check if a model version forward works"""
+
     stack_trace: Optional[str] = None
     output: Optional[Any] = None
 
@@ -77,7 +89,7 @@ def naive_check_forward_exception(db: Session, config: ModelSchema) -> ForwardCh
         sample = next(iter(dataloader))
         output = model(sample)
         return ForwardCheck(output=output)
-    except:  # noqa E722
+    except:  # noqa E722 pylint: disable=W0702
         lines = traceback.format_exc()
         return ForwardCheck(stack_trace=lines)
 
@@ -128,7 +140,7 @@ def create_model(
         if exp.error_code == mlflow.exceptions.RESOURCE_ALREADY_EXISTS:
             raise ModelNameAlreadyUsed(
                 "A model with that name is already in use by mlflow"
-            )
+            ) from exp
         raise
 
     model = model_store.create(
@@ -247,11 +259,11 @@ def get_model_options() -> ModelOptions:
 
     component_annotations: List[ComponentOption] = []
 
-    def make_component(class_path: str, type: Literal["layer", "featurizer"]):
+    def make_component(class_path: str, type_: Literal["layer", "featurizer"]):
         summary = get_summary(class_path)
         assert summary, f"class Summary of {class_path} should not be None"
         option = get_annotations_from_cls(class_path)
-        option.type = type
+        option.type = type_
         option.component = summary
         return option
 
@@ -265,6 +277,8 @@ def get_model_options() -> ModelOptions:
 
 
 class PredictRequest(ApiBaseModel):
+    """Payload of a prediction request"""
+
     user_id: int
     model_version_id: int
     model_input: Any
@@ -322,11 +336,7 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
             f"dataframe failed {len(broken_checks)} checks",
             reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
         )
-    dataset = CustomDataset(
-        data=df,
-        feature_columns=modelversion.config.dataset.feature_columns,
-        featurizers_config=modelversion.config.featurizers,
-    )
+    dataset = CustomDataset(data=df, config=modelversion.config, target=False)
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
@@ -348,8 +358,8 @@ def delete_model(db: Session, user: UserEntity, model_id: int) -> Model:
     model = model_store.get(db, model_id)
     if not model or model.created_by_id != user.id:
         raise ModelNotFound()
-    parsed_model = Model.from_orm(model)
     client = mlflow.tracking.MlflowClient()
-    client.delete_registered_model(parsed_model.mlflow_name)
+    client.delete_registered_model(model.mlflow_name)
+    parsed_model = Model.from_orm(model)
     model_store.delete_by_id(db, model_id)
     return parsed_model
