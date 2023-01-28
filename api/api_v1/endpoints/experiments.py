@@ -97,3 +97,13 @@ async def post_update_metrics(
     else:
         raise Exception(f"Failed msg type {msgtype}")
     return "ok"
+
+
+@router.get(
+    "/metrics",
+    dependencies=[Depends(deps.get_current_active_user)],
+    response_model=List[experiments_ctl.MonitorableMetric],
+)
+def get_experiments_metrics():
+    """Get's monitorable metrics to configure early stopping and checkpoint monitoring"""
+    return experiments_ctl.get_metrics_for_monitoring()
