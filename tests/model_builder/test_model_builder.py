@@ -23,8 +23,9 @@ from tests.utils.utils import random_lower_string
 
 # model configuration to be tested
 model_config_yamls = [
-    "tests/data/small_regressor_schema.yaml",
-    "tests/data/categorical_features_model.yaml",
+    # "tests/data/small_regressor_schema.yaml",
+    # "tests/data/categorical_features_model.yaml",
+    "tests/data/dna_example.yml",
     # "tests/data/test_model_with_from_smiles.yaml",
 ]
 
