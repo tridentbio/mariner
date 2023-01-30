@@ -1,0 +1,64 @@
+name: Dna Example Model
+dataset:
+  name: Dna Example Dataset
+  featureColumns:
+    - name: sequence
+      dataType:
+        domainKind: dna
+  targetColumns:
+    name: class
+    dataType:
+      domainKind: categorical
+layers:
+  - name: embeddings
+    type: torch.nn.Embeddings
+    constructorArgs:
+      num_embeddings: 5
+      embedding_dim: 16
+      padding_idx: 0
+    forwardArgs:
+      input: $sequence
+
+  - name: transformer 1 
+    type: torch.nn.TransformerEncoderLayer
+    constructorArgs:
+      d_model: 16
+      nhead: 4
+      dim_feedforward: 128
+    forwardArgs:
+      input: $sequence
+
+  - name: transformer 2
+    type: torch.nn.TransformerEncoderLayer
+    constructorArgs:
+      d_model: 16
+      nhead: 4
+      dim_feedforward: 128
+    forwardArgs:
+      input: ${transformer 1}
+  - name: sequence pooling
+    type: model_builder.layers.AddPooling
+    constructorArgs:
+      dim: 0
+    forwardArgs:
+      input: ${transformer 2}
+  - name: linear 1
+    type: torch.nn.Linear
+    constructorArgs:
+      in_features: 16
+      out_features: 32
+    forwardArgs:
+      input: ${transformer sequence pooling}
+  - name: activation linear 1
+    type: torch.nn.ReLU
+    constructorArgs:
+      inplace: False
+    forwardArgs:
+      input: ${linear 1}
+  - name: linear 2
+    type: torch.nn.Linear
+    constructorArgs:
+      in_features: 32
+      out_features: 1
+    forwardArgs:
+      input: ${ctivation linear 1}
