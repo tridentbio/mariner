@@ -23,7 +23,7 @@ class OneHot(nn.Module, AutoBuilder):
     classes: Union[dict[Union[str, int], int], None] = None
 
     def __init__(self):
-        super(nn.Module).__init__()
+        nn.Module.__init__(self)
 
     def forward(self, x1: Union[list[str], list[int]]) -> torch.Tensor:
         """One hot representation of the input
