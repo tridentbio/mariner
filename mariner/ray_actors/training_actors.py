@@ -61,17 +61,18 @@ class TrainingActor:
         model = CustomModel(config=modelconfig)
         model.set_training_parameters(self.request.optimizer)
         df = dataset.get_dataframe()
+        batch_size = self.request.batch_size or 32
         datamodule = DataModule(
             config=modelconfig,
             data=df,
             split_target=dataset.split_target,
             split_type=dataset.split_type,
-            batch_size=self.request.batch_size or 32,
+            batch_size=batch_size,
         )
         trainer = Trainer(
             max_epochs=self.request.epochs,
             logger=self.loggers,
-            log_every_n_steps=1,
+            log_every_n_steps=max(batch_size // 2, 10),
             enable_progress_bar=False,
             callbacks=[self.checkpoint_callback, self.early_stopping_callback],
         )

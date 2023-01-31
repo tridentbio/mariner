@@ -221,6 +221,7 @@ class CustomModel(LightningModule):
         self.log_dict(
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
         )
+        self.log("val_loss", loss)
         return loss
 
     def training_step(self, batch, batch_idx):
