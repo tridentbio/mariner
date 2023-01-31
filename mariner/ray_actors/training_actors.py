@@ -1,3 +1,6 @@
+"""
+Training/validation/testing related actors
+"""
 from typing import List
 
 import ray
@@ -55,12 +58,12 @@ class TrainingActor:
             dataset: dataset to perform the experiment
         """
         modelconfig = self.experiment.model_version.config
-        model = CustomModel(config=modelconfig, lr=self.request.learning_rate)
+        model = CustomModel(config=modelconfig)
+        model.set_training_parameters(self.request.optimizer)
         df = dataset.get_dataframe()
         datamodule = DataModule(
-            featurizers_config=modelconfig.featurizers,
+            config=modelconfig,
             data=df,
-            dataset_config=modelconfig.dataset,
             split_target=dataset.split_target,
             split_type=dataset.split_type,
             batch_size=self.request.batch_size or 32,

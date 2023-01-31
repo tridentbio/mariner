@@ -18,7 +18,10 @@ from mariner.exceptions import (
     ModelNameAlreadyUsed,
     ModelNotFound,
 )
-from mariner.exceptions.model_exceptions import InvalidDataframe
+from mariner.exceptions.model_exceptions import (
+    InvalidDataframe,
+    ModelVersionNotTrained,
+)
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     Model,
@@ -121,6 +124,11 @@ def post_model_predict(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Model Not Found"
         )
+    except ModelVersionNotTrained:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Model version was not trained yet",
+        )
     if isinstance(prediction, torch.Tensor):
         return prediction.tolist()
     elif isinstance(prediction, DataFrame):
@@ -135,7 +143,7 @@ def get_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    model = controller.get_model_version(db, current_user, model_id)
+    model = controller.get_model(db, current_user, model_id)
     return model
 
 
