@@ -8,6 +8,8 @@ from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
 from mariner.core.config import settings
 
+LOG = logging.getLogger(__name__)
+
 
 class AppLogger(LightningLoggerBase):
     running_history: Dict[str, List[float]]
@@ -59,8 +61,6 @@ class AppLogger(LightningLoggerBase):
         pass
 
     def send(self, msg, msg_type, force=False):
-        if not force and time.time() - self.last_sent_at < 5:
-            return
         data = self.make_contextualized_data()
         data["type"] = msg_type
         data["data"] = msg
@@ -71,22 +71,24 @@ class AppLogger(LightningLoggerBase):
                 headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
             )
             if res.status_code != 200:
-                logging.warning(
-                    "POST %s failed with status %s",
+                LOG.warning(
+                    "POST %s failed with status %s\n%r",
                     f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics",
                     res.status_code,
+                    res.json(),
                 )
 
+            self.last_sent_at = time.time()
+
         except (requests.ConnectionError, requests.ConnectTimeout):
-            logging.error(
-                f"Failed logging metrics to {settings.SERVER_HOST}/api/v1/experiments"
+            LOG.error(
+                f"Failed metrics to {settings.SERVER_HOST}/api/v1/experiments"
                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
                 "the ray services, and that it points to the mariner backend"
             )
         except Exception as exp:
-            logging.error(exp)
-        finally:
-            self.last_sent_at = time.time()
+            LOG.error("Failed to send data from custom logger")
+            LOG.error(exp)
 
     @rank_zero_only
     def finalize(self, status):
