@@ -49,9 +49,10 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         # Handle column info not being from categorical
         if not isinstance(column_info.data_type, CategoricalDataType):
             raise DataTypeMismatchException(
-                f"expecteing CategoricalDataType, but found {column_info.__class__}",
+                "expecteing CategoricalDataType, but found"
+                f"{column_info.data_type.__class__}",
                 expected=CategoricalDataType,
-                got_item=column_info,
+                got_item=column_info.data_type,
             )
         self.classes = column_info.data_type.classes
         self.reversed_classes = {value: key for key, value in self.classes.items()}
