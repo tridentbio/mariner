@@ -18,6 +18,7 @@ from mariner.schemas.dataset_schemas import (
     RNADataType,
     SmileDataType,
     StatsType,
+    StringDataType,
 )
 from mariner.stats import get_metadata, get_stats
 from mariner.utils import decompress_file
@@ -235,13 +236,19 @@ class DatasetTransforms:
             # check if it is smiles
             if is_valid_smiles_series(series):
                 return SmileDataType(domain_kind="smiles")
+
             # check if it is likely to be categorical
             series = series.sort_values()
             uniques = series.unique()
-            return CategoricalDataType(
-                domain_kind="categorical",
-                # Classes will need to be overwritten by complete data type checking
-                classes={val: idx for idx, val in enumerate(uniques)},
+            if len(uniques) / len(series) < 0.4:
+                return CategoricalDataType(
+                    domain_kind="categorical",
+                    # Classes will need to be overwritten by complete data type checking
+                    classes={val: idx for idx, val in enumerate(uniques)},
+                )
+
+            return StringDataType(
+                domain_kind="string",
             )
         elif series.dtype == int:
             series = series.sort_values()
