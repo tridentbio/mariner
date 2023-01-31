@@ -99,7 +99,6 @@ class CustomModel(LightningModule):
         if isinstance(config, str):
             config = ModelSchema.parse_raw(config)
         self.lr = lr
-
         layers_dict = {}
         self.config = config
         self.layer_configs = {layer.name: layer for layer in config.layers}
@@ -119,7 +118,9 @@ class CustomModel(LightningModule):
         loss_fn_class = eval(config.loss_fn)
         self.loss_fn = loss_fn_class()
 
+        # Saving the hyperparams is needed to call CustomModel.load_from_checkpoint()
         self.save_hyperparameters({"config": config.json()})
+
         # Set up metrics for training and validation
         if config.is_regressor():
             self.metrics = Metrics("regressor")
