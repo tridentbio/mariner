@@ -1,3 +1,6 @@
+"""
+Custom pytorch lightning loggers
+"""
 import logging
 import time
 from typing import Dict, List
@@ -12,6 +15,12 @@ LOG = logging.getLogger(__name__)
 
 
 class AppLogger(LightningLoggerBase):
+    """
+    Custom logger that sends the metrics collected to the mariner API
+    through HTTP requests. The API saves the metrics and forwards to the
+    user if online.
+    """
+
     running_history: Dict[str, List[float]]
     experiment_id: int
     experiment_name: str
@@ -33,6 +42,7 @@ class AppLogger(LightningLoggerBase):
         return "0.1"
 
     def make_contextualized_data(self):
+        """Creates base request payload based on instance members"""
         return {
             "experimentName": self.experiment_name,
             "experimentId": self.experiment_id,
@@ -41,10 +51,21 @@ class AppLogger(LightningLoggerBase):
 
     @rank_zero_only
     def log_hyperparams(self, params):
+        """Send hyperparams
+
+        Args:
+            params (Any): hyperparams to be send to the mariner API
+        """
         self.send(params, "hyperparams")
 
     @rank_zero_only
     def log_metrics(self, metrics, step):
+        """Send metrics
+
+        Args:
+            metrics (dict): dictionary with metrics
+            step (int): step
+        """
         data = {
             "metrics": {},
             "epoch": metrics["epoch"] if "epoch" in metrics else None,
@@ -60,7 +81,13 @@ class AppLogger(LightningLoggerBase):
     def save(self):
         pass
 
-    def send(self, msg, msg_type, force=False):
+    def send(self, msg, msg_type):
+        """Sends a message to the mariner API
+
+        Args:
+            msg (dict): request payload
+            msg_type (str): type of the message
+        """
         data = self.make_contextualized_data()
         data["type"] = msg_type
         data["data"] = msg
@@ -98,4 +125,4 @@ class AppLogger(LightningLoggerBase):
         for metric_name, metric_values in self.running_history.items():
             data["metrics"][metric_name] = metric_values[-1]
         data["history"] = self.running_history
-        self.send(data, "metrics", force=True)
+        self.send(data, "metrics")

@@ -15,8 +15,10 @@ from mariner.schemas.dataset_schemas import (
     SmileDataType,
     Split,
 )
+from mariner.schemas.experiment_schemas import TrainingRequest
 from model_builder.dataset import DataModule
 from model_builder.model import CustomModel
+from model_builder.optimizers import AdamOptimizer
 from model_builder.schemas import ModelSchema
 from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string
@@ -82,6 +84,7 @@ async def test_model_building(zinc_extra_dataset: Dataset, model_config_path: st
     with open(model_config_path, "rb") as f:
         model_config = ModelSchema.from_yaml(f.read())
     model = CustomModel(model_config)
+    model.set_training_parameters(optimizer=AdamOptimizer())
     data_module = DataModule(
         config=model_config,
         data=zinc_extra_dataset.get_dataframe(),
