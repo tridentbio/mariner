@@ -21,7 +21,12 @@ def mocked_experiment_payload(some_model: Model):
     version = some_model.versions[-1]
     return {
         "name": experiment_name,
-        "learningRate": 0.05,
+        "optimizer": {
+            "classPath": "torch.optim.Adam",
+            "params": {
+                "lr": 0.05,
+            },
+        },
         "epochs": 1,
         "modelVersionId": version.id,
         "checkpointConfig": {"metricKey": "val_mse", "mode": "min"},

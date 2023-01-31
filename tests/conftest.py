@@ -24,6 +24,7 @@ from mariner.schemas.model_schemas import Model
 from mariner.stores import user_sql
 from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
+from model_builder.optimizers import AdamOptimizer
 from tests.fixtures.dataset import setup_create_dataset, teardown_create_dataset
 from tests.fixtures.events import get_test_events, teardown_events
 from tests.fixtures.experiments import mock_experiment
@@ -112,7 +113,7 @@ async def some_trained_model(
         model_version_id=version.id,
         epochs=1,
         name=random_lower_string(),
-        learning_rate=0.05,
+        optimizer=AdamOptimizer(),
         checkpoint_config=MonitoringConfig(
             mode="min",
             metric_key="val_mse",
