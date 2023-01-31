@@ -76,6 +76,18 @@ def some_dataset(
     teardown_create_dataset(db, ds)
 
 
+@pytest.fixture(scope="module")
+def some_bio_dataset(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    ds = setup_create_dataset(
+        db, client, normal_user_token_headers, file="tests/data/chimpanzee.csv"
+    )
+    assert ds is not None
+    yield ds
+    teardown_create_dataset(db, ds)
+
+
 # MODEL GLOBAL FIXTURES
 @pytest.fixture(scope="module")
 def some_model(

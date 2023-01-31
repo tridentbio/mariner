@@ -1,4 +1,4 @@
-name: DnaExampleModelllll
+name: DnaExampleModel
 dataset:
   name: Dna Example Dataset
   featureColumns:
@@ -6,16 +6,17 @@ dataset:
       dataType:
         domainKind: dna
   targetColumn:
-    name: class
+    name: " class"
     dataType:
       domainKind: categorical
       classes:
-        1: 1
-        2: 2
-        3: 3
-        4: 4
-        5: 5
-        6: 6
+        0: 1
+        1: 2
+        2: 3
+        3: 4
+        4: 5
+        5: 6
+        6: 7
 layers:
   - name: embeddings
     type: torch.nn.Embedding
@@ -70,4 +71,4 @@ layers:
       in_features: 32
       out_features: 1
     forwardArgs:
-      input: ${ctivation linear 1}
+      input: ${activation linear 1}

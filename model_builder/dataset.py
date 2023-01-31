@@ -1,20 +1,34 @@
 """Dataset related classes to use for training/evaluating/testing"""
-from typing import Any
+from typing import Any, Callable, Union
 
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-from torch.utils.data import Subset, random_split
+from torch.utils.data import DataLoader, Subset, random_split
 from torch_geometric.data import Dataset as PygDataset
-from torch_geometric.loader import DataLoader
 
 from model_builder.component_builder import AutoBuilder
+from model_builder.featurizers.base_featurizers import BaseFeaturizer
+from model_builder.featurizers.bio_sequence_featurizer import (
+    DNAFeaturizer,
+    ProteinFeaturizer,
+    RNAFeaturizer,
+)
 from model_builder.featurizers.integer_featurizer import IntegerFeaturizer
 from model_builder.model_schema_query import (
     get_dependencies,
     get_target_columns,
 )
-from model_builder.schemas import CategoricalDataType, ModelSchema
+from model_builder.schemas import (
+    CategoricalDataType,
+    ColumnConfig,
+    DNADataType,
+    ModelSchema,
+    NumericalDataType,
+    ProteinDataType,
+    QuantityDataType,
+    RNADataType,
+)
 from model_builder.utils import DataInstance, get_references_dict
 
 
@@ -37,7 +51,7 @@ class CustomDataset(PygDataset):
         feature_columns (List[str]): List of columns that will be
             used by the model to be extracted.
         featurizers_config (List[AppmoleculefeaturizerLayerConfig]):
-            Object containing information about the featurizers
+            Object containing information about the fAcho que vaeaturizers
             used by the CustomDataset.
         target (str, optional): Name of the columns that will be
             used as the model target for predictions.
@@ -70,19 +84,30 @@ class CustomDataset(PygDataset):
             self._featurizers[featurizer_config.name] = feat
         self.output_featurizer = self.get_output_featurizer()
 
-    def get_output_featurizer(self):
+    def _get_default_featurizer(
+        self, column: ColumnConfig
+    ) -> Union[BaseFeaturizer, None]:
+        """Gets a default featurizer based on the data type"""
+        feat = None
+        if isinstance(column.data_type, CategoricalDataType):
+            feat = IntegerFeaturizer()
+            feat.set_from_model_schema(self.config, [column.name])
+        elif isinstance(column.data_type, DNADataType):
+            feat = DNAFeaturizer()
+        elif isinstance(column.data_type, RNADataType):
+            feat = RNAFeaturizer()
+        elif isinstance(column.data_type, ProteinDataType):
+            feat = ProteinFeaturizer()
+        return feat
+
+    def get_output_featurizer(self) -> Union[BaseFeaturizer, None]:
         """Gets the output featurizer"""
         if not self.target:
             return None
         targets = get_target_columns(self.config)
         # Assume a single target
         target = targets[0]
-        if isinstance(target.data_type, CategoricalDataType):
-            feat = IntegerFeaturizer()
-            feat.set_from_model_schema(self.config, [target.name])
-            return feat
-        else:
-            return None
+        return self._get_default_featurizer(target)
 
     def __len__(self) -> int:
         """Gets the number of rows in the dataset"""
@@ -117,8 +142,14 @@ class CustomDataset(PygDataset):
         # include all unfeaturized columns
         for column in columns_to_include:
             val = sample[column.name]
-            if isinstance(val, (float, int)):
+            if isinstance(column.data_type, (NumericalDataType, QuantityDataType)):
                 data[column.name] = torch.Tensor([val])
+            elif isinstance(
+                column.data_type, (DNADataType, RNADataType, ProteinFeaturizer)
+            ):
+                feat = self._get_default_featurizer(column)
+                assert feat, "dna, rna and protein have a default featurizer"
+                data[column.name] = feat(val)
             else:
                 data[column.name] = val
 
@@ -155,6 +186,8 @@ class DataModule(pl.LightningDataModule):
             about the Dataset used.
         batch_size (int, optional): Number of data instances in each
             batch. Defaults to 32.
+        collate_fn (Callable, optional): Function to be called on a list
+            of samples by the dataloader to build a batch.
     """
 
     train_dataset: Subset[Any]
@@ -168,7 +201,9 @@ class DataModule(pl.LightningDataModule):
         split_target: str,
         config: ModelSchema,
         batch_size=32,
+        collate_fn: Union[Callable, None] = None,
     ):
+        print("Creating a DataModule")
         super().__init__()
         self.dataset_config = config.dataset
         self.featurizers_config = config.featurizers
@@ -180,6 +215,7 @@ class DataModule(pl.LightningDataModule):
         self.split_type = split_type
         self.split_target = split_target
 
+        self.collate_fn = collate_fn
         self.dataset = CustomDataset(
             self.data,
             config,
@@ -197,6 +233,8 @@ class DataModule(pl.LightningDataModule):
         Args:
             stage (_type_, optional): _description_. Defaults to None.
         """
+
+        # TODO: Use split index column instead
         train_split, val_split, _ = self.split_target.split("-")
 
         full_size = len(self.dataset)
@@ -222,6 +260,7 @@ class DataModule(pl.LightningDataModule):
         return DataLoader(
             self.train_dataset,
             self.batch_size,
+            collate_fn=self.collate_fn,
             shuffle=True,
         )
 
@@ -229,12 +268,14 @@ class DataModule(pl.LightningDataModule):
         """Return the DataLoader instance used to test the custom
         model.
 
-        TODO: maybe whe can set drop last or other params in dl.
-
         Returns:
             DataLoader: instance used in test steps.
         """
-        return DataLoader(self.test_dataset, self.batch_size)
+        return DataLoader(
+            self.test_dataset,
+            self.batch_size,
+            collate_fn=self.collate_fn,
+        )
 
     def val_dataloader(self) -> DataLoader:
         """Return the DataLoader used to validate the custom model.
@@ -242,4 +283,8 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in validation steps.
         """
-        return DataLoader(self.val_dataset, self.batch_size)
+        return DataLoader(
+            self.val_dataset,
+            self.batch_size,
+            collate_fn=self.collate_fn,
+        )
