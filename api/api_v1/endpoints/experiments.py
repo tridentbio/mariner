@@ -90,10 +90,13 @@ async def post_update_metrics(
             stage="SUCCESS",
         )
     elif msgtype == "hyperparams":
+        # Don't need to save the config argument of the CustomModel again
+        if 'config' in data:
+            data.pop('config')
         experiments_ctl.log_hyperparams(
             db=db,
             experiment_id=experiment_id,
-            hyperparams=data["hyperparams"],
+            hyperparams=data,
         )
     else:
         raise Exception(f"Failed msg type {msgtype}")

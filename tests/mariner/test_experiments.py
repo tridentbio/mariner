@@ -165,7 +165,6 @@ async def test_experiment_has_stacktrace_when_training_fails(
         # Await for tas
         with pytest.raises(Exception):
             result = await task
-            print(result)
 
         db.commit()
         # Assertions over task outcome
