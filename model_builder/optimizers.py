@@ -27,6 +27,7 @@ class InputDescription(CamelCaseModel):
 
     param_type: Literal["float", "float?"]
     default: Any = None
+    label: str
 
 
 class AdamParamsSchema(BaseModel):
@@ -38,10 +39,18 @@ class AdamParamsSchema(BaseModel):
     class_path: Literal["torch.optim.Adam"] = Field(
         default="torch.optim.Adam", alias="classPath"
     )
-    lr = InputDescription(param_type="float?", default=0.001)
-    beta1 = InputDescription(param_type="float?", default=0.9)
-    beta2 = InputDescription(param_type="float?", default=0.999)
-    eps = InputDescription(param_type="float?", default=1e-8)
+    lr = InputDescription(param_type="float?", default=0.001, label="Learning Rate")
+    beta1 = InputDescription(
+        param_type="float?",
+        default=0.9,
+        label="Beta 1",
+    )
+    beta2 = InputDescription(
+        param_type="float?",
+        default=0.999,
+        label="Beta 2",
+    )
+    eps = InputDescription(param_type="float?", default=1e-8, label="Epsilon")
 
 
 class AdamOptimizer(CamelCaseModel):
@@ -90,8 +99,12 @@ class SGDParamsSchema(BaseModel):
     class_path: Literal["torch.optim.SGD"] = Field(
         default="torch.optim.SGD", alias="classPath"
     )
-    lr = InputDescription(param_type="float", default=0.001)
-    momentum = InputDescription(param_type="float?", default=0)
+    lr = InputDescription(
+        param_type="float",
+        default=0.001,
+        label="Learning Rate",
+    )
+    momentum = InputDescription(param_type="float?", default=0, label="Momentum")
 
 
 class SGDOptimizer(CamelCaseModel):
