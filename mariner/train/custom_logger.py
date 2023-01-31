@@ -11,6 +11,8 @@ from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
 from mariner.core.config import settings
 
+LOG = logging.getLogger(__name__)
+
 
 class AppLogger(LightningLoggerBase):
     """
@@ -79,18 +81,13 @@ class AppLogger(LightningLoggerBase):
     def save(self):
         pass
 
-    def send(self, msg, msg_type, force=False):
+    def send(self, msg, msg_type):
         """Sends a message to the mariner API
-
-        Only sends message after 5 seconds from previously sent one
 
         Args:
             msg (dict): request payload
             msg_type (str): type of the message
-            force (bool): if the request should be sent even under threshold time
         """
-        if not force and time.time() - self.last_sent_at < 5:
-            return
         data = self.make_contextualized_data()
         data["type"] = msg_type
         data["data"] = msg
@@ -101,22 +98,24 @@ class AppLogger(LightningLoggerBase):
                 headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
             )
             if res.status_code != 200:
-                logging.warning(
-                    "POST %s failed with status %s",
+                LOG.warning(
+                    "POST %s failed with status %s\n%r",
                     f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics",
                     res.status_code,
+                    res.json(),
                 )
 
+            self.last_sent_at = time.time()
+
         except (requests.ConnectionError, requests.ConnectTimeout):
-            logging.error(
-                f"Failed logging metrics to {settings.SERVER_HOST}/api/v1/experiments"
+            LOG.error(
+                f"Failed metrics to {settings.SERVER_HOST}/api/v1/experiments"
                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
                 "the ray services, and that it points to the mariner backend"
             )
         except Exception as exp:
-            logging.error(exp)
-        finally:
-            self.last_sent_at = time.time()
+            LOG.error("Failed to send data from custom logger")
+            LOG.error(exp)
 
     @rank_zero_only
     def finalize(self, status):
@@ -126,4 +125,4 @@ class AppLogger(LightningLoggerBase):
         for metric_name, metric_values in self.running_history.items():
             data["metrics"][metric_name] = metric_values[-1]
         data["history"] = self.running_history
-        self.send(data, "metrics", force=True)
+        self.send(data, "metrics")
