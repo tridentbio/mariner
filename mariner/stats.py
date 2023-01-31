@@ -160,7 +160,6 @@ def create_int_histogram(data: pd.Series, bins: int) -> Dict[str, Any]:
             "bin_end": histogram[1][index + 1],
             "count": int(count),
         }
-        data_point["label"] = str(int(data_point["bin_end"] - 0.5))
         histogram_data["values"].append(data_point)
 
     histogram_data["values"].append(
