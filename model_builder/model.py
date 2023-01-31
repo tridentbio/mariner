@@ -157,7 +157,6 @@ class CustomModel(LightningModule):
         loss_fn_class = eval(config.loss_fn)
         self.loss_fn = loss_fn_class()
 
-        self.save_hyperparameters({"config": config.json()})
         # Set up metrics for training and validation
         if config.is_regressor():
             self.metrics = Metrics("regressor")
@@ -180,6 +179,8 @@ class CustomModel(LightningModule):
             training_request:
         """
         self.optimizer = optimizer
+
+        self.save_hyperparameters({"config": self.config.json(), "learning_rate": self.optimizer.params.lr})
 
     def forward(self, input: DataInstance):  # type: ignore
         last = input
