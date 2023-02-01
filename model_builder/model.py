@@ -180,7 +180,9 @@ class CustomModel(LightningModule):
         """
         self.optimizer = optimizer
 
-        self.save_hyperparameters({"config": self.config.json(), "learning_rate": self.optimizer.params.lr})
+        self.save_hyperparameters(
+            {"config": self.config.json(), "learning_rate": self.optimizer.params.lr}
+        )
 
     def forward(self, input: DataInstance):  # type: ignore
         last = input
