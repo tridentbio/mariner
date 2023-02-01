@@ -1,3 +1,6 @@
+"""
+Experiment schemas
+"""
 from typing import Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
@@ -35,19 +38,27 @@ class EarlyStoppingConfig(ApiBaseModel):
 
 
 class TrainingRequest(ApiBaseModel):
+    """
+    Configure options for starting a training
+    """
+
     name: str
     model_version_id: int
     epochs: int
     batch_size: Optional[int] = None
     checkpoint_config: MonitoringConfig
     optimizer: Optimizer
-    early_stopping_config: EarlyStoppingConfig
+    early_stopping_config: Optional[EarlyStoppingConfig]
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]
 
 
 class Experiment(ApiBaseModel):
+    """
+    Experiment entry
+    """
+
     experiment_name: Optional[str]
     model_version_id: int
     model_version: ModelVersion
@@ -68,6 +79,10 @@ class Experiment(ApiBaseModel):
 
 
 class ListExperimentsQuery:
+    """
+    Used to get the listing experiments query from the querystring
+    """
+
     def __init__(
         self,
         stage: Union[list[str], None] = Query(default=None),
@@ -88,6 +103,12 @@ class ListExperimentsQuery:
 
 
 class RunningHistory(ApiBaseModel):
+    """
+    Objects used to update the frontend progress bar of a training.
+    Sends complete metrics history for a client to catch up (in case
+    of missing EpochUpdates)
+    """
+
     experiment_id: int
     user_id: int
     # maps metric name to values
@@ -95,5 +116,9 @@ class RunningHistory(ApiBaseModel):
 
 
 class EpochUpdate(ApiBaseModel):
+    """
+    Update the client with the metrics gotten from a single training step
+    """
+
     experiment_id: str
     metrics: Dict[str, float]
