@@ -1,7 +1,7 @@
 """Base class for featurizers
 """
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Any
 
 import torch
 
@@ -29,7 +29,18 @@ class ReversibleFeaturizer(BaseFeaturizer[T], ABC):
     """Base class for reversible featurizers."""
 
     @abstractmethod
-    def undo(self, input_: torch.Tensor) -> T:
+    def featurize(self, input_: T) -> torch.Tensor:
+        """Featurize a sequence
+
+        Args:
+            input_: tensor
+
+        Returns:
+            the return value has type equals the column featurized
+        """
+
+    @abstractmethod
+    def unfeaturize(self, input_: torch.Tensor) -> T:
         """Inverse of the featurization
 
         Args:

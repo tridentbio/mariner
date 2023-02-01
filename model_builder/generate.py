@@ -24,6 +24,11 @@ featurizers = [
     Layer(name)
     for name in [
         "model_builder.featurizers.MoleculeFeaturizer",
+        "model_builder.featurizers.IntegerFeaturizer",
+        
+        "model_builder.featurizers.DNASequenceFeaturizer",
+        "model_builder.featurizers.RNASequenceFeaturizer",
+        "model_builder.featurizers.ProteinSequenceFeaturizer"
     ]
 ]
 

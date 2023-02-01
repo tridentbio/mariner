@@ -9,11 +9,6 @@ from torch_geometric.data import Dataset as PygDataset
 
 from model_builder.component_builder import AutoBuilder
 from model_builder.featurizers.base_featurizers import BaseFeaturizer
-from model_builder.featurizers.bio_sequence_featurizer import (
-    DNAFeaturizer,
-    ProteinFeaturizer,
-    RNAFeaturizer,
-)
 from model_builder.featurizers.integer_featurizer import IntegerFeaturizer
 from model_builder.model_schema_query import (
     get_dependencies,
@@ -72,8 +67,8 @@ class CustomDataset(PygDataset):
         return self.config.featurizers
 
     def setup(self):
-        """Instantiates input and ouput featurizers"""
-        # Instanciate all featurizers
+        """Instantiates input and output featurizers"""
+        # Instantiate all featurizers
         self._featurizers = {}
         for featurizer_config in self.get_featurizer_configs():
             feat = featurizer_config.create()
@@ -92,22 +87,16 @@ class CustomDataset(PygDataset):
         if isinstance(column.data_type, CategoricalDataType):
             feat = IntegerFeaturizer()
             feat.set_from_model_schema(self.config, [column.name])
-        elif isinstance(column.data_type, DNADataType):
-            feat = DNAFeaturizer()
-        elif isinstance(column.data_type, RNADataType):
-            feat = RNAFeaturizer()
-        elif isinstance(column.data_type, ProteinDataType):
-            feat = ProteinFeaturizer()
         return feat
 
     def get_output_featurizer(self) -> Union[BaseFeaturizer, None]:
         """Gets the output featurizer"""
-        if not self.target:
-            return None
-        targets = get_target_columns(self.config)
-        # Assume a single target
-        target = targets[0]
-        return self._get_default_featurizer(target)
+        if self.target:
+            targets = get_target_columns(self.config)
+            # Assume a single target
+            target = targets[0]
+            return self._get_default_featurizer(target)
+
 
     def __len__(self) -> int:
         """Gets the number of rows in the dataset"""
@@ -121,25 +110,31 @@ class CustomDataset(PygDataset):
         Returns:
             DataInstance with all values of that row
         """
+        # Instantiate the data instance
         data = DataInstance()
+        
+        # Convert the row to a dictionary
         sample = dict(self.data.iloc[index, :])
+        
+        # Subset columns
         columns_to_include = self.config.dataset.feature_columns
+        
         # Featurize all of the columns that pass into a
-        # featurizer before include in the data instance
+        # featurizer before including in the data instance
         for featurizer in self.get_featurizer_configs():
+            
             references = get_references_dict(featurizer.forward_args.dict())
             assert len(references) == 1, "only 1 forward arg for featurizers for now"
             col_name = list(references.values())[0]
-            data[featurizer.name] = [
-                self._featurizers[featurizer.name](sample[col_name])
-            ]
-            # Remove featurized columns from columsn_to_include
-            # since it's featurized value was already included
+            data[featurizer.name] = self._featurizers[featurizer.name](sample[col_name])
+
+            # Remove featurized columns from columns_to_include
+            # since its featurized value was already included
             for index, col in enumerate(columns_to_include):
                 if col.name == col_name:
                     columns_to_include.pop(index)
 
-        # include all unfeaturized columns
+        # Include all unfeaturized columns
         for column in columns_to_include:
             val = sample[column.name]
             if isinstance(column.data_type, (NumericalDataType, QuantityDataType)):
