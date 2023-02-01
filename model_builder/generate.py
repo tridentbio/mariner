@@ -109,10 +109,6 @@ def get_component_signature(class_def: Any, method_name: str) -> Optional[Signat
     if method_name not in dir(class_def):
         return None
     method = getattr(class_def, method_name)
-    if "__code__" not in dir(method):
-        raise Exception(
-            "Unsure how to introspect method {method_name} with no __code__"
-        )
     return signature(method)
 
 
