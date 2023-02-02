@@ -12,19 +12,19 @@ from model_builder.utils import CamelCaseModel, get_class_from_path_string
 
 
 def get_module_name(classpath: str) -> str:
-    return '.'.join(classpath.split('.')[:-1])
+    return ".".join(classpath.split(".")[:-1])
+
 
 def is_func(obj):
-  return str(type(obj)) == "<class 'function'>"
+    return str(type(obj)) == "<class 'function'>"
 
 
 class ModelbuilderonehotConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.layers.OneHot
-    
+
     Generated code
     """
-
 
 
 class ModelbuilderonehotForwardArgsSummary(BaseModel):
@@ -36,24 +36,20 @@ class ModelbuilderonehotForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     x1 = "typing.Union[list[str], list[int]]"
 
+
 class ModelbuilderonehotForwardArgsReferences(BaseModel):
-    
+
     x1: str
-    
-
-
 
 
 class ModelbuilderonehotSummary(CamelCaseModel):
-    type: Literal["model_builder.layers.OneHot"] = 'model_builder.layers.OneHot'
+    type: Literal["model_builder.layers.OneHot"] = "model_builder.layers.OneHot"
     constructor_args_summary = ModelbuilderonehotConstructorArgsSummary()
-    
+
     forward_args_summary = ModelbuilderonehotForwardArgsSummary()
-    
-
-
 
 
 class ModelbuilderonehotLayerConfig(CamelCaseModel):
@@ -65,31 +61,27 @@ class ModelbuilderonehotLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.layers.OneHot"] = 'model_builder.layers.OneHot'
+
+    type: Literal["model_builder.layers.OneHot"] = "model_builder.layers.OneHot"
     name: str
-    
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls()
-    
-    
+
     forward_args: ModelbuilderonehotForwardArgsReferences
-
-    
-
-
 
 
 class ModelbuilderglobalpoolingConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.layers.GlobalPooling
-    
+
     Generated code
     """
-    aggr = "<class 'str'>"
 
+    aggr = "<class 'str'>"
 
 
 class ModelbuilderglobalpoolingForwardArgsSummary(BaseModel):
@@ -101,27 +93,27 @@ class ModelbuilderglobalpoolingForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     x = "<class 'torch.Tensor'>"
-    batch =  "typing.Optional[torch.Tensor]?"
-    size =  "typing.Optional[int]?"
+    batch = "typing.Optional[torch.Tensor]?"
+    size = "typing.Optional[int]?"
+
 
 class ModelbuilderglobalpoolingForwardArgsReferences(BaseModel):
-    
+
     x: str
-    
+
     batch: Optional[str] = None
     size: Optional[str] = None
 
 
-
-
 class ModelbuilderglobalpoolingSummary(CamelCaseModel):
-    type: Literal["model_builder.layers.GlobalPooling"] = 'model_builder.layers.GlobalPooling'
+    type: Literal[
+        "model_builder.layers.GlobalPooling"
+    ] = "model_builder.layers.GlobalPooling"
     constructor_args_summary = ModelbuilderglobalpoolingConstructorArgsSummary()
-    
-    forward_args_summary = ModelbuilderglobalpoolingForwardArgsSummary()
-    
 
+    forward_args_summary = ModelbuilderglobalpoolingForwardArgsSummary()
 
 
 class ModelbuilderglobalpoolingConstructorArgs(BaseModel):
@@ -130,10 +122,8 @@ class ModelbuilderglobalpoolingConstructorArgs(BaseModel):
 
     Generated code
     """
+
     aggr: str
-
-
-
 
 
 class ModelbuilderglobalpoolingLayerConfig(CamelCaseModel):
@@ -145,32 +135,31 @@ class ModelbuilderglobalpoolingLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.layers.GlobalPooling"] = 'model_builder.layers.GlobalPooling'
+
+    type: Literal[
+        "model_builder.layers.GlobalPooling"
+    ] = "model_builder.layers.GlobalPooling"
     name: str
-    
+
     constructor_args: ModelbuilderglobalpoolingConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: ModelbuilderglobalpoolingForwardArgsReferences
-
-    
-
-
 
 
 class ModelbuilderconcatConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.layers.Concat
-    
+
     Generated code
     """
-    dim = "<class 'int'>?"
 
+    dim = "<class 'int'>?"
 
 
 class ModelbuilderconcatForwardArgsSummary(BaseModel):
@@ -182,23 +171,20 @@ class ModelbuilderconcatForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     xs = "typing.List[torch.Tensor]"
 
+
 class ModelbuilderconcatForwardArgsReferences(BaseModel):
-    
+
     xs: List[str]
-    
-
-
 
 
 class ModelbuilderconcatSummary(CamelCaseModel):
-    type: Literal["model_builder.layers.Concat"] = 'model_builder.layers.Concat'
+    type: Literal["model_builder.layers.Concat"] = "model_builder.layers.Concat"
     constructor_args_summary = ModelbuilderconcatConstructorArgsSummary()
-    
-    forward_args_summary = ModelbuilderconcatForwardArgsSummary()
-    
 
+    forward_args_summary = ModelbuilderconcatForwardArgsSummary()
 
 
 class ModelbuilderconcatConstructorArgs(BaseModel):
@@ -207,10 +193,8 @@ class ModelbuilderconcatConstructorArgs(BaseModel):
 
     Generated code
     """
+
     dim: Optional[int] = None
-
-
-
 
 
 class ModelbuilderconcatLayerConfig(CamelCaseModel):
@@ -222,32 +206,29 @@ class ModelbuilderconcatLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.layers.Concat"] = 'model_builder.layers.Concat'
+
+    type: Literal["model_builder.layers.Concat"] = "model_builder.layers.Concat"
     name: str
-    
+
     constructor_args: ModelbuilderconcatConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: ModelbuilderconcatForwardArgsReferences
-
-    
-
-
 
 
 class ModelbuilderaddpoolingConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.layers.AddPooling
-    
+
     Generated code
     """
-    dim = "typing.Optional[int]?"
 
+    dim = "typing.Optional[int]?"
 
 
 class ModelbuilderaddpoolingForwardArgsSummary(BaseModel):
@@ -259,23 +240,20 @@ class ModelbuilderaddpoolingForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     x = "<class 'torch.Tensor'>"
 
+
 class ModelbuilderaddpoolingForwardArgsReferences(BaseModel):
-    
+
     x: str
-    
-
-
 
 
 class ModelbuilderaddpoolingSummary(CamelCaseModel):
-    type: Literal["model_builder.layers.AddPooling"] = 'model_builder.layers.AddPooling'
+    type: Literal["model_builder.layers.AddPooling"] = "model_builder.layers.AddPooling"
     constructor_args_summary = ModelbuilderaddpoolingConstructorArgsSummary()
-    
-    forward_args_summary = ModelbuilderaddpoolingForwardArgsSummary()
-    
 
+    forward_args_summary = ModelbuilderaddpoolingForwardArgsSummary()
 
 
 class ModelbuilderaddpoolingConstructorArgs(BaseModel):
@@ -284,10 +262,8 @@ class ModelbuilderaddpoolingConstructorArgs(BaseModel):
 
     Generated code
     """
+
     dim: Optional[Optional[int]] = None
-
-
-
 
 
 class ModelbuilderaddpoolingLayerConfig(CamelCaseModel):
@@ -299,34 +275,31 @@ class ModelbuilderaddpoolingLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.layers.AddPooling"] = 'model_builder.layers.AddPooling'
+
+    type: Literal["model_builder.layers.AddPooling"] = "model_builder.layers.AddPooling"
     name: str
-    
+
     constructor_args: ModelbuilderaddpoolingConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: ModelbuilderaddpoolingForwardArgsReferences
-
-    
-
-
 
 
 class TorchlinearConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch.nn.Linear
-    
+
     Generated code
     """
+
     in_features = "<class 'int'>"
     out_features = "<class 'int'>"
     bias = "<class 'bool'>?"
-
 
 
 class TorchlinearForwardArgsSummary(BaseModel):
@@ -338,23 +311,20 @@ class TorchlinearForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     input = "<class 'torch.Tensor'>"
 
+
 class TorchlinearForwardArgsReferences(BaseModel):
-    
+
     input: str
-    
-
-
 
 
 class TorchlinearSummary(CamelCaseModel):
-    type: Literal["torch.nn.Linear"] = 'torch.nn.Linear'
+    type: Literal["torch.nn.Linear"] = "torch.nn.Linear"
     constructor_args_summary = TorchlinearConstructorArgsSummary()
-    
-    forward_args_summary = TorchlinearForwardArgsSummary()
-    
 
+    forward_args_summary = TorchlinearForwardArgsSummary()
 
 
 class TorchlinearConstructorArgs(BaseModel):
@@ -363,12 +333,10 @@ class TorchlinearConstructorArgs(BaseModel):
 
     Generated code
     """
+
     in_features: int
     out_features: int
     bias: Optional[bool] = None
-
-
-
 
 
 class TorchlinearLayerConfig(CamelCaseModel):
@@ -380,31 +348,27 @@ class TorchlinearLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["torch.nn.Linear"] = 'torch.nn.Linear'
+
+    type: Literal["torch.nn.Linear"] = "torch.nn.Linear"
     name: str
-    
+
     constructor_args: TorchlinearConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: TorchlinearForwardArgsReferences
-
-    
-
-
 
 
 class TorchsigmoidConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch.nn.Sigmoid
-    
+
     Generated code
     """
-
 
 
 class TorchsigmoidForwardArgsSummary(BaseModel):
@@ -416,24 +380,20 @@ class TorchsigmoidForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     input = "<class 'torch.Tensor'>"
 
+
 class TorchsigmoidForwardArgsReferences(BaseModel):
-    
+
     input: str
-    
-
-
 
 
 class TorchsigmoidSummary(CamelCaseModel):
-    type: Literal["torch.nn.Sigmoid"] = 'torch.nn.Sigmoid'
+    type: Literal["torch.nn.Sigmoid"] = "torch.nn.Sigmoid"
     constructor_args_summary = TorchsigmoidConstructorArgsSummary()
-    
+
     forward_args_summary = TorchsigmoidForwardArgsSummary()
-    
-
-
 
 
 class TorchsigmoidLayerConfig(CamelCaseModel):
@@ -445,31 +405,27 @@ class TorchsigmoidLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["torch.nn.Sigmoid"] = 'torch.nn.Sigmoid'
+
+    type: Literal["torch.nn.Sigmoid"] = "torch.nn.Sigmoid"
     name: str
-    
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls()
-    
-    
+
     forward_args: TorchsigmoidForwardArgsReferences
-
-    
-
-
 
 
 class TorchreluConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch.nn.ReLU
-    
+
     Generated code
     """
-    inplace = "<class 'bool'>?"
 
+    inplace = "<class 'bool'>?"
 
 
 class TorchreluForwardArgsSummary(BaseModel):
@@ -481,23 +437,20 @@ class TorchreluForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     input = "<class 'torch.Tensor'>"
 
+
 class TorchreluForwardArgsReferences(BaseModel):
-    
+
     input: str
-    
-
-
 
 
 class TorchreluSummary(CamelCaseModel):
-    type: Literal["torch.nn.ReLU"] = 'torch.nn.ReLU'
+    type: Literal["torch.nn.ReLU"] = "torch.nn.ReLU"
     constructor_args_summary = TorchreluConstructorArgsSummary()
-    
-    forward_args_summary = TorchreluForwardArgsSummary()
-    
 
+    forward_args_summary = TorchreluForwardArgsSummary()
 
 
 class TorchreluConstructorArgs(BaseModel):
@@ -506,10 +459,8 @@ class TorchreluConstructorArgs(BaseModel):
 
     Generated code
     """
+
     inplace: Optional[bool] = None
-
-
-
 
 
 class TorchreluLayerConfig(CamelCaseModel):
@@ -521,30 +472,28 @@ class TorchreluLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["torch.nn.ReLU"] = 'torch.nn.ReLU'
+
+    type: Literal["torch.nn.ReLU"] = "torch.nn.ReLU"
     name: str
-    
+
     constructor_args: TorchreluConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: TorchreluForwardArgsReferences
-
-    
-
-
 
 
 class TorchgeometricgcnconvConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch_geometric.nn.GCNConv
-    
+
     Generated code
     """
+
     in_channels = "<class 'int'>"
     out_channels = "<class 'int'>"
     improved = "<class 'bool'>?"
@@ -552,7 +501,6 @@ class TorchgeometricgcnconvConstructorArgsSummary(BaseModel):
     add_self_loops = "<class 'bool'>?"
     normalize = "<class 'bool'>?"
     bias = "<class 'bool'>?"
-
 
 
 class TorchgeometricgcnconvForwardArgsSummary(BaseModel):
@@ -564,29 +512,26 @@ class TorchgeometricgcnconvForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     x = "<class 'torch.Tensor'>"
     edge_index = "typing.Union[torch.Tensor, torch_sparse.tensor.SparseTensor]"
-    edge_weight =  "typing.Optional[torch.Tensor]?"
+    edge_weight = "typing.Optional[torch.Tensor]?"
+
 
 class TorchgeometricgcnconvForwardArgsReferences(BaseModel):
-    
+
     x: str
-    
-    
+
     edge_index: str
-    
+
     edge_weight: Optional[str] = None
 
 
-
-
 class TorchgeometricgcnconvSummary(CamelCaseModel):
-    type: Literal["torch_geometric.nn.GCNConv"] = 'torch_geometric.nn.GCNConv'
+    type: Literal["torch_geometric.nn.GCNConv"] = "torch_geometric.nn.GCNConv"
     constructor_args_summary = TorchgeometricgcnconvConstructorArgsSummary()
-    
-    forward_args_summary = TorchgeometricgcnconvForwardArgsSummary()
-    
 
+    forward_args_summary = TorchgeometricgcnconvForwardArgsSummary()
 
 
 class TorchgeometricgcnconvConstructorArgs(BaseModel):
@@ -595,6 +540,7 @@ class TorchgeometricgcnconvConstructorArgs(BaseModel):
 
     Generated code
     """
+
     in_channels: int
     out_channels: int
     improved: Optional[bool] = None
@@ -602,9 +548,6 @@ class TorchgeometricgcnconvConstructorArgs(BaseModel):
     add_self_loops: Optional[bool] = None
     normalize: Optional[bool] = None
     bias: Optional[bool] = None
-
-
-
 
 
 class TorchgeometricgcnconvLayerConfig(CamelCaseModel):
@@ -616,30 +559,28 @@ class TorchgeometricgcnconvLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["torch_geometric.nn.GCNConv"] = 'torch_geometric.nn.GCNConv'
+
+    type: Literal["torch_geometric.nn.GCNConv"] = "torch_geometric.nn.GCNConv"
     name: str
-    
+
     constructor_args: TorchgeometricgcnconvConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: TorchgeometricgcnconvForwardArgsReferences
-
-    
-
-
 
 
 class TorchembeddingConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch.nn.Embedding
-    
+
     Generated code
     """
+
     num_embeddings = "<class 'int'>"
     embedding_dim = "<class 'int'>"
     padding_idx = "typing.Optional[int]?"
@@ -648,7 +589,6 @@ class TorchembeddingConstructorArgsSummary(BaseModel):
     scale_grad_by_freq = "<class 'bool'>?"
     sparse = "<class 'bool'>?"
     _weight = "typing.Optional[torch.Tensor]?"
-
 
 
 class TorchembeddingForwardArgsSummary(BaseModel):
@@ -660,23 +600,20 @@ class TorchembeddingForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     input = "<class 'torch.Tensor'>"
 
+
 class TorchembeddingForwardArgsReferences(BaseModel):
-    
+
     input: str
-    
-
-
 
 
 class TorchembeddingSummary(CamelCaseModel):
-    type: Literal["torch.nn.Embedding"] = 'torch.nn.Embedding'
+    type: Literal["torch.nn.Embedding"] = "torch.nn.Embedding"
     constructor_args_summary = TorchembeddingConstructorArgsSummary()
-    
-    forward_args_summary = TorchembeddingForwardArgsSummary()
-    
 
+    forward_args_summary = TorchembeddingForwardArgsSummary()
 
 
 class TorchembeddingConstructorArgs(BaseModel):
@@ -685,6 +622,7 @@ class TorchembeddingConstructorArgs(BaseModel):
 
     Generated code
     """
+
     num_embeddings: int
     embedding_dim: int
     padding_idx: Optional[Optional[int]] = None
@@ -693,9 +631,6 @@ class TorchembeddingConstructorArgs(BaseModel):
     scale_grad_by_freq: Optional[bool] = None
     sparse: Optional[bool] = None
     _weight: Optional[Optional[torch.Tensor]] = None
-
-
-
 
 
 class TorchembeddingLayerConfig(CamelCaseModel):
@@ -707,30 +642,28 @@ class TorchembeddingLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["torch.nn.Embedding"] = 'torch.nn.Embedding'
+
+    type: Literal["torch.nn.Embedding"] = "torch.nn.Embedding"
     name: str
-    
+
     constructor_args: TorchembeddingConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: TorchembeddingForwardArgsReferences
-
-    
-
-
 
 
 class TorchtransformerencoderlayerConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate torch.nn.TransformerEncoderLayer
-    
+
     Generated code
     """
+
     d_model = "<class 'int'>"
     nhead = "<class 'int'>"
     dim_feedforward = "<class 'int'>?"
@@ -739,7 +672,6 @@ class TorchtransformerencoderlayerConstructorArgsSummary(BaseModel):
     layer_norm_eps = "<class 'float'>?"
     batch_first = "<class 'bool'>?"
     norm_first = "<class 'bool'>?"
-
 
 
 class TorchtransformerencoderlayerForwardArgsSummary(BaseModel):
@@ -751,27 +683,27 @@ class TorchtransformerencoderlayerForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     src = "<class 'torch.Tensor'>"
-    src_mask =  "typing.Optional[torch.Tensor]?"
-    src_key_padding_mask =  "typing.Optional[torch.Tensor]?"
+    src_mask = "typing.Optional[torch.Tensor]?"
+    src_key_padding_mask = "typing.Optional[torch.Tensor]?"
+
 
 class TorchtransformerencoderlayerForwardArgsReferences(BaseModel):
-    
+
     src: str
-    
+
     src_mask: Optional[str] = None
     src_key_padding_mask: Optional[str] = None
 
 
-
-
 class TorchtransformerencoderlayerSummary(CamelCaseModel):
-    type: Literal["torch.nn.TransformerEncoderLayer"] = 'torch.nn.TransformerEncoderLayer'
+    type: Literal[
+        "torch.nn.TransformerEncoderLayer"
+    ] = "torch.nn.TransformerEncoderLayer"
     constructor_args_summary = TorchtransformerencoderlayerConstructorArgsSummary()
-    
-    forward_args_summary = TorchtransformerencoderlayerForwardArgsSummary()
-    
 
+    forward_args_summary = TorchtransformerencoderlayerForwardArgsSummary()
 
 
 class TorchtransformerencoderlayerConstructorArgs(BaseModel):
@@ -780,6 +712,7 @@ class TorchtransformerencoderlayerConstructorArgs(BaseModel):
 
     Generated code
     """
+
     d_model: int
     nhead: int
     dim_feedforward: Optional[int] = None
@@ -788,9 +721,6 @@ class TorchtransformerencoderlayerConstructorArgs(BaseModel):
     layer_norm_eps: Optional[float] = None
     batch_first: Optional[bool] = None
     norm_first: Optional[bool] = None
-
-
-
 
 
 class TorchtransformerencoderlayerLayerConfig(CamelCaseModel):
@@ -802,34 +732,33 @@ class TorchtransformerencoderlayerLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["torch.nn.TransformerEncoderLayer"] = 'torch.nn.TransformerEncoderLayer'
+
+    type: Literal[
+        "torch.nn.TransformerEncoderLayer"
+    ] = "torch.nn.TransformerEncoderLayer"
     name: str
-    
+
     constructor_args: TorchtransformerencoderlayerConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: TorchtransformerencoderlayerForwardArgsReferences
-
-    
-
-
 
 
 class ModelbuildermoleculefeaturizerConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.featurizers.MoleculeFeaturizer
-    
+
     Generated code
     """
+
     allow_unknown = "<class 'bool'>"
     sym_bond_list = "<class 'bool'>"
     per_atom_fragmentation = "<class 'bool'>"
-
 
 
 class ModelbuildermoleculefeaturizerForwardArgsSummary(BaseModel):
@@ -841,23 +770,22 @@ class ModelbuildermoleculefeaturizerForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     mol = "typing.Union[rdkit.Chem.rdchem.Mol, str]"
 
+
 class ModelbuildermoleculefeaturizerForwardArgsReferences(BaseModel):
-    
+
     mol: str
-    
-
-
 
 
 class ModelbuildermoleculefeaturizerSummary(CamelCaseModel):
-    type: Literal["model_builder.featurizers.MoleculeFeaturizer"] = 'model_builder.featurizers.MoleculeFeaturizer'
+    type: Literal[
+        "model_builder.featurizers.MoleculeFeaturizer"
+    ] = "model_builder.featurizers.MoleculeFeaturizer"
     constructor_args_summary = ModelbuildermoleculefeaturizerConstructorArgsSummary()
-    
-    forward_args_summary = ModelbuildermoleculefeaturizerForwardArgsSummary()
-    
 
+    forward_args_summary = ModelbuildermoleculefeaturizerForwardArgsSummary()
 
 
 class ModelbuildermoleculefeaturizerConstructorArgs(BaseModel):
@@ -866,12 +794,10 @@ class ModelbuildermoleculefeaturizerConstructorArgs(BaseModel):
 
     Generated code
     """
+
     allow_unknown: bool
     sym_bond_list: bool
     per_atom_fragmentation: bool
-
-
-
 
 
 class ModelbuildermoleculefeaturizerLayerConfig(CamelCaseModel):
@@ -883,39 +809,56 @@ class ModelbuildermoleculefeaturizerLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.featurizers.MoleculeFeaturizer"] = 'model_builder.featurizers.MoleculeFeaturizer'
+
+    type: Literal[
+        "model_builder.featurizers.MoleculeFeaturizer"
+    ] = "model_builder.featurizers.MoleculeFeaturizer"
     name: str
-    
+
     constructor_args: ModelbuildermoleculefeaturizerConstructorArgs
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls(**self.constructor_args.dict())
-    
-    
+
     forward_args: ModelbuildermoleculefeaturizerForwardArgsReferences
-
-    
-
-
 
 
 class ModelbuilderintegerfeaturizerConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.featurizers.IntegerFeaturizer
-    
+
     Generated code
     """
 
 
+class ModelbuilderintegerfeaturizerForwardArgsSummary(BaseModel):
+    """
+    Maps to references for the the arguments of model_builder.featurizers.IntegerFeaturizer.forward or model_builder.featurizers.IntegerFeaturizer.__call__
+
+    References can be names of layers/featurizers defined in the same model config or reference an attribute
+    of the same component
+
+    Generated code
+    """
+
+    input = "<class 'str'>"
+
+
+class ModelbuilderintegerfeaturizerForwardArgsReferences(BaseModel):
+
+    input: str
+
 
 class ModelbuilderintegerfeaturizerSummary(CamelCaseModel):
-    type: Literal["model_builder.featurizers.IntegerFeaturizer"] = 'model_builder.featurizers.IntegerFeaturizer'
+    type: Literal[
+        "model_builder.featurizers.IntegerFeaturizer"
+    ] = "model_builder.featurizers.IntegerFeaturizer"
     constructor_args_summary = ModelbuilderintegerfeaturizerConstructorArgsSummary()
-    
 
-
+    forward_args_summary = ModelbuilderintegerfeaturizerForwardArgsSummary()
 
 
 class ModelbuilderintegerfeaturizerLayerConfig(CamelCaseModel):
@@ -927,27 +870,27 @@ class ModelbuilderintegerfeaturizerLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.featurizers.IntegerFeaturizer"] = 'model_builder.featurizers.IntegerFeaturizer'
+
+    type: Literal[
+        "model_builder.featurizers.IntegerFeaturizer"
+    ] = "model_builder.featurizers.IntegerFeaturizer"
     name: str
-    
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls()
-    
-    
 
-
+    forward_args: ModelbuilderintegerfeaturizerForwardArgsReferences
 
 
 class ModelbuilderdnasequencefeaturizerConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.featurizers.DNASequenceFeaturizer
-    
+
     Generated code
     """
-
 
 
 class ModelbuilderdnasequencefeaturizerForwardArgsSummary(BaseModel):
@@ -959,24 +902,22 @@ class ModelbuilderdnasequencefeaturizerForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     input_ = "<class 'str'>"
 
+
 class ModelbuilderdnasequencefeaturizerForwardArgsReferences(BaseModel):
-    
+
     input_: str
-    
-
-
 
 
 class ModelbuilderdnasequencefeaturizerSummary(CamelCaseModel):
-    type: Literal["model_builder.featurizers.DNASequenceFeaturizer"] = 'model_builder.featurizers.DNASequenceFeaturizer'
+    type: Literal[
+        "model_builder.featurizers.DNASequenceFeaturizer"
+    ] = "model_builder.featurizers.DNASequenceFeaturizer"
     constructor_args_summary = ModelbuilderdnasequencefeaturizerConstructorArgsSummary()
-    
+
     forward_args_summary = ModelbuilderdnasequencefeaturizerForwardArgsSummary()
-    
-
-
 
 
 class ModelbuilderdnasequencefeaturizerLayerConfig(CamelCaseModel):
@@ -988,30 +929,27 @@ class ModelbuilderdnasequencefeaturizerLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.featurizers.DNASequenceFeaturizer"] = 'model_builder.featurizers.DNASequenceFeaturizer'
+
+    type: Literal[
+        "model_builder.featurizers.DNASequenceFeaturizer"
+    ] = "model_builder.featurizers.DNASequenceFeaturizer"
     name: str
-    
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls()
-    
-    
+
     forward_args: ModelbuilderdnasequencefeaturizerForwardArgsReferences
-
-    
-
-
 
 
 class ModelbuilderrnasequencefeaturizerConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.featurizers.RNASequenceFeaturizer
-    
+
     Generated code
     """
-
 
 
 class ModelbuilderrnasequencefeaturizerForwardArgsSummary(BaseModel):
@@ -1023,24 +961,22 @@ class ModelbuilderrnasequencefeaturizerForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     input_ = "<class 'str'>"
 
+
 class ModelbuilderrnasequencefeaturizerForwardArgsReferences(BaseModel):
-    
+
     input_: str
-    
-
-
 
 
 class ModelbuilderrnasequencefeaturizerSummary(CamelCaseModel):
-    type: Literal["model_builder.featurizers.RNASequenceFeaturizer"] = 'model_builder.featurizers.RNASequenceFeaturizer'
+    type: Literal[
+        "model_builder.featurizers.RNASequenceFeaturizer"
+    ] = "model_builder.featurizers.RNASequenceFeaturizer"
     constructor_args_summary = ModelbuilderrnasequencefeaturizerConstructorArgsSummary()
-    
+
     forward_args_summary = ModelbuilderrnasequencefeaturizerForwardArgsSummary()
-    
-
-
 
 
 class ModelbuilderrnasequencefeaturizerLayerConfig(CamelCaseModel):
@@ -1052,30 +988,27 @@ class ModelbuilderrnasequencefeaturizerLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.featurizers.RNASequenceFeaturizer"] = 'model_builder.featurizers.RNASequenceFeaturizer'
+
+    type: Literal[
+        "model_builder.featurizers.RNASequenceFeaturizer"
+    ] = "model_builder.featurizers.RNASequenceFeaturizer"
     name: str
-    
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls()
-    
-    
+
     forward_args: ModelbuilderrnasequencefeaturizerForwardArgsReferences
-
-    
-
-
 
 
 class ModelbuilderproteinsequencefeaturizerConstructorArgsSummary(BaseModel):
     """
     Summarizes what types are the arguments necessary to instantiate model_builder.featurizers.ProteinSequenceFeaturizer
-    
+
     Generated code
     """
-
 
 
 class ModelbuilderproteinsequencefeaturizerForwardArgsSummary(BaseModel):
@@ -1087,24 +1020,24 @@ class ModelbuilderproteinsequencefeaturizerForwardArgsSummary(BaseModel):
 
     Generated code
     """
+
     input_ = "<class 'str'>"
 
+
 class ModelbuilderproteinsequencefeaturizerForwardArgsReferences(BaseModel):
-    
+
     input_: str
-    
-
-
 
 
 class ModelbuilderproteinsequencefeaturizerSummary(CamelCaseModel):
-    type: Literal["model_builder.featurizers.ProteinSequenceFeaturizer"] = 'model_builder.featurizers.ProteinSequenceFeaturizer'
-    constructor_args_summary = ModelbuilderproteinsequencefeaturizerConstructorArgsSummary()
-    
+    type: Literal[
+        "model_builder.featurizers.ProteinSequenceFeaturizer"
+    ] = "model_builder.featurizers.ProteinSequenceFeaturizer"
+    constructor_args_summary = (
+        ModelbuilderproteinsequencefeaturizerConstructorArgsSummary()
+    )
+
     forward_args_summary = ModelbuilderproteinsequencefeaturizerForwardArgsSummary()
-    
-
-
 
 
 class ModelbuilderproteinsequencefeaturizerLayerConfig(CamelCaseModel):
@@ -1116,20 +1049,19 @@ class ModelbuilderproteinsequencefeaturizerLayerConfig(CamelCaseModel):
 
     Generated code
     """
-    type: Literal["model_builder.featurizers.ProteinSequenceFeaturizer"] = 'model_builder.featurizers.ProteinSequenceFeaturizer'
+
+    type: Literal[
+        "model_builder.featurizers.ProteinSequenceFeaturizer"
+    ] = "model_builder.featurizers.ProteinSequenceFeaturizer"
     name: str
-    
+
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls()
-    
-    
+
     forward_args: ModelbuilderproteinsequencefeaturizerForwardArgsReferences
-
-    
-
 
 
 LayersType = Union[
@@ -1143,7 +1075,6 @@ LayersType = Union[
     TorchgeometricgcnconvLayerConfig,
     TorchembeddingLayerConfig,
     TorchtransformerencoderlayerLayerConfig,
-    
 ]
 
 FeaturizersType = Union[
@@ -1152,7 +1083,6 @@ FeaturizersType = Union[
     ModelbuilderdnasequencefeaturizerLayerConfig,
     ModelbuilderrnasequencefeaturizerLayerConfig,
     ModelbuilderproteinsequencefeaturizerLayerConfig,
-    
 ]
 
 LayersArgsType = Union[
@@ -1166,10 +1096,12 @@ LayersArgsType = Union[
     TorchgeometricgcnconvSummary,
     TorchembeddingSummary,
     TorchtransformerencoderlayerSummary,
-    
 ]
 
 FeaturizersArgsType = Union[
-    ModelbuildermoleculefeaturizerSummary,ModelbuilderintegerfeaturizerSummary,ModelbuilderdnasequencefeaturizerSummary,ModelbuilderrnasequencefeaturizerSummary,ModelbuilderproteinsequencefeaturizerSummary,
+    ModelbuildermoleculefeaturizerSummary,
+    ModelbuilderintegerfeaturizerSummary,
+    ModelbuilderdnasequencefeaturizerSummary,
+    ModelbuilderrnasequencefeaturizerSummary,
+    ModelbuilderproteinsequencefeaturizerSummary,
 ]
-
