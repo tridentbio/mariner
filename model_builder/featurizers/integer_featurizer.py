@@ -23,17 +23,20 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
     reversed_classes: dict[int, Union[str, int]]
 
     def __init__(self):
-        pass
+        super().__init__()
 
-    def __call__(self, input: str) -> torch.Tensor:
-        if str(input) not in self.classes:
+    def __call__(self, input_: str) -> torch.Tensor:
+        return self.featurize(input_)
+
+    def featurize(self, input_: Union[str, int]):
+        if str(input_) not in self.classes:
             raise RuntimeError(
                 f"Element {input} of type {input.__class__} is not defined"
                 f" in the classes dictionary {self.classes}"
             )
-        return torch.Tensor([self.classes[str(input)]]).long()
+        return torch.Tensor([self.classes[str(input_)]]).long()
 
-    def undo(self, input_: torch.Tensor):
+    def unfeaturize(self, input_: torch.Tensor):
         idx = int(input_.item())
         if idx not in self.reversed_classes:
             raise RuntimeError(
