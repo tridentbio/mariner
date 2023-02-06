@@ -21,3 +21,43 @@ def test_schema_autofills_lossfn():
     classifier_schema = model_config(model_type="classifier")
     assert regressor_schema.loss_fn == "torch.nn.MSELoss"
     assert classifier_schema.loss_fn == "torch.nn.CrossEntropyLoss"
+
+
+def test_schema_1():
+    schema = """
+name: Simple Classifier
+dataset:
+  name: zinc dataset
+  targetColumn: 
+    name: mwt_group
+    dataType:
+      domainKind: categorical
+      classes:
+        mwt_small: 0
+        mwt_big: 1
+  featureColumns:
+    - name: mwt
+      dataType:
+        domainKind: numeric
+
+featurizers:
+  - name: "MWT Cat Featurizer"
+    type: model_builder.featurizers.IntegerFeaturizer
+    forwardArgs:
+      input: $mwt_group
+      
+layers:
+  - name: "Linear1"
+    type: torch.nn.Linear
+    constructorArgs:
+      in_features: 1
+      out_features: 2
+    forwardArgs:
+      input: $mwt
+  - name: "Sigmoid1"
+    type: torch.nn.Sigmoid
+    forwardArgs:
+      input: $Linear1
+    """
+    schema = ModelSchema.from_yaml(schema)
+    assert isinstance(schema, ModelSchema)

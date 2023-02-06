@@ -25,10 +25,9 @@ featurizers = [
     for name in [
         "model_builder.featurizers.MoleculeFeaturizer",
         "model_builder.featurizers.IntegerFeaturizer",
-        
         "model_builder.featurizers.DNASequenceFeaturizer",
         "model_builder.featurizers.RNASequenceFeaturizer",
-        "model_builder.featurizers.ProteinSequenceFeaturizer"
+        "model_builder.featurizers.ProteinSequenceFeaturizer",
     ]
 ]
 
@@ -107,7 +106,7 @@ def get_component_signature(class_def: Any, method_name: str) -> Optional[Signat
             The signature of the method or None if the method does not exist
     """
     if method_name not in dir(class_def):
-        return None
+        raise Exception(f"{method_name} not found in class_def")
     method = getattr(class_def, method_name)
     return signature(method)
 
@@ -396,7 +395,6 @@ todo_include_todos = True"""
 
 
 if __name__ == "__main__":
-
     template = sys.argv[1]
     if template == "component":
         compnames = sys.argv[2:]
