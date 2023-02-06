@@ -141,6 +141,7 @@ class MissingComponentArgs(ValueError):
 
 
 AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
+AnnotatedFeaturizersType = Annotated[FeaturizersType, Field(discriminator="type")]
 LossType = Literal["torch.nn.MSELoss", "torch.nn.CrossEntropyLoss"]
 
 ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss"]
@@ -267,7 +268,7 @@ class ModelSchema(CamelCaseModel):
     name: str
     dataset: DatasetConfig
     layers: List[AnnotatedLayersType] = []
-    featurizers: List[FeaturizersType] = []
+    featurizers: List[AnnotatedFeaturizersType] = []
     loss_fn: LossType = None
 
     def make_graph(self):
