@@ -240,7 +240,7 @@ class ModelSchema(CamelCaseModel):
         return values
 
     @validator("loss_fn", pre=True, always=True)
-    def autofill_loss_gn(cls, value: str, values: Dict[str, Any]) -> Any:
+    def autofill_loss_fn(cls, value: str, values: Dict[str, Any]) -> Any:
         target_column = values["dataset"].target_column
         if is_classifier(target_column):
             if not value:
