@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any, Callable, Dict, Sequence, Union
+from typing import Any, Callable, Dict, List, Sequence, Union
 
 import numpy as np
 import torch
@@ -194,13 +194,13 @@ def unwrap_dollar(value: str) -> tuple[str, bool]:
 def get_references_dict(
     forward_args_dict: dict[str, Any]
 ) -> dict[str, Union[str, list[str]]]:
-    
+
     # Init a dict
     result = {}
-    
+
     # Loop through the forward args dict
     for key, value in forward_args_dict.items():
-        
+
         # Handle list instances
         if isinstance(value, list):
             result[key] = []
@@ -208,7 +208,7 @@ def get_references_dict(
                 ref, is_ref = unwrap_dollar(item)
                 if is_ref:
                     result[key].append(ref)
-        
+
         # Handle string instances
         elif isinstance(value, str):
             ref, is_ref = unwrap_dollar(value)
@@ -218,34 +218,66 @@ def get_references_dict(
     return result
 
 
-def get_ref_from_input(value: str, input: DataInstance):
+def get_ref_from_data_instance(acessor_str: str, input: DataInstance):
+    """Get's the value of a DataInstance
+
+    Used by model builder to interpret the forward_args.
+    When ``acessor_str`` contains '.', it's value  is splitted on
+    the first occurence, e.g:
+        - ``"foo.a.b.c"`` is splitted to ``["foo", "a.b.c"]``
+    The first string of the tuple is used as a key of the ``input`` and
+    the last one is used to access a possibly nested attribute in the value
+    found in ``input``.
+
+    Args:
+        accessor_str: string representing attribute to get, e.g. "mol_featurizer.x", "mwt"
+        input: data instance with collected layer/featurizer outputs, inputs
+    and outputs
+    """
     attribute, attribute_accessors = (
-        value.split(".")[0],
-        value.split(".")[1:],
+        acessor_str.split(".")[0],
+        acessor_str.split(".")[1:],
     )
     if attribute == "input":
         return input["".join(attribute_accessors)]  # $inputs.x is accessed as data['x']
     value = input[attribute]
     if len(attribute_accessors) == 0:
         return value
-    # TODO: fix edges_weight and edge_attr usage
-    if "edge_weight" in attribute_accessors or "edge_attr" in attribute_accessors:
-        return None
-    value = value[0]  # hack to flatten array of DataBatches (output of Featurizer)
+
     for attr in attribute_accessors:
         value = getattr(value, attr)
     return value
+
+
+def get_ref_from_input(
+    acessor_str: str, input: Union[DataInstance, List[DataInstance]]
+):
+    """Get's the acessor_str of a DataInstance or a batch of DataInstances
+
+
+    Args:
+        acessor_str: string represented acessor_str to get, e.g. "mol_featurizer.x", "mwt".
+        input(Union[DataInstance, List[DataInstance]):
+    """
+    if isinstance(input, list):
+        values = [get_ref_from_data_instance(acessor_str, item) for item in input]
+        assert len(values) > 0, "failed to get values from input"
+        if isinstance(values[0], torch.Tensor):
+            return torch.cat(values)  # type: ignore
+
+    else:
+        return get_ref_from_data_instance(acessor_str, input)
 
 
 def collect_args(
     input: DataInstance, args_dict: dict[str, Any]
 ) -> Union[list, dict, Any]:
     """
-    Takes a DataInstance object and a dictionary of args to retrieve
+    Takes a batch of DataInstance objects and a dictionary of args to retrieve
     and returns a dictionary of resolved arguments.
-    
-    Each arg value may be a reference. In such case, the arg value must be
-    retrieved from `input`. Otherwise, it's raw value that can be returned as is
+
+    Each arg acessor_str may be a reference. In such case, the arg acessor_str must be
+    retrieved from `input`. Otherwise, it's raw acessor_str that can be returned as is
     """
     result = {}
     for key, value in args_dict.items():

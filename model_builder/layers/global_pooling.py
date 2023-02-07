@@ -106,7 +106,6 @@ class GlobalPooling(torch.nn.Module):
     def forward(
         self, x: Tensor, batch: Optional[Tensor] = None, size: Optional[int] = None
     ) -> Tensor:
-        """"""
         xs: List[Tensor] = []
 
         for aggr in self.aggrs:
