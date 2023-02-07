@@ -181,7 +181,7 @@ references['cls'] = {export}
 
 def unwrap_dollar(value: str) -> tuple[str, bool]:
     """
-    Takes a string and remove it's reference indicators: $ or ${...}
+    Takes a string and remove its reference indicators: $ or ${...}
     Returns the string unwrapped (if it was a reference) and `is_reference` boolean
     """
     if value.startswith("${") and value.endswith("}"):
@@ -194,20 +194,27 @@ def unwrap_dollar(value: str) -> tuple[str, bool]:
 def get_references_dict(
     forward_args_dict: dict[str, Any]
 ) -> dict[str, Union[str, list[str]]]:
+    
+    # Init a dict
     result = {}
+    
+    # Loop through the forward args dict
     for key, value in forward_args_dict.items():
+        
+        # Handle list instances
         if isinstance(value, list):
             result[key] = []
             for item in value:
                 ref, is_ref = unwrap_dollar(item)
                 if is_ref:
                     result[key].append(ref)
+        
+        # Handle string instances
         elif isinstance(value, str):
             ref, is_ref = unwrap_dollar(value)
             if is_ref:
                 result[key] = ref
-        else:
-            continue
+
     return result
 
 
@@ -234,9 +241,10 @@ def collect_args(
     input: DataInstance, args_dict: dict[str, Any]
 ) -> Union[list, dict, Any]:
     """
-    Takes a DataInstance object and a dictionary of args to retrive
-    and returns a dictinoraty of resolved arguments.
-    Each arg value may be a reference. in such case, the arg value must be
+    Takes a DataInstance object and a dictionary of args to retrieve
+    and returns a dictionary of resolved arguments.
+    
+    Each arg value may be a reference. In such case, the arg value must be
     retrieved from `input`. Otherwise, it's raw value that can be returned as is
     """
     result = {}
