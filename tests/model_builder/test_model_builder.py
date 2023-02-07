@@ -22,7 +22,7 @@ from mariner.schemas.dataset_schemas import (
     Split,
 )
 from mariner.stores import dataset_sql
-from model_builder.dataset import DataModule
+from model_builder.dataset import Collater, DataModule
 from model_builder.model import CustomModel
 from model_builder.schemas import ModelSchema
 from tests.conftest import get_test_user
@@ -107,24 +107,6 @@ model_configs_and_dataset_setup = [
 ]
 
 
-def collate_fn(batch: List[torch.Tensor], sequence_columns: List[str] = ["sequence"]):
-    longest_sizes = {col_name: 0 for col_name in sequence_columns}
-    for column in sequence_columns:
-        for data in batch:
-            sequence_data = data[column]
-            longest_sizes[column] = max(len(sequence_data), longest_sizes[column])
-
-        longest_size = longest_sizes[column]
-
-        for data in batch:
-            sequence_data = data[column]
-            longest_sizes[column] = max(len(sequence_data), longest_sizes[column])
-            pad = torch.nn.ConstantPad1d((0, longest_size - len(sequence_data)), 0)
-            data[column] = pad(sequence_data)
-
-    return batch
-
-
 @pytest.mark.parametrize(
     "model_config_path,dataset_setup", model_configs_and_dataset_setup
 )
@@ -136,12 +118,14 @@ async def test_model_building(
     with open(model_config_path, "rb") as f:
         model_config = ModelSchema.from_yaml(f.read())
     model = CustomModel(model_config)
+    collate_fn = Collater()
     data_module = DataModule(
         config=model_config,
         data=dataset.get_dataframe(),
         split_target=dataset.split_target,
         split_type=dataset.split_type,
         collate_fn=collate_fn,
+        batch_size=4,
     )
     data_module.setup(stage="fit")
     trainer = Trainer(
