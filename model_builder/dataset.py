@@ -1,17 +1,23 @@
 """Dataset related classes to use for training/evaluating/testing"""
-from typing import Any, Callable, Union
+from collections.abc import Mapping
+from typing import Any, Callable, Sequence, Union
 
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-from torch.utils.data import Dataset, DataLoader, Subset, random_split
-from torch.utils.data.dataloader import default_collate
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader, Dataset, Subset, random_split
+from torch.utils.data.dataloader import default_collate
 from torch_geometric.data import Batch
 from torch_geometric.data.data import BaseData
 
 from model_builder.component_builder import AutoBuilder
 from model_builder.featurizers.base_featurizers import BaseFeaturizer
+from model_builder.featurizers.bio_sequence_featurizer import (
+    DNASequenceFeaturizer,
+    ProteinSequenceFeaturizer,
+    RNASequenceFeaturizer,
+)
 from model_builder.featurizers.integer_featurizer import IntegerFeaturizer
 from model_builder.model_schema_query import (
     get_dependencies,
@@ -33,16 +39,17 @@ from model_builder.utils import DataInstance, get_references_dict
 class Collater:
     """
     Collater that automatically handles all of the data types supported by Mariner
-    
+
     The Collater automatically detects the data types from each element of the batch
     and adjusts the collation function accoringly.
-    
+
     Args:
         pyg_batch_kwargs - Keyword arguments passed to the PyTorch geometric batch
-        
+
     Returns:
         Batched data
     """
+
     def __init__(self, **pyg_batch_kwargs):
         self.pyg_batch_kwargs = pyg_batch_kwargs
 
@@ -52,44 +59,44 @@ class Collater:
     def collate(self, batch):  # Deprecated...
         # Get the first element to check data type
         elem = batch[0]
-        
+
         # Handle PyG data
         if isinstance(elem, BaseData):
             return Batch.from_data_list(batch, **self.pyg_batch_kwargs)
-        
+
         # Handle Tensor data
         elif isinstance(elem, torch.Tensor):
-            if elem.dtype == torch.long:
-                if not all([batch[0].shape == batch[i].shape for i in range(1, len(batch))]):
-                    return pad_sequence(batch, batch_first=True)
-            else:
-                return default_collate(batch)
-        
+            if elem.dtype == torch.long and not all(
+                [batch[0].shape == batch[i].shape for i in range(1, len(batch))]
+            ):
+                return pad_sequence(batch, batch_first=True)
+            return default_collate(batch)
+
         # Handle float data
         elif isinstance(elem, float):
             return torch.tensor(batch, dtype=torch.float)
-        
+
         # Handle int data
         elif isinstance(elem, int):
             return torch.tensor(batch)
-        
+
         # Handle str data
         elif isinstance(elem, str):
             return batch
-        
+
         # Handle Mapping data
         elif isinstance(elem, Mapping):
             return {key: self([data[key] for data in batch]) for key in elem}
-        
+
         # Handle additional PyG-specific batching
-        elif isinstance(elem, tuple) and hasattr(elem, '_fields'):
+        elif isinstance(elem, tuple) and hasattr(elem, "_fields"):
             return type(elem)(*(self(s) for s in zip(*batch)))
-        
+
         # Handle sequences
         elif isinstance(elem, Sequence) and not isinstance(elem, str):
             return [self(s) for s in zip(*batch)]
 
-        raise TypeError(f'DataLoader found invalid type: {type(elem)}')
+        raise TypeError(f"DataLoader found invalid type: {type(elem)}")
 
 
 class CustomDataset(Dataset):
@@ -152,6 +159,13 @@ class CustomDataset(Dataset):
         if isinstance(column.data_type, CategoricalDataType):
             feat = IntegerFeaturizer()
             feat.set_from_model_schema(self.config, [column.name])
+        elif isinstance(column.data_type, DNADataType):
+            feat = DNASequenceFeaturizer()
+        elif isinstance(column.data_type, RNADataType):
+            feat = RNASequenceFeaturizer()
+        elif isinstance(column.data_type, ProteinDataType):
+            feat = ProteinSequenceFeaturizer()
+
         return feat
 
     def get_output_featurizer(self) -> Union[BaseFeaturizer, None]:
@@ -161,7 +175,6 @@ class CustomDataset(Dataset):
             # Assume a single target
             target = targets[0]
             return self._get_default_featurizer(target)
-
 
     def __len__(self) -> int:
         """Gets the number of rows in the dataset"""
@@ -177,17 +190,17 @@ class CustomDataset(Dataset):
         """
         # Instantiate the data instance
         data = DataInstance()
-        
+
         # Convert the row to a dictionary
         sample = dict(self.data.iloc[index, :])
-        
+
         # Subset columns
         columns_to_include = self.config.dataset.feature_columns
-        
+
         # Featurize all of the columns that pass into a
         # featurizer before including in the data instance
         for featurizer in self.get_featurizer_configs():
-            
+
             references = get_references_dict(featurizer.forward_args.dict())
             assert len(references) == 1, "only 1 forward arg for featurizers for now"
             col_name = list(references.values())[0]
@@ -205,7 +218,7 @@ class CustomDataset(Dataset):
             if isinstance(column.data_type, (NumericalDataType, QuantityDataType)):
                 data[column.name] = torch.Tensor([val])
             elif isinstance(
-                column.data_type, (DNADataType, RNADataType, ProteinFeaturizer)
+                column.data_type, (DNADataType, RNADataType, ProteinDataType)
             ):
                 feat = self._get_default_featurizer(column)
                 assert feat, "dna, rna and protein have a default featurizer"
@@ -263,7 +276,6 @@ class DataModule(pl.LightningDataModule):
         batch_size=32,
         collate_fn: Union[Callable, None] = Collater(),
     ):
-        print("Creating a DataModule")
         super().__init__()
         self.dataset_config = config.dataset
         self.featurizers_config = config.featurizers
