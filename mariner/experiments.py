@@ -408,9 +408,10 @@ def get_metrics_for_monitoring() -> List[MonitorableMetric]:
         MonitorableMetric(key="precision", label="Precision", type="classification"),
         MonitorableMetric(key="recall", label="Recall", type="classification"),
         MonitorableMetric(key="f1", label="F1", type="classification"),
-        MonitorableMetric(
-            key="confusion_matrix", label="Confusion Matrix", type="classification"
-        ),
+        # removed on UI fixes - 2/6/2023:
+        # MonitorableMetric(
+        #     key="confusion_matrix", label="Confusion Matrix", type="classification"
+        # ),
     ]
 
 
