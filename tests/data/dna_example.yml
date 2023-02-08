@@ -14,8 +14,7 @@ layers:
   - name: embeddings
     type: torch.nn.Embedding
     constructorArgs:
-      num_embeddings: 
-
+      num_embeddings: 23
       embedding_dim: 16
       padding_idx: 0
     forwardArgs:

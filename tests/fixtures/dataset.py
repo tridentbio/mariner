@@ -52,8 +52,9 @@ def setup_create_dataset(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
     file="tests/data/zinc_extra.csv",
+    **kwargs,
 ):
-    data = mock_dataset()
+    data = mock_dataset(**kwargs)
     db.query(Dataset).filter(Dataset.name == data["name"]).delete()
     db.commit()
     with open(file, "rb") as f:
