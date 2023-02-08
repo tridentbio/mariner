@@ -1,12 +1,9 @@
 from typing import Callable, List
 
 import pytest
-import pytest_asyncio
-import torch
 from fastapi import UploadFile
 from pytorch_lightning import Trainer
 from sqlalchemy.orm.session import Session
-from torch.nn.utils.rnn import pad_sequence
 
 from mariner import datasets as dataset_ctl
 from mariner.entities import Dataset as DatasetEntity
@@ -15,13 +12,11 @@ from mariner.schemas.dataset_schemas import (
     ColumnsDescription,
     Dataset,
     DatasetCreate,
-    DatasetCreateRepo,
     DNADataType,
     QuantityDataType,
     SmileDataType,
     Split,
 )
-from mariner.stores import dataset_sql
 from model_builder.dataset import Collater, DataModule
 from model_builder.model import CustomModel
 from model_builder.schemas import ModelSchema
@@ -58,13 +53,13 @@ def chem_dataset() -> tuple[str, List[ColumnsDescription]]:
     return zinc_extra_path, columns_metadata
 
 
-def bio_dataset() -> tuple[str, List[ColumnsDescription]]:
+def bio_classification_dataset() -> tuple[str, List[ColumnsDescription]]:
     chimpazee_path = "tests/data/chimpanzee.csv"
     columns_metadata = [
         ColumnsDescription(
             pattern="sequence",
             data_type=DNADataType(),
-            description="smiles column",
+            description="dna sequence",
         ),
         ColumnsDescription(
             pattern=" class",
@@ -73,6 +68,25 @@ def bio_dataset() -> tuple[str, List[ColumnsDescription]]:
         ),
     ]
     return chimpazee_path, columns_metadata
+
+
+def bio_regression_dataset() -> tuple[str, List[ColumnsDescription]]:
+    # aaMutations,uniqueBarcodes,medianBrightness,std
+    # DNA,int,float,float
+    csvpath = "tests/data/sarkisyan_full_seq_data.csv"
+    columns = [
+        ColumnsDescription(
+            pattern="aaMutations",
+            data_type=DNADataType(),
+            description="dna sequence",
+        ),
+        ColumnsDescription(
+            pattern="medianBrightness",
+            data_type=QuantityDataType(unit="mole"),
+            description="median brightness",
+        ),
+    ]
+    return csvpath, columns
 
 
 async def setup_dataset(
@@ -103,7 +117,7 @@ async def setup_dataset(
 model_configs_and_dataset_setup = [
     ("tests/data/small_regressor_schema.yaml", chem_dataset),
     ("tests/data/categorical_features_model.yaml", chem_dataset),
-    ("tests/data/dna_example.yml", bio_dataset),
+    ("tests/data/dna_example.yml", bio_regression_dataset),
 ]
 
 
@@ -118,13 +132,12 @@ async def test_model_building(
     with open(model_config_path, "rb") as f:
         model_config = ModelSchema.from_yaml(f.read())
     model = CustomModel(model_config)
-    collate_fn = Collater()
     data_module = DataModule(
         config=model_config,
         data=dataset.get_dataframe(),
         split_target=dataset.split_target,
         split_type=dataset.split_type,
-        collate_fn=collate_fn,
+        collate_fn=Collater(),
         batch_size=4,
     )
     data_module.setup(stage="fit")

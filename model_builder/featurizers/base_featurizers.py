@@ -1,7 +1,7 @@
 """Base class for featurizers
 """
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Any
+from typing import Any, Generic, TypeVar
 
 import torch
 
@@ -25,7 +25,7 @@ class BaseFeaturizer(ABC, Generic[T]):
         """
 
 
-class ReversibleFeaturizer(BaseFeaturizer[T], ABC):
+class ReversibleFeaturizer(BaseFeaturizer[T]):
     """Base class for reversible featurizers."""
 
     @abstractmethod

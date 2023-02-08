@@ -1,3 +1,4 @@
+import logging
 from typing import List, Literal, Optional, Union
 
 import networkx as nx
@@ -18,6 +19,9 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
     if isinstance(x, str):
         return [x]
     return x
+
+
+LOG = logging.getLogger(__name__)
 
 
 class Metrics:
@@ -71,14 +75,18 @@ class Metrics:
         for metric in self.metrics:
             if not metric.startswith("train"):
                 continue
-            if isinstance(self.metrics[metric], (metrics.Accuracy)):
-                metrics_dict[metric] = self.metrics[metric](
-                    prediction.squeeze().long(), batch["y"].squeeze().long()
-                )
-            else:
-                metrics_dict[metric] = self.metrics[metric](
-                    prediction.squeeze(), batch["y"].squeeze()
-                )
+            try:
+                if isinstance(self.metrics[metric], (metrics.Accuracy)):
+                    metrics_dict[metric] = self.metrics[metric](
+                        prediction.squeeze().long(), batch["y"].squeeze().long()
+                    )
+                else:
+                    metrics_dict[metric] = self.metrics[metric](
+                        prediction.squeeze(), batch["y"].squeeze()
+                    )
+            except ValueError as exp:
+                LOG.warning("Gor error with metric %s", metric)
+                LOG.warning(exp)
 
         return metrics_dict
 
@@ -146,6 +154,7 @@ class CustomModel(LightningModule):
                 input[layer.name] = self._model[node_name](*args)
             else:
                 input[layer.name] = self._model[node_name](args)
+
             last = input[layer.name]
         return last
 
@@ -169,7 +178,10 @@ class CustomModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
         prediction = self(batch)
-        loss = self.loss_fn(prediction.squeeze(), batch["y"].squeeze())
+        loss = self.loss_fn(
+            prediction.squeeze().type(torch.DoubleTensor),
+            batch["y"].squeeze().type(torch.DoubleTensor),
+        )
         metrics_dict = {
             "train_loss": loss,
         } | self.metrics.get_training_metrics(prediction, batch)
