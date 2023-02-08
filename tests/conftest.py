@@ -26,7 +26,11 @@ from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
 from tests.fixtures.dataset import setup_create_dataset, teardown_create_dataset
 from tests.fixtures.events import get_test_events, teardown_events
-from tests.fixtures.experiments import mock_experiment
+from tests.fixtures.experiments import (
+    mock_experiment,
+    setup_experiments,
+    teardown_experiments,
+)
 from tests.fixtures.model import setup_create_model, teardown_create_model
 from tests.fixtures.user import get_test_user
 from tests.utils.user import authentication_token_from_email, create_random_user
@@ -229,22 +233,7 @@ def some_successfull_experiment(
 def some_experiments(
     db: Session, some_model: Model
 ) -> Generator[List[Experiment], None, None]:
-    user = get_test_user(db)
-    version = some_model.versions[-1]
-    # creates 1 started experiment and 2 successful
-    exps = [
-        experiment_store.create(
-            db,
-            obj_in=mock_experiment(
-                version, user.id, stage="started" if i % 2 == 1 else "success"
-            ),
-        )
-        for i in range(0, 3)
-    ]
-    exps = [Experiment.from_orm(exp) for exp in exps]
+    exps = setup_experiments(db, some_model, num_experiments=3)
     assert len(exps) == 3, "failed in setup of some_experiments fixture"
     yield exps
-    db.query(ExperimentEntity).filter(
-        ExperimentEntity.id.in_([exp.id for exp in exps])
-    ).delete()
-    db.flush()
+    teardown_experiments(db, exps)
