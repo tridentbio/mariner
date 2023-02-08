@@ -143,7 +143,7 @@ def get_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    model = controller.get_model_version(db, current_user, model_id)
+    model = controller.get_model(db, current_user, model_id)
     return model
 
 

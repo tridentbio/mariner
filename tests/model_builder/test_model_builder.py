@@ -19,6 +19,7 @@ from mariner.schemas.dataset_schemas import (
 )
 from model_builder.dataset import Collater, DataModule
 from model_builder.model import CustomModel
+from model_builder.optimizers import AdamOptimizer
 from model_builder.schemas import ModelSchema
 from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string
@@ -132,6 +133,7 @@ async def test_model_building(
     with open(model_config_path, "rb") as f:
         model_config = ModelSchema.from_yaml(f.read())
     model = CustomModel(model_config)
+    model.set_optimizer(optimizer=AdamOptimizer())
     data_module = DataModule(
         config=model_config,
         data=dataset.get_dataframe(),
