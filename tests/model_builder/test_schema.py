@@ -44,7 +44,7 @@ featurizers:
   - name: "MWT Cat Featurizer"
     type: model_builder.featurizers.IntegerFeaturizer
     forwardArgs:
-      input: $mwt_group
+      input_: $mwt_group
       
 layers:
   - name: "Linear1"

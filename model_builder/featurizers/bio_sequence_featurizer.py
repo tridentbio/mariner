@@ -36,7 +36,9 @@ class SequenceFeaturizer(ReversibleFeaturizer[str]):
         # Loop through and featurize or raise ValueError if unrecognized token
         for i in input_:
             if i not in self.alphabet:
-                raise ValueError(f"Unrecognized token '{i}' for {self.__class__.__name__}.")
+                raise ValueError(
+                    f"Unrecognized token '{i}' for {self.__class__.__name__}."
+                )
 
             sequence.append(self.alphabet[i])
 
@@ -52,21 +54,23 @@ class SequenceFeaturizer(ReversibleFeaturizer[str]):
         for i in input_:
             i = i.item()
             if i not in self.inverse_alphabet:
-                raise ValueError(f"Unrecognized value '{i}' for {self.__class__.__name__}.")
-            
+                raise ValueError(
+                    f"Unrecognized value '{i}' for {self.__class__.__name__}."
+                )
+
             sequence.append(self.inverse_alphabet[i])
 
         # Return the unfeaturized string
-        return ''.join(sequence)
+        return "".join(sequence)
 
 
 class DNASequenceFeaturizer(SequenceFeaturizer):
     """DNA sequence featurizer"""
 
     alphabet = {
-        "A": 1, 
-        "C": 2, 
-        "G": 3, 
+        "A": 1,
+        "C": 2,
+        "G": 3,
         "T": 4,
         "R": 5,
         "Y": 6,
@@ -79,16 +83,17 @@ class DNASequenceFeaturizer(SequenceFeaturizer):
         "H": 13,
         "V": 14,
         "N": 15,
-        "-": 16
+        "-": 16,
     }
+
 
 class RNASequenceFeaturizer(SequenceFeaturizer):
     """RNA sequence featurizer"""
 
     alphabet = {
-        "A": 1, 
-        "C": 2, 
-        "G": 3, 
+        "A": 1,
+        "C": 2,
+        "G": 3,
         "U": 4,
         "R": 5,
         "Y": 6,
@@ -101,7 +106,7 @@ class RNASequenceFeaturizer(SequenceFeaturizer):
         "H": 13,
         "V": 14,
         "N": 15,
-        "-": 16
+        "-": 16,
     }
 
 
@@ -130,5 +135,5 @@ class ProteinSequenceFeaturizer(SequenceFeaturizer):
         "W": 19,
         "Y": 20,
         "-": 21,
-        "*": 22
+        "*": 22,
     }

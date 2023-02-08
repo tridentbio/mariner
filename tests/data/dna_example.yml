@@ -2,30 +2,24 @@ name: DnaExampleModel
 dataset:
   name: Dna Example Dataset
   featureColumns:
-    - name: sequence
+    - name: aaMutations
       dataType:
-        domainKind: dna
+        domainKind: protein
   targetColumn:
-    name: " class"
+    name: medianBrightness
     dataType:
-      domainKind: categorical
-      classes:
-        0: 1
-        1: 2
-        2: 3
-        3: 4
-        4: 5
-        5: 6
-        6: 7
+      domainKind: numeric
+      unit: mole
 layers:
   - name: embeddings
     type: torch.nn.Embedding
     constructorArgs:
-      num_embeddings: 5
+      num_embeddings: 
+
       embedding_dim: 16
       padding_idx: 0
     forwardArgs:
-      input: $sequence
+      input: $aaMutations
 
   - name: transformer 1 
     type: torch.nn.TransformerEncoderLayer
@@ -34,14 +28,16 @@ layers:
       nhead: 4
       dim_feedforward: 128
       dropout: 0.1
+      batch_first: True
     forwardArgs:
-      src: $sequence
+      src: $embeddings
 
   - name: transformer 2
     type: torch.nn.TransformerEncoderLayer
     constructorArgs:
       d_model: 16
       nhead: 4
+      batch_first: True
       dim_feedforward: 128
       dropout: 0.1
     forwardArgs:
@@ -49,7 +45,7 @@ layers:
   - name: sequence pooling
     type: model_builder.layers.AddPooling
     constructorArgs:
-      dim: 0
+      dim: 1
     forwardArgs:
       x: ${transformer 2}
   - name: linear 1
@@ -58,7 +54,7 @@ layers:
       in_features: 16
       out_features: 32
     forwardArgs:
-      input: ${transformer sequence pooling}
+      input: ${sequence pooling}
   - name: activation linear 1
     type: torch.nn.ReLU
     constructorArgs:

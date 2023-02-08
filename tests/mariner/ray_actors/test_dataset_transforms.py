@@ -113,7 +113,7 @@ class TestDatasetTransforms:
         ] = await bio_transformer_fixture.get_columns_metadata.remote()
         assert len(metadata_list) == 4
 
-        expected_domain = ["categorical", "rna", "dna", "protein"]
+        expected_domain = ["string", "rna", "dna", "protein"]
 
         for i, metadata in enumerate(metadata_list):
             assert isinstance(metadata, ColumnsMeta)
