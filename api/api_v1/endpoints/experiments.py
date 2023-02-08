@@ -14,6 +14,7 @@ from mariner.schemas.experiment_schemas import (
     RunningHistory,
     TrainingRequest,
 )
+from model_builder.optimizers import OptimizerSchema
 
 router = APIRouter()
 
@@ -89,10 +90,13 @@ async def post_update_metrics(
             stage="SUCCESS",
         )
     elif msgtype == "hyperparams":
+        # Don't need to save the config argument of the CustomModel again
+        if 'config' in data:
+            data.pop('config')
         experiments_ctl.log_hyperparams(
             db=db,
             experiment_id=experiment_id,
-            hyperparams=data["hyperparams"],
+            hyperparams=data,
         )
     else:
         raise Exception(f"Failed msg type {msgtype}")
@@ -107,3 +111,12 @@ async def post_update_metrics(
 def get_experiments_metrics():
     """Get's monitorable metrics to configure early stopping and checkpoint monitoring"""
     return experiments_ctl.get_metrics_for_monitoring()
+
+
+@router.get(
+    "/optimizers",
+    dependencies=[Depends(deps.get_current_active_user)],
+    response_model=List[OptimizerSchema],
+)
+def get_training_experiment_optimizers():
+    return experiments_ctl.get_optimizer_options()

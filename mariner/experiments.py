@@ -42,6 +42,11 @@ from mariner.stores.experiment_sql import (
 )
 from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
+from model_builder.optimizers import (
+    AdamParamsSchema,
+    OptimizerSchema,
+    SGDParamsSchema,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -167,6 +172,7 @@ async def create_model_traning(
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,
             epochs=training_request.epochs,
+            hyperparams={"learning_rate": training_request.optimizer.params.lr},
             stage="RUNNING",
         ),
     )
@@ -403,7 +409,19 @@ def get_metrics_for_monitoring() -> List[MonitorableMetric]:
         MonitorableMetric(key="precision", label="Precision", type="classification"),
         MonitorableMetric(key="recall", label="Recall", type="classification"),
         MonitorableMetric(key="f1", label="F1", type="classification"),
-        MonitorableMetric(
-            key="confusion_matrix", label="Confusion Matrix", type="classification"
-        ),
+        # removed on UI fixes - 2/6/2023:
+        # MonitorableMetric(
+        #     key="confusion_matrix", label="Confusion Matrix", type="classification"
+        # ),
+    ]
+
+
+def get_optimizer_options() -> List[OptimizerSchema]:
+    """Gets optimizer configurations
+
+    Returns what params are needed for each type of optimizer supported
+    """
+    return [
+        AdamParamsSchema(),
+        SGDParamsSchema(),
     ]

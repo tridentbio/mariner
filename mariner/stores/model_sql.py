@@ -7,14 +7,13 @@ from sqlalchemy.sql import and_
 from mariner.entities.model import Model, ModelFeaturesAndTarget, ModelVersion
 from mariner.schemas.model_schemas import (
     ModelCreateRepo,
-    ModelUpdateRepo,
     ModelVersionCreateRepo,
     ModelVersionUpdateRepo,
 )
 from mariner.stores.base_sql import CRUDBase
 
 
-class CRUDModel(CRUDBase[Model, ModelCreateRepo, ModelUpdateRepo]):
+class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
     def get_by_name(self, db: Session, name: str, user_id: int) -> Model:
         return (
             db.query(Model)

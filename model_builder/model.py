@@ -1,3 +1,6 @@
+"""
+Torch and PytorchLightning build through from ModelSchema
+"""
 import logging
 from typing import List, Literal, Optional, Union
 
@@ -6,16 +9,26 @@ import torch
 import torch.nn
 import torchmetrics as metrics
 from pytorch_lightning.core.lightning import LightningModule
-from torch.optim.adam import Adam
 
 from model_builder.component_builder import AutoBuilder
 from model_builder.dataset import DataInstance
 from model_builder.model_schema_query import get_dependencies
+from model_builder.optimizers import Optimizer
 from model_builder.schemas import CategoricalDataType, ModelSchema
-from model_builder.utils import collect_args
+from model_builder.utils import collect_args, get_class_from_path_string
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
+    """Treat something that can be either str of List[śtr] as List[str]
+
+    Converts str to single element lists
+
+    Args:
+        x: input'
+
+    Returns:
+        List[str]
+    """
     if isinstance(x, str):
         return [x]
     return x
@@ -25,6 +38,10 @@ LOG = logging.getLogger(__name__)
 
 
 class Metrics:
+    """
+    Metrics operations that abstract the task type (regression/classification)
+    """
+
     def __init__(
         self,
         type: Literal["regressor", "classification"],
@@ -71,6 +88,15 @@ class Metrics:
             )
 
     def get_training_metrics(self, prediction: torch.Tensor, batch: DataInstance):
+        """Gets a dict with the training metrics
+
+        For each of the training metrics avaliable on the task type, return a dictionary
+        with the metrics value given the input ``batch`` and the model output ``prediction``
+
+        Args:
+            prediction: the model output
+            batch: object with target data (at batch['y'])
+        """
         metrics_dict = {}
         for metric in self.metrics:
             if not metric.startswith("train"):
@@ -91,6 +117,15 @@ class Metrics:
         return metrics_dict
 
     def get_validation_metrics(self, prediction: torch.Tensor, batch: DataInstance):
+        """Gets a dict with the validation metrics
+
+        For each of the training metrics avaliable on the task type, return a dictionary
+        with the metrics value given the input ``batch`` and the model output ``prediction``
+
+        Args:
+            prediction: the model output
+            batch: object with target data (at batch['y'])
+        """
         metrics_dict = {}
         for metric in self.metrics:
             if not metric.startswith("val"):
@@ -102,16 +137,19 @@ class Metrics:
 
 
 class CustomModel(LightningModule):
-    def __init__(self, config: Union[ModelSchema, str], lr=5e-3):
+    """Neural network model encoded by a ModelSchema"""
+
+    optimizer: Optimizer
+
+    def __init__(self, config: Union[ModelSchema, str]):
         super().__init__()
         if isinstance(config, str):
             config = ModelSchema.parse_raw(config)
-        self.lr = lr
         layers_dict = {}
         self.config = config
         self.layer_configs = {layer.name: layer for layer in config.layers}
         for layer in config.layers:
-            layer_instance = layer.create()  # possibly pass schema here
+            layer_instance = layer.create()
             if isinstance(layer_instance, AutoBuilder):
                 layer_instance.set_from_model_schema(
                     config, list(get_dependencies(layer))
@@ -125,10 +163,6 @@ class CustomModel(LightningModule):
         # This is safe as long ModelSchema was validated
         loss_fn_class = eval(config.loss_fn)
         self.loss_fn = loss_fn_class()
-
-        # Saving the hyperparams is needed to call CustomModel.load_from_checkpoint()
-        self.save_hyperparameters({"config": config.json()})
-
         # Set up metrics for training and validation
         if config.is_regressor():
             self.metrics = Metrics("regressor")
@@ -140,6 +174,21 @@ class CustomModel(LightningModule):
                 "classification",
                 num_classes=len(config.dataset.target_column.data_type.classes),
             )
+
+    def set_optimizer(self, optimizer: Optimizer):
+        """Sets parameters that only are given in training configuration
+
+        Parameters that are set:
+            - optimizer
+
+        Args:
+            training_request:
+        """
+        self.optimizer = optimizer
+
+        self.save_hyperparameters(
+            {"config": self.config.json(), "learning_rate": self.optimizer.params.lr}
+        )
 
     def forward(self, input: DataInstance):  # type: ignore
         last = input
@@ -159,7 +208,14 @@ class CustomModel(LightningModule):
         return last
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr=self.lr)
+        if not self.optimizer:
+            raise ValueError(
+                "using model without setting attributes from training request"
+            )
+        assert self.optimizer.class_path.startswith(
+            "torch.optim."
+        ), "invalid start string for optimizer class_path"
+        return self.optimizer.create(self.parameters())
 
     def test_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()
@@ -174,6 +230,7 @@ class CustomModel(LightningModule):
         self.log_dict(
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
         )
+        self.log("val_loss", loss)
         return loss
 
     def training_step(self, batch, batch_idx):

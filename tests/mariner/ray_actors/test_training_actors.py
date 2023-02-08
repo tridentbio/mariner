@@ -21,6 +21,7 @@ from mariner.schemas.experiment_schemas import (
 from mariner.schemas.model_schemas import Model, ModelVersion
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from model_builder.model import CustomModel
+from model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
@@ -136,9 +137,9 @@ class TestTrainingActor:
         return TrainingRequest(
             name="asdiasjd",
             model_version_id=modelversion_fixture.id,
-            learning_rate=0.005,
             epochs=3,
             batch_size=32,
             checkpoint_config=MonitoringConfig(metric_key="val_mse", mode="min"),
+            optimizer=AdamOptimizer(),
             early_stopping_config=EarlyStoppingConfig(metric_key="val_mse", mode="min"),
         )
