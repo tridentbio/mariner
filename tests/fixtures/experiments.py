@@ -1,7 +1,11 @@
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
-from mariner.schemas.model_schemas import ModelVersion
-from mariner.stores.experiment_sql import ExperimentCreateRepo
+from sqlalchemy.orm.session import Session
+
+from mariner.entities.experiment import Experiment as ExperimentEntity
+from mariner.schemas.experiment_schemas import Experiment
+from mariner.schemas.model_schemas import Model, ModelVersion
+from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from tests.utils.utils import random_lower_string
 
 
@@ -28,3 +32,28 @@ def mock_experiment(
     else:
         raise NotImplementedError()
     return create_obj
+
+
+def setup_experiments(db: Session, model: Model, num_experiments=4) -> List[Experiment]:
+    version = model.versions[-1]
+    # creates 1 started experiment and 2 successful
+    exps = [
+        experiment_store.create(
+            db,
+            obj_in=mock_experiment(
+                version,
+                model.created_by_id,
+                stage="started" if i % 2 == 1 else "success",
+            ),
+        )
+        for i in range(0, num_experiments)
+    ]
+    exps = [Experiment.from_orm(exp) for exp in exps]
+    return exps
+
+
+def teardown_experiments(db: Session, experiments: List[Experiment]):
+    db.query(ExperimentEntity).filter(
+        ExperimentEntity.id.in_([exp.id for exp in experiments])
+    ).delete()
+    db.flush()

@@ -1,7 +1,8 @@
 """
 Torch and PytorchLightning build through from ModelSchema
 """
-from typing import Iterable, List, Literal, Optional, Union
+import logging
+from typing import List, Literal, Optional, Union
 
 import networkx as nx
 import torch
@@ -31,6 +32,9 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
     if isinstance(x, str):
         return [x]
     return x
+
+
+LOG = logging.getLogger(__name__)
 
 
 class Metrics:
@@ -97,14 +101,18 @@ class Metrics:
         for metric in self.metrics:
             if not metric.startswith("train"):
                 continue
-            if isinstance(self.metrics[metric], (metrics.Accuracy)):
-                metrics_dict[metric] = self.metrics[metric](
-                    prediction.squeeze().long(), batch["y"].squeeze().long()
-                )
-            else:
-                metrics_dict[metric] = self.metrics[metric](
-                    prediction.squeeze(), batch["y"].squeeze()
-                )
+            try:
+                if isinstance(self.metrics[metric], (metrics.Accuracy)):
+                    metrics_dict[metric] = self.metrics[metric](
+                        prediction.squeeze().long(), batch["y"].squeeze().long()
+                    )
+                else:
+                    metrics_dict[metric] = self.metrics[metric](
+                        prediction.squeeze(), batch["y"].squeeze()
+                    )
+            except ValueError as exp:
+                LOG.warning("Gor error with metric %s", metric)
+                LOG.warning(exp)
 
         return metrics_dict
 
@@ -137,12 +145,11 @@ class CustomModel(LightningModule):
         super().__init__()
         if isinstance(config, str):
             config = ModelSchema.parse_raw(config)
-
         layers_dict = {}
         self.config = config
         self.layer_configs = {layer.name: layer for layer in config.layers}
         for layer in config.layers:
-            layer_instance = layer.create()  # possibly pass schema here
+            layer_instance = layer.create()
             if isinstance(layer_instance, AutoBuilder):
                 layer_instance.set_from_model_schema(
                     config, list(get_dependencies(layer))
@@ -156,7 +163,6 @@ class CustomModel(LightningModule):
         # This is safe as long ModelSchema was validated
         loss_fn_class = eval(config.loss_fn)
         self.loss_fn = loss_fn_class()
-
         # Set up metrics for training and validation
         if config.is_regressor():
             self.metrics = Metrics("regressor")
@@ -169,7 +175,7 @@ class CustomModel(LightningModule):
                 num_classes=len(config.dataset.target_column.data_type.classes),
             )
 
-    def set_training_parameters(self, optimizer: Optimizer):
+    def set_optimizer(self, optimizer: Optimizer):
         """Sets parameters that only are given in training configuration
 
         Parameters that are set:
@@ -197,6 +203,7 @@ class CustomModel(LightningModule):
                 input[layer.name] = self._model[node_name](*args)
             else:
                 input[layer.name] = self._model[node_name](args)
+
             last = input[layer.name]
         return last
 
@@ -228,7 +235,10 @@ class CustomModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
         prediction = self(batch)
-        loss = self.loss_fn(prediction.squeeze(), batch["y"].squeeze())
+        loss = self.loss_fn(
+            prediction.squeeze().type(torch.DoubleTensor),
+            batch["y"].squeeze().type(torch.DoubleTensor),
+        )
         metrics_dict = {
             "train_loss": loss,
         } | self.metrics.get_training_metrics(prediction, batch)

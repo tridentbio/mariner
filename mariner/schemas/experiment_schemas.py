@@ -69,7 +69,7 @@ class Experiment(ApiBaseModel):
     mlflow_id: str
     stage: ExperimentStage
     created_by: Optional[User] = None
-    hyperparams: Optional[Dict[str, float]] = None
+    hyperparams: Optional[Dict[str, Union[float, None]]] = None
     epochs: Optional[int] = None
     train_metrics: Optional[Dict[str, float]] = None
     val_metrics: Optional[Dict[str, float]] = None
