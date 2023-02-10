@@ -185,6 +185,7 @@ class MissingComponentArgs(ValueError):
 
 
 AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
+AnnotatedFeaturizersType = Annotated[FeaturizersType, Field(discriminator="type")]
 LossType = Literal["torch.nn.MSELoss", "torch.nn.CrossEntropyLoss"]
 
 ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss"]
@@ -310,8 +311,8 @@ class ModelSchema(CamelCaseModel):
         return values
 
     @validator("loss_fn", pre=True, always=True)
-    def autofill_loss_gn(cls, value: str, values: Dict[str, Any]) -> Any:
-        """[TODO:summary]
+    def autofill_loss_fn(cls, value: str, values: Dict[str, Any]) -> Any:
+        """Validates or infer the loss_fn attribute
 
         Automatically fills and validates the loss_fn field based on the target_column
         of the dataset.target_column field
@@ -352,7 +353,7 @@ class ModelSchema(CamelCaseModel):
     name: str
     dataset: DatasetConfig
     layers: List[AnnotatedLayersType] = []
-    featurizers: List[FeaturizersType] = []
+    featurizers: List[AnnotatedFeaturizersType] = []
     loss_fn: LossType = None
 
     def make_graph(self):

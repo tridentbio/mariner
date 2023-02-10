@@ -59,7 +59,7 @@ class TrainingActor:
         """
         modelconfig = self.experiment.model_version.config
         model = CustomModel(config=modelconfig)
-        model.set_training_parameters(self.request.optimizer)
+        model.set_optimizer(self.request.optimizer)
         df = dataset.get_dataframe()
         batch_size = self.request.batch_size or 32
         datamodule = DataModule(

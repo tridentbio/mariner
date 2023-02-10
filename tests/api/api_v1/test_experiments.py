@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Dict, Generator, List
 from urllib.parse import urlencode
 
 import pytest
@@ -8,53 +9,122 @@ from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
 
 from mariner.core.config import settings
+from mariner.entities.dataset import Dataset
+from mariner.entities.user import User
 from mariner.schemas.experiment_schemas import Experiment
-from tests.fixtures.user import get_test_user
+from mariner.schemas.model_schemas import Model
+from tests.fixtures.dataset import setup_create_dataset, teardown_create_dataset
+from tests.fixtures.experiments import setup_experiments, teardown_experiments
+from tests.fixtures.model import setup_create_model, teardown_create_model
+from tests.fixtures.user import get_random_test_user, get_test_user
+from tests.utils.user import authentication_token_from_email
+from tests.utils.utils import random_lower_string
+
+
+@pytest.fixture(scope="module")
+def user_fixture(db: Session) -> User:
+    return get_random_test_user(db)
+
+
+@pytest.fixture(scope="module")
+def user_headers_fixture(
+    client: TestClient, db: Session, user_fixture: User
+) -> Dict[str, str]:
+    return authentication_token_from_email(
+        client=client, email=user_fixture.email, db=db
+    )
+
+
+@pytest.fixture(scope="module")
+def user_dataset_fixture(
+    client: TestClient, db: Session, user_headers_fixture: Dict[str, str]
+):
+    ds = setup_create_dataset(
+        db, client, user_headers_fixture, name=random_lower_string()
+    )
+    assert ds is not None
+    yield ds
+    teardown_create_dataset(db, ds)
+
+
+@pytest.fixture(scope="module")
+def user_model_fixture(
+    client: TestClient,
+    db: Session,
+    user_headers_fixture: Dict[str, str],
+    user_dataset_fixture: Dataset,
+):
+    model = setup_create_model(
+        client,
+        user_headers_fixture,
+        dataset_name=user_dataset_fixture.name,
+        model_type="regressor",
+    )
+    yield model
+    teardown_create_model(db, model)
 
 
 @pytest.mark.long
 def test_post_experiments(
-    client: TestClient, mocked_experiment_payload: dict, normal_user_token_headers
+    client: TestClient, mocked_experiment_payload: dict, user_headers_fixture: dict
 ):
     res = client.post(
         f"{settings.API_V1_STR}/experiments/",
         json=mocked_experiment_payload,
-        headers=normal_user_token_headers,
+        headers=user_headers_fixture,
     )
     assert res.status_code == HTTP_200_OK
 
 
-def test_get_experiments(
-    client: TestClient, some_model, some_experiments, normal_user_token_headers
-):
-    params = {"modelId": some_model.id}
+@pytest.fixture(scope="module")
+def user_experiments_fixture(
+    db: Session, user_model_fixture: Model
+) -> Generator[List[Experiment], None, None]:
+    exps = setup_experiments(db, user_model_fixture, num_experiments=3)
+    assert len(exps) == 3, "failed in setup of some_experiments fixture"
+    yield exps
+    teardown_experiments(db, exps)
 
+
+def test_get_experiments(
+    client: TestClient,
+    user_model_fixture,
+    user_experiments_fixture,
+    user_headers_fixture,
+):
+
+    params = {"modelId": user_model_fixture.id}
     res = client.get(
         f"{settings.API_V1_STR}/experiments/",
         params=params,
-        headers=normal_user_token_headers,
+        headers=user_headers_fixture,
     )
     assert res.status_code == HTTP_200_OK
     body = res.json()
     exps, total = body["data"], body["total"]
-    assert len(exps) == len(some_experiments) == total == 3, "gets all experiments"
+    assert total == len(exps) == len(user_experiments_fixture), "gets all experiments"
 
 
 def test_get_experiments_ordered_by_createdAt_desc_url_encoded(
-    client: TestClient, some_model, some_experiments, normal_user_token_headers
+    client: TestClient,
+    user_model_fixture,
+    user_experiments_fixture,
+    user_headers_fixture,
 ):
-    params = {"modelId": some_model.id, "orderBy": "-createdAt"}
+    params = {"modelId": user_model_fixture.id, "orderBy": "-createdAt"}
     querystring = urlencode(params)
 
     res = client.get(
         f"{settings.API_V1_STR}/experiments/?{querystring}",
         params=params,
-        headers=normal_user_token_headers,
+        headers=user_headers_fixture,
     )
     assert res.status_code == HTTP_200_OK
     body = res.json()
     exps, total = body["data"], body["total"]
-    assert len(exps) == len(some_experiments) == total == 3, "gets all experiments"
+    assert (
+        len(exps) == len(user_experiments_fixture) == total == 3
+    ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
         assert datetime.fromisoformat(next["createdAt"]) < datetime.fromisoformat(
@@ -63,19 +133,24 @@ def test_get_experiments_ordered_by_createdAt_desc_url_encoded(
 
 
 def test_get_experiments_ordered_by_createdAt_desc(
-    client: TestClient, some_model, some_experiments, normal_user_token_headers
+    client: TestClient,
+    user_model_fixture,
+    user_experiments_fixture,
+    user_headers_fixture,
 ):
-    params = {"modelId": some_model.id, "orderBy": "-createdAt"}
+    params = {"modelId": user_model_fixture.id, "orderBy": "-createdAt"}
 
     res = client.get(
         f"{settings.API_V1_STR}/experiments/",
         params=params,
-        headers=normal_user_token_headers,
+        headers=user_headers_fixture,
     )
     assert res.status_code == HTTP_200_OK
     body = res.json()
     exps, total = body["data"], body["total"]
-    assert len(exps) == len(some_experiments) == total == 3, "gets all experiments"
+    assert (
+        len(exps) == len(user_experiments_fixture) == total == 3
+    ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
         assert datetime.fromisoformat(next["createdAt"]) < datetime.fromisoformat(
@@ -84,19 +159,24 @@ def test_get_experiments_ordered_by_createdAt_desc(
 
 
 def test_get_experiments_ordered_by_createdAt_asc_url_encoded(
-    client: TestClient, some_model, some_experiments, normal_user_token_headers
+    client: TestClient,
+    user_model_fixture,
+    user_experiments_fixture,
+    user_headers_fixture,
 ):
-    params = {"modelId": some_model.id, "orderBy": "+createdAt"}
+    params = {"modelId": user_model_fixture.id, "orderBy": "+createdAt"}
     querystring = urlencode(params)
 
     res = client.get(
         f"{settings.API_V1_STR}/experiments/?{querystring}",
-        headers=normal_user_token_headers,
+        headers=user_headers_fixture,
     )
     assert res.status_code == HTTP_200_OK
     body = res.json()
     exps, total = body["data"], body["total"]
-    assert len(exps) == len(some_experiments) == total == 3, "gets all experiments"
+    assert (
+        len(exps) == len(user_experiments_fixture) == total == 3
+    ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
         assert datetime.fromisoformat(next["createdAt"]) > datetime.fromisoformat(
@@ -106,10 +186,18 @@ def test_get_experiments_ordered_by_createdAt_asc_url_encoded(
 
 # FAILING
 def test_get_experiments_by_stage(
-    client: TestClient, some_model, some_experiments, normal_user_token_headers
+    client: TestClient,
+    user_model_fixture,
+    user_experiments_fixture,
+    user_headers_fixture,
 ):
+    print(
+        user_model_fixture,
+        user_experiments_fixture,
+        user_headers_fixture,
+    )
     params = {
-        "modelId": some_model.id,
+        "modelId": user_model_fixture.id,
         "page": 0,
         "perPage": 15,
         "stage": ["SUCCESS"],
@@ -117,7 +205,7 @@ def test_get_experiments_by_stage(
     res = client.get(
         f"{settings.API_V1_STR}/experiments",
         params=params,
-        headers=normal_user_token_headers,
+        headers=user_headers_fixture,
     )
     body = res.json()
     assert res.status_code == HTTP_200_OK, "Request failed with body: %r" % body

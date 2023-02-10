@@ -172,6 +172,7 @@ async def create_model_traning(
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,
             epochs=training_request.epochs,
+            hyperparams={"learning_rate": training_request.optimizer.params.lr},
             stage="RUNNING",
         ),
     )

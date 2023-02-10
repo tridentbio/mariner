@@ -92,13 +92,18 @@ class {{ component["prefix"] }}LayerConfig(CamelCaseModel):
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
-        return lib_cls(**self.constructor_args.dict())
+            return lib_cls
+        args = self.constructor_args.dict()
+        newargs = {}
+        for key, value in args.items():
+            if value is not None:
+                newargs[key] = value
+        return lib_cls(**newargs)
     {% else %}
     def create(self):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
-          return lib_cls
+            return lib_cls
         return lib_cls()
     {% endif %}
     {% if fwd_count > 0 %}
