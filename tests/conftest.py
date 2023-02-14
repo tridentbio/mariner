@@ -3,10 +3,12 @@ from typing import Dict, Generator, List
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
+from jose import jwt
 from sqlalchemy.orm import Session
 
 from api.fastapi_app import app
 from mariner import experiments as experiments_ctl
+from mariner.core import security
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import Dataset, EventEntity
@@ -21,6 +23,7 @@ from mariner.schemas.experiment_schemas import (
     TrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
+from mariner.schemas.token import TokenPayload
 from mariner.stores import user_sql
 from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
@@ -55,6 +58,15 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
     return authentication_token_from_email(
         client=client, email=settings.EMAIL_TEST_USER, db=db
     )
+
+
+@pytest.fixture(scope="module")
+def normal_user_token_headers_payload(
+    normal_user_token_headers: Dict[str, str]
+) -> Dict[str, str]:
+    token = normal_user_token_headers["Authorization"].split(" ")[1]
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
+    return TokenPayload(**payload)
 
 
 @pytest.fixture(scope="module")
