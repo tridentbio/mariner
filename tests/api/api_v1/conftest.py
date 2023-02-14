@@ -4,10 +4,15 @@ from typing import List
 import pytest
 from sqlalchemy.orm import Session
 
+from mariner.core.aws import upload_s3_compressed
 from mariner.entities import EventEntity
 from mariner.entities import Experiment as ExperimentEntity
 from mariner.entities import Model
+from mariner.entities.dataset import Dataset
+from mariner.schemas.dataset_schemas import DatasetCreateRepo
 from mariner.schemas.experiment_schemas import Experiment
+from mariner.schemas.token import TokenPayload
+from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.experiment_sql import experiment_store
 from tests.fixtures.events import get_test_events, teardown_events
 from tests.fixtures.experiments import mock_experiment
@@ -56,3 +61,27 @@ def some_events(
     events = get_test_events(db, some_experiments)
     yield events
     teardown_events(db, events)
+
+
+@pytest.fixture(scope="module")
+def some_dataset(
+    db: Session, normal_user_token_headers_payload: TokenPayload
+) -> Dataset:
+    key, _ = upload_s3_compressed(open("tests/data/bad_dataset.csv", "rb"))
+    create_obj = DatasetCreateRepo.construct(
+        bytes=0,
+        data_url=key,
+        split_actual=None,
+        split_target="60-20-20",
+        columns_metadata=[],
+        name=random_lower_string(),
+        description=random_lower_string(),
+        created_by_id=normal_user_token_headers_payload.sub,
+        errors={"dataset_error_key": key},
+    )
+    dataset = dataset_store.create(db, create_obj)
+
+    dataset_from_orm = dataset_store.get(db, dataset.id)
+    yield dataset_from_orm
+
+    db.query(Dataset).filter(Dataset.id == dataset.id).delete()
