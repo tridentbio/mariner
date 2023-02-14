@@ -438,11 +438,12 @@ def get_csv_file(
         if not dataset.errors:
             raise DatasetNotFound(f"Dataset with id {dataset_id} has no errors")
 
-        file_key = dataset.errors.dataset_error_key
+        
+        file_key = dataset.errors['dataset_error_key']
 
     if not file_key:
         raise NotImplementedError(f"File type {file_type} not implemented")
 
     client = create_s3_client()
     s3_res = client.get_object(Bucket=settings.AWS_DATASETS, Key=file_key)
-    return s3_res["body"].iter_chunks()
+    return s3_res["Body"].iter_chunks()
