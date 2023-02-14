@@ -154,6 +154,10 @@ $ alembic revision --autogenerate -m "Add column last_name to User model"
 $ alembic upgrade head
 ```
 
+## CI-CD
+
+The CI-CD pipeline is configured to run on all pull requests targeting the develop branch.
+
 ## Publishing releases
 
 A cli tool was made to publish releases from the [RELEASES.md](./RELEASES.md) file.
