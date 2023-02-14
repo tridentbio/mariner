@@ -167,7 +167,7 @@ class CompatibilityChecker:
         file = BytesIO()
         df.to_csv(file, index=False)
         file.seek(0)
-        file_key, _ = upload_s3_compressed(file, Bucket.Datasets.value)
+        file_key, _ = upload_s3_compressed(file, Bucket.Datasets)
         self.errors["dataset_error_key"] = file_key
 
     @staticmethod
