@@ -3,13 +3,11 @@ name: Docker Image CI
 on:
   pull_request:
     branches: [ "develop", "ci/configure-action" ]
+    types: [opened, ready_for_review]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Check style code standards
