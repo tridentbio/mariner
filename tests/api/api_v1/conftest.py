@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from typing import List
 
-import pytest
+import pytest, io
 from sqlalchemy.orm import Session
 
 from mariner.core.aws import upload_s3_compressed
@@ -67,7 +67,7 @@ def some_events(
 def some_dataset(
     db: Session, normal_user_token_headers_payload: TokenPayload
 ) -> Dataset:
-    key, _ = upload_s3_compressed(open("tests/data/bad_dataset.csv", "rb"))
+    key, _ = upload_s3_compressed(io.BytesIO(open("tests/data/bad_dataset.csv", "rb").read()))
     create_obj = DatasetCreateRepo.construct(
         bytes=0,
         data_url=key,

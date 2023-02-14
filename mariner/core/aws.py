@@ -105,7 +105,7 @@ def upload_s3_compressed(
     Returns:
         Tuple[str, int]: s3 key and file size in bytes
     """
-    file_instance = file if hasattr(file, "read") else file.file
+    file_instance = file if isinstance(file, (io.BytesIO, BinaryIO)) else file.file
 
     file_size = get_size(file_instance)
 
