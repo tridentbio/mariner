@@ -3,7 +3,8 @@ FROM python:3.9
 WORKDIR /app/
 
 # Install Poetry
-RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python3 && \
+RUN curl -sSL https://install.python-poetry.org | \
+    POETRY_HOME=/opt/poetry python3 && \
     cd /usr/local/bin && \
     ln -s /opt/poetry/bin/poetry && \
     poetry config virtualenvs.create false
@@ -28,6 +29,10 @@ COPY ./model_builder /app/model_builder
 COPY ./scripts /app/scripts
 COPY ./tests /app/tests
 COPY ./alembic.ini /app/alembic.ini
+COPY ./.coveragerc /app/.coveragerc
+COPY ./pylintrc /app/pylintrc
+COPY ./mypy.ini /app/mypy.ini
+COPY ./pytest.ini /app/pytest.ini
 ENV PYTHONPATH=/app
 
 CMD [ "sh", "/app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]

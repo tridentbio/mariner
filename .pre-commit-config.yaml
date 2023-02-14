@@ -20,9 +20,9 @@ repos:
       fail_fast: true
     - id: test
       name: Running short tests
-      entry: docker-compose exec -T backend pytest -m 'not long' --timeout 45
+      entry: sh scripts/test.sh
       language: system
       pass_filenames: false
       fail_fast: true
       stages: 
-        - push
+        - manual

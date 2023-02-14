@@ -13,3 +13,5 @@ configmap.yaml
 .hypothesis/
 MarinerLogger/
 checkpoints/
+cov/
+.coverage
