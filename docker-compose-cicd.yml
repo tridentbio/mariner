@@ -5,7 +5,7 @@ services:
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
     env_file:
-      - .env
+      - .env.test
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - PGUSER=postgres
@@ -33,7 +33,7 @@ services:
       - 80:80
       - 8888:8888
     env_file:
-      - .env
+      - .env.test
     environment:
       - SERVER_HOST=http://${SERVER_NAME?Variable not set}
     healthcheck:
@@ -57,7 +57,7 @@ services:
     volumes:
       - app-mlflow-data:/var/lib/postgresql/data/pgdata
     env_file:
-      - .env.local
+      - .env.test
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_SERVER=mlflowdb
@@ -82,7 +82,7 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      - .env.local
+      - .env.test
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
@@ -107,7 +107,7 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.local
+      .env.test
     ports:
       - "6379:6379"
       - "8265:8265"
@@ -131,7 +131,7 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.local
+      .env.test
     depends_on: 
       - ray-head
     environment:
