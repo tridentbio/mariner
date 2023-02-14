@@ -1,4 +1,3 @@
-docker-compose -f docker-compose-cicd.yml up -d --build && \
 docker-compose -f docker-compose-cicd.yml exec backend poetry run coverage run -m pytest 
 docker-compose -f docker-compose-cicd.yml exec backend poetry run coverage json
 docker-compose -f docker-compose-cicd.yml exec backend poetry run coverage html
