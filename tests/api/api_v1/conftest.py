@@ -1,7 +1,8 @@
+import io
 from collections.abc import Generator
 from typing import List
 
-import pytest, io
+import pytest
 from sqlalchemy.orm import Session
 
 from mariner.core.aws import upload_s3_compressed
@@ -63,21 +64,47 @@ def some_events(
     teardown_events(db, events)
 
 
+""" 
+id
+name
+description
+rows
+columns
+bytes
+stats
+data_url
+split_target
+split_actual
+split_type
+created_at
+updated_at
+created_by_id
+columns_metadata
+ready_status
+errors
+"""
+
+
 @pytest.fixture(scope="module")
-def some_dataset(
+def some_dataset_without_process(
     db: Session, normal_user_token_headers_payload: TokenPayload
 ) -> Dataset:
-    key, _ = upload_s3_compressed(io.BytesIO(open("tests/data/bad_dataset.csv", "rb").read()))
+    key, _ = upload_s3_compressed(
+        io.BytesIO(open("tests/data/bad_dataset.csv", "rb").read())
+    )
     create_obj = DatasetCreateRepo.construct(
         bytes=0,
+        rows=0,
         data_url=key,
-        split_actual=None,
         split_target="60-20-20",
+        split_type="random",
         columns_metadata=[],
         name=random_lower_string(),
         description=random_lower_string(),
         created_by_id=normal_user_token_headers_payload.sub,
         errors={"dataset_error_key": key},
+        columns=0,
+        stats={},
     )
     dataset = dataset_store.create(db, create_obj)
 
