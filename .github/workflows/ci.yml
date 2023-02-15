@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Build containers
+    - name: Build containers and install dependencies
       run: docker-compose --env-file .env.test -f docker-compose-cicd.yml up -d --build
     - name: Check style code standards
-      run: docker-compose --env-file .env.test -f docker-compose-cicd.yml exec backend sh scripts/check-format.sh
+      run: docker-compose --env-file .env.test -f docker-compose-cicd.yml exec -T backend sh scripts/check-format.sh
     - name: Check code quality
-      run: docker-compose --env-file .env.test -f docker-compose-cicd.yml exec backend sh scripts/lint.sh
+      run: docker-compose --env-file .env.test -f docker-compose-cicd.yml exec -T backend sh scripts/lint.sh
       continue-on-error: true
     - name: Build and test on Docker Compose. Fails when coverage is under 77%
       run: pre-commit run --hook-stage manual test
