@@ -9,7 +9,7 @@ env:
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     AWS_REGION: us-east-1
 jobs:
-  build:
+  all-backend-tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -17,7 +17,6 @@ jobs:
       continue-on-error: true
       with:
         key: docker-layer-caching-tests-{hashFiles('poetry.lock')}-{hashFiles('dockerfiles/Dockerfile.local')}-{hashFiles('docker-compose-cicd.yml')}-{hashFiles('.env.test')}
-        restore-keys: docker-layer-caching-Unit-tests-
     - name: Build containers and install dependencies
       run: docker-compose --env-file .env.test -f docker-compose-cicd.yml up -d --build --wait
     - name: Build and test on Docker Compose. Fails when coverage is under 77%
