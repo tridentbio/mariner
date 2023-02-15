@@ -18,4 +18,4 @@ jobs:
     - name: Build containers and install dependencies
       run: docker-compose --env-file .env.test -f docker-compose-cicd.yml up -d --build
     - name: Build and test on Docker Compose. Fails when coverage is under 77%
-      run: docker-compose --env-file .env.test -f docker-compose-cicd.yml exec -T backend sh scripts/test.sh
+      run: sh scripts/test.sh
