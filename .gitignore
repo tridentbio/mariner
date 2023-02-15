@@ -13,3 +13,4 @@ configmap.yaml
 .hypothesis/
 MarinerLogger/
 checkpoints/
+configmaps
