@@ -12,11 +12,14 @@ def make_list_from_array_string(v: Union[str, list[str]]):
     raise ValueError(v)
 
 
+# Make settings be the aggregation of several settings
+# Possibly using multi-inheritance
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+
     SERVER_NAME: str
     SERVER_HOST: AnyHttpUrl
     WEBAPP_URL: str
@@ -34,7 +37,6 @@ class Settings(BaseSettings):
         return make_list_from_array_string(v)
 
     PROJECT_NAME: str
-
     POSTGRES_SERVER: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
@@ -64,6 +66,7 @@ class Settings(BaseSettings):
 
     RAY_ADDRESS: str = "ray://ray-head:10001"
     APPLICATION_SECRET: str
+    APPLICATION_CHUNK_SIZE: int = 1024
 
     GITHUB_CLIENT_ID: str
     GITHUB_CLIENT_SECRET: str

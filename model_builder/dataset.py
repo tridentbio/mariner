@@ -1,23 +1,105 @@
-from typing import List, Optional
+"""Dataset related classes to use for training/evaluating/testing"""
+from collections.abc import Mapping
+from typing import Any, Callable, Sequence, Union
 
 import pandas as pd
 import pytorch_lightning as pl
 import torch
-from torch.nn import functional as F
-from torch.utils.data import Dataset as TorchDataset
-from torch.utils.data import random_split
-from torch_geometric.loader import DataLoader
+from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader, Dataset, Subset, random_split
+from torch.utils.data.dataloader import default_collate
+from torch_geometric.data import Batch
+from torch_geometric.data.data import BaseData
 
-from model_builder.layers_schema import FeaturizersType
+from model_builder.component_builder import AutoBuilder
+from model_builder.featurizers.base_featurizers import BaseFeaturizer
+from model_builder.featurizers.bio_sequence_featurizer import (
+    DNASequenceFeaturizer,
+    ProteinSequenceFeaturizer,
+    RNASequenceFeaturizer,
+)
+from model_builder.featurizers.integer_featurizer import IntegerFeaturizer
+from model_builder.model_schema_query import (
+    get_dependencies,
+    get_target_columns,
+)
 from model_builder.schemas import (
     CategoricalDataType,
     ColumnConfig,
-    DatasetConfig,
+    DNADataType,
+    ModelSchema,
+    NumericalDataType,
+    ProteinDataType,
+    QuantityDataType,
+    RNADataType,
 )
 from model_builder.utils import DataInstance, get_references_dict
 
 
-class CustomDataset(TorchDataset):
+class Collater:
+    """
+    Collater that automatically handles all of the data types supported by Mariner
+
+    The Collater automatically detects the data types from each element of the batch
+    and adjusts the collation function accoringly.
+
+    Args:
+        pyg_batch_kwargs - Keyword arguments passed to the PyTorch geometric batch
+
+    Returns:
+        Batched data
+    """
+
+    def __init__(self, **pyg_batch_kwargs):
+        self.pyg_batch_kwargs = pyg_batch_kwargs
+
+    def __call__(self, batch):
+        return self.collate(batch)
+
+    def collate(self, batch):  # Deprecated...
+        # Get the first element to check data type
+        elem = batch[0]
+
+        # Handle PyG data
+        if isinstance(elem, BaseData):
+            return Batch.from_data_list(batch, **self.pyg_batch_kwargs)
+
+        # Handle Tensor data
+        elif isinstance(elem, torch.Tensor):
+            if elem.dtype == torch.long and not all(
+                [batch[0].shape == batch[i].shape for i in range(1, len(batch))]
+            ):
+                return pad_sequence(batch, batch_first=True)
+            return default_collate(batch)
+
+        # Handle float data
+        elif isinstance(elem, float):
+            return torch.tensor(batch, dtype=torch.float)
+
+        # Handle int data
+        elif isinstance(elem, int):
+            return torch.tensor(batch)
+
+        # Handle str data
+        elif isinstance(elem, str):
+            return batch
+
+        # Handle Mapping data
+        elif isinstance(elem, Mapping):
+            return {key: self([data[key] for data in batch]) for key in elem}
+
+        # Handle additional PyG-specific batching
+        elif isinstance(elem, tuple) and hasattr(elem, "_fields"):
+            return type(elem)(*(self(s) for s in zip(*batch)))
+
+        # Handle sequences
+        elif isinstance(elem, Sequence) and not isinstance(elem, str):
+            return [self(s) for s in zip(*batch)]
+
+        raise TypeError(f"DataLoader found invalid type: {type(elem)}")
+
+
+class CustomDataset(Dataset):
     """Class that implements a custom dataset to support multiple
     inputs from multiple different layers.
 
@@ -36,7 +118,7 @@ class CustomDataset(TorchDataset):
         feature_columns (List[str]): List of columns that will be
             used by the model to be extracted.
         featurizers_config (List[AppmoleculefeaturizerLayerConfig]):
-            Object containing information about the featurizers
+            Object containing information about the fAcho que vaeaturizers
             used by the CustomDataset.
         target (str, optional): Name of the columns that will be
             used as the model target for predictions.
@@ -45,64 +127,114 @@ class CustomDataset(TorchDataset):
     >>> dataset = CustomDataset(data, ['mwt', 'smiles'], featurizer_config, 'tpsa')
     """
 
-    def __init__(
-        self,
-        data: pd.DataFrame,
-        feature_columns: List[ColumnConfig],
-        featurizers_config,
-        target: Optional[ColumnConfig] = None,
-    ) -> None:
+    def __init__(self, data: pd.DataFrame, config: ModelSchema, target=True) -> None:
         super().__init__()
         self.data = data
+        self.config = config
         self.target = target
-        self.columns = feature_columns
-        self._featurizers_config = featurizers_config
-
         self.setup()
 
+    def get_featurizer_configs(self):
+        """Gets the input featurizers"""
+        return self.config.featurizers
+
     def setup(self):
-        # Instanciate all featurizers
+        """Instantiates input and output featurizers"""
+        # Instantiate all featurizers
         self._featurizers = {}
-        for featurizer_config in self._featurizers_config:
-            self._featurizers[featurizer_config.name] = featurizer_config.create()
+        for featurizer_config in self.get_featurizer_configs():
+            feat = featurizer_config.create()
+            if isinstance(feat, AutoBuilder):
+                feat.set_from_model_schema(
+                    self.config, list(get_dependencies(featurizer_config))
+                )
+            self._featurizers[featurizer_config.name] = feat
+        self.output_featurizer = self.get_output_featurizer()
+
+    def _get_default_featurizer(
+        self, column: ColumnConfig
+    ) -> Union[BaseFeaturizer, None]:
+        """Gets a default featurizer based on the data type"""
+        feat = None
+        if isinstance(column.data_type, CategoricalDataType):
+            feat = IntegerFeaturizer()
+            feat.set_from_model_schema(self.config, [column.name])
+        elif isinstance(column.data_type, DNADataType):
+            feat = DNASequenceFeaturizer()
+        elif isinstance(column.data_type, RNADataType):
+            feat = RNASequenceFeaturizer()
+        elif isinstance(column.data_type, ProteinDataType):
+            feat = ProteinSequenceFeaturizer()
+
+        return feat
+
+    def get_output_featurizer(self) -> Union[BaseFeaturizer, None]:
+        """Gets the output featurizer"""
+        if self.target:
+            targets = get_target_columns(self.config)
+            # Assume a single target
+            target = targets[0]
+            return self._get_default_featurizer(target)
 
     def __len__(self) -> int:
+        """Gets the number of rows in the dataset"""
         return len(self.data)
 
     def __getitem__(self, index) -> DataInstance:
-        d = DataInstance()
+        """Gets the item at index-th row of the dataset
+
+        Args:
+            index (int): row to get
+        Returns:
+            DataInstance with all values of that row
+        """
+        # Instantiate the data instance
+        data = DataInstance()
+
+        # Convert the row to a dictionary
         sample = dict(self.data.iloc[index, :])
-        columns_to_include = self.columns.copy()
+
+        # Subset columns
+        columns_to_include = self.config.dataset.feature_columns
+
         # Featurize all of the columns that pass into a
-        # featurizer before include in the data instance
-        for featurizer in self._featurizers_config:
+        # featurizer before including in the data instance
+        for featurizer in self.get_featurizer_configs():
+
             references = get_references_dict(featurizer.forward_args.dict())
             assert len(references) == 1, "only 1 forward arg for featurizers for now"
             col_name = list(references.values())[0]
-            d[featurizer.name] = [self._featurizers[featurizer.name](sample[col_name])]
-            # Remove featurized columns from columsn_to_include
-            # since it's featurized value was already included
+            data[featurizer.name] = self._featurizers[featurizer.name](sample[col_name])
+
+            # Remove featurized columns from columns_to_include
+            # since its featurized value was already included
             for index, col in enumerate(columns_to_include):
                 if col.name == col_name:
                     columns_to_include.pop(index)
 
-        # include all unfeaturized columns
+        # Include all unfeaturized columns
         for column in columns_to_include:
             val = sample[column.name]
-            if isinstance(val, (float, int)):
-                d[column.name] = torch.Tensor([val])
+            if isinstance(column.data_type, (NumericalDataType, QuantityDataType)):
+                data[column.name] = torch.Tensor([val])
+            elif isinstance(
+                column.data_type, (DNADataType, RNADataType, ProteinDataType)
+            ):
+                feat = self._get_default_featurizer(column)
+                assert feat, "dna, rna and protein have a default featurizer"
+                data[column.name] = feat(val)
             else:
-                d[column.name] = val
+                data[column.name] = val
 
         if self.target:
-            if isinstance(self.target.data_type, CategoricalDataType):
-                classes = self.target.data_type.classes
-                idx = classes[sample[self.target.name]]
-                d.y = F.one_hot(torch.tensor(idx), num_classes=len(classes)).float()
+            targets = get_target_columns(self.config)
+            target = targets[0]
+            if self.output_featurizer:
+                data.y = self.output_featurizer(sample[target.name])
             else:
-                d.y = torch.Tensor([sample[self.target.name]])
+                data.y = torch.Tensor([sample[target.name]])
 
-        return d
+        return data
 
 
 class DataModule(pl.LightningDataModule):
@@ -127,20 +259,26 @@ class DataModule(pl.LightningDataModule):
             about the Dataset used.
         batch_size (int, optional): Number of data instances in each
             batch. Defaults to 32.
+        collate_fn (Callable, optional): Function to be called on a list
+            of samples by the dataloader to build a batch.
     """
+
+    train_dataset: Subset[Any]
+    val_dataset: Subset[Any]
+    test_dataset: Subset[Any]
 
     def __init__(
         self,
         data: pd.DataFrame,
         split_type: str,
         split_target: str,
-        featurizers_config: FeaturizersType,
-        dataset_config: DatasetConfig,
-        batch_size: int = 32,
+        config: ModelSchema,
+        batch_size=32,
+        collate_fn: Union[Callable, None] = Collater(),
     ):
         super().__init__()
-        self.dataset_config = dataset_config
-        self.featurizers_config = featurizers_config
+        self.dataset_config = config.dataset
+        self.featurizers_config = config.featurizers
 
         self.data = data
 
@@ -149,11 +287,10 @@ class DataModule(pl.LightningDataModule):
         self.split_type = split_type
         self.split_target = split_target
 
+        self.collate_fn = collate_fn
         self.dataset = CustomDataset(
             self.data,
-            self.dataset_config.feature_columns,
-            self.featurizers_config,
-            self.dataset_config.target_column,
+            config,
         )
 
     def setup(self, stage=None):
@@ -168,6 +305,8 @@ class DataModule(pl.LightningDataModule):
         Args:
             stage (_type_, optional): _description_. Defaults to None.
         """
+
+        # TODO: Use split index column instead
         train_split, val_split, _ = self.split_target.split("-")
 
         full_size = len(self.dataset)
@@ -193,6 +332,7 @@ class DataModule(pl.LightningDataModule):
         return DataLoader(
             self.train_dataset,
             self.batch_size,
+            collate_fn=self.collate_fn,
             shuffle=True,
         )
 
@@ -200,12 +340,14 @@ class DataModule(pl.LightningDataModule):
         """Return the DataLoader instance used to test the custom
         model.
 
-        TODO: maybe whe can set drop last or other params in dl.
-
         Returns:
             DataLoader: instance used in test steps.
         """
-        return DataLoader(self.test_dataset, self.batch_size, shuffle=False)
+        return DataLoader(
+            self.val_dataset,
+            self.batch_size,
+            collate_fn=self.collate_fn,
+        )
 
     def val_dataloader(self) -> DataLoader:
         """Return the DataLoader used to validate the custom model.
@@ -213,4 +355,8 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in validation steps.
         """
-        return DataLoader(self.test_dataset, self.batch_size, shuffle=True)
+        return DataLoader(
+            self.val_dataset,
+            self.batch_size,
+            collate_fn=self.collate_fn,
+        )

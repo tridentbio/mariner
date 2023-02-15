@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Callable, List
 
 import pytest
 from fastapi import UploadFile
@@ -6,31 +6,26 @@ from pytorch_lightning import Trainer
 from sqlalchemy.orm.session import Session
 
 from mariner import datasets as dataset_ctl
+from mariner.entities import Dataset as DatasetEntity
 from mariner.schemas.dataset_schemas import (
     CategoricalDataType,
     ColumnsDescription,
     Dataset,
     DatasetCreate,
+    DNADataType,
     QuantityDataType,
     SmileDataType,
     Split,
 )
-from model_builder.dataset import DataModule
+from model_builder.dataset import Collater, DataModule
 from model_builder.model import CustomModel
+from model_builder.optimizers import AdamOptimizer
 from model_builder.schemas import ModelSchema
 from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string
 
-# model configuration to be tested
-mlflow_yamls = [
-    "tests/data/small_regressor_schema.yaml",
-    # "tests/data/test_model_with_from_smiles.yaml",
-    # "tests/data/categorical_features_model.yaml",
-]
 
-
-@pytest.fixture()
-def zinc_extra_dataset(db: Session) -> Generator[Dataset, None, None]:
+def chem_dataset() -> tuple[str, List[ColumnsDescription]]:
     zinc_extra_path = "tests/data/zinc_extra.csv"
     columns_metadata = [
         ColumnsDescription(
@@ -56,33 +51,96 @@ def zinc_extra_dataset(db: Session) -> Generator[Dataset, None, None]:
             description="yes if mwt is larger than 300 otherwise no",
         ),
     ]
-    with open(zinc_extra_path, "rb") as f:
+    return zinc_extra_path, columns_metadata
+
+
+def bio_classification_dataset() -> tuple[str, List[ColumnsDescription]]:
+    chimpazee_path = "tests/data/chimpanzee.csv"
+    columns_metadata = [
+        ColumnsDescription(
+            pattern="sequence",
+            data_type=DNADataType(),
+            description="dna sequence",
+        ),
+        ColumnsDescription(
+            pattern=" class",
+            data_type=CategoricalDataType(classes={str(i): i for i in range(0, 7)}),
+            description="class",
+        ),
+    ]
+    return chimpazee_path, columns_metadata
+
+
+def bio_regression_dataset() -> tuple[str, List[ColumnsDescription]]:
+    # aaMutations,uniqueBarcodes,medianBrightness,std
+    # DNA,int,float,float
+    csvpath = "tests/data/sarkisyan_full_seq_data.csv"
+    columns = [
+        ColumnsDescription(
+            pattern="aaMutations",
+            data_type=DNADataType(),
+            description="dna sequence",
+        ),
+        ColumnsDescription(
+            pattern="medianBrightness",
+            data_type=QuantityDataType(unit="mole"),
+            description="median brightness",
+        ),
+    ]
+    return csvpath, columns
+
+
+async def setup_dataset(
+    db: Session, dataset_setup_fn: Callable[[], tuple[str, List[ColumnsDescription]]]
+) -> Dataset:
+    path, columns_descriptions = dataset_setup_fn()
+    with open(path, "rb") as f:
         dataset_create_obj = DatasetCreate(
             name=random_lower_string(),
             description="Test description",
             split_type="random",
             split_target=Split("60-20-20"),
             file=UploadFile("file", f),
-            columns_metadata=columns_metadata,
+            columns_metadata=columns_descriptions,
         )
-        dataset = dataset_ctl.create_dataset(db, get_test_user(db), dataset_create_obj)
-        assert dataset, "creation of fixture dataset from zinc_extra.csv failed"
+        dataset = await dataset_ctl.create_dataset(
+            db, get_test_user(db), dataset_create_obj
+        )
+        assert isinstance(
+            dataset, DatasetEntity
+        ), "creation of fixture dataset from zinc_extra.csv failed"
         dataset = Dataset.from_orm(dataset)
-        yield dataset
+    assert dataset.id >= 1, "failed to create dataset"
+    return dataset
 
 
-@pytest.mark.parametrize("model_config_path", mlflow_yamls)
-def test_model_building(zinc_extra_dataset: Dataset, model_config_path: str):
+# model configuration to be tested
+model_configs_and_dataset_setup = [
+    ("tests/data/small_regressor_schema.yaml", chem_dataset),
+    ("tests/data/categorical_features_model.yaml", chem_dataset),
+    ("tests/data/dna_example.yml", bio_regression_dataset),
+]
+
+
+@pytest.mark.parametrize(
+    "model_config_path,dataset_setup", model_configs_and_dataset_setup
+)
+@pytest.mark.asyncio
+async def test_model_building(
+    db: Session, model_config_path: str, dataset_setup: Callable
+):
+    dataset = await setup_dataset(db, dataset_setup)
     with open(model_config_path, "rb") as f:
         model_config = ModelSchema.from_yaml(f.read())
     model = CustomModel(model_config)
-    featurizers_config = model_config.featurizers
+    model.set_optimizer(optimizer=AdamOptimizer())
     data_module = DataModule(
-        featurizers_config=featurizers_config,
-        data=zinc_extra_dataset.get_dataframe(),
-        dataset_config=model_config.dataset,
-        split_target=zinc_extra_dataset.split_target,
-        split_type=zinc_extra_dataset.split_type,
+        config=model_config,
+        data=dataset.get_dataframe(),
+        split_target=dataset.split_target,
+        split_type=dataset.split_type,
+        collate_fn=Collater(),
+        batch_size=4,
     )
     data_module.setup(stage="fit")
     trainer = Trainer(

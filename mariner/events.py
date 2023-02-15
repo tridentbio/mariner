@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -29,6 +29,8 @@ def build_message(source: EventSource, events: List[EventEntity]) -> str:
         return f'Training "{experiment_name}"{and_others} completed'
     elif source == "changelog":
         return "Checkout what's new!"
+    elif "dataset" in source:
+        return f"New dataset available. result: {source.split(':')[1]}"
     raise NotImplementedError(f'No message building for source = "{source}"')
 
 
@@ -62,7 +64,7 @@ class EventCreate(ApiBaseModel):
 
     user_id: Optional[int] = None
     timestamp: datetime
-    source: Literal["training:completed", "changelog"]
+    source: EventSource
     payload: Dict[str, Any]
     url: Optional[str] = None
 

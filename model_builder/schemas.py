@@ -1,3 +1,6 @@
+"""
+Object schemas used by the model builder
+"""
 # Temporary file to hold all extracted mariner schemas
 from typing import Any, Dict, List, Literal, Union
 
@@ -17,10 +20,15 @@ from model_builder.components_query import (
     get_component_constructor_args_by_type,
 )
 from model_builder.layers_schema import FeaturizersType, LayersType
+from model_builder.optimizers import Optimizer
 from model_builder.utils import CamelCaseModel, get_references_dict
 
 
 class NumericalDataType(CamelCaseModel):
+    """
+    Data type for a numerical series
+    """
+
     domain_kind: Literal["numeric"] = Field("numeric")
 
     @validator("domain_kind")
@@ -29,10 +37,18 @@ class NumericalDataType(CamelCaseModel):
 
 
 class QuantityDataType(NumericalDataType):
+    """
+    Data type for a numerical series bound to a unit
+    """
+
     unit: str
 
 
 class StringDataType(CamelCaseModel):
+    """
+    Data type for series of strings
+    """
+
     domain_kind: Literal["string"] = Field("string")
 
     @validator("domain_kind")
@@ -41,6 +57,10 @@ class StringDataType(CamelCaseModel):
 
 
 class CategoricalDataType(CamelCaseModel):
+    """
+    Data type for a series of categorical column
+    """
+
     domain_kind: Literal["categorical"] = Field("categorical")
     classes: dict[Union[str, int], int]
 
@@ -50,6 +70,10 @@ class CategoricalDataType(CamelCaseModel):
 
 
 class SmileDataType(CamelCaseModel):
+    """
+    Data type for a series of SMILEs strings column
+    """
+
     domain_kind: Literal["smiles"] = Field("smiles")
 
     @validator("domain_kind")
@@ -57,8 +81,48 @@ class SmileDataType(CamelCaseModel):
         return "smiles"
 
 
+class DNADataType(CamelCaseModel):
+    """
+    Data type for a series of DNA strings column
+    """
+
+    domain_kind: Literal["dna"] = Field("dna")
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "dna"
+
+
+class RNADataType(CamelCaseModel):
+    """
+    Data type for a series of RNA strings column
+    """
+
+    domain_kind: Literal["rna"] = Field("rna")
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "rna"
+
+
+class ProteinDataType(CamelCaseModel):
+    """
+    Data type for a series of protein strings column
+    """
+
+    domain_kind: Literal["protein"] = Field("protein")
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "protein"
+
+
 # TODO: make data_type optional
 class ColumnConfig(CamelCaseModel):
+    """
+    Describes a column based on its data type and index
+    """
+
     name: str
     data_type: Union[
         QuantityDataType,
@@ -66,11 +130,18 @@ class ColumnConfig(CamelCaseModel):
         StringDataType,
         SmileDataType,
         CategoricalDataType,
+        DNADataType,
+        RNADataType,
+        ProteinDataType,
     ] = Field(...)
 
 
 # TODO: move featurizers to feature_columns
 class DatasetConfig(CamelCaseModel):
+    """
+    Describes a dataset for the model in terms of it's used columns
+    """
+
     name: str
     target_column: ColumnConfig
     feature_columns: List[ColumnConfig]
@@ -114,6 +185,7 @@ class MissingComponentArgs(ValueError):
 
 
 AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
+AnnotatedFeaturizersType = Annotated[FeaturizersType, Field(discriminator="type")]
 LossType = Literal["torch.nn.MSELoss", "torch.nn.CrossEntropyLoss"]
 
 ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss"]
@@ -121,10 +193,18 @@ ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
 
 
 def is_regression(target_column: ColumnConfig):
+    """
+    Returns ``True`` if ``target_column`` is numeric and therefore the model
+    that predicts it is a regressor
+    """
     return target_column.data_type.domain_kind == "numeric"
 
 
 def is_classifier(target_column: ColumnConfig):
+    """
+    Returns ``True`` if the ``target_column`` is categorical and therefore the model
+    that predicts it is a classifier
+    """
     return target_column.data_type.domain_kind == "categorical"
 
 
@@ -141,6 +221,15 @@ class ModelSchema(CamelCaseModel):
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
+        """Pydantic validator that checks if layers and featurizer types are
+        known and secure (it's from one of the trusted 3rd party ML libs)
+
+        Args:
+            values (dict): dictionary with object values
+
+        Raises:
+            UnknownComponentType: in case a layer of featurizer has unknown ``type``
+        """
         layers = values.get("layers")
         featurizers = values.get("featurizers")
         layer_types = [layer.name for layer in generate.layers]
@@ -165,6 +254,16 @@ class ModelSchema(CamelCaseModel):
 
     @root_validator(pre=True)
     def check_no_missing_args(cls, values):
+        """Pydantic validator to check component arguments
+
+        Checks if all layers and featurizer have the nessery arguments
+
+        Args:
+            values (dict): dict with object values
+
+        Raises:
+            MissingComponentArgs: if some component is missing required args
+        """
         layers = values.get("layers")
         featurizers = values.get("featurizers")
         errors = []
@@ -212,7 +311,21 @@ class ModelSchema(CamelCaseModel):
         return values
 
     @validator("loss_fn", pre=True, always=True)
-    def autofill_loss_gn(cls, value: str, values: Dict[str, Any]) -> Any:
+    def autofill_loss_fn(cls, value: str, values: Dict[str, Any]) -> Any:
+        """Validates or infer the loss_fn attribute
+
+        Automatically fills and validates the loss_fn field based on the target_column
+        of the dataset.target_column field
+
+        Args:
+            value: user given value for loss_fn
+            values: values of the model schema
+
+
+        Raises:
+            ValidationError: if the loss_fn is invalid for the defined task and target_columns
+            ValueError: if the loss_fn could not be inferred
+        """
         target_column = values["dataset"].target_column
         if is_classifier(target_column):
             if not value:
@@ -240,10 +353,14 @@ class ModelSchema(CamelCaseModel):
     name: str
     dataset: DatasetConfig
     layers: List[AnnotatedLayersType] = []
-    featurizers: List[FeaturizersType] = []
+    featurizers: List[AnnotatedFeaturizersType] = []
     loss_fn: LossType = None
 
     def make_graph(self):
+        """Makes a graph of the layers and featurizers
+
+        The graph is used for a topological walk on the schema
+        """
         g = nx.DiGraph()
         for feat in self.featurizers:
             g.add_node(feat.name)
@@ -277,6 +394,11 @@ class ModelSchema(CamelCaseModel):
 
     @classmethod
     def from_yaml(cls, yamlstr):
+        """Parses a model schema object directly form a yaml str
+
+        Args:
+            yamlstr (str): yaml str
+        """
         config_dict = yaml.safe_load(yamlstr)
         return ModelSchema(**config_dict)
 

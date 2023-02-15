@@ -13,7 +13,7 @@ def get_units(q: Optional[str]):
 
 
 @router.get("/valid", response_model=units.Unit)
-def get_is_valid(q: str = Query(...)):
+def get_is_unit_valid(q: str = Query(...)):
     valid_unit = units.valid_unit(q)
     if not valid_unit:
         raise HTTPException(

@@ -1,7 +1,19 @@
 import json
 from json.decoder import JSONDecodeError
-from typing import Any, Dict, List, Literal, Optional, Union, no_type_check
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    NewType,
+    Optional,
+    Tuple,
+    Union,
+    no_type_check,
+)
 
+import pandas as pd
 from fastapi.datastructures import UploadFile
 from pydantic import Field, validator
 from pydantic.main import BaseModel
@@ -9,15 +21,43 @@ from pydantic.main import BaseModel
 from mariner.core.aws import Bucket, download_file_as_dataframe
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from model_builder.schemas import CategoricalDataType as BuilderCategoricalDT
+from model_builder.schemas import DNADataType as BuilderDNADT
 from model_builder.schemas import NumericalDataType as BuilderNumericalDT
+from model_builder.schemas import ProteinDataType as BuilderProteinDT
 from model_builder.schemas import QuantityDataType as BuilderQuantityDT
+from model_builder.schemas import RNADataType as BuilderRNADT
 from model_builder.schemas import SmileDataType as BuilderSmilesDT
 from model_builder.schemas import StringDataType as BuilderStringDT
 
 SplitType = Literal["scaffold", "random"]
 
+StatsType = NewType(
+    "StatsType",
+    Dict[
+        Literal["full", "train", "test", "val"],
+        Dict[str, Union[pd.Series, Dict[str, pd.Series]]],
+    ],
+)
+
+SchemaType = NewType(
+    "SchemaType",
+    Dict[
+        str,
+        Union[Tuple[Callable[..., bool], str], List[Tuple[Callable[..., bool], str]]],
+    ],
+)
+
 
 class Split(str):
+    """Split class. This class is used to validate and type the split string.
+
+    Attributes:
+        string (str): split string
+        train_percents (int): train percents
+        test_percents (int): test percents
+        val_percents (int): val percents
+    """
+
     string: str
     train_percents: int
     test_percents: int
@@ -61,6 +101,16 @@ class Split(str):
 
 
 class DatasetsQuery(PaginatedApiQuery):
+    """Query for datasets.
+
+    Attributes:
+        sort_by_rows (Optional[str]): sort by rows
+        sort_by_cols (Optional[str]): sort by cols
+        sort_by_created_at (Optional[str]): sort by created at
+        search_by_name (Optional[str]): search by name
+        created_by_id (Optional[int]): created by id
+    """
+
     sort_by_rows: Optional[str]
     sort_by_cols: Optional[str]
     sort_by_created_at: Optional[str]
@@ -69,22 +119,24 @@ class DatasetsQuery(PaginatedApiQuery):
 
 
 class NumericalDataType(ApiBaseModel, BuilderNumericalDT):
-    pass
+    """Numerical data type."""
 
 
 class QuantityDataType(ApiBaseModel, BuilderQuantityDT):
-    pass
+    """Quantity data type."""
 
 
 class StringDataType(ApiBaseModel, BuilderStringDT):
-    pass
+    """String data type."""
 
 
 class CategoricalDataType(BuilderCategoricalDT, ApiBaseModel):
-    pass
+    """Categorical data type."""
 
 
 class SmileDataType(ApiBaseModel, BuilderSmilesDT):
+    """Smile data type."""
+
     domain_kind: Literal["smiles"] = Field("smiles")
 
     @validator("domain_kind")
@@ -92,9 +144,58 @@ class SmileDataType(ApiBaseModel, BuilderSmilesDT):
         return "smiles"
 
 
+class DNADataType(ApiBaseModel, BuilderDNADT):
+    """DNA data type."""
+
+    domain_kind: Literal["dna"] = Field("dna")
+    is_ambiguous: bool = Field(False)
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "dna"
+
+
+class RNADataType(ApiBaseModel, BuilderRNADT):
+    """RNA data type."""
+
+    domain_kind: Literal["rna"] = Field("rna")
+    is_ambiguous: bool = Field(False)
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "rna"
+
+
+class ProteinDataType(ApiBaseModel, BuilderProteinDT):
+    """Protein data type."""
+
+    domain_kind: Literal["protein"] = Field("protein")
+
+    @validator("domain_kind")
+    def check_domain_kind(cls, v):
+        return "protein"
+
+
+BiologicalDataType = Union[DNADataType, RNADataType, ProteinDataType]
+
+
 class ColumnsDescription(ApiBaseModel):
+    """Columns description.
+
+    Attributes:
+        data_type (AnyDataType):
+        column data type
+        description (str): column description
+        pattern (str): column pattern
+        dataset_id (Optional[int]): dataset id
+    """
+
     data_type: Union[
-        QuantityDataType, StringDataType, CategoricalDataType, SmileDataType
+        QuantityDataType,
+        StringDataType,
+        CategoricalDataType,
+        SmileDataType,
+        BiologicalDataType,
     ] = Field(...)
     description: str
     pattern: str
@@ -102,6 +203,8 @@ class ColumnsDescription(ApiBaseModel):
 
 
 class ColumnMetadataFromJSONStr(str):
+    """Type for raw column metadata comming from a json request."""
+
     metadatas: List[ColumnsDescription] = []
 
     @classmethod
@@ -124,13 +227,16 @@ class ColumnMetadataFromJSONStr(str):
 
 
 class DatasetBase(ApiBaseModel):
+    """Dataset base type."""
+
+    id: Optional[int] = None
     name: str
     description: str
-    rows: int
-    columns: int
-    bytes: int
-    stats: Any
-    data_url: str
+    rows: Optional[int]
+    columns: Optional[int]
+    bytes: Optional[int]
+    stats: Optional[Any]
+    data_url: Optional[str]
     split_target: Split
     split_actual: Optional[Split]
     split_type: SplitType
@@ -138,16 +244,31 @@ class DatasetBase(ApiBaseModel):
     updated_at: utc_datetime
     created_by_id: int
     columns_metadata: List[ColumnsDescription] = []
+    ready_status: Optional[Literal["failed", "processing", "ready"]] = "processing"
+    errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 
 class ColumnsMeta(BaseModel):
+    """Columns metadata parsed."""
+
     name: str
     dtype: Optional[
-        Union[CategoricalDataType, NumericalDataType, StringDataType, SmileDataType]
+        Union[
+            CategoricalDataType,
+            NumericalDataType,
+            StringDataType,
+            SmileDataType,
+            BiologicalDataType,
+        ]
     ]
 
 
 class DatasetCreate(BaseModel):
+    """Dataset to create type.
+
+    Used in the dataset creation route.
+    """
+
     file: UploadFile
     name: str
     description: str
@@ -158,18 +279,29 @@ class DatasetCreate(BaseModel):
 
 
 class DatasetCreateRepo(DatasetBase):
-    pass
+    """Dataset to create type.
+
+    Used in the DatasetCRUD to create a dataset in the database.
+    """
 
 
 class Dataset(DatasetBase):
+    """Dataset model type."""
+
     id: int
 
     def get_dataframe(self):
+        assert self.data_url
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
         return df
 
 
 class DatasetUpdate(ApiBaseModel):
+    """Dataset to update type.
+
+    Used in the dataset update route.
+    """
+
     file: Optional[UploadFile] = None
     name: Optional[str] = None
     description: Optional[str] = None
@@ -179,7 +311,19 @@ class DatasetUpdate(ApiBaseModel):
     columns_metadata: Optional[List[ColumnsDescription]] = None
 
 
+class DatasetUpdateInput(ApiBaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    split_column: Optional[str] = None
+    split_target: Optional[Split] = None
+    split_type: Optional[SplitType] = None
+    file: Optional[UploadFile] = None
+    columns_metadata: Optional[ColumnMetadataFromJSONStr] = None
+
+
 class DatasetSummary(BaseModel):
+    """Dataset summary type."""
+
     train: Dict[str, Any]
     val: Dict[str, Any]
     test: Dict[str, Any]
@@ -187,6 +331,11 @@ class DatasetSummary(BaseModel):
 
 
 class DatasetUpdateRepo(BaseModel):
+    """Dataset to update type.
+
+    Accepted by the DatasetCRUD to update a dataset in the database.
+    """
+
     id: int
     name: Optional[str] = None
     description: Optional[str] = None
@@ -200,3 +349,17 @@ class DatasetUpdateRepo(BaseModel):
     split_column: Optional[str] = None
     split_type: Optional[SplitType] = None
     columns_metadata: Optional[List[ColumnsDescription]] = None
+    ready_status: Optional[str] = None
+    errors: Optional[Dict[str, Union[List[str], str]]] = None
+
+
+class DatasetProcessStatusEventPayload(ApiBaseModel):
+    """Dataset process status event payload type.
+
+    Used in the dataset process to send the status of the
+    dataset processing to the frontend.
+    """
+
+    dataset_id: Optional[int] = None
+    message: Optional[str] = "success on dataset creation"
+    dataset: Optional[Dataset] = None

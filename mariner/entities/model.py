@@ -5,6 +5,8 @@ from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import DateTime
 
 from mariner.db.base_class import Base
+from mariner.entities.dataset import Dataset
+from mariner.entities.user import User
 
 
 class ModelVersion(Base):
@@ -24,9 +26,10 @@ class ModelVersion(Base):
     model_id = Column(
         Integer, ForeignKey("model.id", ondelete="CASCADE"), nullable=False
     )
+    description = Column(String, nullable=True)
     model = relationship("Model", back_populates="versions")
     name = Column(String, nullable=False)
-    mlflow_version = Column(String, nullable=False)
+    mlflow_version = Column(String, nullable=True)
     mlflow_model_name = Column(String, nullable=False)
     # experiments = relationship("Experiment", back_populates="model_version")
     config = Column(JSON, nullable=False)
@@ -67,16 +70,17 @@ class Model(Base):
 
     id = Column(Integer, primary_key=True, index=True, unique=True)
     name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
     mlflow_name = Column(String, nullable=False)
     created_by_id = Column(
         Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=False
     )
     created_by = relationship(
-        "User",
+        User,
     )
     dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="SET NULL"))
-    dataset = relationship("Dataset")
-    versions = relationship("ModelVersion", cascade="all,delete")
-    columns = relationship("ModelFeaturesAndTarget", cascade="all,delete")
+    dataset = relationship(Dataset)
+    versions = relationship(ModelVersion, cascade="all,delete")
+    columns = relationship(ModelFeaturesAndTarget, cascade="all,delete", uselist=True)
     created_at = Column(DateTime, server_default=current_timestamp(), nullable=False)
     updated_at = Column(DateTime, server_default=current_timestamp(), nullable=False)
