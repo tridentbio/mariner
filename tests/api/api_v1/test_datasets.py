@@ -8,7 +8,6 @@ from starlette import status
 
 from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetModel
-from mariner.entities.dataset import Dataset
 from mariner.schemas.dataset_schemas import DatasetCreateRepo, Split
 from mariner.stores.dataset_sql import dataset_store
 from mariner.utils import hash_md5
@@ -219,18 +218,18 @@ def test_get_csv_metadata(
 
 def test_download_dataset(
     normal_user_token_headers: dict,
-    some_dataset: Dataset,
+    some_dataset_without_process: DatasetModel,
     client: TestClient,
 ):
     routes_to_test = ["csv-file", "csv-file-with-errors"]
     for route in routes_to_test:
         res = client.get(
-            f"/api/v1/datasets/{some_dataset.id}/{route}",
+            f"{settings.API_V1_STR}/datasets/{some_dataset_without_process.id}/{route}",
             headers=normal_user_token_headers,
         )
         assert res.status_code == 200, f"route datasets/{route} failed"
 
         hash = hash_md5(data=res.content)
         assert (
-            f"datasets/{hash}.csv" == some_dataset.data_url
+            f"datasets/{hash}.csv" == some_dataset_without_process.data_url
         ), f"downloaded file hash does not match in route datasets/{route}"
