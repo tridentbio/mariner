@@ -1,5 +1,10 @@
+"""
+Models controller. Responsible for exposing model tracking
+functions working under the defined business rules.
+"""
+
 import traceback
-from typing import Any, Optional, Union, get_type_hints
+from typing import Any, List, Literal, Optional, Tuple, Union, get_type_hints
 from uuid import uuid4
 
 import mlflow
@@ -18,7 +23,10 @@ from mariner.exceptions import (
     ModelNotFound,
     ModelVersionNotFound,
 )
-from mariner.logger import logger
+from mariner.exceptions.model_exceptions import (
+    InvalidDataframe,
+    ModelVersionNotTrained,
+)
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     ComponentOption,
@@ -34,29 +42,39 @@ from mariner.schemas.model_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
+from mariner.validation.functions import is_valid_smiles_series
 from model_builder import generate, layers_schema
 from model_builder.dataset import CustomDataset
 from model_builder.model import CustomModel
+from model_builder.schemas import DatasetConfig, SmileDataType
 from model_builder.utils import get_class_from_path_string
 
 
 def get_model_and_dataloader(
     db: Session, config: ModelSchema
 ) -> tuple[pl.LightningModule, DataLoader]:
-    dataset = dataset_store.get_by_name(db, config.dataset.name)
-    assert dataset, f"No dataset found with name {config.dataset.name}"
-    df = dataset.get_dataframe()
-    dataset = CustomDataset(
-        data=df,
-        feature_columns=config.dataset.feature_columns,
-        featurizers_config=config.featurizers,
-    )
+    """Gets the CustomModel and the DataLoader needed to train
+    a model
+
+    Args:
+        db: connection to the database
+        config: model config
+
+    Returns:
+        tuple[pl.LightningModule, DataLoader]
+    """
+    dataset_entity = dataset_store.get_by_name(db, config.dataset.name)
+    assert dataset_entity, f"No dataset found with name {config.dataset.name}"
+    df = dataset_entity.get_dataframe()
+    dataset = CustomDataset(data=df, config=config)
     dataloader = DataLoader(dataset, batch_size=1)
     model = CustomModel(config)
     return model, dataloader
 
 
 class ForwardCheck(ApiBaseModel):
+    """Response to a request to check if a model version forward works"""
+
     stack_trace: Optional[str] = None
     output: Optional[Any] = None
 
@@ -71,7 +89,7 @@ def naive_check_forward_exception(db: Session, config: ModelSchema) -> ForwardCh
         sample = next(iter(dataloader))
         output = model(sample)
         return ForwardCheck(output=output)
-    except:  # noqa E722
+    except:  # noqa E722 pylint: disable=W0702
         lines = traceback.format_exc()
         return ForwardCheck(stack_trace=lines)
 
@@ -92,77 +110,75 @@ def create_model(
     dataset = dataset_store.get_by_name(db, model_create.config.dataset.name)
     if not dataset:
         raise DatasetNotFound()
-    torchmodel = CustomModel(model_create.config)
-    existingmodel = model_store.get_by_name(db, model_create.name)
-    mlflow_name = f"{user.id}-{model_create.name}-{uuid4()}"
-    if existingmodel and existingmodel.created_by_id != user.id:
-        raise ModelNameAlreadyUsed()
 
-    if not existingmodel:
-        try:
-            regmodel, version = mlflowapi.create_registered_model(
-                client,
-                mlflow_name,
-                torchmodel,
-                description=model_create.model_description,
-                version_description=model_create.model_version_description,
-            )
-        except mlflow.exceptions.MlflowException as exp:
-            if exp.error_code == mlflow.exceptions.RESOURCE_ALREADY_EXISTS:
-                raise ModelNameAlreadyUsed(
-                    "A model with that name is already in use by mlflow"
-                )
-            raise
-    else:
-        regmodel = mlflowapi.get_registry_model(
-            existingmodel.mlflow_name, client=client
-        )
-        version = mlflowapi.create_model_version(
-            client,
-            existingmodel.mlflow_name,
-            torchmodel,
-            desc=model_create.model_version_description,
-        )
-
-    if not existingmodel:
-        existingmodel = model_store.create(
+    # Handle case where model_create.name refers to existing model
+    existingmodel = model_store.get_by_name(db, model_create.name, user_id=user.id)
+    if existingmodel:
+        model_store.create_model_version(
             db,
-            obj_in=ModelCreateRepo(
-                name=model_create.name,
-                mlflow_name=mlflow_name,
-                created_by_id=user.id,
-                dataset_id=dataset.id,
-                columns=[
-                    ModelFeaturesAndTarget.construct(
-                        column_name=feature_col.name,
-                        column_type="feature",
-                    )
-                    for feature_col in model_create.config.dataset.feature_columns
-                ]
-                + [
-                    ModelFeaturesAndTarget.construct(
-                        column_name=model_create.config.dataset.target_column.name,
-                        column_type="target",
-                    )
-                ],
+            ModelVersionCreateRepo(
+                mlflow_version=None,
+                mlflow_model_name=existingmodel.mlflow_name,
+                model_id=existingmodel.id,
+                name=model_create.config.name,
+                config=model_create.config,
+                description=model_create.model_version_description,
             ),
         )
+        return Model.from_orm(existingmodel)
 
-    if version:
-        version = ModelVersion.from_orm(
-            model_store.create_model_version(
-                db,
-                version_create=ModelVersionCreateRepo(
-                    mlflow_version=str(version.version),
-                    model_id=existingmodel.id,
-                    name=model_create.config.name,
-                    mlflow_model_name=regmodel.name,
-                    config=model_create.config,
-                ),
-            )
+    # Handle cases of creating a new model in the registry
+    mlflow_name = f"{user.id}-{model_create.name}-{uuid4()}"
+
+    try:
+        mlflowapi.create_registered_model(
+            client,
+            name=mlflow_name,
+            description=model_create.model_description,
         )
-    model = Model.from_orm(model_store.get_by_name(db, existingmodel.name))
-    model.description = regmodel.description
+    except mlflow.exceptions.MlflowException as exp:
+        if exp.error_code == mlflow.exceptions.RESOURCE_ALREADY_EXISTS:
+            raise ModelNameAlreadyUsed(
+                "A model with that name is already in use by mlflow"
+            ) from exp
+        raise
+
+    model = model_store.create(
+        db,
+        obj_in=ModelCreateRepo(
+            name=model_create.name,
+            description=model_create.model_description,
+            mlflow_name=mlflow_name,
+            created_by_id=user.id,
+            dataset_id=dataset.id,
+            columns=[
+                ModelFeaturesAndTarget.construct(
+                    column_name=feature_col.name,
+                    column_type="feature",
+                )
+                for feature_col in model_create.config.dataset.feature_columns
+            ]
+            + [
+                ModelFeaturesAndTarget.construct(
+                    column_name=model_create.config.dataset.target_column.name,
+                    column_type="target",
+                )
+            ],
+        ),
+    )
+    model_store.create_model_version(
+        db,
+        ModelVersionCreateRepo(
+            mlflow_version=None,
+            mlflow_model_name=mlflow_name,
+            model_id=model.id,
+            name=model_create.config.name,
+            config=model_create.config,
+            description=model_create.model_version_description,
+        ),
+    )
+
+    model = Model.from_orm(model)
     return model
 
 
@@ -175,15 +191,8 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
         page=query.page,
         q=query.q,
     )
-    models = [Model.from_orm(model) for model in models]
-    for model in models:
-        try:
-            model.load_from_mlflow()
-        except mlflow.exceptions.MlflowException as exp:
-            logger.error("Error while getting model's mlflow data")
-            logger.error(exp)
-
-    return models, total
+    parsed_models = [Model.from_orm(model) for model in models]
+    return parsed_models, total
 
 
 def get_documentation_link(class_path: str) -> Optional[str]:
@@ -222,6 +231,8 @@ def get_annotations_from_cls(cls_path: str) -> ComponentOption:
         docs=docs,
         output_type=str(output_type_hint) if output_type_hint else None,
         class_path=cls_path,
+        type=None,  # type: ignore
+        component=None,  # type: ignore
     )
 
 
@@ -233,7 +244,7 @@ def get_model_options() -> ModelOptions:
 
     def get_summary(
         cls_path: str,
-    ) -> Union[layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType, None]:
+    ) -> Union[None, layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType]:
         for schema_exported in dir(layers_schema):
             if (
                 schema_exported.endswith("Summary")
@@ -244,53 +255,100 @@ def get_model_options() -> ModelOptions:
                 instance = class_def()
                 if instance.type and instance.type == cls_path:
                     return instance
+        raise RuntimeError(f"Schema for {cls_path} not found")
 
-    component_annotations = []
-    for type, class_path in zip(
-        ["layer"] * len(layer_types) + ["featurizer"] * len(featurizer_types),
-        layer_types + featurizer_types,
-    ):
+    component_annotations: List[ComponentOption] = []
+
+    def make_component(class_path: str, type_: Literal["layer", "featurizer"]):
         summary = get_summary(class_path)
         assert summary, f"class Summary of {class_path} should not be None"
         option = get_annotations_from_cls(class_path)
-        option.type = type
+        option.type = type_
         option.component = summary
-        component_annotations.append(option)
+        return option
+
+    for class_path in layer_types:
+        component_annotations.append(make_component(class_path, "layer"))
+
+    for class_path in featurizer_types:
+        component_annotations.append(make_component(class_path, "featurizer"))
+
     return component_annotations
 
 
 class PredictRequest(ApiBaseModel):
+    """Payload of a prediction request"""
+
     user_id: int
     model_version_id: int
     model_input: Any
 
 
+InvalidReason = Literal["invalid-smiles-series"]
+
+
+def _check_dataframe_conforms_dataset(
+    df: pd.DataFrame, dataset_config: DatasetConfig
+) -> List[Tuple[str, InvalidReason]]:
+    """Checks if dataframe conforms to data types specified in dataset_config
+
+    Args:
+        df: dataframe to be checked
+        dataset_config: model builder dataset configuration used in model building
+    """
+    column_configs = dataset_config.feature_columns + [dataset_config.target_column]
+    result: List[Tuple[str, InvalidReason]] = []
+    for column_config in column_configs:
+        data_type = column_config.data_type
+        if isinstance(data_type, SmileDataType):
+            series = df[column_config.name]
+            if not is_valid_smiles_series(series):
+                result.append((column_config.name, "invalid-smiles-series"))
+    return result
+
+
 def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
-    """(Slowly) Loads a model version and apply it to a sample input"""
+    """(Slowly) Loads a model version and apply it to a sample input
+
+    Args:
+        db: Session with the database
+        request: prediction request data
+
+    Returns:
+        torch.Tensor: model output
+
+    Raises:
+        ModelVersionNotFound: If the version from request.model_version_id
+        is not in the database
+        InvalidDataframe: If the dataframe fails one or more checks
+    """
     modelversion = ModelVersion.from_orm(
         model_store.get_model_version(db, request.model_version_id)
     )
     if not modelversion:
         raise ModelVersionNotFound()
-    df = pd.DataFrame.from_dict(request.model_input)
-    dataset = CustomDataset(
-        data=df,
-        feature_columns=modelversion.config.dataset.feature_columns,
-        featurizers_config=modelversion.config.featurizers,
-    )
+    if not modelversion.mlflow_version:
+        raise ModelVersionNotTrained()
+    df = pd.DataFrame.from_dict(request.model_input, dtype=float)
+    broken_checks = _check_dataframe_conforms_dataset(df, modelversion.config.dataset)
+    if len(broken_checks) > 0:
+        raise InvalidDataframe(
+            f"dataframe failed {len(broken_checks)} checks",
+            reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
+        )
+    dataset = CustomDataset(data=df, config=modelversion.config, target=False)
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
     return pyfuncmodel(modelinput)
 
 
-def get_model_version(db: Session, user: UserEntity, model_id: int) -> Model:
-    """Gets a single model version"""
+def get_model(db: Session, user: UserEntity, model_id: int) -> Model:
+    """Gets a single model"""
     modeldb = model_store.get(db, model_id)
     if not modeldb or modeldb.created_by_id != user.id:
         raise ModelNotFound()
     model = Model.from_orm(modeldb)
-    model.load_from_mlflow()
     return model
 
 
@@ -299,8 +357,8 @@ def delete_model(db: Session, user: UserEntity, model_id: int) -> Model:
     model = model_store.get(db, model_id)
     if not model or model.created_by_id != user.id:
         raise ModelNotFound()
-    model = Model.from_orm(model)
     client = mlflow.tracking.MlflowClient()
     client.delete_registered_model(model.mlflow_name)
+    parsed_model = Model.from_orm(model)
     model_store.delete_by_id(db, model_id)
-    return model
+    return parsed_model

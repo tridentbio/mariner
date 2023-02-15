@@ -11,11 +11,16 @@ from starlette import status
 import mariner.models as controller
 from api import deps
 from api.api_v1.endpoints.datasets import Paginated
+from mariner import nn_validation as validation
 from mariner.entities.user import User
 from mariner.exceptions import (
     DatasetNotFound,
     ModelNameAlreadyUsed,
     ModelNotFound,
+)
+from mariner.exceptions.model_exceptions import (
+    InvalidDataframe,
+    ModelVersionNotTrained,
 )
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
@@ -90,12 +95,12 @@ class GetNameSuggestionResponse(ApiBaseModel):
     dependencies=[Depends(deps.get_current_active_user)],
     response_model=GetNameSuggestionResponse,
 )
-def get_name_suggestion():
+def get_model_name_suggestion():
     return GetNameSuggestionResponse(name=random_pretty_name())
 
 
 @router.post("/{model_version_id}/predict", response_model=Any)
-def post_predict(
+def post_model_predict(
     model_version_id: int,
     model_input: Dict[str, List[Any]],  # Any json
     current_user: User = Depends(deps.get_current_active_user),
@@ -110,9 +115,19 @@ def post_predict(
                 model_input=model_input,
             ),
         )
+    except InvalidDataframe as exp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Payload failed following checks:{','.join(exp.reasons)}",
+        )
     except ModelNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Model Not Found"
+        )
+    except ModelVersionNotTrained:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Model version was not trained yet",
         )
     if isinstance(prediction, torch.Tensor):
         return prediction.tolist()
@@ -128,7 +143,7 @@ def get_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    model = controller.get_model_version(db, current_user, model_id)
+    model = controller.get_model(db, current_user, model_id)
     return model
 
 
@@ -147,5 +162,16 @@ def delete_model(
     response_model=controller.ForwardCheck,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def post_check_config(model_config: ModelSchema, db: Session = Depends(deps.get_db)):
+def post_model_check_config(
+    model_config: ModelSchema, db: Session = Depends(deps.get_db)
+):
     return controller.naive_check_forward_exception(db, model_config)
+
+
+@router.post(
+    "/check-type",
+    response_model=bool,
+    dependencies=[Depends(deps.get_current_active_user)],
+)
+def post_check_type(type_check_req: validation.CheckTypeHints):
+    return True

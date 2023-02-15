@@ -2,6 +2,7 @@
 .coverage
 htmlcov
 __pycache__/
+.venv/
 .env
 dist/
 .ipynb_checkpoints
@@ -9,4 +10,7 @@ lightning_logs/
 docker-compose.override.yml
 secrets.yaml
 configmap.yaml
+.hypothesis/
+MarinerLogger/
+checkpoints/
 configmaps

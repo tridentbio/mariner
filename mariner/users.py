@@ -92,7 +92,10 @@ def _authenticate_github(code: str, state: str) -> User:
         user = user_store.get_by_email(db, email=github_user.email)
         if not user:
             user = user_store.create(
-                db, obj_in=UserCreateOAuth(email=EmailStr(github_user.email))
+                db,
+                obj_in=UserCreateOAuth(
+                    email=EmailStr(github_user.email), image_url=github_user.avatar_url
+                ),
             )
         if not user.is_active:
             raise UserNotActive()

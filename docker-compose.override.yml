@@ -1,44 +1,13 @@
 version: "3.3"
 services:
   backend:
-    ports:
-      - "8888:8888"
     volumes:
       - ./:/app:z
     environment:
       - JUPYTER=jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
-  mlflow:
-    deploy:
-      resources:
-        limits:
-          memory: 1.5G
-
   ray-head:
     volumes:
       - ./:/app:z
-    deploy:
-      resources:
-        limits:
-          memory: 1G
   ray-worker:
     volumes:
       - ./:/app:z
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-
-  db:
-    deploy:
-      resources:
-        limits:
-          memory: 500M
-        reservations:
-          memory: 100M
-  mlflowdb:
-    deploy:
-      resources:
-        limits:
-          memory: 500M
-        reservations:
-          memory: 100M

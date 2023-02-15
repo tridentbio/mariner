@@ -24,9 +24,10 @@ featurizers = [
     Layer(name)
     for name in [
         "model_builder.featurizers.MoleculeFeaturizer",
-        # PyG's from_smiles only outputs Long tensors for node_features
-        # Waiting for issue ... to be resolved
-        # "model_builder.featurizers.FromSmiles",
+        "model_builder.featurizers.IntegerFeaturizer",
+        "model_builder.featurizers.DNASequenceFeaturizer",
+        "model_builder.featurizers.RNASequenceFeaturizer",
+        "model_builder.featurizers.ProteinSequenceFeaturizer",
     ]
 ]
 
@@ -36,10 +37,14 @@ layers = [
         "model_builder.layers.OneHot",
         "model_builder.layers.GlobalPooling",
         "model_builder.layers.Concat",
+        "model_builder.layers.AddPooling",
         "torch.nn.Linear",
         "torch.nn.Sigmoid",
         "torch.nn.ReLU",
         "torch_geometric.nn.GCNConv",
+        # "model_builder.featurizers.FromSmiles",
+        "torch.nn.Embedding",
+        "torch.nn.TransformerEncoderLayer",
     ]
 ]
 
@@ -52,79 +57,18 @@ python_primitives_reprs = {
 }
 
 
-def get_module_name(classpath: str) -> str:
-    return ".".join(classpath.split(".")[:-1])
-
-
-# deprecated
-def access_attributes_of_interest(clspath):
-    cls = get_class_from_path_string(clspath)
-    if "__init__" in dir(cls) and "__code__" in dir(cls.__init__):
-        d = {}
-        argscount = cls.__init__.__code__.co_argcount
-        args = cls.__init__.__code__.co_varnames[
-            :argscount
-        ]  # Exclude kword args if any
-        defaults = cls.__init__.__defaults__
-        d["types"] = cls.__init__.__annotations__  # dictionary mapping argname to type
-        d["defaults"] = defaults  # tuple with ending default argument  valuts
-        d["call_type"] = "class"
-        d["args"] = args  # tuple with argnames.
-        last = argscount - len(defaults or [])
-        d["not_defaults"] = args[1:last]
-        return d
-    raise Exception(
-        f"Failed to inspect type annotations for {clspath}. "
-        "Is it a class with __init__ implementation?"
-    )
-
-
-# deprecated
-def collect_components_info(class_paths: List[str]) -> Any:
-    modules_memo = {}
-    for cls in class_paths:
-        try:
-            dic = access_attributes_of_interest(cls)
-            modules_memo[cls] = dic
-        except Exception as exp:
-            raise exp
-    return modules_memo
-
-
-def is_primitive(pr):
-    return pr in [int, str, bool, float]
-
-
-# deprecated
-def get_component_template_args(path: str):
-    path_parts = path.split(".")
-    if "_" in path_parts[-1]:
-        compname = camel.case(path_parts[-1])
-    else:
-        compname = path_parts[-1]
-    prefix = camel.case(path_parts[0]) + compname
-    prefix = prefix.title()
-    info = collect_components_info([path])[path]
-    arg_types = {
-        argname: python_primitives_reprs[info["types"][argname]]
-        for argname in info["not_defaults"]
-        if argname in info["types"] and is_primitive(info["types"][argname])
-    }
-    return prefix, arg_types
-
-
 def get_component_constructor_signature(
     class_def: Any,
 ) -> Optional[Signature]:
     """
-    Get's  the constructor Signature
+    Get's the __init__ method signature
 
     Args:
-        class_def (Any):
+        class_def (Any): Class to inspect
 
     Returns:
-        Signature
-
+        Optional[Signature]:
+            The signature of the method or None if the method does not exist
     """
     return get_component_signature(class_def, "__init__")
 
@@ -134,10 +78,11 @@ def get_component_forward_signature(class_def: Any) -> Optional[Signature]:
     Get's the forward ( or __call__ for featurizers ) Signature
 
     Args:
-        class_def (Any):
+        class_def (Any): Class to inspect
 
     Returns:
-        Signature
+        Optional[Signature]:
+            The signature of the method or None if the method does not exist
     """
     if "forward" in dir(class_def):
         return get_component_signature(class_def, "forward")
@@ -147,21 +92,48 @@ def get_component_forward_signature(class_def: Any) -> Optional[Signature]:
 
 
 def get_component_signature(class_def: Any, method_name: str) -> Optional[Signature]:
+    """Get's the signature of a method of a class
+
+    Args:
+        class_def (Any): Class to inspect
+        method_name (str): Class method to inspect name
+
+    Raises:
+        Exception: If the method has no __code__ attribute
+
+    Returns:
+        Optional[Signature]:
+            The signature of the method or None if the method does not exist
+    """
     if method_name not in dir(class_def):
-        return None
+        raise Exception(f"{method_name} not found in class_def")
     method = getattr(class_def, method_name)
-    if "__code__" not in dir(method):
-        raise Exception(
-            "Unsure how to introspect method {method_name} with no __code__"
-        )
     return signature(method)
 
 
-def is_bad(parameter: Parameter):
+def is_bad(parameter: Parameter) -> bool:
+    """Returns True if the parameter is bad
+
+    Bad parameters are those that are not positional or keyword only
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is bad else False
+    """
     return parameter.annotation == inspect._empty
 
 
-def is_positional(parameter: Parameter):
+def is_positional(parameter: Parameter) -> bool:
+    """Returns True if the parameter is positional
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is positional else False
+    """
     return parameter.name != "self" and (
         (
             parameter.kind == Parameter.POSITIONAL_OR_KEYWORD
@@ -171,7 +143,15 @@ def is_positional(parameter: Parameter):
     )
 
 
-def is_optional(parameter: Parameter):
+def is_optional(parameter: Parameter) -> bool:
+    """Returns True if the parameter is optional
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is optional else False
+    """
     return parameter.name != "self" and (
         parameter.kind == Parameter.KEYWORD_ONLY
         or (
@@ -181,8 +161,28 @@ def is_optional(parameter: Parameter):
     )
 
 
+def is_primitive(val: Any):
+    return val == int or val == float or val == str
+
+
 def args_to_list(params: List[Parameter]) -> List[tuple[str, Any, Any]]:
-    return [(param.name, str(param.annotation), param.default) for param in params]
+    """Returns a list of tuples with the name, type and default value of the parameters
+
+    Args:
+        params (List[Parameter]): list of parameters
+
+    Returns:
+        List[tuple[str, Any, Any]]:
+            list of tuples with the name, type and default value of the parameters
+    """
+    return [
+        (
+            param.name,
+            str(param.annotation),
+            param.default if is_primitive(param.default) else None,
+        )
+        for param in params
+    ]
 
 
 def get_component_template_args_v2(path: str):
@@ -253,21 +253,33 @@ def get_component_template_args_v2(path: str):
     return {"prefix": prefix, "path": path, "ctr": ctr, "fwd": fwd}
 
 
-def create_jinja_env():
+def create_jinja_env() -> Environment:
+    """Creates a jinja environment with the custom filters and globals
+
+    Returns:
+        Environment: jinja environment
+    """
     env = Environment(
         loader=PackageLoader("model_builder"), autoescape=select_autoescape()
     )
 
     def type_name(value):
         value = str(value)
-        assert value.startswith("<class '"), f"expected {value} to start with <class '"
-        return value[8:-2]
+        if value.startswith("<class '"):
+            return f"{value[8:-2]}"
+        elif value.startswith("typing."):
+            return value.replace("typing.", "")
 
     env.globals.update(type_name=type_name)
     return env
 
 
 def generatev2(path: str) -> str:
+    """Generates the bundle python code using componentv2.py.jinja as a template
+
+    Returns:
+        str: python code for the bundle.py file
+    """
     template_args = get_component_template_args_v2(path)
     env = create_jinja_env()
     template = env.get_template("componentv2.py.jinja")
@@ -275,6 +287,11 @@ def generatev2(path: str) -> str:
 
 
 def generate_bundlev2() -> str:
+    """Generates the bundle python code using base.py.jinja as a template
+
+    Returns:
+        str: python code for the bundle.py file
+    """
     env = create_jinja_env()
     schemas_template = env.get_template("base.py.jinja")
     layer_template_args = [
@@ -378,12 +395,12 @@ todo_include_todos = True"""
 
 
 if __name__ == "__main__":
-
     template = sys.argv[1]
     if template == "component":
         compnames = sys.argv[2:]
         for compname in compnames:
-            print(generatev2(compname))
+            out = generatev2(compname)
+            print(out)
     elif template == "base":
         bundle = generate_bundlev2()
         print(bundle)

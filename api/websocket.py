@@ -21,11 +21,19 @@ class WebSocketMessage(ApiBaseModel):
     Base class for messages exchanged with client
     """
 
-    type: Literal["pong", "update-running-metrics"]
+    type: Literal["pong", "update-running-metrics", "dataset-process-finish"]
     data: Any
 
 
-def _is_closed(ws: WebSocket):
+def _is_closed(ws: WebSocket) -> bool:
+    """Checks if the websocket is closed
+
+    Args:
+        ws (WebSocket): websocket to check
+
+    Returns:
+        bool: True if the websocket is closed, False otherwise
+    """
     return ws.application_state == WebSocketState.DISCONNECTED
 
 
@@ -63,9 +71,17 @@ class ConnectionManager:
         self.active_connections.pop(user_id)
 
     async def send_message(self, user_id: int, message: WebSocketMessage):
+        """Sends a message to a specific user
+
+        If the user is not connected, the message is not sent without raising an error
+
+        Args:
+            user_id (int): id from user to send the message
+            message (WebSocketMessage): message to be sent
+        """
         if user_id not in self.active_connections:
             return
-        await self.active_connections[user_id].send_text(message.json())
+        await self.active_connections[user_id].send_text(message.json(by_alias=True))
 
     async def broadcast(self, message: str):
         for connection in self.active_connections.values():
@@ -76,6 +92,11 @@ _manager = None
 
 
 def get_websockets_manager() -> ConnectionManager:
+    """Returns the singleton instance of the connection manager
+
+    Returns:
+        ConnectionManager: singleton instance of the connection manager
+    """
     global _manager
     if not _manager:
         _manager = ConnectionManager()
@@ -89,6 +110,14 @@ ws_router = APIRouter()
 async def websocket_endpoint(
     websocket: WebSocket, user: User = Depends(deps.get_current_websocket_user)
 ):
+    """Endpoint for websocket connections
+
+    Args:
+        websocket (WebSocket): websocket instance
+        user (User, optional):
+            user instance.
+            Defaults to Depends(deps.get_current_websocket_user).
+    """
     manager = get_websockets_manager()
     await manager.connect(user.id, websocket)
     while websocket.application_state == WebSocketState.CONNECTED:

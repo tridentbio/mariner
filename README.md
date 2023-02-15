@@ -156,7 +156,7 @@ $ alembic upgrade head
 
 ## Publishing releases
 
-A cli tool was made to publish releases from the [RLEASES.md](./RELEASES.md) file.
+A cli tool was made to publish releases from the [RELEASES.md](./RELEASES.md) file.
 
 If on the commit, there is an upgrade to the version in the pyproject, the script will
 detect it, and use it to filter the current release to publish notifications for.

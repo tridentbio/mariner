@@ -16,5 +16,5 @@ class User(Base):
     hashed_password = Column(String, nullable=True)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
+    img_url = Column(String, nullable=True)
     datasets = relationship("Dataset", back_populates="created_by")
-    # oauth_integrations = relationship("OAuthIntegration")

@@ -1,10 +1,10 @@
 class InvalidCategoricalColumn(Exception):
-    pass
+    """Invalid categorical column exception"""
 
 
 class DatasetAlreadyExists(Exception):
-    pass
+    """Dataset already exists exception"""
 
 
 class DatasetNotFound(Exception):
-    pass
+    """Dataset not found exception"""

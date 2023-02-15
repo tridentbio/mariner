@@ -1,9 +1,15 @@
-from typing import Any, Dict
+import re
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import rdkit.Chem as Chem
+from Bio.SeqUtils import molecular_weight as calc_molecular_weight
+from pandas.core.frame import DataFrame
 from rdkit.Chem import Descriptors
+
+from mariner.schemas.dataset_schemas import ColumnsDescription, StatsType
+from model_builder.constants import TrainingStep
 
 
 def get_chemical_props(smiles: str) -> tuple:
@@ -29,6 +35,56 @@ def get_chemical_props(smiles: str) -> tuple:
     has_chiral_centers = True if len(Chem.FindMolChiralCenters(mol)) > 0 else False
 
     return mol_weight, mol_tpsa, atom_count, ring_count, has_chiral_centers
+
+
+def get_biological_props(
+    row: str,
+    metadata: ColumnsDescription,
+) -> Tuple[int, Optional[float], int, Optional[float]]:
+    sequence_lengh, gc_content, gaps_number, mwt = None, None, None, None
+
+    sequence_lengh = len(re.sub(r"[-\*]", "", row))
+    gaps_number = len(re.findall(r"-", row))
+
+    if (
+        metadata.data_type.domain_kind in ["dna", "rna"]
+        and not metadata.data_type.is_ambiguous
+    ):
+        gc_content = len(re.findall(r"[GC]", row)) / sequence_lengh
+        mwt = calc_molecular_weight(
+            row, seq_type=metadata.data_type.domain_kind.upper()
+        )
+
+    return sequence_lengh, gc_content, gaps_number, mwt
+
+
+def create_categorical_histogram(
+    data: pd.Series,
+) -> Dict[Literal["values"], List[dict]]:
+    """Creates the data used to generate a histogram from a pd.Series
+    (dataset column).
+
+    This method should only be used for columns with categorical data.
+
+    Args:
+        data (pd.Series): Dataset column used to generate the histogram.
+
+    Returns:
+        List[Dict[str, Any]]: List of dictionaries used to generate the
+            histogram in vega-lite format.
+    """
+
+    # Calculate the histogram bins
+    histogram = data.value_counts()
+
+    histogram_data = []
+
+    for index, count in enumerate(histogram):
+        data_point = {"label": str(histogram.index[index]), "count": int(count)}
+
+        histogram_data.append(data_point)
+
+    return {"values": histogram_data[:15]}
 
 
 def create_float_histogram(data: pd.Series, bins: int = 15) -> Dict[str, Any]:
@@ -104,7 +160,6 @@ def create_int_histogram(data: pd.Series, bins: int) -> Dict[str, Any]:
             "bin_end": histogram[1][index + 1],
             "count": int(count),
         }
-
         histogram_data["values"].append(data_point)
 
     histogram_data["values"].append(
@@ -119,75 +174,151 @@ def create_int_histogram(data: pd.Series, bins: int) -> Dict[str, Any]:
     return histogram_data
 
 
-def get_dataset_summary(dataset: pd.DataFrame, smiles_column: str):
+def get_dataset_summary(
+    dataset: pd.DataFrame,
+    smiles_columns: List[str] = [],
+    biological_columns: List[Dict[str, Any]] = [],
+    categorical_columns: List[str] = [],
+) -> dict[str, Union[pd.Series, dict[str, pd.Series]]]:
+    """Computes the dataset histograms
 
+    Creates a dictionary to hold histograms of float/int dtype columns
+    and histograms of mol properties computed by rdkit
+
+    :param dataset pd.DataFrame: original dataset
+    :param smiles_columns List[str]: Optional array of smiles column to
+    compute mol props
+    :return dict[str, Union[pd.Series, dict[str, pd.Series]]
+    """
     statistics = {}
-
-    # Iterate over column and calculate the
-    # distributions for each int or float column
-    # If the column is of any other type, an empty
-    # stats obj is created, because the keys of
-    # the stats summary object is used to get the
-    # complete array of colums of the dataset
     for column, dtype in dataset.dtypes.items():
         if np.issubdtype(dtype, float):
             statistics[column] = {"hist": create_float_histogram(dataset[column], 15)}
+        elif column in categorical_columns:
+            statistics[column] = {"hist": create_categorical_histogram(dataset[column])}
         elif np.issubdtype(dtype, int):
             statistics[column] = {"hist": create_int_histogram(dataset[column], 15)}
         else:
-            statistics[column] = {}
+            statistics[column] = {}  # The key is used to recover all columns
 
-    # Calculate and compute chemical stats for smile column
-    (
-        dataset["mwt"],
-        dataset["tpsa"],
-        dataset["atom_count"],
-        dataset["ring_count"],
-        dataset["has_chiral_centers"],
-    ) = zip(*dataset[smiles_column].apply(get_chemical_props))
+    for smiles_column in smiles_columns:
+        # Get chemical stats for smile column
+        (mwts, tpsas, atom_counts, ring_counts, has_chiral_centers_arr) = zip(
+            *dataset[smiles_column].apply(get_chemical_props)
+        )
 
-    chem_dataset = dataset[
-        ["mwt", "tpsa", "atom_count", "ring_count", "has_chiral_centers"]
-    ]
-
-    # Convert boolean column to 0 and 1
-    chem_dataset["has_chiral_centers"] = chem_dataset["has_chiral_centers"].apply(
-        lambda x: 1 if x else 0
-    )
-
-    statistics[smiles_column] = {}
-    for column, dtype in chem_dataset.dtypes.items():
-        if np.issubdtype(dtype, float):
-            statistics[smiles_column][column] = {
-                "hist": create_float_histogram(chem_dataset[column], 15)
+        chem_dataset = DataFrame(
+            {
+                "mwt": mwts,
+                "tpsa": tpsas,
+                "atom_count": atom_counts,
+                "ring_count": ring_counts,
+                "has_chiral_centers": has_chiral_centers_arr,
             }
-        elif np.issubdtype(dtype, int):
-            statistics[smiles_column][column] = {
-                "hist": create_int_histogram(chem_dataset[column], 15)
+        )
+
+        # Convert boolean column to 0 and 1
+        chem_dataset["has_chiral_centers"] = chem_dataset["has_chiral_centers"].apply(
+            lambda x: 1 if x else 0,
+        )
+
+        statistics[smiles_column] = {}
+        for column, dtype in chem_dataset.dtypes.items():
+            if np.issubdtype(dtype, float):
+                statistics[smiles_column][column] = {
+                    "hist": create_float_histogram(chem_dataset[column], 15)
+                }
+            elif np.issubdtype(dtype, int):
+                statistics[smiles_column][column] = {
+                    "hist": create_int_histogram(chem_dataset[column], 15)
+                }
+
+    for biological_column in biological_columns:
+        (sequence_lengh, gc_content, gaps_number, mwt) = zip(
+            *dataset[biological_column["col"]].apply(
+                lambda row: get_biological_props(
+                    row, metadata=biological_column["metadata"]
+                )
+            )
+        )
+        bio_dataset = DataFrame(
+            {
+                "sequence_lengh": sequence_lengh,
+                "gc_content": gc_content,
+                "gaps_number": gaps_number
+                if not all(row == 0 for row in gaps_number)
+                else None,
+                "mwt": mwt,
             }
+        )
+
+        for column, dtype in bio_dataset.dtypes.items():
+            if np.issubdtype(dtype, float):
+                statistics[biological_column["col"]][column] = {
+                    "hist": create_float_histogram(bio_dataset[column], 15)
+                }
+            elif np.issubdtype(dtype, int):
+                statistics[biological_column["col"]][column] = {
+                    "hist": create_int_histogram(bio_dataset[column], 15)
+                }
 
     return statistics
 
 
-def get_stats(dataset: pd.DataFrame, smiles_column: str):
-    stats = {}
+def get_stats(
+    dataset: pd.DataFrame,
+    smiles_columns: List[str],
+    biological_columns: List[Dict[str, Any]],
+    categorical_columns: List[str],
+) -> StatsType:
+    """Computes the dataset histograms
 
-    stats["full"] = get_dataset_summary(dataset, smiles_column)
+    Args:
+        dataset (pd.DataFrame): _description_
+        smiles_columns (List[str]): _description_
+
+    Returns:
+        Stats:
+            Histogram of the columns where it is calculable.
+            It is separated by the step of the dataset, possible
+            keys are: full, train, test, val
+    """
+    stats: StatsType = {}
+
+    stats["full"] = get_dataset_summary(
+        dataset, smiles_columns, biological_columns, categorical_columns
+    )
     stats["train"] = get_dataset_summary(
-        dataset[dataset["step"] == "train"], smiles_column
+        dataset[dataset["step"] == TrainingStep.TRAIN.value],
+        smiles_columns,
+        biological_columns,
+        categorical_columns,
     )
     stats["test"] = get_dataset_summary(
-        dataset[dataset["step"] == "test"], smiles_column
+        dataset[dataset["step"] == TrainingStep.TEST.value],
+        smiles_columns,
+        biological_columns,
+        categorical_columns,
     )
-    stats["val"] = get_dataset_summary(dataset[dataset["step"] == "val"], smiles_column)
+    stats["val"] = get_dataset_summary(
+        dataset[dataset["step"] == TrainingStep.VAL.value],
+        smiles_columns,
+        biological_columns,
+        categorical_columns,
+    )
 
     return stats
 
 
 def get_metadata(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Extracts metadata from the dataset to be cached on
+    """Extracts metadata from the dataset to be cached on
     the entity
+
+    Args:
+        df (pd.DataFrame): Dataset to extract metadata from
+
+    Returns:
+        pd.DataFrame: Metadata dataframe
     """
     dtypes: pd.Series = pd.Series(
         list(map(str, df.dtypes)), name="types", index=df.columns

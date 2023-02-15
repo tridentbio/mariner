@@ -27,6 +27,7 @@ services:
         condition: service_healthy
     ports:
       - 80:80
+      - 8888:8888
     env_file:
       - .env
     environment:
