@@ -17,7 +17,9 @@ jobs:
       continue-on-error: true
       with:
         key: docker-layer-caching-tests-{hashFiles('poetry.lock')}-{hashFiles('dockerfiles/Dockerfile.local')}-{hashFiles('docker-compose-cicd.yml')}-{hashFiles('.env.test')}
-    - name: Build containers and install dependencies
-      run: docker compose --env-file .env.test -f docker-compose-cicd.yml up -d --build --wait
+    - name: Build containers
+      run: docker compose --env-file .env.test -f docker-compose-cicd.yml build
+    - name: Start services
+      run: docker compose --env-file .env.test -f docker-compose-cicd.yml up -d
     - name: Build and test on Docker Compose. Fails when coverage is under 77%
       run: sh scripts/test.sh
