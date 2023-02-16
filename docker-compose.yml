@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      dockerfile: ./dockerfiles/Dockerfile.example
     networks:
       - ray_net
     command: bash -c 'poetry run sh /app/scripts/prestart.sh && poetry run python -m api.main'
