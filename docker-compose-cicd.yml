@@ -4,8 +4,6 @@ services:
     image: postgres:12
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
-    env_file:
-      - .env.test
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - PGUSER=postgres
@@ -33,9 +31,7 @@ services:
       - 80:80
       - 8888:8888
     env_file:
-      - .env.test
-    environment:
-      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
+      - ./.env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 5s
@@ -56,8 +52,6 @@ services:
     image: postgres:12
     volumes:
       - app-mlflow-data:/var/lib/postgresql/data/pgdata
-    env_file:
-      - .env.test
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_SERVER=mlflowdb
@@ -82,12 +76,10 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      - .env.test
+      - ./.env
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
@@ -95,7 +87,7 @@ services:
       retries: 3
       start_period: 90s
     restart: unless-stopped
-    command: bash -c 'poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
+    command: bash -c 'poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root s3://dev-mariner-datasets --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
       #command: bash -c 'while true; do sleep 1; done;'
     ports:
       - "5000:5000"
@@ -107,20 +99,12 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.test
+      - ./.env
     ports:
       - "6379:6379"
       - "8265:8265"
       - "10001:10001"
       - "8000:8000"
-    environment:
-      - SERVER_NAME=${SERVER_NAME?Variable not set}
-      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - APPLICATION_SECRET=${APPLICATION_SECRET?Variable not set}
-      - WEBAPP_URL=${WEBAPP_URL}
 
     command: bash -c "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 && serve start && while true; do sleep 1; done;"
     shm_size: 3g
@@ -131,17 +115,9 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.test
+      - ./.env
     depends_on: 
       - ray-head
-    environment:
-      - SERVER_NAME=${SERVER_NAME?Variable not set}
-      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - APPLICATION_SECRET=${APPLICATION_SECRET?Variable not set}
-      - WEBAPP_URL=${WEBAPP_URL}
     command: bash -c "poetry run ray start --address=ray-head:6379 --num-cpus=1 --block" 
     shm_size: 3g
     networks:
