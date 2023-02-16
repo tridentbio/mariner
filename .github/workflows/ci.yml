@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: satackey/action-docker-layer-caching@v0.0.11
-      continue-on-error: true
-      with:
-        key: docker-layer-caching-tests-{hashFiles('poetry.lock')}-{hashFiles('dockerfiles/Dockerfile.local')}-{hashFiles('docker-compose-cicd.yml')}-{hashFiles('.env.test')}
+      # - uses: satackey/action-docker-layer-caching@v0.0.11
+      #   continue-on-error: true
+      #   with:
+      #     key: docker-layer-caching-tests-{hashFiles('poetry.lock')}-{hashFiles('dockerfiles/Dockerfile.local')}-{hashFiles('docker-compose-cicd.yml')}-{hashFiles('.env.test')}
     - name: Build containers
       run: docker compose --env-file .env.test -f docker-compose-cicd.yml build
     - name: Start services
