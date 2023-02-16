@@ -64,9 +64,9 @@ services:
       - ./.env
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGUSER=postgres
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
-      - PGUSER=postgres
     ports: 
       - "54321:5432"
     healthcheck:
