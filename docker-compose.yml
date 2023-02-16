@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: ./dockerfiles/Dockerfile.example
+      dockerfile: ./dockerfiles/Dockerfile.local
     networks:
       - ray_net
     command: bash -c 'poetry run sh /app/scripts/prestart.sh && poetry run python -m api.main'
@@ -81,16 +81,15 @@ services:
       - POSTGRES_PORT=5432
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - MLFLOW_ARTIFACT_URI=s3://dev-mariner-datasets
-      - AWS_MODELS_BUCKET=$MLFLOW_ARTIFACT_URI
+      - AWS_MODELS_BUCKET=s3://dev-mariner-datasets
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5\000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
       timeout: 60s
       retries: 3
       start_period: 90s
     restart: unless-stopped
     command: poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET-s3://dev-mariner-datasets} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app
-      #command: bash -c 'while true; do sleep 1; done;'
     ports:
       - "5000:5000"
     networks:
