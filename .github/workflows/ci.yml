@@ -21,5 +21,7 @@ jobs:
       run: docker compose --env-file .env.test -f docker-compose-cicd.yml build
     - name: Start services
       run: docker compose --env-file .env.test -f docker-compose-cicd.yml up -d
-    - name: Build and test on Docker Compose. Fails when coverage is under 77%
+    - name: Backend logs
+      run: docker compose --env-file .env.test -f docker-compose-cicd.yml logs backend
+    - name: Run tests and get report
       run: sh scripts/test.sh
