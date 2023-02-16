@@ -40,6 +40,8 @@ services:
       - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET}
       - AWS_REGION=${AWS_REGION}
       - AWS_DATASETS=${AWS_DATASETS}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 5s
