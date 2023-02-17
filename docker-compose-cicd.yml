@@ -18,8 +18,6 @@ services:
       - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
       - AWS_REGION=${AWS_REGION-Variable not set}
       - AWS_DATASETS=${AWS_DATASETS-Variable not set}
-      - POSTGRES_SERVER=mlflowdb
-      - POSTGRES_PORT=5432
 
   ray-head:
     environment:
@@ -35,4 +33,7 @@ services:
       - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
       - AWS_REGION=${AWS_REGION-Variable not set}
       - AWS_DATASETS=${AWS_DATASETS-Variable not set}
-
+  db:
+    volumes: []
+  mlflowdb:
+    volumes: []
