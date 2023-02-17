@@ -2,37 +2,37 @@ version: "3.3"
 services:
   backend:
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_DATASETS=${AWS_DATASETS}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
+      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
+      - AWS_REGION=${AWS_REGION-Variable not set}
+      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID-Variable not set}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET-Variable not set}
     volumes:
       - ./cov:/app/cov
   mlflow:
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_DATASETS=${AWS_DATASETS}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
+      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
+      - AWS_REGION=${AWS_REGION-Variable not set}
+      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
 
   ray-head:
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_DATASETS=${AWS_DATASETS}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
+      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
+      - AWS_REGION=${AWS_REGION-Variable not set}
+      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
   ray-worker:
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_DATASETS=${AWS_DATASETS}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
+      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
+      - AWS_REGION=${AWS_REGION-Variable not set}
+      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
 
