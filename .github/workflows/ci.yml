@@ -28,4 +28,4 @@ jobs:
     - name: Backend logs
       run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml logs backend mlflow ray-head
     - name: Run tests and get report
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec backend sh scripts/test.sh
+      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh
