@@ -221,7 +221,7 @@ def test_download_dataset(
     some_dataset_without_process: DatasetModel,
     client: TestClient,
 ):
-    routes_to_test = ["csv-file", "csv-file-with-errors"]
+    routes_to_test = ["file", "file-with-errors"]
     for route in routes_to_test:
         res = client.get(
             f"{settings.API_V1_STR}/datasets/{some_dataset_without_process.id}/{route}",
