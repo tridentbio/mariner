@@ -177,7 +177,7 @@ async def get_dataset_columns_metadata(file: UploadFile = File(None)):
 
 
 @router.get(
-    "/{dataset_id}/csv-file",
+    "/{dataset_id}/file",
     response_class=StreamingResponse,
     dependencies=[Depends(deps.get_current_active_user)],
 )
@@ -198,7 +198,7 @@ def get_csv_file(
 
 
 @router.get(
-    "/{dataset_id}/csv-file-with-errors",
+    "/{dataset_id}/file-with-errors",
     response_class=StreamingResponse,
     dependencies=[Depends(deps.get_current_active_user)],
 )
