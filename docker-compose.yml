@@ -1,4 +1,4 @@
-version: "3.3"
+version: "3.4"
 services:
   db:
     image: postgres:12
@@ -23,10 +23,9 @@ services:
   backend:
     image: 'image:latest'
     depends_on:
-      db:
-        condition: service_healthy
-      mlflow:
-        condition: service_healthy
+      - db
+      - mlflow
+      - ray-worker
     ports:
       - 80:80
       - 8888:8888
@@ -38,14 +37,14 @@ services:
       interval: 5s
       timeout: 10s
       retries: 3
-      start_period: 40s
     restart: unless-stopped
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     networks:
       - ray_net
-    command: bash -c 'poetry run sh /app/scripts/prestart.sh && poetry run python -m api.main'
+    command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
+    # command: bash -c 'while true; do sleep 1; done;'
 
   mlflowdb:
     image: postgres:12
@@ -69,8 +68,7 @@ services:
 
   mlflow:
     depends_on:
-      mlflowdb:
-        condition: service_healthy
+      - mlflowdb
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
@@ -89,7 +87,8 @@ services:
       retries: 3
       start_period: 90s
     restart: unless-stopped
-    command: poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET-s3://dev-mariner-datasets} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app
+    command:  mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET-s3://dev-mariner-datasets} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app
+      #command: bash -c 'while true; do sleep 1; done;'
     ports:
       - "5000:5000"
     networks:
@@ -107,7 +106,7 @@ services:
       - "8265:8265"
       - "10001:10001"
       - "8000:8000"
-    command: bash -c "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 && serve start && while true; do sleep 1; done;"
+    command: ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block
     shm_size: 3g
     networks:
       - ray_net
@@ -120,7 +119,7 @@ services:
       - .env.secret
     depends_on: 
       - ray-head
-    command: bash -c "poetry run ray start --address=ray-head:6379 --num-cpus=1 --block" 
+    command: ray start --address=ray-head:6379 --num-cpus=1 --block
     shm_size: 3g
     networks:
       - ray_net

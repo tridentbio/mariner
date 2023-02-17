@@ -1,29 +1,13 @@
 version: "3.3"
 services:
-  mlflow:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.example
   backend:
-
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.example
     volumes:
       - ./:/app:z
     environment:
       - JUPYTER=jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
   ray-head:
-
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.example
     volumes:
       - ./:/app:z
   ray-worker:
-
-    build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.example
     volumes:
       - ./:/app:z
