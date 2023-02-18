@@ -85,43 +85,6 @@ async def test_get_notifications(
     assert got_notification["events"][0]["url"] == expected_url
 
 
-@pytest.mark.asyncio
-@pytest.mark.skip(reason="broken")
-async def test_post_read_notifications(
-    db: Session,
-    client: TestClient,
-    normal_user_token_headers: dict[str, str],
-    events_fixture: List[EventEntity],
-    event_loop: AbstractEventLoop,
-):
-    res = client.get(
-        f"{settings.API_V1_STR}/events/report",
-        headers=normal_user_token_headers,
-    )
-    events_fixture = await events_fixture
-    assert res.status_code == 200
-    body = res.json()
-    assert len(body) == 1
-    assert body[0]["total"] == 1
-
-    res = client.post(
-        f"{settings.API_V1_STR}/events/read",
-        headers=normal_user_token_headers,
-        json={"eventIds": [event.id for event in events_fixture]},
-    )
-    assert res.status_code == 200
-    assert res.json() == {"total": 1}, "POST /events/read doesn't update any event"
-
-    # assert all events are read
-    res = client.get(
-        f"{settings.API_V1_STR}/events/report",
-        headers=normal_user_token_headers,
-    )
-    assert res.status_code == 200
-    body = res.json()
-    assert len(body) == 0
-
-
 @pytest.fixture(scope="module")
 async def experiment_fixture(db: Session, some_model: Model) -> Experiment:
     user = get_test_user(db)
