@@ -2,7 +2,9 @@
 
 poetry run coverage run -m pytest
 TEST_RESULT=$?
+# Populate cov/json
 poetry run coverage json
+# Populate cov/html
 poetry run coverage html
 poetry run coverage report
 COVERAGE_RESULT=$?
