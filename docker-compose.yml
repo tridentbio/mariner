@@ -44,7 +44,6 @@ services:
     networks:
       - ray_net
     command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
-    # command: bash -c 'while true; do sleep 1; done;'
 
   mlflowdb:
     image: postgres:12
@@ -90,7 +89,6 @@ services:
       start_period: 90s
     restart: unless-stopped
     command:  mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET-s3://dev-mariner-datasets} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app
-      #command: bash -c 'while true; do sleep 1; done;'
     ports:
       - "5000:5000"
     networks:
