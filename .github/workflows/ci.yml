@@ -1,9 +1,8 @@
 name: Docker Image CI
-
 on:
   pull_request:
-    branches: [ "develop", "ci/configure-action" ]
-    types: [opened, reopened]
+    branches: [ "develop", "releases/**" ]
+    types: [opened, synchronize]
 env:
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -22,10 +21,5 @@ jobs:
       run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml build
     - name: Start services
       run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d
-      continue-on-error: true
-    - name: Wait a bit
-      run: sleep 10
-    - name: Backend logs
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml ps
     - name: Run tests and get report
       run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh

@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import sys
 
 emails = str(sys.argv[1])
