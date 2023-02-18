@@ -1,5 +1,4 @@
 .mypy_cache
-.coverage
 htmlcov
 __pycache__/
 .venv/
@@ -15,3 +14,4 @@ MarinerLogger/
 checkpoints/
 cov/
 .coverage
+configmaps
