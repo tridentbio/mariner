@@ -27,7 +27,7 @@ pandas = "^1.4.2"
 humps = "^0.2.2"
 PyYAML = "^6.0"
 torchsummary = "^1.5.1"
-mlflow = {version = "1.27.0", extras = ["pytorch"]}
+mlflow = {version = "1.27.0", extras = ["extras"]}
 ray = {extras = ["serve"], version = "^1.13.0"}
 mlflow-ray-serve = "^0.2.0"
 networkx = "^2.8.4"
