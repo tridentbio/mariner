@@ -3,7 +3,6 @@ Tests the mariner.models package
 """
 from typing import Any
 
-import mlflow.pyfunc
 import pytest
 from mockito import patch
 from pydantic import AnyHttpUrl
