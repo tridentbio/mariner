@@ -1,7 +1,7 @@
 import io
 import logging
 from io import BytesIO
-from typing import Any, List, Literal, Optional, Tuple, TypeVar, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
 import ray

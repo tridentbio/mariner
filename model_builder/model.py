@@ -15,7 +15,7 @@ from model_builder.dataset import DataInstance
 from model_builder.model_schema_query import get_dependencies
 from model_builder.optimizers import Optimizer
 from model_builder.schemas import CategoricalDataType, ModelSchema
-from model_builder.utils import collect_args, get_class_from_path_string
+from model_builder.utils import collect_args
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:

@@ -1,49 +1,39 @@
-version: "3.3"
+version: "3.4"
 services:
-  db:
-    image: postgres:12
+  backend:
     environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - PGUSER=postgres
-      - POSTGRES_SERVER=localhost
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=app
-    ports: 
-      - "5432:5432"
-    networks:
-      - ray_net
-
-  mlflowdb:
-    image: postgres:12
-    environment:
-      - POSTGRES_SERVER=localhost
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=app
-    ports: 
-      - "54321:5432"
-    networks:
-      - ray_net
-
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
+      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
+      - AWS_REGION=${AWS_REGION-Variable not set}
+      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID-Variable not set}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET-Variable not set}
+    volumes:
+      - ./cov:/app/cov
   mlflow:
-    depends_on:
-      - mlflowdb
-    image: larribas/mlflow
     environment:
-      - POSTGRES_SERVER=localhost
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=app
-      - POSTGRES_PORT=54321
-    ports:
-      - "5000:5000"
-    networks:
-      - ray_net
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
+      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
+      - AWS_REGION=${AWS_REGION-Variable not set}
+      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
 
-networks:
-  ray_net:
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.63.0.0/16
+  ray-head:
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
+      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
+      - AWS_REGION=${AWS_REGION-Variable not set}
+      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
+  ray-worker:
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
+      - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
+      - AWS_REGION=${AWS_REGION-Variable not set}
+      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
+  db:
+    volumes: []
+  mlflowdb:
+    volumes: []
