@@ -1,0 +1,41 @@
+# Compare code quality between origin and target branches
+# If event iquals merge, updates the score on the target branch
+# Cache j
+name: Code Quality Analysis
+on:
+  pull_request:
+    branches: [ "develop", "releases/**" ]
+    types: [opened, synchronize]
+  workflow_dispatch:
+jobs:
+  pylint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.3.2
+        virtualenvs-create: false
+        virtualenvs-in-project: false
+        installer-parallel: true
+    # Cache poetry
+    - name: Cache Dependencies
+      id: poetry-cache
+      uses: actions/cache@v3
+      with:
+        path: $HOME/.cache/poetry
+        key: ${{ runner.os }}-poetry-cache
+    - name: Debug poetry
+      run: which poetry && poetry --version && python --version
+    - name: Install project
+      run: poetry install
+    # Cache dependencies with hashFile of poetry.lock
+    - name: Cache Dependencies
+      id: poetry-cache
+      uses: actions/cache@v3
+      with:
+        path: $HOME/.cache/pylint
+        key: ${{ runner.os }}-pylint-cache
+    - name: Run pylint and check score
+      run: "poetry run python scripts/pylint_packages.py"
