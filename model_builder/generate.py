@@ -24,9 +24,10 @@ featurizers = [
     Layer(name)
     for name in [
         "model_builder.featurizers.MoleculeFeaturizer",
-        # PyG's from_smiles only outputs Long tensors for node_features
-        # Waiting for issue ... to be resolved
-        # "model_builder.featurizers.FromSmiles",
+        "model_builder.featurizers.IntegerFeaturizer",
+        "model_builder.featurizers.DNASequenceFeaturizer",
+        "model_builder.featurizers.RNASequenceFeaturizer",
+        "model_builder.featurizers.ProteinSequenceFeaturizer",
     ]
 ]
 
@@ -36,10 +37,14 @@ layers = [
         "model_builder.layers.OneHot",
         "model_builder.layers.GlobalPooling",
         "model_builder.layers.Concat",
+        "model_builder.layers.AddPooling",
         "torch.nn.Linear",
         "torch.nn.Sigmoid",
         "torch.nn.ReLU",
         "torch_geometric.nn.GCNConv",
+        # "model_builder.featurizers.FromSmiles",
+        "torch.nn.Embedding",
+        "torch.nn.TransformerEncoderLayer",
     ]
 ]
 
@@ -101,12 +106,8 @@ def get_component_signature(class_def: Any, method_name: str) -> Optional[Signat
             The signature of the method or None if the method does not exist
     """
     if method_name not in dir(class_def):
-        return None
+        raise Exception(f"{method_name} not found in class_def")
     method = getattr(class_def, method_name)
-    if "__code__" not in dir(method):
-        raise Exception(
-            "Unsure how to introspect method {method_name} with no __code__"
-        )
     return signature(method)
 
 
@@ -160,6 +161,10 @@ def is_optional(parameter: Parameter) -> bool:
     )
 
 
+def is_primitive(val: Any):
+    return val == int or val == float or val == str
+
+
 def args_to_list(params: List[Parameter]) -> List[tuple[str, Any, Any]]:
     """Returns a list of tuples with the name, type and default value of the parameters
 
@@ -170,7 +175,14 @@ def args_to_list(params: List[Parameter]) -> List[tuple[str, Any, Any]]:
         List[tuple[str, Any, Any]]:
             list of tuples with the name, type and default value of the parameters
     """
-    return [(param.name, str(param.annotation), param.default) for param in params]
+    return [
+        (
+            param.name,
+            str(param.annotation),
+            param.default if is_primitive(param.default) else None,
+        )
+        for param in params
+    ]
 
 
 def get_component_template_args_v2(path: str):
@@ -253,8 +265,10 @@ def create_jinja_env() -> Environment:
 
     def type_name(value):
         value = str(value)
-        assert value.startswith("<class '"), f"expected {value} to start with <class '"
-        return value[8:-2]
+        if value.startswith("<class '"):
+            return f"{value[8:-2]}"
+        elif value.startswith("typing."):
+            return value.replace("typing.", "")
 
     env.globals.update(type_name=type_name)
     return env
@@ -381,12 +395,12 @@ todo_include_todos = True"""
 
 
 if __name__ == "__main__":
-
     template = sys.argv[1]
     if template == "component":
         compnames = sys.argv[2:]
         for compname in compnames:
-            print(generatev2(compname))
+            out = generatev2(compname)
+            print(out)
     elif template == "base":
         bundle = generate_bundlev2()
         print(bundle)

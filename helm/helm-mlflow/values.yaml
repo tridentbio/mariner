@@ -1,5 +1,7 @@
 replicaCount: 3
 replicaCountCanary: 1
+command: /app/entrypoints/mlflow.sh
+
 
 canary:
   enabled: false

@@ -13,10 +13,4 @@ spec:
   - route:
      - destination:
          host: {{ .Release.Name }}
-         subset: v2
-       weight: 0
-     - destination:
-         host: {{ .Release.Name }}
-         subset: v1
-       weight: 100
 {{- end }}

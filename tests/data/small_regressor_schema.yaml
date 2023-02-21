@@ -33,7 +33,6 @@ layers:
     forwardArgs:
       x: ${MolToGraphFeaturizer.x}
       edge_index: ${MolToGraphFeaturizer.edge_index}
-      edge_weight: ${MolToGraphFeaturizer.edge_attr}
 
   - name: GCN1_Activation
     type: torch.nn.ReLU
@@ -47,7 +46,6 @@ layers:
     forwardArgs: 
       x: ${GCN1_Activation}
       edge_index: ${MolToGraphFeaturizer.edge_index}
-      edge_weight: ${MolToGraphFeaturizer.edge_attr}
     constructorArgs:
       in_channels: 64
       out_channels: 64
@@ -64,7 +62,6 @@ layers:
     forwardArgs:
       x: ${GCN2_Activation}
       edge_index: ${MolToGraphFeaturizer.edge_index}
-      edge_weight: ${MolToGraphFeaturizer.edge_attr}
     constructorArgs:
       in_channels: 64
       out_channels: 64

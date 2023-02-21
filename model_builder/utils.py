@@ -1,5 +1,8 @@
+"""
+This package contain utility classes and functions used in the model builder
+"""
 from collections.abc import Mapping
-from typing import Any, Callable, Dict, Sequence, Union
+from typing import Any, Dict, List, Sequence, Union
 
 import numpy as np
 import torch
@@ -58,44 +61,14 @@ class DataInstance(BaseStorage):
     def __setattr__(self, key: str, value: Any) -> None:
         setattr(self._store, key, value)
 
-    def __delattr__(self, key: str, value: Any) -> None:
+    def __delattr__(self, key: str) -> None:
         delattr(self._store, key)
 
     def __repr__(self) -> str:
         cls = self.__class__.__name__
-        info = [size_repr(k, v, indent=2) for k, v in self._store.items()]
-        info = ",\n".join(info)
+        info_parts = [size_repr(k, v, indent=2) for k, v in self._store.items()]
+        info = ",\n".join(info_parts)
         return f"{cls}(\n{info}\n)"
-
-
-def recursive_apply_(data: Any, function: Callable) -> None:
-    """Recursively apply a function to the data structures that
-    have been passed in.
-
-    Args:
-        data (Any): Data structure to apply the function.
-        function (Callable): Function that will be applied to the data.
-    """
-    if isinstance(data, torch.Tensor):
-        function(data)
-        return
-
-    if isinstance(data, tuple) and hasattr(data, "_fields"):
-        for value in data:
-            recursive_apply_(value, function)
-        return
-
-    if isinstance(data, Sequence) and not isinstance(data, str):
-        for value in data:
-            recursive_apply_(value, function)
-        return
-
-    if isinstance(data, Mapping):
-        for value in data.values:
-            recursive_apply_(value, function)
-        return
-
-    function(data)
 
 
 def size_repr(key: Any, value: Any, indent: int = 0) -> str:
@@ -114,7 +87,7 @@ def size_repr(key: Any, value: Any, indent: int = 0) -> str:
     pad = " " * indent
 
     if isinstance(value, torch.Tensor) and value.dim() == 0:
-        out = value.item()
+        out = str(value.item())
 
     elif isinstance(value, torch.Tensor):
         out = str(list(value.size()))
@@ -160,7 +133,7 @@ def split_module_export(classpath: str) -> tuple[str, str]:
     return module, export
 
 
-def get_class_from_path_string(pathstring: str) -> Any:
+def get_class_from_path_string(pathstring: str) -> type:
     """Dynamically import a class from a string path.
 
     Args:
@@ -181,7 +154,7 @@ references['cls'] = {export}
 
 def unwrap_dollar(value: str) -> tuple[str, bool]:
     """
-    Takes a string and remove it's reference indicators: $ or ${...}
+    Takes a string and remove its reference indicators: $ or ${...}
     Returns the string unwrapped (if it was a reference) and `is_reference` boolean
     """
     if value.startswith("${") and value.endswith("}"):
@@ -194,52 +167,91 @@ def unwrap_dollar(value: str) -> tuple[str, bool]:
 def get_references_dict(
     forward_args_dict: dict[str, Any]
 ) -> dict[str, Union[str, list[str]]]:
-    result = {}
+
+    # Init a dict
+    result: dict[str, Union[str, list[str]]] = {}
+
+    # Loop through the forward args dict
     for key, value in forward_args_dict.items():
+
+        # Handle list instances
         if isinstance(value, list):
-            result[key] = []
+            result_key = []
             for item in value:
                 ref, is_ref = unwrap_dollar(item)
                 if is_ref:
-                    result[key].append(ref)
+                    result_key.append(ref)
+            result[key] = result_key
         elif isinstance(value, str):
             ref, is_ref = unwrap_dollar(value)
             if is_ref:
                 result[key] = ref
-        else:
-            continue
+
     return result
 
 
-def get_ref_from_input(value: str, input: DataInstance):
+def get_ref_from_data_instance(acessor_str: str, input: DataInstance):
+    """Get's the value of a DataInstance
+
+    Used by model builder to interpret the forward_args.
+    When ``acessor_str`` contains '.', it's value  is splitted on
+    the first occurence, e.g:
+        - ``"foo.a.b.c"`` is splitted to ``["foo", "a.b.c"]``
+    The first string of the tuple is used as a key of the ``input`` and
+    the last one is used to access a possibly nested attribute in the value
+    found in ``input``.
+
+    Args:
+        accessor_str: string representing attribute to get, e.g. "mol_featurizer.x", "mwt"
+        input: data instance with collected layer/featurizer outputs, inputs
+    and outputs
+    """
     attribute, attribute_accessors = (
-        value.split(".")[0],
-        value.split(".")[1:],
+        acessor_str.split(".")[0],
+        acessor_str.split(".")[1:],
     )
     if attribute == "input":
         return input["".join(attribute_accessors)]  # $inputs.x is accessed as data['x']
     value = input[attribute]
     if len(attribute_accessors) == 0:
         return value
-    # TODO: fix edges_weight and edge_attr usage
-    if "edge_weight" in attribute_accessors or "edge_attr" in attribute_accessors:
-        return None
-    value = value[0]  # hack to flatten array of DataBatches (output of Featurizer)
+
     for attr in attribute_accessors:
         value = getattr(value, attr)
     return value
 
 
+def get_ref_from_input(
+    acessor_str: str, input: Union[DataInstance, List[DataInstance]]
+):
+    """Get's the acessor_str of a DataInstance or a batch of DataInstances
+
+
+    Args:
+        acessor_str: string represented acessor_str to get, e.g. "mol_featurizer.x", "mwt".
+        input(Union[DataInstance, List[DataInstance]):
+    """
+    if isinstance(input, list):
+        values = [get_ref_from_data_instance(acessor_str, item) for item in input]
+        assert len(values) > 0, "failed to get values from input"
+        if isinstance(values[0], torch.Tensor):
+            return torch.cat(values)  # type: ignore
+
+    else:
+        return get_ref_from_data_instance(acessor_str, input)
+
+
 def collect_args(
-    input: DataInstance, args_dict: dict[str, Any]
+    input_: DataInstance, args_dict: Dict[str, Any]
 ) -> Union[list, dict, Any]:
     """
-    Takes a DataInstance object and a dictionary of args to retrive
-    and returns a dictinoraty of resolved arguments.
-    Each arg value may be a reference. in such case, the arg value must be
-    retrieved from `input`. Otherwise, it's raw value that can be returned as is
+    Takes a batch of DataInstance objects and a dictionary of args to retrieve
+    and returns a dictionary of resolved arguments.
+
+    Each arg acessor_str may be a reference. In such case, the arg acessor_str must be
+    retrieved from `input`. Otherwise, it's raw acessor_str that can be returned as is
     """
-    result = {}
+    result: Dict[str, Union[Any, str, None]] = {}
     for key, value in args_dict.items():
         if value is None:
             continue
@@ -248,7 +260,7 @@ def collect_args(
             for item in value:
                 item_value, item_is_ref = unwrap_dollar(item)
                 if item_is_ref:
-                    value_.append(get_ref_from_input(item_value, input))
+                    value_.append(get_ref_from_input(item_value, input_))
                 else:
                     value_.append(item_value)
             result[key] = value_
@@ -257,7 +269,7 @@ def collect_args(
                 continue
             value, is_ref = unwrap_dollar(value)
             if is_ref:
-                result[key] = get_ref_from_input(value, input)
+                result[key] = get_ref_from_input(value, input_)
             else:
                 result[key] = value
         else:

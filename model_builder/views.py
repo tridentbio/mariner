@@ -1,7 +1,14 @@
+"""
+Dictionary like helper classes used my model_builder.storage
+"""
 from typing import Iterable, List, Mapping
 
 
 class MappingView(object):
+    """
+    Dictionary like class
+    """
+
     def __init__(self, mapping: Mapping, *args: List[str]) -> None:
         self._mapping = mapping
         self._args = args
@@ -22,17 +29,29 @@ class MappingView(object):
 
 
 class KeysView(MappingView):
+    """
+    Extends MappingView with key iteration
+    """
+
     def __iter__(self) -> Iterable:
         yield from self._keys()
 
 
 class ValuesView(MappingView):
+    """
+    Extends MappingView with value iteration
+    """
+
     def __iter__(self) -> Iterable:
         for key in self._keys():
             yield self._mapping[key]
 
 
 class ItemsView(MappingView):
+    """
+    Extends MappingView with (key, value) iteration
+    """
+
     def __iter__(self) -> Iterable:
         for key in self._keys():
             yield (key, self._mapping[key])

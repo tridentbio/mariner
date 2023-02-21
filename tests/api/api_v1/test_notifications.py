@@ -10,12 +10,14 @@ from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import EventEntity
 from mariner.schemas.experiment_schemas import (
+    EarlyStoppingConfig,
     Experiment,
     MonitoringConfig,
     TrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
+from model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
@@ -33,8 +35,12 @@ async def experiments_fixture(db: Session, some_model: Model):
             TrainingRequest(
                 name=random_lower_string(),
                 epochs=1,
-                learning_rate=0.1,
                 model_version_id=version.id,
+                optimizer=AdamOptimizer(),
+                checkpoint_config=MonitoringConfig(metric_key="val_mse", mode="min"),
+                early_stopping_config=EarlyStoppingConfig(
+                    metric_key="val_mse", mode="min"
+                ),
             ),
         )
     ]
@@ -79,43 +85,6 @@ async def test_get_notifications(
     assert got_notification["events"][0]["url"] == expected_url
 
 
-@pytest.mark.asyncio
-@pytest.mark.skip(reason="broken")
-async def test_post_read_notifications(
-    db: Session,
-    client: TestClient,
-    normal_user_token_headers: dict[str, str],
-    events_fixture: List[EventEntity],
-    event_loop: AbstractEventLoop,
-):
-    res = client.get(
-        f"{settings.API_V1_STR}/events/report",
-        headers=normal_user_token_headers,
-    )
-    events_fixture = await events_fixture
-    assert res.status_code == 200
-    body = res.json()
-    assert len(body) == 1
-    assert body[0]["total"] == 1
-
-    res = client.post(
-        f"{settings.API_V1_STR}/events/read",
-        headers=normal_user_token_headers,
-        json={"eventIds": [event.id for event in events_fixture]},
-    )
-    assert res.status_code == 200
-    assert res.json() == {"total": 1}, "POST /events/read doesn't update any event"
-
-    # assert all events are read
-    res = client.get(
-        f"{settings.API_V1_STR}/events/report",
-        headers=normal_user_token_headers,
-    )
-    assert res.status_code == 200
-    body = res.json()
-    assert len(body) == 0
-
-
 @pytest.fixture(scope="module")
 async def experiment_fixture(db: Session, some_model: Model) -> Experiment:
     user = get_test_user(db)
@@ -126,11 +95,12 @@ async def experiment_fixture(db: Session, some_model: Model) -> Experiment:
         model_version_id=version.id,
         epochs=1,
         name=random_lower_string(),
-        learning_rate=0.05,
         checkpoint_config=MonitoringConfig(
             mode="min",
             metric_key="val_mse",
         ),
+        optimizer=AdamOptimizer(),
+        early_stopping_config=EarlyStoppingConfig(metric_key="val_mse", mode="min"),
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
     task = get_exp_manager().get_task(exp.id)
