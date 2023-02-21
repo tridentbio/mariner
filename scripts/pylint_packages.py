@@ -22,8 +22,8 @@ PYLINT_HOME = f"{HOME}/.cache/pylint"
 
 
 @click.command(help="Lints modules")
-@click.argument("src_branch", cls=str)
-@click.argument("target_branch", cls=str)
+@click.argument("src_branch")
+@click.argument("target_branch")
 @click.option("save-src", help="Saves src_branch results as target_branch results")
 @click.option("save-new-target", "s", help="Saves src_branch results as target_branch results")
 def main(src_branch: str, target_branch: str, save_src=False, save_new_target=False):
