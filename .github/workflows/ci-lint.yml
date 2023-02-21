@@ -11,6 +11,7 @@ on:
       - 'develop'
       - 'releases/**'
   workflow_dispatch:
+    inputs:
       save_src:
         type: boolean
         description: Saves the branch linting results in the repo cache
