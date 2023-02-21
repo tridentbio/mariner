@@ -55,6 +55,7 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:latest"
+          command: ["{{ .Values.command }}"]
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: {{ .Values.image.containerPort }}-tcp

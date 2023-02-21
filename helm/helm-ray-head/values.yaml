@@ -1,5 +1,6 @@
 replicaCount: 1
 replicaCountCanary: 1
+command: /app/entrypoints/ray-head.sh
 
 canary:
   enabled: false
