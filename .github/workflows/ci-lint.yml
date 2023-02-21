@@ -16,13 +16,13 @@ jobs:
       id: poetry-cache
       uses: actions/cache@v3
       with:
-        path: $HOME/.cache/pypoetry
+        path: /home/runner/.cache/pypoetry
         key: ${{ runner.os }}-poetry-cache
     - name: Cache Pylint results
       id: pylint-cache
       uses: actions/cache@v3
       with:
-        path: $HOME/.cache/pylint
+        path: /home/runner/.cache/pylint
         key: ${{ runner.os }}-pylint-cache
     - uses: actions/setup-python@v4
       with:
@@ -36,12 +36,10 @@ jobs:
         installer-parallel: true
     - name: Install project
       run: poetry install
-    - name: Debug
-      run: echo $HOME; ls $HOME; ls $HOME/.cache; ls /home ; echo "${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }}"
     - name: Update target branch score
       if: github.event.pull_request.merged == 'true'
-      run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }} --save-new-target --save-src"
+      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} --save-new-target --save-src"
 
     - name: Update src branch
       if: github.event.pull_request.merged != 'true'
-      run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }} --save-src"
+      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} --save-src"
