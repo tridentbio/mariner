@@ -37,7 +37,7 @@ jobs:
     - name: Install project
       run: poetry install
     - name: Debug
-      run: ls $HOME; ls $HOME/.cache; ls /home ; echo "${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }}"
+      run: echo $HOME; ls $HOME; ls $HOME/.cache; ls /home ; echo "${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }}"
     - name: Update target branch score
       if: github.event.pull_request.merged == 'true'
       run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }} --save-new-target --save-src"
