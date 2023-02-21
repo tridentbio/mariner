@@ -1,29 +1,26 @@
-FROM python:3.9
+FROM python:3.9-slim
 
 WORKDIR /app/
 
-# Copy entrypoint of each package, otherwise poetry fails to run install_deps_* script
 COPY ./mariner/__init__.py /app/mariner/__init__.py
 COPY ./api/__init__.py /app/api/__init__.py
 COPY ./model_builder/__init__.py /app/model_builder/__init__.py
 
-# Copy dependency related files
 COPY ./pyproject.toml ./poetry.lock ./deps.py /app/
 
 RUN /usr/local/bin/python3 -m pip install --upgrade pip
 
-# Install Poetry
 ENV POETRY_VERSION=1.2.0a2
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_VENV=/opt/poetry-venv
 ENV POETRY_CACHE_DIR=/opt/.cache
-RUN pip install -U pip setuptools
-RUN pip install poetry
+RUN python3 -m venv $POETRY_VENV \
+    && pip install -U pip setuptools \
+    && pip install poetry
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 RUN poetry config virtualenvs.create false
 
-# Allow installing dev dependencies to run tests
-RUN poetry install --no-root
+RUN poetry install --no-root --no-cache && poetry cache clear --no-interaction --all pypi
 
 COPY ./mariner /app/mariner
 COPY ./api /app/api
@@ -33,12 +30,12 @@ COPY ./tests /app/tests
 COPY ./alembic.ini /app/alembic.ini
 ENV PYTHONPATH=/app
 
-RUN bash -c "pip install jupyterlab"
+RUN apt-get update
 RUN apt-get install libpq-dev -y
 RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
 
 COPY --from=quay.io/oauth2-proxy/oauth2-proxy:v7.3.0-amd64 /bin/oauth2-proxy /usr/local/bin/oauth2-proxy
 
-COPY ./entrypoints/mariner.sh /app/mariner.sh
-RUN chmod +x /app/mariner.sh
-ENTRYPOINT ["/app/mariner.sh"]
+COPY ./entrypoints/ /app/entrypoints
+RUN chmod +x /app/entrypoints/*
+CMD ["sh"]
