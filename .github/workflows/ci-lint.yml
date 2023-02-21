@@ -44,8 +44,8 @@ jobs:
       run: poetry install
     - name: Update target branch score
       if: github.event.action == 'push'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.push.ref }} ${{ github.event.push.base_ref }} --save-new-target --save-src"
+      run: "poetry run python scripts/pylint_packages.py ${{ github.event.push.ref }} ${{ github.event.push.base_ref }} --save-new-target"
 
     - name: Update src branch
       if: github.event.action == 'pull_request'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} --save-src"
+      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
