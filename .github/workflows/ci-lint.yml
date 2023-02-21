@@ -22,23 +22,26 @@ jobs:
         virtualenvs-create: false
         virtualenvs-in-project: false
         installer-parallel: true
-    # Cache poetry
     - name: Cache Dependencies
       id: poetry-cache
       uses: actions/cache@v3
       with:
         path: $HOME/.cache/poetry
         key: ${{ runner.os }}-poetry-cache
-    - name: Debug poetry
-      run: which poetry && poetry --version && python --version
     - name: Install project
       run: poetry install
-    # Cache dependencies with hashFile of poetry.lock
+    - name: Debug
+      run: echo "${GITHUB_REF##*/} ${{ github.event.pull_request.base.ref }}"
     - name: Cache Dependencies
       id: pylint-cache
       uses: actions/cache@v3
       with:
         path: $HOME/.cache/pylint
         key: ${{ runner.os }}-pylint-cache
-    - name: Run pylint and check score
-      run: "poetry run python scripts/pylint_packages.py"
+    - name: Update target branch score
+      if: github.event.pull_request.merged == 'true'
+      run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF##*/} ${{ github.event.pull_request.base.ref }} --save-new-target --save-src"
+
+    - name: Update src branch
+      if: github.event.pull_request.merged == 'false'
+      run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF##*/} ${{ github.event.pull_request.base.ref }} --save-src"

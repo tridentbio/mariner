@@ -22,24 +22,31 @@ PYLINT_HOME = f"{HOME}/.cache/pylint"
 
 
 @click.command(help="Lints modules")
-def main():
+@click.argument("src_branch", cls=str)
+@click.argument("target_branch", cls=str)
+@click.option("save-src", help="Saves src_branch results as target_branch results")
+@click.option("save-new-target", "s", help="Saves src_branch results as target_branch results")
+def main(src_branch: str, target_branch: str, save_src=False, save_new_target=False):
     result = Run(modules, do_exit=False)
 
-    previous_results = load_results("global", PYLINT_HOME)
+    previous_results = load_results(target_branch, PYLINT_HOME)
     previous_global_note = previous_results.global_note if previous_results else None
     global_note = result.linter.stats.global_note
 
     if previous_global_note:
         if global_note < previous_global_note:
             click.echo("Pylint score of main packages regressed", err=True)
+            if save_src: save_results(result.linter.stats, src_branch, PYLINT_HOME)
             sys.exit(1)
         elif global_note > previous_global_note:
             click.echo("Pylint score was improved!")
-            save_results(result.linter.stats, "global", PYLINT_HOME)
+            if save_src: save_results(result.linter.stats, src_branch, PYLINT_HOME)
+            if save_new_target: save_results(result.linter.stats, target_branch, PYLINT_HOME)
             sys.exit(0)
     else:
         click.echo("New Pylint score")
-        save_results(result.linter.stats, "global", PYLINT_HOME)
+        if save_src: save_results(result.linter.stats, src_branch, PYLINT_HOME)
+        if save_new_target: save_results(result.linter.stats, target_branch, PYLINT_HOME)
         sys.exit(0)
 
 
