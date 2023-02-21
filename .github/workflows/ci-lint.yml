@@ -1,39 +1,63 @@
+# Code quality related jobs
 name: Code Quality Analysis
 on:
+  # Runs on PRs for check and easier review
   pull_request:
+    # Only when PRs are targeting develop or releases/** branches
     branches: [ "develop", "releases/**" ]
+    # Only when PRs are opened or there are pushs to it
     types: [opened, synchronize]
+  # Runs on pushs to develop or releases/** branchs
   push:
     branches:
       - 'develop'
       - 'releases/**'
+  # Runs manually
   workflow_dispatch:
     inputs:
       save_src:
         type: boolean
         description: Saves the branch linting results in the repo cache
 jobs:
+  # Checks if pylint score is equals or higher than target branch
+  # Pylint uses project configurations defined in pylintrc
   pylint:
     runs-on: ubuntu-latest
     steps:
+    # Checks into commit of the event
     - uses: actions/checkout@v3
+    # Sets up python3.9
     - uses: actions/setup-python@v4
       with:
         python-version: '3.9' 
+    # Sets cache to virtual environment
     - name: Cache Dependencies
       id: poetry-cache
       uses: actions/cache@v3
       with:
         path: .venv
-        key: ${{ runner.os }}-poetry-cache
-        restore-keys: ${{ runner.os }}-poetry-cache
-    - name: Cache Pylint results
-      id: pylint-cache
-      uses: actions/cache@v3
+        # First try a exact match of dependencies
+        key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+        # Fallbacks to latest dependencies or default branch (develop) one
+        restore-keys: poetry-cache-${{ runner.os }}
+    # Restores cache with known target branch pylint results
+    - name: Cache Pylint results (restore)
+      id: pylint-cache-restore
+      uses: actions/cache/restore@v3
       with:
-        path: ~/.cache/pylint
-        key: ${{ runner.os }}-pylint-cache
-        restore-keys: ${{ runner.os }}-pylint-cache
+        # This will be the paths for the pylint stats
+        # We only cache common target branches results
+        # and ignore other stats that are saved as a side effect
+        path: |
+          ~/.cache/pylint/develop*
+          ~/.cache/pylint/releases*
+        # Same key is used in key and restore-keys because cache
+        # must be reused in multiple refs, so a push to the 
+        # default branch updates the results for next runs checks
+        key: pylint-cache-${{ runner.os }}
+        restore-keys: pylint-cache-${{ runner.os }}
+    # Installs poetry and configures to use virtualenv
+    # virtual env path is cwd()/.venv
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
       with:
@@ -41,19 +65,39 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
+    # Installs all packages and it's dependencies
     - name: Install project
       run: poetry install
+
+    # On pushs, compare score and save target branch result to cache
+    # Only saves if branch is develop or releases/**
     - name: Update target branch score (push)
       if: github.event_name == 'push'
       run: "poetry run python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target"
 
+
+    # On "manually" dispatched actions, compare score to the one in 
+    # develop branch. If inputs.save_src is true, save branch result
+    # to cache.
+    # Only saves if branch is develop or releases/**
     - name: Update branch score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-new-target' }}"
+      run: "poetry run python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}"
 
+    # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
       run: "poetry run python scripts/pylint_packages.py -- ${{ github.event.pull_request.base.ref }}"
-
+    # Saves linting results of common branchs to github cache
+    # Use same args as restore step
+    - name: Cache Pylint results (save)
+      id: pylint-cache-save
+      uses: actions/cache/save@v3
+      with:
+        path: |
+          ~/.cache/pylint/develop*
+          ~/.cache/pylint/releases*
+        key: pylint-cache-${{ runner.os }}
     - name: Debug lint cache
       run: ls ~/.cache/ && echo '-----' && ls .venv && ls -hal ~
+
