@@ -11,6 +11,7 @@ repos:
       pass_filenames: true
       language: system
       types: [python]
+      files: '(mariner|model_builder|api|tests).*\.py'
     - id: lint-single
       name: Linting staged code with scripts/lint-single.sh
       entry: poetry run sh scripts/lint-single.sh
@@ -18,11 +19,12 @@ repos:
       types: [python]
       pass_filenames: true
       fail_fast: true
+      files: '(mariner|model_builder|api|tests).*\.py'
     - id: test
       name: Running short tests
-      entry: docker-compose exec -T backend pytest -m 'not long' --timeout 45
+      entry: sh scripts/test.sh
       language: system
       pass_filenames: false
       fail_fast: true
       stages: 
-        - push
+        - manual

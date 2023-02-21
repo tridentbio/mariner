@@ -11,6 +11,7 @@ if [[ $FLAKE_RESULT != 0 ]];
 then
   echo "Flake failed with status $FLAKE_RESULT"
 fi
+
 if [[ $MYPY_RESULT != 0 ]]
 then 
   echo "mypy failed with status $MYPY_RESULT"

@@ -1,0 +1,30 @@
+[report]
+include =
+  ./mariner/*
+  ./model_builder/*
+  ./api/*
+
+fail_under = 77
+
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+
+    # Don't complain if non-runnable code isn't run:
+    if __name__ == .__main__.:
+
+    # Don't complain about abstract methods, they aren't run:
+    @(abc\.)?abstractmethod
+
+
+[html]
+directory = cov/html
+
+[json]
+output = cov/json
+
+

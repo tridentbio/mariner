@@ -1,9 +1,8 @@
 .mypy_cache
-.coverage
 htmlcov
 __pycache__/
 .venv/
-.env
+.env.secret
 dist/
 .ipynb_checkpoints
 lightning_logs/
@@ -13,3 +12,6 @@ configmap.yaml
 .hypothesis/
 MarinerLogger/
 checkpoints/
+cov/
+.coverage
+configmaps

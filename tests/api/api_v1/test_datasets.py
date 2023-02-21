@@ -68,7 +68,6 @@ def test_post_datasets(
 
 
 @pytest.mark.long
-@pytest.mark.skip(reason="too long")
 def test_post_datasets_invalid(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
