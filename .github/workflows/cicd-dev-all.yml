@@ -7,7 +7,6 @@ env:
   AWS_REGION: us-east-1
   IMAGE_TAG: ${{ github.sha }}
 jobs:
-
   docker_image:
     name: docker_image
     runs-on: ubuntu-20.04
