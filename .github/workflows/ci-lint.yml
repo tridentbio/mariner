@@ -12,6 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Cache Dependencies
+      id: poetry-cache
+      uses: actions/cache@v3
+      with:
+        path: $HOME/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-cache
+    - name: Cache Pylint results
+      id: pylint-cache
+      uses: actions/cache@v3
+      with:
+        path: $HOME/.cache/pylint
+        key: ${{ runner.os }}-pylint-cache
     - uses: actions/setup-python@v4
       with:
         python-version: '3.9' 
@@ -22,22 +34,10 @@ jobs:
         virtualenvs-create: false
         virtualenvs-in-project: false
         installer-parallel: true
-    - name: Cache Dependencies
-      id: poetry-cache
-      uses: actions/cache@v3
-      with:
-        path: $HOME/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-cache
     - name: Install project
       run: poetry install
     - name: Debug
       run: echo "${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }}"
-    - name: Cache Dependencies
-      id: pylint-cache
-      uses: actions/cache@v3
-      with:
-        path: $HOME/.cache/pylint
-        key: ${{ runner.os }}-pylint-cache
     - name: Update target branch score
       if: github.event.pull_request.merged == 'true'
       run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }} --save-new-target --save-src"
