@@ -26,7 +26,7 @@ jobs:
       id: poetry-cache
       uses: actions/cache@v3
       with:
-        path: $HOME/.cache/poetry
+        path: $HOME/.cache/pypoetry
         key: ${{ runner.os }}-poetry-cache
     - name: Install project
       run: poetry install
