@@ -11,6 +11,9 @@ on:
       - 'develop'
       - 'releases/**'
   workflow_dispatch:
+      save_src:
+        type: boolean
+        description: Saves the branch linting results in the repo cache
 jobs:
   pylint:
     runs-on: ubuntu-latest
@@ -23,6 +26,8 @@ jobs:
         path: /home/runner/.cache/pypoetry
         key: ${{ runner.os }}-poetry-cache
         restore-keys: ${{ runner.os }}-poetry-cache
+    - name: Debug cache
+      run: ls /home/runner/.cache/pypoetry
     - name: Cache Pylint results
       id: pylint-cache
       uses: actions/cache@v3
@@ -45,7 +50,15 @@ jobs:
     - name: Update target branch score
       if: github.event.action == 'push'
       run: "poetry run python scripts/pylint_packages.py ${{ github.event.push.ref }} ${{ github.event.push.base_ref }} --save-new-target"
+    - name: Update target branch score
+      if: github.event.action == 'workflow_dispatch'
+      run: 'poetry run python scripts/pylint_packages.py ${{ github.event.workflow_dispatch.ref }} develop ${{ github.event.inputs.save_src && "--save-new-target" }}'
+
 
     - name: Update src branch
       if: github.event.action == 'pull_request'
       run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
+
+
+    - name: Debug lint cache
+      run: ls /home/runner/.cache/ && echo '-----' && ls /home/runner/.cache/pylint
