@@ -9,15 +9,6 @@ from pylint.lint import Run, load_results, save_results
 
 modules = ["--extension-pkg-whitelist='pydantic'", "mariner", "model_builder", "api"]
 
-
-HOME = os.getenv("HOME")
-
-
-if not HOME:
-    click.echo("Needs a home variable", err=True)
-    sys.exit(1)
-
-
 PYLINT_HOME = os.path.expanduser("~/.cache/pylint")
 
 @click.command(help="Lints modules")
