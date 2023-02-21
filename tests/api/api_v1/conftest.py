@@ -64,31 +64,14 @@ def some_events(
     teardown_events(db, events)
 
 
-""" 
-id
-name
-description
-rows
-columns
-bytes
-stats
-data_url
-split_target
-split_actual
-split_type
-created_at
-updated_at
-created_by_id
-columns_metadata
-ready_status
-errors
-"""
-
-
 @pytest.fixture(scope="module")
 def some_dataset_without_process(
     db: Session, normal_user_token_headers_payload: TokenPayload
 ) -> Dataset:
+    """Fixture to create a dataset without process it
+    This dataset has errors dataset key to download
+    Dataset will be deleted after test
+    """
     key, _ = upload_s3_compressed(
         io.BytesIO(open("tests/data/bad_dataset.csv", "rb").read())
     )
