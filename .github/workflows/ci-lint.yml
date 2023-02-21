@@ -56,4 +56,4 @@ jobs:
       run: "poetry run python scripts/pylint_packages.py -- ${{ github.event.pull_request.base.ref }}"
 
     - name: Debug lint cache
-      run: ls /home/runner/.cache/ && echo '-----' && ls /home/runner/.cache/pylint
+      run: ls ~/.cache/ && echo '-----' && ls .venv
