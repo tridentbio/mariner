@@ -50,14 +50,14 @@ jobs:
     - name: Update target branch score
       if: github.event.action == 'push'
       run: "poetry run python scripts/pylint_packages.py ${{ github.event.push.ref }} ${{ github.event.push.base_ref }} --save-new-target"
-    - name: Update target branch score
+
+    - name: Update Source branch score
       if: github.event.action == 'workflow_dispatch'
-      run: 'poetry run python scripts/pylint_packages.py ${{ github.event.workflow_dispatch.ref }} develop ${{ github.event.inputs.save_src && "--save-new-target" }}'
+      run: "poetry run python scripts/pylint_packages.py ${{ github.event.workflow_dispatch.ref }} develop ${{ github.event.inputs.save_src && '--save-new-target' }}"
 
-
-    - name: Update src branch
+    - name: Check PR lint score
       if: github.event.action == 'pull_request'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
+      run: "poetry run python scripts/pylint_packages.py -- ${{ github.event.pull_request.base.ref }}"
 
 
     - name: Debug lint cache
