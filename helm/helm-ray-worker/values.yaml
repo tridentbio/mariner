@@ -1,5 +1,6 @@
 replicaCount: 3
 replicaCountCanary: 1
+command: /app/entrypoints/ray-worker.sh
 
 canary:
   enabled: false
