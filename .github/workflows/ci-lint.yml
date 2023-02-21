@@ -31,7 +31,7 @@ jobs:
     - name: Install project
       run: poetry install
     - name: Debug
-      run: echo "${GITHUB_REF##*/} ${{ github.event.pull_request.base.ref }}"
+      run: echo "${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }}"
     - name: Cache Dependencies
       id: pylint-cache
       uses: actions/cache@v3
@@ -40,8 +40,8 @@ jobs:
         key: ${{ runner.os }}-pylint-cache
     - name: Update target branch score
       if: github.event.pull_request.merged == 'true'
-      run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF##*/} ${{ github.event.pull_request.base.ref }} --save-new-target --save-src"
+      run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }} --save-new-target --save-src"
 
     - name: Update src branch
-      if: github.event.pull_request.merged == 'false'
-      run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF##*/} ${{ github.event.pull_request.base.ref }} --save-src"
+      if: github.event.pull_request.merged != 'true'
+      run: "poetry run python scripts/pylint_packages.py ${GITHUB_REF#refs/heads/} ${{ github.event.pull_request.base.ref }} --save-src"
