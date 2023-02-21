@@ -3,7 +3,7 @@ replicaCountCanary: 1
 
 canary:
   enabled: false
-
+command: /app/entrypoints/mariner.sh
 normal_deploy:
   enabled: true
 
