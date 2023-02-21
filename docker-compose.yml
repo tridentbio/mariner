@@ -1,12 +1,14 @@
-version: "3.3"
+version: "3.4"
 services:
   db:
     image: postgres:12
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
-    env_file:
-      - .env
     environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=app
       - PGDATA=/var/lib/postgresql/data/pgdata
       - PGUSER=postgres
     healthcheck:
@@ -21,41 +23,40 @@ services:
   backend:
     image: 'image:latest'
     depends_on:
-      db:
-        condition: service_healthy
-      mlflow:
-        condition: service_healthy
+      - db
+      - mlflow
+      - ray-worker
     ports:
       - 80:80
       - 8888:8888
+    environment:
+      - RESTART=true
     env_file:
       - .env
-    environment:
-      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
+      - .env.secret
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 5s
       timeout: 10s
       retries: 3
-      start_period: 40s
     restart: unless-stopped
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     networks:
       - ray_net
-    command: bash -c 'poetry run sh /app/scripts/prestart.sh && poetry run python -m api.main'
+    command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
 
   mlflowdb:
     image: postgres:12
     volumes:
       - app-mlflow-data:/var/lib/postgresql/data/pgdata
-    env_file:
-      - .env.local
     environment:
+      - POSTGRES_SERVER=mlflow
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=app
       - PGDATA=/var/lib/postgresql/data/pgdata
-      - POSTGRES_SERVER=mlflowdb
-      - POSTGRES_PORT=5432
       - PGUSER=postgres
     ports: 
       - "54321:5432"
@@ -70,18 +71,18 @@ services:
 
   mlflow:
     depends_on:
-      mlflowdb:
-        condition: service_healthy
+      - mlflowdb
     build:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      - .env.local
+      - .env.secret
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_ARTIFACT_URI=s3://dev-mariner-datasets
+      - AWS_MODELS_BUCKET=s3://dev-mariner-datasets
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
@@ -89,8 +90,7 @@ services:
       retries: 3
       start_period: 90s
     restart: unless-stopped
-    command: bash -c 'echo $AWS_MODELS_BUCKET && poetry run mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
-      #command: bash -c 'while true; do sleep 1; done;'
+    command:  mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET-s3://dev-mariner-datasets} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app
     ports:
       - "5000:5000"
     networks:
@@ -101,22 +101,14 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.local
+      - .env
+      - .env.secret
     ports:
       - "6379:6379"
       - "8265:8265"
       - "10001:10001"
       - "8000:8000"
-    environment:
-      - SERVER_NAME=${SERVER_NAME?Variable not set}
-      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - APPLICATION_SECRET=${APPLICATION_SECRET?Variable not set}
-      - WEBAPP_URL=${WEBAPP_URL}
-
-    command: bash -c "poetry run ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 && serve start && while true; do sleep 1; done;"
+    command: ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block
     shm_size: 3g
     networks:
       - ray_net
@@ -125,25 +117,53 @@ services:
       context: .
       dockerfile: ./dockerfiles/Dockerfile.local
     env_file:
-      .env.local
+      - .env
+      - .env.secret
     depends_on: 
       - ray-head
-    environment:
-      - SERVER_NAME=${SERVER_NAME?Variable not set}
-      - SERVER_HOST=http://${SERVER_NAME?Variable not set}
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - APPLICATION_SECRET=${APPLICATION_SECRET?Variable not set}
-      - WEBAPP_URL=${WEBAPP_URL}
-
-    command: bash -c "poetry run ray start --address=ray-head:6379 --num-cpus=1 --block" 
+    command: ray start --address=ray-head:6379 --num-cpus=1 --block
     shm_size: 3g
+    networks:
+      - ray_net
+  grafana:
+    image: grafana/grafana:9.3.1
+    container_name: grafana
+    restart: always
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS}
+    ports:
+      - 3000:3000
+    networks:
+      - ray_net
+
+  prometheus:
+    image: prom/prometheus:v2.40.5
+    container_name: prometheus
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=360h'
+      - '--web.enable-lifecycle'
+    ports:
+      - 9090:9090
     networks:
       - ray_net
 volumes:
   app-db-data:
   app-mlflow-data:
+  grafana_data:
+  prometheus_data:
 
 networks:
   ray_net:

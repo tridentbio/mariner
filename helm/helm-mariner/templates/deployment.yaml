@@ -50,17 +50,18 @@ spec:
       serviceAccountName: {{ include "chart.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      volumes:
-        - name: {{ .Release.Name }}
-          secret:
-            secretName: {{ .Release.Name }}
-            optional: true
+      # volumes:
+      #   - name: {{ .Release.Name }}
+      #     secret:
+      #       secretName: {{ .Release.Name }}
+      #       optional: true
       containers:
         - name: {{ .Release.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:latest"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["{{ .Values.command }}"]
           ports:
             - name: {{ .Values.image.containerPort }}-tcp
               containerPort: {{ .Values.image.containerPort }}
@@ -86,6 +87,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}
+            - configMapRef:
+                name: {{ .Release.Name }}-emails
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

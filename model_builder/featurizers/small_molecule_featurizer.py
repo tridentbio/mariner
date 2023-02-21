@@ -1,5 +1,4 @@
-# flake8: noqa
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import numpy as np
 import rdkit.Chem as Chem
@@ -9,24 +8,11 @@ from rdkit.Chem.rdchem import Bond as RDKitBond
 from rdkit.Chem.rdchem import Mol as RDKitMol
 from torch_geometric.data import Batch as PyGBatch
 from torch_geometric.data import Data as PyGData
-from torch_geometric.utils.smiles import from_smiles
+
+from model_builder.featurizers.base_featurizers import BaseFeaturizer
 
 
-class FromSmiles:
-    def __init__(self, kekulize: bool = False, with_hydrogen: bool = False):
-        self.kekulize = kekulize or False
-        self.with_hydrogen = with_hydrogen or False
-
-    def __call__(self, x: str) -> PyGData:
-        return from_smiles(x, kekulize=self.kekulize, with_hydrogen=self.with_hydrogen)
-
-
-FromSmiles.__doc__ = "(Based off torch_geometric.utils.from_smiles)\n" + (
-    from_smiles.__doc__ or ""
-)
-
-
-class MoleculeFeaturizer:
+class MoleculeFeaturizer(BaseFeaturizer[str]):
     """
     Small molecule featurizer.
     Args:
@@ -177,7 +163,7 @@ class MoleculeFeaturizer:
 
         # Try setting correct index to 1.0
         try:
-            one_hot[allowable_set.index(val)] = 1.0
+            one_hot[allowable_set.index(val)] = 1.0  # type: ignore
         except ValueError:
             if include_unknown_set:
 
@@ -221,7 +207,7 @@ class MoleculeFeaturizer:
             int(atom.GetTotalNumHs()), self.TOTAL_NUM_HS_SET, self.allow_unknown
         )
 
-    def _get_mol_atom_features(self, mol: RDKitMol) -> List[float]:
+    def _get_mol_atom_features(self, mol: RDKitMol) -> List[List[float]]:
         """Receive a RDKitMol object and returns a List of all atom features.
         Args:
             mol (RDKitMol): object that have the atoms featurized
@@ -310,8 +296,8 @@ class MoleculeFeaturizer:
             # For each atom, generate a frag without it
             new_mol_atom_features = np.delete(mol_atom_features, (i), axis=0)
             # Generate only the mol bond features for this fragment
-            mol_bond_features = []
-            mol_bond_list = [[], []]
+            mol_bond_features: List[Any] = []
+            mol_bond_list: List[List[Any]] = [[], []]
 
             # Bond features still have to be created here because there are difference in conditions
             for bond in mol.GetBonds():
@@ -384,8 +370,8 @@ class MoleculeFeaturizer:
         """
         # Initialize lists to hold data
         mol_atom_features = self._get_mol_atom_features(mol)
-        mol_bond_features = []
-        mol_bond_list = [[], []]
+        mol_bond_features: List[Any] = []
+        mol_bond_list: List[List[Any]] = [[], []]
 
         # Featurize all bonds
         included_bond_features = [

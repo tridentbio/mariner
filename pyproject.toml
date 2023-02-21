@@ -7,7 +7,6 @@ packages = [
   { include = "api" },
   { include = "model_builder" },
   { include = "mariner" },
-  { include = "tests" },
 ]
 
 [tool.poetry.dependencies]
@@ -16,9 +15,7 @@ uvicorn = "^0.16.0"
 fastapi = "0.86.0"
 python-multipart = "^0.0.5"
 email-validator = "^1.0.5"
-celery = "^4.4.2"
 passlib = {extras = ["bcrypt"], version = "^1.7.2"}
-tenacity = "^6.1.0"
 pydantic = {extras = ["dotenv"], version = "^1.9.1"}
 psycopg2-binary = "^2.8.5"
 alembic = "^1.4.2"
@@ -41,15 +38,14 @@ pytorch-lightning = "^1.6.4"
 websockets = "^10.3"
 torch = "==1.13.0"
 Pint = "0.19.1"
-click = "8.0.4"
 wonderwords = "^2.2.0"
 fastapi-utils = "^0.2.1"
 Sphinx = "^5.3.0"
 torchmetrics = "^0.10.2"
-requests = "^2.28.1"
 biopython = "^1.80"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+click = "8.0.4"
 pre-commit = "^2.20.0"
 mypy = "^0.971"
 mockito = "^1.4.0"
@@ -60,13 +56,12 @@ sqlalchemy-stubs = "^0.3"
 matplotlib = "^3.5.2"
 pytest = "^7.1.2"
 pytest-asyncio = "^0.19.0"
-pytest-cov = "^3.0.0"
-pytest-dotenv = "^0.5.2"
 pytest-timeout = "^2.1.0"
 jupyterlab = "^3.5.0"
 isort = "^5.10.1"
 pylint = "^2.15.5"
 pylint-pydantic = "^0.1.4"
+coverage = "^7.1.0"
 
 [tool.isort]
 multi_line_output = 3
