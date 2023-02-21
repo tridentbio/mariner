@@ -29,6 +29,8 @@ services:
     ports:
       - 80:80
       - 8888:8888
+    environment:
+      - RESTART=true
     env_file:
       - .env
       - .env.secret

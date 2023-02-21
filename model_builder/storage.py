@@ -1,3 +1,7 @@
+"""
+Package with BaseStorage, a dictionary like class used by the
+model_builder.utils.DataInstance
+"""
 import weakref
 from collections.abc import MutableMapping
 from copy import copy
@@ -47,6 +51,10 @@ def recursive_apply(data: Any, function: Callable) -> Any:
 
 
 class BaseStorage(MutableMapping):
+    """
+    Dictionary like class
+    """
+
     def __init__(self, _mapping: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         super().__init__()
         self._mapping = {}
