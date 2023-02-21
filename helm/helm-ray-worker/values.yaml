@@ -1,5 +1,6 @@
 replicaCount: 3
 replicaCountCanary: 1
+command: /app/entrypoints/ray-worker.sh
 
 canary:
   enabled: false
@@ -7,12 +8,12 @@ canary:
 normal_deploy:
   enabled: true
 
-version: mlflow-v1
+version: ray-worker-v1
 
 port: 5000
 
 image:
-  repository: mlflow-dev
+  repository: 515402585597.dkr.ecr.us-east-1.amazonaws.com/ray-worker
   pullPolicy: Always
   tag: latest
   containerPort: 5000
@@ -46,7 +47,7 @@ serviceAccount:
   name: ""
 
 podAnnotations:
-  product: mlflow
+  product: ray-worker
 
 podSecurityContext: {}
 
@@ -68,7 +69,7 @@ ingress:
   enabled: false
   annotations:
     kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/load-balancer-name: mlflow-alb
+    alb.ingress.kubernetes.io/load-balancer-name: ray-worker-alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
@@ -78,20 +79,20 @@ ingress:
     alb.ingress.kubernetes.io/healthy-threshold-count: '2'
     alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
   hosts:
-  - host: mlflow.dev.trident.bio
+  - host: ray-worker.dev.trident.bio
   tls:
   - hosts:
-    - mlflow.dev.trident.bio
+    - ray-worker.dev.trident.bio
 
-istio_url: mlflow.dev.trident.bio
+istio_url: ray-worker.dev.trident.bio
 
 resources:
   limits:
-    cpu: 500m
+    cpu: 200m
     memory: 1024Mi
   requests:
-    cpu: 200m
-    memory: 256Mi
+    cpu: 100m
+    memory: 512Mi
 
 autoscaling:
   enabled: false

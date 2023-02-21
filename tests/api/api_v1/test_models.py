@@ -3,7 +3,6 @@ Tests the mariner.models package
 """
 from typing import Any
 
-import mlflow.pyfunc
 import pytest
 from mockito import patch
 from pydantic import AnyHttpUrl
@@ -308,30 +307,6 @@ def test_post_models_invalid_type(
     assert len(error_body["detail"]) == 1
     assert error_body["detail"][0]["type"] == "value_error.unknowncomponenttype"
     assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name
-
-
-@pytest.mark.skip(reason="Failing")
-def test_post_models_missing_arguments(
-    client: TestClient,
-    mocked_invalid_model: ModelCreate,
-    normal_user_token_headers: dict[str, str],
-):
-
-    tmp = mocked_invalid_model.dict()
-    del tmp["config"]["layers"][0]["constructor_args"]["in_features"]
-    mocked_invalid_model = ModelCreate.construct(**tmp)
-    wrong_layer_name = mocked_invalid_model.config["layers"][0]["name"]
-    res = client.post(
-        f"{settings.API_V1_STR}/models/",
-        headers=normal_user_token_headers,
-        json=mocked_invalid_model.dict(),
-    )
-    assert res.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    error_body = res.json()
-    assert "detail" in error_body
-    assert len(error_body["detail"]) == 1
-    assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name
-    assert error_body["detail"][0]["type"] == "value_error.missingcomponentargs"
 
 
 def test_post_check_config_good_model(

@@ -2,7 +2,7 @@
 This package contain utility classes and functions used in the model builder
 """
 from collections.abc import Mapping
-from typing import Any, Callable, Dict, List, Sequence, Union
+from typing import Any, Dict, List, Sequence, Union
 
 import numpy as np
 import torch

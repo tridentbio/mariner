@@ -1,7 +1,7 @@
 #!/bin/sh -e
 set -x
 
-autoflake --remove-all-unused-imports --recursive --remove-unused-variables --exclude=__init__.py .
+autoflake --remove-all-unused-imports --recursive --remove-unused-variables --exclude=__init__.py --in-place .
 black .
 isort .
 
