@@ -18,8 +18,7 @@ if not HOME:
     sys.exit(1)
 
 
-PYLINT_HOME = f"{HOME}/.cache/pylint"
-
+PYLINT_HOME = os.path.expanduser("~/.cache/pylint")
 
 @click.command(help="Lints modules")
 @click.argument("src_branch")
