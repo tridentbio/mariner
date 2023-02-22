@@ -1,5 +1,5 @@
 # Code quality related jobs
-name: Code Quality Analysis
+name: CI - Code Quality Check
 on:
   # Runs on PRs for check and easier review
   pull_request:
