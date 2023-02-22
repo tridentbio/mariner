@@ -8,7 +8,6 @@ import click
 from pylint.lint import Run, load_results, save_results
 
 modules = [
-    "--extension-pkf-allow-list='rdkit.Chem.rdchem'",
     "--extension-pkg-whitelist='pydantic'",
     "mariner",
     "model_builder",
