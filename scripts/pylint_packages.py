@@ -37,7 +37,7 @@ def main(src_branch: str, target_branch: str, save_src=False, save_new_target=Fa
     if previous_global_note:
         if global_note < previous_global_note:
             # Don't update if note is lower. Let's try to keep it high
-            click.echo("Score is less than target. Ignoring save flags", err=True)
+            click.echo("Score is less than target. Ignoring save flags")
             sys.exit(1)
         elif global_note > previous_global_note:
             if save_src:
