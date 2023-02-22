@@ -1,3 +1,6 @@
+"""
+Dataset data layer defining ways to read and write to the datasets collection
+"""
 from sqlalchemy.orm import Session
 
 from mariner.entities.dataset import ColumnsMetadata, Dataset

@@ -1,3 +1,6 @@
+"""
+AWS service
+"""
 import enum
 import io
 from typing import BinaryIO, Tuple, Union

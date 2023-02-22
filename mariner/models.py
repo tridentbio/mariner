@@ -1,6 +1,5 @@
 """
-Models controller. Responsible for exposing model tracking
-functions working under the defined business rules.
+Models service
 """
 
 import traceback

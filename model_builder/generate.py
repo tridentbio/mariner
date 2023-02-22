@@ -1,3 +1,6 @@
+"""
+Layers and Featurizers code generation related code
+"""
 import functools
 import inspect
 import os
@@ -17,6 +20,10 @@ from model_builder.utils import get_class_from_path_string
 
 @dataclass
 class Layer:
+    """
+    Represents resource to be inspected to generate code
+    """
+
     name: str
 
 
@@ -162,6 +169,11 @@ def is_optional(parameter: Parameter) -> bool:
 
 
 def is_primitive(val: Any):
+    """Checks if val is instance of valid primitive
+
+    Args:
+        val: value to be checked
+    """
     return val == int or val == float or val == str
 
 
@@ -307,6 +319,8 @@ def generate_bundlev2() -> str:
 
 
 class EmptySphinxException(Exception):
+    """Raised when sphix outputs empty docs"""
+
     pass
 
 
@@ -322,7 +336,7 @@ def sphinxfy(classpath: str) -> str:
     Raises:
         EmptySphinxException: when the sphinxfy task does not produce any output
     """
-    SPHINX_CONF = r"""
+    sphinx_conf = r"""
 extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autodoc', 'sphinx.ext.mathjax']
 
 templates_path = ['templates']
@@ -334,7 +348,7 @@ html_split_index = False
 html_copy_source = False
 
 todo_include_todos = True"""
-    HTML_TEMPLATE = r"""<div class="docstring">
+    html_template = r"""<div class="docstring">
     {% block body %} {% endblock %}
 </div>"""
 
@@ -344,20 +358,20 @@ todo_include_todos = True"""
     )
     rst_name, out_name = src_base_name + ".rst", out_base_name + ".html"
     docstring = get_class_from_path_string(classpath).__doc__
-    with open(rst_name, "w") as filed:
-        filed.write(docstring)
+    with open(rst_name, "w") as file:
+        file.write(docstring)
 
     # Setup sphinx configuratio
     confdir = os.path.join(srcdir, "en", "introspect")
     os.makedirs(confdir)
-    with open(os.path.join(confdir, "conf.py"), "w") as filed:
-        filed.write(SPHINX_CONF)
+    with open(os.path.join(confdir, "conf.py"), "w") as file:
+        file.write(sphinx_conf)
 
     # Setup sphixn templates dir
     templatesdir = os.path.join(confdir, "templates")
     os.makedirs(templatesdir)
-    with open(os.path.join(templatesdir, "layout.html"), "w") as filed:
-        filed.write(HTML_TEMPLATE)
+    with open(os.path.join(templatesdir, "layout.html"), "w") as file:
+        file.write(html_template)
     doctreedir = os.path.join(srcdir, "doctrees")
     confoverrides = {"html_context": {}, "master_doc": "docstring"}
     old_sys_path = list(sys.path)  # Sphinx modifies sys.path
@@ -379,8 +393,8 @@ todo_include_todos = True"""
     sys.path = old_sys_path
 
     if os.path.exists(out_name):
-        with open(out_name, "r") as f:
-            output = f.read()
+        with open(out_name, "r") as file:
+            output = file.read()
             # Remove spurious \(, \), \[, \].
             output = (
                 output.replace(r"\(", "")
@@ -395,13 +409,13 @@ todo_include_todos = True"""
 
 
 if __name__ == "__main__":
-    template = sys.argv[1]
-    if template == "component":
+    TEMPLATE = sys.argv[1]
+    if TEMPLATE == "component":
         compnames = sys.argv[2:]
         for compname in compnames:
             out = generatev2(compname)
             print(out)
-    elif template == "base":
+    elif TEMPLATE == "base":
         bundle = generate_bundlev2()
         print(bundle)
         sys.exit(0)

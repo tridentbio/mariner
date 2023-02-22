@@ -1,3 +1,6 @@
+"""
+Handlers for api/v1/login* endpoints
+"""
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException

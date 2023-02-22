@@ -1,3 +1,8 @@
+"""
+Authentication related exceptions
+"""
+
+
 class InvalidOAuthState(Exception):
     pass
 

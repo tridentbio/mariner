@@ -1,3 +1,7 @@
+"""
+OAuth state data layer defining ways to read and write to the state collection
+"""
+
 import os
 from typing import Any, Optional
 

@@ -1,3 +1,12 @@
+"""
+Model entity and core relations
+
+Core relations include: 
+    - (1-N) ModelVersion with a model architecture
+    - (1-N) ModelFeaturesAndTarget with features and target view of the
+    dataset related to the model
+"""
+
 from sqlalchemy import JSON, Column, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp

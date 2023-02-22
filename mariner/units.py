@@ -1,3 +1,8 @@
+"""
+Units service.
+
+Uses pint to get and validate units and quantities
+"""
 from functools import lru_cache
 from typing import List, Optional, Union
 

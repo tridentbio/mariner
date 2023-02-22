@@ -1,5 +1,5 @@
 """
-This module defines the schemas pertinent to model related features
+Model related DTOs
 """
 from datetime import datetime
 from typing import List, Literal, Optional, Union

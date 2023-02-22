@@ -1,3 +1,8 @@
+"""
+Dataset related exceptions
+"""
+
+
 class InvalidCategoricalColumn(Exception):
     """Invalid categorical column exception"""
 

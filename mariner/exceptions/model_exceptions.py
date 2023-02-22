@@ -1,3 +1,7 @@
+"""
+Model related exceptions
+"""
+
 from typing import List
 
 
