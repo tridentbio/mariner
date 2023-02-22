@@ -34,10 +34,10 @@ def main(src_branch: str, target_branch: str, save_src=False, save_new_target=Fa
     previous_global_note = previous_results.global_note if previous_results else None
     global_note = result.linter.stats.global_note
 
-    if previous_global_note:
+    if previous_global_note is not None:
         if global_note < previous_global_note:
             # Don't update if note is lower. Let's try to keep it high
-            click.echo("Score is less than target. Ignoring save flags")
+            click.echo(f"Score is less than target ({previous_global_note}). Ignoring save flags")
             sys.exit(1)
         elif global_note > previous_global_note:
             if save_src:
