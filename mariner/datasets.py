@@ -2,14 +2,15 @@ import asyncio
 import datetime
 import json
 import logging
-from typing import List, Tuple
+from typing import List, Literal, Tuple
 
 from fastapi.datastructures import UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
+from starlette.responses import ContentStream
 
 from api.websocket import WebSocketMessage, get_websockets_manager
-from mariner.core.aws import download_s3, upload_s3_compressed
+from mariner.core.aws import create_s3_client, download_s3, upload_s3_compressed
 from mariner.core.config import settings
 from mariner.entities.dataset import Dataset as DatasetEntity
 from mariner.entities.user import User
@@ -402,3 +403,47 @@ async def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
     await dataset_actor.set_is_dataset_fully_loaded.remote(True)
     metadata = await dataset_actor.get_columns_metadata.remote()
     return metadata
+
+
+def get_csv_file(
+    db: Session,
+    dataset_id: int,
+    current_user: User,
+    file_type: Literal["original", "error"],
+) -> ContentStream:
+    """Returns the content stream of requested file of dataset
+
+    Args:
+        db (Session): database session
+        dataset_id (int): id of the dataset
+        current_user (User): user that is requesting the file
+        file_type (Literal['original', 'error']): type of the file
+
+    Returns:
+        ContentStream: file content
+    """
+    dataset = dataset_store.get(db, dataset_id)
+    if not dataset:
+        raise DatasetNotFound(f"Dataset with id {dataset_id} not found")
+
+    if not dataset.created_by_id == current_user.id:
+        raise NotCreatorOwner("Should be creator of dataset")
+
+    file_key = None
+
+    if file_type == "original":
+        file_key = dataset.data_url
+
+    elif file_type == "error":
+        if not dataset.errors:
+            raise DatasetNotFound(f"Dataset with id {dataset_id} has no errors")
+
+        
+        file_key = dataset.errors['dataset_error_key']
+
+    if not file_key:
+        raise NotImplementedError(f"File type {file_type} not implemented")
+
+    client = create_s3_client()
+    s3_res = client.get_object(Bucket=settings.AWS_DATASETS, Key=file_key)
+    return s3_res["Body"].iter_chunks()
