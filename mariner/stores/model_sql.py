@@ -1,3 +1,8 @@
+"""
+Model data layer defining ways to read and write to the models and model
+versions collection
+"""
+
 from typing import List, Optional
 
 from fastapi.encoders import jsonable_encoder

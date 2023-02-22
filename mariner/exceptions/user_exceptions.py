@@ -1,3 +1,8 @@
+"""
+User related exceptions
+"""
+
+
 class NotCreatorOwner(Exception):
     pass
 

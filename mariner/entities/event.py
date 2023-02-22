@@ -1,3 +1,10 @@
+"""
+Event entity and core relations
+
+Core relations include: (1-N) EventRead describing which users read the
+notification
+"""
+
 from typing import Literal, get_args
 
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String

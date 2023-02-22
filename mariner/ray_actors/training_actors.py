@@ -1,5 +1,5 @@
 """
-Training/validation/testing related actors
+Actors for Training, validation and testing models
 """
 from typing import List
 

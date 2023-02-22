@@ -1,3 +1,8 @@
+"""
+Dataset entity and core relations
+
+Core relations include: (1-N) ColumnMetadata describing set of columns
+"""
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp

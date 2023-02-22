@@ -31,7 +31,8 @@ class NumericalDataType(CamelCaseModel):
     domain_kind: Literal["numeric"] = Field("numeric")
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, value: Any):
+        """Validates domain_kind"""
         return "numeric"
 
 
@@ -51,7 +52,8 @@ class StringDataType(CamelCaseModel):
     domain_kind: Literal["string"] = Field("string")
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, value: Any):
+        """Validates domain_kind"""
         return "string"
 
 
@@ -64,7 +66,8 @@ class CategoricalDataType(CamelCaseModel):
     classes: dict[Union[str, int], int]
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, value: Any):
+        """Validates domain_kind"""
         return "categorical"
 
 
@@ -76,7 +79,8 @@ class SmileDataType(CamelCaseModel):
     domain_kind: Literal["smiles"] = Field("smiles")
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, value: Any):
+        """Validates domain_kind"""
         return "smiles"
 
 
@@ -88,7 +92,8 @@ class DNADataType(CamelCaseModel):
     domain_kind: Literal["dna"] = Field("dna")
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, value: Any):
+        """Validates domain_kind"""
         return "dna"
 
 
@@ -100,7 +105,8 @@ class RNADataType(CamelCaseModel):
     domain_kind: Literal["rna"] = Field("rna")
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, value: Any):
+        """Validates domain_kind"""
         return "rna"
 
 
@@ -112,7 +118,8 @@ class ProteinDataType(CamelCaseModel):
     domain_kind: Literal["protein"] = Field("protein")
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, value: Any):
+        """Validates domain_kind"""
         return "protein"
 
 

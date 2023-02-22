@@ -1,5 +1,5 @@
 """
-Experiment schemas
+Experiment related DTOs
 """
 from typing import Dict, List, Literal, Optional, Union
 

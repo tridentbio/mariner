@@ -1,3 +1,7 @@
+"""
+Event related DTOs
+"""
+
 from typing import Any, Dict, Optional
 
 from mariner.entities import EventSource

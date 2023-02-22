@@ -1,3 +1,6 @@
+"""
+Definitions to validate if dataset conforms to specified data types
+"""
 from io import BytesIO
 from typing import Dict, List, Literal, NewType, Optional, Union, cast
 
@@ -201,3 +204,6 @@ class CompatibilityChecker:
             str: row message
         """
         return f"Value {row} in row '{index}' of column" f" '{column}' is invalid"
+
+
+__all__ = ["CompatibilityChecker", "ErrorsType"]
