@@ -41,9 +41,10 @@ jobs:
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
     # Restores cache with known target branch pylint results
+    # Configures post step to resave-cache
     - name: Cache Pylint results (restore)
       id: pylint-cache-restore
-      uses: actions/cache/restore@v3
+      uses: actions/cache@v3
       with:
         # This will be the paths for the pylint stats
         # We only cache common target branches results
@@ -51,10 +52,8 @@ jobs:
         path: |
           ~/.cache/pylint/develop*
           ~/.cache/pylint/releases*
-        # Same key is used in key and restore-keys because cache
-        # must be reused in multiple refs, so a push to the 
-        # default branch updates the results for next runs checks
-        key: pylint-cache-${{ runner.os }}
+        # Using run_id to update cache even when it hits
+        key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
         restore-keys: pylint-cache-${{ runner.os }}
     # Installs poetry and configures to use virtualenv
     # virtual env path is cwd()/.venv
@@ -88,16 +87,6 @@ jobs:
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
       run: "poetry run python scripts/pylint_packages.py -- ${{ github.event.pull_request.base.ref }}"
-    # Saves linting results of common branchs to github cache
-    # Use same args as restore step
-    - name: Cache Pylint results (save)
-      id: pylint-cache-save
-      uses: actions/cache/save@v3
-      with:
-        path: |
-          ~/.cache/pylint/develop*
-          ~/.cache/pylint/releases*
-        key: pylint-cache-${{ runner.os }}
     - name: Debug lint cache
       run: ls ~/.cache/ && echo '-----' && ls .venv && ls -hal ~
 
