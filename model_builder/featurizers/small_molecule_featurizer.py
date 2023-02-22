@@ -1,3 +1,6 @@
+"""
+MoleculeFeaturizer featurizer definition
+"""
 from typing import Any, Dict, List, Union
 
 import numpy as np

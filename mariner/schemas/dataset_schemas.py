@@ -1,3 +1,7 @@
+"""
+Dataset related DTOs
+"""
+
 import json
 from json.decoder import JSONDecodeError
 from typing import (

@@ -1,3 +1,6 @@
+"""
+API related DTOs
+"""
 from datetime import datetime, timezone
 from typing import Any, Generic, List, Literal, TypeVar, Union
 from urllib.parse import unquote

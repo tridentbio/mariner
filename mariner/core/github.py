@@ -1,3 +1,6 @@
+"""
+Github service
+"""
 from logging import error
 
 import requests

@@ -1,3 +1,6 @@
+"""
+Dataset splitting strategies
+"""
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -9,6 +12,10 @@ from .constants import TrainingStep
 
 
 class RandomSplitter:
+    """
+    Randomly splits dataset into train-validation-test
+    """
+
     def __init__(self):
         pass
 
@@ -20,6 +27,15 @@ class RandomSplitter:
         val_size: float = 0.05,
         seed: Optional[int] = None,
     ):
+        """Splits dataset randomly
+
+        Args:
+            dataset: DataFrame to be splitted
+            train_size: train percents
+            test_size: test percents
+            val_size: validation percents
+            seed: controm randomness
+        """
         np.testing.assert_almost_equal(train_size + val_size + test_size, 1.0)
 
         if seed is not None:
@@ -48,6 +64,11 @@ class RandomSplitter:
 
 
 class ScaffoldSplitter:
+    """
+    Splits dataset into train-validation-test trying to achieve same
+    distributions based on molecular properties of dataset SMILES column
+    """
+
     def __init__(self) -> None:
         pass
 
@@ -57,6 +78,12 @@ class ScaffoldSplitter:
         return scaffold
 
     def generate_scaffolds(self, dataset: pd.DataFrame, smiles_column: str = "smiles"):
+        """Create scaffolds based on ``smiles_column`` column of ``dataset``
+
+        Args:
+            dataset: DataFrame
+            smiles_column: column with smiles
+        """
         scaffolds: Dict[str, List[int]] = {}
 
         for i, smiles in enumerate(dataset[smiles_column]):
@@ -86,6 +113,16 @@ class ScaffoldSplitter:
         val_size: float = 0.1,
         seed: Optional[int] = None,
     ):
+        """Splits dataset using scaffold strategy
+
+        Args:
+            dataset: DataFrame to be splitted
+            smiles_column: str column to get molecule of the sample
+            train_size: train percents
+            test_size: test percents
+            val_size: validation percents
+            seed: controm randomness
+        """
         np.testing.assert_almost_equal(train_size + test_size + val_size, 1.0)
         scaffold_sets = self.generate_scaffolds(dataset, smiles_column)
 

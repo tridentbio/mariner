@@ -1,3 +1,6 @@
+"""
+Histograms generation and dataset statistics
+"""
 import re
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 

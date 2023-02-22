@@ -1,3 +1,6 @@
+"""
+Mariner utility functions
+"""
 import hashlib
 import io
 from gzip import compress, decompress

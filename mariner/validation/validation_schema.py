@@ -1,8 +1,9 @@
-""" Schema to validate the dataset
-    Validators are a tuple of a function and a informative message about the check.
-    The function should be applied to a pd.Series and return a boolean.
-        True if the series is valid
-        False if the series is invalid
+"""
+Schema to validate the dataset
+Validators are a tuple of a function and a informative message about the check.
+The function should be applied to a pd.Series and return a boolean.
+    True if the series is valid
+    False if the series is invalid
 """
 from re import search
 

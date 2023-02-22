@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: CI - Integration Tests
 on:
   pull_request:
     branches: [ "develop", "releases/**" ]
@@ -19,8 +19,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build containers
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml build
+      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml build backend
     - name: Start services
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d
+      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
     - name: Run tests and get report
       run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh
