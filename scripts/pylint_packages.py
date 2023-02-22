@@ -36,11 +36,7 @@ def main(src_branch: str, target_branch: str, save_src=False, save_new_target=Fa
 
     if previous_global_note:
         if global_note < previous_global_note:
-            click.echo("Pylint score of main packages regressed", err=True)
-            if save_src:
-                save_results(result.linter.stats, src_branch, PYLINT_HOME)
             # Don't update if note is lower. Let's try to keep it high
-            # if save_new_target: save_results(result.linter.stats, target_branch, PYLINT_HOME)
             click.echo("Score is less than target. Ignoring save flags", err=True)
             sys.exit(1)
         elif global_note > previous_global_note:
@@ -50,7 +46,8 @@ def main(src_branch: str, target_branch: str, save_src=False, save_new_target=Fa
             if save_new_target:
                 click.echo(f"Pylint score was improved! Saved as {target_branch}")
                 save_results(result.linter.stats, target_branch, PYLINT_HOME)
-            sys.exit(0)
+        else:
+            click.echo("Score is the same")
     else:
         if save_src:
             click.echo(f"New Pylint score saved as {src_branch}")
@@ -58,7 +55,6 @@ def main(src_branch: str, target_branch: str, save_src=False, save_new_target=Fa
         if save_new_target:
             click.echo(f"New Pylint score saved as {target_branch}")
             save_results(result.linter.stats, target_branch, PYLINT_HOME)
-        sys.exit(0)
 
 
 if __name__ == "__main__":

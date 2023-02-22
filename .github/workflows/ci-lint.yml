@@ -87,6 +87,3 @@ jobs:
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
       run: "poetry run python scripts/pylint_packages.py -- ${{ github.event.pull_request.base.ref }}"
-    - name: Debug lint cache
-      run: ls ~/.cache/ && echo '-----' && ls .venv && ls -hal ~
-
