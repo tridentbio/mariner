@@ -86,4 +86,4 @@ jobs:
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_resquest.head.ref }} ${{ github.event.pull_request.base.ref }}"
+      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
