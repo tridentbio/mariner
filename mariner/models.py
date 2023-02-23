@@ -105,10 +105,11 @@ def create_model(
     Triggers the creation of a RegisteredModel and a ModelVersion
     in MLFlow API's
     """
-    client = mlflowapi.create_tracking_client()
     dataset = dataset_store.get_by_name(db, model_create.config.dataset.name)
     if not dataset:
         raise DatasetNotFound()
+
+    client = mlflowapi.create_tracking_client()
 
     # Handle case where model_create.name refers to existing model
     existingmodel = model_store.get_by_name(db, model_create.name, user_id=user.id)
