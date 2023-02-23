@@ -22,6 +22,24 @@ jobs:
   # Checks if pylint score is equals or higher than target branch
   # Pylint uses project configurations defined in pylintrc
   pylint-and-unit:
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      db:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_SERVER: db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_DB: app
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     runs-on: ubuntu-latest
     steps:
     # Checks into commit of the event
@@ -107,7 +125,8 @@ jobs:
         . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
 
-    - name: Get unit test coverage
+    - name: Run unit tests and get coverage
       run: |
         . .venv/bin/activate
-        bash scripts/test.sh -m pytest -m 'not integration'
+        bash scripts/prestart.sh # runs migrations
+        bash scripts/test.sh -m pytest -m 'not integration' # run unit tests
