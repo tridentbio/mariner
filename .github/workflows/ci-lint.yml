@@ -40,38 +40,10 @@ jobs:
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
 
-    # Installs poetry and configures to use virtualenv
-    # created in cwd()/.venv
-    - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 1.3.2
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
-
-    - name: Debug
-      run: ls ~/.local -hal;
-
-    # Activates poetry created and cached environment
-    - name: Activate virtualenv
-      # Must match path in cached dependencies
-      run: . .venv/bin/activate
-
-    # Installs all packages and it's dependencies
-    - name: Install project
-      run: poetry install
-
-
-
-    # Installs quirkier packages
-    - name: Install quirk packages
-      run: python deps.py
-
 
   # Checks if pylint score is equals or higher than target branch
   # Pylint uses project configurations defined in pylintrc
-  pylint:
+  pylint-and-unit:
     needs: install-deps
     runs-on: ubuntu-latest
     steps:
@@ -107,15 +79,41 @@ jobs:
         # Using run_id to update cache even when it hits
         key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
         restore-keys: pylint-cache-${{ runner.os }}
+ 
+    # Installs poetry and configures to use virtualenv
+    # created in cwd()/.venv
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.3.2
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
+
+    - name: Debug
+      run: ls ~/.local -hal;
+
+    # Activates poetry created and cached environment
+    - name: Activate virtualenv
+      # Must match path in cached dependencies
+      run: . .venv/bin/activate
+
+    # Installs all packages and it's dependencies
+    - name: Install project
+      run: poetry install
+
+
+    # Installs quirkier packages
+    - name: Install quirk packages
+      run: python deps.py
+
     # On pushs, compare score and save target branch result to cache
     # Only saves if branch is develop or releases/**
     - name: Update target branch score (push)
       if: github.event_name == 'push'
       run:  |
-        ls .venv -hal
         . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target
-
 
     # On "manually" dispatched actions, compare score to the one in 
     # develop branch. If inputs.save_src is true, save branch result
@@ -123,36 +121,19 @@ jobs:
     # Only saves if branch is develop or releases/**
     - name: Update branch score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
-      run: "python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}"
+      run: |
+        . .venv/bin/activate
+        python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}
 
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
-      run: "python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
-
-  unittest:
-    runs-on: ubuntu-latest
-    needs: install-deps
-    steps:
-    # Checks into commit of the event
-    - uses: actions/checkout@v3
-    # Sets up python3.9
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.9' 
-    # Sets cache to virtual environment
-    - name: Cache Dependencies
-      id: poetry-cache
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        # First try a exact match of dependencies
-        key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-        # Fallbacks to latest dependencies or default branch (develop) one
-        restore-keys: poetry-cache-${{ runner.os }}
-
-    - name: Run unit tests
       run: |
-        ls .venv -hal
         . .venv/bin/activate
-        bash scripts/test.sh -m pytest -m 'not integration'
+        python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
+
+    - name: Update unit test coverage
+      if: github.event_name == 'push'
+      run: |
+        . .venv/bin/activate
+        bash scripts/testh.sh -m pytest -m 'not integration'
