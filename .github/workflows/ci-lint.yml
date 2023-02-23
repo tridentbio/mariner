@@ -110,4 +110,4 @@ jobs:
     - name: Get unit test coverage
       run: |
         . .venv/bin/activate
-        bash scripts/testh.sh -m pytest -m 'not integration'
+        bash scripts/test.sh -m pytest -m 'not integration'
