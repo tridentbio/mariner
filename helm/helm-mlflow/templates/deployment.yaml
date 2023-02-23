@@ -82,6 +82,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}
+            - configMapRef:
+                name: {{ .Release.Name }}-secrets
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
