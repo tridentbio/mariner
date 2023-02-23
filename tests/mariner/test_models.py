@@ -16,6 +16,7 @@ from tests.fixtures.user import get_test_user
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_get_model_prediction(db: Session, some_trained_model: Model):
     version = some_trained_model.versions[-1]
     test_user = get_test_user(db)
@@ -34,6 +35,7 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
         assert isinstance(tpsa, torch.Tensor)
 
 
+@pytest.mark.integration
 def test_delete_model(db: Session, model: Model):
     user = get_test_user(db)
     model_ctl.delete_model(db, user, model.id)
@@ -41,16 +43,18 @@ def test_delete_model(db: Session, model: Model):
     assert not model_db
 
 
+@pytest.mark.integration
 def test_check_forward_exception_good_regressor(
     db: Session, some_dataset: DatasetEntity
 ):
     regressor = model_config(model_type="regressor")
     assert regressor.loss_fn
     check = model_ctl.naive_check_forward_exception(db, regressor)
-    assert check.stack_trace is None
+    assert check.stack_trace is None, check.stack_trace
     assert check.output is not None
 
 
+@pytest.mark.integration
 def test_check_forward_exception_good_classifier(
     db: Session, some_dataset: DatasetEntity
 ):
@@ -61,6 +65,7 @@ def test_check_forward_exception_good_classifier(
     assert check.output is not None
 
 
+@pytest.mark.integration
 def test_check_forward_exception_bad_model(db: Session, some_dataset: DatasetEntity):
     broken_model: ModelSchema = model_config(dataset_name=some_dataset.name)
     import model_builder.model
@@ -71,4 +76,4 @@ def test_check_forward_exception_bad_model(db: Session, some_dataset: DatasetEnt
     with patch(model_builder.model.CustomModel.forward, raise_):
         check = model_ctl.naive_check_forward_exception(db, broken_model)
         assert check.output is None
-        assert check.stack_trace is not None
+        assert check.stack_trace is not None, check.stack_trace

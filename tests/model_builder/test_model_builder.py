@@ -126,6 +126,7 @@ model_configs_and_dataset_setup = [
     "model_config_path,dataset_setup", model_configs_and_dataset_setup
 )
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_model_building(
     db: Session, model_config_path: str, dataset_setup: Callable
 ):

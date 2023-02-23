@@ -20,6 +20,7 @@ def mlflow_model():
     client.delete_registered_model(model.name)
 
 
+@pytest.mark.integration
 def test_get_model(mlflow_model: RegisteredModel):
     assert mlflow_model.latest_versions
     version = mlflow_model.latest_versions[-1].version

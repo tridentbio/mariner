@@ -28,14 +28,22 @@ from mariner.stores import user_sql
 from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
 from model_builder.optimizers import AdamOptimizer
-from tests.fixtures.dataset import setup_create_dataset, teardown_create_dataset
+from tests.fixtures.dataset import (
+    setup_create_dataset,
+    setup_create_dataset_db,
+    teardown_create_dataset,
+)
 from tests.fixtures.events import get_test_events, teardown_events
 from tests.fixtures.experiments import (
     mock_experiment,
     setup_experiments,
     teardown_experiments,
 )
-from tests.fixtures.model import setup_create_model, teardown_create_model
+from tests.fixtures.model import (
+    setup_create_model,
+    setup_create_model_db,
+    teardown_create_model,
+)
 from tests.fixtures.user import get_test_user
 from tests.utils.user import authentication_token_from_email, create_random_user
 from tests.utils.utils import random_lower_string
@@ -88,7 +96,7 @@ def randomuser_token_headers(
 def some_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):
-    ds = setup_create_dataset(db, client, normal_user_token_headers)
+    ds = setup_create_dataset_db(db)
     assert ds is not None
     yield ds
     teardown_create_dataset(db, ds)
@@ -110,10 +118,46 @@ def some_bio_dataset(
 @pytest.fixture(scope="module")
 def some_model(
     db: Session,
-    client: TestClient,
-    normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
 ):
+    """Model fixture
+
+    Creates a fixture model for unit testing. Fails
+    database service is down
+
+    Args:
+        db: database connection
+        client: fastapi http client
+        normal_user_token_headers: authenticated headers
+        some_dataset: dataset to be used on model
+    """
+    model = setup_create_model_db(
+        db=db,
+        dataset=some_dataset,
+        model_type="regressor",
+    )
+    yield model
+    teardown_create_model(db, model, skip_mlflow=True)
+
+
+@pytest.fixture(scope="module")
+def some_model_integration(
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_dataset: Dataset,
+):
+    """Model fixture
+
+    Creates a fixture model using running services. Fails
+    if mlflow, ray or database services are down
+
+    Args:
+        db: database connection
+        client: fastapi http client
+        normal_user_token_headers: authenticated headers
+        some_dataset: dataset to be used on model
+    """
     model = setup_create_model(
         client,
         normal_user_token_headers,

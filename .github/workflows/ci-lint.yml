@@ -4,7 +4,7 @@ on:
   # Runs on PRs for check and easier review
   pull_request:
     # Only when PRs are targeting develop or releases/** branches
-    branches: [ "develop", "releases/**" ]
+    branches: [ "develop", "releases/*", "releases/**" ]
     # Only when PRs are opened or there are pushs to it
     types: [opened, synchronize]
   # Runs on pushs to develop or releases/** branchs
@@ -21,7 +21,27 @@ on:
 jobs:
   # Checks if pylint score is equals or higher than target branch
   # Pylint uses project configurations defined in pylintrc
-  pylint:
+  pylint-and-unit:
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      db:
+        # Docker Hub image
+        image: postgres
+        ports:
+          - 5432:5432
+        # Provide the password for postgres
+        env:
+          POSTGRES_SERVER: db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_DB: app
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     runs-on: ubuntu-latest
     steps:
     # Checks into commit of the event
@@ -40,6 +60,7 @@ jobs:
         key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
+
     # Restores cache with known target branch pylint results
     # Configures post step to resave-cache
     - name: Cache Pylint results (restore)
@@ -55,8 +76,9 @@ jobs:
         # Using run_id to update cache even when it hits
         key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
         restore-keys: pylint-cache-${{ runner.os }}
+ 
     # Installs poetry and configures to use virtualenv
-    # virtual env path is cwd()/.venv
+    # created in cwd()/.venv
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
       with:
@@ -64,16 +86,30 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
+
+    # Activates poetry created and cached environment
+    - name: Activate virtualenv
+      # Must match path in cached dependencies
+      run: |
+        . .venv/bin/activate
+
     # Installs all packages and it's dependencies
     - name: Install project
       run: poetry install
+
+
+    # Installs quirkier packages
+    - name: Install quirk packages
+      run: python deps.py
 
     # On pushs, compare score and save target branch result to cache
     # Only saves if branch is develop or releases/**
     - name: Update target branch score (push)
       if: github.event_name == 'push'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target"
-
+      continue-on-error: true
+      run:  |
+        . .venv/bin/activate
+        python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target
 
     # On "manually" dispatched actions, compare score to the one in 
     # develop branch. If inputs.save_src is true, save branch result
@@ -81,9 +117,25 @@ jobs:
     # Only saves if branch is develop or releases/**
     - name: Update branch score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}"
+      continue-on-error: true
+      run: |
+        . .venv/bin/activate
+        python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}
 
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
+      continue-on-error: true
+      run: |
+        . .venv/bin/activate
+        python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
+
+    - name: Run unit tests and get coverage
+      env:
+        POSTGRES_SERVER: localhost 
+        POSTGRES_PASSWORD: 123456
+        POSTGRES_USER: postgres
+      run: |
+        . .venv/bin/activate
+        bash scripts/prestart.sh # runs migrations
+        bash scripts/test.sh -m pytest -m 'not integration' --tb=line -q

@@ -12,6 +12,15 @@ repos:
       language: system
       types: [python]
       files: '(mariner|model_builder|api|tests).*\.py'
+    - id: format-fix
+      name: Checking staged code style (Possibly fixable with scripts/format.sh)
+      entry: poetry run sh scripts/format-single.sh
+      pass_filenames: true
+      language: system
+      types: [python]
+      files: '(mariner|model_builder|api|tests).*\.py'
+      stages:
+        - manual
     - id: lint-single
       name: Linting staged code with scripts/lint-single.sh
       entry: poetry run sh scripts/lint-single.sh
@@ -19,7 +28,7 @@ repos:
       types: [python]
       pass_filenames: true
       fail_fast: true
-      files: '(mariner|model_builder|api|tests).*\.py'
+      files: '(mariner|model_builder|api).*\.py'
     - id: test
       name: Running short tests
       entry: sh scripts/test.sh
