@@ -77,14 +77,14 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL }}
-        CONFIGMAP: ${{ secrets.CONFIGMAP }}
-        SECRETS: ${{ secrets.SECRETS }}
+        SECRETS: ${{ secrets.SECRETS_MARINER }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$CONFIGMAP" 
+        kubectl apply -f - <<< "$SECRETS" 
+        kubectl apply -f ./configmaps/dev/mariner.yaml
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
@@ -131,12 +131,14 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL_MLFLOW }}
         CONFIGMAP: ${{ secrets.CONFIGMAP }}
+        SECRETS: ${{ secrets.SECRETS_MLFLOW }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$CONFIGMAP"
+        kubectl apply -f - <<< "$SECRETS" 
+        kubectl apply -f ./configmaps/dev/mlflow.yaml
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mlflow/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
@@ -183,12 +185,14 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL_RAY_HEAD }}
         CONFIGMAP: ${{ secrets.CONFIGMAP_RAY_HEAD }}
+        SECRETS: ${{ secrets.SECRETS_RAY_HEAD }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$CONFIGMAP"
+        kubectl apply -f - <<< "$SECRETS" 
+        kubectl apply -f ./configmaps/dev/ray-head.yaml
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-head/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
@@ -234,12 +238,14 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         HEALTH_CHECK_URL: ${{ secrets.HEALTH_CHECK_URL_RAY_WORKER }}
         CONFIGMAP: ${{ secrets.CONFIGMAP_RAY_WORKER }}
+        SECRETS: ${{ secrets.SECRETS_RAY_WORKER }}
         REPLICA_COUNT: ${{ secrets.REPLICA_COUNT }}
       run: |
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$CONFIGMAP"
+        kubectl apply -f - <<< "$SECRETS" 
+        kubectl apply -f ./configmaps/dev/ray-worker.yaml
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
