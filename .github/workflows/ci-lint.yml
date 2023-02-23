@@ -28,6 +28,8 @@ jobs:
       db:
         # Docker Hub image
         image: postgres
+        ports:
+          - 5432:5432
         # Provide the password for postgres
         env:
           POSTGRES_SERVER: db
@@ -129,6 +131,8 @@ jobs:
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
 
     - name: Run unit tests and get coverage
+      env:
+        POSTGRES_SERVER: localhost 
       run: |
         . .venv/bin/activate
         bash scripts/prestart.sh # runs migrations
