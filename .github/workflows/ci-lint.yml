@@ -4,7 +4,7 @@ on:
   # Runs on PRs for check and easier review
   pull_request:
     # Only when PRs are targeting develop or releases/** branches
-    branches: [ "develop", "releases/**" ]
+    branches: [ "develop", "releases/*", "releases/**" ]
     # Only when PRs are opened or there are pushs to it
     types: [opened, synchronize]
   # Runs on pushs to develop or releases/** branchs
