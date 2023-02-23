@@ -70,7 +70,8 @@ jobs:
     # Activates poetry created and cached environment
     - name: Activate virtualenv
       # Must match path in cached dependencies
-      run: 
+      run: |
+        . .venv/bin/activate
 
     # Installs all packages and it's dependencies
     - name: Install project
