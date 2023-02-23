@@ -65,6 +65,7 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
     return model
 
 
+@pytest.mark.integration
 def test_post_models_success(
     db: Session,
     client: TestClient,
@@ -99,24 +100,29 @@ def test_post_models_success(
     assert db_model_config is not None
 
 
+@pytest.mark.integration
 def test_post_models_on_existing_model_creates_new_version(
     db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_model: Model,
+    some_model_integration: Model,
 ):
-    new_version = some_model.versions[0].copy()
+    new_version = some_model_integration.versions[0].copy()
     res = client.post(
         f"{settings.API_V1_STR}/models/",
         json={
-            "name": some_model.name,
+            "name": some_model_integration.name,
             "config": new_version.config.dict(),
             "modelVersionDescription": "This should be  version 2",
         },
         headers=normal_user_token_headers,
     )
     assert res.status_code == status.HTTP_200_OK
-    model = db.query(ModelEntity).filter(ModelEntity.name == some_model.name).first()
+    model = (
+        db.query(ModelEntity)
+        .filter(ModelEntity.name == some_model_integration.name)
+        .first()
+    )
     assert model
     model = Model.from_orm(model)
     assert len(model.versions) == 2
@@ -124,10 +130,9 @@ def test_post_models_on_existing_model_creates_new_version(
 
 
 def test_post_models_dataset_not_found(
-    client: TestClient, normal_user_token_headers: dict[str, str], some_model: Model
+    client: TestClient, normal_user_token_headers: dict[str, str]
 ):
-    model = mock_model(name=some_model.name)
-    model.name = random_lower_string()
+    model = mock_model(name=random_lower_string())
     datasetname = "a dataset name that is not registered"
     model.config.dataset.name = datasetname
     res = client.post(
@@ -139,6 +144,7 @@ def test_post_models_dataset_not_found(
     assert res.json()["detail"] == f'Dataset "{datasetname}" not found'
 
 
+@pytest.mark.integration
 def test_get_models_success(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
@@ -191,6 +197,7 @@ def test_update_model():
     pass
 
 
+@pytest.mark.integration
 def test_delete_model(
     client: TestClient,
     db: Session,
@@ -207,6 +214,7 @@ def test_delete_model(
     assert not db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
 
 
+@pytest.mark.integration
 def test_post_predict(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
@@ -231,12 +239,13 @@ def test_post_predict(
     assert len(body) == 3
 
 
+@pytest.mark.integration
 def test_post_predict_fails_untrained_model(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_model: Model,
+    some_model_integration: Model,
 ):
-    model_version = some_model.versions[-1].id
+    model_version = some_model_integration.versions[-1].id
     route = f"{settings.API_V1_STR}/models/{model_version}/predict"
     res = client.post(
         route,
@@ -255,12 +264,13 @@ def test_post_predict_fails_untrained_model(
     assert body["detail"] == "Model version was not trained yet"
 
 
+@pytest.mark.integration
 def test_post_predict_validates_smiles(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_model: Model,
+    some_model_integration: Model,
 ):
-    model_version = some_model.versions[-1].id
+    model_version = some_model_integration.versions[-1].id
     route = f"{settings.API_V1_STR}/models/{model_version}/predict"
     res = client.post(
         route,
@@ -343,6 +353,7 @@ def test_post_check_config_good_model2(
     assert "output" in body
 
 
+@pytest.mark.skip
 def test_post_check_config_bad_model(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],

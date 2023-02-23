@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, time
 from typing import Dict, Optional
 
 from fastapi import status
@@ -7,10 +8,13 @@ from sqlalchemy.orm import Session
 
 from mariner.core.config import settings
 from mariner.entities.dataset import Dataset
+from mariner.schemas.dataset_schemas import DatasetCreateRepo
+from mariner.stores import dataset_sql
+from tests.fixtures.user import get_test_user
 
 
-def mock_dataset(name: Optional[str] = None):
-    metadatas = [
+def mock_columns_metadatas():
+    return [
         {
             "pattern": "smiles",
             "data_type": {
@@ -38,12 +42,15 @@ def mock_dataset(name: Optional[str] = None):
         },
     ]
 
+
+def mock_dataset(name: Optional[str] = None):
     return {
         "name": name if name else "Small Zinc dataset",
         "description": "Test description",
         "splitType": "random",
         "splitTarget": "60-20-20",
-        "columnsMetadata": json.dumps(metadatas),
+        "dataUrl": "datasets/fa6691b5cd14cabf0db3d325e7da59e3.csv",
+        "columnsMetadata": json.dumps(mock_columns_metadatas()),
     }
 
 
@@ -75,3 +82,24 @@ def teardown_create_dataset(db: Session, dataset: Dataset):
     assert ds is not None
     db.delete(ds)
     db.commit()
+
+
+def setup_create_dataset_db(
+    db: Session,
+    **kwargs,
+):
+    data = mock_dataset(**kwargs)
+    user = get_test_user(db)
+    db.query(Dataset).filter(Dataset.name == data["name"]).delete()
+    data.pop("columnsMetadata")
+    create_data = DatasetCreateRepo(
+        **data,
+        updated_at=datetime.now(),
+        created_at=datetime.now(),
+        created_by_id=user.id,
+        columns_metadata=mock_columns_metadatas(),
+        from_alias=True,
+    )
+    dataset = dataset_sql.dataset_store.create(db, create_data)
+    db.commit()
+    return dataset

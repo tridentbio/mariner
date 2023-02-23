@@ -9,8 +9,17 @@ from sqlalchemy.orm import Session
 from mariner.core.config import settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
-from mariner.schemas.model_schemas import Model, ModelCreate
+from mariner.entities.dataset import Dataset
+from mariner.entities.model import ModelFeaturesAndTarget
+from mariner.schemas.model_schemas import (
+    Model,
+    ModelCreate,
+    ModelCreateRepo,
+    ModelVersionCreateRepo,
+)
+from mariner.stores import model_sql
 from model_builder.schemas import ModelSchema
+from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 ModelType = Literal["regressor", "regressor-with-categorical", "classifier"]
@@ -81,12 +90,53 @@ def setup_create_model(
     return Model.parse_obj(res.json())
 
 
-def teardown_create_model(db: Session, model: Model):
+def setup_create_model_db(
+    db: Session,
+    dataset: Dataset,
+    **mock_model_kwargs,
+):
+    model = mock_model(**mock_model_kwargs, dataset_name=dataset.name)
+    user = get_test_user(db)
+    model_create = ModelCreateRepo(
+        dataset_id=dataset.id,
+        name=model.name,
+        mlflow_name=random_lower_string(),
+        created_by_id=user.id,
+        columns=[
+            ModelFeaturesAndTarget(
+                column_name=feature_col.name,
+                column_type="feature",
+            )
+            for feature_col in model.config.dataset.feature_columns
+        ]
+        + [
+            ModelFeaturesAndTarget(
+                column_name=model.config.dataset.target_column.name,
+                column_type="target",
+            )
+        ],
+    )
+    created_model = model_sql.model_store.create(db, model_create)
+    version_create = ModelVersionCreateRepo(
+        mlflow_version="1",
+        mlflow_model_name=model_create.mlflow_name,
+        model_id=created_model.id,
+        name=model.config.name,
+        config=model.config,
+        description=model.model_version_description,
+    )
+    model_sql.model_store.create_model_version(db, version_create)
+    model = db.query(ModelEntity).get(created_model.id)
+    return Model.from_orm(model)
+
+
+def teardown_create_model(db: Session, model: Model, skip_mlflow=False):
     obj = db.query(ModelVersion).filter(ModelVersion.model_id == model.id).first()
     db.delete(obj)
     obj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
     if obj:
         db.delete(obj)
         db.flush()
-        mlflowclient = mlflow.tracking.MlflowClient()
-        mlflowclient.delete_registered_model(model.mlflow_name)
+        if not skip_mlflow:
+            mlflowclient = mlflow.tracking.MlflowClient()
+            mlflowclient.delete_registered_model(model.mlflow_name)

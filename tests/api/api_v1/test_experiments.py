@@ -65,6 +65,7 @@ def user_model_fixture(
 
 
 @pytest.mark.long
+@pytest.mark.integration
 def test_post_experiments(
     client: TestClient, mocked_experiment_payload: dict, user_headers_fixture: dict
 ):
@@ -86,6 +87,7 @@ def user_experiments_fixture(
     teardown_experiments(db, exps)
 
 
+@pytest.mark.integration  # fixtures use other services
 def test_get_experiments(
     client: TestClient,
     user_model_fixture,
@@ -105,6 +107,7 @@ def test_get_experiments(
     assert total == len(exps) == len(user_experiments_fixture), "gets all experiments"
 
 
+@pytest.mark.integration  # fixtures use other services
 def test_get_experiments_ordered_by_createdAt_desc_url_encoded(
     client: TestClient,
     user_model_fixture,
@@ -132,6 +135,7 @@ def test_get_experiments_ordered_by_createdAt_desc_url_encoded(
         ), "createdAt descending order is not respected"
 
 
+@pytest.mark.integration  # fixtures use other services
 def test_get_experiments_ordered_by_createdAt_desc(
     client: TestClient,
     user_model_fixture,
@@ -158,6 +162,7 @@ def test_get_experiments_ordered_by_createdAt_desc(
         ), "createdAt descending order is not respected"
 
 
+@pytest.mark.integration  # fixtures use other services
 def test_get_experiments_ordered_by_createdAt_asc_url_encoded(
     client: TestClient,
     user_model_fixture,
@@ -184,18 +189,13 @@ def test_get_experiments_ordered_by_createdAt_asc_url_encoded(
         ), "createdAt ascending order is not respected"
 
 
-# FAILING
+@pytest.mark.integration  # fixtures use other services
 def test_get_experiments_by_stage(
     client: TestClient,
     user_model_fixture,
     user_experiments_fixture,
     user_headers_fixture,
 ):
-    print(
-        user_model_fixture,
-        user_experiments_fixture,
-        user_headers_fixture,
-    )
     params = {
         "modelId": user_model_fixture.id,
         "page": 0,
@@ -218,6 +218,7 @@ def test_get_experiments_by_stage(
     ), "request failed to get the 2 out 3 successfull experiments"
 
 
+@pytest.mark.integration
 def test_post_update_metrics_unauthorized(
     client: TestClient, db: Session, some_experiment: Experiment
 ):
@@ -236,6 +237,7 @@ def test_post_update_metrics_unauthorized(
     assert res.status_code == status.HTTP_403_FORBIDDEN
 
 
+@pytest.mark.integration  # fixtures use other services
 def test_post_update_metrics_sucess(
     client: TestClient,
     db: Session,
