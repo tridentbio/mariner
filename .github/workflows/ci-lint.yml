@@ -70,7 +70,7 @@ jobs:
     # Activates poetry created and cached environment
     - name: Activate virtualenv
       # Must match path in cached dependencies
-      run: . .venv/bin/activate
+      run: 
 
     # Installs all packages and it's dependencies
     - name: Install project
@@ -86,6 +86,7 @@ jobs:
     - name: Update target branch score (push)
       if: github.event_name == 'push'
       run:  |
+        . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target
 
     # On "manually" dispatched actions, compare score to the one in 
@@ -95,14 +96,17 @@ jobs:
     - name: Update branch score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
       run: |
+        . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}
 
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
       run: |
+        . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
 
     - name: Get unit test coverage
       run: |
+        . .venv/bin/activate
         bash scripts/testh.sh -m pytest -m 'not integration'
