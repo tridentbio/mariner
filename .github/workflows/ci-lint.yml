@@ -129,4 +129,4 @@ jobs:
       run: |
         . .venv/bin/activate
         bash scripts/prestart.sh # runs migrations
-        bash scripts/test.sh -m pytest -m 'not integration' # run unit tests
+        bash scripts/test.sh -m pytest -m 'not integration' --tb=line -q
