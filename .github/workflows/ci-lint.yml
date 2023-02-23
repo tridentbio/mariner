@@ -31,7 +31,7 @@ jobs:
         python-version: '3.9' 
     # Sets cache to virtual environment
     - name: Debug
-      run: ls /opt/poetry -hal; which poetry; ls ~/.local -hal;
+      run: which poetry; ls ~/.local -hal;
     - name: Cache Dependencies
       id: poetry-cache
       uses: actions/cache@v3
