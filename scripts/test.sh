@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-poetry run coverage run -m pytest
+echo $@
+poetry run coverage run -m pytest $@
 TEST_RESULT=$?
 # Populate cov/json
 poetry run coverage json
