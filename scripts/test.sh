@@ -2,7 +2,8 @@
 # Script to run tests with coverage.
 #
 # Run test suites
-coverage run $@
+echo "$@"
+coverage run "$@"
 TEST_RESULT=$?
 # Populate cov/json
 coverage json
