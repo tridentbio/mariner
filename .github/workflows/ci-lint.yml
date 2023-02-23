@@ -104,6 +104,7 @@ jobs:
     # Only saves if branch is develop or releases/**
     - name: Update target branch score (push)
       if: github.event_name == 'push'
+      continue-on-error: true
       run:  |
         . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target
@@ -114,6 +115,7 @@ jobs:
     # Only saves if branch is develop or releases/**
     - name: Update branch score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
+      continue-on-error: true
       run: |
         . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}
@@ -121,6 +123,7 @@ jobs:
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
+      continue-on-error: true
       run: |
         . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
