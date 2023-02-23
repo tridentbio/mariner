@@ -53,6 +53,11 @@ jobs:
     - name: Install project
       run: poetry install
 
+    # Activates poetry created and cached environment
+    - name: Activate virtualenv
+      # Must match path in cached dependencies
+      run: source .venv/bin/activate
+
     # Installs quirkier packages
     - name: Install quirk packages
       run: python deps.py
@@ -80,6 +85,12 @@ jobs:
         key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
+
+    # Activates poetry created and cached environment
+    - name: Activate virtualenv
+      # Must match path in cached dependencies
+      run: source .venv/bin/activate
+
     # Restores cache with known target branch pylint results
     # Configures post step to resave-cache
     - name: Cache Pylint results (restore)
@@ -135,5 +146,10 @@ jobs:
         key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
+
+    # Activates poetry created and cached environment
+    - name: Activate virtualenv
+      # Must match path in cached dependencies
+      run: source .venv/bin/activate
     - name: Run unit tests
       run: bash scripts/test.sh -m pytest -m 'not integration'
