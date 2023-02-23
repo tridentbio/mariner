@@ -19,32 +19,9 @@ on:
         type: boolean
         description: Saves the branch linting results in the repo cache
 jobs:
-  # Install dependencies for all other jobs
-  install-deps:
-    runs-on: ubuntu-latest
-    steps:
-    # Checks into commit of the event
-    - uses: actions/checkout@v3
-    # Sets up python3.9
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.9' 
-    # Sets cache to virtual environment
-    - name: Cache Dependencies
-      id: poetry-cache
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        # First try a exact match of dependencies
-        key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-        # Fallbacks to latest dependencies or default branch (develop) one
-        restore-keys: poetry-cache-${{ runner.os }}
-
-
   # Checks if pylint score is equals or higher than target branch
   # Pylint uses project configurations defined in pylintrc
   pylint-and-unit:
-    needs: install-deps
     runs-on: ubuntu-latest
     steps:
     # Checks into commit of the event
@@ -90,9 +67,6 @@ jobs:
         virtualenvs-in-project: true
         installer-parallel: true
 
-    - name: Debug
-      run: ls ~/.local -hal;
-
     # Activates poetry created and cached environment
     - name: Activate virtualenv
       # Must match path in cached dependencies
@@ -112,7 +86,6 @@ jobs:
     - name: Update target branch score (push)
       if: github.event_name == 'push'
       run:  |
-        . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target
 
     # On "manually" dispatched actions, compare score to the one in 
@@ -122,18 +95,14 @@ jobs:
     - name: Update branch score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
       run: |
-        . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}
 
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
       run: |
-        . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
 
-    - name: Update unit test coverage
-      if: github.event_name == 'push'
+    - name: Get unit test coverage
       run: |
-        . .venv/bin/activate
         bash scripts/testh.sh -m pytest -m 'not integration'
