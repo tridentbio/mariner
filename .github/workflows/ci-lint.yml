@@ -56,7 +56,7 @@ jobs:
     # Activates poetry created and cached environment
     - name: Activate virtualenv
       # Must match path in cached dependencies
-      run: source .venv/bin/activate
+      run: . .venv/bin/activate
 
     # Installs all packages and it's dependencies
     - name: Install project
@@ -92,22 +92,6 @@ jobs:
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
 
-    # Activates poetry created and cached environment
-    - name: Activate virtualenv
-      # Must match path in cached dependencies
-      run: source .venv/bin/activate
-
-
-    # Installs poetry and configures to use virtualenv
-    # created in cwd()/.venv
-    - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 1.3.2
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
-
     # Restores cache with known target branch pylint results
     # Configures post step to resave-cache
     - name: Cache Pylint results (restore)
@@ -127,7 +111,10 @@ jobs:
     # Only saves if branch is develop or releases/**
     - name: Update target branch score (push)
       if: github.event_name == 'push'
-      run: "python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target"
+      run:  |
+        ls .venv -hal
+        . .venv/bin/activate
+        python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target
 
 
     # On "manually" dispatched actions, compare score to the one in 
@@ -164,20 +151,8 @@ jobs:
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
 
-    # Activates poetry created and cached environment
-    - name: Activate virtualenv
-      # Must match path in cached dependencies
-      run: source .venv/bin/activate
-
-    # Installs poetry and configures to use virtualenv
-    # created in cwd()/.venv
-    - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 1.3.2
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
-
     - name: Run unit tests
-      run: bash scripts/test.sh -m pytest -m 'not integration'
+      run: |
+        ls .venv -hal
+        . .venv/bin/activate
+        bash scripts/test.sh -m pytest -m 'not integration'
