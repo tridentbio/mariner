@@ -53,6 +53,10 @@ jobs:
     - name: Install project
       run: poetry install
 
+    # Installs quirkier packages
+    - name: Install quirk packages
+      run: python deps.py
+
 
   # Checks if pylint score is equals or higher than target branch
   # Pylint uses project configurations defined in pylintrc
@@ -95,7 +99,7 @@ jobs:
     # Only saves if branch is develop or releases/**
     - name: Update target branch score (push)
       if: github.event_name == 'push'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target"
+      run: "python scripts/pylint_packages.py ${{ github.event.ref }} ${{ github.event.base_ref || 'develop' }} --save-new-target"
 
 
     # On "manually" dispatched actions, compare score to the one in 
@@ -104,12 +108,12 @@ jobs:
     # Only saves if branch is develop or releases/**
     - name: Update branch score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}"
+      run: "python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}"
 
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
-      run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
+      run: "python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
 
   unittest:
     runs-on: ubuntu-latest
