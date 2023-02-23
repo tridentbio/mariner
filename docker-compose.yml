@@ -22,10 +22,6 @@ services:
       - ray_net
   backend:
     image: 'image:latest'
-    depends_on:
-      - db
-      - mlflow
-      - ray-worker
     ports:
       - 80:80
       - 8888:8888

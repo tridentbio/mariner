@@ -14,4 +14,4 @@ MarinerLogger/
 checkpoints/
 cov/
 .coverage
-configmaps
+secrets

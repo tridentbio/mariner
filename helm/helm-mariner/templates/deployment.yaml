@@ -88,6 +88,8 @@ spec:
             - configMapRef:
                 name: {{ .Release.Name }}
             - configMapRef:
+                name: {{ .Release.Name }}-secrets
+            - configMapRef:
                 name: {{ .Release.Name }}-emails
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

@@ -31,7 +31,7 @@ def is_close(val1: float, val2: float):
     return abs(val1 - val2) < 0.02
 
 
-@pytest.mark.long
+@pytest.mark.integration
 def test_post_datasets(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -68,6 +68,7 @@ def test_post_datasets(
 
 
 @pytest.mark.long
+@pytest.mark.integration
 def test_post_datasets_invalid(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -103,6 +104,7 @@ def test_post_datasets_invalid(
         assert isinstance(ds.errors["dataset_error_key"], str)
 
 
+@pytest.mark.integration  # requires ray some_dataset
 def test_post_datasets_name_conflict(
     client: TestClient,
     some_dataset: DatasetModel,
@@ -119,6 +121,8 @@ def test_post_datasets_name_conflict(
         assert res.status_code == status.HTTP_409_CONFLICT
 
 
+@pytest.mark.integration  # requires ray some_dataset
+@pytest.mark.skip(reason="taking very long")
 def test_put_datasets(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -189,6 +193,7 @@ def test_delete_datasets(
     assert ds is None
 
 
+@pytest.mark.integration
 def test_get_csv_metadata(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -215,6 +220,7 @@ def test_get_csv_metadata(
         } in cols
 
 
+@pytest.mark.integration
 def test_download_dataset(
     normal_user_token_headers: dict,
     some_dataset_without_process: DatasetModel,

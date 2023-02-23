@@ -1,4 +1,4 @@
-"""Routines to install torch geometric dependencies.
+"""Routines to install torch geometric dependenci activating the virtual environment first.
 
 Adapted from https://github.com/BorgwardtLab/TOGL/blob/af2d0fb9e3262d1327fff512963e3d7745a6acae/deps.
 """
@@ -41,7 +41,7 @@ python -m deps [CUDA]
 """
 
 if __name__ == "__main__":
-    cuda = sys.argv[1] if len(sys.argv) > 1 else None
+    cuda = sys.argv[1] if len(sys.argv) > 1 else 'cpu'
     if cuda and cuda not in envs:
         print(usage)
         sys.exit(1)
