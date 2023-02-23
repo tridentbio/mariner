@@ -30,8 +30,6 @@ jobs:
       with:
         python-version: '3.9' 
     # Sets cache to virtual environment
-    - name: Debug
-      run: which poetry; ls ~/.local -hal;
     - name: Cache Dependencies
       id: poetry-cache
       uses: actions/cache@v3
@@ -52,6 +50,9 @@ jobs:
         virtualenvs-in-project: true
         installer-parallel: true
 
+    - name: Debug
+      run: ls ~/.local -hal;
+
     # Activates poetry created and cached environment
     - name: Activate virtualenv
       # Must match path in cached dependencies
@@ -60,6 +61,7 @@ jobs:
     # Installs all packages and it's dependencies
     - name: Install project
       run: poetry install
+
 
 
     # Installs quirkier packages
