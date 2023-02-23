@@ -49,14 +49,16 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
-    # Installs all packages and it's dependencies
-    - name: Install project
-      run: poetry install
 
     # Activates poetry created and cached environment
     - name: Activate virtualenv
       # Must match path in cached dependencies
       run: source .venv/bin/activate
+
+    # Installs all packages and it's dependencies
+    - name: Install project
+      run: poetry install
+
 
     # Installs quirkier packages
     - name: Install quirk packages
