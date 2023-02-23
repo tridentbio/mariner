@@ -2,13 +2,13 @@
 # Script to run tests with coverage.
 #
 # Run test suites
-poetry run coverage run $@
+coverage run $@
 TEST_RESULT=$?
 # Populate cov/json
-poetry run coverage json
+coverage json
 # Populate cov/html
-poetry run coverage html
-poetry run coverage report
+coverage html
+coverage report
 COVERAGE_RESULT=$?
 
 if [[ $TEST_RESULT != 0 ]];
