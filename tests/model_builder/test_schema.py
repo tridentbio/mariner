@@ -11,7 +11,6 @@ def schema_yaml_fixture():
 
 
 def test_schema(schema_yaml_fixture: str):
-    assert 0
     model_config = ModelSchema.from_yaml(schema_yaml_fixture)
     assert model_config
     assert model_config.layers[8].type == "model_builder.layers.Concat"
