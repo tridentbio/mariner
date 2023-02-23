@@ -133,6 +133,8 @@ jobs:
     - name: Run unit tests and get coverage
       env:
         POSTGRES_SERVER: localhost 
+        POSTGRES_PASSWORD: 123456
+        POSTGRES_USER: postgres
       run: |
         . .venv/bin/activate
         bash scripts/prestart.sh # runs migrations
