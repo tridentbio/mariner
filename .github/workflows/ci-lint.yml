@@ -30,6 +30,8 @@ jobs:
       with:
         python-version: '3.9' 
     # Sets cache to virtual environment
+    - name: Debug
+      run: ls /opt/poetry -hal; which poetry; ls ~/.local -hal;
     - name: Cache Dependencies
       id: poetry-cache
       uses: actions/cache@v3
@@ -41,7 +43,7 @@ jobs:
         restore-keys: poetry-cache-${{ runner.os }}
 
     # Installs poetry and configures to use virtualenv
-    # virtual env path is cwd()/.venv
+    # created in cwd()/.venv
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
       with:
@@ -92,6 +94,17 @@ jobs:
     - name: Activate virtualenv
       # Must match path in cached dependencies
       run: source .venv/bin/activate
+
+
+    # Installs poetry and configures to use virtualenv
+    # created in cwd()/.venv
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.3.2
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
 
     # Restores cache with known target branch pylint results
     # Configures post step to resave-cache
@@ -153,5 +166,16 @@ jobs:
     - name: Activate virtualenv
       # Must match path in cached dependencies
       run: source .venv/bin/activate
+
+    # Installs poetry and configures to use virtualenv
+    # created in cwd()/.venv
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.3.2
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
+
     - name: Run unit tests
       run: bash scripts/test.sh -m pytest -m 'not integration'
