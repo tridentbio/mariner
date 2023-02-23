@@ -1,44 +1,136 @@
-name: CI - Integration Tests
+# Continous integration checks that can be done out of docker
+name: Continuous integration
 on:
+  # Runs on PRs for check and easier review
   pull_request:
+    # Only when PRs are targeting develop or releases/** branches
     branches: [ "develop", "releases/**" ]
-    types: [opened, synchronize]
+    # Only when PRs are opened or there are pushs to it
+    types: [opened, synchronize, closed]
+
+  # Runs manually
   workflow_dispatch:
-env:
-    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    AWS_REGION: us-east-1
-    AWS_MODELS_BUCKET: s3://dev-mariner-datasets
-    AWS_DATASETS: dev-mariner-datasets
-    GITHUB_CLIENT_ID: --
-    GITHUB_CLIENT_SECRET: --
-    COMPOSE_HTTP_TIMEOUT: 600
+    inputs:
+      save_src:
+        type: boolean
+        description: Saves the branch linting results in the repo cache
 jobs:
-  all-backend-tests:
+  # Checks: pylint score, unit test cov regression
+  install-and-checks:
+    env:
+      COV_PATH: '~/.cache/cov'
+    # Service containers to run with `install-and-checks`
+    services:
+      # Label used to access the service container
+      db:
+        # Docker Hub image
+        image: postgres
+        ports:
+          - 5432:5432
+        # Provide the password for postgres
+        env:
+          POSTGRES_SERVER: db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_DB: app
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     runs-on: ubuntu-latest
     steps:
+    # Checks into commit of the event
     - uses: actions/checkout@v3
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    - name: Cache Docker layers
+    # Sets up python3.9
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9' 
+    # Sets cache to virtual environment
+    - name: Cache Dependencies
+      id: poetry-cache
       uses: actions/cache@v3
       with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-    - name: Build main image
-      uses: docker/build-push-action@v2
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        path: .venv
+        # First try a exact match of dependencies
+        key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+        # Fallbacks to latest dependencies or default branch (develop) one
+        restore-keys: poetry-cache-${{ runner.os }}
+
+    # Restores cache with known target branch pylint results
+    # Configures post step to resave-cache
+    - name: Cache Pylint results (restore)
+      id: pylint-cache-restore
+      uses: actions/cache@v3
       with:
-          context: .
-          push: false
-          file: ./dockerfiles/Dockerfile.local
-          tags: mariner-slow-test:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-    - name: Start services
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
-    - name: Integration tests and get report
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
+        # This will be the paths for the pylint stats
+        # We only cache common target branches results
+        # and ignore other stats that are saved as a side effect
+        path: |
+          ~/.cache/pylint/develop*
+          ~/.cache/pylint/releases*
+          ~/.cache/cov/develop*
+          ~/.cache/cov/releases*
+        # Using run_id to update cache even when it hits
+        key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
+        restore-keys: pylint-cache-${{ runner.os }}
+ 
+    # Installs poetry and configures to use virtualenv
+    # created in cwd()/.venv
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.3.2
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
+
+    # Activates poetry created and cached environment
+    - name: Activate virtualenv
+      # Must match path in cached dependencies
+      run: |
+        . .venv/bin/activate
+
+    # Installs all packages and it's dependencies
+    - name: Install project
+      run: poetry install
+
+
+    # Installs quirkier packages
+    - name: Install quirk packages
+      run: python deps.py
+
+    # On "manually" dispatched actions, compare score to the one in 
+    # develop branch. If inputs.save_src is true, save branch result
+    # to cache.
+    # Only saves if branch is develop or releases/**
+    - name: Update branch score (workflow_dispatch)
+      if: github.event_name == 'workflow_dispatch'
+      continue-on-error: true
+      run: |
+        . .venv/bin/activate
+        python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}
+
+    # On PRs, compare score to targeting branch
+    - name: Check PR lint score improve (pull_request)
+      if: github.event_name == 'pull_request'
+      continue-on-error: true
+      run: |
+        . .venv/bin/activate
+        python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' }}
+
+    - name: Run unit tests and get coverage
+      if: github.event_name == 'pull_request'
+      env:
+        POSTGRES_SERVER: localhost 
+        POSTGRES_PASSWORD: 123456
+        POSTGRES_USER: postgres
+        BASE_COV_PATH: ${{ github.event.pull_request.base.ref }}
+      run: |
+        . .venv/bin/activate
+        bash scripts/prestart.sh # Runs migrations
+        PREV_COV=$(cat $COV_PATH/${{ github.event.pull_request.base.ref }}.json | jq .totals.percent_covered)
+        [ $PREV_COV != '' ] && FAIL_UNDER=$( printf '--fail-under %s' $PREV_COV) || FAIL_UNDER=''
+        bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
+        mv ./coverage.json $COV_PATH/$BASE_COV_PATH
