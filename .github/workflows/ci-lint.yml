@@ -19,9 +19,45 @@ on:
         type: boolean
         description: Saves the branch linting results in the repo cache
 jobs:
+  # Install dependencies for all other jobs
+  install-deps:
+    runs-on: ubuntu-latest
+    steps:
+    # Checks into commit of the event
+    - uses: actions/checkout@v3
+    # Sets up python3.9
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9' 
+    # Sets cache to virtual environment
+    - name: Cache Dependencies
+      id: poetry-cache
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        # First try a exact match of dependencies
+        key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+        # Fallbacks to latest dependencies or default branch (develop) one
+        restore-keys: poetry-cache-${{ runner.os }}
+
+    # Installs poetry and configures to use virtualenv
+    # virtual env path is cwd()/.venv
+    - name: Install and configure Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.3.2
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
+    # Installs all packages and it's dependencies
+    - name: Install project
+      run: poetry install
+
+
   # Checks if pylint score is equals or higher than target branch
   # Pylint uses project configurations defined in pylintrc
   pylint:
+    needs: install-deps
     runs-on: ubuntu-latest
     steps:
     # Checks into commit of the event
@@ -55,19 +91,6 @@ jobs:
         # Using run_id to update cache even when it hits
         key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
         restore-keys: pylint-cache-${{ runner.os }}
-    # Installs poetry and configures to use virtualenv
-    # virtual env path is cwd()/.venv
-    - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 1.3.2
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
-    # Installs all packages and it's dependencies
-    - name: Install project
-      run: poetry install
-
     # On pushs, compare score and save target branch result to cache
     # Only saves if branch is develop or releases/**
     - name: Update target branch score (push)
@@ -87,3 +110,26 @@ jobs:
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
       run: "poetry run python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}"
+
+  unittest:
+    runs-on: ubuntu-latest
+    needs: install-deps
+    steps:
+    # Checks into commit of the event
+    - uses: actions/checkout@v3
+    # Sets up python3.9
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9' 
+    # Sets cache to virtual environment
+    - name: Cache Dependencies
+      id: poetry-cache
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        # First try a exact match of dependencies
+        key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+        # Fallbacks to latest dependencies or default branch (develop) one
+        restore-keys: poetry-cache-${{ runner.os }}
+    - name: Run unit tests
+      run: bash scripts/test.sh -m pytest -m 'not integration'

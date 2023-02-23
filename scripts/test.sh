@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-
-echo $@
-poetry run coverage run -m pytest $@
+# Script to run tests with coverage.
+#
+# Run test suites
+poetry run coverage run $@
 TEST_RESULT=$?
 # Populate cov/json
 poetry run coverage json
