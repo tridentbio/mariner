@@ -220,6 +220,7 @@ def test_get_csv_metadata(
         } in cols
 
 
+@pytest.mark.integration
 def test_download_dataset(
     normal_user_token_headers: dict,
     some_dataset_without_process: DatasetModel,

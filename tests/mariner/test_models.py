@@ -43,6 +43,7 @@ def test_delete_model(db: Session, model: Model):
     assert not model_db
 
 
+@pytest.mark.integration
 def test_check_forward_exception_good_regressor(
     db: Session, some_dataset: DatasetEntity
 ):
@@ -53,6 +54,7 @@ def test_check_forward_exception_good_regressor(
     assert check.output is not None
 
 
+@pytest.mark.integration
 def test_check_forward_exception_good_classifier(
     db: Session, some_dataset: DatasetEntity
 ):
@@ -63,6 +65,7 @@ def test_check_forward_exception_good_classifier(
     assert check.output is not None
 
 
+@pytest.mark.integration
 def test_check_forward_exception_bad_model(db: Session, some_dataset: DatasetEntity):
     broken_model: ModelSchema = model_config(dataset_name=some_dataset.name)
     import model_builder.model
