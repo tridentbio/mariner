@@ -60,7 +60,7 @@ jobs:
 
     # Restores cache with known target branch pylint results
     # Configures post step to resave-cache
-    - name: Cache Pylint results (restore)
+    - name: Cache Pylint results
       id: pylint-cache-restore
       uses: actions/cache@v3
       with:
@@ -95,12 +95,12 @@ jobs:
     # Installs all packages and it's dependencies
     - name: Install project
       run: poetry install
-      if: steps.venv-cache.outputs.cache-hit != 'true'
+      if: steps.venv-cache.outputs.cache-hit != true
 
     # Installs quirkier packages
     - name: Install quirk packages
       run: python deps.py
-      if: steps.venv-cache.outputs.cache-hit != 'true'
+      if: steps.venv-cache.outputs.cache-hit != true
 
 
     # On "manually" dispatched actions, compare score to the one in 
@@ -129,8 +129,6 @@ jobs:
         POSTGRES_USER: postgres
         # (optional) The path of the target coverage json relative to the coverages dir path
         BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event.ref }}.json
-        # (optional) The output of the coverage in json format
-        JSON_OUT: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged }}
       run: |
         . .venv/bin/activate # Activates virtualenv
         bash scripts/prestart.sh # Runs migrations
@@ -139,5 +137,5 @@ jobs:
         [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
         echo FAIL_UNDER=$FAIL_UNDER
         [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || github.event.inputs.save_src || false }} ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
-        echo JSON_OUT=$JSON_OUT
+        [-n $JSON_OUT ] && echo Saving coverage cache at $JSON_OUT
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
