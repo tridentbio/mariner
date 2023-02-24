@@ -13,7 +13,7 @@ on:
     inputs:
       save_src:
         type: boolean
-        description: Saves the branch linting results in the repo cache
+        description: Saves the branch scoring results in the repo cache
 jobs:
   # Checks: pylint score, unit test cov regression
   install-and-checks:
@@ -58,7 +58,7 @@ jobs:
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
 
-    # Restores cache with known target branch pylint results
+    # Restores cache with known target branch scores
     # Configures post step to resave-cache
     - name: Cache Pylint results
       id: pylint-cache-restore
@@ -107,12 +107,13 @@ jobs:
     # develop branch. If inputs.save_src is true, save branch result
     # to cache.
     # Only saves if branch is develop or releases/**
-    - name: Update branch score (workflow_dispatch)
+    - name: Update branch pylint score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
       continue-on-error: true
       run: |
+        BASE_REF_LINT_DATA="${GITHUB_REF#refs/heads/}.json"
         . .venv/bin/activate
-        python scripts/pylint_packages.py ${{ github.event.ref }} develop ${{ github.event.inputs.save_src && '--save-src' }}
+        python scripts/pylint_packages.py $BASE_REF_LINT_DATA develop ${{ github.event.inputs.save_src && ' --save-src' }}
 
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
@@ -129,14 +130,18 @@ jobs:
         POSTGRES_USER: postgres
         # (optional) The path of the target coverage json relative to the coverages dir path
         
-        BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '$(echo ${GITHUB_REF#refs/heads/})' }}.json
+        BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref }}.json
       run: |
+        [-z $BASE_REF_COVERAGE_JSON ] && BASE_REF_COVERAGE_JSON="${GITHUB_REF#refs/heads/}.json"
+        PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
+        [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
+        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || github.event.inputs.save_src || false }} ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
+
+        echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
+        echo FAIL_UNDER=$FAIL_UNDER
+
         . .venv/bin/activate # Activates virtualenv
         bash scripts/prestart.sh # Runs migrations
-        PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
-        echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
-        [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
-        echo FAIL_UNDER=$FAIL_UNDER
-        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || github.event.inputs.save_src || false }} ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
-        [-n $JSON_OUT ] && echo Saving coverage cache at $JSON_OUT
-        bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
+        bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q &&
+
+        [-n $JSON_OUT ] && echo Saved coverage cache at $JSON_OUT
