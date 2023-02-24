@@ -136,7 +136,6 @@ jobs:
         echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
         [ $PREVIOUS_COVERAGE != '' ] && FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE) || FAIL_UNDER=''
         echo FAIL_UNDER=$FAIL_UNDER
-        echo ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }}
-        echo ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || 'false' }}
-        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || 'false' }} ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
+        echo ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false
+        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
