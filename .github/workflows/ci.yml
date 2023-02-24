@@ -126,10 +126,16 @@ jobs:
         POSTGRES_PASSWORD: 123456
         POSTGRES_USER: postgres
         BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event.ref }}.json
+        JSON_OUT: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged }}
       run: |
         . .venv/bin/activate
         bash scripts/prestart.sh # Runs migrations
         PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
         [ $PREVIOUS_COVERAGE != '' ] && FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE) || FAIL_UNDER=''
+        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
-        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} ] && mv ./coverage.json $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON
+
+
+
+
+
