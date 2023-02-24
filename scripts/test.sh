@@ -6,7 +6,7 @@ echo coverage run "$@"
 coverage run "$@"
 TEST_RESULT=$?
 # Populate cov/json
-[ $JSON_OUT != '' ] && coverage json -o $JSON_OUT
+[ -n $JSON_OUT ] && coverage json -o $JSON_OUT
 # Populate cov/html
 coverage html
 coverage report
