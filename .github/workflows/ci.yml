@@ -68,10 +68,10 @@ jobs:
         # We only cache common target branches results
         # and ignore other stats that are saved as a side effect
         path: |
-          ~/.cache/pylint/develop*
-          ~/.cache/pylint/releases*
-          ~/.cache/cov/develop*
-          ~/.cache/cov/releases*
+          ~/.cache/pylint/**/develop*
+          ~/.cache/pylint/**/releases*
+          ~/.cache/cov/**/develop*
+          ~/.cache/cov/**/releases*
         # Using run_id to update cache even when it hits
         key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
         restore-keys: pylint-cache-${{ runner.os }}
@@ -138,7 +138,6 @@ jobs:
         echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
         [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
         echo FAIL_UNDER=$FAIL_UNDER
-        echo ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false
         [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || github.event.inputs.save_src }} != false ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
         echo JSON_OUT=$JSON_OUT
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
