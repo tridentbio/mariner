@@ -121,7 +121,6 @@ jobs:
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' }}
 
     - name: Run unit tests and get coverage
-      if: github.event_name == 'pull_request'
       env:
         POSTGRES_SERVER: localhost 
         POSTGRES_PASSWORD: 123456
