@@ -18,7 +18,7 @@ jobs:
   # Checks: pylint score, unit test cov regression
   install-and-checks:
     env:
-      COV_PATH: '~/.cache/cov'
+      COVERAGES_PATH: '~/.cache/cov'
     # Service containers to run with `install-and-checks`
     services:
       # Label used to access the service container
@@ -126,11 +126,11 @@ jobs:
         POSTGRES_SERVER: localhost 
         POSTGRES_PASSWORD: 123456
         POSTGRES_USER: postgres
-        BASE_COV_PATH: ${{ github.event.pull_request.base.ref }}
+        BASE_REF_COVERAGE_JSON: ${{ github.event_type == 'pull_request' && github.event.pull_request.base.ref || github.event.ref }}.json
       run: |
         . .venv/bin/activate
         bash scripts/prestart.sh # Runs migrations
-        PREV_COV=$(cat $COV_PATH/${{ github.event.pull_request.base.ref }}.json | jq .totals.percent_covered)
-        [ $PREV_COV != '' ] && FAIL_UNDER=$( printf '--fail-under %s' $PREV_COV) || FAIL_UNDER=''
+        PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
+        [ $PREVIOUS_COVERAGE != '' ] && FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE) || FAIL_UNDER=''
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
-        mv ./coverage.json $COV_PATH/$BASE_COV_PATH
+        [ ${{ github.event_type == 'pull_request' && github.event.pull_request.merged || false }} ] && mv ./coverage.json $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON
