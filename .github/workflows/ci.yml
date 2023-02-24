@@ -68,10 +68,10 @@ jobs:
         # We only cache common target branches results
         # and ignore other stats that are saved as a side effect
         path: |
-          ~/.cache/pylint/**/develop*
-          ~/.cache/pylint/**/releases*
-          ~/.cache/cov/**/develop*
-          ~/.cache/cov/**/releases*
+          ~/.cache/pylint/develop**
+          ~/.cache/pylint/releases**
+          ~/.cache/cov/develop**
+          ~/.cache/cov/releases**
         # Using run_id to update cache even when it hits
         key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
         restore-keys: pylint-cache-${{ runner.os }}
@@ -128,7 +128,8 @@ jobs:
         POSTGRES_PASSWORD: 123456
         POSTGRES_USER: postgres
         # (optional) The path of the target coverage json relative to the coverages dir path
-        BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event.ref }}.json
+        
+        BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '$(echo ${GITHUB_REF#refs/heads/})' }}.json
       run: |
         . .venv/bin/activate # Activates virtualenv
         bash scripts/prestart.sh # Runs migrations
