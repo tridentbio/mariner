@@ -4,7 +4,7 @@ on:
   # Runs on PRs for check and easier review
   pull_request:
     # Only when PRs are targeting develop or releases/** branches
-    branches: [ "develop", "releases/**" ]
+    branches: [ develop, releases/** ]
     # Only when PRs are opened or there are pushs to it
     types: [opened, synchronize, closed]
 
@@ -139,6 +139,6 @@ jobs:
         [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
         echo FAIL_UNDER=$FAIL_UNDER
         echo ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false
-        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
+        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || github.event.inputs.save_src }} != false ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
         echo JSON_OUT=$JSON_OUT
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
