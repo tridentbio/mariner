@@ -132,7 +132,7 @@ jobs:
         
         BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref }}.json
       run: |
-        [-z $BASE_REF_COVERAGE_JSON ] && BASE_REF_COVERAGE_JSON="${GITHUB_REF#refs/heads/}.json"
+        [ -z $BASE_REF_COVERAGE_JSON ] && BASE_REF_COVERAGE_JSON="${GITHUB_REF#refs/heads/}.json"
         PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
         [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
         [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || github.event.inputs.save_src || false }} ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
@@ -144,4 +144,4 @@ jobs:
         bash scripts/prestart.sh # Runs migrations
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q &&
 
-        [-n $JSON_OUT ] && echo Saved coverage cache at $JSON_OUT
+        [ -n $JSON_OUT ] && echo Saved coverage cache at $JSON_OUT
