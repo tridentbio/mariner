@@ -14,7 +14,7 @@ modules = [
     "api",
 ]
 
-PYLINT_HOME = os.path.expanduser("~/.cache/pylint")
+PYLINT_HOME = os.getenv('PYLINT_HOME') or os.path.expanduser("~/.cache/pylint")
 
 
 @click.command(help="Compares current pylint score to TARGET_BRANCH run")
