@@ -92,6 +92,27 @@ jobs:
       run: |
         . .venv/bin/activate
 
+    - name: Run unit tests and get coverage
+      env:
+        POSTGRES_SERVER: localhost 
+        POSTGRES_PASSWORD: 123456
+        POSTGRES_USER: postgres
+        # (optional) The path of the target coverage json relative to the coverages dir path
+        BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event.ref }}.json
+        # (optional) The output of the coverage in json format
+        JSON_OUT: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged }}
+      run: |
+        . .venv/bin/activate # Activates virtualenv
+        bash scripts/prestart.sh # Runs migrations
+        PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
+        echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
+        [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
+        echo FAIL_UNDER=$FAIL_UNDER
+        echo ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false
+        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
+        echo JSON_OUT=$JSON_OUT
+        bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
+
     # Installs all packages and it's dependencies
     - name: Install project
       run: poetry install
@@ -120,22 +141,3 @@ jobs:
         . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' }}
 
-    - name: Run unit tests and get coverage
-      env:
-        POSTGRES_SERVER: localhost 
-        POSTGRES_PASSWORD: 123456
-        POSTGRES_USER: postgres
-        # (optional) The path of the target coverage json relative to the coverages dir path
-        BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event.ref }}.json
-        # (optional) The output of the coverage in json format
-        JSON_OUT: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged }}
-      run: |
-        . .venv/bin/activate # Activates virtualenv
-        bash scripts/prestart.sh # Runs migrations
-        PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
-        echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
-        [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
-        echo FAIL_UNDER=$FAIL_UNDER
-        echo ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false
-        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
-        bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
