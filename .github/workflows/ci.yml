@@ -134,7 +134,7 @@ jobs:
         bash scripts/prestart.sh # Runs migrations
         PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
         echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
-        [ $PREVIOUS_COVERAGE != '' ] && FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE) || FAIL_UNDER=''
+        [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
         echo FAIL_UNDER=$FAIL_UNDER
         echo ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false
         [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || false }} != false ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
