@@ -111,7 +111,7 @@ jobs:
       if: github.event_name == 'workflow_dispatch'
       continue-on-error: true
       run: |
-        BASE_REF_LINT_DATA="${GITHUB_REF#refs/heads/}.json"
+        BASE_REF_LINT_DATA="${GITHUB_REF#refs/heads/}"
         . .venv/bin/activate
         python scripts/pylint_packages.py $BASE_REF_LINT_DATA develop ${{ github.event.inputs.save_src && ' --save-src' }}
 
