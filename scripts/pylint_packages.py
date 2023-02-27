@@ -14,7 +14,7 @@ modules = [
     "api",
 ]
 
-PYLINT_HOME = os.path.expanduser("~/.cache/pylint")
+PYLINT_HOME = os.getenv('PYLINT_HOME') or os.path.expanduser("~/.cache/pylint")
 
 
 @click.command(help="Compares current pylint score to TARGET_BRANCH run")
@@ -39,29 +39,31 @@ def main(src_branch: str, target_branch: str, save_src=False, save_new_target=Fa
     previous_global_note = previous_results.global_note if previous_results else None
     global_note = result.linter.stats.global_note
 
-    if previous_global_note is not None:
-        if global_note < previous_global_note:
-            # Don't update if note is lower. Let's try to keep it high
-            click.echo(
-                f"Score is less than target ({previous_global_note}). Ignoring save flags"
-            )
-            sys.exit(1)
-        elif global_note > previous_global_note:
-            if save_src:
-                click.echo(f"Pylint score was improved! Saved as {src_branch}")
-                save_results(result.linter.stats, src_branch, PYLINT_HOME)
-            if save_new_target:
-                click.echo(f"Pylint score was improved! Saved as {target_branch}")
-                save_results(result.linter.stats, target_branch, PYLINT_HOME)
-        else:
-            click.echo("Score is the same")
-    else:
-        if save_src:
-            click.echo(f"New Pylint score saved as {src_branch}")
-            save_results(result.linter.stats, src_branch, PYLINT_HOME)
-        if save_new_target:
-            click.echo(f"New Pylint score saved as {target_branch}")
-            save_results(result.linter.stats, target_branch, PYLINT_HOME)
+    def update_cache():
+        should_save_at = [(save_src, src_branch), (save_new_target, target_branch)]
+        for (should_save, at) in should_save_at:
+            if not should_save:
+                continue
+            click.echo(f"New Pylint score saved as {PYLINT_HOME}/{at}")
+            save_results(result.linter.stats, at, PYLINT_HOME)
+
+    # Unknown BASE pylint score
+    if previous_global_note is None:
+        click.echo("New score")
+        update_cache()
+    # HEAD pylint score higher than BASE pylint score
+    elif previous_global_note < global_note:
+        click.echo("Setting a new lower bound pylint score")
+        update_cache()
+    # HEAD pylint score equals BASE pylint score
+    elif previous_global_note == global_note:
+        click.echo("Score is the same")
+    # HEAD pylint score lower than BASE pylint score
+    elif previous_global_note > global_note:
+        click.echo(
+            f"Score is less than target ({previous_global_note}). Ignoring save flags"
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":
