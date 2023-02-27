@@ -72,6 +72,8 @@ jobs:
           ~/.cache/pylint/releases**
           ~/.cache/cov/develop**
           ~/.cache/cov/releases**
+          ~/.cache/doccov/develop**
+          ~/.cache/doccov/releases**
         # Using run_id to update cache even when it hits
         key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
         restore-keys: pylint-cache-${{ runner.os }}
@@ -142,6 +144,24 @@ jobs:
 
         . .venv/bin/activate # Activates virtualenv
         bash scripts/prestart.sh # Runs migrations
-        bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q &&
+        bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
 
         [ -n $JSON_OUT ] && echo Saved coverage cache at $JSON_OUT
+    - name: Get docstring coverage and save as new docstrig target (pull_request merged)
+      if: github.event_name == 'pull_request' && github.event.pull_request.merged
+      run: |
+        BASE_COV_PATH=~/.cov/doccov/${{ github.event.pull_request.base.ref }}
+        COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH
+
+    - name: Get docstring coverage and save as new docstrig target (workflow dispatch)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.save_src
+      run: |
+        BASE_COV_PATH=~/.cov/doccov/$( echo -n "$(GITHUB_REF#refs/heads/ ).json"
+        COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH
+
+    - name: Get docstring coverage
+      if: ! github.event.inputs.save_src || ! github.event.pull_request.merged
+      run: |
+        BASE_COV_PATH=~/.cov/doccov/$( echo -n "$(GITHUB_REF#refs/heads/ ).json"
+        bash scripts/doc-coverage.sh
+
