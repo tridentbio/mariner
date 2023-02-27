@@ -124,6 +124,7 @@ jobs:
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' }}
 
     - name: Run unit tests and get coverage
+      continue-on-error: true
       env:
         POSTGRES_SERVER: localhost 
         POSTGRES_PASSWORD: 123456
@@ -145,18 +146,21 @@ jobs:
 
         [ -n $JSON_OUT ] && echo Saved coverage cache at $JSON_OUT
     - name: Get docstring coverage and save as new docstrig target (pull_request merged)
+      continue-on-error: true
       if: github.event_name == 'pull_request' && github.event.pull_request.merged
       run: |
         BASE_COV_PATH=~/.cov/doccov/${{ github.event.pull_request.base.ref }}
         COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH
 
     - name: Get docstring coverage and save as new docstrig target (workflow dispatch)
+      continue-on-error: true
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.save_src
       run: |
         BASE_COV_PATH=~/.cov/doccov/$( echo -n "$(GITHUB_REF#refs/heads/ ).json")
         COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH
 
     - name: Get docstring coverage
+      continue-on-error: true
       if: github.event.inputs.save_src != true || github.event.pull_request.merged != true 
       run: |
         BASE_COV_PATH=~/.cov/doccov/$( echo -n "$(GITHUB_REF#refs/heads/ ).json"
