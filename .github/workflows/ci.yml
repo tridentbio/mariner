@@ -82,17 +82,17 @@ jobs:
     # created in cwd()/.venv
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
+      if: steps.venv-cache.outputs.cache-hit != true
       with:
         version: 1.3.2
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
 
-    # Activates poetry created and cached environment
     - name: Activate virtualenv
-      # Must match path in cached dependencies
       run: |
         . .venv/bin/activate
+        echo PATH=$PATH >> $GITHUB_ENV
 
     # Installs all packages and it's dependencies
     - name: Install project
