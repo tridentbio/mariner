@@ -114,7 +114,6 @@ jobs:
       continue-on-error: true
       run: |
         BASE_REF_LINT_DATA="${GITHUB_REF#refs/heads/}"
-        . .venv/bin/activate
         python scripts/pylint_packages.py $BASE_REF_LINT_DATA develop ${{ github.event.inputs.save_src && ' --save-src' }}
 
     # On PRs, compare score to targeting branch
@@ -122,7 +121,6 @@ jobs:
       if: github.event_name == 'pull_request'
       continue-on-error: true
       run: |
-        . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' }}
 
     - name: Run unit tests and get coverage
@@ -142,7 +140,6 @@ jobs:
         echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
         echo FAIL_UNDER=$FAIL_UNDER
 
-        . .venv/bin/activate # Activates virtualenv
         bash scripts/prestart.sh # Runs migrations
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
 
