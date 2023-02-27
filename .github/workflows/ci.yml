@@ -156,7 +156,7 @@ jobs:
     - name: Get docstring coverage and save as new docstrig target (workflow dispatch)
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.save_src
       run: |
-        BASE_COV_PATH=~/.cov/doccov/$( echo -n "$(GITHUB_REF#refs/heads/ ).json"
+        BASE_COV_PATH=~/.cov/doccov/$( echo -n "$(GITHUB_REF#refs/heads/ ).json")
         COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH
 
     - name: Get docstring coverage
