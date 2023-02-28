@@ -1,8 +1,11 @@
 name: Build Minikube - Manual
 on:
-  push:
-    branches:
-      - 'minikube'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'develop'
 env:
   AWS_REGION: us-east-1
   IMAGE_TAG: ${{ github.sha }}
