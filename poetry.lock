@@ -1630,6 +1630,26 @@ websocket-client = ">=0.32.0"
 ssh = ["paramiko (>=2.4.3)"]
 
 [[package]]
+name = "docstr-coverage"
+version = "2.2.0"
+description = "Utility for examining python source files to ensure proper documentation. Lists missing docstrings, and calculates overall docstring coverage percentage rating."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "docstr-coverage-2.2.0.tar.gz", hash = "sha256:3487f3f09f7d2c45e2e67f0a3a6c1cc1960b6449e89f3e8eaca30c37e05eace2"},
+    {file = "docstr_coverage-2.2.0-py3-none-any.whl", hash = "sha256:13b21417fb6b743ac297495c4530687f78acecb9a61cfef7e3ec8f00938e574d"},
+]
+
+[package.dependencies]
+click = "*"
+PyYAML = "*"
+
+[package.extras]
+lint = ["black (==21.5b2)", "flake8 (==3.9.2)", "isort (==5.9.0)"]
+test = ["pytest (==6.2.5)", "pytest-mock (==3.4.0)"]
+
+[[package]]
 name = "docutils"
 version = "0.19"
 description = "Docutils -- Python Documentation Utilities"
@@ -7401,4 +7421,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "b6fa40f278bc31cc3048da21cb9c25e5c3243338658712f0ca207da794c0e9c5"
+content-hash = "41712d1d9eaa95807708137cb2013917f76ff21ce98343adfe206f4395e191b9"
