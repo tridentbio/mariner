@@ -60,8 +60,8 @@ jobs:
 
     # Restores cache with known target branch scores
     # Configures post step to resave-cache
-    - name: Cache Pylint results
-      id: pylint-cache-restore
+    - name: Cache Score results
+      id: score-cache
       uses: actions/cache@v3
       with:
         # This will be the paths for the pylint stats
@@ -89,23 +89,15 @@ jobs:
         virtualenvs-in-project: true
         installer-parallel: true
 
-    - name: Activate virtualenv
-      run: |
-        . .venv/bin/activate
-        echo PATH=$PATH >> $GITHUB_ENV
-
     # Installs all packages and it's dependencies
     - name: Install project
-      run: poetry install
+      run: |
+        poetry -v --no-ansi --no-interaction install
+        poetry run python deps.py
       if: steps.venv-cache.outputs.cache-hit != true
 
-    # Installs quirkier packages
-    - name: Install quirk packages
-      run: python deps.py
-      if: steps.venv-cache.outputs.cache-hit != true
+    # Pylint score check
 
-
-    # On "manually" dispatched actions, compare score to the one in 
     # develop branch. If inputs.save_src is true, save branch result
     # to cache.
     # Only saves if branch is develop or releases/**
@@ -113,6 +105,7 @@ jobs:
       if: github.event_name == 'workflow_dispatch'
       continue-on-error: true
       run: |
+        . .venv/bin/activate
         BASE_REF_LINT_DATA="${GITHUB_REF#refs/heads/}"
         python scripts/pylint_packages.py $BASE_REF_LINT_DATA develop ${{ github.event.inputs.save_src && ' --save-src' }}
 
@@ -121,7 +114,11 @@ jobs:
       if: github.event_name == 'pull_request'
       continue-on-error: true
       run: |
+        . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' }}
+
+
+    # Unit test coverage check
 
     - name: Run unit tests and get coverage
       continue-on-error: true
@@ -133,36 +130,41 @@ jobs:
         
         BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref }}.json
       run: |
+        . .venv/bin/activate
         [ $BASE_REF_COVERAGE_JSON == 'false.json' ] && BASE_REF_COVERAGE_JSON=$(echo -n "${GITHUB_REF#refs/heads/}.json")
-        PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
+        [ -f $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON ] && PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
         [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
         [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || github.event.inputs.save_src || false }} ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
 
-        echo PREVIOUS_COVERAGE=$PREVIOUS_COVERAGE
-        echo FAIL_UNDER=$FAIL_UNDER
 
         bash scripts/prestart.sh # Runs migrations
         bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
 
-        [ -n $JSON_OUT ] && echo Saved coverage cache at $JSON_OUT
-    - name: Get docstring coverage and save as new docstrig target (pull_request merged)
+        [ -n $JSON_OUT ] && echo Saved test coverage cache at $JSON_OUT
+
+    ## Docstring coverage check
+
+    - name: Get docstring coverage and save as new docstring target (pull_request merged)
       continue-on-error: true
       if: github.event_name == 'pull_request' && github.event.pull_request.merged
       run: |
+        . .venv/bin/activate
         BASE_COV_PATH=~/.cov/doccov/${{ github.event.pull_request.base.ref }}
-        COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH
+        COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH && echo "Saved docstr coverage at $BASE_COV_PATH"
 
-    - name: Get docstring coverage and save as new docstrig target (workflow dispatch)
+    - name: Get docstring coverage and save as new docstring target (workflow dispatch)
       continue-on-error: true
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.save_src
       run: |
-        BASE_COV_PATH=~/.cov/doccov/$( echo -n "$(GITHUB_REF#refs/heads/ ).json")
-        COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH
+        . .venv/bin/activate
+        BASE_COV_PATH=~/.cov/doccov/$(echo -n "${GITHUB_REF#refs/heads/}.json")
+        COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH && echo "Saved docstr coverage at $BASE_COV_PATH"
 
     - name: Get docstring coverage
-      continue-on-error: true
+      continue-on-error: false
       if: github.event.inputs.save_src != true || github.event.pull_request.merged != true 
       run: |
-        BASE_COV_PATH=~/.cov/doccov/$( echo -n "$(GITHUB_REF#refs/heads/ ).json"
-        bash scripts/doc-coverage.sh
+        . .venv/bin/activate
+        BASE_COV_PATH=~/.cov/doccov/$(echo -n "${GITHUB_REF#refs/heads/}.json")
+        BASE_COV_PATH=$BASE_COV_PATH bash scripts/doc-coverage.sh
 
