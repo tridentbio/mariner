@@ -174,7 +174,7 @@ def is_primitive(val: Any):
     Args:
         val: value to be checked
     """
-    return val == int or val == float or val == str
+    return isinstance(val, (int, float, str, bool))
 
 
 def args_to_list(params: List[Parameter]) -> List[tuple[str, Any, Any]]:
@@ -261,7 +261,6 @@ def get_component_template_args_v2(path: str):
         }
     else:
         fwd = {}
-
     return {"prefix": prefix, "path": path, "ctr": ctr, "fwd": fwd}
 
 
@@ -320,8 +319,6 @@ def generate_bundlev2() -> str:
 
 class EmptySphinxException(Exception):
     """Raised when sphix outputs empty docs"""
-
-    pass
 
 
 @functools.cache
