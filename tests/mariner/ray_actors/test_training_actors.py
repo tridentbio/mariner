@@ -26,6 +26,7 @@ from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 
+@pytest.mark.integration
 class TestTrainingActor:
     def test_train(
         self,
@@ -103,12 +104,12 @@ class TestTrainingActor:
         return f"Testing Experiment - {random_lower_string()}"
 
     @pytest.fixture
-    def dataset_fixture(self, some_model: Model):
-        return some_model.dataset
+    def dataset_fixture(self, some_model_integration: Model):
+        return some_model_integration.dataset
 
     @pytest.fixture
-    def modelversion_fixture(self, some_model: Model) -> ModelVersion:
-        return some_model.versions[-1]
+    def modelversion_fixture(self, some_model_integration: Model) -> ModelVersion:
+        return some_model_integration.versions[-1]
 
     @pytest.fixture(scope="function")
     def experiment_fixture(

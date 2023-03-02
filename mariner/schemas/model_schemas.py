@@ -1,8 +1,8 @@
 """
-This module defines the schemas pertinent to model related features
+Model related DTOs
 """
 from datetime import datetime
-from typing import List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
@@ -171,6 +171,7 @@ class ComponentOption(ComponentAnnotation):
     """
 
     component: Union[LayersArgsType, FeaturizersArgsType]
+    default_args: Optional[Dict[str, Any]]
 
 
 ModelOptions = List[ComponentOption]

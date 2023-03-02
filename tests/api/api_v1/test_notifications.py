@@ -51,6 +51,7 @@ async def experiments_fixture(db: Session, some_model: Model):
 
 
 @pytest.fixture(scope="module")
+@pytest.mark.integration
 async def events_fixture(db: Session, experiments_fixture):
     user = get_test_user(db)
     events_ents = db.query(EventEntity).filter(EventEntity.user_id == user.id).all()
@@ -58,10 +59,11 @@ async def events_fixture(db: Session, experiments_fixture):
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_get_notifications(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_model: Model,
+    some_model_integration: Model,
     experiment_fixture,
 ):
     result = await experiment_fixture
@@ -81,16 +83,17 @@ async def test_get_notifications(
     assert got_notification["message"] == expected_notification["message"]
     assert "events" in got_notification
     assert len(got_notification["events"]) == 1
-    expected_url = f"{settings.WEBAPP_URL}/models/{some_model.id}#training"
+    expected_url = f"{settings.WEBAPP_URL}/models/{some_model_integration.id}#training"
     assert got_notification["events"][0]["url"] == expected_url
 
 
 @pytest.fixture(scope="module")
-async def experiment_fixture(db: Session, some_model: Model) -> Experiment:
+@pytest.mark.integration
+async def experiment_fixture(db: Session, some_model_integration: Model) -> Experiment:
     user = get_test_user(db)
     db.query(EventEntity).filter(EventEntity.user_id == user.id).delete()
     db.flush()
-    version = some_model.versions[-1]
+    version = some_model_integration.versions[-1]
     request = TrainingRequest(
         model_version_id=version.id,
         epochs=1,

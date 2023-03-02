@@ -1,3 +1,9 @@
+"""
+Configuration for running environment variables.
+
+Shared between api and mariner, on ray and backend instances
+Sometimes cause the application to fail when missing an ENV VAR
+"""
 import secrets
 from typing import Any, Dict, List, Optional, Union
 

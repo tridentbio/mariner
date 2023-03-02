@@ -1,3 +1,6 @@
+"""
+Handlers for api/v1/oauth* endpoints
+"""
 import logging
 import traceback
 from typing import Optional

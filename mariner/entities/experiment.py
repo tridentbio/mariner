@@ -1,3 +1,7 @@
+"""
+Experiment entity
+"""
+
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import Column, ForeignKey

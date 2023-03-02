@@ -1,3 +1,6 @@
+"""
+Event data layer defining ways to read and write to the events collection
+"""
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 

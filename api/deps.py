@@ -1,3 +1,9 @@
+"""
+Utility FastAPI dependencies
+
+Useful for intercept requests before controller handlers, .e.g. performing
+authentication
+"""
 from typing import Union
 
 from fastapi import Header, WebSocket, status

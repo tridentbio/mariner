@@ -1,23 +1,22 @@
 #!/usr/bin/env bash
 
-poetry run coverage run -m pytest
+# Script to run tests with coverage.
+#
+# Run test suites
+echo coverage run "$@"
+coverage run "$@"
 TEST_RESULT=$?
-# Populate cov/json
-poetry run coverage json
+
+# Populate cov/json if JSON_OUT is not empty
+[ ! -z $JSON_OUT ] && coverage json -o $JSON_OUT
+
 # Populate cov/html
-poetry run coverage html
-poetry run coverage report
-COVERAGE_RESULT=$?
+coverage html
+coverage report
 
 if [[ $TEST_RESULT != 0 ]];
 then
-  echo "Some test failed!";
-  exit 1
-fi
-
-if [[ $COVERAGE_RESULT != 0 ]];
-then
-  echo "Test coverage is not met";
+  echo "Some test failed or coverage is not met!";
   exit 1
 fi
 

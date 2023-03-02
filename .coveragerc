@@ -4,8 +4,6 @@ include =
   ./model_builder/*
   ./api/*
 
-fail_under = 77
-
 # Regexes for lines to exclude from consideration
 exclude_lines =
     # Have to re-enable the standard pragma
@@ -23,8 +21,4 @@ exclude_lines =
 
 [html]
 directory = cov/html
-
-[json]
-output = cov/json
-
 

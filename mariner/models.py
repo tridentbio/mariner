@@ -1,10 +1,19 @@
 """
-Models controller. Responsible for exposing model tracking
-functions working under the defined business rules.
+Models service
 """
 
 import traceback
-from typing import Any, List, Literal, Optional, Tuple, Union, get_type_hints
+from inspect import Parameter, signature
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    get_type_hints,
+)
 from uuid import uuid4
 
 import mlflow
@@ -106,10 +115,11 @@ def create_model(
     Triggers the creation of a RegisteredModel and a ModelVersion
     in MLFlow API's
     """
-    client = mlflowapi.create_tracking_client()
     dataset = dataset_store.get_by_name(db, model_create.config.dataset.name)
     if not dataset:
         raise DatasetNotFound()
+
+    client = mlflowapi.create_tracking_client()
 
     # Handle case where model_create.name refers to existing model
     existingmodel = model_store.get_by_name(db, model_create.name, user_id=user.id)
@@ -233,6 +243,7 @@ def get_annotations_from_cls(cls_path: str) -> ComponentOption:
         class_path=cls_path,
         type=None,  # type: ignore
         component=None,  # type: ignore
+        default_args=None,  # type: ignore
     )
 
 
@@ -241,6 +252,20 @@ def get_model_options() -> ModelOptions:
     along with metadata about each"""
     layer_types = [layer.name for layer in generate.layers]
     featurizer_types = [f.name for f in generate.featurizers]
+
+    def get_default_values(summary_name: str) -> Dict[str, Any]:
+        try:
+            class_args = getattr(
+                layers_schema, summary_name.replace("Summary", "ConstructorArgs")
+            )
+            args = {
+                arg.name: arg.default
+                for arg in signature(class_args).parameters.values()
+                if arg.default != Parameter.empty
+            }
+            return args
+        except AttributeError:
+            return None
 
     def get_summary(
         cls_path: str,
@@ -252,19 +277,21 @@ def get_model_options() -> ModelOptions:
                 and not schema_exported.endswith("ConstructorArgsSummary")
             ):
                 class_def = getattr(layers_schema, schema_exported)
+                default_args = get_default_values(schema_exported)
                 instance = class_def()
                 if instance.type and instance.type == cls_path:
-                    return instance
+                    return instance, default_args
         raise RuntimeError(f"Schema for {cls_path} not found")
 
     component_annotations: List[ComponentOption] = []
 
     def make_component(class_path: str, type_: Literal["layer", "featurizer"]):
-        summary = get_summary(class_path)
+        summary, default_args = get_summary(class_path)
         assert summary, f"class Summary of {class_path} should not be None"
         option = get_annotations_from_cls(class_path)
         option.type = type_
         option.component = summary
+        option.default_args = default_args
         return option
 
     for class_path in layer_types:

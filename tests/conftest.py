@@ -3,10 +3,12 @@ from typing import Dict, Generator, List
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
+from jose import jwt
 from sqlalchemy.orm import Session
 
 from api.fastapi_app import app
 from mariner import experiments as experiments_ctl
+from mariner.core import security
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import Dataset, EventEntity
@@ -21,18 +23,27 @@ from mariner.schemas.experiment_schemas import (
     TrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
+from mariner.schemas.token import TokenPayload
 from mariner.stores import user_sql
 from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
 from model_builder.optimizers import AdamOptimizer
-from tests.fixtures.dataset import setup_create_dataset, teardown_create_dataset
+from tests.fixtures.dataset import (
+    setup_create_dataset,
+    setup_create_dataset_db,
+    teardown_create_dataset,
+)
 from tests.fixtures.events import get_test_events, teardown_events
 from tests.fixtures.experiments import (
     mock_experiment,
     setup_experiments,
     teardown_experiments,
 )
-from tests.fixtures.model import setup_create_model, teardown_create_model
+from tests.fixtures.model import (
+    setup_create_model,
+    setup_create_model_db,
+    teardown_create_model,
+)
 from tests.fixtures.user import get_test_user
 from tests.utils.user import authentication_token_from_email, create_random_user
 from tests.utils.utils import random_lower_string
@@ -58,6 +69,16 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
 
 
 @pytest.fixture(scope="module")
+def normal_user_token_headers_payload(
+    normal_user_token_headers: Dict[str, str]
+) -> Dict[str, str]:
+    """Get the payload from the token"""
+    token = normal_user_token_headers["Authorization"].split(" ")[1]
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
+    return TokenPayload(**payload)
+
+
+@pytest.fixture(scope="module")
 def user_fixture(db: Session):
     return create_random_user(db)
 
@@ -75,7 +96,7 @@ def randomuser_token_headers(
 def some_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):
-    ds = setup_create_dataset(db, client, normal_user_token_headers)
+    ds = setup_create_dataset_db(db)
     assert ds is not None
     yield ds
     teardown_create_dataset(db, ds)
@@ -97,10 +118,46 @@ def some_bio_dataset(
 @pytest.fixture(scope="module")
 def some_model(
     db: Session,
-    client: TestClient,
-    normal_user_token_headers: Dict[str, str],
     some_dataset: Dataset,
 ):
+    """Model fixture
+
+    Creates a fixture model for unit testing. Fails
+    database service is down
+
+    Args:
+        db: database connection
+        client: fastapi http client
+        normal_user_token_headers: authenticated headers
+        some_dataset: dataset to be used on model
+    """
+    model = setup_create_model_db(
+        db=db,
+        dataset=some_dataset,
+        model_type="regressor",
+    )
+    yield model
+    teardown_create_model(db, model, skip_mlflow=True)
+
+
+@pytest.fixture(scope="module")
+def some_model_integration(
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_dataset: Dataset,
+):
+    """Model fixture
+
+    Creates a fixture model using running services. Fails
+    if mlflow, ray or database services are down
+
+    Args:
+        db: database connection
+        client: fastapi http client
+        normal_user_token_headers: authenticated headers
+        some_dataset: dataset to be used on model
+    """
     model = setup_create_model(
         client,
         normal_user_token_headers,

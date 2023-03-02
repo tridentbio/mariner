@@ -1,6 +1,10 @@
 version: "3.4"
 services:
   backend:
+    depends_on:
+      - db
+      - mlflow
+      - ray-worker
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}

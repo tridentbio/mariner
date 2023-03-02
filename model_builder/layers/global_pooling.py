@@ -1,4 +1,8 @@
-# https://github.com/pyg-team/pytorch_geometric/commit/be97c5bb8c7485fbedc8bad9607aa601694ce0d2#diff-e90cb8ecd22db3edf831e1e95045231fe3277e6c32bf1af94694f5414a73d199
+"""
+Global pooling layer defition
+
+Based on <https://github.com/pyg-team/pytorch_geometric/commit/be97c5bb8c7485fbedc8bad9607aa601694ce0d2#diff-e90cb8ecd22db3edf831e1e95045231fe3277e6c32bf1af94694f5414a73d199>
+"""
 from typing import List, Optional
 
 import torch

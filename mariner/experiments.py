@@ -1,6 +1,5 @@
 """
-Experiments controller. Responsible for exposing training
-functions working under the defined business rules.
+Experiments service
 """
 import asyncio
 import logging

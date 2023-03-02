@@ -1630,6 +1630,26 @@ websocket-client = ">=0.32.0"
 ssh = ["paramiko (>=2.4.3)"]
 
 [[package]]
+name = "docstr-coverage"
+version = "2.2.0"
+description = "Utility for examining python source files to ensure proper documentation. Lists missing docstrings, and calculates overall docstring coverage percentage rating."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "docstr-coverage-2.2.0.tar.gz", hash = "sha256:3487f3f09f7d2c45e2e67f0a3a6c1cc1960b6449e89f3e8eaca30c37e05eace2"},
+    {file = "docstr_coverage-2.2.0-py3-none-any.whl", hash = "sha256:13b21417fb6b743ac297495c4530687f78acecb9a61cfef7e3ec8f00938e574d"},
+]
+
+[package.dependencies]
+click = "*"
+PyYAML = "*"
+
+[package.extras]
+lint = ["black (==21.5b2)", "flake8 (==3.9.2)", "isort (==5.9.0)"]
+test = ["pytest (==6.2.5)", "pytest-mock (==3.4.0)"]
+
+[[package]]
 name = "docutils"
 version = "0.19"
 description = "Docutils -- Python Documentation Utilities"
@@ -5479,6 +5499,22 @@ pytest = ">=6.1.0"
 testing = ["coverage (>=6.2)", "flaky (>=3.5.0)", "hypothesis (>=5.7.1)", "mypy (>=0.931)", "pytest-trio (>=0.7.0)"]
 
 [[package]]
+name = "pytest-dotenv"
+version = "0.5.2"
+description = "A py.test plugin that parses environment files before running tests"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytest-dotenv-0.5.2.tar.gz", hash = "sha256:2dc6c3ac6d8764c71c6d2804e902d0ff810fa19692e95fe138aefc9b1aa73732"},
+    {file = "pytest_dotenv-0.5.2-py3-none-any.whl", hash = "sha256:40a2cece120a213898afaa5407673f6bd924b1fa7eafce6bda0e8abffe2f710f"},
+]
+
+[package.dependencies]
+pytest = ">=5.0.0"
+python-dotenv = ">=0.9.1"
+
+[[package]]
 name = "pytest-timeout"
 version = "2.1.0"
 description = "pytest plugin to abort hanging tests"
@@ -7385,4 +7421,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "0d81c86bf49e21baedae3e831b048db65b8619576c6b13a58e5862f7e3aa2cf1"
+content-hash = "41712d1d9eaa95807708137cb2013917f76ff21ce98343adfe206f4395e191b9"

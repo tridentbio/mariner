@@ -14,6 +14,7 @@ HIV_DATASET_PATH = "tests/data/HIV.csv"
 DATASETS_TO_TEST = [ZINC_DATASET_PATH, HIV_DATASET_PATH]
 
 
+@pytest.mark.integration
 class TestDatasetTransforms:
     @pytest.mark.parametrize(
         "csvpath",

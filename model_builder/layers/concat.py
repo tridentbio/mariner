@@ -1,3 +1,6 @@
+"""
+Concat layer definition
+"""
 from typing import List
 
 import torch

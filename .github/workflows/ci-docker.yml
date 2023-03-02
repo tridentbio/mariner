@@ -1,0 +1,44 @@
+name: Continous Integration with Docker
+on:
+  pull_request:
+    branches: [ "develop", "releases/**" ]
+    types: [opened, synchronize]
+  workflow_dispatch:
+env:
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    AWS_REGION: us-east-1
+    AWS_MODELS_BUCKET: s3://dev-mariner-datasets
+    AWS_DATASETS: dev-mariner-datasets
+    GITHUB_CLIENT_ID: --
+    GITHUB_CLIENT_SECRET: --
+    COMPOSE_HTTP_TIMEOUT: 600
+jobs:
+  all-backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+    - name: Build main image
+      uses: docker/build-push-action@v2
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      with:
+          context: .
+          push: false
+          file: ./dockerfiles/Dockerfile.local
+          tags: mariner-slow-test:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+    - name: Start services
+      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
+    - name: Integration tests and get report
+      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'

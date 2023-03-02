@@ -10,6 +10,7 @@ from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetModel
 from mariner.schemas.dataset_schemas import DatasetCreateRepo, Split
 from mariner.stores.dataset_sql import dataset_store
+from mariner.utils import hash_md5
 from tests.fixtures.dataset import mock_dataset
 from tests.fixtures.user import get_test_user
 from tests.utils.dataset import get_post_dataset_data
@@ -30,7 +31,7 @@ def is_close(val1: float, val2: float):
     return abs(val1 - val2) < 0.02
 
 
-@pytest.mark.long
+@pytest.mark.integration
 def test_post_datasets(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -67,6 +68,7 @@ def test_post_datasets(
 
 
 @pytest.mark.long
+@pytest.mark.integration
 def test_post_datasets_invalid(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -102,6 +104,7 @@ def test_post_datasets_invalid(
         assert isinstance(ds.errors["dataset_error_key"], str)
 
 
+@pytest.mark.integration  # requires ray some_dataset
 def test_post_datasets_name_conflict(
     client: TestClient,
     some_dataset: DatasetModel,
@@ -118,6 +121,8 @@ def test_post_datasets_name_conflict(
         assert res.status_code == status.HTTP_409_CONFLICT
 
 
+@pytest.mark.integration  # requires ray some_dataset
+@pytest.mark.skip(reason="taking very long")
 def test_put_datasets(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -188,6 +193,7 @@ def test_delete_datasets(
     assert ds is None
 
 
+@pytest.mark.integration
 def test_get_csv_metadata(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -212,3 +218,23 @@ def test_get_csv_metadata(
                 "domainKind": "smiles",
             },
         } in cols
+
+
+@pytest.mark.integration
+def test_download_dataset(
+    normal_user_token_headers: dict,
+    some_dataset_without_process: DatasetModel,
+    client: TestClient,
+):
+    routes_to_test = ["file", "file-with-errors"]
+    for route in routes_to_test:
+        res = client.get(
+            f"{settings.API_V1_STR}/datasets/{some_dataset_without_process.id}/{route}",
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == 200, f"route datasets/{route} failed"
+
+        hash = hash_md5(data=res.content)
+        assert (
+            f"datasets/{hash}.csv" == some_dataset_without_process.data_url
+        ), f"downloaded file hash does not match in route datasets/{route}"

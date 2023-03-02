@@ -171,6 +171,28 @@ cat RELEASES.md | python -m app.changelog publish
 or from the docker compose
 
 ```bash
-docker-compose run backend python -m app.changelog --help
+docker-compose run backend python -m mariner.changelog --help
 cat RELEASES.md | docker-compose run backend python -m app.changelog publish
 ```
+
+## Troubleshooting
+
+- Got a: `OSError: libcublas.so.11: cannot open shared object file: No such file or directory`
+
+    **CPU** users:
+
+    1. Activate virtual env
+    ```
+    poetry shell
+    ```
+    2. Uninstall torch: 
+    ```
+    pip uninstall torch
+    ```
+    2. Reinstall torch with cpu extra deps: 
+    ```
+    pip install torch==1.13.0 --extra-index-url https://download.pytorch.org/whl/cpu
+    ```
+
+
+

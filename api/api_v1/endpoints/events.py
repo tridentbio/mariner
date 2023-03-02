@@ -1,3 +1,6 @@
+"""
+Handlers for api/v1/events* endpoints
+"""
 from typing import List
 
 from fastapi import APIRouter, Depends

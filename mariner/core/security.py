@@ -1,3 +1,6 @@
+"""
+Security service
+"""
 from datetime import datetime, timedelta
 from typing import Any, Optional, Union
 

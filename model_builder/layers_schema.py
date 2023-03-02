@@ -199,7 +199,7 @@ class ModelbuilderconcatConstructorArgs(BaseModel):
     Generated code
     """
 
-    dim: Optional[int] = None
+    dim: Optional[int] = 0
 
 
 class ModelbuilderconcatLayerConfig(CamelCaseModel):
@@ -351,7 +351,7 @@ class TorchlinearConstructorArgs(BaseModel):
 
     in_features: int
     out_features: int
-    bias: Optional[bool] = None
+    bias: Optional[bool] = True
 
 
 class TorchlinearLayerConfig(CamelCaseModel):
@@ -480,7 +480,7 @@ class TorchreluConstructorArgs(BaseModel):
     Generated code
     """
 
-    inplace: Optional[bool] = None
+    inplace: Optional[bool] = False
 
 
 class TorchreluLayerConfig(CamelCaseModel):
@@ -568,11 +568,11 @@ class TorchgeometricgcnconvConstructorArgs(BaseModel):
 
     in_channels: int
     out_channels: int
-    improved: Optional[bool] = None
-    cached: Optional[bool] = None
-    add_self_loops: Optional[bool] = None
-    normalize: Optional[bool] = None
-    bias: Optional[bool] = None
+    improved: Optional[bool] = False
+    cached: Optional[bool] = False
+    add_self_loops: Optional[bool] = True
+    normalize: Optional[bool] = True
+    bias: Optional[bool] = True
 
 
 class TorchgeometricgcnconvLayerConfig(CamelCaseModel):
@@ -657,9 +657,9 @@ class TorchembeddingConstructorArgs(BaseModel):
     embedding_dim: int
     padding_idx: Optional[Optional[int]] = None
     max_norm: Optional[Optional[float]] = None
-    norm_type: Optional[float] = None
-    scale_grad_by_freq: Optional[bool] = None
-    sparse: Optional[bool] = None
+    norm_type: Optional[float] = 2.0
+    scale_grad_by_freq: Optional[bool] = False
+    sparse: Optional[bool] = False
     _weight: Optional[Optional[torch.Tensor]] = None
 
 
@@ -750,12 +750,12 @@ class TorchtransformerencoderlayerConstructorArgs(BaseModel):
 
     d_model: int
     nhead: int
-    dim_feedforward: Optional[int] = None
-    dropout: Optional[float] = None
+    dim_feedforward: Optional[int] = 2048
+    dropout: Optional[float] = 0.1
     activation: Optional[Union[str, Callable[[torch.Tensor], torch.Tensor]]] = None
-    layer_norm_eps: Optional[float] = None
-    batch_first: Optional[bool] = None
-    norm_first: Optional[bool] = None
+    layer_norm_eps: Optional[float] = 1e-05
+    batch_first: Optional[bool] = False
+    norm_first: Optional[bool] = False
 
 
 class TorchtransformerencoderlayerLayerConfig(CamelCaseModel):

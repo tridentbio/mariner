@@ -1,3 +1,7 @@
+"""
+User data layer defining ways to read and write to the users collection
+"""
+
 from typing import Any, Dict, Optional, Union
 
 from sqlalchemy.orm import Session

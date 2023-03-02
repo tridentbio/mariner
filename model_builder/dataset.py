@@ -57,6 +57,16 @@ class Collater:
         return self.collate(batch)
 
     def collate(self, batch):  # Deprecated...
+        """Prepares batch for layers according to data type
+
+        Use __call__ instead
+
+        Args:
+            batch: input with batched data
+
+        Raises:
+            TypeError: When can't make a batch out of input
+        """
         # Get the first element to check data type
         elem = batch[0]
 

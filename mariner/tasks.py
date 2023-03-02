@@ -1,3 +1,10 @@
+"""
+Asynchronous tasks collections
+
+Current task manager options (:see get_manager):
+    - "experiment"
+    - "dataset"
+"""
 from asyncio.tasks import Task
 from ctypes import ArgumentError
 from typing import Any, Callable, Dict, List, Literal, Optional

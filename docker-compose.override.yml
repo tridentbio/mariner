@@ -1,6 +1,12 @@
 version: "3.3"
 services:
   backend:
+    # Basic services to run the backend. Placing it here so main docker-compose
+    # can be used along with multiple file applications
+    depends_on:
+      - db
+      - mlflow
+      - ray-worker
     volumes:
       - ./:/app:z
     environment:

@@ -1,3 +1,6 @@
+"""
+Handlers for api/v1/datasets* endpoints
+"""
 from typing import Any, List, Optional
 
 from fastapi.datastructures import UploadFile
@@ -6,6 +9,7 @@ from fastapi.param_functions import Depends, File, Form
 from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
 from starlette import status
+from starlette.responses import StreamingResponse
 
 import mariner.datasets as controller
 from api import deps
@@ -173,3 +177,45 @@ async def get_dataset_columns_metadata(file: UploadFile = File(None)):
     """Extracts column metadata for a given csv file"""
     metadata = await controller.parse_csv_headers(file)
     return metadata
+
+
+@router.get(
+    "/{dataset_id}/file",
+    response_class=StreamingResponse,
+    dependencies=[Depends(deps.get_current_active_user)],
+)
+def get_csv_file(
+    dataset_id: int,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db),
+) -> StreamingResponse:
+    """Get csv file for a given dataset id"""
+    try:
+        file = controller.get_csv_file(db, dataset_id, current_user, "original")
+        return StreamingResponse(file, media_type="text/csv")
+
+    except DatasetNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    except NotCreatorOwner:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@router.get(
+    "/{dataset_id}/file-with-errors",
+    response_class=StreamingResponse,
+    dependencies=[Depends(deps.get_current_active_user)],
+)
+def get_csv_file(
+    dataset_id: int,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db),
+) -> StreamingResponse:
+    """Get csv file for a given dataset id"""
+    try:
+        file = controller.get_csv_file(db, dataset_id, current_user, "error")
+        return StreamingResponse(file, media_type="text/csv")
+
+    except DatasetNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    except NotCreatorOwner:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

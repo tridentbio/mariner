@@ -1,3 +1,6 @@
+"""
+Useful functions when developing on a fresh database
+"""
 from sqlalchemy.orm import Session
 
 from mariner.core.security import get_password_hash

@@ -1,3 +1,6 @@
+"""
+User related DTOs
+"""
 from typing import Optional
 
 from humps import camel

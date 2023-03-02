@@ -70,9 +70,10 @@ async def test_get_experiments_ordered_by_createdAt_desceding(
 
 @pytest.mark.asyncio
 @pytest.mark.long
-async def test_create_model_training(db: Session, some_model: Model):
+@pytest.mark.integration
+async def test_create_model_training(db: Session, some_model_integration: Model):
     user = get_test_user(db)
-    version = some_model.versions[-1]
+    version = some_model_integration.versions[-1]
     request = TrainingRequest(
         model_version_id=version.id,
         epochs=1,

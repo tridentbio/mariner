@@ -1,10 +1,14 @@
+"""
+Dataset entity and core relations
+
+Core relations include: (1-N) ColumnMetadata describing set of columns
+"""
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import JSON, DateTime
 
-from mariner.core.aws import Bucket, download_file_as_dataframe
 from mariner.db.base_class import Base
 
 
@@ -45,5 +49,6 @@ class Dataset(Base):
     errors = Column(JSON, nullable=True)
 
     def get_dataframe(self):
+        from mariner.core.aws import Bucket, download_file_as_dataframe
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
         return df

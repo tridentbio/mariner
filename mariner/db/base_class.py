@@ -1,3 +1,6 @@
+"""
+Base class for entities mapping to table name
+"""
 from typing import Any
 
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
