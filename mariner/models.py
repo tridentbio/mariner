@@ -290,7 +290,7 @@ def get_model_options() -> ModelOptions:
         option = get_annotations_from_cls(class_path)
         option.type = type_
         option.component = summary
-        option.default_agrs = default_args
+        option.default_args = default_args
         return option
 
     for class_path in layer_types:

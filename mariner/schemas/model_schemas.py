@@ -171,7 +171,7 @@ class ComponentOption(ComponentAnnotation):
     """
 
     component: Union[LayersArgsType, FeaturizersArgsType]
-    default_agrs: Optional[Dict[str, Any]]
+    default_args: Optional[Dict[str, Any]]
 
 
 ModelOptions = List[ComponentOption]
