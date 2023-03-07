@@ -17,3 +17,7 @@ services:
   ray-worker:
     volumes:
       - ./:/app:z
+  webapp:
+    build:
+      context: ../mariner-webapp
+      dockerfile: ../mariner/dockerfiles/Dockerfile.webapp

@@ -159,9 +159,6 @@ services:
       - ray_net
 
   webapp:
-    build:
-      context: ../mariner-webapp
-      dockerfile: ../mariner/dockerfiles/Dockerfile.webapp
     networks:
       - ray_net
     ports:

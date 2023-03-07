@@ -1,6 +1,7 @@
 version: "3.4"
 services:
   backend:
+    image: tridentbio/mariner:latest
     depends_on:
       - db
       - mlflow
@@ -41,3 +42,5 @@ services:
     volumes: []
   mlflowdb:
     volumes: []
+  webapp:
+    image: mariner-webapp:latest
