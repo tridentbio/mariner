@@ -160,7 +160,7 @@ services:
 
   webapp:
     build:
-      context: ../mariner-webapp
+      context: ./mariner-webapp
       dockerfile: ./dockerfiles/Dockerfile.webapp
     networks:
       - ray_net
