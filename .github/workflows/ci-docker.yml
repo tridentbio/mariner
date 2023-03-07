@@ -50,8 +50,14 @@ jobs:
         #       cache-from: type=local,src=/tmp/.buildx-cache
         #       cache-to: type=local,dest=/tmp/.buildx-cache-new
     - name: Run E2E tests
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up cypress
+      run: |
+        cd mariner &&
+        docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up cypress
     - name: Start services
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
+      run: |
+        cd mariner &&
+        docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
     - name: Integration tests and get report
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
+      run: |
+        cd mariner &&
+        docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
