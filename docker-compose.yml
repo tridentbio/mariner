@@ -159,6 +159,7 @@ services:
       - ray_net
 
   webapp:
+    image: mariner-webapp:latest
     networks:
       - ray_net
     ports:
