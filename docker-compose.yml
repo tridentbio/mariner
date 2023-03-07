@@ -20,6 +20,7 @@ services:
       - "5432:5432"
     networks:
       - ray_net
+
   backend:
     image: 'image:latest'
     ports:
@@ -64,7 +65,6 @@ services:
     networks:
       - ray_net
 
-
   mlflow:
     depends_on:
       - mlflowdb
@@ -108,6 +108,7 @@ services:
     shm_size: 3g
     networks:
       - ray_net
+
   ray-worker:
     build:
       context: .
@@ -121,6 +122,7 @@ services:
     shm_size: 3g
     networks:
       - ray_net
+
   grafana:
     image: grafana/grafana:9.3.1
     container_name: grafana
@@ -155,6 +157,30 @@ services:
       - 9090:9090
     networks:
       - ray_net
+
+  webapp:
+    build:
+      context: ../mariner-webapp
+      dockerfile: ../mariner/dockerfiles/Dockerfile.webapp
+    networks:
+      - ray_net
+    ports:
+      - 3000:3000
+
+  cypress:
+    image: cypress/included:10.3.0
+    container_name: cypress
+    environment:
+      - CYPRESS_baseUrl=http://localhost:3000/
+    depends_on:
+      - backend
+      - webapp
+    working_dir: /e2e
+    user: node
+    volumes:
+      - ../mariner-webapp:/e2e:Z
+    network_mode: host 
+
 volumes:
   app-db-data:
   app-mlflow-data:
