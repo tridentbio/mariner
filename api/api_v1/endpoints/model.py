@@ -89,11 +89,10 @@ def get_model_options():
 
 
 class GetNameSuggestionResponse(ApiBaseModel):
-    """Payload for a name suggestion
+    """Payload for a name suggestion.
 
     Attributes:
-        name: the name suggested
-
+        name: the name suggested.
     """
 
     name: str

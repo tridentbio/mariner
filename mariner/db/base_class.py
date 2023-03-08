@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import as_declarative, declared_attr
 
 @as_declarative()
 class Base:
-    """Base class for mapping entities to SQL tables"""
+    """Base class for mapping entities to SQL tables."""
 
     id: Any
     __name__: str

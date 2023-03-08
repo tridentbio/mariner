@@ -49,7 +49,7 @@ def github_post(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
 
 class GithubAccessCode(BaseModel):
     """Model of an access code object from github, used to make requests
-    in behaf of a user
+    in behalf of a user.
     """
 
     access_token: str
@@ -60,7 +60,7 @@ class GithubAccessCode(BaseModel):
 # Complete payload:
 # https://docs.github.com/en/rest/users/users#get-the-authenticated-user
 class GithubUser(BaseModel):
-    """Models a github user"""
+    """Models a github user."""
 
     id: int
     login: str
@@ -72,7 +72,7 @@ class GithubUser(BaseModel):
 
 
 class GithubFailure(Exception):
-    """Exception raised when github returns an error"""
+    """Exception raised when github returns an error."""
 
     def __init__(self, message: str, response: requests.Response):
         super().__init__()

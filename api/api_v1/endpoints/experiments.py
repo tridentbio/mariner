@@ -51,7 +51,7 @@ def get_experiments_running_history(
 
 
 class MetricsUpdate(ApiBaseModel):
-    """Models the payload to update a metric from a running training"""
+    """Models the payload to update a metric from a running training."""
 
     type: str
     data: Any

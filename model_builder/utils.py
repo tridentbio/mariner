@@ -244,12 +244,11 @@ def get_ref_from_input(
 def collect_args(
     input_: DataInstance, args_dict: Dict[str, Any]
 ) -> Union[list, dict, Any]:
-    """
-    Takes a batch of DataInstance objects and a dictionary of arguments to retrieve
+    """Takes a batch of DataInstance objects and a dictionary of arguments to retrieve
     and returns a dictionary of resolved arguments.
 
     Each argument accessor_str may be a reference. In such case, the argument accessor_str must be
-    retrieved from `input`. Otherwise, it's raw accessor_str that can be returned as is
+    retrieved from `input`. Otherwise, it's raw accessor_str that can be returned as is.
     """
     result: Dict[str, Union[Any, str, None]] = {}
     for key, value in args_dict.items():
@@ -278,10 +277,10 @@ def collect_args(
 
 
 class CamelCaseModel(BaseModel):
-    """Specialize pydantic models to work with camel case when working with json"""
+    """Specialize pydantic models to work with camel case when working with json."""
 
     class Config:
-        """Configures the wrapper class to work as intended"""
+        """Configures the wrapper class to work as intended."""
 
         alias_generator = camel.case
         allow_population_by_field_name = True

@@ -316,11 +316,11 @@ class DatasetUpdate(ApiBaseModel):
 
 
 class DatasetUpdateInput(ApiBaseModel):
-    """Payload of a dataset update
+    """Payload of a dataset update.
 
 
     Attributes:
-        name: alters dataset name to this value
+        name: alters dataset name to this value.
         description: alters dataset's description to this value.
         split_column: alters dataset's split_column to this value.
         split_target: alters dataset's split_target to this value.

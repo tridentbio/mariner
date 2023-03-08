@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 
 class Token(BaseModel):
-    """Payload to return when an user successfully authenticates"""
+    """Payload to return when an user successfully authenticates."""
 
     access_token: str
     token_type: str

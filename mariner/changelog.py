@@ -26,14 +26,14 @@ ALLOWED_TYPES = ["Added", "Changed", "Security", "Removed", "Fixed", "Deprecated
 
 
 class ReleaseChange(BaseModel):
-    """Models change of a release"""
+    """Models change of a release."""
 
     type: Literal["Added", "Changed", "Removed", "Deprecated", "Fixed", "Security"]
     message: str
 
 
 class Release(BaseModel):
-    """Models a release parsed from RELEASES.md"""
+    """Models a release parsed from RELEASES.md file."""
 
     version: str
     date: datetime.date

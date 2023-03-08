@@ -15,13 +15,13 @@ from mariner.stores.event_sql import EventCreateRepo, event_store
 
 
 class EventsbySource(ApiBaseModel):
-    """Generic event that is produced by interacting with the application
+    """Generic event that is produced by interacting with the application.
 
     Attributes:
-        source: specifies kind of event
-        total: number of events of that kind
-        message: description of the grouped events
-        events: detailed events of kind ``source`` that were grouped
+        source: specifies kind of event.
+        total: number of events of that kind.
+        message: description of the grouped events.
+        events: detailed events of kind ``source`` that were grouped.
     """
 
     source: EventSource
@@ -64,7 +64,7 @@ def get_events_from_user(db: Session, user: UserEntity):
 
 def set_events_read(db: Session, user: UserEntity, event_ids: List[int]) -> int:
     """Sets the read flag on the notifications.
-    Returns a list of succesfully updated events"""
+    Returns a list of successfully updated events"""
     events = [
         event for event in event_store.get_to_user(db, user.id) if event.id in event_ids
     ]

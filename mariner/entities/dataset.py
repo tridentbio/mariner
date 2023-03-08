@@ -13,7 +13,7 @@ from mariner.db.base_class import Base
 
 
 class ColumnsMetadata(Base):
-    """Entity mapping column information provided by user during dataset creation"""
+    """Entity mapping column information provided by user during dataset creation."""
 
     data_type = Column(JSON, nullable=False)
     description = Column(String, nullable=True)
@@ -28,7 +28,7 @@ class ColumnsMetadata(Base):
 
 
 class Dataset(Base):
-    """Entity mapping to dataset created by users"""
+    """Entity mapping to dataset created by users."""
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, unique=True)

@@ -21,7 +21,7 @@ def make_list_from_array_string(v: Union[str, list[str]]):
 # Make settings be the aggregation of several settings
 # Possibly using multi-inheritance
 class Settings(BaseSettings):
-    """Models the environment variables used around the application"""
+    """Models the environment variables used around the application."""
 
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str
 
     class Config:
-    """Configure the environment variable model to be case sensitive"""
+    """Configure the environment variable model to be case sensitive."""
         # env_file = str(path.join('..', '.env.local'))
         # env_file_encoding = 'utf-8'
         case_sensitive = True

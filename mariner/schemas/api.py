@@ -18,7 +18,7 @@ class ApiBaseModel(BaseModel):
     """
 
     class Config:
-        """Configures pydantic behaviour to work as intended"""
+        """Configures pydantic behaviour to work as intended."""
 
         alias_generator = camel.case
         allow_population_by_field_name = True
@@ -35,14 +35,14 @@ DataT = TypeVar("DataT")
 
 
 class Paginated(GenericModel, Generic[DataT]):
-    """Models a generic paginated payload data"""
+    """Models a generic paginated payload data."""
 
     data: List[DataT]
     total: int
 
 
 class PaginatedApiQuery(ApiBaseModel):
-    """Models a paginated query of a resource"""
+    """Models a paginated query of a resource."""
 
     page: int = 0
     per_page: int = 15
@@ -50,7 +50,7 @@ class PaginatedApiQuery(ApiBaseModel):
 
 class utc_datetime(datetime):
     """Class converts datetime field to utc format to let the client
-    display a localized version of the same timestamp"""
+    display a localized version of the same timestamp."""
 
     @classmethod
     def __get_validators__(cls):
@@ -69,14 +69,14 @@ class utc_datetime(datetime):
 
 
 class OrderByClause(ApiBaseModel):
-    """Class to model an ordering over a query"""
+    """Class to model an ordering over a query."""
 
     field: str
     order: Literal["asc", "desc"]
 
 
 class OrderByQuery(ApiBaseModel):
-    """Models a complex sorting on multiple columns"""
+    """Models a complex sorting on multiple columns."""
 
     clauses: List[OrderByClause]
 
@@ -99,14 +99,14 @@ def get_order_by_query(
     )
 ):
     """Maps the order_by query string into pydantic model describing the
-    requested order
+    requested order.
 
     Splits the querystring by comma and maps elements to ordering clause
-    :class:`OrderByQuery`
+    :class:`OrderByQuery`.
 
-    Args:
+    Attributes:
         order_by: string to be parsed (gotten by fastapi from the request's
-                                       querystring order_by or orderBy)
+                                       querystring order_by or ``orderBy``.
     """
     if not isinstance(order_by, str):
         return None

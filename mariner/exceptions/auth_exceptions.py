@@ -4,13 +4,13 @@ Authentication related exceptions
 
 
 class InvalidOAuthState(Exception):
-    """Exception raised when there is an error during OAuth authentication"""
+    """Exception raised when there is an error during oauth authentication."""
 
     pass
 
 
 class InvalidGithubCode(Exception):
     """Exception raised when the github token from the request is invalid
-    i.e. it didn't came from github"""
+    i.e. it didn't came from github."""
 
     pass
