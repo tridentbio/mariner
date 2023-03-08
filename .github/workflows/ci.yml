@@ -113,7 +113,7 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         . .venv/bin/activate
-        python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' }}
+        python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' || '' }}
 
 
     # Unit test coverage check
