@@ -19,6 +19,8 @@ from mariner.stores.base_sql import CRUDBase
 
 
 class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
+    """Data layer operators on the models collection"""
+
     def get_by_name(self, db: Session, name: str, user_id: int) -> Model:
         return (
             db.query(Model)

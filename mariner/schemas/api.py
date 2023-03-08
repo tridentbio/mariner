@@ -13,7 +13,13 @@ from pydantic.main import BaseModel
 
 
 class ApiBaseModel(BaseModel):
+    """Configures all payloads inputs and outputs of the domain layer
+    to be convertible to and from camelCase.
+    """
+
     class Config:
+        """Configures pydantic behaviour to work as intended"""
+
         alias_generator = camel.case
         allow_population_by_field_name = True
         allow_population_by_alias = True
@@ -29,16 +35,23 @@ DataT = TypeVar("DataT")
 
 
 class Paginated(GenericModel, Generic[DataT]):
+    """Models a generic paginated payload data"""
+
     data: List[DataT]
     total: int
 
 
 class PaginatedApiQuery(ApiBaseModel):
+    """Models a paginated query of a resource"""
+
     page: int = 0
     per_page: int = 15
 
 
 class utc_datetime(datetime):
+    """Class converts datetime field to utc format to let the client
+    display a localized version of the same timestamp"""
+
     @classmethod
     def __get_validators__(cls):
         yield parse_datetime
@@ -56,11 +69,15 @@ class utc_datetime(datetime):
 
 
 class OrderByClause(ApiBaseModel):
+    """Class to model an ordering over a query"""
+
     field: str
     order: Literal["asc", "desc"]
 
 
 class OrderByQuery(ApiBaseModel):
+    """Models a complex sorting on multiple columns"""
+
     clauses: List[OrderByClause]
 
 

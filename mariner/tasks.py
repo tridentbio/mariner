@@ -118,7 +118,20 @@ class AbstractManager:
 
 
 # TODO - adapt following TaskManager and View to use Abstracts
+# TODO - During high traffic, this may cause memory issues because of running_history
+# being stored in memory
 class ExperimentView:
+    """Asynchronous task wrapper stored in-memory
+
+    Attributes:
+        experiment_id: id of the experiment that originated object
+        user_id: id of the user the created the experiment
+        task: asynchronous task pointer to be used to interact with the task result
+            as a promise
+        running_history: aggregation of metrics to be send over websockets to the user
+            and compute progress
+    """
+
     def __init__(self, experiment_id: int, user_id: int, task: Task):
         self.experiment_id = experiment_id
         self.user_id = user_id
@@ -126,7 +139,11 @@ class ExperimentView:
         self.running_history = {}
 
 
+# TODO - Enforce singleton pattern on class,
+# (https://refactoring.guru/design-patterns/singleton/python/example)
 class ExperimentManager:
+    """Singleton to handle the operations on the collections of async tasks"""
+
     def __init__(self):
         self.experiments: Dict[int, ExperimentView] = {}
 

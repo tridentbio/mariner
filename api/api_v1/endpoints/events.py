@@ -23,10 +23,21 @@ def get_events_report(
 
 
 class EventsReadResponse(ApiBaseModel):
+    """Models response of a command that marks events as read.
+
+    Attributes:
+        total: number of events updated.
+    """
+
     total: int
 
 
 class ReadRequest(ApiBaseModel):
+    """Models a request to mark events as read.
+
+    Attributes:
+        event_ids: ids of events to mark as read."""
+
     event_ids: List[int]
 
 

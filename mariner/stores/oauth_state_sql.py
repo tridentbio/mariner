@@ -13,6 +13,8 @@ from mariner.stores.base_sql import CRUDBase
 
 
 class CRUDOAuthState(CRUDBase[OAuthState, Any, Any]):
+    """Data layer operations on the collection of oauth state keys"""
+
     def create_state(self, db: Session, provider: str):
         state = OAuthState(state=os.urandom(16).hex(), provider=provider)
 

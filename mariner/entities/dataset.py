@@ -13,6 +13,8 @@ from mariner.db.base_class import Base
 
 
 class ColumnsMetadata(Base):
+    """Entity mapping column information provided by user during dataset creation"""
+
     data_type = Column(JSON, nullable=False)
     description = Column(String, nullable=True)
     pattern = Column(String, primary_key=True)
@@ -26,6 +28,8 @@ class ColumnsMetadata(Base):
 
 
 class Dataset(Base):
+    """Entity mapping to dataset created by users"""
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, unique=True)
     description = Column(String)
@@ -50,5 +54,6 @@ class Dataset(Base):
 
     def get_dataframe(self):
         from mariner.core.aws import Bucket, download_file_as_dataframe
+
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
         return df

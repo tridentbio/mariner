@@ -61,11 +61,15 @@ def get_user(db: Session, user_id: int, current_user: UserEntity) -> User:
 
 
 class BasicAuth(BaseModel):
+    """Payload for basic authentication request"""
+
     username: str
     password: str
 
 
 class GithubAuth(BaseModel):
+    """Payload for oauth authentication with github as a provider"""
+
     code: str
     state: str
 

@@ -12,6 +12,8 @@ from mariner.schemas.api import ApiBaseModel
 
 
 class Unit(ApiBaseModel):
+    """Models a unit that can be displayed on markup or text"""
+
     name: str
     latex: str
 

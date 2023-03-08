@@ -15,6 +15,15 @@ from mariner.stores.event_sql import EventCreateRepo, event_store
 
 
 class EventsbySource(ApiBaseModel):
+    """Generic event that is produced by interacting with the application
+
+    Attributes:
+        source: specifies kind of event
+        total: number of events of that kind
+        message: description of the grouped events
+        events: detailed events of kind ``source`` that were grouped
+    """
+
     source: EventSource
     total: int
     message: str

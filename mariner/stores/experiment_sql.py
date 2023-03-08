@@ -15,6 +15,8 @@ from mariner.stores.base_sql import CRUDBase
 
 
 class ExperimentCreateRepo(pydantic.BaseModel):
+    """Payload to record an experiment in experiments collection."""
+
     mlflow_id: str
     model_version_id: int
     created_by_id: int
@@ -31,6 +33,8 @@ class ExperimentCreateRepo(pydantic.BaseModel):
 
 
 class ExperimentUpdateRepo(pydantic.BaseModel):
+    """Payload to update an experiment in experiments collection."""
+
     stage: Optional[
         Literal["NOT RUNNING", "STARTED", "RUNNING", "ERROR", "SUCCESS"]
     ] = None
@@ -44,6 +48,8 @@ class ExperimentUpdateRepo(pydantic.BaseModel):
 
 
 class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdateRepo]):
+    """Data layer access on the experiments collection."""
+
     def filter_by_model_id(self, query: Query, id: int) -> Query:
         return query.join(Experiment.model_version).filter(ModelVersion.model_id == id)
 

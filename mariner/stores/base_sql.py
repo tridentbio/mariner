@@ -1,5 +1,5 @@
 """
-Base class and types for SQL persistance with sqlalchemy
+Base class and types for SQL persistence with sqlalchemy
 """
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
@@ -15,6 +15,8 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
 class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    """Base class for all repositories with generic SQL queries implementation"""
+
     def __init__(self, model: Type[ModelType]):
         """
         CRUD object with default methods to Create, Read, Update, Delete (CRUD).

@@ -23,9 +23,9 @@ class DataInstance(BaseStorage):
     For information about the methods see:
     https://docs.python.org/3/reference/datamodel.html
 
-    Args:
+    Arguments:
         y (Any): The target value for that instance.
-        **kwargs: Any arg passed via kwargs will become an
+        **kwargs: Any argument passed via kwargs will become an
             attribute of the instance.
 
     Example:
@@ -75,8 +75,8 @@ def size_repr(key: Any, value: Any, indent: int = 0) -> str:
     """Creates a string representation varying according to
     the passed data structure.
 
-    Args:
-        key (Any): Store key to be used to create the repr.
+    Arguments:
+        key (Any): Store key to display in ``repr``.
         value (Any): Store value used to represent the data.
         indent (int, optional): Level of indentations used if
             necessary. Defaults to 0.
@@ -136,7 +136,7 @@ def split_module_export(classpath: str) -> tuple[str, str]:
 def get_class_from_path_string(pathstring: str) -> type:
     """Dynamically import a class from a string path.
 
-    Args:
+    Arguments:
         pathstring (str): String path to the class.
 
     Returns:
@@ -190,25 +190,25 @@ def get_references_dict(
     return result
 
 
-def get_ref_from_data_instance(acessor_str: str, input: DataInstance):
+def get_ref_from_data_instance(accessor_str: str, input: DataInstance):
     """Get's the value of a DataInstance
 
     Used by model builder to interpret the forward_args.
-    When ``acessor_str`` contains '.', it's value  is splitted on
-    the first occurence, e.g:
+    When ``accessor_str`` contains '.', it's value  is splitted on
+    the first occurrence, e.g:
         - ``"foo.a.b.c"`` is splitted to ``["foo", "a.b.c"]``
     The first string of the tuple is used as a key of the ``input`` and
     the last one is used to access a possibly nested attribute in the value
     found in ``input``.
 
-    Args:
+    Arguments:
         accessor_str: string representing attribute to get, e.g. "mol_featurizer.x", "mwt"
         input: data instance with collected layer/featurizer outputs, inputs
     and outputs
     """
     attribute, attribute_accessors = (
-        acessor_str.split(".")[0],
-        acessor_str.split(".")[1:],
+        accessor_str.split(".")[0],
+        accessor_str.split(".")[1:],
     )
     if attribute == "input":
         return input["".join(attribute_accessors)]  # $inputs.x is accessed as data['x']
@@ -222,34 +222,34 @@ def get_ref_from_data_instance(acessor_str: str, input: DataInstance):
 
 
 def get_ref_from_input(
-    acessor_str: str, input: Union[DataInstance, List[DataInstance]]
+    accessor_str: str, input: Union[DataInstance, List[DataInstance]]
 ):
-    """Get's the acessor_str of a DataInstance or a batch of DataInstances
+    """Get's the accessor_str of a DataInstance or a batch of DataInstance's
 
 
-    Args:
-        acessor_str: string represented acessor_str to get, e.g. "mol_featurizer.x", "mwt".
+    Arguments:
+        accessor_str: string represented accessor_str to get, e.g. "mol_featurizer.x", "mwt".
         input(Union[DataInstance, List[DataInstance]):
     """
     if isinstance(input, list):
-        values = [get_ref_from_data_instance(acessor_str, item) for item in input]
+        values = [get_ref_from_data_instance(accessor_str, item) for item in input]
         assert len(values) > 0, "failed to get values from input"
         if isinstance(values[0], torch.Tensor):
             return torch.cat(values)  # type: ignore
 
     else:
-        return get_ref_from_data_instance(acessor_str, input)
+        return get_ref_from_data_instance(accessor_str, input)
 
 
 def collect_args(
     input_: DataInstance, args_dict: Dict[str, Any]
 ) -> Union[list, dict, Any]:
     """
-    Takes a batch of DataInstance objects and a dictionary of args to retrieve
+    Takes a batch of DataInstance objects and a dictionary of arguments to retrieve
     and returns a dictionary of resolved arguments.
 
-    Each arg acessor_str may be a reference. In such case, the arg acessor_str must be
-    retrieved from `input`. Otherwise, it's raw acessor_str that can be returned as is
+    Each argument accessor_str may be a reference. In such case, the argument accessor_str must be
+    retrieved from `input`. Otherwise, it's raw accessor_str that can be returned as is
     """
     result: Dict[str, Union[Any, str, None]] = {}
     for key, value in args_dict.items():
@@ -278,7 +278,11 @@ def collect_args(
 
 
 class CamelCaseModel(BaseModel):
+    """Specialize pydantic models to work with camel case when working with json"""
+
     class Config:
+        """Configures the wrapper class to work as intended"""
+
         alias_generator = camel.case
         allow_population_by_field_name = True
         allow_population_by_alias = True

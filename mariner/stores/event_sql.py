@@ -13,6 +13,8 @@ from mariner.stores.base_sql import CRUDBase
 
 
 class EventCreateRepo(BaseModel):
+    """Payload for inserting an event to the events collection"""
+
     source: Literal["training:completed"]
     user_id: Optional[int]
     timestamp: datetime
@@ -20,11 +22,9 @@ class EventCreateRepo(BaseModel):
     url: Optional[str]
 
 
-class EventUpdateRepo(BaseModel):
-    pass
+class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, None]):
+    """Data layer operators on the events collection"""
 
-
-class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, EventUpdateRepo]):
     def _is_event_to_user(self, query: Query, user_id: int):
         return query.filter(
             or_(EventEntity.user_id.is_(None), EventEntity.user_id == user_id)
