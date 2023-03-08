@@ -242,7 +242,30 @@ class CustomModel(LightningModule):
         metrics_dict = {
             "train_loss": loss,
         } | self.metrics.get_training_metrics(prediction, batch)
-        self.log_dict(
+        self.log_gdict(
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
         )
         return loss
+    
+    @property
+    def is_multilabel():
+        # TODO implement this property
+        return False
+    
+    def predict_step(self, batch, batch_idx):
+        '''
+        Runs the forward pass using self.forward, then, for
+        classifier models, normalizes the predictions using a
+        non-linearity like sigmoid or softmax.
+        '''
+        predictions = self(batch).squeeze()
+    
+        # Apply non-linearity for classifier models
+        if self.config.is_classifier():
+            num_classes = len(self.config.dataset.target_column.data_type.classes.values())
+            if num_classes == 2 or self.is_multilabel:  # binary or multi-label classification
+                predictions = torch.sigmoid(predictions)
+            else:  # multi-class classification
+                predictions = torch.softmax(predictions, dim=-1)
+            
+        return predictions
