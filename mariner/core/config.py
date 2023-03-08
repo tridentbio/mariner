@@ -1,7 +1,7 @@
 """
 Configuration for running environment variables.
 
-Shared between api and mariner, on ray and backend instances
+Shared between API and mariner, on ray and backend instances
 Sometimes cause the application to fail when missing an ENV VAR
 """
 import secrets
@@ -80,9 +80,8 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str
 
     class Config:
-    """Configure the environment variable model to be case sensitive."""
-        # env_file = str(path.join('..', '.env.local'))
-        # env_file_encoding = 'utf-8'
+        """Configure the environment variable model to be case sensitive."""
+
         case_sensitive = True
 
 

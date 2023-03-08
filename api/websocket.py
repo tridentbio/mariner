@@ -25,7 +25,7 @@ class WebSocketMessage(ApiBaseModel):
     data: Any
 
 
-def _is_closed(ws: WebSocket) -> bool:.
+def _is_closed(ws: WebSocket) -> bool:
     """Checks if the websocket is closed.
 
     Arguments:

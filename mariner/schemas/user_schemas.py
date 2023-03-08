@@ -7,6 +7,8 @@ from humps import camel
 from pydantic import EmailStr
 from pydantic.main import BaseModel
 
+from mariner.schemas.api import ApiBaseModel
+
 
 # Shared properties
 class UserBase(ApiBaseModel):
