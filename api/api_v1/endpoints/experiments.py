@@ -28,6 +28,16 @@ async def post_experiments(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Experiment:
+    """Endpoint to create a new training experiment.
+
+    Args:
+        request: The payload describing the training experiment.
+        db: Connection to the database.
+        current_user: User that originated the request.
+
+    Returns:
+        Created experiment.
+    """
     result = await experiments_ctl.create_model_traning(db, current_user, request)
     return result
 
@@ -38,6 +48,16 @@ def get_experiments(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Paginated[Experiment]:
+    """Gets a user's experiments.
+
+    Args:
+        experiments_query: Query to specify which experiments to search.
+        db: Connection to the database.
+        current_user: User that originated the request.
+
+    Returns:
+        A paginated view of the experiments queried.
+    """
     data, total = experiments_ctl.get_experiments(db, current_user, experiments_query)
     return Paginated(data=data, total=total)
 
@@ -46,6 +66,14 @@ def get_experiments(
 def get_experiments_running_history(
     user: User = Depends(deps.get_current_active_user),
 ) -> List[RunningHistory]:
+    """Gets an experiment history of metrics.
+
+    Args:
+        user: User that originated request.
+
+    Returns:
+        List with the history of metrics for all experiments from user.
+    """
     histories = experiments_ctl.get_running_histories(user)
     return histories
 
@@ -68,6 +96,17 @@ class MetricsUpdate(ApiBaseModel):
 async def post_update_metrics(
     parsed_msg: MetricsUpdate, db: Session = Depends(deps.get_db)
 ):
+    """Updates experiment with metrics of a step.
+
+    Function used by custom logger to remotely log metrics.
+
+    Args:
+        parsed_msg: The payload with metrics.
+        db: Connection with database.
+
+    Raises:
+        ValueError: when the type of parsed_msg is unhandled.
+    """
     msgtype = parsed_msg.type
     data = parsed_msg.data
     experiment_id = parsed_msg.experiment_id
@@ -104,7 +143,7 @@ async def post_update_metrics(
             hyperparams=data,
         )
     else:
-        raise Exception(f"Failed msg type {msgtype}")
+        raise ValueError(f"Failed msg type {msgtype}")
     return "ok"
 
 
@@ -114,7 +153,7 @@ async def post_update_metrics(
     response_model=List[experiments_ctl.MonitorableMetric],
 )
 def get_experiments_metrics():
-    """Get's monitorable metrics to configure early stopping and checkpoint monitoring"""
+    """Gets monitorable metrics to configure early stopping and checkpoint monitoring"""
     return experiments_ctl.get_metrics_for_monitoring()
 
 
@@ -124,4 +163,5 @@ def get_experiments_metrics():
     response_model=List[OptimizerSchema],
 )
 def get_training_experiment_optimizers():
+    """Gets the options for experiment optimizers."""
     return experiments_ctl.get_optimizer_options()

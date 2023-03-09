@@ -64,6 +64,16 @@ class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, None]):
         return query.all()
 
     def update_read(self, db: Session, dbobjs: List[EventEntity], user_id: int) -> int:
+        """Updates a list of events setting it's read state to true.
+
+        Args:
+            db: Connection to the database.
+            dbobjs: Objects to be updated to read state.
+            user_id: If of the user that read the events.
+
+        Returns:
+            Number of events updated.
+        """
         event_ids = [dbobj.id for dbobj in dbobjs]
         reads = (
             db.query(EventReadEntity)
@@ -86,6 +96,12 @@ class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, None]):
         return updated
 
     def get(self, db: Session, from_source: Optional[EventSource] = None):
+        """Gets events from specific source, or all.
+
+        Args:
+            db: Connection to database.
+            from_source: The event kind identifier to filter the events by.
+        """
         query = db.query(EventEntity)
         if from_source:
             query = query.filter(EventEntity.source == from_source)

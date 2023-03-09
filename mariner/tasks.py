@@ -147,12 +147,19 @@ class ExperimentManager:
     def __init__(self):
         self.experiments: Dict[int, ExperimentView] = {}
 
-    def handle_finish(
+    def _handle_finish(
         self,
         task: Task,
         experiment_id: int,
         done_callback: Optional[Callable[[Task, int], Any]],
     ):
+        """Function called when an asynchronous task finishes.
+
+        Args:
+            task: The asynchronous task
+            experiment_id: The id of the experiment that originated the task
+            done_callback: The function that should be called when task is over
+        """
         if done_callback:
             done_callback(task, experiment_id)
         self.experiments.pop(experiment_id)
@@ -162,26 +169,56 @@ class ExperimentManager:
         experiment: ExperimentView,
         done_callback: Optional[Callable[[Task, int], Any]] = None,
     ):
+        """Adds a task and it's related data to a dictionary.
+
+        Args:
+            experiment: the view of the experiment including the asynchronous training task.
+            done_callback: A function to be called when the experiment task promise resolves.
+
+        Raises:
+            ArgumentError: When the experiment is already in memory of this instance
+        """
         experiment_id = experiment.experiment_id
         task = experiment.task
         if experiment_id in self.experiments:
             raise ArgumentError("experiment_id already has a task")
         self.experiments[experiment_id] = experiment
         task.add_done_callback(
-            lambda task: self.handle_finish(task, experiment_id, done_callback)
+            lambda task: self._handle_finish(task, experiment_id, done_callback)
         )
 
     def get_running_history(self, experiment_id: int):
+        """Gets the array of metrics logged during the training.
+
+        Args:
+            experiment_id: id of the experiment.
+        """
         if experiment_id in self.experiments:
             return self.experiments[experiment_id].running_history
 
     def get_from_user(self, user_id: int):
+        """Gets all tasks from the user with id equals user_id.
+
+        Args:
+            user_id: Id of the user.
+
+        Returns:
+            List of ExperimentView belonging to user.
+        """
         experiments = [
             exp for exp in self.experiments.values() if exp.user_id == user_id
         ]
         return experiments
 
     def get_task(self, experiemnt_id: int):
+        """Gets the asynchronous task from an experiment_id
+
+        Args:
+            experiment_id: Id of the experiment.
+
+        Returns:
+            asyncio.Task running the training task.
+        """
         if experiemnt_id in self.experiments:
             return self.experiments[experiemnt_id].task
 
@@ -190,6 +227,10 @@ _task_manager: Optional[ExperimentManager] = None
 
 
 def get_exp_manager():
+    """Get's the global experiment manager.
+
+    It's the correct way of accessing the manager.
+    """
     global _task_manager
     if not _task_manager:
         _task_manager = ExperimentManager()

@@ -84,6 +84,11 @@ class ConnectionManager:
         await self.active_connections[user_id].send_text(message.json(by_alias=True))
 
     async def broadcast(self, message: str):
+        """Sends message to all active connections.
+
+        Args:
+            message: message to send.
+        """
         for connection in self.active_connections.values():
             await connection.send_text(message)
 

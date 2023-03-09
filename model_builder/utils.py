@@ -176,6 +176,16 @@ def unwrap_dollar(value: str) -> tuple[str, bool]:
 def get_references_dict(
     forward_args_dict: dict[str, Any]
 ) -> dict[str, Union[str, list[str]]]:
+    """Gets a dictionary with the same shape of forward_args_dict
+    but with all string values representing reference mapped to the
+    reference name.
+
+    Args:
+        forward_args_dict: dict with forward arguments input.
+
+    Returns:
+        dictionary mapping forward argument keys to schema references.
+    """
 
     # Init a dict
     result: dict[str, Union[str, list[str]]] = {}
@@ -200,7 +210,7 @@ def get_references_dict(
 
 
 def get_ref_from_data_instance(accessor_str: str, input: DataInstance):
-    """Get's the value of a DataInstance
+    """Gets the value of a DataInstance
 
     Used by model builder to interpret the forward_args.
     When ``accessor_str`` contains '.', it's value  is splitted on
@@ -233,7 +243,7 @@ def get_ref_from_data_instance(accessor_str: str, input: DataInstance):
 def get_ref_from_input(
     accessor_str: str, input: Union[DataInstance, List[DataInstance]]
 ):
-    """Get's the accessor_str of a DataInstance or a batch of DataInstance's
+    """Gets the accessor_str of a DataInstance or a batch of DataInstance's
 
 
     Args:

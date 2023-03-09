@@ -72,24 +72,24 @@ class Split(str):
 
     @classmethod
     def __get_validators__(cls):
-        yield cls.validate
+        yield cls._validate
 
     @classmethod
     def _modify_schema__(cls, field_schema):
         field_schema.update(examples=["60-20-20", "70-20-10"])
 
     @classmethod
-    def build(
+    def _build(
         cls, *, train_percents: int, test_percents: int, val_percents: int
     ) -> str:
         return f"{train_percents}-{test_percents}-{val_percents}"
 
     @no_type_check
     def __new__(cls, url: Optional[str], **kwargs) -> object:
-        return str.__new__(cls, cls.build(**kwargs) if url is None else url)
+        return str.__new__(cls, cls._build(**kwargs) if url is None else url)
 
     @classmethod
-    def validate(cls, v):
+    def _validate(cls, v):
         try:
             splits = [int(s) for s in v.split("-")]
             total = sum(splits)
@@ -213,10 +213,10 @@ class ColumnMetadataFromJSONStr(str):
 
     @classmethod
     def __get_validators__(cls):
-        yield cls.validate
+        yield cls._validate
 
     @classmethod
-    def validate(cls, v):
+    def _validate(cls, v):
         try:
             encoded = json.loads(v)
             assert isinstance(encoded, list), "should be array"
@@ -295,6 +295,11 @@ class Dataset(DatasetBase):
     id: int
 
     def get_dataframe(self):
+        """Loads the dataframe linked to this dataset from s3.
+
+        Gets dataframe stored in this dataset data_url attribute at
+        datasets bucket.
+        """
         assert self.data_url
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
         return df

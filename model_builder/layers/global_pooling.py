@@ -110,6 +110,15 @@ class GlobalPooling(torch.nn.Module):
     def forward(
         self, x: Tensor, batch: Optional[Tensor] = None, size: Optional[int] = None
     ) -> Tensor:
+        """Forward function for global pooling on graph data.
+        Args:
+            x: Node features.
+            batch: Tensor with batch index for each graph.
+            size:
+
+        Returns:
+            Tensor resulted from the pooling.
+        """
         xs: List[Tensor] = []
 
         for aggr in self.aggrs:

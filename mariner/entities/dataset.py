@@ -53,6 +53,11 @@ class Dataset(Base):
     errors = Column(JSON, nullable=True)
 
     def get_dataframe(self):
+        """Loads the dataframe linked to this dataset from s3.
+
+        Gets dataframe stored in this dataset data_url attribute at
+        datasets bucket.
+        """
         from mariner.core.aws import Bucket, download_file_as_dataframe
 
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)

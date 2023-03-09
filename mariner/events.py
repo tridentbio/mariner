@@ -31,6 +31,18 @@ class EventsbySource(ApiBaseModel):
 
 
 def build_message(source: EventSource, events: List[EventEntity]) -> str:
+    """Creates a generic English message to summarize all events
+
+    Args:
+        source: the kind of all events
+        events: list of events
+
+    Returns:
+        English message for the user
+
+    Raises:
+        NotImplementedError: when the message is not handled for events of source
+    """
     if source == "training:completed":
         assert len(events) > 0, "events argument cannot be empty"
         last_event = events[-1]

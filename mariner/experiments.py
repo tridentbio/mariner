@@ -197,7 +197,7 @@ async def create_model_traning(
 def get_experiments(
     db: Session, user: UserEntity, query: ListExperimentsQuery
 ) -> tuple[List[Experiment], int]:
-    """Get's the experiments from ``user``
+    """Gets the experiments from ``user``
 
     Args:
         db: Session
@@ -298,7 +298,7 @@ def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]
 def get_running_histories(
     user: UserEntity, experiment_id: Optional[int] = None
 ) -> List[RunningHistory]:
-    """Get's metrics history from a users experiment that is running
+    """Gets metrics history from a users experiment that is running
 
     Gets the metrics from ingoing trainings that are persisted to the
     ``ExperimentManager`` singleton
@@ -390,7 +390,7 @@ class MonitorableMetric(ApiBaseModel):
 
 
 def get_metrics_for_monitoring() -> List[MonitorableMetric]:
-    """Get's options available for model checkpoint metric monitoring
+    """Gets options available for model checkpoint metric monitoring
 
     The real metric keys have the stage prefixed, e.g.: ``train_mse``, ``val_f1``
 

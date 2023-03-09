@@ -19,6 +19,12 @@ def get_events_report(
     db: Session = Depends(deps.get_db),
     user: User = Depends(deps.get_current_active_user),
 ):
+    """Endpoint to get user unread notifications.
+
+    Args:
+        db: Connection to the database.
+        user: User that originated the request.
+    """
     return events_ctl.get_events_from_user(db, user)
 
 
@@ -47,6 +53,13 @@ def post_events_read(
     db: Session = Depends(deps.get_db),
     user: User = Depends(deps.get_current_active_user),
 ):
+    """Endpoint to mark events (notification) as read.
+
+    Args:
+        read_request: payload specifying events to be updated.
+        db: Connection to the database.
+        user: User that originated request.
+    """
     return EventsReadResponse(
         total=events_ctl.set_events_read(db, user, read_request.event_ids)
     )

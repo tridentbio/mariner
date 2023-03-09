@@ -1,5 +1,5 @@
 """
-API related DTOs
+API related Data Transfer Objects.
 """
 from datetime import datetime, timezone
 from typing import Any, Generic, List, Literal, TypeVar, Union
@@ -28,6 +28,11 @@ class ApiBaseModel(BaseModel):
 
     @classmethod
     def from_orm_array(cls, entities: List[Any]):
+        """Parses an array of entities to the calling class pydantic model.
+
+        Args:
+            entities: Array of entity instances to be parsed by pydantic model.
+        """
         return [cls.from_orm(entity) for entity in entities]
 
 
@@ -55,17 +60,13 @@ class utc_datetime(datetime):
     @classmethod
     def __get_validators__(cls):
         yield parse_datetime
-        yield cls.ensure_tzinfo
+        yield cls._ensure_tzinfo
 
     @classmethod
-    def ensure_tzinfo(cls, v):
+    def _ensure_tzinfo(cls, v):
         if v.tzinfo is None:
             return v.replace(tzinfo=timezone.utc)
         return v.astimezone(timezone.utc)
-
-    @staticmethod
-    def to_str(dt: datetime) -> str:
-        return dt.isoformat()
 
 
 class OrderByClause(ApiBaseModel):
