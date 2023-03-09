@@ -58,7 +58,7 @@ def setup_create_dataset(
     db: Session,
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
-    file="tests/data/zinc_extra.csv",
+    file="tests/data/csv/zinc_extra.csv",
     **kwargs,
 ):
     data = mock_dataset(**kwargs)

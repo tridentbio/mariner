@@ -62,7 +62,7 @@ def mock_dataset_create_request(
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_create_dataset(db: Session, create_obj: DatasetCreate):
-    with open("tests/data/Lipophilicity.csv", "rb") as f:
+    with open("tests/data/csv/Lipophilicity.csv", "rb") as f:
         user = get_test_user(db)
         create_obj.file = UploadFile("file", f)
         # print(create_obj.file.file.read())

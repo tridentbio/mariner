@@ -26,7 +26,7 @@ from tests.utils.utils import random_lower_string
 
 
 def chem_dataset() -> tuple[str, List[ColumnsDescription]]:
-    zinc_extra_path = "tests/data/zinc_extra.csv"
+    zinc_extra_path = "tests/data/csv/zinc_extra.csv"
     columns_metadata = [
         ColumnsDescription(
             pattern="smiles",
@@ -55,7 +55,7 @@ def chem_dataset() -> tuple[str, List[ColumnsDescription]]:
 
 
 def bio_classification_dataset() -> tuple[str, List[ColumnsDescription]]:
-    chimpazee_path = "tests/data/chimpanzee.csv"
+    chimpazee_path = "tests/data/csv/chimpanzee.csv"
     columns_metadata = [
         ColumnsDescription(
             pattern="sequence",
@@ -74,7 +74,7 @@ def bio_classification_dataset() -> tuple[str, List[ColumnsDescription]]:
 def bio_regression_dataset() -> tuple[str, List[ColumnsDescription]]:
     # aaMutations,uniqueBarcodes,medianBrightness,std
     # DNA,int,float,float
-    csvpath = "tests/data/sarkisyan_full_seq_data.csv"
+    csvpath = "tests/data/csv/sarkisyan_full_seq_data.csv"
     columns = [
         ColumnsDescription(
             pattern="aaMutations",
@@ -116,9 +116,10 @@ async def setup_dataset(
 
 # model configuration to be tested
 model_configs_and_dataset_setup = [
-    ("tests/data/small_regressor_schema.yaml", chem_dataset),
-    ("tests/data/categorical_features_model.yaml", chem_dataset),
-    ("tests/data/dna_example.yml", bio_regression_dataset),
+    ("tests/data/yaml/small_regressor_schema.yaml", chem_dataset),
+    ("tests/data/yaml/categorical_features_model.yaml", chem_dataset),
+    # ("tests/data/classification_model.yaml", chem_dataset),
+    ("tests/data/yaml/dna_example.yml", bio_regression_dataset),
 ]
 
 
@@ -150,3 +151,5 @@ async def test_model_building(
         enable_checkpointing=False,
     )
     trainer.fit(model, data_module.train_dataloader())
+
+

@@ -73,7 +73,7 @@ def some_dataset_without_process(
     Dataset will be deleted after test
     """
     key, _ = upload_s3_compressed(
-        io.BytesIO(open("tests/data/bad_dataset.csv", "rb").read())
+        io.BytesIO(open("tests/data/csv/bad_dataset.csv", "rb").read())
     )
     create_obj = DatasetCreateRepo.construct(
         bytes=0,
