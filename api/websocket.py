@@ -28,7 +28,7 @@ class WebSocketMessage(ApiBaseModel):
 def _is_closed(ws: WebSocket) -> bool:
     """Checks if the websocket is closed.
 
-    Arguments:
+    Args:
         ws (WebSocket): websocket to check.
 
     Returns:

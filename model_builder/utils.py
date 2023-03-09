@@ -23,7 +23,7 @@ class DataInstance(BaseStorage):
     For information about the methods see:
     https://docs.python.org/3/reference/datamodel.html
 
-    Arguments:
+    Args:
         y (Any): The target value for that instance.
         **kwargs: Any argument passed via kwargs will become an
             attribute of the instance.
@@ -75,7 +75,7 @@ def size_repr(key: Any, value: Any, indent: int = 0) -> str:
     """Creates a string representation varying according to
     the passed data structure.
 
-    Arguments:
+    Args:
         key (Any): Store key to display in ``repr``.
         value (Any): Store value used to represent the data.
         indent (int, optional): Level of indentations used if
@@ -127,6 +127,15 @@ def size_repr(key: Any, value: Any, indent: int = 0) -> str:
 
 
 def split_module_export(classpath: str) -> tuple[str, str]:
+    """Splits a complete class path such as "A.B.foo" into it's
+    module ("A.B") and definition ("foo") strings
+
+    Args:
+        classpath: the complete class path, .e.g. ``"torch.nn.Linear"``
+
+    Returns:
+        (module, definition) tuple of strings
+    """
     words = classpath.split(".")
     module = ".".join(words[:-1])
     export = words[-1]
@@ -136,7 +145,7 @@ def split_module_export(classpath: str) -> tuple[str, str]:
 def get_class_from_path_string(pathstring: str) -> type:
     """Dynamically import a class from a string path.
 
-    Arguments:
+    Args:
         pathstring (str): String path to the class.
 
     Returns:
@@ -201,7 +210,7 @@ def get_ref_from_data_instance(accessor_str: str, input: DataInstance):
     the last one is used to access a possibly nested attribute in the value
     found in ``input``.
 
-    Arguments:
+    Args:
         accessor_str: string representing attribute to get, e.g. "mol_featurizer.x", "mwt"
         input: data instance with collected layer/featurizer outputs, inputs
     and outputs
@@ -227,7 +236,7 @@ def get_ref_from_input(
     """Get's the accessor_str of a DataInstance or a batch of DataInstance's
 
 
-    Arguments:
+    Args:
         accessor_str: string represented accessor_str to get, e.g. "mol_featurizer.x", "mwt".
         input(Union[DataInstance, List[DataInstance]):
     """
