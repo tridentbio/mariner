@@ -242,7 +242,7 @@ class CustomModel(LightningModule):
         metrics_dict = {
             "train_loss": loss,
         } | self.metrics.get_training_metrics(prediction, batch)
-        self.log_gdict(
+        self.log_dict(
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
         )
         return loss
