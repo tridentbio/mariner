@@ -24,6 +24,10 @@ def get_events_report(
     Args:
         db: Connection to the database.
         user: User that originated the request.
+
+    Returns:
+        Returns a list of unread notifications grouped by notification
+        kind.
     """
     return events_ctl.get_events_from_user(db, user)
 
@@ -59,6 +63,9 @@ def post_events_read(
         read_request: payload specifying events to be updated.
         db: Connection to the database.
         user: User that originated request.
+
+    Returns:
+        Count of updated events.
     """
     return EventsReadResponse(
         total=events_ctl.set_events_read(db, user, read_request.event_ids)
