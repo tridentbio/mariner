@@ -46,6 +46,25 @@ def create_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Model:
+    """Creates a model and model version, or adds a model version to existing model.
+
+    Creates a model and model version in the database and in mlflow. The entities from
+    mlflow are mapped from the Mariner entities through mlflow* columns, like
+    mlflow_name and mlflow_id. When the payload refers to an already existing model,
+    than a model version is added to it.
+
+    Args:
+        model_create: Payload specifying model.
+        db: Connection to the database.
+        current_user: User that originated the request.
+
+    Returns:
+        The created model.
+
+    Raises:
+        HTTPException: 409 when model name conflicts.
+        HTTPException: 404 when some reference in payload doesn't exist.
+    """
     try:
         model = controller.create_model(
             db,
@@ -74,6 +93,13 @@ def get_models(
     query: ModelsQuery = Depends(ModelsQuery),
     current_user: User = Depends(deps.get_current_active_user),
 ):
+    """Gets a page of models.
+
+    Args:
+        db: Connection to database.
+        query: Query specifying what models to get.
+        current_user: The user that originated the request.
+    """
     models, total = controller.get_models(db, query, current_user=current_user)
     models = [Model.from_orm(m) for m in models]
     return Paginated(data=models, total=total)
@@ -84,11 +110,18 @@ def get_models(
     response_model=ModelOptions,
 )
 def get_model_options():
+    """Gets the model building options and documentations."""
     model_options = controller.get_model_options()
     return model_options
 
 
 class GetNameSuggestionResponse(ApiBaseModel):
+    """Payload for a name suggestion.
+
+    Attributes:
+        name: the name suggested.
+    """
+
     name: str
 
 
@@ -98,6 +131,7 @@ class GetNameSuggestionResponse(ApiBaseModel):
     response_model=GetNameSuggestionResponse,
 )
 def get_model_name_suggestion():
+    """Endpoint to get a name suggestion."""
     return GetNameSuggestionResponse(name=random_pretty_name())
 
 
@@ -108,6 +142,21 @@ def post_model_predict(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
+    """Endpoint to use a trained model for prediction.
+
+    Args:
+        model_version_id: Id of the model version to be used for prediction.
+        model_input: JSON version of the pandas dataframe used as input.
+        current_user: User that originated the request.
+        db: Connection to the db
+
+    Returns:
+        The model prediction as a torch tensor or pandas dataframe.
+
+    Raises:
+        HTTPException: When app is not able to get the prediction
+        TypeError: When the model output is not a Tensor or a Dataframe
+    """
     try:
         prediction = controller.get_model_prediction(
             db,
@@ -145,6 +194,13 @@ def get_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
+    """Endpoint to get a single model from the database.
+
+    Args:
+        model_id: Id of the model.
+        db: Database connection.
+        current_user: User that is requested the action
+    """
     model = controller.get_model(db, current_user, model_id)
     return model
 
@@ -155,6 +211,13 @@ def delete_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
+    """Endpoint to delete a model
+
+    Args:
+        model_id: id of the model to be deleted
+        db: Connection to the database.
+        current_user: User that is requested the action
+    """
     model = controller.delete_model(db, current_user, model_id)
     return model
 
@@ -167,4 +230,10 @@ def delete_model(
 def post_model_check_config(
     model_config: ModelSchema, db: Session = Depends(deps.get_db)
 ):
+    """Endpoint to check the forward method of a ModelSchema
+
+    Args:
+        model_config: Model schema to be checked
+        db: Database connection
+    """
     return controller.naive_check_forward_exception(db, model_config)

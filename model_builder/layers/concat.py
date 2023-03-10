@@ -9,7 +9,10 @@ from torch import nn
 
 class Concat(nn.Module):
     """
-    A helper layer that concatenates the outputs of 2 other layers
+    A helper layer that concatenates the outputs of 2 other layers.
+
+    Attributes:
+        dim: dimension to use on concatenation.
     """
 
     def __init__(self, dim: int = 0):
@@ -17,6 +20,14 @@ class Concat(nn.Module):
         self.dim = dim
 
     def forward(self, xs: List[torch.Tensor]) -> torch.Tensor:
+        """Performs a concatenation as done by ``torch.cat``.
+
+        Args:
+            xs: List of inputs to be concatenated on ``dim`` dimension.
+
+        Returns:
+            A tensor with the concatenated inputs.
+        """
         return torch.cat(xs, dim=self.dim)
 
 

@@ -27,6 +27,7 @@ reusable_oauth2 = OAuth2PasswordBearer(
 
 
 def get_db():
+    """DB generator with auto-closing."""
     db = SessionLocal()
     yield db
     db.close()
@@ -35,6 +36,18 @@ def get_db():
 def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
 ) -> User:
+    """Get's the user from a authentication token.
+
+    Args:
+        db: Connection to the database.
+        token: String with authentication.
+
+    Returns:
+        The same input user if he is authenticated.
+
+    Raises:
+        HTTPException: 400 when user is not active.
+    """
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
@@ -54,6 +67,17 @@ def get_current_user(
 def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
+    """Authenticates if the user is active or raise HTTPException
+
+    Args:
+        current_user: User that originated request.
+
+    Returns:
+        The same input user if he is authenticated.
+
+    Raises:
+        HTTPException: 400 when user is not active.
+    """
     if not user_store.is_active(current_user):
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
@@ -62,6 +86,17 @@ def get_current_active_user(
 def get_current_active_superuser(
     current_user: User = Depends(get_current_user),
 ) -> User:
+    """Authenticates if the user is superuser or raise HTTPException
+
+    Args:
+        current_user: User that originated request.
+
+    Returns:
+        The same input user if he is authenticated.
+
+    Raises:
+        HTTPException: 400 when user is not super user.
+    """
     if not user_store.is_superuser(current_user):
         raise HTTPException(
             status_code=400, detail="The user doesn't have enough privileges"
@@ -73,12 +108,26 @@ async def get_cookie_or_token(
     websocket: WebSocket,
     token: Union[str, None] = Query(default=None),
 ):
+    """Gets the token from a http websocket connection request.
+
+    Args:
+        websocket: instance to send and receive messages.
+        token: the token present in the message received.
+    """
     if not token:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
     return token
 
 
 def assert_trusted_service(authorization: Union[str, None] = Header("Authorization")):
+    """Checks a basic inter service authentication using the Authorization HTTP header.
+
+    Args:
+        authorization: string parsed from request headers.
+
+    Raises:
+        HTTPException: 403 when the token doesn't match
+    """
     if not authorization:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     else:
@@ -90,4 +139,13 @@ def assert_trusted_service(authorization: Union[str, None] = Header("Authorizati
 def get_current_websocket_user(
     db: Session = Depends(get_db), token: str = Depends(get_cookie_or_token)
 ) -> User:
+    """Gets the user entity encoded in an authentication token.
+
+    Args:
+        db: Connection to the database.
+        token: Authentication token passed in request.
+
+    Returns:
+        User from token.
+    """
     return get_current_user(db, token)

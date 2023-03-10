@@ -1,5 +1,5 @@
 """
-API related DTOs
+API related Data Transfer Objects.
 """
 from datetime import datetime, timezone
 from typing import Any, Generic, List, Literal, TypeVar, Union
@@ -13,7 +13,13 @@ from pydantic.main import BaseModel
 
 
 class ApiBaseModel(BaseModel):
+    """Configures all payloads inputs and outputs of the domain layer
+    to be convertible to and from camelCase.
+    """
+
     class Config:
+        """Configures pydantic behaviour to work as intended."""
+
         alias_generator = camel.case
         allow_population_by_field_name = True
         allow_population_by_alias = True
@@ -22,6 +28,11 @@ class ApiBaseModel(BaseModel):
 
     @classmethod
     def from_orm_array(cls, entities: List[Any]):
+        """Parses an array of entities to the calling class pydantic model.
+
+        Args:
+            entities: Array of entity instances to be parsed by pydantic model.
+        """
         return [cls.from_orm(entity) for entity in entities]
 
 
@@ -29,38 +40,45 @@ DataT = TypeVar("DataT")
 
 
 class Paginated(GenericModel, Generic[DataT]):
+    """Models a generic paginated payload data."""
+
     data: List[DataT]
     total: int
 
 
 class PaginatedApiQuery(ApiBaseModel):
+    """Models a paginated query of a resource."""
+
     page: int = 0
     per_page: int = 15
 
 
 class utc_datetime(datetime):
+    """Class converts datetime field to utc format to let the client
+    display a localized version of the same timestamp."""
+
     @classmethod
     def __get_validators__(cls):
         yield parse_datetime
-        yield cls.ensure_tzinfo
+        yield cls._ensure_tzinfo
 
     @classmethod
-    def ensure_tzinfo(cls, v):
+    def _ensure_tzinfo(cls, v):
         if v.tzinfo is None:
             return v.replace(tzinfo=timezone.utc)
         return v.astimezone(timezone.utc)
 
-    @staticmethod
-    def to_str(dt: datetime) -> str:
-        return dt.isoformat()
-
 
 class OrderByClause(ApiBaseModel):
+    """Class to model an ordering over a query."""
+
     field: str
     order: Literal["asc", "desc"]
 
 
 class OrderByQuery(ApiBaseModel):
+    """Models a complex sorting on multiple columns."""
+
     clauses: List[OrderByClause]
 
 
@@ -82,14 +100,14 @@ def get_order_by_query(
     )
 ):
     """Maps the order_by query string into pydantic model describing the
-    requested order
+    requested order.
 
     Splits the querystring by comma and maps elements to ordering clause
-    :class:`OrderByQuery`
+    :class:`OrderByQuery`.
 
-    Args:
+    Attributes:
         order_by: string to be parsed (gotten by fastapi from the request's
-                                       querystring order_by or orderBy)
+                                       querystring order_by or ``orderBy``.
     """
     if not isinstance(order_by, str):
         return None
