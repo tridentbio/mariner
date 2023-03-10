@@ -103,7 +103,7 @@ class Metrics:
                 continue
             try:
                 if isinstance(self.metrics[metric], (metrics.Accuracy)):
-                    
+
                     metrics_dict[metric] = self.metrics[metric](
                         prediction.squeeze().long(), batch["y"].squeeze().long()
                     )
@@ -236,10 +236,13 @@ class CustomModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
         prediction = self(batch)
-        loss = self.loss_fn(
-            prediction.squeeze().type(torch.DoubleTensor),
-            batch["y"].squeeze().type(torch.DoubleTensor),
-        )
+        loss_args = (prediction.squeeze(), batch["y"].squeeze())
+
+        # If the model is not multi-class, we need to convert the loss to double
+        if not self.config.is_classifier() or self.config.is_binary:
+            loss_args = map(lambda x: x.type(torch.DoubleTensor), loss_args)
+
+        loss = self.loss_fn(*loss_args)
         metrics_dict = {
             "train_loss": loss,
         } | self.metrics.get_training_metrics(prediction, batch)
@@ -247,25 +250,22 @@ class CustomModel(LightningModule):
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
         )
         return loss
-    
-    @property
-    def is_multilabel():
-        # TODO implement this property
-        return False
-    
+
     def predict_step(self, batch, batch_idx):
-        '''
+        """
         Runs the forward pass using self.forward, then, for
         classifier models, normalizes the predictions using a
         non-linearity like sigmoid or softmax.
-        '''
-        predictions = self(batch).squeeze()
-    
+        """
+        predictions = self(batch)
+
         # Apply non-linearity for classifier models
         if self.config.is_classifier():
-            if self.config.is_binary() or self.is_multilabel:  # binary or multi-label classification
+            if (
+                self.config.is_binary or self.config.is_multilabel
+            ):  # binary or multi-label classification
                 predictions = torch.sigmoid(predictions)
             else:  # multi-class classification
-                predictions = torch.softmax(predictions, dim=-1)
-            
+                predictions = torch.nn.functional.softmax(predictions)
+
         return predictions
