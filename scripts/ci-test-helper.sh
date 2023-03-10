@@ -37,8 +37,9 @@ setup_cypress() {
 }
 
 integration_test() {
-  bash -c "$DOCKER_COMPOSE up -d backend" && \
-    COMMAND="$DOCKER_COMPOSE exec -T backend pytest -m 'integration' $@" bash -c $COMMAND
+  bash -c "$DOCKER_COMPOSE up -d backend"
+  COMMAND="$DOCKER_COMPOSE exec backend pytest -m 'integration' $@"
+  bash -c "$COMMAND"
 }
 
 cypress_up() {
