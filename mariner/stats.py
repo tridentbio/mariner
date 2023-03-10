@@ -44,7 +44,7 @@ def get_biological_props(
     row: str,
     metadata: ColumnsDescription,
 ) -> Tuple[int, Optional[float], int, Optional[float]]:
-    """Gets statistics of a biological input  from.
+    """Gets statistics of a biological input from.
 
     Data returned:
 
