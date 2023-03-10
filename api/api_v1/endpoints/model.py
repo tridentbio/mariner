@@ -49,7 +49,7 @@ def create_model(
     """Creates a model and model version, or adds a model version to existing model.
 
     Creates a model and model version in the database and in mlflow. The entities from mlflow
-    are mapped from the mariner entities through mlflow* columns, like mlflow_name and mlflow_id.
+    are mapped from the Mariner entities through mlflow* columns, like mlflow_name and mlflow_id.
     When the payload refers to an already existing model, than a model version is added to it.
 
     Args:
