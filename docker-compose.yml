@@ -162,10 +162,7 @@ services:
     build:
       context: ../mariner-webapp
       dockerfile: ./dockerfiles/Dockerfile.webapp
-    networks:
-      - ray_net
-    ports:
-      - 3000:3000
+    network_mode: host
 
   cypress:
     image: cypress/included:10.3.0

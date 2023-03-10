@@ -14,7 +14,7 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID-Variable not set}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET-Variable not set}
     volumes:
-      - ./cov:/app/cov
+      - ./:/app:z
   mlflow:
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
@@ -22,7 +22,6 @@ services:
       - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
       - AWS_REGION=${AWS_REGION-Variable not set}
       - AWS_DATASETS=${AWS_DATASETS-Variable not set}
-
   ray-head:
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
