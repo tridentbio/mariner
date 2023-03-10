@@ -50,9 +50,9 @@ jobs:
       run: |
         cd mariner &&
         source scripts/ci-test-helper.sh &&
-        cypress_up
+        DOCKER_COMPOSE="docker-compose -f docker-compose.yml -f docker-compose-cicd.yml" cypress_up
     - name: Integration tests and get report
       run: |
         cd mariner &&
         source scripts/ci-test-helper.sh &&
-        integration_test
+        DOCKER_COMPOSE="docker-compose -f docker-compose.yml -f docker-compose-cicd.yml" integration_test

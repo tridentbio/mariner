@@ -25,7 +25,7 @@ setup_cypress() {
 
 
   echo "Creating admin@mariner.trident.bio user"
-  DEFAULT_USER_CREATION_OUT=$(bash -c "$DOCKER_COMPOSE exec backend python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'")
+  DEFAULT_USER_CREATION_OUT=$(bash -c "$DOCKER_COMPOSE exec -T backend python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'")
   SUB="DETAIL:  Key (email)=(admin@mariner.trident.bio) already exists."
   
   if grep -q "$SUB" <<< "$DEFAULT_USER_CREATION_OUT"; then
@@ -38,7 +38,7 @@ setup_cypress() {
 
 integration_test() {
   bash -c "$DOCKER_COMPOSE up -d backend" && \
-    COMMAND="$DOCKER_COMPOSE exec backend pytest -m 'integration' $@" bash -c $COMMAND
+    COMMAND="$DOCKER_COMPOSE exec -T backend pytest -m 'integration' $@" bash -c $COMMAND
 }
 
 cypress_up() {
