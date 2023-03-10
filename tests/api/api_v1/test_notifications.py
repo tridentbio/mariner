@@ -1,6 +1,3 @@
-from asyncio.events import AbstractEventLoop
-from typing import List
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session

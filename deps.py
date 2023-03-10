@@ -41,7 +41,7 @@ python -m deps [CUDA]
 """
 
 if __name__ == "__main__":
-    cuda = sys.argv[1] if len(sys.argv) > 1 else 'cpu'
+    cuda = sys.argv[1] if len(sys.argv) > 1 else "cpu"
     if cuda and cuda not in envs:
         print(usage)
         sys.exit(1)

@@ -216,13 +216,29 @@ def is_classifier(target_column: ColumnConfig):
 
 class ModelSchema(CamelCaseModel):
     """
-    A serializable neural net architecture
+    A serializable neural net architecture.
     """
 
     def is_regressor(self) -> bool:
+        """Checks if the model is for a regression task
+
+        A torch model spec is a regression when the dataset.target_column attribute
+        is numeric
+
+        Returns:
+            True if the model is for a regression task
+        """
         return is_regression(self.dataset.target_column)
 
     def is_classifier(self) -> bool:
+        """Checks if the model is for a classification task
+
+        A torch model spec is a classifier when the dataset.target_column attribute
+        is categorical.
+
+        Returns:
+            True if the model is for a classification task
+        """
         return is_classifier(self.dataset.target_column)
 
     @root_validator(pre=True)
