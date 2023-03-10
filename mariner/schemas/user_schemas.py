@@ -3,9 +3,7 @@ User related Data Transfer Objects.
 """
 from typing import Optional
 
-from humps import camel
 from pydantic import EmailStr
-from pydantic.main import BaseModel
 
 from mariner.schemas.api import ApiBaseModel
 
@@ -65,8 +63,6 @@ class User(UserInDBBase):
         is_superuser: flag to mark user as superuser.
         full_name: name of the user.
     """
-
-    pass
 
 
 # Additional properties stored in DB
