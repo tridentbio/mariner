@@ -1,6 +1,7 @@
 from typing import Callable, List
 
 import pytest
+import torch
 from fastapi import UploadFile
 from pytorch_lightning import Trainer
 from sqlalchemy.orm.session import Session
@@ -157,12 +158,17 @@ async def setup_dataset(
 model_configs_and_dataset_setup = [
     ("tests/data/yaml/small_regressor_schema.yaml", chem_dataset),
     ("tests/data/yaml/categorical_features_model.yaml", chem_dataset),
+    ("tests/data/yaml/dna_example.yml", bio_regression_dataset),
     (
         "tests/data/yaml/binary_classification_model.yaml",
         iris_dataset,
         {"batch_size": 8, "max_epochs": 10},
     ),
-    ("tests/data/yaml/dna_example.yml", bio_regression_dataset),
+    (
+        "tests/data/yaml/multiclass_classification_model.yaml",
+        iris_dataset,
+        {"batch_size": 8, "max_epochs": 10},
+    ),
 ]
 
 # setting default kwargs for model configs that don't have them
@@ -199,3 +205,17 @@ async def test_model_building(
         enable_checkpointing=False,
     )
     trainer.fit(model, data_module.train_dataloader())
+
+    batch_example = next(iter(data_module.val_dataloader()))
+    foward = model(batch_example)
+    predict = model.predict_step(batch_example, 0)
+
+    if model_config.is_classifier():
+        if model_config.is_binary or model_config.is_multilabel:
+            assert all(
+                torch.eq(torch.sigmoid(foward), predict)
+            ), "predict_step is not equal to sigmoid of forward for binary classifier"
+        else:
+            assert torch.equal(
+                torch.nn.functional.softmax(foward), predict
+            ), "predict_step is not equal to softmax of forward for multi class classifier"

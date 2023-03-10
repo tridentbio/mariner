@@ -234,8 +234,14 @@ class ModelSchema(CamelCaseModel):
     def is_classifier(self) -> bool:
         return is_classifier(self.dataset.target_column)
 
+    @property
     def is_binary(self) -> bool:
         return is_binary(self.dataset.target_column)
+
+    @property
+    def is_multilabel(self) -> bool:
+        # TODO: implement
+        return False
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
