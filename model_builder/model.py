@@ -74,16 +74,16 @@ class Metrics:
                     "train_precision": metrics.Precision(),
                     "train_recall": metrics.Recall(),
                     "train_f1": metrics.F1Score(),
-                    "train_confusion_matrix": metrics.ConfusionMatrix(
-                        num_classes=num_classes
-                    ),
+                    # "train_confusion_matrix": metrics.ConfusionMatrix(
+                    #     num_classes=num_classes,
+                    # ),
                     "val_accuracy": metrics.Accuracy(mdmc_reduce="global"),
                     "val_precision": metrics.Precision(),
                     "val_recall": metrics.Recall(),
                     "val_f1": metrics.F1Score(),
-                    "val_confusion_matrix": metrics.ConfusionMatrix(
-                        num_classes=num_classes
-                    ),
+                    # "val_confusion_matrix": metrics.ConfusionMatrix(
+                    #     num_classes=num_classes,
+                    # ),
                 }
             )
 
@@ -103,6 +103,7 @@ class Metrics:
                 continue
             try:
                 if isinstance(self.metrics[metric], (metrics.Accuracy)):
+
                     metrics_dict[metric] = self.metrics[metric](
                         prediction.squeeze().long(), batch["y"].squeeze().long()
                     )
@@ -219,12 +220,14 @@ class CustomModel(LightningModule):
 
     def test_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()
+        # prediction = self.forward(batch)
         loss = self.loss_fn(prediction, batch["y"])
         self.log("test_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         prediction = self(batch).squeeze()
+        # prediction = self.forward(batch)
         loss = self.loss_fn(prediction, batch["y"])
         metrics_dict = self.metrics.get_validation_metrics(prediction, batch)
         self.log_dict(
@@ -235,6 +238,7 @@ class CustomModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
         prediction = self(batch)
+        # prediction = self.forward(batch)
         loss = self.loss_fn(
             prediction.squeeze().type(torch.DoubleTensor),
             batch["y"].squeeze().type(torch.DoubleTensor),
@@ -246,26 +250,27 @@ class CustomModel(LightningModule):
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
         )
         return loss
-    
+
     @property
     def is_multilabel():
         # TODO implement this property
         return False
-    
+
     def predict_step(self, batch, batch_idx):
-        '''
+        """
         Runs the forward pass using self.forward, then, for
         classifier models, normalizes the predictions using a
         non-linearity like sigmoid or softmax.
-        '''
+        """
         predictions = self(batch).squeeze()
-    
+
         # Apply non-linearity for classifier models
         if self.config.is_classifier():
-            num_classes = len(self.config.dataset.target_column.data_type.classes.values())
-            if num_classes == 2 or self.is_multilabel:  # binary or multi-label classification
+            if (
+                self.config.is_binary() or self.is_multilabel
+            ):  # binary or multi-label classification
                 predictions = torch.sigmoid(predictions)
             else:  # multi-class classification
                 predictions = torch.softmax(predictions, dim=-1)
-            
+
         return predictions

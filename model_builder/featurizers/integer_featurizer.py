@@ -31,7 +31,7 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
     def featurize(self, input_: Union[str, int]):
         if str(input_) not in self.classes:
             raise RuntimeError(
-                f"Element {input} of type {input.__class__} is not defined"
+                f"Element {input_} or of type {input_.__class__} is not defined"
                 f" in the classes dictionary {self.classes}"
             )
         return torch.Tensor([self.classes[str(input_)]]).long()

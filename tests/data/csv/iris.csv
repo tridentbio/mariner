@@ -1,4 +1,4 @@
-sepal length (cm),sepal width (cm),petal length (cm),petal width (cm),species,large petal length,large petal width
+sepal_length,sepal_width,petal_length,petal_width,species,large_petal_length,large_petal_width
 6.9,3.1,4.9,1.5,1,0,0
 7.7,3.8,6.7,2.2,2,1,1
 6.3,2.9,5.6,1.8,2,1,1
