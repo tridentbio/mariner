@@ -192,9 +192,11 @@ class MissingComponentArgs(ValueError):
 
 AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
 AnnotatedFeaturizersType = Annotated[FeaturizersType, Field(discriminator="type")]
-LossType = Literal["torch.nn.MSELoss", "torch.nn.CrossEntropyLoss"]
+LossType = Literal[
+    "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
+]
 
-ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss"]
+ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"]
 ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
 
 
@@ -214,6 +216,13 @@ def is_classifier(target_column: ColumnConfig):
     return target_column.data_type.domain_kind == "categorical"
 
 
+def is_binary(target_column: ColumnConfig):
+    """
+    Returns ``True`` if the ``target_column`` is categorical and has only 2 classes
+    """
+    return is_classifier(target_column) and len(target_column.data_type.classes) == 2
+
+
 class ModelSchema(CamelCaseModel):
     """
     A serializable neural net architecture
@@ -224,6 +233,9 @@ class ModelSchema(CamelCaseModel):
 
     def is_classifier(self) -> bool:
         return is_classifier(self.dataset.target_column)
+
+    def is_binary(self) -> bool:
+        return is_binary(self.dataset.target_column)
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
@@ -335,6 +347,8 @@ class ModelSchema(CamelCaseModel):
         target_column = values["dataset"].target_column
         if is_classifier(target_column):
             if not value:
+                if is_binary(target_column):
+                    return "torch.nn.BCEWithLogitsLoss"
                 return "torch.nn.CrossEntropyLoss"
             else:
                 if value not in ALLOWED_CLASSIFIYNG_LOSSES:

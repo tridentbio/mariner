@@ -90,6 +90,45 @@ def bio_regression_dataset() -> tuple[str, List[ColumnsDescription]]:
     return csvpath, columns
 
 
+def iris_dataset() -> tuple[str, List[ColumnsDescription]]:
+    irirs_path = "tests/data/csv/iris.csv"
+    columns_metadata = [
+        ColumnsDescription(
+            pattern="petal_length",
+            data_type=QuantityDataType(unit="mole"),
+            description="petal length",
+        ),
+        ColumnsDescription(
+            pattern="sepal_length",
+            data_type=QuantityDataType(unit="mole"),
+            description="sepal length",
+        ),
+        ColumnsDescription(
+            pattern="sepal_width",
+            data_type=QuantityDataType(unit="mole"),
+            description="sepal width",
+        ),
+        ColumnsDescription(
+            pattern="species",
+            data_type=CategoricalDataType(
+                classes={"setosa": 0, "versicolor": 1, "virginica": 2}
+            ),
+            description="species",
+        ),
+        ColumnsDescription(
+            pattern="large_petal_length",
+            data_type=CategoricalDataType(classes={"yes": 1, "no": 0}),
+            description="yes if petal length is larger than 5.10 otherwise no",
+        ),
+        ColumnsDescription(
+            pattern="large_petal_width",
+            data_type=CategoricalDataType(classes={"yes": 1, "no": 0}),
+            description="yes if petal width is larger than 1.80 otherwise no",
+        ),
+    ]
+    return irirs_path, columns_metadata
+
+
 async def setup_dataset(
     db: Session, dataset_setup_fn: Callable[[], tuple[str, List[ColumnsDescription]]]
 ) -> Dataset:
@@ -118,18 +157,27 @@ async def setup_dataset(
 model_configs_and_dataset_setup = [
     ("tests/data/yaml/small_regressor_schema.yaml", chem_dataset),
     ("tests/data/yaml/categorical_features_model.yaml", chem_dataset),
-    # ("tests/data/classification_model.yaml", chem_dataset),
+    (
+        "tests/data/yaml/binary_classification_model.yaml",
+        iris_dataset,
+        {"batch_size": 8, "max_epochs": 10},
+    ),
     ("tests/data/yaml/dna_example.yml", bio_regression_dataset),
 ]
 
+# setting default kwargs for model configs that don't have them
+model_configs_and_dataset_setup = list(
+    map(lambda x: x if len(x) == 3 else (*x, {}), model_configs_and_dataset_setup)
+)
+
 
 @pytest.mark.parametrize(
-    "model_config_path,dataset_setup", model_configs_and_dataset_setup
+    "model_config_path,dataset_setup,kwargs", model_configs_and_dataset_setup
 )
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_model_building(
-    db: Session, model_config_path: str, dataset_setup: Callable
+    db: Session, model_config_path: str, dataset_setup: Callable, kwargs: dict
 ):
     dataset = await setup_dataset(db, dataset_setup)
     with open(model_config_path, "rb") as f:
@@ -142,14 +190,12 @@ async def test_model_building(
         split_target=dataset.split_target,
         split_type=dataset.split_type,
         collate_fn=Collater(),
-        batch_size=4,
+        batch_size=kwargs.get("batch_size", 4),
     )
     data_module.setup(stage="fit")
     trainer = Trainer(
-        max_epochs=1,
+        max_epochs=kwargs.get("max_epochs", 1),
         enable_progress_bar=False,
         enable_checkpointing=False,
     )
     trainer.fit(model, data_module.train_dataloader())
-
-
