@@ -21,12 +21,6 @@ jobs:
     - uses: actions/checkout@v3
       with:
         path: mariner
-    - uses: actions/checkout@v3
-      with:
-        repository: tridentbio/mariner-webapp
-        path: mariner-webapp
-        ref: releases/0.1.1
-        token: ${{ secrets.GH_PAT }}
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
     - name: Cache Docker layers
@@ -47,13 +41,19 @@ jobs:
         #       tags: mariner-slow-test:latest
         #       cache-from: type=local,src=/tmp/.buildx-cache
         #       cache-to: type=local,dest=/tmp/.buildx-cache-new
-    - name: Run E2E tests
-      run: |
-        cd mariner &&
-        source scripts/ci-test-helper.sh &&
-        DOCKER_COMPOSE="docker-compose -f docker-compose.yml -f docker-compose-cicd.yml" cypress_up
     - name: Integration tests and get report
       run: |
         cd mariner &&
         source scripts/ci-test-helper.sh &&
         DOCKER_COMPOSE="docker-compose -f docker-compose.yml -f docker-compose-cicd.yml" integration_test
+    - uses: actions/checkout@v3
+      with:
+        repository: tridentbio/mariner-webapp
+        path: mariner-webapp
+        ref: releases/0.1.1
+        token: ${{ secrets.GH_PAT }}
+    - name: Run E2E tests
+      run: |
+        cd mariner &&
+        source scripts/ci-test-helper.sh &&
+        DOCKER_COMPOSE="docker-compose -f docker-compose.yml -f docker-compose-cicd.yml" cypress_up
