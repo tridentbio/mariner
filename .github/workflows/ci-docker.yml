@@ -37,7 +37,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildx-
     - name: Debug
-      run: ls . ; ls ..
+      run: echo At $(pwd); ls . ; echo At $(pwd)/.. ; ls .. ; echo -- mariner -- ; ls mariner; echo --mariner-webapp--; ls mariner-webapp
         # - name: Build main image
         #   uses: docker/build-push-action@v2
         #   env:
@@ -52,12 +52,10 @@ jobs:
     - name: Run E2E tests
       run: |
         cd mariner &&
-        docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up cypress
-    - name: Start services
-      run: |
-        cd mariner &&
-        docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
+        source scripts/ci-test-helper.sh &&
+        cypress_up
     - name: Integration tests and get report
       run: |
         cd mariner &&
-        docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
+        source scripts/ci-test-helper.sh &&
+        integration_test
