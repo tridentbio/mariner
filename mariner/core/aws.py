@@ -43,6 +43,12 @@ def create_s3_client() -> BaseClient:
 
 
 def list_s3_objects(bucket: Bucket, prefix: str):
+    """List objects from s3 bucket starting with prefix.
+
+    Args:
+        bucket: bucket string.
+        prefix: The prefix used to search the objects.
+    """
     client = create_s3_client()
     response = client.list_objects_v2(
         Bucket=bucket.value,
@@ -67,6 +73,17 @@ def upload_s3_file(file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket
 
 
 def download_file_as_dataframe(bucket: Bucket, key: str) -> pd.DataFrame:
+    """Downloads s3 file and attempts to parse it as pd.Dataframe
+
+    Will raise exceptions if object is not in csv format.
+
+    Args:
+        bucket: Bucket enum value where the object is located.
+        key: The key identifying the object.
+
+    Returns:
+        The pandas Dataframe stored in s3.
+    """
     s3 = create_s3_client()
     s3_res = s3.get_object(Bucket=bucket.value, Key=key)
     s3body = s3_res["Body"].read()
@@ -76,6 +93,14 @@ def download_file_as_dataframe(bucket: Bucket, key: str) -> pd.DataFrame:
 
 
 def delete_s3_file(key: str, bucket: Bucket):
+    """Attempts to delete a file from s3.
+
+    Will only work if AWS credentials in project environment have ``s3:DeleteObject`` permissions.
+
+    Args:
+        key: key to be deleted.
+        bucket: bucket in which object is stored.
+    """
     s3 = create_s3_client()
     s3.delete_object(Bucket=bucket.value, Key=key)
 

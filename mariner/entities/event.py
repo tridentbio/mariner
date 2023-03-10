@@ -46,7 +46,7 @@ class EventEntity(Base):
     url = Column(String, nullable=True)
 
     @validates("source")
-    def validate_source(self, key, source):
+    def _validate_source(self, _, source):
         valid_event_sources = get_args(EventSource)
         if source not in valid_event_sources:
             raise ValueError(f"Invalid source for EventEntity {source}")

@@ -25,7 +25,7 @@ def get_component_config_by_type(name: str) -> Optional[BaseModel]:
 
 
 def get_component_constructor_args_by_type(name: str) -> Optional[BaseModel]:
-    """Get's the ConstructorArgs class for a component by type
+    """Gets the ConstructorArgs class for a component by type
 
     Args:
         name: type, .e.g "torch.nn.Linear"

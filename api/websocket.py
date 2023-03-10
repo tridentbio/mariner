@@ -1,5 +1,5 @@
 """
-Package defines all websocket related funcionality
+Package defines all websocket related functionality.
 """
 import logging
 from typing import Any, Dict, Literal
@@ -26,13 +26,13 @@ class WebSocketMessage(ApiBaseModel):
 
 
 def _is_closed(ws: WebSocket) -> bool:
-    """Checks if the websocket is closed
+    """Checks if the websocket is closed.
 
     Args:
-        ws (WebSocket): websocket to check
+        ws (WebSocket): websocket to check.
 
     Returns:
-        bool: True if the websocket is closed, False otherwise
+        True if the websocket is closed, False otherwise.
     """
     return ws.application_state == WebSocketState.DISCONNECTED
 
@@ -84,6 +84,11 @@ class ConnectionManager:
         await self.active_connections[user_id].send_text(message.json(by_alias=True))
 
     async def broadcast(self, message: str):
+        """Sends message to all active connections.
+
+        Args:
+            message: message to send.
+        """
         for connection in self.active_connections.values():
             await connection.send_text(message)
 

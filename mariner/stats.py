@@ -44,6 +44,21 @@ def get_biological_props(
     row: str,
     metadata: ColumnsDescription,
 ) -> Tuple[int, Optional[float], int, Optional[float]]:
+    """Gets statistics of a biological input from.
+
+    Data returned:
+
+    Args:
+        row: DNA, RNA or protein sequence string.
+        metadata: column description the row must belong to.
+
+    Returns:
+        Tuple (sequence_length, gc_content, gaps_number, mwt)
+        1. sequence_length: The length of the sequence.
+        2. gc_content: The number of GC pairs
+        3. gaps_number: The number of gaps in the sequence.
+        4. mwt: The molecular weight of the sequence.
+    """
     sequence_lengh, gc_content, gaps_number, mwt = None, None, None, None
 
     sequence_lengh = len(re.sub(r"[-\*]", "", row))

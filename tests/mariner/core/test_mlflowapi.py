@@ -1,12 +1,42 @@
+from typing import Optional
+
 import mlflow.pyfunc
 import mlflow.tracking
 import pytest
+import torch.nn
+from mlflow.entities.model_registry.registered_model import \
+    ModelVersion as MlflowModelVersion
 from mlflow.entities.model_registry.registered_model import RegisteredModel
+from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 
-from mariner.core.mlflowapi import create_model_version
 from model_builder.model import CustomModel
 from tests.fixtures.model import mock_model
 from tests.utils.utils import random_lower_string
+
+
+def create_model_version(
+    client: mlflow.tracking.MlflowClient,
+    name: str,
+    model: torch.nn.Module,
+    artifact_path: Optional[str] = None,
+    desc: Optional[str] = None,
+) -> MlflowModelVersion:
+    if not artifact_path:
+        artifact_path = name
+    active_run = mlflow.active_run()
+    if active_run is not None:
+        mlflow.end_run()
+    with mlflow.start_run() as run:
+        mlflow.pytorch.log_model(
+            model,
+            artifact_path=artifact_path,
+        )
+    runs_uri = f"runs:/{run.info.run_id}/{artifact_path}"
+    model_src = RunsArtifactRepository.get_underlying_uri(runs_uri)
+    version = client.create_model_version(
+        name, model_src, run.info.run_id, description=desc
+    )
+    return version
 
 
 @pytest.fixture()

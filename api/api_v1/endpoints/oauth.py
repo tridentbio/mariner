@@ -26,6 +26,12 @@ LOG = logging.getLogger(__name__)
 
 @router.get("/oauth")
 def get_oauth_provider_redirect(provider: str, db: Session = Depends(deps.get_db)):
+    """Endpoint to redirect user to provider authentication site.
+
+    Args:
+        provider: string of the oauth provider.
+        db: database connection.
+    """
     if provider not in oauth.provider_url_makers:
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -43,6 +49,18 @@ def receive_github_code(
     error_uri: Optional[str] = None,
     error_description: Optional[str] = None,
 ):
+    """Function to handle callback from github with
+
+    Args:
+        code: github oauth code
+        state: state produced by application previously
+        error: error from oauth setup
+        error_uri: link to more detailed description of the error.
+        error_description: message describing the error
+
+    Raises:
+        HTTPException: When the github cod is invalid.
+    """
     if code and state:
         try:
             token = authenticate(
