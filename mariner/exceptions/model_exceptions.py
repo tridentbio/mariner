@@ -9,14 +9,10 @@ class ModelVersionNotFound(Exception):
     """Raised when the application can't proceed because of
     the absence of a model version."""
 
-    pass
-
 
 class ModelNotFound(Exception):
     """Raised when the application can't proceed because of
     the absence of a model."""
-
-    pass
 
 
 class ModelNameAlreadyUsed(Exception):
@@ -25,8 +21,6 @@ class ModelNameAlreadyUsed(Exception):
     It's not allowed to have 2 models because it makes the name
     attribute harder to be used for specifying a model.
     """
-
-    pass
 
 
 class InvalidDataframe(Exception):
@@ -42,5 +36,3 @@ class ModelVersionNotTrained(Exception):
     """Raised when the application can't proceed because the
     user is trying to use a model not yet trained.
     """
-
-    pass

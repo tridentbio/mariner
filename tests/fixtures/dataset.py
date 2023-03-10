@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, time
+from datetime import datetime
 from typing import Dict, Optional
 
 from fastapi import status

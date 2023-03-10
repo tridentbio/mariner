@@ -10,7 +10,6 @@ from sqlalchemy.orm.session import Session
 
 from mariner.entities import Experiment, ModelVersion
 from mariner.schemas.api import OrderByQuery
-from mariner.schemas.experiment_schemas import ListExperimentsQuery
 from mariner.stores.base_sql import CRUDBase
 
 
