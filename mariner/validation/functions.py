@@ -156,7 +156,7 @@ def determine_seq_type(seq: str) -> Tuple[bool, str, bool, int]:
     Determine sequence type.
 
     Args:
-        seq (str) - Sequence to identify.
+        seq (str): Sequence to identify.
 
     Returns:
         Tuple of valid (bool), type (str), possible_ambiguous (bool), count_unambiguous (int).
