@@ -6,8 +6,8 @@ dataset:
     dataType:
       domainKind: categorical
       classes:
-        0.0: no
-        1.0: yes
+        0: no
+        1: yes
   featureColumns:
     - name: sepal_length
       dataType:

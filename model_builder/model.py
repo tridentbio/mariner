@@ -225,8 +225,14 @@ class CustomModel(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        prediction = self(batch).squeeze()
-        loss = self.loss_fn(prediction, batch["y"])
+        prediction = self(batch)
+        loss_args = (prediction.squeeze(), batch["y"].squeeze())
+
+        # If the model is not multi-class, we need to convert the loss to double
+        if not self.config.is_classifier() or self.config.is_binary:
+            loss_args = map(lambda x: x.type(torch.DoubleTensor), loss_args)
+        loss = self.loss_fn(*loss_args)
+        
         metrics_dict = self.metrics.get_validation_metrics(prediction, batch)
         self.log_dict(
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
