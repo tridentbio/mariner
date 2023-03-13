@@ -55,6 +55,7 @@ jobs:
         source scripts/ci-test-helper.sh &&
         DOCKER_COMPOSE="docker-compose -f docker-compose.yml -f docker-compose-cicd.yml" integration_test
     - name: Run E2E tests
+      if: success() || failure()
       run: |
         cd mariner &&
         source scripts/ci-test-helper.sh &&
