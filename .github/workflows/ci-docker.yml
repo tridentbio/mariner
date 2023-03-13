@@ -50,7 +50,6 @@ jobs:
         token: ${{ secrets.GH_PAT }}
     - name: Integration tests and get report
       run: |
-        mkdir mariner-webapp; # Temporarily mocking the mariner-webapp repo to allow building the app
         cd mariner &&
         source scripts/ci-test-helper.sh &&
         DOCKER_COMPOSE="docker-compose -f docker-compose.yml -f docker-compose-cicd.yml" integration_test
