@@ -16,7 +16,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    ports: 
+    ports:
       - "5432:5432"
     networks:
       - ray_net
@@ -161,11 +161,11 @@ services:
   webapp:
     build:
       context: ../mariner-webapp
-      dockerfile: ./dockerfiles/Dockerfile.webapp
+      dockerfile: ../mariner/dockerfiles/Dockerfile.webapp
     network_mode: host
 
   cypress:
-    image: cypress/included:10.3.0
+    image: cypress/included:12.7.0
     container_name: cypress
     environment:
       - CYPRESS_baseUrl=http://localhost:3000/
@@ -175,7 +175,7 @@ services:
     working_dir: /e2e
     user: node
     volumes:
-      - ../mariner-webapp:/e2e:Z
+      - ../mariner-webapp:/e2e:z
     network_mode: host 
 
 volumes:

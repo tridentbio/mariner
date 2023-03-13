@@ -12,7 +12,7 @@
 # In actual Github CI, the secret variables are populated by github secrets
 
 
-DOCKER_COMPOSE="docker-compose -f docker-compose.yml -f docker-compose-cicd.yml --env-file ./.env.secret"
+DOCKER_COMPOSE="docker compose -f docker-compose.yml -f docker-compose-cicd.yml --env-file ./.env.secret"
 echo "Compose commands ran with: $DOCKER_COMPOSE"
 
 down() {
