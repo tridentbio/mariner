@@ -70,13 +70,13 @@ deploy-postgres() {
 
 # this command deploys 2 nodes in a ray cluster
 deploy-ray-cluster() {
-  helm upgrade -i "ray-head" infrastructure/ helm/helm-ray-head/.  -n ray \
+  helm upgrade -i "ray-head" infrastructure/helm/helm-ray-head/.  -n ray \
           --set "replicaCount=1" \
 					--set "image.pullPolicy=IfNotPresent" \
           --set "image.repository=515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-minikube" \
           --set "istio_url=dev.ray-head.local"
 
-  helm upgrade -i "ray-worker" infrastructure/ helm/helm-ray-worker/.  -n ray \
+  helm upgrade -i "ray-worker" infrastructure/helm/helm-ray-worker/.  -n ray \
           --set "replicaCount=1" \
 					--set "image.pullPolicy=IfNotPresent" \
           --set "image.repository=515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-minikube" 
@@ -84,7 +84,7 @@ deploy-ray-cluster() {
 
 # This command deploys the mariner service
 deploy-mariner() {
-  helm upgrade -i "mariner-backend" infrastructure/ helm/helm-mariner/. -n trident \
+  helm upgrade -i "mariner-backend" infrastructure/helm/helm-mariner/. -n trident \
           --set "replicaCount=1" \
 					--set "image.pullPolicy=IfNotPresent" \
           --set "image.repository=515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-minikube" \
@@ -95,7 +95,7 @@ deploy-mariner() {
 
 # This command deploys a mlflow service
 deploy-mlflow() {
-  helm upgrade -i "mlflow" infrastructure/ helm/helm-mlflow/. -n trident \
+  helm upgrade -i "mlflow" infrastructure/helm/helm-mlflow/. -n trident \
           --set "replicaCount=1" \
 					--set "image.pullPolicy=IfNotPresent" \
           --set "image.repository=515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-minikube" \

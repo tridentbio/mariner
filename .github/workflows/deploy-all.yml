@@ -86,7 +86,7 @@ jobs:
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS" 
         kubectl apply -f ./infrastructure/configmaps/dev/mariner.yaml
-        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/ helm/helm-mariner/. \
+        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-mariner/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
@@ -135,7 +135,7 @@ jobs:
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS" 
         kubectl apply -f ./infrastructure/configmaps/dev/mlflow.yaml
-        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/ helm/helm-mlflow/. \
+        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-mlflow/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
@@ -184,7 +184,7 @@ jobs:
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS"  -n ray
         kubectl apply -f ./infrastructure/configmaps/dev/ray-head.yaml  -n ray
-        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/ helm/helm-ray-head/.  -n ray \
+        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-ray-head/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
@@ -232,7 +232,7 @@ jobs:
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS"  -n ray
         kubectl apply -f ./infrastructure/configmaps/dev/ray-worker.yaml -n ray
-        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/ helm/helm-ray-worker/.  -n ray \
+        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-ray-worker/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
