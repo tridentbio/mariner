@@ -43,6 +43,7 @@ fastapi-utils = "^0.2.1"
 Sphinx = "^5.3.0"
 torchmetrics = "^0.10.2"
 biopython = "^1.80"
+numba = "^0.56.4"
 
 [tool.poetry.group.dev.dependencies]
 click = "8.0.4"

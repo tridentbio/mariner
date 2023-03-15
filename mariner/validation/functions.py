@@ -3,9 +3,8 @@ from re import search
 from typing import Any, Callable, Dict, Literal, Optional, Set, Tuple, Union
 
 import pandas as pd
+from numba import njit
 from rdkit import Chem, RDLogger
-
-from .rules import BiologicalValidChars
 
 Mol = Chem.rdchem.Mol
 
@@ -151,11 +150,63 @@ def _is_instance(
     return (func, msg)
 
 
+@njit
+def determine_seq_type(seq: str) -> Tuple[bool, str, bool, int]:
+    """
+    Determine sequence type.
+
+    Args:
+        seq (str): Sequence to identify.
+
+    Returns:
+        Tuple of valid (bool), type (str), possible_ambiguous (bool), count_unambiguous (int).
+    """
+    AMBIGUOUS_DNA_RNA = "RYSWKMBDHVN"
+    UNAMBIGUOUS_DNA_RNA = "ACGTU-"
+    ONLY_DNA = "T"
+    ONLY_RNA = "U"
+    PROTEIN = "ACDEFGHIKLMNPQRSTVWY-*"
+
+    seq = seq.upper()
+    domain_kind: Literal["dna", "rna", "protein"] = "dna"  # priority
+    possible_ambiguous = False
+    count_unambiguous = 0
+
+    for i, char in enumerate(seq):
+        # check for unambiguous chars
+        if char in UNAMBIGUOUS_DNA_RNA and domain_kind in ["dna", "rna"]:
+            # need to have chars A, C, G or T >50% of sequence to be DNA or RNA
+            count_unambiguous += 1
+
+            # dna is priority so domain_kind can be changed to rna or protein
+            if char in ONLY_RNA and domain_kind == "dna":
+                # need to check if it has any only_dna value in checked values
+                domain_kind = "rna" if ONLY_DNA not in set(seq[:i]) else "protein"
+
+            # if domain_kind already changed to rna it's not a valid dna
+            if char in ONLY_DNA and domain_kind == "rna":
+                domain_kind = "protein"
+
+        # check if it's possible to be ambiguous or protein
+        else:
+            if char in AMBIGUOUS_DNA_RNA and domain_kind in ["dna", "rna"]:
+                possible_ambiguous = True
+
+            elif char in PROTEIN:
+                domain_kind = "protein"
+
+            else:
+                # invalid char for any biological domain kind
+                return False, "none", False, 0
+
+    return True, domain_kind, possible_ambiguous, count_unambiguous
+
+
 def check_biological_sequence(seq: str) -> Dict[str, Union[str, bool]]:
     """Check if a sequence is valid as DNA, RNA or Protein
     Rules (ordered by priority):
         DNA:
-            unanbiguous nucleotides: A, C, G, T, -
+            unambiguous nucleotides: A, C, G, T, -
             ambiguous nucleotides: R, Y, S, W, K, M, B, D, H, V, N
                 presence of A, C, G or T needs to be >50% of sequence
         RNA:
@@ -167,57 +218,20 @@ def check_biological_sequence(seq: str) -> Dict[str, Union[str, bool]]:
             - chars: - A, C, D, E, F, G, H, I, K, L, M, N, P, Q, R, S, T, V, W, Y, -, *
     Args:
         seq (str): sequence to check
-
     Returns:
         Dict[str, str]: dictionary with the following keys:
             - valid: True if sequence is a valid biological sequence
             - type?: dna, rna or protein
             - is_ambiguous?: True if sequence contains ambiguous nucleotides
     """
+
     if len(seq) < 5:  # at least 5 chars to be a valid sequence
         return {"valid": False}
 
-    seq = seq.upper()
-    domain_kind: Literal["dna", "rna", "protein"] = "dna"  # priority
-    possible_ambiguous = False
-    count_unambiguous = 0
+    valid, domain_kind, possible_ambiguous, count_unambiguous = determine_seq_type(seq)
 
-    for i, char in enumerate(seq):
-        # check for unambiguous chars
-        if char in BiologicalValidChars.UNAMBIGUOUS_DNA_RNA.value and domain_kind in [
-            "dna",
-            "rna",
-        ]:
-            # need to have chars A, C, G or T >50% of sequence to be DNA or RNA
-            count_unambiguous += 1
-
-            # dna is priority so domain_kind can be changed to rna or protein
-            if char in BiologicalValidChars.ONLY_RNA.value and domain_kind == "dna":
-                # need to check if it has any only_dna value in checked values
-                domain_kind = (
-                    "rna"
-                    if BiologicalValidChars.ONLY_DNA.value not in set(seq[:i])
-                    else "protein"
-                )
-
-            # if domain_kind already changed to rna it's not a valid dna
-            if char in BiologicalValidChars.ONLY_DNA.value and domain_kind == "rna":
-                domain_kind = "protein"
-
-        # check if it's possible to be ambiguous or protein
-        else:
-            if (
-                char in BiologicalValidChars.AMBIGUOUS_DNA_RNA.value
-                and domain_kind in ["dna", "rna"]
-            ):
-                possible_ambiguous = True
-
-            elif char in BiologicalValidChars.PROTEIN.value:
-                domain_kind = "protein"
-
-            else:
-                # invalid char for any biological domain kind
-                return {"valid": False}
+    if not valid:
+        return {"valid": False}
 
     result = dict(valid=True)
 
