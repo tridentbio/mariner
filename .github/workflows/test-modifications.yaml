@@ -11,7 +11,7 @@ jobs:
   mariner:
     name: Mariner
     runs-on: ubuntu-20.04
-    needs: docker_image
+    
     env:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: mariner-backend
@@ -59,7 +59,7 @@ jobs:
   mlflow:
     name: MLFlow
     runs-on: ubuntu-20.04
-    needs: docker_image
+    
     env:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: mlflow
@@ -108,7 +108,7 @@ jobs:
   ray-head:
     name: Ray Head
     runs-on: ubuntu-20.04
-    needs: docker_image
+    
     env:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: ray-head
@@ -156,7 +156,7 @@ jobs:
   ray-worker:
     name: Ray Worker
     runs-on: ubuntu-20.04
-    needs: docker_image
+    
     env:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: ray-worker
