@@ -85,7 +85,7 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS" 
-        kubectl apply -f ./configmaps/dev/mariner.yaml
+        kubectl apply -f ./infrastructure/configmaps/dev/mariner.yaml
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
@@ -134,7 +134,7 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS" 
-        kubectl apply -f ./configmaps/dev/mlflow.yaml
+        kubectl apply -f ./infrastructure/configmaps/dev/mlflow.yaml
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mlflow/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
@@ -183,7 +183,7 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS"  -n ray
-        kubectl apply -f ./configmaps/dev/ray-head.yaml  -n ray
+        kubectl apply -f ./infrastructure/configmaps/dev/ray-head.yaml  -n ray
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-head/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
@@ -231,7 +231,7 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS"  -n ray
-        kubectl apply -f ./configmaps/dev/ray-worker.yaml -n ray
+        kubectl apply -f ./infrastructure/configmaps/dev/ray-worker.yaml -n ray
         helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
