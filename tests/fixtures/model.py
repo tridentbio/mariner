@@ -111,9 +111,10 @@ def setup_create_model_db(
         ]
         + [
             ModelFeaturesAndTarget(
-                column_name=model.config.dataset.target_column.name,
+                column_name=target_col.name,
                 column_type="target",
             )
+            for target_col in model.config.dataset.target_columns
         ],
     )
     created_model = model_sql.model_store.create(db, model_create)

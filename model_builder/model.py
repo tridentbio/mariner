@@ -91,6 +91,7 @@ class Metrics:
             batch: object with target data (at batch['y'])
         """
         metrics_dict = {}
+        sufix = f"_{sufix}" if sufix else ""
         for metric in self.metrics:
             if not metric.startswith("train"):
                 continue
@@ -123,6 +124,7 @@ class Metrics:
             batch: object with target data (at batch['y'])
         """
         metrics_dict = {}
+        sufix = f"_{sufix}" if sufix else ""
         for metric in self.metrics:
             if not metric.startswith("val"):
                 continue
@@ -255,7 +257,7 @@ class CustomModel(LightningModule):
             )
 
             if target_column.column_type != "multiclass":
-                args = map(lambda x: x.type(torch.DoubleTensor), args)
+                args = map(lambda x: x.type(torch.FloatTensor), args)
 
             losses[target_column.name] = self.loss_dict[target_column.name](*args)
             metrics_dict = self.metrics_dict[target_column.name].get_validation_metrics(
@@ -264,7 +266,10 @@ class CustomModel(LightningModule):
                 target_column.name,
             )
             self.log_dict(
-                metrics_dict, batch_size=len(batch), on_epoch=True, on_step=False
+                metrics_dict,
+                batch_size=len(batch[target_column.name]),
+                on_epoch=True,
+                on_step=False,
             )
             self.log(f"val_loss_{target_column.name}", losses[target_column.name])
 
@@ -282,7 +287,7 @@ class CustomModel(LightningModule):
             )
 
             if target_column.column_type != "multiclass":
-                args = map(lambda x: x.type(torch.DoubleTensor), args)
+                args = map(lambda x: x.type(torch.FloatTensor), args)
 
             losses[target_column.name] = self.loss_dict[target_column.name](*args)
             metrics_dict = self.metrics_dict[target_column.name].get_training_metrics(
@@ -291,9 +296,14 @@ class CustomModel(LightningModule):
                 target_column.name,
             )
             self.log_dict(
-                metrics_dict, batch_size=len(batch), on_epoch=True, on_step=False
+                {
+                    **metrics_dict,
+                    f"train_loss_{target_column.name}": losses[target_column.name],
+                },
+                batch_size=len(batch[target_column.name]),
+                on_epoch=True,
+                on_step=False,
             )
-            self.log(f"train_loss_{target_column.name}", losses[target_column.name])
 
         loss = sum(losses.values())
         return loss
@@ -306,13 +316,18 @@ class CustomModel(LightningModule):
         """
         predictions = self(batch)
 
-        # Apply non-linearity for classifier models
-        if self.config.is_classifier():
-            if (
-                self.config.is_binary or self.config.is_multilabel
-            ):  # binary or multi-label classification
-                predictions = torch.sigmoid(predictions)
-            else:  # multi-class classification
-                predictions = torch.nn.functional.softmax(predictions)
+        for target_column in self.config.dataset.target_columns:
+            if target_column.column_type == "multiclass":
+                predictions[target_column.name] = torch.nn.functional.softmax(
+                    predictions[target_column.name].squeeze(), dim=-1
+                )
+            elif target_column.column_type == "binary":
+                predictions[target_column.name] = torch.sigmoid(
+                    predictions[target_column.name].squeeze()
+                )
+            else:
+                predictions[target_column.name] = predictions[
+                    target_column.name
+                ].squeeze()
 
         return predictions

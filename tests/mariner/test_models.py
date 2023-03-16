@@ -48,7 +48,7 @@ def test_check_forward_exception_good_regressor(
     db: Session, some_dataset: DatasetEntity
 ):
     regressor = model_config(model_type="regressor")
-    assert regressor.loss_fn
+    assert regressor.dataset.target_columns[0].loss_fn
     check = model_ctl.naive_check_forward_exception(db, regressor)
     assert check.stack_trace is None, check.stack_trace
     assert check.output is not None
@@ -59,7 +59,7 @@ def test_check_forward_exception_good_classifier(
     db: Session, some_dataset: DatasetEntity
 ):
     classifier = model_config(dataset_name=some_dataset.name, model_type="classifier")
-    assert classifier.loss_fn
+    assert classifier.dataset.target_columns[0].loss_fn
     check = model_ctl.naive_check_forward_exception(db, classifier)
     assert check.stack_trace is None
     assert check.output is not None

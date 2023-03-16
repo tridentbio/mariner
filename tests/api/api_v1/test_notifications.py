@@ -1,6 +1,3 @@
-from asyncio.events import AbstractEventLoop
-from typing import List
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -28,6 +25,7 @@ async def experiments_fixture(db: Session, some_model: Model):
     db.query(EventEntity).delete()
     db.flush()
     version = some_model.versions[-1]
+    target_column = version.config.dataset.target_columns[0]
     experiments = [
         await experiments_ctl.create_model_traning(
             db,
@@ -37,9 +35,11 @@ async def experiments_fixture(db: Session, some_model: Model):
                 epochs=1,
                 model_version_id=version.id,
                 optimizer=AdamOptimizer(),
-                checkpoint_config=MonitoringConfig(metric_key="val_mse", mode="min"),
+                checkpoint_config=MonitoringConfig(
+                    metric_key=f"val_mse_{target_column.name}", mode="min"
+                ),
                 early_stopping_config=EarlyStoppingConfig(
-                    metric_key="val_mse", mode="min"
+                    metric_key=f"val_mse_{target_column.name}", mode="min"
                 ),
             ),
         )
@@ -94,16 +94,19 @@ async def experiment_fixture(db: Session, some_model_integration: Model) -> Expe
     db.query(EventEntity).filter(EventEntity.user_id == user.id).delete()
     db.flush()
     version = some_model_integration.versions[-1]
+    target_column = version.config.dataset.target_columns[0]
     request = TrainingRequest(
         model_version_id=version.id,
         epochs=1,
         name=random_lower_string(),
         checkpoint_config=MonitoringConfig(
             mode="min",
-            metric_key="val_mse",
+            metric_key=f"val_mse_{target_column.name}",
         ),
         optimizer=AdamOptimizer(),
-        early_stopping_config=EarlyStoppingConfig(metric_key="val_mse", mode="min"),
+        early_stopping_config=EarlyStoppingConfig(
+            metric_key=f"val_mse_{target_column.name}", mode="min"
+        ),
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
     task = get_exp_manager().get_task(exp.id)

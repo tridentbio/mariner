@@ -240,7 +240,8 @@ class CustomDataset(Dataset):
             for i, target in enumerate(targets):
                 if self.output_featurizers[i]:
                     data[target.name] = self.output_featurizers[i](sample[target.name])
-
+                else:
+                    data[target.name] = sample[target.name]
 
         return data
 
