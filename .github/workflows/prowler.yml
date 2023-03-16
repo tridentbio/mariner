@@ -29,4 +29,4 @@ jobs:
         run: |
           export NAME_DIR=$(date +"%Y-%m-%d_%H-%M-%S")
           mv ./prowler prowler_$NAME_DIR
-          aws s3 cp --recursive ./prowler_$NAME_DIR/ s3://prowler-mariner
+          aws s3 cp --recursive ./prowler_$NAME_DIR/ s3://prowler-mariner/prowler_$NAME_DIR
