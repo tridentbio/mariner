@@ -38,7 +38,7 @@ def test_post_datasets(
     db: Session,
 ) -> None:
 
-    with open("tests/data/Lipophilicity.csv", "rb") as f:
+    with open("tests/data/csv/Lipophilicity.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
             data=get_post_dataset_data(),
@@ -75,7 +75,7 @@ def test_post_datasets_invalid(
     db: Session,
 ) -> None:
 
-    with open("tests/data/bad_dataset.csv", "rb") as f:
+    with open("tests/data/csv/bad_dataset.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
             data=get_post_dataset_data(),
@@ -111,7 +111,7 @@ def test_post_datasets_name_conflict(
     normal_user_token_headers: dict[str, str],
 ):
     ds = mock_dataset(name=some_dataset.name)
-    with open("tests/data/zinc.csv", "rb") as f:
+    with open("tests/data/csv/zinc.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
             data=ds,
@@ -198,7 +198,7 @@ def test_get_csv_metadata(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
 ) -> None:
-    with open("tests/data/Lipophilicity.csv", "rb") as f:
+    with open("tests/data/csv/Lipophilicity.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/csv-metadata",
             files={"file": ("dataset.csv", f.read())},

@@ -192,9 +192,11 @@ class MissingComponentArgs(ValueError):
 
 AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
 AnnotatedFeaturizersType = Annotated[FeaturizersType, Field(discriminator="type")]
-LossType = Literal["torch.nn.MSELoss", "torch.nn.CrossEntropyLoss"]
+LossType = Literal[
+    "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
+]
 
-ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss"]
+ALLOWED_CLASSIFIER_LOSSES = ["torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"]
 ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
 
 
@@ -212,6 +214,13 @@ def is_classifier(target_column: ColumnConfig):
     that predicts it is a classifier
     """
     return target_column.data_type.domain_kind == "categorical"
+
+
+def is_binary(target_column: ColumnConfig):
+    """
+    Returns ``True`` if the ``target_column`` is categorical and has only 2 classes
+    """
+    return is_classifier(target_column) and len(target_column.data_type.classes) == 2
 
 
 class ModelSchema(CamelCaseModel):
@@ -240,6 +249,15 @@ class ModelSchema(CamelCaseModel):
             True if the model is for a classification task
         """
         return is_classifier(self.dataset.target_column)
+
+    @property
+    def is_binary(self) -> bool:
+        return is_binary(self.dataset.target_column)
+
+    @property
+    def is_multilabel(self) -> bool:
+        # TODO: implement
+        return False
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
@@ -351,9 +369,11 @@ class ModelSchema(CamelCaseModel):
         target_column = values["dataset"].target_column
         if is_classifier(target_column):
             if not value:
+                if is_binary(target_column):
+                    return "torch.nn.BCEWithLogitsLoss"
                 return "torch.nn.CrossEntropyLoss"
             else:
-                if value not in ALLOWED_CLASSIFIYNG_LOSSES:
+                if value not in ALLOWED_CLASSIFIER_LOSSES:
                     raise ValidationError(
                         "loss is not valid for classifiers", model=ModelSchema
                     )

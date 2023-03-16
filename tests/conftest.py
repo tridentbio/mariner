@@ -107,7 +107,7 @@ def some_bio_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):
     ds = setup_create_dataset(
-        db, client, normal_user_token_headers, file="tests/data/chimpanzee.csv"
+        db, client, normal_user_token_headers, file="tests/data/csv/chimpanzee.csv"
     )
     assert ds is not None
     yield ds

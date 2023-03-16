@@ -1,6 +1,7 @@
 from typing import Callable, List
 
 import pytest
+import torch
 from fastapi import UploadFile
 from pytorch_lightning import Trainer
 from sqlalchemy.orm.session import Session
@@ -26,7 +27,7 @@ from tests.utils.utils import random_lower_string
 
 
 def chem_dataset() -> tuple[str, List[ColumnsDescription]]:
-    zinc_extra_path = "tests/data/zinc_extra.csv"
+    zinc_extra_path = "tests/data/csv/zinc_extra.csv"
     columns_metadata = [
         ColumnsDescription(
             pattern="smiles",
@@ -55,7 +56,7 @@ def chem_dataset() -> tuple[str, List[ColumnsDescription]]:
 
 
 def bio_classification_dataset() -> tuple[str, List[ColumnsDescription]]:
-    chimpazee_path = "tests/data/chimpanzee.csv"
+    chimpazee_path = "tests/data/csv/chimpanzee.csv"
     columns_metadata = [
         ColumnsDescription(
             pattern="sequence",
@@ -74,7 +75,7 @@ def bio_classification_dataset() -> tuple[str, List[ColumnsDescription]]:
 def bio_regression_dataset() -> tuple[str, List[ColumnsDescription]]:
     # aaMutations,uniqueBarcodes,medianBrightness,std
     # DNA,int,float,float
-    csvpath = "tests/data/sarkisyan_full_seq_data.csv"
+    csvpath = "tests/data/csv/sarkisyan_full_seq_data.csv"
     columns = [
         ColumnsDescription(
             pattern="aaMutations",
@@ -88,6 +89,45 @@ def bio_regression_dataset() -> tuple[str, List[ColumnsDescription]]:
         ),
     ]
     return csvpath, columns
+
+
+def iris_dataset() -> tuple[str, List[ColumnsDescription]]:
+    irirs_path = "tests/data/csv/iris.csv"
+    columns_metadata = [
+        ColumnsDescription(
+            pattern="petal_length",
+            data_type=QuantityDataType(unit="mole"),
+            description="petal length",
+        ),
+        ColumnsDescription(
+            pattern="sepal_length",
+            data_type=QuantityDataType(unit="mole"),
+            description="sepal length",
+        ),
+        ColumnsDescription(
+            pattern="sepal_width",
+            data_type=QuantityDataType(unit="mole"),
+            description="sepal width",
+        ),
+        ColumnsDescription(
+            pattern="species",
+            data_type=CategoricalDataType(
+                classes={"setosa": 0, "versicolor": 1, "virginica": 2}
+            ),
+            description="species",
+        ),
+        ColumnsDescription(
+            pattern="large_petal_length",
+            data_type=CategoricalDataType(classes={"yes": 1, "no": 0}),
+            description="yes if petal length is larger than 5.10 otherwise no",
+        ),
+        ColumnsDescription(
+            pattern="large_petal_width",
+            data_type=CategoricalDataType(classes={"yes": 1, "no": 0}),
+            description="yes if petal width is larger than 1.80 otherwise no",
+        ),
+    ]
+    return irirs_path, columns_metadata
 
 
 async def setup_dataset(
@@ -116,19 +156,34 @@ async def setup_dataset(
 
 # model configuration to be tested
 model_configs_and_dataset_setup = [
-    ("tests/data/small_regressor_schema.yaml", chem_dataset),
-    ("tests/data/categorical_features_model.yaml", chem_dataset),
-    ("tests/data/dna_example.yml", bio_regression_dataset),
+    ("tests/data/yaml/small_regressor_schema.yaml", chem_dataset),
+    ("tests/data/yaml/categorical_features_model.yaml", chem_dataset),
+    ("tests/data/yaml/dna_example.yml", bio_regression_dataset),
+    (
+        "tests/data/yaml/binary_classification_model.yaml",
+        iris_dataset,
+        8,
+    ),
+    (
+        "tests/data/yaml/multiclass_classification_model.yaml",
+        iris_dataset,
+        8,
+    ),
 ]
+
+# setting default batch_size=4 for model configs that don't have them
+model_configs_and_dataset_setup = list(
+    map(lambda x: x if len(x) == 3 else (*x, 4), model_configs_and_dataset_setup)
+)
 
 
 @pytest.mark.parametrize(
-    "model_config_path,dataset_setup", model_configs_and_dataset_setup
+    "model_config_path,dataset_setup,batch_size", model_configs_and_dataset_setup
 )
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_model_building(
-    db: Session, model_config_path: str, dataset_setup: Callable
+    db: Session, model_config_path: str, dataset_setup: Callable, batch_size: int
 ):
     dataset = await setup_dataset(db, dataset_setup)
     with open(model_config_path, "rb") as f:
@@ -141,7 +196,7 @@ async def test_model_building(
         split_target=dataset.split_target,
         split_type=dataset.split_type,
         collate_fn=Collater(),
-        batch_size=4,
+        batch_size=batch_size,
     )
     data_module.setup(stage="fit")
     trainer = Trainer(
@@ -150,3 +205,17 @@ async def test_model_building(
         enable_checkpointing=False,
     )
     trainer.fit(model, data_module.train_dataloader())
+
+    batch_example = next(iter(data_module.val_dataloader()))
+    foward = model(batch_example)
+    predict = model.predict_step(batch_example, 0)
+
+    if model_config.is_classifier():
+        if model_config.is_binary or model_config.is_multilabel:
+            assert all(
+                torch.eq(torch.sigmoid(foward), predict)
+            ), "predict_step is not equal to sigmoid of forward for binary classifier"
+        else:
+            assert torch.equal(
+                torch.nn.functional.softmax(foward, dim=-1), predict
+            ), "predict_step is not equal to softmax of forward for multi class classifier"
