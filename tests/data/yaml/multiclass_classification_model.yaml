@@ -1,14 +1,14 @@
 name: multiclass_classification_model
 dataset:
   name: Iris
-  targetColumn:
-    name: species
-    dataType:
-      domainKind: categorical
-      classes:
-        0: 0
-        1: 1
-        2: 2
+  targetColumns:
+    - name: species
+      dataType:
+        domainKind: categorical
+        classes:
+          0: 0
+          1: 1
+          2: 2
   featureColumns:
     - name: sepal_length
       dataType:

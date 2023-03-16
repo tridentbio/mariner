@@ -182,6 +182,7 @@ async def some_trained_model(
         model_type="regressor",
     )
     version = model.versions[-1]
+    target_column = version.config.dataset.target_columns[0]
     request = TrainingRequest(
         model_version_id=version.id,
         epochs=1,
@@ -189,9 +190,11 @@ async def some_trained_model(
         optimizer=AdamOptimizer(),
         checkpoint_config=MonitoringConfig(
             mode="min",
-            metric_key="val_mse",
+            metric_key=f"val_mse_{target_column.name}",
         ),
-        early_stopping_config=EarlyStoppingConfig(metric_key="val_mse", mode="min"),
+        early_stopping_config=EarlyStoppingConfig(
+            metric_key=f"val_mse_{target_column.name}", mode="min"
+        ),
     )
     user = user_sql.user_store.get(db, model.created_by_id)
     assert user

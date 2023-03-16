@@ -1,13 +1,13 @@
 name: binary_classification_model
 dataset:
   name: Iris
-  targetColumn:
-    name: large_petal_length
-    dataType:
-      domainKind: categorical
-      classes:
-        0: no
-        1: yes
+  targetColumns:
+    - name: large_petal_length
+      dataType:
+        domainKind: categorical
+        classes:
+          0: no
+          1: yes
   featureColumns:
     - name: sepal_length
       dataType:
