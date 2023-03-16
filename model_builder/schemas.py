@@ -195,7 +195,7 @@ LossType = Literal[
     "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
 ]
 
-ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"]
+ALLOWED_CLASSIFIER_LOSSES = ["torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"]
 ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
 DEFAULT_LOSS_MAP = {
     "regression": "torch.nn.MSELoss",
@@ -380,10 +380,16 @@ class ModelSchema(CamelCaseModel):
             ValidationError: if the loss_fn is invalid for the defined task and target_columns
             ValueError: if the loss_fn could not be inferred
         """
+
         if not values.get("dataset") or not values.get("layers"):
             raise ValidationError("You must specify dataset and layers")
 
-        dataset = DatasetConfig(**values["dataset"])
+        dataset = (
+            values["dataset"]
+            if isinstance(values["dataset"], DatasetConfig)
+            else DatasetConfig(**values["dataset"])
+        )
+
         layers: List[AnnotatedLayersType] = values["layers"]
 
         try:
@@ -399,14 +405,18 @@ class ModelSchema(CamelCaseModel):
                         raise ValidationError(
                             "You must specify out_module for each target column."
                         )
-                    target_column.out_module = layers[-1]["name"]
+                    target_column.out_module = (
+                        layers[-1]["name"]
+                        if isinstance(layers[-1], dict)
+                        else layers[-1].name
+                    )
 
                 assert (
                     target_column.column_type == "regression"
                     and target_column.loss_fn in ALLOWED_REGRESSOR_LOSSES
                 ) or (
                     target_column.column_type in ("multiclass", "binary")
-                    and target_column.loss_fn in ALLOWED_CLASSIFIYNG_LOSSES
+                    and target_column.loss_fn in ALLOWED_CLASSIFIER_LOSSES
                 )
 
                 dataset.target_columns[i] = target_column

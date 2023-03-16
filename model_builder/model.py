@@ -308,7 +308,7 @@ class CustomModel(LightningModule):
         loss = sum(losses.values())
         return loss
 
-    def predict_step(self, batch, batch_idx):
+    def predict_step(self, batch, batch_idx=0):
         """
         Runs the forward pass using self.forward, then, for
         classifier models, normalizes the predictions using a
