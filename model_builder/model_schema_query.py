@@ -21,7 +21,7 @@ def get_columns_configs(config: ModelSchema) -> List[ColumnConfig]:
     Returns:
         List[ColumnConfig]
     """
-    return config.dataset.feature_columns + [config.dataset.target_column]
+    return config.dataset.feature_columns + config.dataset.target_columns
 
 
 def get_column_config(
@@ -80,4 +80,4 @@ def get_target_columns(model_schema: ModelSchema) -> List[ColumnConfig]:
     Returns:
         List[ColumnConfig]: list of columns
     """
-    return [model_schema.dataset.target_column]
+    return model_schema.dataset.target_columns

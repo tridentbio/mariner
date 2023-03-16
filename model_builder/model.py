@@ -2,7 +2,7 @@
 Torch and PytorchLightning build through from ModelSchema
 """
 import logging
-from typing import List, Literal, Optional, Union
+from typing import Dict, List, Literal, Union
 
 import networkx as nx
 import torch
@@ -45,7 +45,6 @@ class Metrics:
     def __init__(
         self,
         type: Literal["regressor", "classification"],
-        num_classes: Optional[int] = None,
     ):
         if type == "regressor":
             self.metrics = torch.nn.ModuleDict(
@@ -65,8 +64,6 @@ class Metrics:
                 }
             )
         else:
-            if not num_classes:
-                raise ValueError("num_classes must be provided to classifier metrics")
             # https://torchmetrics.readthedocs.io/en/latest/
             self.metrics = torch.nn.ModuleDict(
                 {
@@ -74,20 +71,16 @@ class Metrics:
                     "train_precision": metrics.Precision(),
                     "train_recall": metrics.Recall(),
                     "train_f1": metrics.F1Score(),
-                    # "train_confusion_matrix": metrics.ConfusionMatrix(
-                    #     num_classes=num_classes,
-                    # ),
                     "val_accuracy": metrics.Accuracy(mdmc_reduce="global"),
                     "val_precision": metrics.Precision(),
                     "val_recall": metrics.Recall(),
                     "val_f1": metrics.F1Score(),
-                    # "val_confusion_matrix": metrics.ConfusionMatrix(
-                    #     num_classes=num_classes,
-                    # ),
                 }
             )
 
-    def get_training_metrics(self, prediction: torch.Tensor, batch: DataInstance):
+    def get_training_metrics(
+        self, prediction: torch.Tensor, batch: DataInstance, sufix=""
+    ):
         """Gets a dict with the training metrics
 
         For each of the training metrics avaliable on the task type, return a dictionary
@@ -104,12 +97,12 @@ class Metrics:
             try:
                 if isinstance(self.metrics[metric], (metrics.Accuracy)):
 
-                    metrics_dict[metric] = self.metrics[metric](
-                        prediction.squeeze().long(), batch["y"].squeeze().long()
+                    metrics_dict[metric + sufix] = self.metrics[metric](
+                        prediction.squeeze().long(), batch.squeeze().long()
                     )
                 else:
-                    metrics_dict[metric] = self.metrics[metric](
-                        prediction.squeeze(), batch["y"].squeeze()
+                    metrics_dict[metric + sufix] = self.metrics[metric](
+                        prediction.squeeze(), batch.squeeze()
                     )
             except ValueError as exp:
                 LOG.warning("Gor error with metric %s", metric)
@@ -117,7 +110,9 @@ class Metrics:
 
         return metrics_dict
 
-    def get_validation_metrics(self, prediction: torch.Tensor, batch: DataInstance):
+    def get_validation_metrics(
+        self, prediction: torch.Tensor, batch: DataInstance, sufix=""
+    ):
         """Gets a dict with the validation metrics
 
         For each of the training metrics avaliable on the task type, return a dictionary
@@ -131,8 +126,8 @@ class Metrics:
         for metric in self.metrics:
             if not metric.startswith("val"):
                 continue
-            metrics_dict[metric] = self.metrics[metric](
-                prediction.squeeze(), batch["y"].squeeze()
+            metrics_dict[metric + sufix] = self.metrics[metric](
+                prediction.squeeze(), batch.squeeze()
             )
         return metrics_dict
 
@@ -141,6 +136,8 @@ class CustomModel(LightningModule):
     """Neural network model encoded by a ModelSchema"""
 
     optimizer: Optimizer
+    loss_dict: dict
+    metrics_dict: Dict[str, Metrics]
 
     def __init__(self, config: Union[ModelSchema, str]):
         super().__init__()
@@ -159,22 +156,23 @@ class CustomModel(LightningModule):
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
-        if not config.loss_fn:
-            raise ValueError("config.loss_fn cannot be None")
-        # This is safe as long ModelSchema was validated
-        loss_fn_class = eval(config.loss_fn)
-        self.loss_fn = loss_fn_class()
-        # Set up metrics for training and validation
-        if config.is_regressor():
-            self.metrics = Metrics("regressor")
-        elif config.is_classifier():
-            assert isinstance(
-                config.dataset.target_column.data_type, CategoricalDataType
-            )
-            self.metrics = Metrics(
-                "classification",
-                num_classes=len(config.dataset.target_column.data_type.classes),
-            )
+
+        self.loss_dict = {}
+        self.metrics_dict = {}
+        for target_column in config.dataset.target_columns:
+            if not target_column.loss_fn:
+                raise ValueError(f"{target_column.name}.loss_fn cannot be None")
+
+            # This is safe as long ModelSchema was validated
+            loss_fn_class = eval(target_column.loss_fn)
+            self.loss_dict[target_column.name] = loss_fn_class()
+
+            # Set up metrics for training and validation
+            if target_column.column_type == "regression":
+                self.metrics_dict[target_column.name] = Metrics("regressor")
+            else:
+                assert isinstance(target_column.data_type, CategoricalDataType)
+                self.metrics_dict[target_column.name] = Metrics("classification")
 
     def set_optimizer(self, optimizer: Optimizer):
         """Sets parameters that only are given in training configuration
@@ -191,22 +189,35 @@ class CustomModel(LightningModule):
             {"config": self.config.json(), "learning_rate": self.optimizer.params.lr}
         )
 
+    @staticmethod
+    def call_model(model, args):
+        if isinstance(args, dict):
+            return model(**args)
+        if isinstance(args, list):
+            return model(*args)
+        return model(args)
+
     def forward(self, input: DataInstance):  # type: ignore
         last = input
         for node_name in self.topo_sorting:
             if node_name not in self.layer_configs:
                 continue  # is a featurizer, already evaluated by dataset
+            if node_name in map(
+                lambda x: x.out_module, self.config.dataset.target_columns
+            ):
+                continue  # is a target column output, evaluated separately
             layer = self.layer_configs[node_name]
             args = collect_args(input, layer.forward_args.dict())
-            if isinstance(args, dict):
-                input[layer.name] = self._model[node_name](**args)
-            elif isinstance(args, list):
-                input[layer.name] = self._model[node_name](*args)
-            else:
-                input[layer.name] = self._model[node_name](args)
-
+            input[layer.name] = self.call_model(self._model[node_name], args)
             last = input[layer.name]
-        return last
+
+        result = {}
+        for target_column in self.config.dataset.target_columns:
+            result[target_column.name] = self.call_model(
+                self._model[target_column.out_module], last
+            )
+
+        return result
 
     def configure_optimizers(self):
         if not self.optimizer:
@@ -219,42 +230,72 @@ class CustomModel(LightningModule):
         return self.optimizer.create(self.parameters())
 
     def test_step(self, batch, batch_idx):
-        prediction = self(batch).squeeze()
-        loss = self.loss_fn(prediction, batch["y"])
-        self.log("test_loss", loss)
+        predictions = self(batch)
+
+        losses = {}
+        for target_column in self.config.dataset.target_columns:
+            args = (
+                predictions[target_column.name].squeeze(),
+                batch[target_column.name],
+            )
+            losses[target_column.name] = self.loss_dict[target_column.name](*args)
+            self.log(f"test_loss_{target_column.name}", loss)
+
+        loss = sum(losses.values())
         return loss
 
     def validation_step(self, batch, batch_idx):
         prediction = self(batch)
-        loss_args = (prediction.squeeze(), batch["y"].squeeze())
 
-        # If the model is not multi-class, we need to convert the loss to double
-        if not self.config.is_classifier() or self.config.is_binary:
-            loss_args = map(lambda x: x.type(torch.DoubleTensor), loss_args)
-        loss = self.loss_fn(*loss_args)
-        
-        metrics_dict = self.metrics.get_validation_metrics(prediction, batch)
-        self.log_dict(
-            metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
-        )
-        self.log("val_loss", loss)
+        losses = {}
+        for target_column in self.config.dataset.target_columns:
+            args = (
+                prediction[target_column.name].squeeze(),
+                batch[target_column.name].squeeze(),
+            )
+
+            if target_column.column_type != "multiclass":
+                args = map(lambda x: x.type(torch.DoubleTensor), args)
+
+            losses[target_column.name] = self.loss_dict[target_column.name](*args)
+            metrics_dict = self.metrics_dict[target_column.name].get_validation_metrics(
+                prediction[target_column.name],
+                batch[target_column.name],
+                target_column.name,
+            )
+            self.log_dict(
+                metrics_dict, batch_size=len(batch), on_epoch=True, on_step=False
+            )
+            self.log(f"val_loss_{target_column.name}", losses[target_column.name])
+
+        loss = sum(losses.values())
         return loss
 
     def training_step(self, batch, batch_idx):
         prediction = self(batch)
-        loss_args = (prediction.squeeze(), batch["y"].squeeze())
 
-        # If the model is not multi-class, we need to convert the loss to double
-        if not self.config.is_classifier() or self.config.is_binary:
-            loss_args = map(lambda x: x.type(torch.DoubleTensor), loss_args)
+        losses = {}
+        for target_column in self.config.dataset.target_columns:
+            args = (
+                prediction[target_column.name].squeeze(),
+                batch[target_column.name].squeeze(),
+            )
 
-        loss = self.loss_fn(*loss_args)
-        metrics_dict = {
-            "train_loss": loss,
-        } | self.metrics.get_training_metrics(prediction, batch)
-        self.log_dict(
-            metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False
-        )
+            if target_column.column_type != "multiclass":
+                args = map(lambda x: x.type(torch.DoubleTensor), args)
+
+            losses[target_column.name] = self.loss_dict[target_column.name](*args)
+            metrics_dict = self.metrics_dict[target_column.name].get_training_metrics(
+                prediction[target_column.name],
+                batch[target_column.name],
+                target_column.name,
+            )
+            self.log_dict(
+                metrics_dict, batch_size=len(batch), on_epoch=True, on_step=False
+            )
+            self.log(f"train_loss_{target_column.name}", losses[target_column.name])
+
+        loss = sum(losses.values())
         return loss
 
     def predict_step(self, batch, batch_idx):
