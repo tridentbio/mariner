@@ -38,7 +38,6 @@ from mariner.exceptions.model_exceptions import (
     ModelVersionNotTrained,
 )
 from mariner.ray_actors.model_check_actor import ModelCheckActor
-from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     ComponentOption,
