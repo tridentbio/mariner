@@ -74,16 +74,10 @@ class Metrics:
                     "train_precision": metrics.Precision(),
                     "train_recall": metrics.Recall(),
                     "train_f1": metrics.F1Score(),
-                    # "train_confusion_matrix": metrics.ConfusionMatrix(
-                    #     num_classes=num_classes,
-                    # ),
                     "val_accuracy": metrics.Accuracy(mdmc_reduce="global"),
                     "val_precision": metrics.Precision(),
                     "val_recall": metrics.Recall(),
                     "val_f1": metrics.F1Score(),
-                    # "val_confusion_matrix": metrics.ConfusionMatrix(
-                    #     num_classes=num_classes,
-                    # ),
                 }
             )
 
@@ -230,7 +224,7 @@ class CustomModel(LightningModule):
 
         # If the model is not multi-class, we need to convert the loss to double
         if not self.config.is_classifier() or self.config.is_binary:
-            loss_args = map(lambda x: x.type(torch.DoubleTensor), loss_args)
+            loss_args = map(lambda x: x.type(torch.FloatTensor), loss_args)
         loss = self.loss_fn(*loss_args)
         
         metrics_dict = self.metrics.get_validation_metrics(prediction, batch)
@@ -246,7 +240,7 @@ class CustomModel(LightningModule):
 
         # If the model is not multi-class, we need to convert the loss to double
         if not self.config.is_classifier() or self.config.is_binary:
-            loss_args = map(lambda x: x.type(torch.DoubleTensor), loss_args)
+            loss_args = map(lambda x: x.type(torch.FloatTensor), loss_args)
 
         loss = self.loss_fn(*loss_args)
         metrics_dict = {
@@ -272,6 +266,6 @@ class CustomModel(LightningModule):
             ):  # binary or multi-label classification
                 predictions = torch.sigmoid(predictions)
             else:  # multi-class classification
-                predictions = torch.nn.functional.softmax(predictions)
+                predictions = torch.nn.functional.softmax(predictions, dim=-1)
 
         return predictions

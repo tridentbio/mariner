@@ -196,7 +196,7 @@ LossType = Literal[
     "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
 ]
 
-ALLOWED_CLASSIFIYNG_LOSSES = ["torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"]
+ALLOWED_CLASSIFIER_LOSSES = ["torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"]
 ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
 
 
@@ -357,7 +357,7 @@ class ModelSchema(CamelCaseModel):
                     return "torch.nn.BCEWithLogitsLoss"
                 return "torch.nn.CrossEntropyLoss"
             else:
-                if value not in ALLOWED_CLASSIFIYNG_LOSSES:
+                if value not in ALLOWED_CLASSIFIER_LOSSES:
                     raise ValidationError(
                         "loss is not valid for classifiers", model=ModelSchema
                     )
