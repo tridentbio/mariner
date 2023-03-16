@@ -75,11 +75,8 @@ class TrainingActor:
             log_every_n_steps=max(batch_size // 2, 10),
             enable_progress_bar=False,
             callbacks=[
-                callback for callback in
-                (
-                    self.checkpoint_callback, 
-                    self.early_stopping_callback
-                )
+                callback
+                for callback in (self.checkpoint_callback, self.early_stopping_callback)
                 if callback
             ],
         )
