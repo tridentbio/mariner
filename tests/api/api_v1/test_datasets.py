@@ -220,7 +220,7 @@ def test_get_csv_metadata(
         } in cols
 
 
-@pytest.mark.parametrize('route', ["file", "file-with-errors"])
+@pytest.mark.parametrize("route", ["file", "file-with-errors"])
 @pytest.mark.integration
 def test_download_dataset(
     normal_user_token_headers: dict,
