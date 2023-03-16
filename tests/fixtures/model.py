@@ -117,6 +117,7 @@ def setup_create_model_db(
             for target_col in model.config.dataset.target_columns
         ],
     )
+
     created_model = model_sql.model_store.create(db, model_create)
     version_create = ModelVersionCreateRepo(
         mlflow_version="1",

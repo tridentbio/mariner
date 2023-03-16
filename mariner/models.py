@@ -334,7 +334,9 @@ def _check_dataframe_conforms_dataset(
     return result
 
 
-def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
+def get_model_prediction(
+    db: Session, request: PredictRequest
+) -> Dict[str, torch.Tensor]:
     """(Slowly) Loads a model version and apply it to a sample input
 
     Args:
@@ -367,7 +369,7 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
-    return pyfuncmodel(modelinput)
+    return pyfuncmodel.predict_step(modelinput)
 
 
 def get_model(db: Session, user: UserEntity, model_id: int) -> Model:

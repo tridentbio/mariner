@@ -162,28 +162,33 @@ model_configs_and_dataset_setup = [
     (
         "tests/data/yaml/binary_classification_model.yaml",
         iris_dataset,
-        {"batch_size": 8, "max_epochs": 1},
+        8,
     ),
     (
         "tests/data/yaml/multiclass_classification_model.yaml",
         iris_dataset,
-        {"batch_size": 8, "max_epochs": 1},
+        8,
+    ),
+    (
+        "tests/data/yaml/multitarget_classification_model.yaml",
+        iris_dataset,
+        8,
     ),
 ]
 
-# setting default kwargs for model configs that don't have them
+# setting default batch_size=4 for model configs that don't have them
 model_configs_and_dataset_setup = list(
-    map(lambda x: x if len(x) == 3 else (*x, {}), model_configs_and_dataset_setup)
+    map(lambda x: x if len(x) == 3 else (*x, 4), model_configs_and_dataset_setup)
 )
 
 
 @pytest.mark.parametrize(
-    "model_config_path,dataset_setup,kwargs", model_configs_and_dataset_setup
+    "model_config_path,dataset_setup,batch_size", model_configs_and_dataset_setup
 )
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_model_building(
-    db: Session, model_config_path: str, dataset_setup: Callable, kwargs: dict
+    db: Session, model_config_path: str, dataset_setup: Callable, batch_size: int
 ):
     dataset = await setup_dataset(db, dataset_setup)
     with open(model_config_path, "rb") as f:
@@ -196,11 +201,11 @@ async def test_model_building(
         split_target=dataset.split_target,
         split_type=dataset.split_type,
         collate_fn=Collater(),
-        batch_size=kwargs.get("batch_size", 4),
+        batch_size=batch_size,
     )
     data_module.setup(stage="fit")
     trainer = Trainer(
-        max_epochs=kwargs.get("max_epochs", 1),
+        max_epochs=1,
         enable_progress_bar=False,
         enable_checkpointing=False,
     )

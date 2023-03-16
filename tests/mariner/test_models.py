@@ -31,8 +31,8 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
             user_id=test_user.id, model_version_id=version.id, model_input=df
         ),
     )
-    for tpsa in result:
-        assert isinstance(tpsa, torch.Tensor)
+    for prediction in result.values():
+        assert isinstance(prediction, torch.Tensor)
 
 
 @pytest.mark.integration

@@ -16,6 +16,8 @@ from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 from mlflow.tracking.client import MlflowClient
 
+from mariner.models import CustomModel
+
 
 def log_models_and_create_version(
     model_name: str,
@@ -152,7 +154,7 @@ def get_registry_model(model_registry_name: str, client: Optional[MlflowClient] 
     return registered_model
 
 
-def get_model_by_uri(model_uri: str):
+def get_model_by_uri(model_uri: str) -> CustomModel:
     mlflowmodel = mlflow.pytorch.load_model(model_uri)
     return mlflowmodel
 
