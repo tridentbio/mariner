@@ -27,4 +27,4 @@ jobs:
         run: prowler aws --checks s3_bucket_public_access -M html -F prowler-report -o ./prowler || true
       - name: Upload Report to S3
         run: |
-          aws s3 sync ./prowler s3://prowler-mariner --delete --quiet
+          aws s3 cp ./prowler/* s3://prowler-mariner --delete --quiet
