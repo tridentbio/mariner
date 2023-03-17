@@ -26,7 +26,7 @@ class TrainingActor:
     """Runs training with needed mlflow and custom logging"""
 
     checkpoint_callback: ModelCheckpoint
-    early_stopping_callback: Union[EarlyStopping, None]
+    early_stopping_callback: Union[EarlyStopping, None] = None
     dataset: Dataset
     modelversion: ModelVersion
     request: TrainingRequest
@@ -78,7 +78,11 @@ class TrainingActor:
             logger=self.loggers,
             log_every_n_steps=max(batch_size // 2, 10),
             enable_progress_bar=False,
-            callbacks=callbacks,
+            callbacks=[
+                callback
+                for callback in (self.checkpoint_callback, self.early_stopping_callback)
+                if callback
+            ],
         )
         datamodule.setup()
         trainer.fit(model, datamodule)
@@ -136,5 +140,3 @@ class TrainingActor:
                 patience=early_stopping_config.patience,
                 check_finite=early_stopping_config.check_finite,
             )
-        else:
-            self.early_stopping_callback = None
