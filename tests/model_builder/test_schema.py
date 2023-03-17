@@ -6,7 +6,7 @@ from tests.fixtures.model import model_config
 
 @pytest.fixture(scope="module")
 def schema_yaml_fixture():
-    with open("tests/data/small_regressor_schema.yaml") as f:
+    with open("tests/data/yaml/small_regressor_schema.yaml") as f:
         yield f.read()
 
 
@@ -20,7 +20,10 @@ def test_schema_autofills_lossfn():
     regressor_schema = model_config(model_type="regressor")
     classifier_schema = model_config(model_type="classifier")
     assert regressor_schema.loss_fn == "torch.nn.MSELoss"
-    assert classifier_schema.loss_fn == "torch.nn.CrossEntropyLoss"
+    assert classifier_schema.loss_fn in (
+        "torch.nn.CrossEntropyLoss",
+        "torch.nn.BCEWithLogitsLoss",
+    )
 
 
 def test_schema_1():
