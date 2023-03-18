@@ -163,8 +163,3 @@ class BaseStorage(MutableMapping):
 
     def items(self, *args: List[str]) -> ItemsView:
         return ItemsView(self._mapping, *args)
-
-    def apply(self, function: Callable, *args: List[str]):
-        for key, value in self.items(*args):
-            self[key] = recursive_apply(value, function)
-        return self

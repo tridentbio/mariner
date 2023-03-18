@@ -255,23 +255,8 @@ class DatasetConfig(CamelCaseModel):
 
 class ModelSchema(CamelCaseModel):
     """
-    A serializable neural net architecture
+    A serializable neural net architecture.
     """
-
-    # def is_regressor(self) -> bool:
-    #     return is_regression(self.dataset.target_column)
-
-    # def is_classifier(self) -> bool:
-    #     return is_classifier(self.dataset.target_column)
-
-    # @property
-    # def is_binary(self) -> bool:
-    #     return is_binary(self.dataset.target_column)
-
-    @property
-    def is_multilabel(self) -> bool:
-        # TODO: implement
-        return len(self.dataset.target_columns) > 1
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):

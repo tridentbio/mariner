@@ -205,7 +205,7 @@ def get_csv_file(
     response_class=StreamingResponse,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def get_csv_file(
+def get_csv_file_with_errors(
     dataset_id: int,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),

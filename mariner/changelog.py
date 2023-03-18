@@ -26,11 +26,15 @@ ALLOWED_TYPES = ["Added", "Changed", "Security", "Removed", "Fixed", "Deprecated
 
 
 class ReleaseChange(BaseModel):
+    """Models change of a release."""
+
     type: Literal["Added", "Changed", "Removed", "Deprecated", "Fixed", "Security"]
     message: str
 
 
 class Release(BaseModel):
+    """Models a release parsed from RELEASES.md file."""
+
     version: str
     date: datetime.date
     changes: List[ReleaseChange]
@@ -39,6 +43,16 @@ class Release(BaseModel):
 def parseline(
     line: str,
 ) -> tuple[Optional[str], Optional[str], Optional[str], Optional[str]]:
+    """Parses a line of RELEASES.md file.
+
+    Args:
+        line: string line from the RELEASES.md file.
+
+    Returns:
+        tuple (new_version, new_date, new_type, new_message returning the
+        parsed result.
+
+    """
     new_version, new_date, new_type, new_message = None, None, None, None
     vm = version_pattern.match(line)
     tm = type_pattern.match(line)
@@ -55,6 +69,17 @@ def parseline(
 
 
 def parse_text(text: TextIO):
+    """Parses the RELEASES.md file
+
+    Parses the contents of a RELEASES.md file where every entry occupies a single string
+
+    Args:
+        text: IO object with file contents
+
+    Raises:
+        Exception: when a parsed entry is not from a allowed type (see ALLOWED_TYPES constant
+                                                                   in this package)
+    """
     releases: dict[str, Release] = {}
     current_version: Optional[str] = None
     current_type: Optional[str] = None
@@ -104,11 +129,27 @@ def parse_text(text: TextIO):
 
 
 def parse_release_file(filepath: str) -> List[Release]:
+    """Parses a RELEASES.md file given it's filepath
+
+    Args:
+        filepath: string with path to RELEASES.md file.
+
+    Returns:
+        A list of releases parsed from the input file.
+    """
     with open(filepath, "r", encoding="utf-8") as f:
         return parse_text(f)
 
 
 def log_new_release_events(releases: List[Release]):
+    """Updates database with releases
+
+    Starts a connection to the database to access the events collecetion
+    and insert the releases as new events.
+
+    Args:
+        releases: list of releases parsed from RELEASES.md
+    """
     db = SessionLocal()
     with SessionLocal() as db:
         # Later something like:
@@ -125,7 +166,20 @@ def log_new_release_events(releases: List[Release]):
             )
 
 
-def release_greater_or_equal(version: str, lower_bound_version: str) -> bool:
+def version_greater_or_equal(version: str, lower_bound_version: str) -> bool:
+    """Compares 2 strings representing versions
+
+    Args:
+        version: left hand side of greater or equal check
+        lower_bound_version: right hand side of greater or equal check
+
+    Returns:
+        True if version is greater or equal lower_bound_version, otherwise False
+
+    Raises:
+        ValueError: When input values cannot be parsed as versions
+    """
+
     def split_version(version: str):
         return [int(v) for v in version.split(".")]
 
@@ -133,7 +187,9 @@ def release_greater_or_equal(version: str, lower_bound_version: str) -> bool:
         version_ints = split_version(version)
         boudn_ints = split_version(lower_bound_version)
     except ValueError:
-        raise ValueError("Failed to parse versions, expecting semver liv 1.0.1, 2.0.21")
+        raise ValueError(
+            "Failed to parse versions, expecting semver like 1.0.1, 2.0.21"
+        )
     for (release_number, bound_number) in zip(version_ints, boudn_ints):
         if release_number > bound_number:
             return True
@@ -143,6 +199,11 @@ def release_greater_or_equal(version: str, lower_bound_version: str) -> bool:
 
 
 def get_version_from_pyproject() -> str:
+    """Gets the version of mariner project as informed by pyproject.toml.
+
+    Returns:
+        string with current version.
+    """
     return pkg_resources.get_distribution("mariner").version
 
 
@@ -152,6 +213,7 @@ logger.setLevel(logging.INFO)
 
 @click.group()
 def cli():
+    """Groups cli global options, that will affect all commands."""
     logging.basicConfig(level=logging.INFO)
 
 
@@ -159,6 +221,13 @@ def cli():
 @click.option("--from-version", default=get_version_from_pyproject())
 @click.option("--force-resend", default=False)
 def publish(from_version: str, force_resend: bool):
+    """CLI handler for taking a RELEASES.md and publish changes to users.
+
+    Args:
+        from_version: Starting version from which to start pushing notifications.
+        force_resend: Flag to tell if should send a notification even tho it was
+        already send.
+    """
     with SessionLocal() as db:
         changelog_events = event_store.get(db, from_source="changelog")
         versions_published = [
@@ -168,14 +237,14 @@ def publish(from_version: str, force_resend: bool):
 
             def filter_fn(x):
                 return (
-                    release_greater_or_equal(x, from_version)
+                    version_greater_or_equal(x, from_version)
                     and x not in versions_published
                 )
 
         else:
 
             def filter_fn(x):
-                return release_greater_or_equal(x, from_version)
+                return version_greater_or_equal(x, from_version)
 
         releases = [
             release for release in parse_text(sys.stdin) if filter_fn(release.version)

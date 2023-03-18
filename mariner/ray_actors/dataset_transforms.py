@@ -273,7 +273,7 @@ class DatasetTransforms:
     def get_dataset_summary(
         self, columns_metadata: List[ColumnsDescription] = []
     ) -> StatsType:
-        """Get's histogram for dataset columns according to it's inferred type
+        """Gets histogram for dataset columns according to it's inferred type
 
         Columns for which histograms are generated must be of type int, float,
         smiles, categorical or biological.
