@@ -100,7 +100,7 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
             "bond_conjugated": self._get_bond_is_conjugated,
         }
 
-        self.get_slices()
+        self._get_slices()
 
     def __call__(self, mol: Union[RDKitMol, str]) -> PyGData:
         return self._featurize(mol, self.sym_bond_list)
@@ -114,7 +114,7 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
         )
         return f"Featurizer({atom_features}; {bond_features})"
 
-    def get_slices(self):
+    def _get_slices(self):
         if self.allow_unknown:
             unknown_val = 1
         else:

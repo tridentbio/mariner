@@ -220,21 +220,21 @@ def test_get_csv_metadata(
         } in cols
 
 
+@pytest.mark.parametrize('route', ["file", "file-with-errors"])
 @pytest.mark.integration
 def test_download_dataset(
     normal_user_token_headers: dict,
     some_dataset_without_process: DatasetModel,
     client: TestClient,
+    route: str,
 ):
-    routes_to_test = ["file", "file-with-errors"]
-    for route in routes_to_test:
-        res = client.get(
-            f"{settings.API_V1_STR}/datasets/{some_dataset_without_process.id}/{route}",
-            headers=normal_user_token_headers,
-        )
-        assert res.status_code == 200, f"route datasets/{route} failed"
+    res = client.get(
+        f"{settings.API_V1_STR}/datasets/{some_dataset_without_process.id}/{route}",
+        headers=normal_user_token_headers,
+    )
+    assert res.status_code == 200, f"route datasets/{route} failed"
 
-        hash = hash_md5(data=res.content)
-        assert (
-            f"datasets/{hash}.csv" == some_dataset_without_process.data_url
-        ), f"downloaded file hash does not match in route datasets/{route}"
+    hash = hash_md5(data=res.content)
+    assert (
+        f"datasets/{hash}.csv" == some_dataset_without_process.data_url
+    ), f"downloaded file hash does not match in route datasets/{route}"

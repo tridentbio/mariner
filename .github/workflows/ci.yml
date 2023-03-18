@@ -103,7 +103,6 @@ jobs:
     # Only saves if branch is develop or releases/**
     - name: Update branch pylint score (workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
-      continue-on-error: true
       run: |
         . .venv/bin/activate
         BASE_REF_LINT_DATA="${GITHUB_REF#refs/heads/}"
@@ -112,16 +111,14 @@ jobs:
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
       if: github.event_name == 'pull_request'
-      continue-on-error: true
       run: |
         . .venv/bin/activate
-        python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' }}
+        python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' || '' }}
 
 
     # Unit test coverage check
 
     - name: Run unit tests and get coverage
-      continue-on-error: true
       env:
         POSTGRES_SERVER: localhost 
         POSTGRES_PASSWORD: 123456
@@ -145,7 +142,6 @@ jobs:
     ## Docstring coverage check
 
     - name: Get docstring coverage and save as new docstring target (pull_request merged)
-      continue-on-error: true
       if: github.event_name == 'pull_request' && github.event.pull_request.merged
       run: |
         . .venv/bin/activate
@@ -153,7 +149,6 @@ jobs:
         COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH && echo "Saved docstr coverage at $BASE_COV_PATH"
 
     - name: Get docstring coverage and save as new docstring target (workflow dispatch)
-      continue-on-error: true
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.save_src
       run: |
         . .venv/bin/activate
@@ -161,7 +156,6 @@ jobs:
         COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH && echo "Saved docstr coverage at $BASE_COV_PATH"
 
     - name: Get docstring coverage
-      continue-on-error: false
       if: github.event.inputs.save_src != true || github.event.pull_request.merged != true 
       run: |
         . .venv/bin/activate

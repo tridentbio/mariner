@@ -121,7 +121,7 @@ def create_model(
 
     client = mlflowapi.create_tracking_client()
     # Handle case where model_create.name refers to existing model
-    existingmodel = model_store.get_by_name_from_user(db, user.id, model_create.name)
+    existingmodel = model_store.get_by_name_from_user(db, model_create.name, user_id=user.id)
     if existingmodel:
         model_store.create_model_version(
             db,

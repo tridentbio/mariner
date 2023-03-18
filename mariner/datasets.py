@@ -441,8 +441,7 @@ def get_csv_file(
         if not dataset.errors:
             raise DatasetNotFound(f"Dataset with id {dataset_id} has no errors")
 
-        
-        file_key = dataset.errors['dataset_error_key']
+        file_key = dataset.errors["dataset_error_key"]
 
     if not file_key:
         raise NotImplementedError(f"File type {file_type} not implemented")
