@@ -1,7 +1,7 @@
 """
 Handlers for api/v1/models* endpoints
 """
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from fastapi.exceptions import HTTPException
@@ -156,7 +156,7 @@ def post_model_predict(
         HTTPException: When app is not able to get the prediction
         TypeError: When the model output is not a Tensor or a Dataframe
     """
-    prediction = None
+    prediction: Optional[Dict[str, Union[torch.Tensor, List[Any]]]] = None
     try:
         prediction = controller.get_model_prediction(
             db,
@@ -184,7 +184,9 @@ def post_model_predict(
     for column, result in prediction.items():
         if not isinstance(result, torch.Tensor):
             raise TypeError("Unexpected model output")
-        prediction[column] = result.tolist()
+        serialized_result = result.tolist()
+        prediction[column] = serialized_result \
+            if isinstance(serialized_result, list) else [serialized_result]
 
     return prediction
 
