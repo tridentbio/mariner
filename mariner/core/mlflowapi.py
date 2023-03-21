@@ -88,7 +88,7 @@ def create_registered_model(
     return registered_model
 
 
-def get_model_by_uri(model_uri: str):
+def get_model_by_uri(model_uri: str) -> CustomModel:
     """The uri specifying the model.
 
     Args:
