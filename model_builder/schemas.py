@@ -2,7 +2,7 @@
 Object schemas used by the model builder
 """
 # Temporary file to hold all extracted mariner schemas
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import networkx as nx
 import yaml
@@ -194,14 +194,40 @@ AnnotatedFeaturizersType = Annotated[FeaturizersType, Field(discriminator="type"
 LossType = Literal[
     "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
 ]
+AllowedLossesType = List[Dict[str, str]]
 
-ALLOWED_CLASSIFIER_LOSSES = ["torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"]
-ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
-DEFAULT_LOSS_MAP = {
-    "regression": "torch.nn.MSELoss",
-    "binary": "torch.nn.BCEWithLogitsLoss",
-    "multiclass": "torch.nn.CrossEntropyLoss",
-}
+
+class AllowedLosses(CamelCaseModel):
+    """
+    List allowed losses for each column type
+    """
+
+    regr: AllowedLossesType = [{"key": "torch.nn.MSELoss", "value": "MSELoss"}]
+    bin_class: AllowedLossesType = [
+        {"key": "torch.nn.BCEWithLogitsLoss", "value": "BCEWithLogitsLoss"}
+    ]
+    mc_class: AllowedLossesType = [
+        {"key": "torch.nn.CrossEntropyLoss", "value": "CrossEntropyLoss"}
+    ]
+
+    @property
+    def type_map(self):
+        return {"regression": "regr", "binary": "bin_class", "multiclass": "mc_class"}
+
+    def check(
+        self, loss: str, column_type: Literal["regression", "multiclass", "binary"]
+    ):
+        """Check if loss is allowed for column_type"""
+        allowed_losses_list = map(
+            lambda x: x["key"], self.dict()[self.type_map[column_type]]
+        )
+        return loss in allowed_losses_list
+
+    def get_default(
+        self, column_type: Literal["regression", "multiclass", "binary"]
+    ) -> str:
+        """Get default loss for column_type"""
+        return self.dict()[self.type_map[column_type]][0]["key"]
 
 
 def is_regression(target_column: TargetConfig):
@@ -378,12 +404,15 @@ class ModelSchema(CamelCaseModel):
         layers: List[AnnotatedLayersType] = values["layers"]
 
         try:
+            allowed_losses = AllowedLosses()
             for i, target_column in enumerate(dataset.target_columns):
                 if not target_column.column_type:
                     target_column.column_type = infer_column_type(target_column)
 
                 if not target_column.loss_fn:
-                    target_column.loss_fn = DEFAULT_LOSS_MAP[target_column.column_type]
+                    target_column.loss_fn = allowed_losses.get_default(
+                        target_column.column_type
+                    )
 
                 if not target_column.out_module:
                     if len(dataset.target_columns) > 1:
@@ -396,13 +425,9 @@ class ModelSchema(CamelCaseModel):
                         else layers[-1].name
                     )
 
-                assert (
-                    target_column.column_type == "regression"
-                    and target_column.loss_fn in ALLOWED_REGRESSOR_LOSSES
-                ) or (
-                    target_column.column_type in ("multiclass", "binary")
-                    and target_column.loss_fn in ALLOWED_CLASSIFIER_LOSSES
-                )
+                assert allowed_losses.check(
+                    target_column.loss_fn, target_column.column_type
+                ), f"Loss function {target_column.loss_fn} is not valid for {target_column.column_type} task"
 
                 dataset.target_columns[i] = target_column
 
