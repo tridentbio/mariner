@@ -16,10 +16,10 @@ from typing import (
 )
 from uuid import uuid4
 
+import lightning.pytorch as pl
 import mlflow
 import mlflow.exceptions
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 from sqlalchemy.orm.session import Session
 from torch_geometric.loader import DataLoader
@@ -121,7 +121,9 @@ def create_model(
 
     client = mlflowapi.create_tracking_client()
     # Handle case where model_create.name refers to existing model
-    existingmodel = model_store.get_by_name_from_user(db, model_create.name, user_id=user.id)
+    existingmodel = model_store.get_by_name_from_user(
+        db, model_create.name, user_id=user.id
+    )
     if existingmodel:
         model_store.create_model_version(
             db,
