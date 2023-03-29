@@ -93,11 +93,11 @@ class TestTrainingActor:
         ]
         assert len(object_keys) == 2, "failed to trained model artifacts from s3"
         loss_history = client.get_metric_history(
-            run_id=run.info.run_id, key=f"train_loss_{target_column.name}"
+            run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
         )
         assert len(loss_history) > 0
         val_loss_history = client.get_metric_history(
-            run_id=run.info.run_id, key=f"val_mse_{target_column.name}"
+            run_id=run.info.run_id, key=f"val/mse/{target_column.name}"
         )
         assert len(val_loss_history) > 0
 
@@ -144,10 +144,10 @@ class TestTrainingActor:
             epochs=3,
             batch_size=32,
             checkpoint_config=MonitoringConfig(
-                metric_key=f"val_mse_{target_column.name}", mode="min"
+                metric_key=f"val/mse/{target_column.name}", mode="min"
             ),
             optimizer=AdamOptimizer(),
             early_stopping_config=EarlyStoppingConfig(
-                metric_key=f"val_mse_{target_column.name}", mode="min"
+                metric_key=f"val/mse/{target_column.name}", mode="min"
             ),
         )
