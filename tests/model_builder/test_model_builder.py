@@ -3,7 +3,7 @@ from typing import Callable, List
 import pytest
 import torch
 from fastapi import UploadFile
-from pytorch_lightning import Trainer
+from lightning.pytorch import Trainer
 from sqlalchemy.orm.session import Session
 
 from mariner import datasets as dataset_ctl
