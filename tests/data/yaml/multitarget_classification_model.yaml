@@ -1,7 +1,14 @@
-name: multiclass_classification_model
+name: binary_classification_model
 dataset:
   name: Iris
   targetColumns:
+    - name: large_petal_length
+      dataType:
+        domainKind: categorical
+        classes:
+          0: no
+          1: yes
+      outModule: BinaryOut
     - name: species
       dataType:
         domainKind: categorical
@@ -9,6 +16,12 @@ dataset:
           0: 0
           1: 1
           2: 2
+      outModule: MultiClassOut
+    - name: petal_length
+      dataType:
+        domainKind: numeric
+        unit: cm
+      outModule: RegressionOut
   featureColumns:
     - name: sepal_length
       dataType:
@@ -59,10 +72,26 @@ layers:
     forwardArgs:
       input: $Linear1
 
-  - name: Linear2
+  - name: RegressionOut
+    type: torch.nn.Linear
+    constructorArgs:
+      in_features: 16
+      out_features: 1
+    forwardArgs:
+      input: $ReLU1
+
+  - name: MultiClassOut
     type: torch.nn.Linear
     constructorArgs:
       in_features: 16
       out_features: 3
+    forwardArgs:
+      input: $ReLU1
+
+  - name: BinaryOut
+    type: torch.nn.Linear
+    constructorArgs:
+      in_features: 16
+      out_features: 1
     forwardArgs:
       input: $ReLU1

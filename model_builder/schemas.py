@@ -2,7 +2,7 @@
 Object schemas used by the model builder
 """
 # Temporary file to hold all extracted mariner schemas
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, List, Literal, Optional, Union
 
 import networkx as nx
 import yaml
@@ -142,15 +142,14 @@ class ColumnConfig(CamelCaseModel):
     ] = Field(...)
 
 
-# TODO: move featurizers to feature_columns
-class DatasetConfig(CamelCaseModel):
+class TargetConfig(ColumnConfig):
     """
-    Describes a dataset for the model in terms of it's used columns
+    Describes a target column based on its data type and index
     """
 
-    name: str
-    target_column: ColumnConfig
-    feature_columns: List[ColumnConfig]
+    out_module: Optional[str]
+    loss_fn: Optional[str]
+    column_type: Optional[Literal["regression", "multiclass", "binary"]]
 
 
 class UnknownComponentType(ValueError):
@@ -198,22 +197,31 @@ LossType = Literal[
 
 ALLOWED_CLASSIFIER_LOSSES = ["torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"]
 ALLOWED_REGRESSOR_LOSSES = ["torch.nn.MSELoss"]
+DEFAULT_LOSS_MAP = {
+    "regression": "torch.nn.MSELoss",
+    "binary": "torch.nn.BCEWithLogitsLoss",
+    "multiclass": "torch.nn.CrossEntropyLoss",
+}
 
 
-def is_regression(target_column: ColumnConfig):
+def is_regression(target_column: TargetConfig):
     """
     Returns ``True`` if ``target_column`` is numeric and therefore the model
     that predicts it is a regressor
     """
-    return target_column.data_type.domain_kind == "numeric"
+    if not target_column.column_type:
+        return target_column.data_type.domain_kind == "numeric"
+    return target_column.column_type == "regression"
 
 
-def is_classifier(target_column: ColumnConfig):
+def is_classifier(target_column: TargetConfig):
     """
     Returns ``True`` if the ``target_column`` is categorical and therefore the model
     that predicts it is a classifier
     """
-    return target_column.data_type.domain_kind == "categorical"
+    if not target_column.column_type:
+        return target_column.data_type.domain_kind == "categorical"
+    return target_column.column_type in ["binary", "multiclass"]
 
 
 def is_binary(target_column: ColumnConfig):
@@ -223,41 +231,32 @@ def is_binary(target_column: ColumnConfig):
     return is_classifier(target_column) and len(target_column.data_type.classes) == 2
 
 
+def infer_column_type(column: TargetConfig):
+    """
+    Infer column type based on its data type
+    """
+    if is_regression(column):
+        return "regression"
+    if is_classifier(column):
+        return "multiclass" if len(column.data_type.classes) > 2 else "binary"
+    raise ValueError(f"Unknown column type for {column.name}")
+
+
+# TODO: move featurizers to feature_columns
+class DatasetConfig(CamelCaseModel):
+    """
+    Describes a dataset for the model in terms of it's used columns
+    """
+
+    name: str
+    target_columns: List[TargetConfig]
+    feature_columns: List[ColumnConfig]
+
+
 class ModelSchema(CamelCaseModel):
     """
     A serializable neural net architecture.
     """
-
-    def is_regressor(self) -> bool:
-        """Checks if the model is for a regression task
-
-        A torch model spec is a regression when the dataset.target_column attribute
-        is numeric
-
-        Returns:
-            True if the model is for a regression task
-        """
-        return is_regression(self.dataset.target_column)
-
-    def is_classifier(self) -> bool:
-        """Checks if the model is for a classification task
-
-        A torch model spec is a classifier when the dataset.target_column attribute
-        is categorical.
-
-        Returns:
-            True if the model is for a classification task
-        """
-        return is_classifier(self.dataset.target_column)
-
-    @property
-    def is_binary(self) -> bool:
-        return is_binary(self.dataset.target_column)
-
-    @property
-    def is_multilabel(self) -> bool:
-        # TODO: implement
-        return False
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
@@ -270,8 +269,8 @@ class ModelSchema(CamelCaseModel):
         Raises:
             UnknownComponentType: in case a layer of featurizer has unknown ``type``
         """
-        layers = values.get("layers")
-        featurizers = values.get("featurizers")
+        layers: List[AnnotatedLayersType] = values.get("layers")
+        featurizers: List[AnnotatedFeaturizersType] = values.get("featurizers")
         layer_types = [layer.name for layer in generate.layers]
         for layer in layers:
             if not isinstance(layer, dict):
@@ -304,8 +303,8 @@ class ModelSchema(CamelCaseModel):
         Raises:
             MissingComponentArgs: if some component is missing required args
         """
-        layers = values.get("layers")
-        featurizers = values.get("featurizers")
+        layers: List[AnnotatedLayersType] = values.get("layers")
+        featurizers: List[AnnotatedFeaturizersType] = values.get("featurizers")
         errors = []
         for layer in layers:
             if not isinstance(layer, dict):
@@ -350,8 +349,8 @@ class ModelSchema(CamelCaseModel):
             raise errors[0]
         return values
 
-    @validator("loss_fn", pre=True, always=True)
-    def autofill_loss_fn(cls, value: str, values: Dict[str, Any]) -> Any:
+    @root_validator(pre=True)
+    def autofill_loss_fn(cls, values: dict) -> Any:
         """Validates or infer the loss_fn attribute
 
         Automatically fills and validates the loss_fn field based on the target_column
@@ -366,37 +365,65 @@ class ModelSchema(CamelCaseModel):
             ValidationError: if the loss_fn is invalid for the defined task and target_columns
             ValueError: if the loss_fn could not be inferred
         """
-        target_column = values["dataset"].target_column
-        if is_classifier(target_column):
-            if not value:
-                if is_binary(target_column):
-                    return "torch.nn.BCEWithLogitsLoss"
-                return "torch.nn.CrossEntropyLoss"
-            else:
-                if value not in ALLOWED_CLASSIFIER_LOSSES:
-                    raise ValidationError(
-                        "loss is not valid for classifiers", model=ModelSchema
-                    )
-                return value
-        elif is_regression(target_column):
-            if not value:
-                return "torch.nn.MSELoss"
-            else:
-                if value not in ALLOWED_REGRESSOR_LOSSES:
-                    raise ValidationError(
-                        "loss is not valid for regressors", model=ModelSchema
-                    )
-                return value
-        raise ValueError(
-            f"Can't determine task for output {target_column}."
-            "Accepted output types are numeric or categorical."
+
+        if not values.get("dataset") or not values.get("layers"):
+            raise ValidationError("You must specify dataset and layers")
+
+        dataset = (
+            values["dataset"]
+            if isinstance(values["dataset"], DatasetConfig)
+            else DatasetConfig(**values["dataset"])
         )
+
+        layers: List[AnnotatedLayersType] = values["layers"]
+
+        try:
+            for i, target_column in enumerate(dataset.target_columns):
+                if not target_column.column_type:
+                    target_column.column_type = infer_column_type(target_column)
+
+                if not target_column.loss_fn:
+                    target_column.loss_fn = DEFAULT_LOSS_MAP[target_column.column_type]
+
+                if not target_column.out_module:
+                    if len(dataset.target_columns) > 1:
+                        raise ValidationError(
+                            "You must specify out_module for each target column."
+                        )
+                    target_column.out_module = (
+                        layers[-1]["name"]
+                        if isinstance(layers[-1], dict)
+                        else layers[-1].name
+                    )
+
+                assert (
+                    target_column.column_type == "regression"
+                    and target_column.loss_fn in ALLOWED_REGRESSOR_LOSSES
+                ) or (
+                    target_column.column_type in ("multiclass", "binary")
+                    and target_column.loss_fn in ALLOWED_CLASSIFIER_LOSSES
+                )
+
+                dataset.target_columns[i] = target_column
+
+            return {
+                **values,
+                "dataset": dataset.dict(),
+            }
+        except KeyError:
+            raise ValueError(
+                f"Can't determine task for output {target_column}."
+                f"Column type {target_column.column_type} have not default loss function."
+            )
+        except AssertionError:
+            raise ValidationError(
+                f"Loss function {target_column.loss_fn} is not valid for {target_column.column_type} task"
+            )
 
     name: str
     dataset: DatasetConfig
     layers: List[AnnotatedLayersType] = []
     featurizers: List[AnnotatedFeaturizersType] = []
-    loss_fn: LossType = None
 
     def make_graph(self):
         """Makes a graph of the layers and featurizers

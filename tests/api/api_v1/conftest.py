@@ -25,6 +25,7 @@ from tests.utils.utils import random_lower_string
 def mocked_experiment_payload(some_model: Model):
     experiment_name = random_lower_string()
     version = some_model.versions[-1]
+    target_column = version.config.dataset.target_columns[0]
     return {
         "name": experiment_name,
         "optimizer": {
@@ -35,8 +36,14 @@ def mocked_experiment_payload(some_model: Model):
         },
         "epochs": 1,
         "modelVersionId": version.id,
-        "checkpointConfig": {"metricKey": "val_mse", "mode": "min"},
-        "earlyStoppingConfig": {"metricKey": "val_mse", "mode": "min"},
+        "checkpointConfig": {
+            "metricKey": f"val/mse/{target_column.name}",
+            "mode": "min",
+        },
+        "earlyStoppingConfig": {
+            "metricKey": f"val/mse/{target_column.name}",
+            "mode": "min",
+        },
     }
 
 
