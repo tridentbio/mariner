@@ -49,32 +49,32 @@ class Metrics:
         if type == "regressor":
             self.metrics = torch.nn.ModuleDict(
                 {
-                    "train_mse": metrics.MeanSquaredError(),
-                    "train_mae": metrics.MeanAbsoluteError(),
-                    "train_ev": metrics.ExplainedVariance(),
-                    "train_mape": metrics.MeanAbsolutePercentageError(),
-                    "train_R2": metrics.R2Score(),
-                    "train_pearson": metrics.PearsonCorrCoef(),
-                    "val_mse": metrics.MeanSquaredError(),
-                    "val_mae": metrics.MeanAbsoluteError(),
-                    "val_ev": metrics.ExplainedVariance(),
-                    "val_mape": metrics.MeanAbsolutePercentageError(),
-                    "val_R2": metrics.R2Score(),
-                    "val_pearson": metrics.PearsonCorrCoef(),
+                    "train/mse": metrics.MeanSquaredError(),
+                    "train/mae": metrics.MeanAbsoluteError(),
+                    "train/ev": metrics.ExplainedVariance(),
+                    "train/mape": metrics.MeanAbsolutePercentageError(),
+                    "train/R2": metrics.R2Score(),
+                    "train/pearson": metrics.PearsonCorrCoef(),
+                    "val/mse": metrics.MeanSquaredError(),
+                    "val/mae": metrics.MeanAbsoluteError(),
+                    "val/ev": metrics.ExplainedVariance(),
+                    "val/mape": metrics.MeanAbsolutePercentageError(),
+                    "val/R2": metrics.R2Score(),
+                    "val/pearson": metrics.PearsonCorrCoef(),
                 }
             )
         else:
             # https://torchmetrics.readthedocs.io/en/latest/
             self.metrics = torch.nn.ModuleDict(
                 {
-                    "train_accuracy": metrics.Accuracy(mdmc_reduce="global"),
-                    "train_precision": metrics.Precision(),
-                    "train_recall": metrics.Recall(),
-                    "train_f1": metrics.F1Score(),
-                    "val_accuracy": metrics.Accuracy(mdmc_reduce="global"),
-                    "val_precision": metrics.Precision(),
-                    "val_recall": metrics.Recall(),
-                    "val_f1": metrics.F1Score(),
+                    "train/accuracy": metrics.Accuracy(mdmc_reduce="global"),
+                    "train/precision": metrics.Precision(),
+                    "train/recall": metrics.Recall(),
+                    "train/f1": metrics.F1Score(),
+                    "val/accuracy": metrics.Accuracy(mdmc_reduce="global"),
+                    "val/precision": metrics.Precision(),
+                    "val/recall": metrics.Recall(),
+                    "val/f1": metrics.F1Score(),
                 }
             )
 
@@ -91,7 +91,7 @@ class Metrics:
             batch: object with target data (at batch['y'])
         """
         metrics_dict = {}
-        sufix = f"_{sufix}" if sufix else ""
+        sufix = f"/{sufix}" if sufix else ""
         for metric in self.metrics:
             if not metric.startswith("train"):
                 continue
@@ -124,7 +124,7 @@ class Metrics:
             batch: object with target data (at batch['y'])
         """
         metrics_dict = {}
-        sufix = f"_{sufix}" if sufix else ""
+        sufix = f"/{sufix}" if sufix else ""
         for metric in self.metrics:
             if not metric.startswith("val"):
                 continue
@@ -271,7 +271,7 @@ class CustomModel(LightningModule):
                 on_epoch=True,
                 on_step=False,
             )
-            self.log(f"val_loss_{target_column.name}", losses[target_column.name])
+            self.log(f"val/loss/{target_column.name}", losses[target_column.name])
 
         loss = sum(losses.values())
         return loss
@@ -298,7 +298,7 @@ class CustomModel(LightningModule):
             self.log_dict(
                 {
                     **metrics_dict,
-                    f"train_loss_{target_column.name}": losses[target_column.name],
+                    f"train/loss/{target_column.name}": losses[target_column.name],
                 },
                 batch_size=len(batch[target_column.name]),
                 on_epoch=True,

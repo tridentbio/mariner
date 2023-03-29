@@ -190,10 +190,10 @@ async def some_trained_model(
         optimizer=AdamOptimizer(),
         checkpoint_config=MonitoringConfig(
             mode="min",
-            metric_key=f"val_mse_{target_column.name}",
+            metric_key=f"val/mse/{target_column.name}",
         ),
         early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val_mse_{target_column.name}", mode="min"
+            metric_key=f"val/mse/{target_column.name}", mode="min"
         ),
     )
     user = user_sql.user_store.get(db, model.created_by_id)
