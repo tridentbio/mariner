@@ -11,11 +11,11 @@ class TestExperimentRepo:
         update = ExperimentUpdateRepo(
             epochs=13,
             train_metrics={
-                f"train_loss_{target_column.name}": 495.88104248046875,
+                f"train/loss/{target_column.name}": 495.88104248046875,
                 "epoch": 4,
             },
             history={
-                f"train_loss_{target_column.name}": [
+                f"train/loss/{target_column.name}": [
                     1349.7373046875,
                     544.4139404296875,
                     546.408447265625,

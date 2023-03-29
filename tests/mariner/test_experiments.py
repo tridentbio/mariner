@@ -81,11 +81,11 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
         name=random_lower_string(),
         checkpoint_config=MonitoringConfig(
             mode="min",
-            metric_key=f"val_mse_{target_column.name}",
+            metric_key=f"val/mse/{target_column.name}",
         ),
         optimizer=AdamOptimizer(),
         early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val_mse_{target_column.name}", mode="min"
+            metric_key=f"val/mse/{target_column.name}", mode="min"
         ),
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
@@ -112,15 +112,15 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
     assert db_exp.train_metrics
     assert db_exp.history
     assert db_exp.stage == "SUCCESS"
-    assert f"train_loss_{target_column.name}" in db_exp.train_metrics
-    assert len(db_exp.history[f"train_loss_{target_column.name}"]) == request.epochs
+    assert f"train/loss/{target_column.name}" in db_exp.train_metrics
+    assert len(db_exp.history[f"train/loss/{target_column.name}"]) == request.epochs
     collected_regression_metrics = [
-        f"train_mse_{target_column.name}",
-        f"train_mae_{target_column.name}",
-        f"train_ev_{target_column.name}",
-        f"train_mape_{target_column.name}",
-        f"train_R2_{target_column.name}",
-        f"train_pearson_{target_column.name}",
+        f"train/mse/{target_column.name}",
+        f"train/mae/{target_column.name}",
+        f"train/ev/{target_column.name}",
+        f"train/mape/{target_column.name}",
+        f"train/R2/{target_column.name}",
+        f"train/pearson/{target_column.name}",
     ]
     for metric in collected_regression_metrics:
         assert len(db_exp.history[metric]) == request.epochs
@@ -150,10 +150,10 @@ async def test_experiment_has_stacktrace_when_training_fails(
         optimizer=AdamOptimizer(),
         checkpoint_config=MonitoringConfig(
             mode="min",
-            metric_key=f"val_mse_{target_column.name}",
+            metric_key=f"val/mse/{target_column.name}",
         ),
         early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val_mse_{target_column.name}", mode="min"
+            metric_key=f"val/mse/{target_column.name}", mode="min"
         ),
     )
     # Mock CustomLogger forward to raise an Exception

@@ -36,10 +36,10 @@ async def experiments_fixture(db: Session, some_model: Model):
                 model_version_id=version.id,
                 optimizer=AdamOptimizer(),
                 checkpoint_config=MonitoringConfig(
-                    metric_key=f"val_mse_{target_column.name}", mode="min"
+                    metric_key=f"val/mse/{target_column.name}", mode="min"
                 ),
                 early_stopping_config=EarlyStoppingConfig(
-                    metric_key=f"val_mse_{target_column.name}", mode="min"
+                    metric_key=f"val/mse/{target_column.name}", mode="min"
                 ),
             ),
         )
@@ -101,11 +101,11 @@ async def experiment_fixture(db: Session, some_model_integration: Model) -> Expe
         name=random_lower_string(),
         checkpoint_config=MonitoringConfig(
             mode="min",
-            metric_key=f"val_mse_{target_column.name}",
+            metric_key=f"val/mse/{target_column.name}",
         ),
         optimizer=AdamOptimizer(),
         early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val_mse_{target_column.name}", mode="min"
+            metric_key=f"val/mse/{target_column.name}", mode="min"
         ),
     )
     exp = await experiments_ctl.create_model_traning(db, user, request)
