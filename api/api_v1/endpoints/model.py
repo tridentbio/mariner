@@ -1,13 +1,12 @@
 """
 Handlers for api/v1/models* endpoints
 """
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
-from pandas.core.frame import DataFrame
 from sqlalchemy.orm.session import Session
 from starlette import status
 
@@ -135,7 +134,7 @@ def get_model_name_suggestion():
     return GetNameSuggestionResponse(name=random_pretty_name())
 
 
-@router.post("/{model_version_id}/predict", response_model=Any)
+@router.post("/{model_version_id}/predict", response_model=Dict[str, List[Any]])
 def post_model_predict(
     model_version_id: int,
     model_input: Dict[str, List[Any]],  # Any json
@@ -157,6 +156,7 @@ def post_model_predict(
         HTTPException: When app is not able to get the prediction
         TypeError: When the model output is not a Tensor or a Dataframe
     """
+    prediction: Optional[Dict[str, Union[torch.Tensor, List[Any]]]] = None
     try:
         prediction = controller.get_model_prediction(
             db,
@@ -180,12 +180,15 @@ def post_model_predict(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Model version was not trained yet",
         )
-    if isinstance(prediction, torch.Tensor):
-        return prediction.tolist()
-    elif isinstance(prediction, DataFrame):
-        return prediction.to_json()
-    else:
-        raise TypeError("Unexpected model output")
+
+    for column, result in prediction.items():
+        if not isinstance(result, torch.Tensor):
+            raise TypeError("Unexpected model output")
+        serialized_result = result.tolist()
+        prediction[column] = serialized_result \
+            if isinstance(serialized_result, list) else [serialized_result]
+
+    return prediction
 
 
 @router.get("/{model_id}", response_model=Model)

@@ -169,6 +169,11 @@ model_configs_and_dataset_setup = [
         iris_dataset,
         8,
     ),
+    (
+        "tests/data/yaml/multitarget_classification_model.yaml",
+        iris_dataset,
+        8,
+    ),
 ]
 
 # setting default batch_size=4 for model configs that don't have them
@@ -210,12 +215,22 @@ async def test_model_building(
     foward = model(batch_example)
     predict = model.predict_step(batch_example, 0)
 
-    if model_config.is_classifier():
-        if model_config.is_binary or model_config.is_multilabel:
-            assert all(
-                torch.eq(torch.sigmoid(foward), predict)
-            ), "predict_step is not equal to sigmoid of forward for binary classifier"
-        else:
+    for target_column in model_config.dataset.target_columns:
+        if target_column.column_type == "binary":
+            assert torch.allclose(
+                torch.sigmoid(foward[target_column.name].squeeze()),
+                predict[target_column.name],
+            ), (
+                "predict_step is not equal to sigmoid of forward for "
+                f"binary classifier column {target_column.name}"
+            )
+        elif target_column.column_type == "multiclass":
             assert torch.equal(
-                torch.nn.functional.softmax(foward, dim=-1), predict
-            ), "predict_step is not equal to softmax of forward for multi class classifier"
+                torch.nn.functional.softmax(
+                    foward[target_column.name].squeeze(), dim=-1
+                ),
+                predict[target_column.name],
+            ), (
+                "predict_step is not equal to softmax of forward for "
+                f"multi class classifier column {target_column.name}"
+            )
