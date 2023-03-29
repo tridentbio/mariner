@@ -4,8 +4,8 @@ import mlflow.entities.model_registry.model_version
 import mlflow.pytorch
 import pytest
 import ray
+from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
 from mlflow.tracking import MlflowClient
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from sqlalchemy.orm import Session
 
 import mariner.schemas.experiment_schemas
