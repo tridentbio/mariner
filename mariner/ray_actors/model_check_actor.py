@@ -31,8 +31,8 @@ class ModelCheckActor:
         dataloader = DataLoader(torch_dataset, batch_size=1)
         model = CustomModel(config)
         sample = next(iter(dataloader))
-        output = model.predict_step(sample, 0)
-        model.training_step(sample, 0)
+        model.predict_step(sample, 0)
+        output = model.training_step(sample, 0)
         model.validation_step(sample, 0)
         model.test_step(sample, 0)
 
