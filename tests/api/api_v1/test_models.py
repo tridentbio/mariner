@@ -18,6 +18,8 @@ from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from mariner.stores import dataset_sql
 from model_builder import layers_schema as layers
+from model_builder.dataset import CustomDataset
+from model_builder.model import CustomModel
 from model_builder.schemas import (
     ColumnConfig,
     DatasetConfig,
@@ -368,7 +370,7 @@ def test_post_check_config_bad_model(
     client: TestClient,
 ):
 
-    model_path = "tests/data/model_fails_on_training.yml"
+    model_path = "tests/data/yaml/model_fails_on_training.yml"
     with open(model_path, "rU") as f:
         regressor: ModelSchema = ModelSchema.from_yaml(f.read())
         regressor.dataset.name = some_dataset.name
