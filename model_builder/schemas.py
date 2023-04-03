@@ -123,7 +123,6 @@ class ProteinDataType(CamelCaseModel):
         return "protein"
 
 
-# TODO: make data_type optional
 class ColumnConfig(CamelCaseModel):
     """
     Describes a column based on its data type and index
@@ -142,7 +141,6 @@ class ColumnConfig(CamelCaseModel):
     ] = Field(...)
 
 
-# TODO: move featurizers to feature_columns
 class DatasetConfig(CamelCaseModel):
     """
     Describes a dataset for the model in terms of it's used columns
@@ -256,7 +254,6 @@ class ModelSchema(CamelCaseModel):
 
     @property
     def is_multilabel(self) -> bool:
-        # TODO: implement
         return False
 
     @root_validator(pre=True)
@@ -363,7 +360,8 @@ class ModelSchema(CamelCaseModel):
 
 
         Raises:
-            ValidationError: if the loss_fn is invalid for the defined task and target_columns
+            ValidationError: if the loss_fn is invalid for the defined task and
+            target_columns
             ValueError: if the loss_fn could not be inferred
         """
         target_column = values["dataset"].target_column
