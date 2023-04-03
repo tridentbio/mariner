@@ -101,12 +101,10 @@ async def check_model_step_exception(db: Session, config: ModelSchema) -> Forwar
         dataset = dataset_store.get_by_name(db, config.dataset.name)
         actor = ModelCheckActor.remote()
         output = await actor.check_model_steps.remote(dataset=dataset, config=config)
-        print(output)
         return ForwardCheck(output=output)
     # Don't catch any specific exception to properly get the traceback
     except:  # noqa E722 pylint: disable=W0702
         lines = traceback.format_exc()
-        print(lines, file=sys.stderr)
         return ForwardCheck(stack_trace=lines)
 
 

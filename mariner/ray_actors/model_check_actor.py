@@ -7,7 +7,7 @@ from torch_geometric.loader import DataLoader
 
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.model_schemas import ForwardCheck
-from model_builder.dataset import CustomDataset
+from model_builder.dataset import Collater, CustomDataset
 from model_builder.model import CustomModel
 from model_builder.schemas import ModelSchema
 
@@ -28,7 +28,7 @@ class ModelCheckActor:
             The model output
         """
         torch_dataset = CustomDataset(data=dataset.get_dataframe(), config=config)
-        dataloader = DataLoader(torch_dataset, batch_size=1)
+        dataloader = DataLoader(torch_dataset, collate_fn=Collater(), batch_size=4)
         model = CustomModel(config)
         sample = next(iter(dataloader))
         model.predict_step(sample, 0)

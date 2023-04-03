@@ -226,7 +226,7 @@ class CustomModel(LightningModule):
         if not self.config.is_classifier() or self.config.is_binary:
             loss_args = map(lambda x: x.type(torch.FloatTensor), loss_args)
         loss = self.loss_fn(*loss_args)
-        
+
         metrics_dict = self.metrics.get_validation_metrics(prediction, batch)
         self.log_dict(
             metrics_dict, batch_size=len(batch["y"]), on_epoch=True, on_step=False

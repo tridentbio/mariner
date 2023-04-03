@@ -387,7 +387,7 @@ def test_post_check_config_bad_model(
     )
     assert res.status_code == 200
     body = res.json()
-    assert "output" not in body
+    assert body["output"] == None
     assert not body["output"]
     assert "stackTrace" in body
     print(body["stackTrace"])

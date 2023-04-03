@@ -190,4 +190,4 @@ class ForwardCheck(ApiBaseModel):
     """Response to a request to check if a model version forward works"""
 
     stack_trace: Optional[str] = None
-    output: Optional[Any] = None
+    output: Optional[Any]

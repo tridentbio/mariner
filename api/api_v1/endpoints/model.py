@@ -236,4 +236,5 @@ async def post_model_check_config(
         model_config: Model schema to be checked
         db: Database connection
     """
-    return controller.check_model_step_exception(db, model_config)
+    result = await controller.check_model_step_exception(db, model_config)
+    return result
