@@ -37,7 +37,6 @@ def test_post_datasets(
     normal_user_token_headers: Dict[str, str],
     db: Session,
 ) -> None:
-
     with open("tests/data/csv/Lipophilicity.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
@@ -74,7 +73,6 @@ def test_post_datasets_invalid(
     normal_user_token_headers: Dict[str, str],
     db: Session,
 ) -> None:
-
     with open("tests/data/csv/bad_dataset.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",

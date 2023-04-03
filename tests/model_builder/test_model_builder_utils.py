@@ -12,7 +12,6 @@ class Foo:
 
 
 def test_get_ref_from_data_instace():
-
     input = DataInstance()
     element = Foo(a=Baz(b=4))
 

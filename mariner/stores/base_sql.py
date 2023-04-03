@@ -88,7 +88,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
-        for (key, value) in update_data.items():
+        for key, value in update_data.items():
             dbfield = getattr(db_obj, key)
             if key != "id" and value != dbfield:
                 setattr(db_obj, key, value)

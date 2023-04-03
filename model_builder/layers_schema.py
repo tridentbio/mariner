@@ -41,7 +41,6 @@ class ModelbuilderonehotForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderonehotForwardArgsReferences(BaseModel):
-
     x1: str
 
 
@@ -100,7 +99,6 @@ class ModelbuilderglobalpoolingForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderglobalpoolingForwardArgsReferences(BaseModel):
-
     x: str
 
     batch: Optional[str] = None
@@ -181,7 +179,6 @@ class ModelbuilderconcatForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderconcatForwardArgsReferences(BaseModel):
-
     xs: List[str]
 
 
@@ -255,7 +252,6 @@ class ModelbuilderaddpoolingForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderaddpoolingForwardArgsReferences(BaseModel):
-
     x: str
 
 
@@ -331,7 +327,6 @@ class TorchlinearForwardArgsSummary(BaseModel):
 
 
 class TorchlinearForwardArgsReferences(BaseModel):
-
     input: str
 
 
@@ -405,7 +400,6 @@ class TorchsigmoidForwardArgsSummary(BaseModel):
 
 
 class TorchsigmoidForwardArgsReferences(BaseModel):
-
     input: str
 
 
@@ -462,7 +456,6 @@ class TorchreluForwardArgsSummary(BaseModel):
 
 
 class TorchreluForwardArgsReferences(BaseModel):
-
     input: str
 
 
@@ -544,7 +537,6 @@ class TorchgeometricgcnconvForwardArgsSummary(BaseModel):
 
 
 class TorchgeometricgcnconvForwardArgsReferences(BaseModel):
-
     x: str
 
     edge_index: str
@@ -635,7 +627,6 @@ class TorchembeddingForwardArgsSummary(BaseModel):
 
 
 class TorchembeddingForwardArgsReferences(BaseModel):
-
     input: str
 
 
@@ -725,7 +716,6 @@ class TorchtransformerencoderlayerForwardArgsSummary(BaseModel):
 
 
 class TorchtransformerencoderlayerForwardArgsReferences(BaseModel):
-
     src: str
 
     src_mask: Optional[str] = None
@@ -815,7 +805,6 @@ class ModelbuildermoleculefeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuildermoleculefeaturizerForwardArgsReferences(BaseModel):
-
     mol: str
 
 
@@ -893,7 +882,6 @@ class ModelbuilderintegerfeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderintegerfeaturizerForwardArgsReferences(BaseModel):
-
     input_: str
 
 
@@ -952,7 +940,6 @@ class ModelbuilderdnasequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderdnasequencefeaturizerForwardArgsReferences(BaseModel):
-
     input_: str
 
 
@@ -1011,7 +998,6 @@ class ModelbuilderrnasequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderrnasequencefeaturizerForwardArgsReferences(BaseModel):
-
     input_: str
 
 
@@ -1070,7 +1056,6 @@ class ModelbuilderproteinsequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderproteinsequencefeaturizerForwardArgsReferences(BaseModel):
-
     input_: str
 
 

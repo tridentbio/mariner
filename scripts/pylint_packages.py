@@ -41,7 +41,7 @@ def main(src_branch: str, target_branch: str, save_src=False, save_new_target=Fa
 
     def update_cache():
         should_save_at = [(save_src, src_branch), (save_new_target, target_branch)]
-        for (should_save, at) in should_save_at:
+        for should_save, at in should_save_at:
             if not should_save:
                 continue
             click.echo(f"New Pylint score saved as {PYLINT_HOME}/{at}")

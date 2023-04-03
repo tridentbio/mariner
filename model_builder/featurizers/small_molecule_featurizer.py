@@ -155,7 +155,6 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
         allowable_set: Union[List[str], List[int]],
         include_unknown_set: bool = False,
     ) -> List[float]:
-
         # Init an one-hot vector
         if include_unknown_set is False:
             one_hot_length = len(allowable_set)
@@ -169,7 +168,6 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
             one_hot[allowable_set.index(val)] = 1.0  # type: ignore
         except ValueError:
             if include_unknown_set:
-
                 # If include_unknown_set is True, set the last index is 1.
                 one_hot[-1] = 1.0
             else:

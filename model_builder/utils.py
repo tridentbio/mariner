@@ -34,7 +34,6 @@ class DataInstance(BaseStorage):
     """
 
     def __init__(self, y=None, **kwargs):
-
         self.__dict__["_store"] = BaseStorage(_parent=self)
 
         if y is not None:
@@ -192,7 +191,6 @@ def get_references_dict(
 
     # Loop through the forward args dict
     for key, value in forward_args_dict.items():
-
         # Handle list instances
         if isinstance(value, list):
             result_key = []

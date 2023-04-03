@@ -97,7 +97,6 @@ class Metrics:
                 continue
             try:
                 if isinstance(self.metrics[metric], (metrics.Accuracy)):
-
                     metrics_dict[metric + sufix] = self.metrics[metric](
                         prediction.squeeze().long(), batch.squeeze().long()
                     )

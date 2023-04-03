@@ -209,7 +209,6 @@ class CustomDataset(Dataset):
         # Featurize all of the columns that pass into a
         # featurizer before including in the data instance
         for featurizer in self.get_featurizer_configs():
-
             references = get_references_dict(featurizer.forward_args.dict())
             assert len(references) == 1, "only 1 forward arg for featurizers for now"
             col_name = list(references.values())[0]
