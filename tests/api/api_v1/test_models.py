@@ -363,13 +363,13 @@ def test_post_check_config_good_model2(
     assert "output" in body
 
 
+@pytest.mark.integration
 def test_post_check_config_bad_model(
     db: Session,
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
     client: TestClient,
 ):
-
     model_path = "tests/data/yaml/model_fails_on_training.yml"
     with open(model_path, "rU") as f:
         regressor: ModelSchema = ModelSchema.from_yaml(f.read())
