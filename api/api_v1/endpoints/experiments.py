@@ -165,3 +165,18 @@ def get_experiments_metrics():
 def get_training_experiment_optimizers():
     """Gets the options for experiment optimizers."""
     return experiments_ctl.get_optimizer_options()
+
+
+@router.get(
+    "/{model_version_id}/metrics",
+    response_model=List[Experiment],
+)
+def get_experiments_metrics_for_model_version(
+    model_version_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+):
+    """Gets monitorable metrics to configure early stopping and checkpoint monitoring"""
+    return experiments_ctl.get_experiments_metrics_for_model_version(
+        db=db, model_version_id=model_version_id, user=current_user
+    )
