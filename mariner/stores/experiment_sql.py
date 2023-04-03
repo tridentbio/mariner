@@ -126,5 +126,22 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
         result = sql_query.all()
         return result, total
 
+    def get_experiments_metrics_for_model_version(
+        self, db: Session, model_version_id: int, user: int
+    ) -> List[Experiment]:
+        """Get's all experiments for a given model version.
+
+        Args:
+            db: Connection to the database.
+            model_version_id: Id of the model version to filter the experiments.
+
+        Returns:
+            A list of experiments.
+        """
+        sql_query = db.query(Experiment)
+        sql_query = sql_query.filter(Experiment.model_version_id == model_version_id)
+        sql_query = self._by_creator(sql_query, user)
+        return sql_query.all()
+
 
 experiment_store = CRUDExperiment(Experiment)
