@@ -44,9 +44,9 @@ class Metrics:
 
     def __init__(
         self,
-        type: Literal["regressor", "classification"],
+        model_type: Literal["regressor", "classification"],
     ):
-        if type == "regressor":
+        if model_type == "regressor":
             self.metrics = torch.nn.ModuleDict(
                 {
                     "train/mse": metrics.MeanSquaredError(),
@@ -178,10 +178,8 @@ class CustomModel(LightningModule):
 
     def set_optimizer(self, optimizer: Optimizer):
         """Sets parameters that only are given in training configuration
-
         Parameters that are set:
             - optimizer
-
         Args:
             training_request:
         """
@@ -192,15 +190,15 @@ class CustomModel(LightningModule):
         )
 
     @staticmethod
-    def call_model(model, args):
+    def _call_model(model, args):
         if isinstance(args, dict):
             return model(**args)
         if isinstance(args, list):
             return model(*args)
         return model(args)
 
-    def forward(self, input: DataInstance):  # type: ignore
-        last = input
+    def forward(self, input_: DataInstance):  # type: ignore
+        last = input_
         for node_name in self.topo_sorting:
             if node_name not in self.layer_configs:
                 continue  # is a featurizer, already evaluated by dataset
@@ -209,13 +207,13 @@ class CustomModel(LightningModule):
             ):
                 continue  # is a target column output, evaluated separately
             layer = self.layer_configs[node_name]
-            args = collect_args(input, layer.forward_args.dict())
-            input[layer.name] = self.call_model(self._model[node_name], args)
-            last = input[layer.name]
+            args = collect_args(input_, layer.forward_args.dict())
+            input_[layer.name] = CustomModel._call_model(self._model[node_name], args)
+            last = input_[layer.name]
 
         result = {}
         for target_column in self.config.dataset.target_columns:
-            result[target_column.name] = self.call_model(
+            result[target_column.name] = self._call_model(
                 self._model[target_column.out_module], last
             )
 
@@ -241,7 +239,7 @@ class CustomModel(LightningModule):
                 batch[target_column.name],
             )
             losses[target_column.name] = self.loss_dict[target_column.name](*args)
-            self.log(f"test_loss_{target_column.name}", loss)
+            self.log(f"test_loss_{target_column.name}", losses[target_column.name])
 
         loss = sum(losses.values())
         return loss
