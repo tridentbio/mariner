@@ -1,10 +1,10 @@
 name: GNNExample
 dataset:
   name: Small Zinc dataset
-  targetColumn: 
-    name: tpsa
-    dataType:
-      domainKind: smiles
+  targetColumns:
+    - name: tpsa
+      dataType:
+        domainKind: smiles
   featureColumns:
     - name: smiles
       dataType:
@@ -29,15 +29,15 @@ layers:
       in_channels: 26
       out_channels: 64
     forwardArgs:
-        x: MolToGraphFeaturizer.x
-        edge_attr: MolToGraphFeaturizer.edge_attr
-        edge_index: MolToGraphFeaturizer.edge_index
+      x: MolToGraphFeaturizer.x
+      edge_attr: MolToGraphFeaturizer.edge_attr
+      edge_index: MolToGraphFeaturizer.edge_index
   - name: GCN1_Activation
     type: torch.nn.ReLU
     forwardArgs: GCN1
-  - name: GCN2 
+  - name: GCN2
     type: torch_geometric.nn.GCNConv
-    forwardArgs: 
+    forwardArgs:
       x: GCN1_Activation
       edge_index: MoltoGraphFeaturizer.edge_index
       edge_attr: MolToGraphFeaturizer.edge_attr
@@ -63,12 +63,12 @@ layers:
 
   - name: AddPool
     type: app.features.model.layers.GlobalPooling
-    forwardArgs: 
+    forwardArgs:
       x: GCN3_Activation
       edge_index: MoltoGraphFeaturizer.edge_index
       edge_attr: MolToGraphFeaturizer.edge_attr
     constructorArgs:
-      aggr: 'sum'
+      aggr: "sum"
   # End of fst branch
   # Second branch would simply be linear layers in mwt
   - name: Linear1
@@ -79,7 +79,7 @@ layers:
     forwardArgs: mwt
   - name: Combiner
     type: app.features.model.layers.Concat
-    forwardArgs: ['AddPool', 'Linear1']
+    forwardArgs: ["AddPool", "Linear1"]
   - name: LinearJoined
     type: torch.nn.Linear
     forwardArgs: Combiner

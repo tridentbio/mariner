@@ -18,9 +18,12 @@ from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from mariner.stores import dataset_sql
 from model_builder import layers_schema as layers
-from model_builder.dataset import CustomDataset
-from model_builder.model import CustomModel
-from model_builder.schemas import ColumnConfig, DatasetConfig, ModelSchema
+from model_builder.schemas import (
+    ColumnConfig,
+    DatasetConfig,
+    ModelSchema,
+    TargetConfig,
+)
 from tests.fixtures.model import mock_model, model_config, setup_create_model
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
@@ -41,10 +44,12 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
                     data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
                 )
             ],
-            target_column=ColumnConfig(
-                name="tpsa",
-                data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
-            ),
+            target_columns=[
+                TargetConfig(
+                    name="tpsa",
+                    data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
+                )
+            ],
         ),
         featurizers=[],
         layers=[
@@ -238,7 +243,8 @@ def test_post_predict(
     )
     assert res.status_code == 200
     body = res.json()
-    assert len(body) == 3
+    assert "tpsa" in body
+    assert len(body["tpsa"]) == 3
 
 
 @pytest.mark.integration

@@ -24,10 +24,19 @@ def mock_experiment(
     if stage == "started":
         pass  # create_obj is ready
     elif stage == "success":
+        target_column = version.config.dataset.target_columns[0]
         create_obj.history = {
-            "train_loss": [300.3, 210.9, 160.8, 130.3, 80.4, 50.1, 20.0]
+            f"train/loss/{target_column.name}": [
+                300.3,
+                210.9,
+                160.8,
+                130.3,
+                80.4,
+                50.1,
+                20.0,
+            ]
         }
-        create_obj.train_metrics = {"train_loss": 200.3}
+        create_obj.train_metrics = {f"train/loss/{target_column.name}": 200.3}
         create_obj.stage = "SUCCESS"
     else:
         raise NotImplementedError()

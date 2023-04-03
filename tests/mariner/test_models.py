@@ -31,8 +31,8 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
             user_id=test_user.id, model_version_id=version.id, model_input=df
         ),
     )
-    for tpsa in result:
-        assert isinstance(tpsa, torch.Tensor)
+    for prediction in result.values():
+        assert isinstance(prediction, torch.Tensor)
 
 
 @pytest.mark.integration
@@ -49,14 +49,13 @@ async def test_check_forward_exception_good_regressor(
     db: Session, some_dataset: DatasetEntity
 ):
     regressor = model_config(model_type="regressor")
-    assert regressor.loss_fn
     check = await model_ctl.check_model_step_exception(db, regressor)
+    assert regressor.dataset.target_columns[0].loss_fn
     assert check.stack_trace is None, check.stack_trace
     assert check.output is not None
 
 
 @pytest.mark.asyncio
-@pytest.mark.integration
 @pytest.mark.skip(reason="Fails to mock a method executed in ray")
 async def test_check_forward_exception_bad_model(
     db: Session, some_dataset: DatasetEntity
