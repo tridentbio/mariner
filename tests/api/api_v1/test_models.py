@@ -390,7 +390,6 @@ def test_post_check_config_bad_model(
     assert body["output"] == None
     assert not body["output"]
     assert "stackTrace" in body
-    print(body["stackTrace"])
     assert len(body["stackTrace"].split("\n")) > 1
 
 
