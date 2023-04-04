@@ -37,7 +37,6 @@ def test_post_datasets(
     normal_user_token_headers: Dict[str, str],
     db: Session,
 ) -> None:
-
     with open("tests/data/csv/Lipophilicity.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
@@ -74,7 +73,6 @@ def test_post_datasets_invalid(
     normal_user_token_headers: Dict[str, str],
     db: Session,
 ) -> None:
-
     with open("tests/data/csv/bad_dataset.csv", "rb") as f:
         res = client.post(
             f"{settings.API_V1_STR}/datasets/",
@@ -220,7 +218,7 @@ def test_get_csv_metadata(
         } in cols
 
 
-@pytest.mark.parametrize('route', ["file", "file-with-errors"])
+@pytest.mark.parametrize("route", ["file", "file-with-errors"])
 @pytest.mark.integration
 def test_download_dataset(
     normal_user_token_headers: dict,

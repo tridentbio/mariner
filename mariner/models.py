@@ -1,7 +1,6 @@
 """
 Models service
 """
-
 import traceback
 from inspect import Parameter, signature
 from typing import (
@@ -36,9 +35,11 @@ from mariner.exceptions.model_exceptions import (
     InvalidDataframe,
     ModelVersionNotTrained,
 )
+from mariner.ray_actors.model_check_actor import ModelCheckActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     ComponentOption,
+    ForwardCheck,
     Model,
     ModelCreate,
     ModelCreateRepo,
@@ -81,23 +82,25 @@ def get_model_and_dataloader(
     return model, dataloader
 
 
-class ForwardCheck(ApiBaseModel):
-    """Response to a request to check if a model version forward works"""
+async def check_model_step_exception(db: Session, config: ModelSchema) -> ForwardCheck:
+    """Checks the steps of a pytorch lightning model built from config.
 
-    stack_trace: Optional[str] = None
-    output: Optional[Any] = None
+    Steps are checked before creating the model on the backend, so the user may fix
+    the config based on the exceptions raised.
 
+    Args:
+        db: Connection to the database, needed to get the dataset.
+        config: ModelSchema instance specifying the model.
 
-def naive_check_forward_exception(db: Session, config: ModelSchema) -> ForwardCheck:
-    """Given a model config, run it through a small set of the dataset
-    and return the exception if any. It does not mean the training will
-    run smoothly for all examples of the dataset, but it gives some
-    confidence about the model trainability"""
+    Returns:
+        An object either with the stack trace or the model output.
+    """
     try:
-        model, dataloader = get_model_and_dataloader(db, config)
-        sample = next(iter(dataloader))
-        output = model(sample)
+        dataset = dataset_store.get_by_name(db, config.dataset.name)
+        actor = ModelCheckActor.remote()
+        output = await actor.check_model_steps.remote(dataset=dataset, config=config)
         return ForwardCheck(output=output)
+    # Don't catch any specific exception to properly get the traceback
     except:  # noqa E722 pylint: disable=W0702
         lines = traceback.format_exc()
         return ForwardCheck(stack_trace=lines)
@@ -121,7 +124,9 @@ def create_model(
 
     client = mlflowapi.create_tracking_client()
     # Handle case where model_create.name refers to existing model
-    existingmodel = model_store.get_by_name_from_user(db, model_create.name, user_id=user.id)
+    existingmodel = model_store.get_by_name_from_user(
+        db, model_create.name, user_id=user.id
+    )
     if existingmodel:
         model_store.create_model_version(
             db,

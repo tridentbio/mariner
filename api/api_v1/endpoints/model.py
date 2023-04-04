@@ -185,8 +185,11 @@ def post_model_predict(
         if not isinstance(result, torch.Tensor):
             raise TypeError("Unexpected model output")
         serialized_result = result.tolist()
-        prediction[column] = serialized_result \
-            if isinstance(serialized_result, list) else [serialized_result]
+        prediction[column] = (
+            serialized_result
+            if isinstance(serialized_result, list)
+            else [serialized_result]
+        )
 
     return prediction
 
@@ -230,7 +233,7 @@ def delete_model(
     response_model=controller.ForwardCheck,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def post_model_check_config(
+async def post_model_check_config(
     model_config: ModelSchema, db: Session = Depends(deps.get_db)
 ):
     """Endpoint to check the forward method of a ModelSchema
@@ -239,4 +242,5 @@ def post_model_check_config(
         model_config: Model schema to be checked
         db: Database connection
     """
-    return controller.naive_check_forward_exception(db, model_config)
+    result = await controller.check_model_step_exception(db, model_config)
+    return result

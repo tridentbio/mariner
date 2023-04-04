@@ -27,7 +27,7 @@ class TrainingActor:
     """Runs training with needed mlflow and custom logging"""
 
     checkpoint_callback: ModelCheckpoint
-    early_stopping_callback: Union[EarlyStopping, None]
+    early_stopping_callback: Union[EarlyStopping, None] = None
     dataset: Dataset
     modelversion: ModelVersion
     request: TrainingRequest
