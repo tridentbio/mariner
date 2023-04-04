@@ -12,6 +12,7 @@ from pytorch_lightning.loggers.logger import Logger
 from pytorch_lightning.loggers.mlflow import MLFlowLogger
 from pytorch_lightning.trainer.trainer import Trainer
 
+from mariner.core import config
 from mariner.core.mlflowapi import log_models_and_create_version
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
@@ -74,6 +75,7 @@ class TrainingActor:
         if self.early_stopping_callback is not None:
             callbacks.append(self.early_stopping_callback)
         trainer = Trainer(
+            default_root_dir=config.settings.LIGHTNING_LOGGING_ROOT,
             max_epochs=self.request.epochs,
             logger=self.loggers,
             log_every_n_steps=max(batch_size // 2, 10),
