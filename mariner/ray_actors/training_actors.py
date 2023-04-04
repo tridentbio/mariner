@@ -12,6 +12,7 @@ from pytorch_lightning.loggers.logger import Logger
 from pytorch_lightning.loggers.mlflow import MLFlowLogger
 from pytorch_lightning.trainer.trainer import Trainer
 
+from mariner.core import config
 from mariner.core.mlflowapi import log_models_and_create_version
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
@@ -83,6 +84,7 @@ class TrainingActor:
                 for callback in (self.checkpoint_callback, self.early_stopping_callback)
                 if callback
             ],
+            default_root_dir=config.settings.LIGHTNING_LOGS_DIR,
         )
         datamodule.setup()
         trainer.fit(model, datamodule)
