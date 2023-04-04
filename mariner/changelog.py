@@ -190,7 +190,7 @@ def version_greater_or_equal(version: str, lower_bound_version: str) -> bool:
         raise ValueError(
             "Failed to parse versions, expecting semver like 1.0.1, 2.0.21"
         )
-    for (release_number, bound_number) in zip(version_ints, boudn_ints):
+    for release_number, bound_number in zip(version_ints, boudn_ints):
         if release_number > bound_number:
             return True
         elif release_number < bound_number:

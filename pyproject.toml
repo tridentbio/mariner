@@ -28,8 +28,6 @@ humps = "^0.2.2"
 PyYAML = "^6.0"
 torchsummary = "^1.5.1"
 mlflow = {version = "1.27.0", extras = ["extras"]}
-ray = {extras = ["serve"], version = "^1.13.0"}
-mlflow-ray-serve = "^0.2.0"
 networkx = "^2.8.4"
 rdkit = "^2022.3.3"
 Jinja2 = "3.1.2"
@@ -44,6 +42,7 @@ Sphinx = "^5.3.0"
 torchmetrics = "^0.10.2"
 biopython = "^1.80"
 numba = "^0.56.4"
+ray = "2.3.1"
 
 [tool.poetry.group.dev.dependencies]
 click = "8.0.4"
