@@ -1,15 +1,14 @@
 """
 Tests the mariner.models package
 """
-from typing import Any
 
 import pytest
-from mockito import patch
 from pydantic import AnyHttpUrl
 from sqlalchemy.orm.session import Session
 from starlette import status
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
+from torch_geometric.loader import DataLoader
 
 from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetEntity
@@ -17,7 +16,10 @@ from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
 from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
+from mariner.stores import dataset_sql
 from model_builder import layers_schema as layers
+from model_builder.dataset import CustomDataset
+from model_builder.model import CustomModel
 from model_builder.schemas import (
     ColumnConfig,
     DatasetConfig,
@@ -361,30 +363,42 @@ def test_post_check_config_good_model2(
     assert "output" in body
 
 
-@pytest.mark.skip
+@pytest.mark.integration
 def test_post_check_config_bad_model(
+    db: Session,
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
     client: TestClient,
 ):
-    regressor: ModelSchema = model_config(dataset_name=some_dataset.name)
-    import model_builder.model
+    model_path = "tests/data/yaml/model_fails_on_training.yml"
+    with open(model_path, "rU") as f:
+        regressor: ModelSchema = ModelSchema.from_yaml(f.read())
+        regressor.dataset.name = some_dataset.name
 
-    def raise_(x: Any):
-        raise Exception("some random exception in the forward")
+    model = CustomModel(regressor)
+    dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
+    torch_dataset = CustomDataset(dataset.get_dataframe(), config=regressor)
+    dataloader = DataLoader(torch_dataset, batch_size=1)
+    batch = next(iter(dataloader))
+    out = model(batch)
+    assert out != None, "Model forward is fine"
+    try:
+        model.training_step(batch, 0)
+        pytest.fail("training_step should fail")
+    except Exception:
+        pass
 
-    with patch(model_builder.model.CustomModel.forward, raise_):
-        res = client.post(
-            f"{settings.API_V1_STR}/models/check-config",
-            headers=normal_user_token_headers,
-            json=regressor.dict(),
-        )
-        assert res.status_code == 200
-        body = res.json()
-        assert not body["output"]
-        assert "stackTrace" in body
-        assert "some random exception in the forward" in body["stackTrace"]
-        assert len(body["stackTrace"].split("\n")) > 1
+    res = client.post(
+        f"{settings.API_V1_STR}/models/check-config",
+        headers=normal_user_token_headers,
+        json=regressor.dict(),
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["output"] == None
+    assert not body["output"]
+    assert "stackTrace" in body
+    assert len(body["stackTrace"].split("\n")) > 1
 
 
 def test_get_name_suggestion(

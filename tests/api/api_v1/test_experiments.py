@@ -94,7 +94,6 @@ def test_get_experiments(
     user_experiments_fixture,
     user_headers_fixture,
 ):
-
     params = {"modelId": user_model_fixture.id}
     res = client.get(
         f"{settings.API_V1_STR}/experiments/",

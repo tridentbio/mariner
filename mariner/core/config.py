@@ -101,6 +101,8 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: str
     GITHUB_CLIENT_SECRET: str
 
+    LIGHTNING_LOGS_DIR: str
+
     class Config:
         """Configure the environment variable model to be case sensitive."""
 
