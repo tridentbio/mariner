@@ -44,10 +44,10 @@ class Metrics:
 
     def __init__(
         self,
-        type: Literal["regression", "multiclass", "multilabel"],
+        model_type: Literal["regression", "multiclass", "multilabel"],
         num_classes: Optional[int] = None,
     ):
-        if type == "regression":
+        if model_type == "regression":
             self.metrics = torch.nn.ModuleDict(
                 {
                     "train/mse": metrics.MeanSquaredError(),
@@ -67,7 +67,7 @@ class Metrics:
         else:
             # https://torchmetrics.readthedocs.io/en/latest/
             kwargs = {
-                "task": type,
+                "task": model_type,
                 "num_classes": num_classes,
             }
             self.metrics = torch.nn.ModuleDict(
@@ -102,7 +102,6 @@ class Metrics:
                 continue
             try:
                 if isinstance(self.metrics[metric], (metrics.Accuracy)):
-
                     metrics_dict[metric + sufix] = self.metrics[metric](
                         prediction.squeeze().long(), batch.squeeze().long()
                     )
@@ -195,10 +194,8 @@ class CustomModel(pl.LightningModule):
 
     def set_optimizer(self, optimizer: Optimizer):
         """Sets parameters that only are given in training configuration
-
         Parameters that are set:
             - optimizer
-
         Args:
             training_request:
         """
@@ -209,15 +206,15 @@ class CustomModel(pl.LightningModule):
         )
 
     @staticmethod
-    def call_model(model, args):
+    def _call_model(model, args):
         if isinstance(args, dict):
             return model(**args)
         if isinstance(args, list):
             return model(*args)
         return model(args)
 
-    def forward(self, input: DataInstance):  # type: ignore
-        last = input
+    def forward(self, input_: DataInstance):  # type: ignore
+        last = input_
         for node_name in self.topo_sorting:
             if node_name not in self.layer_configs:
                 continue  # is a featurizer, already evaluated by dataset
@@ -226,13 +223,13 @@ class CustomModel(pl.LightningModule):
             ):
                 continue  # is a target column output, evaluated separately
             layer = self.layer_configs[node_name]
-            args = collect_args(input, layer.forward_args.dict())
-            input[layer.name] = self.call_model(self._model[node_name], args)
-            last = input[layer.name]
+            args = collect_args(input_, layer.forward_args.dict())
+            input_[layer.name] = CustomModel._call_model(self._model[node_name], args)
+            last = input_[layer.name]
 
         result = {}
         for target_column in self.config.dataset.target_columns:
-            result[target_column.name] = self.call_model(
+            result[target_column.name] = self._call_model(
                 self._model[target_column.out_module], last
             )
 
@@ -258,7 +255,7 @@ class CustomModel(pl.LightningModule):
                 batch[target_column.name],
             )
             losses[target_column.name] = self.loss_dict[target_column.name](*args)
-            self.log(f"test_loss_{target_column.name}", loss)
+            self.log(f"test_loss_{target_column.name}", losses[target_column.name])
 
         loss = sum(losses.values())
         return loss

@@ -46,11 +46,9 @@ def hash_md5(
                 for chunk in iter(lambda: f.read(chunk_size), b""):
                     hash_md5.update(chunk)
         elif isinstance(file, io.BytesIO):
-
             for chunk in iter(lambda: file.read(chunk_size), b""):  # type: ignore
                 hash_md5.update(chunk)
         elif isinstance(file, (FAUploadFile, SUploadFile)):
-
             for chunk in iter(lambda: file.file.read(chunk_size), b""):  # type: ignore
                 hash_md5.update(bytes(chunk))
         else:
