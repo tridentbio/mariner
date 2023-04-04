@@ -12,6 +12,8 @@ from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 from mlflow.tracking.client import MlflowClient
 
+from mariner.models import CustomModel
+
 
 def log_models_and_create_version(
     model_name: str,
@@ -86,7 +88,7 @@ def create_registered_model(
     return registered_model
 
 
-def get_model_by_uri(model_uri: str):
+def get_model_by_uri(model_uri: str) -> CustomModel:
     """The uri specifying the model.
 
     Args:

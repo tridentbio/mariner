@@ -1,10 +1,10 @@
 name: GNNE
 dataset:
   name: Zinc Extra
-  targetColumn: 
-    name: mwt
-    dataType:
-      domainKind: numeric
+  targetColumns:
+    - name: mwt
+      dataType:
+        domainKind: numeric
   featureColumns:
     - name: smiles
       dataType:
@@ -27,14 +27,13 @@ featurizers:
       per_atom_fragmentation: false
 
 layers:
-
   # Start fst branch (from featurizer)
   - name: GCN1
     type: torch_geometric.nn.GCNConv
     constructorArgs:
       in_channels: 26
       out_channels: 64
-    forwardArgs: 
+    forwardArgs:
       x: $MolToGraphFeaturizer.x
       edge_index: $MolToGraphFeaturizer.edge_index
 
@@ -42,11 +41,11 @@ layers:
     type: torch.nn.ReLU
     constructorArgs:
       inplace: False
-    forwardArgs: 
+    forwardArgs:
       input: $GCN1
-  - name: GCN2 
+  - name: GCN2
     type: torch_geometric.nn.GCNConv
-    forwardArgs: 
+    forwardArgs:
       x: $GCN1_Activation
       edge_index: $MolToGraphFeaturizer.edge_index
     constructorArgs:
@@ -57,12 +56,12 @@ layers:
     type: torch.nn.ReLU
     constructorArgs:
       inplace: False
-    forwardArgs: 
+    forwardArgs:
       input: $GCN2
 
   - name: GCN3
     type: torch_geometric.nn.GCNConv
-    forwardArgs: 
+    forwardArgs:
       x: $GCN2_Activation
       edge_index: $MolToGraphFeaturizer.edge_index
     constructorArgs:
@@ -73,44 +72,43 @@ layers:
     type: torch.nn.ReLU
     constructorArgs:
       inplace: False
-    forwardArgs: 
+    forwardArgs:
       input: $GCN3
 
   - name: AddPool
     type: model_builder.layers.GlobalPooling
-    forwardArgs: 
+    forwardArgs:
       x: $GCN3_Activation
       batch: $MolToGraphFeaturizer.batch
     constructorArgs:
-      aggr: 'sum'
+      aggr: "sum"
   # End of fst branch
 
   # Second branch would simply be linear layers in mwt
   - name: OneHotEncoded
     type: model_builder.layers.OneHot
     constructor_args:
-    forwardArgs: 
+    forwardArgs:
       x1: $mwt_group
   - name: Linear1
     type: torch.nn.Linear
     constructorArgs:
       in_features: 2
       out_features: 10
-    forwardArgs: 
+    forwardArgs:
       input: $OneHotEncoded
   - name: Combiner
     type: model_builder.layers.Concat
     constructorArgs:
       dim: -1
-    forwardArgs: 
+    forwardArgs:
       xs:
         - $AddPool
         - $Linear1
   - name: LinearJoined
     type: torch.nn.Linear
-    forwardArgs: 
+    forwardArgs:
       input: $Combiner
     constructorArgs:
       in_features: 74
       out_features: 1
-

@@ -1,10 +1,10 @@
 name: GNNExample
 dataset:
   name: Small Zinc dataset
-  target_column: 
-    name: tpsa
-    dataType:
-      domain_kind: smiles
+  target_columns:
+    - name: tpsa
+      dataType:
+        domain_kind: smiles
   featureColumns:
     - name: smiles
       dataType:
@@ -38,12 +38,12 @@ layers:
     type: torch.nn.ReLU
     constructor_args:
       inplace: False
-    forward_args: 
+    forward_args:
       input: ${GCN1}
 
-  - name: GCN2 
+  - name: GCN2
     type: torch_geometric.nn.GCNConv
-    forward_args: 
+    forward_args:
       x: ${GCN1_Activation}
       edge_index: ${MolToGraphFeaturizer.edge_index}
       edge_weight: ${MolToGraphFeaturizer.edge_attr}
@@ -82,7 +82,7 @@ layers:
       edge_index: ${MolToGraphFeaturizer.edge_index}
       batch: ${MolToGraphFeaturizer.batch}
     constructor_args:
-      aggr: 'sum'
+      aggr: "sum"
   # End of fst branch
 
   # Second branch would simply be linear layers in mwt
@@ -98,7 +98,7 @@ layers:
     type: model_builder.layers.Concat
     constructor_args:
       dim: -1
-    forward_args: 
+    forward_args:
       xs:
         - "${AddPool}"
         - "${Linear1}"

@@ -120,11 +120,8 @@ def create_model(
         raise DatasetNotFound()
 
     client = mlflowapi.create_tracking_client()
-
     # Handle case where model_create.name refers to existing model
-    existingmodel = model_store.get_by_name_from_user(
-        db, model_create.name, user_id=user.id
-    )
+    existingmodel = model_store.get_by_name_from_user(db, model_create.name, user_id=user.id)
     if existingmodel:
         model_store.create_model_version(
             db,
@@ -172,9 +169,10 @@ def create_model(
             ]
             + [
                 ModelFeaturesAndTarget.construct(
-                    column_name=model_create.config.dataset.target_column.name,
+                    column_name=target_column.name,
                     column_type="target",
                 )
+                for target_column in model_create.config.dataset.target_columns
             ],
         ),
     )
@@ -325,7 +323,7 @@ def _check_dataframe_conforms_dataset(
         df: dataframe to be checked
         dataset_config: model builder dataset configuration used in model building
     """
-    column_configs = dataset_config.feature_columns + [dataset_config.target_column]
+    column_configs = dataset_config.feature_columns + dataset_config.target_columns
     result: List[Tuple[str, InvalidReason]] = []
     for column_config in column_configs:
         data_type = column_config.data_type
@@ -336,7 +334,9 @@ def _check_dataframe_conforms_dataset(
     return result
 
 
-def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
+def get_model_prediction(
+    db: Session, request: PredictRequest
+) -> Dict[str, torch.Tensor]:
     """(Slowly) Loads a model version and apply it to a sample input
 
     Args:
@@ -369,7 +369,7 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
-    return pyfuncmodel(modelinput)
+    return pyfuncmodel.predict_step(modelinput)
 
 
 def get_model(db: Session, user: UserEntity, model_id: int) -> Model:
