@@ -8,7 +8,7 @@ import networkx as nx
 import torch
 import torch.nn
 import torchmetrics as metrics
-from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning import LightningModule
 
 from model_builder.component_builder import AutoBuilder
 from model_builder.dataset import DataInstance

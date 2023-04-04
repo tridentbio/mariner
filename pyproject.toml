@@ -26,7 +26,7 @@ pandas = "^1.4.2"
 humps = "^0.2.2"
 PyYAML = "^6.0"
 torchsummary = "^1.5.1"
-mlflow = {version = "1.27.0", extras = ["extras"]}
+mlflow = {version = "<2.0.0", extras = ["extras"]}
 networkx = "^2.8.4"
 rdkit = "^2022.3.3"
 Jinja2 = "3.1.2"
@@ -44,6 +44,7 @@ numba = "^0.56.4"
 s3fs = "^2023.3.0"
 boto3 = "1.24.59"
 ray = "2.3.1"
+scikit-learn = "^1.2.2"
 
 [tool.poetry.group.dev.dependencies]
 click = "8.0.4"
