@@ -1,10 +1,11 @@
 """
 Actors for Training, validation and testing models
 """
-from typing import List
+from typing import List, Union
 
 import ray
 from mlflow.tracking import MlflowClient
+from pytorch_lightning import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.loggers.logger import Logger
@@ -25,7 +26,7 @@ class TrainingActor:
     """Runs training with needed mlflow and custom logging"""
 
     checkpoint_callback: ModelCheckpoint
-    early_stopping_callback: EarlyStopping = None
+    early_stopping_callback: Union[EarlyStopping, None] = None
     dataset: Dataset
     modelversion: ModelVersion
     request: TrainingRequest
@@ -69,6 +70,9 @@ class TrainingActor:
             split_type=dataset.split_type,
             batch_size=batch_size,
         )
+        callbacks: List[Callback] = [self.checkpoint_callback]
+        if self.early_stopping_callback is not None:
+            callbacks.append(self.early_stopping_callback)
         trainer = Trainer(
             max_epochs=self.request.epochs,
             logger=self.loggers,

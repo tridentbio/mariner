@@ -123,7 +123,6 @@ class ProteinDataType(CamelCaseModel):
         return "protein"
 
 
-# TODO: make data_type optional
 class ColumnConfig(CamelCaseModel):
     """
     Describes a column based on its data type and index
@@ -362,7 +361,8 @@ class ModelSchema(CamelCaseModel):
 
 
         Raises:
-            ValidationError: if the loss_fn is invalid for the defined task and target_columns
+            ValidationError: if the loss_fn is invalid for the defined task and
+            target_columns
             ValueError: if the loss_fn could not be inferred
         """
 
