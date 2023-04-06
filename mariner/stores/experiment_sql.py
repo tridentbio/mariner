@@ -134,6 +134,7 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
         Args:
             db: Connection to the database.
             model_version_id: Id of the model version to filter the experiments.
+            user: Id of the user requesting the experiments.
 
         Returns:
             A list of experiments.

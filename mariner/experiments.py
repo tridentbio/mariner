@@ -434,6 +434,7 @@ def get_experiments_metrics_for_model_version(
     Args:
         db: connection with the database
         model_version_id: id of the model version
+        user: user that is requesting the experiments
 
     Returns:
         List[Experiment]
