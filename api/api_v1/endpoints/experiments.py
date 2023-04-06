@@ -176,7 +176,7 @@ def get_experiments_metrics_for_model_version(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    """Gets monitorable metrics to configure early stopping and checkpoint monitoring"""
+    """Gets the experiments with metrics for a model version."""
     return experiments_ctl.get_experiments_metrics_for_model_version(
         db=db, model_version_id=model_version_id, user=current_user
     )
