@@ -15,10 +15,10 @@ from typing import (
 )
 from uuid import uuid4
 
+import lightning.pytorch as pl
 import mlflow
 import mlflow.exceptions
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 from sqlalchemy.orm.session import Session
 from torch_geometric.loader import DataLoader

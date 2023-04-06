@@ -2,8 +2,8 @@
 from collections.abc import Mapping
 from typing import Any, Callable, List, Sequence, Union
 
+import lightning.pytorch as pl
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset, Subset, random_split
