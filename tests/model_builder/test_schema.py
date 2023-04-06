@@ -1,7 +1,13 @@
 import pytest
 
-from model_builder.schemas import DEFAULT_LOSS_MAP, ModelSchema
+from model_builder.schemas import ModelSchema
 from tests.fixtures.model import model_config
+
+DEFAULT_LOSS_MAP = {
+    "regression": "torch.nn.MSELoss",
+    "binary": "torch.nn.BCEWithLogitsLoss",
+    "multiclass": "torch.nn.CrossEntropyLoss",
+}
 
 
 @pytest.fixture(scope="module")

@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 
-def make_download_uri(platform: str, torch_version="1.13.0"):
+def make_download_uri(platform: str, torch_version="2.0.0"):
     return f"https://data.pyg.org/whl/torch-{torch_version}+{platform}.html"
 
 
