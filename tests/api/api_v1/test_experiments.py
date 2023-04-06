@@ -1,4 +1,5 @@
 from datetime import datetime
+from re import search
 from typing import Dict, Generator, List
 from urllib.parse import urlencode
 
@@ -18,7 +19,7 @@ from tests.fixtures.experiments import setup_experiments, teardown_experiments
 from tests.fixtures.model import setup_create_model, teardown_create_model
 from tests.fixtures.user import get_random_test_user, get_test_user
 from tests.utils.user import authentication_token_from_email
-from tests.utils.utils import random_lower_string
+from tests.utils.utils import assert_all_is_number, random_lower_string
 
 
 @pytest.fixture(scope="module")
@@ -257,3 +258,42 @@ def test_post_update_metrics_sucess(
         headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
     )
     assert res.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.integration
+def test_get_experiments_metrics_for_model_version(
+    client: TestClient,
+    user_model_fixture,
+    user_experiments_fixture,
+    user_headers_fixture,
+):
+    model_version_id = user_model_fixture.versions[0].id
+
+    res = client.get(
+        f"{settings.API_V1_STR}/experiments/{model_version_id}/metrics",
+        headers=user_headers_fixture,
+    )
+
+    assert res.status_code == HTTP_200_OK, "Request failed with body: %r" % res.json()
+
+    experiments_metrics: List[dict] = res.json()
+    assert len(experiments_metrics) == len(
+        user_experiments_fixture
+    ), "Number of experiments with metrics doesn't match the number of user experiments"
+
+    for experiment_metrics in experiments_metrics:
+        assert (
+            experiment_metrics["modelVersionId"] == model_version_id
+        ), "Experiment metrics have incorrect model version id"
+
+        if experiment_metrics["stage"] == "SUCCESS":
+            assert isinstance(
+                experiment_metrics["history"], dict
+            ), "Experiment metrics are not present for successful experiment"
+
+            for key, value in experiment_metrics["history"].items():
+                assert key == "epochs" or bool(
+                    search(r"^(train|val|test)\/\w+\/", key)
+                ), f"Invalid metric name: {key}"
+
+                assert_all_is_number(value)
