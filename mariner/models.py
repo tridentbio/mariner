@@ -1,6 +1,7 @@
 """
 Models service
 """
+import logging
 import traceback
 from inspect import Parameter, signature
 from typing import (
@@ -20,6 +21,7 @@ import mlflow.exceptions
 import pandas as pd
 import pytorch_lightning as pl
 import torch
+import yaml
 from sqlalchemy.orm.session import Session
 from torch_geometric.loader import DataLoader
 
@@ -58,6 +60,9 @@ from model_builder.dataset import CustomDataset
 from model_builder.model import CustomModel
 from model_builder.schemas import DatasetConfig, SmileDataType
 from model_builder.utils import get_class_from_path_string
+
+LOG = logging.getLogger(__file__)
+LOG.setLevel(logging.INFO)
 
 
 def get_model_and_dataloader(
@@ -258,7 +263,7 @@ def get_model_options() -> ModelOptions:
     layer_types = [layer.name for layer in generate.layers]
     featurizer_types = [f.name for f in generate.featurizers]
 
-    def get_default_values(summary_name: str) -> Dict[str, Any]:
+    def get_default_values(summary_name: str) -> Union[Dict[str, Any], None]:
         try:
             class_args = getattr(
                 layers_schema, summary_name.replace("Summary", "ConstructorArgs")
@@ -272,9 +277,15 @@ def get_model_options() -> ModelOptions:
         except AttributeError:
             return None
 
+    def get_args_options(classpath: str) -> Union[Dict[str, List[str]], None]:
+        annotation_path = "model_builder/options.yml"
+        with open(annotation_path, "rU") as f:
+            data = yaml.safe_load(f)
+            return data[classpath] if classpath in data else None
+
     def get_summary(
         cls_path: str,
-    ) -> Union[None, layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType]:
+    ):
         for schema_exported in dir(layers_schema):
             if (
                 schema_exported.endswith("Summary")
@@ -291,19 +302,27 @@ def get_model_options() -> ModelOptions:
     component_annotations: List[ComponentOption] = []
 
     def make_component(class_path: str, type_: Literal["layer", "featurizer"]):
-        summary, default_args = get_summary(class_path)
-        assert summary, f"class Summary of {class_path} should not be None"
+        summary = get_summary(class_path)
+        if not summary:
+            LOG.warning("No summary found for class %s", class_path)
+            return None
+        summary, default_args = summary
         option = get_annotations_from_cls(class_path)
+        option.args_options = get_args_options(class_path)
         option.type = type_
         option.component = summary
         option.default_args = default_args
         return option
 
     for class_path in layer_types:
-        component_annotations.append(make_component(class_path, "layer"))
+        component = make_component(class_path, "layer")
+        if component:
+            component_annotations.append(component)
 
     for class_path in featurizer_types:
-        component_annotations.append(make_component(class_path, "featurizer"))
+        component = make_component(class_path, "featurizer")
+        if component:
+            component_annotations.append(component)
 
     return component_annotations
 
