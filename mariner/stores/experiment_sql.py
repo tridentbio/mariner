@@ -129,7 +129,7 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
     def get_experiments_metrics_for_model_version(
         self, db: Session, model_version_id: int, user: int
     ) -> List[Experiment]:
-        """Get's all experiments for a given model version.
+        """Gets all experiments for a given model version.
 
         Args:
             db: Connection to the database.
