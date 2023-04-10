@@ -78,5 +78,7 @@ def test_get_model_options():
     assert len(options) > 0
     for option in options:
         assert option.type
-        if option.type == "torch.nn.TransformerEncoderLayer":
-            assert len(option.args_options) > 0
+        if option.class_path == "torch.nn.TransformerEncoderLayer":
+            assert option.args_options
+            assert "activation" in option.args_options
+            assert len(option.args_options["activation"]) > 0

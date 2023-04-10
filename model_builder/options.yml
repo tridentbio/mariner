@@ -1,4 +1,4 @@
-torch.nn.TransformerLayerEncoder:
+torch.nn.TransformerEncoderLayer:
   args_options:
     activation:
       - relu

@@ -279,9 +279,10 @@ def get_model_options() -> ModelOptions:
 
     def get_args_options(classpath: str) -> Union[Dict[str, List[str]], None]:
         annotation_path = "model_builder/options.yml"
-        with open(annotation_path, "rU") as f:
+        with open(annotation_path, "r") as f:
             data = yaml.safe_load(f)
-            return data[classpath] if classpath in data else None
+            LOG.info("%r", data)
+            return data[classpath]["args_options"] if classpath in data else None
 
     def get_summary(
         cls_path: str,
