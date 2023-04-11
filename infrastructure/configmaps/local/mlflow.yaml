@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlflow
+data:
+  AWS_DATASETS: dev-mariner-datasets
+  AWS_REGION: us-east-1
+  BACKEND_CORS_ORIGINS: '["http://dev.mariner.local", "http://backend.dev.mariner.local"]'
+  DOMAIN: dev.mariner.local
+  EMAILS_FROM_EMAIL: info@mariner.trident.bio
+  FIRST_SUPERUSER: admin@mariner.trident.bio
+  MLFLOW_ARTIFACT_URI: s3://dev-mariner-datasets
+  MLFLOW_TRACKING_URI: https://dev.mlflow.local
+  OAUTH2_PROXY_CLIENT_ID: 9e3418123ae0f27c5b32
+  OAUTH2_PROXY_HTTP_ADDRESS: http://0.0.0.0:4180
+  OAUTH2_PROXY_PROVIDER: github
+  OAUTH2_PROXY_UPSTREAMS: http://127.0.0.1:5000
+  PROJECT_NAME: mariner
+  RAY_ADDRESS: ray://ray-cluster.ray.svc.cluster.local:10001
+  SENTRY_DSN: ""
+  SERVER_HOST: https://dev.mariner.local
+  SERVER_NAME: mariner-backend
+  SMTP_HOST: smtp.gmail.com
+  SMTP_PORT: "587"
+  SMTP_TLS: "True"
+  SMTP_USER: admin@mariner.trident.bio
+  USERS_OPEN_REGISTRATION: "False"
+  ID: '0805f51ee373c7f1343a'

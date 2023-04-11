@@ -1,9 +1,10 @@
 """
 Actors for Training, validation and testing models
 """
-from typing import List
+from typing import List, Union
 
 import ray
+from lightning.pytorch import Callback
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
 from lightning.pytorch.loggers import MLFlowLogger
@@ -11,6 +12,7 @@ from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.trainer.trainer import Trainer
 from mlflow.tracking import MlflowClient
 
+from mariner.core import config
 from mariner.core.mlflowapi import log_models_and_create_version
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
@@ -25,7 +27,7 @@ class TrainingActor:
     """Runs training with needed mlflow and custom logging"""
 
     checkpoint_callback: ModelCheckpoint
-    early_stopping_callback: EarlyStopping = None
+    early_stopping_callback: Union[EarlyStopping, None] = None
     dataset: Dataset
     modelversion: ModelVersion
     request: TrainingRequest
@@ -69,6 +71,9 @@ class TrainingActor:
             split_type=dataset.split_type,
             batch_size=batch_size,
         )
+        callbacks: List[Callback] = [self.checkpoint_callback]
+        if self.early_stopping_callback is not None:
+            callbacks.append(self.early_stopping_callback)
         trainer = Trainer(
             max_epochs=self.request.epochs,
             logger=self.loggers,
@@ -79,6 +84,7 @@ class TrainingActor:
                 for callback in (self.checkpoint_callback, self.early_stopping_callback)
                 if callback
             ],
+            default_root_dir=config.settings.LIGHTNING_LOGS_DIR,
         )
         datamodule.setup()
         trainer.fit(model, datamodule)

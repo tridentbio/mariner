@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariner-backend
+data:
+  AWS_DATASETS: dev-mariner-datasets
+  AWS_REGION: us-east-1
+  WEBAPP_URL: http://dev.mariner.local
+  BACKEND_CORS_ORIGINS: '["http://dev.mariner.local", "http://backend.dev.mariner.local"]'
+  DOMAIN: dev.mariner.local
+  EMAILS_FROM_EMAIL: info@mariner.trident.bio
+  FIRST_SUPERUSER: admin@mariner.trident.bio
+  PROJECT_NAME: mariner
+  RAY_ADDRESS: ray://ray-cluster.ray.svc.cluster.local:10001
+  SENTRY_DSN: ""
+  SERVER_HOST: http://dev.mariner.local
+  SERVER_NAME: dev.mariner.local
+  SMTP_HOST: smtp.gmail.com
+  SMTP_PORT: "587"
+  SMTP_TLS: "True"
+  SMTP_USER: admin@mariner.trident.bio
+  USERS_OPEN_REGISTRATION: "False"
+  MLFLOW_ARTIFACT_URI: 's3://dev-mariner-datasets'
+  MLFLOW_TRACKING_URI: 'http://dev.mlflow.local:5000'
+  ID: '0805f51ee373c7f1343a'
+  ENV: 'development'
+  GITHUB_CLIENT_ID: '0805f51ee373c7f1343a'
+  AWS_MODELS_BUCKET: 's3://dev-mariner-datasets'

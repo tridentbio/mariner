@@ -31,7 +31,6 @@ class TestDatasetTransforms:
                     await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
                 # dataset_ray_transformer.is_dataset_fully_loaded = True
                 await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
-                assert dataset_ray_transformer.is_dataset_fully_loaded
                 is_loaded = (
                     await dataset_ray_transformer.get_is_dataset_fully_loaded.remote()
                 )

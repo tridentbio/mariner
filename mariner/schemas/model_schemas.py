@@ -2,7 +2,7 @@
 Model related DTOs
 """
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
-from model_builder.layers_schema import FeaturizersArgsType, LayersArgsType
 from model_builder.model import CustomModel
 from model_builder.schemas import LossType, ModelSchema
 
@@ -153,30 +152,6 @@ class ModelVersionUpdateRepo(BaseModel):
     mlflow_version: str
 
 
-class ComponentAnnotation(ApiBaseModel):
-    """
-    Gives extra information about the layer/featurizer
-    """
-
-    docs_link: Optional[str]
-    docs: Optional[str]
-    output_type: Optional[str]
-    class_path: str
-    type: Literal["featurizer", "layer"]
-
-
-class ComponentOption(ComponentAnnotation):
-    """
-    Describes an option to be used in the ModelSchema.layers or ModelSchema.featurizers
-    """
-
-    component: Union[LayersArgsType, FeaturizersArgsType]
-    default_args: Optional[Dict[str, Any]]
-
-
-ModelOptions = List[ComponentOption]
-
-
 class LossOption(ApiBaseModel):
     """
     Option of loss function
@@ -184,3 +159,10 @@ class LossOption(ApiBaseModel):
 
     key: LossType
     label: str
+
+
+class ForwardCheck(ApiBaseModel):
+    """Response to a request to check if a model version forward works"""
+
+    stack_trace: Optional[str] = None
+    output: Optional[Any] = None
