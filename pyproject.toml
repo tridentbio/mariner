@@ -106,13 +106,16 @@ exclude = [
 plugins = ["pydantic.mypy", "sqlmypy"]
 ignore_missing_imports = true
 
-[tool.mypy."mariner.alembic.*"]
+[[tool.mypy.overrides]]
+module = "mariner.alembic.*"
 ignore_errors = true
 
-[tool.mypy."tests.*"]
+[[tool.mypy.overrides]]
+module = "tests.*"
 ignore_errors = true
 
-[tool.mypy."scripts.*"]
+[[tool.mypy.overrides]]
+module = "scripts.*"
 ignore_errors = true
 
 [tool.coverage.report]
