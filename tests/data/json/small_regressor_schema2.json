@@ -8,7 +8,8 @@
         "dataType": {
           "domainKind": "numeric",
           "unit": "mole"
-        }
+        },
+        "outModule": "Linear-ipahhxqjalemtbcs"
       }
     ],
     "featureColumns": [
