@@ -10,30 +10,36 @@ env:
   AWS_REGION: us-east-1
   IMAGE_TAG: ${{ github.sha }}
 jobs:
+  #This step builds and pushes the template image that will be used in all deployments.
   docker_image:
     name: docker_image
     runs-on: ubuntu-20.04
     env:
       ECR_REPOSITORY: mariner-template-dev
     steps:
+    #Setup AWS Credentials using github secrets
     - name: Build - Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+    #Checkout branch
     - name: Build - Git Checkout
       uses: actions/checkout@v2
       with:
         ref: ${{ github.event.inputs.branch }}
         persist-credentials: false
+    #Create or validade the ECR repository (Our private registry for docker images)
     - name: Build - Get ECR Repository
       run: |
         aws ecr describe-repositories --region $AWS_REGION --repository-names $ECR_REPOSITORY > /dev/null 2>&1 || \
           aws ecr create-repository --region $AWS_REGION  --repository-name $ECR_REPOSITORY
+    #Authenticates to the ECR 
     - name: Build - Login to ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+    #Build and push docker image
     - name: Build - Build and push image
       id: build-image
       env:
@@ -42,6 +48,7 @@ jobs:
         docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile .
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
+  #Deployment Mariner Backend
   mariner:
     name: Mariner
     runs-on: ubuntu-20.04
@@ -50,31 +57,25 @@ jobs:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: mariner-backend
     steps:
-    - name: Information
-      env:
-        BRANCH: ${{ github.event.inputs.branch }}
-      run: |
-        if [ -n "$BRANCH" ]
-        then
-          echo Deploying "$BRANCH" for "$DEPLOYMENT_NAME"
-        else
-          echo Deploying default branch for "$DEPLOYMENT_NAME"
-        fi
+    #Setup AWS Credentials using github secrets
     - name: Build - Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+    #Checkout branch
     - name: Build - Git Checkout
       uses: actions/checkout@v2
       with:
         ref: ${{ github.event.inputs.branch }}
         persist-credentials: false
+    #Setup Kubernetes Authentication
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
         aws eks --region $AWS_REGION update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+    #Deploy helm chart
     - name: Deploy - Update Kubernetes Deployment
       id: deploy-to-eks
       env:
@@ -87,14 +88,15 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS" 
-        kubectl apply -f ./configmaps/dev/mariner.yaml
-        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mariner/. \
+        kubectl apply -f ./infrastructure/configmaps/dev/mariner.yaml
+        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-mariner/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
           --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
           --set "istio_url=backend.${{ secrets.HOST_ZONE }}"
         kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+  #Deployment MLFLOW
   mlflow:
     name: MLFlow
     runs-on: ubuntu-20.04
@@ -103,31 +105,25 @@ jobs:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: mlflow
     steps:
-    - name: Information
-      env:
-        BRANCH: ${{ github.event.inputs.branch }}
-      run: |
-        if [ -n "$BRANCH" ]
-        then
-          echo Deploying "$BRANCH" for "$DEPLOYMENT_NAME"
-        else
-          echo Deploying default branch for "$DEPLOYMENT_NAME"
-        fi
+    #Setup AWS Credentials using github secrets
     - name: Build - Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+    #Checkout branch
     - name: Build - Git Checkout
       uses: actions/checkout@v2
       with:
         ref: ${{ github.event.inputs.branch }}
         persist-credentials: false
+    #Setup Kubernetes Authentication
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
         aws eks --region $AWS_REGION update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+    #Deploy helm chart
     - name: Deploy - Update Kubernetes Deployment
       id: deploy-to-eks
       env:
@@ -141,14 +137,15 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS" 
-        kubectl apply -f ./configmaps/dev/mlflow.yaml
-        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-mlflow/. \
+        kubectl apply -f ./infrastructure/configmaps/dev/mlflow.yaml
+        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-mlflow/. \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
           --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
           --set "istio_url=mlflow.${{ secrets.HOST_ZONE }}"
         kubectl rollout status "deployment/$DEPLOYMENT_NAME"
+  #Deployment Ray Head
   ray-head:
     name: Ray Head
     runs-on: ubuntu-20.04
@@ -157,31 +154,25 @@ jobs:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: ray-head
     steps:
-    - name: Information
-      env:
-        BRANCH: ${{ github.event.inputs.branch }}
-      run: |
-        if [ -n "$BRANCH" ]
-        then
-          echo Deploying "$BRANCH" for "$DEPLOYMENT_NAME"
-        else
-          echo Deploying default branch for "$DEPLOYMENT_NAME"
-        fi
+    #Setup AWS Credentials using github secrets
     - name: Build - Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+    #Checkout branch
     - name: Build - Git Checkout
       uses: actions/checkout@v2
       with:
         ref: ${{ github.event.inputs.branch }}
         persist-credentials: false
+    #Setup Kubernetes Authentication
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
         aws eks --region $AWS_REGION update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+    #Deploy helm chart
     - name: Deploy - Update Kubernetes Deployment
       id: deploy-to-eks
       env:
@@ -195,13 +186,14 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS"  -n ray
-        kubectl apply -f ./configmaps/dev/ray-head.yaml  -n ray
-        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-head/.  -n ray \
+        kubectl apply -f ./infrastructure/configmaps/dev/ray-head.yaml  -n ray
+        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-ray-head/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
           --set "image.readinessProbe.path=$HEALTH_CHECK_URL" \
           --set "istio_url=ray.${{ secrets.HOST_ZONE }}"
+  #Deployment Ray Worker
   ray-worker:
     name: Ray Worker
     runs-on: ubuntu-20.04
@@ -210,31 +202,25 @@ jobs:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: ray-worker
     steps:
-    - name: Information
-      env:
-        BRANCH: ${{ github.event.inputs.branch }}
-      run: |
-        if [ -n "$BRANCH" ]
-        then
-          echo Deploying "$BRANCH" for "$DEPLOYMENT_NAME"
-        else
-          echo Deploying default branch for "$DEPLOYMENT_NAME"
-        fi
+    #Setup AWS Credentials using github secrets
     - name: Build - Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+    #Checkout branch
     - name: Build - Git Checkout
       uses: actions/checkout@v2
       with:
         ref: ${{ github.event.inputs.branch }}
         persist-credentials: false
+    #Setup Kubernetes Authentication
     - name: Deploy - Setup Credentials
       id: setup-kubeconfig
       run: |
         aws eks --region $AWS_REGION update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+    #Deploy helm chart
     - name: Deploy - Update Kubernetes Deployment
       id: deploy-to-eks
       env:
@@ -248,8 +234,8 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS"  -n ray
-        kubectl apply -f ./configmaps/dev/ray-worker.yaml -n ray
-        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-worker/.  -n ray \
+        kubectl apply -f ./infrastructure/configmaps/dev/ray-worker.yaml -n ray
+        helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-ray-worker/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
