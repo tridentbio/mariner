@@ -46,7 +46,6 @@ from model_builder import options
 from model_builder.dataset import CustomDataset
 from model_builder.model import CustomModel
 from model_builder.schemas import ComponentOption, DatasetConfig, SmileDataType
-from model_builder.utils import get_class_from_path_string
 
 LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)
