@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    ".storybook",
+    "**/*.stories.*",
+    "**/*.tests.*",
+    "src/tests",
+    "tests",
+    "cypress"
+  ]
+}

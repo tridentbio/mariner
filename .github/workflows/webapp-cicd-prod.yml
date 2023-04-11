@@ -1,0 +1,57 @@
+name: Deploy to Production
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Information
+        env:
+          BRANCH: ${{ github.event.inputs.branch }}
+        run: |
+          if [ -n "$BRANCH" ]
+          then
+            echo Deploying "$BRANCH" for "$DEPLOYMENT_NAME"
+          else
+            echo Deploying default branch for "$DEPLOYMENT_NAME"
+          fi
+      - name: Build - Git Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      - name: Build - Restore cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Build - Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Build - Install NPM packages
+        run: |
+          npm install
+      - name: Build - NPM
+        env:
+          VITE_API_BASE_URL: http://backend.mariner.trident.bio/api
+        run: |
+          npm run build
+      - name: Deploy - Sync with S3
+        run: |
+          aws s3 sync ./build/ s3://mariner-webapp-prod --delete --quiet
+      - name: Deploy - Invalidate Distribution
+        run: |
+          echo Invalidation usually takes about 10-15 minutes, depending on the size of the request.
+          aws configure set preview.cloudfront true
+          aws cloudfront create-invalidation --distribution-id E3UE2637SC438Q --paths '/*'
