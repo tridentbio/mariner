@@ -8,6 +8,7 @@ dataset:
         classes:
           0: no
           1: yes
+      outModule: Linear2
   featureColumns:
     - name: sepal_length
       dataType:

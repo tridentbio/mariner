@@ -5,6 +5,7 @@ dataset:
     - name: tpsa
       dataType:
         domain_kind: smiles
+      outModule: LinearJoined
   featureColumns:
     - name: smiles
       dataType:
