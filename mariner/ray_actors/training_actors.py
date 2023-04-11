@@ -4,13 +4,13 @@ Actors for Training, validation and testing models
 from typing import List, Union
 
 import ray
+from lightning.pytorch import Callback
+from lightning.pytorch.callbacks.early_stopping import EarlyStopping
+from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
+from lightning.pytorch.loggers import MLFlowLogger
+from lightning.pytorch.loggers.logger import Logger
+from lightning.pytorch.trainer.trainer import Trainer
 from mlflow.tracking import MlflowClient
-from pytorch_lightning import Callback
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
-from pytorch_lightning.loggers.logger import Logger
-from pytorch_lightning.loggers.mlflow import MLFlowLogger
-from pytorch_lightning.trainer.trainer import Trainer
 
 from mariner.core import config
 from mariner.core.mlflowapi import log_models_and_create_version

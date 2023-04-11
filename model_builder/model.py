@@ -2,13 +2,13 @@
 Torch and PytorchLightning build through from ModelSchema
 """
 import logging
-from typing import Dict, List, Literal, Union
+from typing import Dict, List, Literal, Optional, Union
 
+import lightning.pytorch as pl
 import networkx as nx
 import torch
 import torch.nn
 import torchmetrics as metrics
-from pytorch_lightning import LightningModule
 
 from model_builder.component_builder import AutoBuilder
 from model_builder.dataset import DataInstance
@@ -44,9 +44,10 @@ class Metrics:
 
     def __init__(
         self,
-        model_type: Literal["regressor", "classification"],
+        model_type: Literal["regression", "multiclass", "multilabel"],
+        num_classes: Optional[int] = None,
     ):
-        if model_type == "regressor":
+        if model_type == "regression":
             self.metrics = torch.nn.ModuleDict(
                 {
                     "train/mse": metrics.MeanSquaredError(),
@@ -65,16 +66,20 @@ class Metrics:
             )
         else:
             # https://torchmetrics.readthedocs.io/en/latest/
+            kwargs = {
+                "task": model_type,
+                "num_classes": num_classes,
+            }
             self.metrics = torch.nn.ModuleDict(
                 {
-                    "train/accuracy": metrics.Accuracy(mdmc_reduce="global"),
-                    "train/precision": metrics.Precision(),
-                    "train/recall": metrics.Recall(),
-                    "train/f1": metrics.F1Score(),
-                    "val/accuracy": metrics.Accuracy(mdmc_reduce="global"),
-                    "val/precision": metrics.Precision(),
-                    "val/recall": metrics.Recall(),
-                    "val/f1": metrics.F1Score(),
+                    "train/accuracy": metrics.Accuracy(**kwargs, mdmc_reduce="global"),
+                    "train/precision": metrics.Precision(**kwargs),
+                    "train/recall": metrics.Recall(**kwargs),
+                    "train/f1": metrics.F1Score(**kwargs),
+                    "val/accuracy": metrics.Accuracy(**kwargs, mdmc_reduce="global"),
+                    "val/precision": metrics.Precision(**kwargs),
+                    "val/recall": metrics.Recall(**kwargs),
+                    "val/f1": metrics.F1Score(**kwargs),
                 }
             )
 
@@ -133,7 +138,7 @@ class Metrics:
         return metrics_dict
 
 
-class CustomModel(LightningModule):
+class CustomModel(pl.LightningModule):
     """Neural network model encoded by a ModelSchema"""
 
     optimizer: Optimizer
@@ -160,6 +165,13 @@ class CustomModel(LightningModule):
 
         self.loss_dict = {}
         self.metrics_dict = {}
+        is_multilabel = len(config.dataset.target_columns) > 1 and all(
+            [
+                target_column.column_type == "binary"
+                for target_column in config.dataset.target_columns
+            ]
+        )
+
         for target_column in config.dataset.target_columns:
             if not target_column.loss_fn:
                 raise ValueError(f"{target_column.name}.loss_fn cannot be None")
@@ -170,10 +182,15 @@ class CustomModel(LightningModule):
 
             # Set up metrics for training and validation
             if target_column.column_type == "regression":
-                self.metrics_dict[target_column.name] = Metrics("regressor")
+                self.metrics_dict[target_column.name] = Metrics(
+                    target_column.column_type
+                )
             else:
                 assert isinstance(target_column.data_type, CategoricalDataType)
-                self.metrics_dict[target_column.name] = Metrics("classification")
+                self.metrics_dict[target_column.name] = Metrics(
+                    "multilabel" if is_multilabel else target_column.column_type,
+                    num_classes=len(target_column.data_type.classes.keys()),
+                )
 
     def set_optimizer(self, optimizer: Optimizer):
         """Sets parameters that only are given in training configuration

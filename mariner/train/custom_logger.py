@@ -6,8 +6,8 @@ import time
 from typing import Dict, List
 
 import requests
-from lightning_fabric.utilities.rank_zero import rank_zero_only
-from pytorch_lightning.loggers.logger import Logger
+from lightning.pytorch.loggers.logger import Logger
+from lightning.pytorch.utilities.rank_zero import rank_zero_only
 
 from mariner.core.config import settings
 

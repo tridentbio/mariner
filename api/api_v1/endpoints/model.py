@@ -32,6 +32,7 @@ from mariner.schemas.model_schemas import (
     ModelsQuery,
 )
 from mariner.utils import random_pretty_name
+from model_builder.schemas import AllowedLosses
 
 router = APIRouter()
 
@@ -192,6 +193,15 @@ def post_model_predict(
         )
 
     return prediction
+
+
+@router.get(
+    "/losses",
+    response_model=AllowedLosses,
+)
+def get_model_losses():
+    """Endpoint to get the available losses"""
+    return AllowedLosses()
 
 
 @router.get("/{model_id}", response_model=Model)
