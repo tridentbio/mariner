@@ -36,5 +36,5 @@ jobs:
         mv ./kubectl /usr/local/bin/kubectl &&\
         EMAILS='${{ github.event.inputs.emails }}'
         python3 scripts/email-list.py $EMAILS
-        kubectl apply -f secrets-example.yaml
+        kubectl apply -f ./infrastructure/secrets-example.yaml
         kubectl delete pod -l app=mariner-backend

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ray-worker
+data:
+  AWS_DATASETS: dev-mariner-datasets
+  AWS_MODELS_BUCKET: s3://dev-mariner-datasets
+  AWS_REGION: us-east-1
+  BACKEND_CORS_ORIGINS: '["http://dev.mariner.local", "http://backend.dev.mariner.local"]'
+  DOMAIN: dev.mariner.local
+  EMAILS_FROM_EMAIL: info@mariner.trident.bio
+  FIRST_SUPERUSER: admin@mariner.trident.bio
+  FLOWER_BASIC_AUTH: admin:123456
+  MLFLOW_ARTIFACT_URI: s3://dev-mariner-datasets
+  MLFLOW_TRACKING_URI: http://mlflow:5000
+  PROJECT_NAME: mariner
+  RAY_HEAD_ADDRESS: ray-head-backend
+  RAY_HEAD_PORT: "6379"
+  RAY_NUM_CPU: "1"
+  SENTRY_DSN: ""
+  SERVER_HOST: http://dev.mariner.local
+  SERVER_NAME: dev.mariner.local
+  SMTP_HOST: smtp.gmail.com
+  SMTP_PORT: "587"
+  SMTP_TLS: "True"
+  SMTP_USER: admin@mariner.trident.bio
+  STACK_NAME: mariner-trident-bio
+  USERS_OPEN_REGISTRATION: "False"
+  ID: '0805f51ee373c7f1343a'
