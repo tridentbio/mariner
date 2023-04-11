@@ -27,17 +27,6 @@ jobs:
         key: ${{ runner.os }}-buildx-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-buildx-
-    - name: Build main image
-      uses: docker/build-push-action@v2
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      with:
-          context: .
-          push: false
-          file: ./dockerfiles/Dockerfile.local
-          tags: mariner-slow-test:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
     - name: Start services
       run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
     - name: Integration tests and get report

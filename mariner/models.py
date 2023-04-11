@@ -1,19 +1,9 @@
 """
 Models service
 """
-
+import logging
 import traceback
-from inspect import Parameter, signature
-from typing import (
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-    get_type_hints,
-)
+from typing import Any, Dict, List, Literal, Tuple
 from uuid import uuid4
 
 import lightning.pytorch as pl
@@ -36,14 +26,14 @@ from mariner.exceptions.model_exceptions import (
     InvalidDataframe,
     ModelVersionNotTrained,
 )
+from mariner.ray_actors.model_check_actor import ModelCheckActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
-    ComponentOption,
+    ForwardCheck,
     Model,
     ModelCreate,
     ModelCreateRepo,
     ModelFeaturesAndTarget,
-    ModelOptions,
     ModelSchema,
     ModelsQuery,
     ModelVersion,
@@ -52,11 +42,13 @@ from mariner.schemas.model_schemas import (
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
 from mariner.validation.functions import is_valid_smiles_series
-from model_builder import generate, layers_schema
+from model_builder import options
 from model_builder.dataset import CustomDataset
 from model_builder.model import CustomModel
-from model_builder.schemas import DatasetConfig, SmileDataType
-from model_builder.utils import get_class_from_path_string
+from model_builder.schemas import ComponentOption, DatasetConfig, SmileDataType
+
+LOG = logging.getLogger(__file__)
+LOG.setLevel(logging.INFO)
 
 
 def get_model_and_dataloader(
@@ -81,23 +73,25 @@ def get_model_and_dataloader(
     return model, dataloader
 
 
-class ForwardCheck(ApiBaseModel):
-    """Response to a request to check if a model version forward works"""
+async def check_model_step_exception(db: Session, config: ModelSchema) -> ForwardCheck:
+    """Checks the steps of a pytorch lightning model built from config.
 
-    stack_trace: Optional[str] = None
-    output: Optional[Any] = None
+    Steps are checked before creating the model on the backend, so the user may fix
+    the config based on the exceptions raised.
 
+    Args:
+        db: Connection to the database, needed to get the dataset.
+        config: ModelSchema instance specifying the model.
 
-def naive_check_forward_exception(db: Session, config: ModelSchema) -> ForwardCheck:
-    """Given a model config, run it through a small set of the dataset
-    and return the exception if any. It does not mean the training will
-    run smoothly for all examples of the dataset, but it gives some
-    confidence about the model trainability"""
+    Returns:
+        An object either with the stack trace or the model output.
+    """
     try:
-        model, dataloader = get_model_and_dataloader(db, config)
-        sample = next(iter(dataloader))
-        output = model(sample)
+        dataset = dataset_store.get_by_name(db, config.dataset.name)
+        actor = ModelCheckActor.remote()
+        output = await actor.check_model_steps.remote(dataset=dataset, config=config)
         return ForwardCheck(output=output)
+    # Don't catch any specific exception to properly get the traceback
     except:  # noqa E722 pylint: disable=W0702
         lines = traceback.format_exc()
         return ForwardCheck(stack_trace=lines)
@@ -207,102 +201,8 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
     return parsed_models, total
 
 
-def get_documentation_link(class_path: str) -> Optional[str]:
-    """Create documentation link for the class_paths of pytorch
-    and pygnn objects"""
-
-    def is_from_pygnn(class_path: str) -> bool:
-        return class_path.startswith("torch_geometric.")
-
-    def is_from_pytorch(class_path: str) -> bool:
-        return class_path.startswith("torch.")
-
-    if is_from_pygnn(class_path):
-        return f"https://pytorch-geometric.readthedocs.io/en/latest/modules/nn.html#{class_path}"  # noqa: E501
-    elif is_from_pytorch(class_path):
-        return f"https://pytorch.org/docs/stable/generated/torch.nn.Linear.html#{class_path}"  # noqa: E501
-    return None
-
-
-def get_annotations_from_cls(cls_path: str) -> ComponentOption:
-    """Gives metadata information of the component implemented by `cls_path`"""
-    docs_link = get_documentation_link(cls_path)
-    cls = get_class_from_path_string(cls_path)
-    try:
-        docs = generate.sphinxfy(cls_path)
-    except generate.EmptySphinxException:
-        docs = cls_path
-    forward_type_hints = {}
-    if "forward" in dir(cls):
-        forward_type_hints = get_type_hints(getattr(cls, "forward"))
-    elif "__call__" in dir(cls):
-        forward_type_hints = get_type_hints(getattr(cls, "__call__"))
-    output_type_hint = forward_type_hints.pop("return", None)
-    return ComponentOption.construct(
-        docs_link=docs_link,
-        docs=docs,
-        output_type=str(output_type_hint) if output_type_hint else None,
-        class_path=cls_path,
-        type=None,  # type: ignore
-        component=None,  # type: ignore
-        default_args=None,  # type: ignore
-    )
-
-
-def get_model_options() -> ModelOptions:
-    """Gets all component (featurizers and layer) options supported by the system,
-    along with metadata about each"""
-    layer_types = [layer.name for layer in generate.layers]
-    featurizer_types = [f.name for f in generate.featurizers]
-
-    def get_default_values(summary_name: str) -> Dict[str, Any]:
-        try:
-            class_args = getattr(
-                layers_schema, summary_name.replace("Summary", "ConstructorArgs")
-            )
-            args = {
-                arg.name: arg.default
-                for arg in signature(class_args).parameters.values()
-                if arg.default != Parameter.empty
-            }
-            return args
-        except AttributeError:
-            return None
-
-    def get_summary(
-        cls_path: str,
-    ) -> Union[None, layers_schema.LayersArgsType, layers_schema.FeaturizersArgsType]:
-        for schema_exported in dir(layers_schema):
-            if (
-                schema_exported.endswith("Summary")
-                and not schema_exported.endswith("ForwardArgsSummary")
-                and not schema_exported.endswith("ConstructorArgsSummary")
-            ):
-                class_def = getattr(layers_schema, schema_exported)
-                default_args = get_default_values(schema_exported)
-                instance = class_def()
-                if instance.type and instance.type == cls_path:
-                    return instance, default_args
-        raise RuntimeError(f"Schema for {cls_path} not found")
-
-    component_annotations: List[ComponentOption] = []
-
-    def make_component(class_path: str, type_: Literal["layer", "featurizer"]):
-        summary, default_args = get_summary(class_path)
-        assert summary, f"class Summary of {class_path} should not be None"
-        option = get_annotations_from_cls(class_path)
-        option.type = type_
-        option.component = summary
-        option.default_args = default_args
-        return option
-
-    for class_path in layer_types:
-        component_annotations.append(make_component(class_path, "layer"))
-
-    for class_path in featurizer_types:
-        component_annotations.append(make_component(class_path, "featurizer"))
-
-    return component_annotations
+def get_model_options() -> List[ComponentOption]:
+    return options.get_model_options()
 
 
 class PredictRequest(ApiBaseModel):
