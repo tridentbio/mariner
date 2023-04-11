@@ -19,7 +19,12 @@ from model_builder import generate
 from model_builder.components_query import (
     get_component_constructor_args_by_type,
 )
-from model_builder.layers_schema import FeaturizersType, LayersType
+from model_builder.layers_schema import (
+    FeaturizersArgsType,
+    FeaturizersType,
+    LayersArgsType,
+    LayersType,
+)
 from model_builder.utils import CamelCaseModel, get_references_dict
 
 
@@ -495,6 +500,28 @@ class ModelSchema(CamelCaseModel):
         """
         config_dict = yaml.safe_load(yamlstr)
         return ModelSchema(**config_dict)
+
+
+class ComponentAnnotation(CamelCaseModel):
+    """
+    Gives extra information about the layer/featurizer
+    """
+
+    docs_link: Optional[str]
+    docs: Optional[str]
+    output_type: Optional[str]
+    class_path: str
+    type: Literal["featurizer", "layer"]
+
+
+class ComponentOption(ComponentAnnotation):
+    """
+    Describes an option to be used in the ModelSchema.layers or ModelSchema.featurizers
+    """
+
+    component: Union[LayersArgsType, FeaturizersArgsType]
+    default_args: Optional[Dict[str, Any]] = None
+    args_options: Optional[Dict[str, List[str]]] = None
 
 
 if __name__ == "__main__":

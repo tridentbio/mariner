@@ -14,25 +14,16 @@ import mariner.models as controller
 from api import deps
 from api.api_v1.endpoints.datasets import Paginated
 from mariner.entities.user import User
-from mariner.exceptions import (
-    DatasetNotFound,
-    ModelNameAlreadyUsed,
-    ModelNotFound,
-)
+from mariner.exceptions import DatasetNotFound, ModelNameAlreadyUsed
 from mariner.exceptions.model_exceptions import (
     InvalidDataframe,
+    ModelNotFound,
     ModelVersionNotTrained,
 )
 from mariner.schemas.api import ApiBaseModel
-from mariner.schemas.model_schemas import (
-    Model,
-    ModelCreate,
-    ModelOptions,
-    ModelSchema,
-    ModelsQuery,
-)
+from mariner.schemas.model_schemas import Model, ModelCreate, ModelsQuery
 from mariner.utils import random_pretty_name
-from model_builder.schemas import AllowedLosses
+from model_builder.schemas import AllowedLosses, ComponentOption, ModelSchema
 
 router = APIRouter()
 
@@ -107,7 +98,7 @@ def get_models(
 
 @router.get(
     "/options",
-    response_model=ModelOptions,
+    response_model=List[ComponentOption],
 )
 def get_model_options():
     """Gets the model building options and documentations."""

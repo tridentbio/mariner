@@ -70,3 +70,15 @@ async def test_check_forward_exception_bad_model(
         check = await model_ctl.check_model_step_exception(db, broken_model)
         assert check.output is None
         assert check.stack_trace is not None, check.stack_trace
+
+
+def test_get_model_options():
+    # Should return a list of ComponentOption
+    options = model_ctl.get_model_options()
+    assert len(options) > 0
+    for option in options:
+        assert option.type
+        if option.class_path == "torch.nn.TransformerEncoderLayer":
+            assert option.args_options
+            assert "activation" in option.args_options
+            assert len(option.args_options["activation"]) > 0
