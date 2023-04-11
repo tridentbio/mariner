@@ -1,5 +1,0 @@
-torch.nn.TransformerEncoderLayer:
-  args_options:
-    activation:
-      - relu
-      - sigmoid

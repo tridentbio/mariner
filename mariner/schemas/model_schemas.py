@@ -153,31 +153,6 @@ class ModelVersionUpdateRepo(BaseModel):
     mlflow_version: str
 
 
-class ComponentAnnotation(ApiBaseModel):
-    """
-    Gives extra information about the layer/featurizer
-    """
-
-    docs_link: Optional[str]
-    docs: Optional[str]
-    output_type: Optional[str]
-    class_path: str
-    type: Literal["featurizer", "layer"]
-
-
-class ComponentOption(ComponentAnnotation):
-    """
-    Describes an option to be used in the ModelSchema.layers or ModelSchema.featurizers
-    """
-
-    component: Union[LayersArgsType, FeaturizersArgsType]
-    default_args: Optional[Dict[str, Any]] = None
-    args_options: Optional[Dict[str, List[str]]] = None
-
-
-ModelOptions = List[ComponentOption]
-
-
 class LossOption(ApiBaseModel):
     """
     Option of loss function
@@ -191,4 +166,4 @@ class ForwardCheck(ApiBaseModel):
     """Response to a request to check if a model version forward works"""
 
     stack_trace: Optional[str] = None
-    output: Optional[Any]
+    output: Optional[Any] = None
