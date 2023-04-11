@@ -10,6 +10,7 @@ dataset:
       dataType:
         domainKind: numeric
         unit: mole
+      outModule: linear 2
 layers:
   - name: embeddings
     type: torch.nn.Embedding
