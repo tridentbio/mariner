@@ -4,9 +4,8 @@ import mlflow.pyfunc
 import mlflow.tracking
 import pytest
 import torch.nn
-from mlflow.entities.model_registry.registered_model import (
-    ModelVersion as MlflowModelVersion,
-)
+from mlflow.entities.model_registry.registered_model import \
+    ModelVersion as MlflowModelVersion
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 
