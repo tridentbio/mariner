@@ -9,6 +9,7 @@ from pylint.lint import Run, load_results, save_results
 
 modules = [
     "--extension-pkg-whitelist='pydantic'",
+    "--output-format=parseable",
     "mariner",
     "model_builder",
     "api",
