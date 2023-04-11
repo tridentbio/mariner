@@ -424,3 +424,21 @@ def get_optimizer_options() -> List[OptimizerSchema]:
         AdamParamsSchema(),
         SGDParamsSchema(),
     ]
+
+
+def get_experiments_metrics_for_model_version(
+    db: Session, model_version_id: int, user: UserEntity
+) -> List[Experiment]:
+    """Gets the experiments for a model version
+
+    Args:
+        db: connection with the database
+        model_version_id: id of the model version
+        user: user that is requesting the experiments
+
+    Returns:
+        List[Experiment]
+    """
+    return experiment_store.get_experiments_metrics_for_model_version(
+        db, model_version_id, user.id
+    )

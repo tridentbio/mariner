@@ -46,6 +46,7 @@ class Metrics:
         self,
         model_type: Literal["regression", "multiclass", "multilabel"],
         num_classes: Optional[int] = None,
+        num_labels: Optional[int] = None,
     ):
         if model_type == "regression":
             self.metrics = torch.nn.ModuleDict(
@@ -69,6 +70,7 @@ class Metrics:
             kwargs = {
                 "task": model_type,
                 "num_classes": num_classes,
+                "num_labels": num_labels,
             }
             self.metrics = torch.nn.ModuleDict(
                 {
@@ -190,6 +192,7 @@ class CustomModel(pl.LightningModule):
                 self.metrics_dict[target_column.name] = Metrics(
                     "multilabel" if is_multilabel else target_column.column_type,
                     num_classes=len(target_column.data_type.classes.keys()),
+                    num_labels=len(config.dataset.target_columns) if is_multilabel else None,
                 )
 
     def set_optimizer(self, optimizer: Optimizer):
