@@ -1,3 +1,4 @@
+import functools
 from inspect import signature
 from typing import Any, Dict, List, Literal, Optional, Union, get_type_hints
 
@@ -67,6 +68,7 @@ def _get_annotations_from_cls(cls_path: str) -> ComponentOption:
     )
 
 
+@functools.cache
 def get_model_options() -> List[ComponentOption]:
     """Gets all component (featurizers and layer) options supported by the system,
     along with metadata about each"""
@@ -109,11 +111,12 @@ def get_model_options() -> List[ComponentOption]:
 
     component_annotations: List[ComponentOption] = []
 
+    overrides = _get_option_overrides()
+
     def make_component(class_path: str, type_: Literal["layer", "featurizer"]):
         summary = get_summary_and_constructor_args(class_path)
         if not summary:
             return None
-        overrides = _get_option_overrides()
         summary, default_args = summary
         option = _get_annotations_from_cls(class_path)
         option.args_options = get_args_options(class_path)
