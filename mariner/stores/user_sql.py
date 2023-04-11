@@ -18,11 +18,29 @@ from mariner.stores.base_sql import CRUDBase
 
 class _CRUDUser(CRUDBase[User, UserCreateBasic, UserUpdate]):
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
+        """Gets a single user by email.
+
+        Args:
+            db: Connection to the datamase.
+            email: Email to use in search.
+
+        Returns:
+            User with input email.
+        """
         return db.query(User).filter(User.email == email).first()
 
     def create(
         self, db: Session, *, obj_in: Union[UserCreateBasic, UserCreateOAuth]
     ) -> User:
+        """Persists user in database.
+
+        Args:
+            db: Connection to the database.
+            obj_in: User creation object>
+
+        Returns:
+            Created user.
+        """
         db_obj = User(
             email=obj_in.email,
             hashed_password=(
@@ -42,6 +60,16 @@ class _CRUDUser(CRUDBase[User, UserCreateBasic, UserUpdate]):
     def update(
         self, db: Session, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]
     ) -> User:
+        """Updates user
+
+        Args:
+            db: Connection to the database
+            db_obj: User instance to be updated
+            obj_in: Update object
+
+        Returns:
+            Updated user
+        """
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
@@ -53,6 +81,16 @@ class _CRUDUser(CRUDBase[User, UserCreateBasic, UserUpdate]):
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def authenticate(self, db: Session, *, email: str, password: str) -> Optional[User]:
+        """Gets the user linked to email if the password is correct.
+
+        Args:
+            db: Connection to the database.
+            email: Email of the user.
+            password: Password of the user
+
+        Returns:
+            User instance if authentication succeeds.
+        """
         user = self.get_by_email(db, email=email)
         if not user:
             return None
@@ -61,9 +99,25 @@ class _CRUDUser(CRUDBase[User, UserCreateBasic, UserUpdate]):
         return user
 
     def is_active(self, user: User) -> bool:
+        """Checks if the user is active.
+
+        Args:
+            user: User to be checked.
+
+        Returns:
+            True if user is active. False otherwise.
+        """
         return user.is_active
 
     def is_superuser(self, user: User) -> bool:
+        """Checks if a user is super user.
+
+        Args:
+            user: User to be checked
+
+        Returns:
+            True if the user is super user, False otherwise.
+        """
         return user.is_superuser
 
 

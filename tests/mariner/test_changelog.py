@@ -72,7 +72,7 @@ def test_change_log(releases_path_fixture: str):
             ],
         ),
     ]
-    for (got, expected) in zip(releases, expected_releases):
+    for got, expected in zip(releases, expected_releases):
         assert got.date == expected.date
         assert got.version == expected.version
         for change in expected.changes:

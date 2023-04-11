@@ -4,8 +4,8 @@ import mlflow.entities.model_registry.model_version
 import mlflow.pytorch
 import pytest
 import ray
+from lightning.pytorch.callbacks.model_checkpoint import ModelCheckpoint
 from mlflow.tracking import MlflowClient
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from sqlalchemy.orm import Session
 
 import mariner.schemas.experiment_schemas
@@ -70,6 +70,8 @@ class TestTrainingActor:
 
         assert isinstance(torch_model, CustomModel)
 
+        target_column = torch_model.config.dataset.target_columns[0]
+
         # Checks wheter metrics can be found in expected mlflow location
         # and models are correctly upload to s3
         client = MlflowClient()
@@ -91,11 +93,11 @@ class TestTrainingActor:
         ]
         assert len(object_keys) == 2, "failed to trained model artifacts from s3"
         loss_history = client.get_metric_history(
-            run_id=run.info.run_id, key="train_loss"
+            run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
         )
         assert len(loss_history) > 0
         val_loss_history = client.get_metric_history(
-            run_id=run.info.run_id, key="val_mse"
+            run_id=run.info.run_id, key=f"val/mse/{target_column.name}"
         )
         assert len(val_loss_history) > 0
 
@@ -135,12 +137,17 @@ class TestTrainingActor:
 
     @pytest.fixture
     def training_request_fixture(self, modelversion_fixture: ModelVersion):
+        target_column = modelversion_fixture.config.dataset.target_columns[0]
         return TrainingRequest(
             name="asdiasjd",
             model_version_id=modelversion_fixture.id,
             epochs=3,
             batch_size=32,
-            checkpoint_config=MonitoringConfig(metric_key="val_mse", mode="min"),
+            checkpoint_config=MonitoringConfig(
+                metric_key=f"val/mse/{target_column.name}", mode="min"
+            ),
             optimizer=AdamOptimizer(),
-            early_stopping_config=EarlyStoppingConfig(metric_key="val_mse", mode="min"),
+            early_stopping_config=EarlyStoppingConfig(
+                metric_key=f"val/mse/{target_column.name}", mode="min"
+            ),
         )

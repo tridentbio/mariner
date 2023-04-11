@@ -1,7 +1,6 @@
 """
 Models service
 """
-
 import traceback
 from inspect import Parameter, signature
 from typing import (
@@ -16,10 +15,10 @@ from typing import (
 )
 from uuid import uuid4
 
+import lightning.pytorch as pl
 import mlflow
 import mlflow.exceptions
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 from sqlalchemy.orm.session import Session
 from torch_geometric.loader import DataLoader
@@ -36,9 +35,11 @@ from mariner.exceptions.model_exceptions import (
     InvalidDataframe,
     ModelVersionNotTrained,
 )
+from mariner.ray_actors.model_check_actor import ModelCheckActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     ComponentOption,
+    ForwardCheck,
     Model,
     ModelCreate,
     ModelCreateRepo,
@@ -81,23 +82,25 @@ def get_model_and_dataloader(
     return model, dataloader
 
 
-class ForwardCheck(ApiBaseModel):
-    """Response to a request to check if a model version forward works"""
+async def check_model_step_exception(db: Session, config: ModelSchema) -> ForwardCheck:
+    """Checks the steps of a pytorch lightning model built from config.
 
-    stack_trace: Optional[str] = None
-    output: Optional[Any] = None
+    Steps are checked before creating the model on the backend, so the user may fix
+    the config based on the exceptions raised.
 
+    Args:
+        db: Connection to the database, needed to get the dataset.
+        config: ModelSchema instance specifying the model.
 
-def naive_check_forward_exception(db: Session, config: ModelSchema) -> ForwardCheck:
-    """Given a model config, run it through a small set of the dataset
-    and return the exception if any. It does not mean the training will
-    run smoothly for all examples of the dataset, but it gives some
-    confidence about the model trainability"""
+    Returns:
+        An object either with the stack trace or the model output.
+    """
     try:
-        model, dataloader = get_model_and_dataloader(db, config)
-        sample = next(iter(dataloader))
-        output = model(sample)
+        dataset = dataset_store.get_by_name(db, config.dataset.name)
+        actor = ModelCheckActor.remote()
+        output = await actor.check_model_steps.remote(dataset=dataset, config=config)
         return ForwardCheck(output=output)
+    # Don't catch any specific exception to properly get the traceback
     except:  # noqa E722 pylint: disable=W0702
         lines = traceback.format_exc()
         return ForwardCheck(stack_trace=lines)
@@ -120,9 +123,10 @@ def create_model(
         raise DatasetNotFound()
 
     client = mlflowapi.create_tracking_client()
-
     # Handle case where model_create.name refers to existing model
-    existingmodel = model_store.get_by_name(db, model_create.name, user_id=user.id)
+    existingmodel = model_store.get_by_name_from_user(
+        db, model_create.name, user_id=user.id
+    )
     if existingmodel:
         model_store.create_model_version(
             db,
@@ -170,9 +174,10 @@ def create_model(
             ]
             + [
                 ModelFeaturesAndTarget.construct(
-                    column_name=model_create.config.dataset.target_column.name,
+                    column_name=target_column.name,
                     column_type="target",
                 )
+                for target_column in model_create.config.dataset.target_columns
             ],
         ),
     )
@@ -323,7 +328,7 @@ def _check_dataframe_conforms_dataset(
         df: dataframe to be checked
         dataset_config: model builder dataset configuration used in model building
     """
-    column_configs = dataset_config.feature_columns + [dataset_config.target_column]
+    column_configs = dataset_config.feature_columns + dataset_config.target_columns
     result: List[Tuple[str, InvalidReason]] = []
     for column_config in column_configs:
         data_type = column_config.data_type
@@ -334,7 +339,9 @@ def _check_dataframe_conforms_dataset(
     return result
 
 
-def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
+def get_model_prediction(
+    db: Session, request: PredictRequest
+) -> Dict[str, torch.Tensor]:
     """(Slowly) Loads a model version and apply it to a sample input
 
     Args:
@@ -367,7 +374,7 @@ def get_model_prediction(db: Session, request: PredictRequest) -> torch.Tensor:
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
-    return pyfuncmodel(modelinput)
+    return pyfuncmodel.predict_step(modelinput)
 
 
 def get_model(db: Session, user: UserEntity, model_id: int) -> Model:

@@ -10,11 +10,12 @@ from sqlalchemy.orm.session import Session
 
 from mariner.entities import Experiment, ModelVersion
 from mariner.schemas.api import OrderByQuery
-from mariner.schemas.experiment_schemas import ListExperimentsQuery
 from mariner.stores.base_sql import CRUDBase
 
 
 class ExperimentCreateRepo(pydantic.BaseModel):
+    """Payload to record an experiment in experiments collection."""
+
     mlflow_id: str
     model_version_id: int
     created_by_id: int
@@ -31,6 +32,8 @@ class ExperimentCreateRepo(pydantic.BaseModel):
 
 
 class ExperimentUpdateRepo(pydantic.BaseModel):
+    """Payload to update an experiment in experiments collection."""
+
     stage: Optional[
         Literal["NOT RUNNING", "STARTED", "RUNNING", "ERROR", "SUCCESS"]
     ] = None
@@ -44,24 +47,13 @@ class ExperimentUpdateRepo(pydantic.BaseModel):
 
 
 class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdateRepo]):
-    def filter_by_model_id(self, query: Query, id: int) -> Query:
+    """Data layer access on the experiments collection."""
+
+    def _filter_by_model_id(self, query: Query, id: int) -> Query:
         return query.join(Experiment.model_version).filter(ModelVersion.model_id == id)
 
-    def filter_by_stages(self, query: Query, stages: List[str]) -> Query:
+    def _filter_by_stages(self, query: Query, stages: List[str]) -> Query:
         return query.filter(Experiment.stage.in_(stages))
-
-    def get_by_model_id(self, db: Session, id: int) -> List[Experiment]:
-        query = db.query(Experiment)
-        query = self.filter_by_model_id(query, id)
-        return query.all()
-
-    def get_many(self, db: Session, q: ListExperimentsQuery) -> List[Experiment]:
-        query = db.query(Experiment)
-        if q.model_id:
-            query = self.filter_by_model_id(query, q.model_id)
-        if q.stage:
-            query = self.filter_by_stages(query, q.stage)
-        return query.all()
 
     def _by_creator(self, query: Query, creator_id: int) -> Query:
         query = query.filter(Experiment.created_by_id == creator_id)
@@ -103,13 +95,28 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
         order_by: Union[OrderByQuery, None] = None,
         per_page: int = 15,
     ) -> tuple[List[Experiment], int]:
+        """Get's paginated view of experiments.
+
+        Args:
+            db: Connection to the database.
+            model_id: Id of the model to filter the experiments.
+            created_by_id: Id of the model creator to filter the models by.
+            stages: Model stages to filter the models by.
+            page: Number of the wanted page.
+            order_by: Object describing wanted ordering of the data.
+            per_page: Number of items per page.
+
+        Returns:
+            A tuple with a list of experiments and the total number of
+        items satisfying the query without the pagination into account.
+        """
         sql_query = db.query(Experiment)
         if model_id:
-            sql_query = self.filter_by_model_id(sql_query, model_id)
+            sql_query = self._filter_by_model_id(sql_query, model_id)
         if created_by_id:
             sql_query = self._by_creator(sql_query, created_by_id)
         if stages:
-            sql_query = self.filter_by_stages(query=sql_query, stages=stages)
+            sql_query = self._filter_by_stages(query=sql_query, stages=stages)
         if order_by:
             self._validate_order_by(order_by)
             sql_query = self._add_order_by(sql_query, query=order_by)
@@ -118,9 +125,6 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
         sql_query = sql_query.offset(per_page * page)
         result = sql_query.all()
         return result, total
-
-    def get(self, db: Session, experiment_id: int) -> Experiment:
-        return db.query(Experiment).filter(Experiment.id == experiment_id).first()
 
 
 experiment_store = CRUDExperiment(Experiment)

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, time
+from datetime import datetime
 from typing import Dict, Optional
 
 from fastapi import status
@@ -58,7 +58,7 @@ def setup_create_dataset(
     db: Session,
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
-    file="tests/data/zinc_extra.csv",
+    file="tests/data/csv/zinc_extra.csv",
     **kwargs,
 ):
     data = mock_dataset(**kwargs)

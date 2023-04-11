@@ -5,11 +5,11 @@ dataset:
     - name: aaMutations
       dataType:
         domainKind: protein
-  targetColumn:
-    name: medianBrightness
-    dataType:
-      domainKind: numeric
-      unit: mole
+  targetColumns:
+    - name: medianBrightness
+      dataType:
+        domainKind: numeric
+        unit: mole
 layers:
   - name: embeddings
     type: torch.nn.Embedding
@@ -20,7 +20,7 @@ layers:
     forwardArgs:
       input: $aaMutations
 
-  - name: transformer 1 
+  - name: transformer 1
     type: torch.nn.TransformerEncoderLayer
     constructorArgs:
       d_model: 16

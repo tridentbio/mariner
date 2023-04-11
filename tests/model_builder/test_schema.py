@@ -3,10 +3,16 @@ import pytest
 from model_builder.schemas import ModelSchema
 from tests.fixtures.model import model_config
 
+DEFAULT_LOSS_MAP = {
+    "regression": "torch.nn.MSELoss",
+    "binary": "torch.nn.BCEWithLogitsLoss",
+    "multiclass": "torch.nn.CrossEntropyLoss",
+}
+
 
 @pytest.fixture(scope="module")
 def schema_yaml_fixture():
-    with open("tests/data/small_regressor_schema.yaml") as f:
+    with open("tests/data/yaml/small_regressor_schema.yaml") as f:
         yield f.read()
 
 
@@ -19,8 +25,14 @@ def test_schema(schema_yaml_fixture: str):
 def test_schema_autofills_lossfn():
     regressor_schema = model_config(model_type="regressor")
     classifier_schema = model_config(model_type="classifier")
-    assert regressor_schema.loss_fn == "torch.nn.MSELoss"
-    assert classifier_schema.loss_fn == "torch.nn.CrossEntropyLoss"
+    target_columns = (
+        regressor_schema.dataset.target_columns
+        + classifier_schema.dataset.target_columns
+    )
+    for target_column in target_columns:
+        assert (
+            target_column.loss_fn == DEFAULT_LOSS_MAP[target_column.column_type]
+        ), f"loss_fn for {target_column.name} was not set to the {target_column.column_type} default"
 
 
 def test_schema_1():
@@ -28,13 +40,13 @@ def test_schema_1():
 name: Simple Classifier
 dataset:
   name: zinc dataset
-  targetColumn: 
-    name: mwt_group
-    dataType:
-      domainKind: categorical
-      classes:
-        mwt_small: 0
-        mwt_big: 1
+  targetColumns: 
+    - name: mwt_group
+      dataType:
+        domainKind: categorical
+        classes:
+          mwt_small: 0
+          mwt_big: 1
   featureColumns:
     - name: mwt
       dataType:

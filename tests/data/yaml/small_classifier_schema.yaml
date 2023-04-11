@@ -1,0 +1,26 @@
+name: Simple Classifier
+dataset:
+  name: zinc dataset # replace by mocked ds name
+  targetColumns:
+    - name: mwt_group
+      dataType:
+        domainKind: categorical
+        classes:
+          mwt_small: 0 # mwt <= 300
+          mwt_big: 1 # mwt > 300
+  featureColumns:
+    - name: mwt
+      dataType:
+        domainKind: numeric
+layers:
+  - name: "Linear1"
+    type: torch.nn.Linear
+    constructorArgs:
+      in_features: 1
+      out_features: 2
+    forwardArgs:
+      input: $mwt
+  - name: "Sigmoid1"
+    type: torch.nn.Sigmoid
+    forwardArgs:
+      input: $Linear1

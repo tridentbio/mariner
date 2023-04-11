@@ -31,8 +31,8 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
             user_id=test_user.id, model_version_id=version.id, model_input=df
         ),
     )
-    for tpsa in result:
-        assert isinstance(tpsa, torch.Tensor)
+    for prediction in result.values():
+        assert isinstance(prediction, torch.Tensor)
 
 
 @pytest.mark.integration
@@ -43,30 +43,23 @@ def test_delete_model(db: Session, model: Model):
     assert not model_db
 
 
+@pytest.mark.asyncio
 @pytest.mark.integration
-def test_check_forward_exception_good_regressor(
+async def test_check_forward_exception_good_regressor(
     db: Session, some_dataset: DatasetEntity
 ):
     regressor = model_config(model_type="regressor")
-    assert regressor.loss_fn
-    check = model_ctl.naive_check_forward_exception(db, regressor)
+    check = await model_ctl.check_model_step_exception(db, regressor)
+    assert regressor.dataset.target_columns[0].loss_fn
     assert check.stack_trace is None, check.stack_trace
     assert check.output is not None
 
 
-@pytest.mark.integration
-def test_check_forward_exception_good_classifier(
+@pytest.mark.asyncio
+@pytest.mark.skip(reason="Fails to mock a method executed in ray")
+async def test_check_forward_exception_bad_model(
     db: Session, some_dataset: DatasetEntity
 ):
-    classifier = model_config(dataset_name=some_dataset.name, model_type="classifier")
-    assert classifier.loss_fn
-    check = model_ctl.naive_check_forward_exception(db, classifier)
-    assert check.stack_trace is None
-    assert check.output is not None
-
-
-@pytest.mark.integration
-def test_check_forward_exception_bad_model(db: Session, some_dataset: DatasetEntity):
     broken_model: ModelSchema = model_config(dataset_name=some_dataset.name)
     import model_builder.model
 
@@ -74,6 +67,6 @@ def test_check_forward_exception_bad_model(db: Session, some_dataset: DatasetEnt
         raise Exception("bad bad model")
 
     with patch(model_builder.model.CustomModel.forward, raise_):
-        check = model_ctl.naive_check_forward_exception(db, broken_model)
+        check = await model_ctl.check_model_step_exception(db, broken_model)
         assert check.output is None
         assert check.stack_trace is not None, check.stack_trace

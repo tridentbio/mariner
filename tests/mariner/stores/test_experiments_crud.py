@@ -7,11 +7,15 @@ from mariner.stores.experiment_sql import ExperimentUpdateRepo, experiment_store
 
 class TestExperimentRepo:
     def test_update(self, db: Session, some_experiment: Experiment):
+        target_column = some_experiment.model_version.config.dataset.target_columns[0]
         update = ExperimentUpdateRepo(
             epochs=13,
-            train_metrics={"train_loss": 495.88104248046875, "epoch": 4},
+            train_metrics={
+                f"train/loss/{target_column.name}": 495.88104248046875,
+                "epoch": 4,
+            },
             history={
-                "train_loss": [
+                f"train/loss/{target_column.name}": [
                     1349.7373046875,
                     544.4139404296875,
                     546.408447265625,

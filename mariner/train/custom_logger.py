@@ -6,15 +6,15 @@ import time
 from typing import Dict, List
 
 import requests
-from pytorch_lightning.loggers.base import LightningLoggerBase
-from pytorch_lightning.utilities.rank_zero import rank_zero_only
+from lightning.pytorch.loggers.logger import Logger
+from lightning.pytorch.utilities.rank_zero import rank_zero_only
 
 from mariner.core.config import settings
 
 LOG = logging.getLogger(__name__)
 
 
-class AppLogger(LightningLoggerBase):
+class AppLogger(Logger):
     """
     Custom logger that sends the metrics collected to the mariner API
     through HTTP requests. The API saves the metrics and forwards to the

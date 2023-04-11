@@ -45,11 +45,11 @@ def model_config(
 
 def get_config_path_for_model_type(model_type: ModelType) -> str:
     if model_type == "regressor":
-        model_path = "tests/data/small_regressor_schema.yaml"
+        model_path = "tests/data/yaml/small_regressor_schema.yaml"
     elif model_type == "classifier":
-        model_path = "tests/data/small_classifier_schema.yaml"
+        model_path = "tests/data/yaml/small_classifier_schema.yaml"
     elif model_type == "regressor-with-categorical":
-        model_path = "tests/data/small_regressor_schema2.json"
+        model_path = "tests/data/json/small_regressor_schema2.json"
     else:
         raise NotImplementedError(f"No model config yaml for model type {model_type}")
     return model_path
@@ -111,11 +111,13 @@ def setup_create_model_db(
         ]
         + [
             ModelFeaturesAndTarget(
-                column_name=model.config.dataset.target_column.name,
+                column_name=target_col.name,
                 column_type="target",
             )
+            for target_col in model.config.dataset.target_columns
         ],
     )
+
     created_model = model_sql.model_store.create(db, model_create)
     version_create = ModelVersionCreateRepo(
         mlflow_version="1",

@@ -13,7 +13,7 @@ from model_builder.utils import unwrap_dollar
 
 
 def get_columns_configs(config: ModelSchema) -> List[ColumnConfig]:
-    """Get's the column configs from targets and featurizers of a ModelSchema object
+    """Gets the column configs from targets and featurizers of a ModelSchema object
 
     Args:
         config: ModelSchema
@@ -21,13 +21,13 @@ def get_columns_configs(config: ModelSchema) -> List[ColumnConfig]:
     Returns:
         List[ColumnConfig]
     """
-    return config.dataset.feature_columns + [config.dataset.target_column]
+    return config.dataset.feature_columns + config.dataset.target_columns
 
 
 def get_column_config(
     config: ModelSchema, column_name: str
 ) -> Union[ColumnConfig, None]:
-    """Get's the column config of any column (target or featurizer) with name
+    """Gets the column config of any column (target or featurizer) with name
     equals ``column_name``
     Args:
         config: ModelSchem
@@ -72,7 +72,7 @@ def get_dependencies(component_config: Union[LayersType, FeaturizersType]) -> Se
 
 
 def get_target_columns(model_schema: ModelSchema) -> List[ColumnConfig]:
-    """Get's the target columns in the model_schema
+    """Gets the target columns in the model_schema
 
     Args:
         model_schema: model config
@@ -80,4 +80,4 @@ def get_target_columns(model_schema: ModelSchema) -> List[ColumnConfig]:
     Returns:
         List[ColumnConfig]: list of columns
     """
-    return [model_schema.dataset.target_column]
+    return model_schema.dataset.target_columns

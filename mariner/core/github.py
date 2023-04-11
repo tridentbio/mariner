@@ -31,6 +31,15 @@ def _join(url: str, path: str):
 
 
 def github_get(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
+    """Makes GET/ request to github on path endpoint.
+
+    Args:
+        path: Endpoint used in request.
+        url (str): Base url.
+
+    Returns:
+        The request response.
+    """
     headers, kwargs = _make_headers(**kwargs)
     kwargs["client_id"] = settings.GITHUB_CLIENT_ID
     kwargs["client_secret"] = settings.GITHUB_CLIENT_SECRET
@@ -39,6 +48,15 @@ def github_get(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
 
 
 def github_post(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
+    """Makes a POST/ request to github on path endpoint.
+
+    Args:
+        path: Endpoint used in request
+        url (str): Base url.
+
+    Returns:
+        The request response.
+    """
     headers, kwargs = _make_headers(**kwargs)
     kwargs["client_id"] = settings.GITHUB_CLIENT_ID
     kwargs["client_secret"] = settings.GITHUB_CLIENT_SECRET
@@ -48,6 +66,10 @@ def github_post(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
 
 
 class GithubAccessCode(BaseModel):
+    """Model of an access code object from github, used to make requests
+    in behalf of a user.
+    """
+
     access_token: str
     scope: str
     token_type: str
@@ -56,6 +78,8 @@ class GithubAccessCode(BaseModel):
 # Complete payload:
 # https://docs.github.com/en/rest/users/users#get-the-authenticated-user
 class GithubUser(BaseModel):
+    """Models a github user."""
+
     id: int
     login: str
     email: str
@@ -66,6 +90,8 @@ class GithubUser(BaseModel):
 
 
 class GithubFailure(Exception):
+    """Exception raised when github returns an error."""
+
     def __init__(self, message: str, response: requests.Response):
         super().__init__()
         self.message = message
@@ -73,6 +99,17 @@ class GithubFailure(Exception):
 
 
 def get_access_token(code: str) -> GithubAccessCode:
+    """Attempts to exchange a code string for an access token.
+
+    Args:
+        code: code string used during oauth.
+
+    Returns:
+        GithubAccessCode object with github credentials.
+
+    Raises:
+        InvalidGithubCode: If the given input is invalid.
+    """
     result = github_post("/login/oauth/access_token", code=code)
     if 200 <= result.status_code < 400:
         return GithubAccessCode.construct(**result.json())
@@ -82,6 +119,17 @@ def get_access_token(code: str) -> GithubAccessCode:
 def get_user(
     access_token: str,
 ) -> GithubUser:
+    """Get's the user github owner of the access_token.
+
+    Args:
+        access_token: github authentication token.
+
+    Returns:
+        Github user object
+
+    Raises:
+        GithubFailure: When there's an error from github response.
+    """
     result = github_get(url=GITHUB_API_URL, path="user", access_token=access_token)
     if 200 <= result.status_code < 400:
         github_user = GithubUser.construct(**result.json())

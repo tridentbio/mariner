@@ -8,9 +8,9 @@ from mariner.core.config import settings
 from mariner.ray_actors.dataset_transforms import DatasetTransforms
 from mariner.schemas.dataset_schemas import ColumnsMeta
 
-BIO_DATASET_PATH = "tests/data/bio_rna_dna_protein.csv"
-ZINC_DATASET_PATH = "tests/data/zinc_extra.csv"
-HIV_DATASET_PATH = "tests/data/HIV.csv"
+BIO_DATASET_PATH = "tests/data/csv/bio_rna_dna_protein.csv"
+ZINC_DATASET_PATH = "tests/data/csv/zinc_extra.csv"
+HIV_DATASET_PATH = "tests/data/csv/HIV.csv"
 DATASETS_TO_TEST = [ZINC_DATASET_PATH, HIV_DATASET_PATH]
 
 
@@ -31,7 +31,6 @@ class TestDatasetTransforms:
                     await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
                 # dataset_ray_transformer.is_dataset_fully_loaded = True
                 await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
-                assert dataset_ray_transformer.is_dataset_fully_loaded
                 is_loaded = (
                     await dataset_ray_transformer.get_is_dataset_fully_loaded.remote()
                 )

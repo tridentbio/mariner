@@ -1,9 +1,9 @@
 """Dataset related classes to use for training/evaluating/testing"""
 from collections.abc import Mapping
-from typing import Any, Callable, Sequence, Union
+from typing import Any, Callable, List, Sequence, Union
 
+import lightning.pytorch as pl
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset, Subset, random_split
@@ -159,7 +159,7 @@ class CustomDataset(Dataset):
                     self.config, list(get_dependencies(featurizer_config))
                 )
             self._featurizers[featurizer_config.name] = feat
-        self.output_featurizer = self.get_output_featurizer()
+        self.output_featurizers = self.get_output_featurizers()
 
     def _get_default_featurizer(
         self, column: ColumnConfig
@@ -178,13 +178,12 @@ class CustomDataset(Dataset):
 
         return feat
 
-    def get_output_featurizer(self) -> Union[BaseFeaturizer, None]:
+    def get_output_featurizers(self) -> List[Union[BaseFeaturizer, None]]:
         """Gets the output featurizer"""
         if self.target:
             targets = get_target_columns(self.config)
             # Assume a single target
-            target = targets[0]
-            return self._get_default_featurizer(target)
+            return [self._get_default_featurizer(target) for target in targets]
 
     def __len__(self) -> int:
         """Gets the number of rows in the dataset"""
@@ -210,7 +209,6 @@ class CustomDataset(Dataset):
         # Featurize all of the columns that pass into a
         # featurizer before including in the data instance
         for featurizer in self.get_featurizer_configs():
-
             references = get_references_dict(featurizer.forward_args.dict())
             assert len(references) == 1, "only 1 forward arg for featurizers for now"
             col_name = list(references.values())[0]
@@ -238,11 +236,11 @@ class CustomDataset(Dataset):
 
         if self.target:
             targets = get_target_columns(self.config)
-            target = targets[0]
-            if self.output_featurizer:
-                data.y = self.output_featurizer(sample[target.name])
-            else:
-                data.y = torch.Tensor([sample[target.name]])
+            for i, target in enumerate(targets):
+                if self.output_featurizers[i]:
+                    data[target.name] = self.output_featurizers[i](sample[target.name])
+                else:
+                    data[target.name] = sample[target.name]
 
         return data
 
