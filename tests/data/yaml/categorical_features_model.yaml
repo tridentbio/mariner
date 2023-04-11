@@ -5,6 +5,7 @@ dataset:
     - name: mwt
       dataType:
         domainKind: numeric
+      outModule: LinearJoined
   featureColumns:
     - name: smiles
       dataType:

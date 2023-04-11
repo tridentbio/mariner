@@ -47,6 +47,7 @@ dataset:
         classes:
           mwt_small: 0
           mwt_big: 1
+      outModule: Sigmoid1
   featureColumns:
     - name: mwt
       dataType:

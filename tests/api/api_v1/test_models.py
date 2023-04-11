@@ -48,6 +48,7 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
                 TargetConfig(
                     name="tpsa",
                     data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
+                    out_module="1"
                 )
             ],
         ),
