@@ -8,12 +8,12 @@ services:
       - mlflow
       - ray-worker
     volumes:
-      - ./:/app:z
+      - ./backend:/app:z
     environment:
       - JUPYTER=jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
   ray-head:
     volumes:
-      - ./:/app:z
+      - ./backend:/app:z
   ray-worker:
     volumes:
-      - ./:/app:z
+      - ./backend:/app:z
