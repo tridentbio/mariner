@@ -1,5 +1,10 @@
 version: "3.4"
 services:
+  webapp:
+    depends_on:
+      - backend
+    volumes:
+      - ./webapp/:/app:z
   backend:
     # Basic services to run the backend. Placing it here so main docker-compose
     # can be used along with multiple file applications
