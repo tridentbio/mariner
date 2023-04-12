@@ -6,6 +6,5 @@
     "**/*.tests.*",
     "src/tests",
     "tests",
-    "cypress"
   ]
 }
