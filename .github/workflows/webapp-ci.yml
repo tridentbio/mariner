@@ -9,7 +9,7 @@ on:
     paths:
       - webapp/**
 jobs:
-  checks:
+  frontend-checks:
     name: Run checks
     runs-on: ubuntu-20.04
     steps:
