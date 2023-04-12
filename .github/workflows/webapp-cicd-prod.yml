@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - webapp/**
 jobs:
   build-and-deploy:
     name: Build and Deploy
@@ -41,14 +43,17 @@ jobs:
           aws-region: us-east-1
       - name: Build - Install NPM packages
         run: |
+          cd webapp
           npm install
       - name: Build - NPM
         env:
           VITE_API_BASE_URL: http://backend.mariner.trident.bio/api
         run: |
+          cd webapp
           npm run build
       - name: Deploy - Sync with S3
         run: |
+          cd webapp
           aws s3 sync ./build/ s3://mariner-webapp-prod --delete --quiet
       - name: Deploy - Invalidate Distribution
         run: |

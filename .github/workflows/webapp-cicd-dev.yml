@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - develop
+    paths:
+      - webapp/**
 jobs:
   build-and-deploy:
     name: Build and Deploy
@@ -41,15 +43,19 @@ jobs:
         aws-region: us-east-1
     - name: Build - Install NPM packages
       run: |
+        cd webapp
         npm install
     - name: Build - NPM
       run: |
+        cd webapp
         DISABLE_ESLINT_PLUGIN=true npm run build
     - name: Deploy - Sync with S3
       run: |
+        cd webapp
         aws s3 sync ./build/ s3://mariner-webapp-dev --delete --quiet
     - name: Deploy - Invalidate Distribution
       run: |
+        cd webapp
         echo Invalidation usually takes about 10-15 minutes, depending on the size of the request.
         aws configure set preview.cloudfront true
         aws cloudfront create-invalidation --distribution-id E31GZM6QHWG7ZY --paths '/*'

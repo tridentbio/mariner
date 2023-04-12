@@ -6,6 +6,8 @@ on:
       - develop
       - releases/**
     types: [opened, synchronize]
+    paths:
+      - webapp/**
 jobs:
   checks:
     name: Run checks
@@ -28,10 +30,22 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Install NPM packages
-        run: npm install
+        run: |
+          cd webapp
+          npm ci
       - name: Checks typescript
-        run: npm run tsc
+        run: |
+          cd webapp
+          npm run tsc
       - name: Lint files with eslint
-        run: npm run eslint:check
+        run: |
+          cd webapp
+          npm run eslint:check
       - name: Run unit tests
-        run: npm run test:unit
+        run: |
+          cd webapp
+          npm run test:unit
+      - name: Checks production build
+        run: |
+          cd webapp
+          npm run build
