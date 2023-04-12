@@ -86,7 +86,7 @@ services:
       retries: 3
       start_period: 90s
     restart: unless-stopped
-    command:  bash -c 'mlflow db upgrade "postgresql://postgres:123456@mlflowdb:5432/app" && mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET-s3://dev-mariner-datasets} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app'
+    command:  mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET-s3://dev-mariner-datasets} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app
     ports:
       - "5000:5000"
     networks:
