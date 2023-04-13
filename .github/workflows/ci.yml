@@ -81,7 +81,6 @@ jobs:
     # Installs poetry and configures to use virtualenv
     # created in cwd()/.venv
     - name: Install and configure Poetry
-      working-directory: backend
       uses: snok/install-poetry@v1
       if: steps.venv-cache.outputs.cache-hit != true
       with:
