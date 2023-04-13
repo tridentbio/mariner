@@ -1,8 +1,12 @@
 name: Prowler AWS Security Analysis
 
 on:
-  push:
-    branches: [prowler]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'develop'
 
 env:
   AWS_REGION: us-east-1
