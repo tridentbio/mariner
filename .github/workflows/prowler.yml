@@ -1,0 +1,37 @@
+name: Prowler AWS Security Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'develop'
+
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET: prowler-mariner
+  S3_KEY: prowler-report.html
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  prowler_analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Install Prowler via pip
+        run: pip install prowler
+      - name: Get AWS credentials
+        run: aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} && aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} && aws configure set region ${{ env.AWS_REGION }}
+      - name: Generate STS Token
+        run: export AWS_SESSION_TOKEN=$(aws sts get-session-token --duration-seconds 900 --query 'Credentials.SessionToken' --output text)
+      - name: Run Prowler Analysis
+        run: prowler aws -M html -F prowler-report -o ./prowler || true
+      - name: Upload Report to S3
+        run: |
+          export NAME_DIR=$(date +"%Y-%m-%d_%H-%M-%S")
+          mv ./prowler prowler_$NAME_DIR
+          aws s3 cp --recursive ./prowler_$NAME_DIR/ s3://prowler-mariner/prowler_$NAME_DIR
+          ls
