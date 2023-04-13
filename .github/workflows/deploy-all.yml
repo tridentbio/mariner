@@ -183,8 +183,13 @@ jobs:
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
         kubectl apply -f - <<< "$SECRETS"  -n ray
+<<<<<<< HEAD
         kubectl apply -f ./infrastructure/configmaps/dev/ray-head.yaml  -n ray
         helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-ray-head/.  -n ray \
+=======
+        kubectl apply -f ./configmaps/dev/ray-head.yaml  -n ray
+        helm upgrade -i "$DEPLOYMENT_NAME" helm/helm-ray-head/.  -n ray \
+>>>>>>> origin/develop
           --set "replicaCount=$REPLICA_COUNT" \
           --set "image.repository=$ECR_REPOSITORY" \
           --set "image.livenessProbe.path=$HEALTH_CHECK_URL" \
