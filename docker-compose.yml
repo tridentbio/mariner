@@ -35,8 +35,8 @@ services:
     environment:
       - RESTART=true
     env_file:
-      - .env
-      - .env.secret
+      - backend/.env
+      - backend/.env.secret
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 5s
@@ -44,8 +44,8 @@ services:
       retries: 3
     restart: unless-stopped
     build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
     networks:
       - ray_net
     command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
@@ -76,10 +76,10 @@ services:
     depends_on:
       - mlflowdb
     build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
     env_file:
-      - .env.secret
+      - backend/.env.secret
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
@@ -101,11 +101,11 @@ services:
 
   ray-head:
     build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
     env_file:
-      - .env
-      - .env.secret
+      - backend/.env
+      - backend/.env.secret
     ports:
       - "6379:6379"
       - "8265:8265"
@@ -117,11 +117,11 @@ services:
       - ray_net
   ray-worker:
     build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
     env_file:
-      - .env
-      - .env.secret
+      - backend/.env
+      - backend/.env.secret
     depends_on: 
       - ray-head
     command: ray start --address=ray-head:6379 --num-cpus=1 --block

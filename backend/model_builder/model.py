@@ -258,7 +258,7 @@ class CustomModel(pl.LightningModule):
                 batch[target_column.name],
             )
             losses[target_column.name] = self.loss_dict[target_column.name](*args)
-            self.log(f"test_loss_{target_column.name}", losses[target_column.name])
+            self.log(f"test/loss/{target_column.name}", losses[target_column.name])
 
         loss = sum(losses.values())
         return loss

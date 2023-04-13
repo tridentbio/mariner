@@ -26,7 +26,7 @@ COPY ./tests /app/tests
 
 RUN poetry install
 
-COPY ./alembic.ini ./.coveragerc ./pylintrc ./mypy.ini ./pytest.ini /app/
+COPY ./alembic.ini ./pylintrc ./pytest.ini /app/
 COPY ./scripts /app/scripts
 
 CMD [ "sh", "/app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]

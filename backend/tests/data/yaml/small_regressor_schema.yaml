@@ -1,20 +1,18 @@
-name: GNNE
+name: GNNExample
 dataset:
-  name: Zinc Extra
+  name: Small Zinc dataset
   targetColumns:
-    - name: mwt
+    - name: tpsa
       dataType:
         domainKind: numeric
+      outModule: LinearJoined
   featureColumns:
     - name: smiles
       dataType:
         domainKind: smiles
-    - name: mwt_group
+    - name: mwt
       dataType:
-        domainKind: categorical
-        classes:
-          mwt_small: 0
-          mwt_big: 1
+        domainKind: numeric
 
 featurizers:
   - name: MolToGraphFeaturizer
@@ -34,20 +32,21 @@ layers:
       in_channels: 26
       out_channels: 64
     forwardArgs:
-      x: $MolToGraphFeaturizer.x
-      edge_index: $MolToGraphFeaturizer.edge_index
+      x: ${MolToGraphFeaturizer.x}
+      edge_index: ${MolToGraphFeaturizer.edge_index}
 
   - name: GCN1_Activation
     type: torch.nn.ReLU
     constructorArgs:
       inplace: False
     forwardArgs:
-      input: $GCN1
+      input: ${GCN1}
+
   - name: GCN2
     type: torch_geometric.nn.GCNConv
     forwardArgs:
-      x: $GCN1_Activation
-      edge_index: $MolToGraphFeaturizer.edge_index
+      x: ${GCN1_Activation}
+      edge_index: ${MolToGraphFeaturizer.edge_index}
     constructorArgs:
       in_channels: 64
       out_channels: 64
@@ -57,13 +56,13 @@ layers:
     constructorArgs:
       inplace: False
     forwardArgs:
-      input: $GCN2
+      input: ${GCN2}
 
   - name: GCN3
     type: torch_geometric.nn.GCNConv
     forwardArgs:
-      x: $GCN2_Activation
-      edge_index: $MolToGraphFeaturizer.edge_index
+      x: ${GCN2_Activation}
+      edge_index: ${MolToGraphFeaturizer.edge_index}
     constructorArgs:
       in_channels: 64
       out_channels: 64
@@ -73,38 +72,36 @@ layers:
     constructorArgs:
       inplace: False
     forwardArgs:
-      input: $GCN3
+      input: ${GCN3}
 
   - name: AddPool
     type: model_builder.layers.GlobalPooling
     forwardArgs:
-      x: $GCN3_Activation
-      batch: $MolToGraphFeaturizer.batch
+      x: ${GCN3_Activation}
+      edge_index: ${MolToGraphFeaturizer.edge_index}
+      batch: ${MolToGraphFeaturizer.batch}
     constructorArgs:
       aggr: "sum"
   # End of fst branch
 
   # Second branch would simply be linear layers in mwt
-  - name: OneHotEncoded
-    type: model_builder.layers.OneHot
-    constructor_args:
-    forwardArgs:
-      x1: $mwt_group
-  - name: Linear1
+  - name: "Linear1"
     type: torch.nn.Linear
     constructorArgs:
-      in_features: 2
+      in_features: 1
       out_features: 10
     forwardArgs:
-      input: $OneHotEncoded
+      input: ${mwt}
+
   - name: Combiner
     type: model_builder.layers.Concat
     constructorArgs:
       dim: -1
     forwardArgs:
       xs:
-        - $AddPool
-        - $Linear1
+        - "${AddPool}"
+        - "${Linear1}"
+
   - name: LinearJoined
     type: torch.nn.Linear
     forwardArgs:

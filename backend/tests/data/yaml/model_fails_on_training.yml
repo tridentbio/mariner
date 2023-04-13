@@ -1,4 +1,4 @@
-name: Simple Classifier
+name: A model that fails only when computing the loss
 dataset:
   name: zinc dataset # replace by mocked ds name
   targetColumns:
@@ -8,6 +8,7 @@ dataset:
         classes:
           mwt_small: 0 # mwt <= 300
           mwt_big: 1 # mwt > 300
+      outModule: Sigmoid1
   featureColumns:
     - name: mwt
       dataType:
@@ -17,7 +18,7 @@ layers:
     type: torch.nn.Linear
     constructorArgs:
       in_features: 1
-      out_features: 2
+      out_features: 1
     forwardArgs:
       input: $mwt
   - name: "Sigmoid1"

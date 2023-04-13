@@ -151,7 +151,7 @@ class TargetConfig(ColumnConfig):
     Describes a target column based on its data type and index
     """
 
-    out_module: Optional[str]
+    out_module: str
     loss_fn: Optional[str]
     column_type: Optional[Literal["regression", "multiclass", "binary"]]
 
@@ -420,14 +420,8 @@ class ModelSchema(CamelCaseModel):
                     )
 
                 if not target_column.out_module:
-                    if len(dataset.target_columns) > 1:
-                        raise ValidationError(
-                            "You must specify out_module for each target column."
-                        )
-                    target_column.out_module = (
-                        layers[-1]["name"]
-                        if isinstance(layers[-1], dict)
-                        else layers[-1].name
+                    raise ValidationError(
+                        "You must specify out_module for each target column."
                     )
 
                 assert allowed_losses.check(
