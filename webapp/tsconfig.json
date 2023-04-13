@@ -26,8 +26,7 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "isolatedModules": false,
-    "noEmit": true
+    "isolatedModules": false
   },
-  "include": ["src", "tests"]
+  "include": ["src", "cypress", "tests"]
 }

@@ -34,14 +34,6 @@ let config: UserConfig = {
   plugins: [react(), viteTsconfigPaths(), svgrPlugin()],
   build: {
     outDir: 'build',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: globalVendorPackages,
-          ...renderChunks(dependencies),
-        },
-      },
-    },
   },
   server: {
     open: true,
