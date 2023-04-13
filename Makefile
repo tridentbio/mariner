@@ -1,13 +1,9 @@
 # A makefile with commands using docker-compose
 DOCKER_COMPOSE = docker compose -f docker-compose.yml -f docker-compose.override.yml
 
-.PHONY: help build create-admin start pre-commit pre-commit-install pre-commit-uninstall
+.PHONY: build create-admin start pre-commit pre-commit-install pre-commit-uninstall
 
-# Shows this help message
-help:           ## Show this help.
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
-
-# Builds application to run project locally
+# Builds the application
 build:
 	$(DOCKER_COMPOSE) build --parallel backend webapp
 
