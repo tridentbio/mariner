@@ -46,13 +46,13 @@ jobs:
     # Sets up python3.9
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.9' 
+        python-version: "3.9"
     # Sets cache to virtual environment
     - name: Cache Dependencies
       id: venv-cache
       uses: actions/cache@v3
       with:
-        path: .venv
+        path: backend/.venv
         # First try a exact match of dependencies
         key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock', 'deps.py') }}
         # Fallbacks to latest dependencies or default branch (develop) one
@@ -77,10 +77,11 @@ jobs:
         # Using run_id to update cache even when it hits
         key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
         restore-keys: pylint-cache-${{ runner.os }}
- 
+
     # Installs poetry and configures to use virtualenv
     # created in cwd()/.venv
     - name: Install and configure Poetry
+      working-directory: backend
       uses: snok/install-poetry@v1
       if: steps.venv-cache.outputs.cache-hit != true
       with:
@@ -91,6 +92,7 @@ jobs:
 
     # Installs all packages and it's dependencies
     - name: Install project
+      working-directory: backend
       run: |
         poetry -v --no-ansi --no-interaction install
         poetry run python deps.py
@@ -102,6 +104,7 @@ jobs:
     # to cache.
     # Only saves if branch is develop or releases/**
     - name: Update branch pylint score (workflow_dispatch)
+      working-directory: backend
       if: github.event_name == 'workflow_dispatch'
       run: |
         . .venv/bin/activate
@@ -110,21 +113,22 @@ jobs:
 
     # On PRs, compare score to targeting branch
     - name: Check PR lint score improve (pull_request)
+      working-directory: backend
       if: github.event_name == 'pull_request'
       run: |
         . .venv/bin/activate
         python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' || '' }}
 
-
     # Unit test coverage check
 
     - name: Run unit tests and get coverage
+      working-directory: backend
       env:
-        POSTGRES_SERVER: localhost 
+        POSTGRES_SERVER: localhost
         POSTGRES_PASSWORD: 123456
         POSTGRES_USER: postgres
         # (optional) The path of the target coverage json relative to the coverages dir path
-        
+
         BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref }}.json
       run: |
         . .venv/bin/activate
@@ -142,6 +146,7 @@ jobs:
     ## Docstring coverage check
 
     - name: Get docstring coverage and save as new docstring target (pull_request merged)
+      working-directory: backend
       if: github.event_name == 'pull_request' && github.event.pull_request.merged
       run: |
         . .venv/bin/activate
@@ -149,6 +154,7 @@ jobs:
         COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH && echo "Saved docstr coverage at $BASE_COV_PATH"
 
     - name: Get docstring coverage and save as new docstring target (workflow dispatch)
+      working-directory: backend
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.save_src
       run: |
         . .venv/bin/activate
@@ -156,9 +162,9 @@ jobs:
         COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH && echo "Saved docstr coverage at $BASE_COV_PATH"
 
     - name: Get docstring coverage
-      if: github.event.inputs.save_src != true || github.event.pull_request.merged != true 
+      working-directory: backend
+      if: github.event.inputs.save_src != true || github.event.pull_request.merged != true
       run: |
         . .venv/bin/activate
         BASE_COV_PATH=~/.cov/doccov/$(echo -n "${GITHUB_REF#refs/heads/}.json")
         BASE_COV_PATH=$BASE_COV_PATH bash scripts/doc-coverage.sh
-
