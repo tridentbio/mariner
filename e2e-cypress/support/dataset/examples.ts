@@ -1,4 +1,4 @@
-import { randomLowerCase } from 'utils';
+import { randomLowerCase } from '../../utils';
 import { DATASET_NAME } from '../constants';
 import { DatasetFormData } from './create';
 

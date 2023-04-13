@@ -1,4 +1,4 @@
-import { Model } from 'app/types/domain/models';
+import { Model } from '@app/types/domain/models';
 
 describe('/models/:modelId/inference', () => {
   beforeEach(() => {

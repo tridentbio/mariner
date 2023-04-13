@@ -2,7 +2,7 @@
 
 import { parse } from 'yaml';
 import { DeepPartial } from '@reduxjs/toolkit';
-import { ModelCreate, ModelSchema } from 'app/rtk/generated/models';
+import { ModelCreate, ModelSchema } from '@app/rtk/generated/models';
 import { randomLowerCase } from 'utils';
 import { dragComponentsAndMapConfig, flowDropSelector } from './common';
 import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';

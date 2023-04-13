@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-import { ModelCreate } from 'app/rtk/generated/models';
+import { ModelCreate } from '@app/rtk/generated/models';
 import { randomLowerCase } from 'utils';
 import { MODEL_SMILES_CATEGORICAL_NAME } from '../constants';
 import {

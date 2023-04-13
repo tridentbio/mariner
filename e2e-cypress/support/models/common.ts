@@ -1,8 +1,8 @@
 /// <reference types="cypress" />
 
-import { ModelSchema } from 'model-compiler/src/interfaces/model-editor';
-import { iterateTopologically } from 'model-compiler/src/utils';
-import { substrAfterLast } from 'utils';
+import { ModelSchema } from '@model-compiler/src/interfaces/model-editor';
+import { iterateTopologically } from '@model-compiler/src/utils';
+import { substrAfterLast } from '@utils';
 import {
   MODEL_SMILES_CATEGORICAL_NAME,
   MODEL_SMILES_NUMERIC_NAME,

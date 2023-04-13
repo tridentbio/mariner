@@ -1,4 +1,4 @@
-import { ModelSchema } from 'app/rtk/generated/models';
+import { ModelSchema } from '@app/rtk/generated/models';
 import TestUtils from '../../support/TestUtils';
 
 describe('Model version form (/models/new)', () => {

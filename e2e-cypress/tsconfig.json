@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es5", "dom"],
+    "types": ["cypress", "node"],
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "rootDirs": [".", "../webapp/src"],
+    "paths": {
+      "@app/*": ["../webapp/src/app/*"],
+      "@components/*": ["../webapp/components/*"],
+      "@features/*": ["../webapp/features/*"],
+      "@hooks": ["../webapp/hooks"],
+      "@hooks/*": ["../webapp/hooks/*"],
+      "@model-compiler/*": ["../webapp/model-compiler/*"],
+      "@utils": ["../webapp/utils"],
+      "@utils/*": ["../webapp/utils/*"]
+    },
+    "jsx": "react-jsx",
+    "noEmit": true
+  },
+  "include": ["../webapp/**/*.ts", "../webapp/**/*.tsx", "**/*.ts"]
+}
