@@ -1,4 +1,4 @@
-import { GetModelOptionsApiResponse } from 'app/rtk/generated/models';
+import { GetModelOptionsApiResponse } from '@app/rtk/generated/models';
 import { ArrayElement } from '@utils';
 import {
   Concat,

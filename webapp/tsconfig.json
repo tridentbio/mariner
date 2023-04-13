@@ -26,7 +26,8 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "isolatedModules": false
+    "isolatedModules": false,
+    "noEmit": true
   },
   "include": ["src", "tests"]
 }

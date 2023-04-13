@@ -1,5 +1,5 @@
 import { Alert, Snackbar } from '@mui/material';
-import { useNotifications } from '../../../app/notifications';
+import { useNotifications } from '@app/notifications';
 
 const Notifications = () => {
   const { message, closeMessage } = useNotifications();

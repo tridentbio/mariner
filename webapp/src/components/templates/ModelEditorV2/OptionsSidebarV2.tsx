@@ -4,9 +4,9 @@ import { IconButton } from '@mui/material';
 import { Box } from '@mui/system';
 import { Text } from '@components/molecules/Text';
 import { ArrayElement, substrAfterLast } from '@utils';
-import { useGetModelOptionsQuery } from 'app/rtk/generated/models';
+import { useGetModelOptionsQuery } from '@app/rtk/generated/models';
 import DocsModel from '@components/templates/ModelEditor/Components/DocsModel/DocsModel';
-import * as modelsApi from 'app/rtk/generated/models';
+import * as modelsApi from '@app/rtk/generated/models';
 import { ModelSchema } from '@model-compiler/src/interfaces/model-editor';
 
 export type HandleProtoDragStartParams = {

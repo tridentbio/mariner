@@ -1,4 +1,4 @@
-import { ModelSchema } from 'app/rtk/generated/models';
+import { ModelSchema } from '@app/rtk/generated/models';
 import fs from 'fs';
 import { parse } from 'yaml';
 

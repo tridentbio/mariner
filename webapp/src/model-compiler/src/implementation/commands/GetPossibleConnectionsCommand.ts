@@ -1,4 +1,4 @@
-import { ModelSchema } from 'app/rtk/generated/models';
+import { ModelSchema } from '@app/rtk/generated/models';
 import { NodeType } from '@model-compiler/src/interfaces/model-editor';
 import { unwrapDollar } from '@model-compiler/src/utils';
 import { flatten } from '@utils';

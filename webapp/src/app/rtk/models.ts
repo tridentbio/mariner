@@ -4,10 +4,10 @@ import {
   ModelConfig,
   ForwardCheck,
   ModelCreateRequest,
-} from 'app/types/domain/models';
-import { Paginated } from 'app/api';
+} from '@app/types/domain/models';
+import { Paginated } from '@app/api';
 import { api } from './api';
-import { ModelOptions } from 'app/types/domain/modelOptions';
+import { ModelOptions } from '@app/types/domain/modelOptions';
 export const modelsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getOptions: builder.query<ModelOptions[], void>({

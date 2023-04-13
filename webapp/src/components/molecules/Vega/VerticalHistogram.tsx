@@ -1,4 +1,4 @@
-import * as modelsApi from 'app/types/domain/models';
+import * as modelsApi from '@app/types/domain/models';
 import { useMemo } from 'react';
 import { VisualizationSpec } from 'react-vega';
 import { theme } from 'theme';

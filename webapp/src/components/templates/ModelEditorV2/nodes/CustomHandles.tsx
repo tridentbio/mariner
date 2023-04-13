@@ -1,4 +1,4 @@
-import { EPythonClasses } from 'app/types/domain/modelOptions';
+import { EPythonClasses } from '@app/types/domain/modelOptions';
 import useModelEditor from '@hooks/useModelEditor';
 import { LayerFeaturizerType } from '@model-compiler/src/interfaces/model-editor';
 import { Position } from 'react-flow-renderer';

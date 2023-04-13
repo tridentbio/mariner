@@ -1,5 +1,5 @@
-import { User } from 'app/rtk/auth';
-import { Model, ModelVersion } from 'app/rtk/generated/models';
+import { User } from '@app/rtk/auth';
+import { Model, ModelVersion } from '@app/rtk/generated/models';
 
 export interface FetchExperimentsQuery {
   modelId?: number;

@@ -1,10 +1,10 @@
-import { NotificationContextProvider } from './app/notifications';
+import { NotificationContextProvider } from '@app/notifications';
 import useAppNavigation from '@hooks/useAppNavigation';
 import Notifications from 'components/organisms/Notifications';
 import { Suspense } from 'react';
 import { CircularProgress } from '@mui/material';
 import { Box } from '@mui/system';
-import { WebSocketContextProvider } from 'app/websocket/context';
+import { WebSocketContextProvider } from '@app/websocket/context';
 
 function App() {
   const { routes } = useAppNavigation();

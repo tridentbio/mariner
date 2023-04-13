@@ -1,5 +1,5 @@
-import { TOKEN } from 'app/local-storage';
-import { User } from 'app/rtk/auth';
+import { TOKEN } from '@app/local-storage';
+import { User } from '@app/rtk/auth';
 import {
   ColumnMeta,
   Dataset,
@@ -7,7 +7,7 @@ import {
   DatasetMetadata,
   DataSummary,
   SplitType,
-} from 'app/types/domain/datasets';
+} from '@app/types/domain/datasets';
 import { isDev } from '@utils';
 
 export type UpdateExperiment = {
