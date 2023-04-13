@@ -1,5 +1,12 @@
 version: "3.4"
 services:
+  webapp:
+    build:
+      dockerfile: ../dockerfiles/Dockerfile.webapp
+      context: webapp
+    ports: 
+      - "3000:3000"
+    
   db:
     image: postgres:12
     volumes:

@@ -1,0 +1,41 @@
+import { Canvas, Meta, Story } from '@storybook/addon-docs';
+
+<Meta title="Model Editor" />
+
+# Model Editor
+
+The component is responsible for building a model architecuture and preprocessing pipeline json representation
+
+- [Model Compiler](#story--components-modeleditorv2--invalid-schema)
+
+<Story
+  id="components-modeleditorv2--default"
+  args={{
+    onChange: console.log,
+    value: {
+      name: 'asdasd',
+      dataset: {
+        name: 'akakak',
+        featureColumns: [
+          { name: 'mwt', dataType: { domainKind: 'numeric', unit: 'mole' } },
+          { name: 'smiles', dataType: { domainKind: 'smiles' } },
+        ],
+        targetColumns: [
+          {
+            name: 'exp',
+            dataType: { domainKind: 'numeric', unit: 'mole' },
+          },
+        ],
+      },
+      layers: [],
+      featurizers: [],
+    },
+  }}
+/>
+
+## Example with invalid Schema
+
+This is a model with a invalid schema. It displays a list of suggestions
+to fix the architecture.
+
+<Story id="components-modeleditorv2--invalid-schema" />
