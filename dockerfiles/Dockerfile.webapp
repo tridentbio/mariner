@@ -1,0 +1,9 @@
+FROM node:16-alpine
+WORKDIR /app
+COPY package.json package-lock.json .
+RUN npm ci
+COPY public/ src/ tests/ . 
+COPY .env .env.production .eslintrc openapi-config.ts jest.config.js .prettierrc.json .eslintignore .
+EXPOSE 3000
+CMD ["npm", "start", "--", "--no-open", "--host"]
+
