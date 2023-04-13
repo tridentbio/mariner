@@ -16,7 +16,7 @@ import { Column, State, TableProps } from './types';
 import FilterIndicator from './FilterIndicator';
 import SortingIndicator from './SortingIndicator';
 import NoData from 'components/atoms/NoData';
-import { range } from 'utils';
+import { range } from '@utils';
 import Filters from 'components/organisms/Table/Filters';
 import { colTitle, columnId, isColumnSortable } from './common';
 import SortingButton from './SortingButton';

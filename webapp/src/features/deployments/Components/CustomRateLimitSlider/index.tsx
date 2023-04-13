@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { required } from 'utils/reactFormRules';
+import { required } from '@utils/reactFormRules';
 
 import { RateLimitSlider } from './styles';
 

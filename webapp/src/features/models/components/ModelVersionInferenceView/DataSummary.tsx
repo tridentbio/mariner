@@ -8,7 +8,7 @@ import { TrueFalseChart } from 'features/datasets/components/charts/trueFalseCha
 import { extractVal } from 'features/models/common';
 import { useState } from 'react';
 import { VegaLite } from 'react-vega';
-import { keys } from 'utils';
+import { keys } from '@utils';
 import { datasetsGraphTitlesMapper } from './utils';
 
 interface DataSummaryProps {

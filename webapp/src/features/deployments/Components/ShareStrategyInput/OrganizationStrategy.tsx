@@ -9,7 +9,7 @@ import { Box } from '@mui/system';
 import { useNotifications } from 'app/notifications';
 import React, { useCallback, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { isValidEmailDomain } from 'utils';
+import { isValidEmailDomain } from '@utils';
 
 type OrganizationStrategyProps = {};
 

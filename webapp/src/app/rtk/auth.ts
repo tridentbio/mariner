@@ -1,4 +1,4 @@
-import { makeForm } from 'utils';
+import { makeForm } from '@utils';
 import { api } from './api';
 
 export interface User {

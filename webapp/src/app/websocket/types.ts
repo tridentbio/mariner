@@ -8,7 +8,7 @@ import {
   DataSummary,
   SplitType,
 } from 'app/types/domain/datasets';
-import { isDev } from 'utils';
+import { isDev } from '@utils';
 
 export type UpdateExperiment = {
   type: 'update-running-metrics';

@@ -1,8 +1,8 @@
 import { FormLabel, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 // import MDEditor from '@uiw/react-md-editor';
-import { Model, ModelColumn } from 'app/types/domain/models';
-import { Dataset_ } from 'app/types/domain/datasets';
+import { Model, ModelColumn } from '@app/types/domain/models';
+import { Dataset_ } from '@app/types/domain/datasets';
 import AppLink from 'components/atoms/AppLink';
 import DataTypeChip from 'components/atoms/DataTypeChip';
 import { lazy } from 'react';

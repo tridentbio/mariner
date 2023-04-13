@@ -1,4 +1,4 @@
-import { ColumnInfo, DataTypeDomainKind } from 'app/types/domain/datasets';
+import { ColumnInfo, DataTypeDomainKind } from '@app/types/domain/datasets';
 import { Text } from 'components/molecules/Text';
 import { Box } from '@mui/system';
 import {

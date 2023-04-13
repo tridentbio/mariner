@@ -1,14 +1,5 @@
-import {
-  MinimizeRounded,
-  MoreOutlined,
-  OpenInFullRounded,
-} from '@mui/icons-material';
-import { Menu, MenuItem, Tooltip } from '@mui/material';
-import IconButton from 'components/atoms/IconButton';
-import { Box } from '@mui/system';
-import DocsModel from 'components/templates/ModelEditor/Components/DocsModel/DocsModel';
-import { Text } from 'components/molecules/Text';
-import useModelEditor from 'hooks/useModelEditor';
+import { Text } from '@components/molecules/Text';
+import useModelEditor from '@hooks/useModelEditor';
 import { ReactNode, useState } from 'react';
 
 export interface BaseNodeProps {

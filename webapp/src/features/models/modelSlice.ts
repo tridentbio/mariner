@@ -1,18 +1,18 @@
 import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
-import { RootState } from '../../app/store';
-import { Model } from 'app/types/domain/models';
+import { RootState } from '@app/store';
+import { Model } from '@app/types/domain/models';
 import {
   EClassPaths,
   ModelOptionsComponent,
   ModelOptions,
-} from 'app/types/domain/modelOptions';
+} from '@app/types/domain/modelOptions';
 import * as expsApi from 'features/models/experimentsApi';
-import { UpdateExperiment } from 'app/websocket/types';
-import { modelsApi } from 'app/rtk/models';
-import { Experiment, TrainingStage } from 'app/types/domain/experiments';
-import { experimentsApi } from 'app/rtk/experiments';
-import { enhancedApi } from 'app/rtk/generated/experiments';
-import { deepClone } from 'utils';
+import { UpdateExperiment } from '@app/websocket/types';
+import { modelsApi } from '@app/rtk/models';
+import { Experiment, TrainingStage } from '@app/types/domain/experiments';
+import { experimentsApi } from '@app/rtk/experiments';
+import { enhancedApi } from '@app/rtk/generated/experiments';
+import { deepClone } from '@utils';
 
 export type ArgumentType = 'string' | 'bool' | 'int';
 

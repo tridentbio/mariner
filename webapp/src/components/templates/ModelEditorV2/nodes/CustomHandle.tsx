@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import useModelEditor from 'hooks/useModelEditor';
+import useModelEditor from '@hooks/useModelEditor';
 import { Handle, HandleProps } from 'react-flow-renderer';
 
 export interface CustomHandleProps extends HandleProps {

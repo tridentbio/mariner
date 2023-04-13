@@ -1,4 +1,4 @@
-import { GcnConv } from 'model-compiler/src/interfaces/model-editor';
+import { GcnConv } from '@model-compiler/src/interfaces/model-editor';
 import { unwrapDollar } from '../../../utils';
 import EditComponentsCommand, {
   makeComponentEdit,

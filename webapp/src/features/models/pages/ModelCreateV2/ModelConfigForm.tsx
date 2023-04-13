@@ -4,7 +4,7 @@ import { Box } from '@mui/system';
 import * as modelsApi from 'app/rtk/generated/models';
 import IconButton from 'components/atoms/IconButton';
 import MDTextField from 'components/organisms/MDTextField';
-import ModelAutoComplete from 'features/models/components/ModelAutocomplete';
+import ModelAutoComplete from '@features/models/components/ModelAutocomplete';
 import { useEffect } from 'react';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';

@@ -6,30 +6,30 @@ import ReactFlow, {
   applyNodeChanges,
   applyEdgeChanges,
 } from 'react-flow-renderer';
-import useModelEditor from 'hooks/useModelEditor';
-import ModelEditorControls from 'components/templates/ModelEditor/Components/ModelEditorControls';
+import useModelEditor from '@hooks/useModelEditor';
+import ModelEditorControls from '@components/templates/ModelEditor/Components/ModelEditorControls';
 import { Box } from '@mui/material';
 import OptionsSidebarV2, {
   HandleProtoDragStartParams,
 } from './OptionsSidebarV2';
-import { substrAfterLast } from 'utils';
+import { substrAfterLast } from '@utils';
 import ComponentConfigNode from './nodes/ComponentConfigNode';
 import InputNode from './nodes/InputNode';
 import OutputNode from './nodes/OutputNode';
 import SuggestionsList from './SuggestionsList';
 import ModelEdge from './edges/ModelEdge';
 import { StyleOverrides } from './styles';
-import { makeComponentEdit } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
+import { makeComponentEdit } from '@model-compiler/src/implementation/commands/EditComponentsCommand';
 import {
   getComponent,
   getNode,
-} from 'model-compiler/src/implementation/modelSchemaQuery';
+} from '@model-compiler/src/implementation/modelSchemaQuery';
 import {
   ModelSchema,
   NodeType,
-} from 'model-compiler/src/interfaces/model-editor';
+} from '@model-compiler/src/interfaces/model-editor';
 import { useMemo } from 'react';
-import FullScreenWrapper from 'components/organisms/FullScreenWrapper';
+import FullScreenWrapper from '@components/organisms/FullScreenWrapper';
 
 type ModelEditorProps = {
   value: ModelSchema;

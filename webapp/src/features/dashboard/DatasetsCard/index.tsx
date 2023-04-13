@@ -3,7 +3,7 @@ import { FC } from 'react';
 import DashboardCard from '../DashboardCard';
 import { CircularProgress, Typography } from '@mui/material';
 import AppLink from 'components/atoms/AppLink';
-import { useGetMyDatasetsQuery } from 'app/rtk/generated/datasets';
+import { useGetMyDatasetsQuery } from '@app/rtk/generated/datasets';
 
 interface DatasetCardProps {
   notifications: MarinerNotification[];

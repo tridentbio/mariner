@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import { isDev } from 'utils';
+import { isDev } from '@utils';
 
 export enum Status {
   OK = 200,

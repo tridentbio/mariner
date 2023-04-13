@@ -5,7 +5,7 @@ import {
   MenuItem,
   TextField,
 } from '@mui/material';
-import { useAppDispatch, useAppSelector } from 'app/hooks';
+import { useAppDispatch, useAppSelector } from '@hooks';
 import { debounce } from 'utils';
 import { isUnitValid, Unit } from 'features/units/unitsAPI';
 import { fetchUnits } from 'features/units/unitsSlice';

@@ -1,7 +1,7 @@
 import { Edge, Node, Position } from 'react-flow-renderer';
 import dagre from 'dagre';
-import { DataTypeDomainKind } from 'app/types/domain/datasets';
-import { DataType } from 'model-compiler/src/interfaces/model-editor';
+import { DataTypeDomainKind } from '@app/types/domain/datasets';
+import { DataType } from '@model-compiler/src/interfaces/model-editor';
 
 /**
  * Apply an auto graph layout into ReactFlow's nodes.

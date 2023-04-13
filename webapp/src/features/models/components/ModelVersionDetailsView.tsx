@@ -4,7 +4,7 @@ import NotFound from 'components/atoms/NotFound';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import ModelEditor from 'components/templates/ModelEditorV2';
 import { modelsApi } from 'app/rtk/models';
-import { ModelEditorContextProvider } from 'hooks/useModelEditor';
+import { ModelEditorContextProvider } from '@hooks/useModelEditor';
 
 interface ModelVersionDetailsProps {
   modelName?: string;

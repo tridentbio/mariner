@@ -4,6 +4,16 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "types": ["jest", "vite/client", "vite-plugin-svgr/client"],
     "baseUrl": "src",
+    "paths": {
+      "@app/*": ["./app/*"],
+      "@components/*": ["components/*"],
+      "@features/*": ["features/*"],
+      "@hooks": ["hooks"],
+      "@hooks/*": ["hooks/*"],
+      "@model-compiler/*": ["model-compiler/*"],
+      "@utils": ["utils"],
+      "@utils/*": ["utils/*"]
+    },
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

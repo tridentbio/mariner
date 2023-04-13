@@ -1,8 +1,8 @@
 import { DeleteOutlined, ExpandOutlined } from '@mui/icons-material';
-import DocsModel from 'components/templates/ModelEditor/Components/DocsModel/DocsModel';
-import BaseNode from 'components/templates/ModelEditorV2/nodes/BaseNode';
-import useModelEditor from 'hooks/useModelEditor';
-import { LayerFeaturizerType } from 'model-compiler/src/interfaces/model-editor';
+import DocsModel from '@components/templates/ModelEditor/Components/DocsModel/DocsModel';
+import BaseNode from '@components/templates/ModelEditorV2/nodes/BaseNode';
+import useModelEditor from '@hooks/useModelEditor';
+import { LayerFeaturizerType } from '@model-compiler/src/interfaces/model-editor';
 import { NodeProps } from 'react-flow-renderer';
 import { substrAfterLast } from 'utils';
 import CustomHandles from '../CustomHandles';

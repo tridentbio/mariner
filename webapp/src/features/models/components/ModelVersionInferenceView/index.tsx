@@ -12,13 +12,13 @@ import {
   Model,
   ModelInputValue,
   ModelOutputValue,
-} from 'app/types/domain/models';
+} from '@app/types/domain/models';
 import NoData from 'components/atoms/NoData';
 import { Button } from '@mui/material';
 import ModelPrediction from './ModelPrediction';
 import ModelInput from './ModelInput';
 import DataSummary from './DataSummary';
-import { datasetsApi } from 'app/rtk/datasets';
+import { datasetsApi } from '@app/rtk/datasets';
 import { getPrediction } from 'features/models/modelsApi';
 import { extractVal } from 'features/models/common';
 

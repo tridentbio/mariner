@@ -6,7 +6,7 @@ import {
   RadioGroup,
   Tooltip,
 } from '@mui/material';
-import { NewTraining } from 'app/types/domain/experiments';
+import { NewTraining } from '@app/types/domain/experiments';
 import React from 'react';
 import { Controller, ControllerProps, useFormContext } from 'react-hook-form';
 

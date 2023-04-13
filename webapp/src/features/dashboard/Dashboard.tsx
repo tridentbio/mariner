@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from 'app/hooks';
+import { useAppDispatch, useAppSelector } from '@hooks';
 import Content from 'components/templates/AppLayout/Content';
 import { MarinerNotification } from 'features/notifications/notificationsAPI';
 import { useEffect, useMemo } from 'react';

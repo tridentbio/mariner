@@ -1,12 +1,12 @@
 import { Box, Step, StepContent, StepLabel, Stepper } from '@mui/material';
-import { useNotifications } from 'app/notifications';
-import * as experimentsApi from 'app/rtk/generated/experiments';
-import { Model } from 'app/types/domain/models';
+import { useNotifications } from '@app/notifications';
+import * as experimentsApi from '@app/rtk/generated/experiments';
+import { Model } from '@app/types/domain/models';
 import Content from 'components/templates/AppLayout/Content';
 import ModelsSelect from 'components/atoms/ModelsSelect';
 import ProcessingModal from 'components/organisms/ProcessingModal';
-import ModelExperimentForm from 'features/models/components/ModelExperimentForm';
-import { addTraining } from 'features/models/modelSlice';
+import ModelExperimentForm from '@features/models/components/ModelExperimentForm';
+import { addTraining } from '@features/models/modelSlice';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';

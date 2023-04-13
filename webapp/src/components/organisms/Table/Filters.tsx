@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useState } from 'react';
-import { title } from 'utils';
+import { title } from '@utils';
 import ChipFilterContain from './ChipFilterContain';
 import ColumnFiltersInput from 'components/templates/Table/ColumnFiltersInput';
 import { colTitle } from 'components/templates/Table/common';
@@ -25,7 +25,7 @@ import {
   SortModel,
   State,
 } from 'components/templates/Table/types';
-import { usePopoverState } from 'hooks/usePopoverState';
+import { usePopoverState } from '@hooks/usePopoverState';
 
 export interface FilterProps {
   filterLinkOperatorOptions: ('and' | 'or')[];

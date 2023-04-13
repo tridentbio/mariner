@@ -1,7 +1,7 @@
 import { Autocomplete, AutocompleteProps, TextField } from '@mui/material';
 import { Box } from '@mui/system';
-import { useAppSelector } from 'app/hooks';
-import { Dataset, useLazyGetMyDatasetsQuery } from 'app/rtk/generated/datasets';
+import { useAppSelector } from '@hooks';
+import { Dataset, useLazyGetMyDatasetsQuery } from '@app/rtk/generated/datasets';
 import { FocusEventHandler, useEffect, useState } from 'react';
 
 export interface DatasetSelectProps

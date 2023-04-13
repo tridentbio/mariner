@@ -1,5 +1,5 @@
 import { Chip } from '@mui/material';
-import { Experiment } from 'app/types/domain/experiments';
+import { Experiment } from '@app/types/domain/experiments';
 import { sampleExperiment } from '../common';
 
 export interface TrainingChipProps {

@@ -1,11 +1,11 @@
 import { AutoFixHighOutlined, ErrorSharp } from '@mui/icons-material';
 import { MenuItem, Box, Alert, IconButton } from '@mui/material';
-import useModelEditor from 'hooks/useModelEditor';
+import useModelEditor from '@hooks/useModelEditor';
 import {
   locateContext,
   SchemaContextTypeGuard,
-} from 'model-compiler/src/implementation/SchemaContext';
-import Suggestion from 'model-compiler/src/implementation/Suggestion';
+} from '@model-compiler/src/implementation/SchemaContext';
+import Suggestion from '@model-compiler/src/implementation/Suggestion';
 
 interface SuggestionsListProps {
   suggestions: Suggestion[];

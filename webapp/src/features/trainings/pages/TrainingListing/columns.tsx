@@ -5,12 +5,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Experiment } from 'app/types/domain/experiments';
+import { Experiment } from '@app/types/domain/experiments';
 import AppLink from 'components/atoms/AppLink';
 import Justify from 'components/atoms/Justify';
 import { Column } from 'components/templates/Table';
 import { dateRender } from 'components/atoms/Table/render';
-import TrainingStatusChip from 'features/models/components/TrainingStatusChip';
+import TrainingStatusChip from '@features/models/components/TrainingStatusChip';
 import { Link } from 'react-router-dom';
 
 export const trainingListingColumns: Column<Experiment, keyof Experiment>[] = [

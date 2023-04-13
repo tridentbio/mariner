@@ -1,5 +1,5 @@
 import { FormEventHandler, MouseEvent, useEffect, useState } from 'react';
-import { ModelEditorContextProvider } from 'hooks/useModelEditor';
+import { ModelEditorContextProvider } from '@hooks/useModelEditor';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import * as modelsApi from 'app/rtk/generated/models';
 import ModelEditor from 'components/templates/ModelEditorV2';
@@ -10,7 +10,7 @@ import Content from 'components/templates/AppLayout/Content';
 import { useNotifications } from 'app/notifications';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import StackTrace from 'components/organisms/StackTrace';
-import { ModelSchema } from 'model-compiler/src/interfaces/model-editor';
+import { ModelSchema } from '@model-compiler/src/interfaces/model-editor';
 import { Box } from '@mui/system';
 import { Stepper, Step, Container, Button, StepLabel } from '@mui/material';
 

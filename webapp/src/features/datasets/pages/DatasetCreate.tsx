@@ -1,10 +1,10 @@
-import { useNotifications } from 'app/notifications';
+import { useNotifications } from '@app/notifications';
 import DatasetForm from '../components/DatasetForm';
 import { useNavigate } from 'react-router-dom';
 import Content from 'components/templates/AppLayout/Content';
-import { datasetsApi } from 'app/rtk/datasets';
-import { NewDataset } from 'app/types/domain/datasets';
-import { isApiError, messageApiError } from 'app/rtk/api';
+import { datasetsApi } from '@app/rtk/datasets';
+import { NewDataset } from '@app/types/domain/datasets';
+import { isApiError, messageApiError } from '@app/rtk/api';
 import { gzipCompress } from 'utils/gzipCompress';
 
 const DatasetCreate = ({ onCreate }: { onCreate: CallableFunction }) => {

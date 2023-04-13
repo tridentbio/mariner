@@ -1,18 +1,18 @@
 import { useGetModelOptionsQuery } from 'app/rtk/generated/models';
 import { positionNodes } from './utils';
-import { ApplySuggestionsCommandArgs } from 'model-compiler/src/implementation/commands/ApplySuggestionsCommand';
-import { DeleteCommandArgs } from 'model-compiler/src/implementation/commands/DeleteComponentsCommand';
-import { EditComponentsCommandArgs } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
-import ModelEditorImpl from 'model-compiler/src/implementation/ModelEditorImpl';
-import { SchemaContextTypeGuard } from 'model-compiler/src/implementation/SchemaContext';
-import Suggestion from 'model-compiler/src/implementation/Suggestion';
+import { ApplySuggestionsCommandArgs } from '@model-compiler/src/implementation/commands/ApplySuggestionsCommand';
+import { DeleteCommandArgs } from '@model-compiler/src/implementation/commands/DeleteComponentsCommand';
+import { EditComponentsCommandArgs } from '@model-compiler/src/implementation/commands/EditComponentsCommand';
+import ModelEditorImpl from '@model-compiler/src/implementation/ModelEditorImpl';
+import { SchemaContextTypeGuard } from '@model-compiler/src/implementation/SchemaContext';
+import Suggestion from '@model-compiler/src/implementation/Suggestion';
 import {
   ComponentConfigType,
   LayerFeaturizerType,
   NodeType,
   ModelSchema,
-} from 'model-compiler/src/interfaces/model-editor';
-import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
+} from '@model-compiler/src/interfaces/model-editor';
+import { iterateTopologically, unwrapDollar } from '@model-compiler/src/utils';
 import { createContext, useContext, useMemo, ReactNode, useState } from 'react';
 import {
   Edge,
@@ -21,12 +21,12 @@ import {
   useEdgesState,
   useStore,
 } from 'react-flow-renderer';
-import { ArrayElement, isArray, Required } from 'utils';
+import { ArrayElement, isArray, Required } from '@utils';
 import { IModelEditorContext, MarinerNode } from './types';
 import {
   getSourceHandles,
   getTargetHandles,
-} from 'model-compiler/src/implementation/modelSchemaQuery';
+} from '@model-compiler/src/implementation/modelSchemaQuery';
 
 // Context impement `IModelEditorContext`
 // @ts-ignore

@@ -1,5 +1,5 @@
 import { NotificationContextProvider } from './app/notifications';
-import useAppNavigation from 'hooks/useAppNavigation';
+import useAppNavigation from '@hooks/useAppNavigation';
 import Notifications from 'components/organisms/Notifications';
 import { Suspense } from 'react';
 import { CircularProgress } from '@mui/material';

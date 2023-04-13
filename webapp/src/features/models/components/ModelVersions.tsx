@@ -1,8 +1,8 @@
 import { CircularProgress } from '@mui/material';
 import { Box } from '@mui/system';
-import { experimentsApi } from 'app/rtk/experiments';
-import { Experiment } from 'app/types/domain/experiments';
-import { ModelVersion } from 'app/types/domain/models';
+import { experimentsApi } from '@app/rtk/experiments';
+import { Experiment } from '@app/types/domain/experiments';
+import { ModelVersion } from '@app/types/domain/models';
 import AppLink from 'components/atoms/AppLink';
 import Table, { Column } from 'components/templates/Table';
 import { dateRender } from 'components/atoms/Table/render';

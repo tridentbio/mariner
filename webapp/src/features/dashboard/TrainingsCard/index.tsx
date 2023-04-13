@@ -1,7 +1,7 @@
 import { RemoveRedEyeOutlined } from '@mui/icons-material';
 import { MenuItem, Link, IconButton, Tooltip, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import { useAppDispatch, useAppSelector } from 'app/hooks';
+import { useAppDispatch, useAppSelector } from '@hooks';
 import {
   MarinerEvent,
   MarinerNotification,

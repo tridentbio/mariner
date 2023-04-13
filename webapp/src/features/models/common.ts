@@ -1,4 +1,4 @@
-import { Experiment } from 'app/types/domain/experiments';
+import { Experiment } from '@app/types/domain/experiments';
 
 type SampleExperimentReturn = {
   successful: boolean;

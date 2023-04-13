@@ -3,14 +3,14 @@ import {
   Dataset,
   useLazyGetMyDatasetQuery,
   useLazyGetMyDatasetsQuery,
-} from 'app/rtk/generated/datasets';
-import DatasetSelect from 'features/datasets/components/DatasetSelect';
-import ColumnDescriptionSelector from 'features/models/components/ColumnDescriptionSelector';
-import { ModelCreate } from 'app/rtk/generated/models';
+} from '@app/rtk/generated/datasets';
+import DatasetSelect from '@features/datasets/components/DatasetSelect';
+import ColumnDescriptionSelector from '@features/models/components/ColumnDescriptionSelector';
+import { ModelCreate } from '@app/rtk/generated/models';
 import { Control, Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
-import { DataTypeGuard } from 'app/types/domain/datasets';
-import { useAppSelector } from 'app/hooks';
+import { DataTypeGuard } from '@app/types/domain/datasets';
+import { useAppSelector } from '@hooks';
 
 export interface DatasetConfigForm {
   control: Control<ModelCreate>;

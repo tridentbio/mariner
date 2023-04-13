@@ -16,7 +16,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import styled from 'styled-components';
 import { logout } from '../../features/users/usersSlice';
-import { useAppDispatch } from '../../app/hooks';
+import { useAppDispatch } from '@hooks';
 import Logo from 'components/atoms/Logo';
 import AppLink from 'components/atoms/AppLink';
 

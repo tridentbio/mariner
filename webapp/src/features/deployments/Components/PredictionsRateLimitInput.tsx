@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { required } from 'utils/reactFormRules';
+import { required } from '@utils/reactFormRules';
 import { ERateLimitUnits } from '../types';
 import CustomRateLimitSlider from './CustomRateLimitSlider';
 

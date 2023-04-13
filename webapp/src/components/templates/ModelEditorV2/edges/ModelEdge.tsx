@@ -1,6 +1,6 @@
-import useModelEditor from 'hooks/useModelEditor';
-import { makeComponentEdit } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
-import { getComponent } from 'model-compiler/src/implementation/modelSchemaQuery';
+import useModelEditor from '@hooks/useModelEditor';
+import { makeComponentEdit } from '@model-compiler/src/implementation/commands/EditComponentsCommand';
+import { getComponent } from '@model-compiler/src/implementation/modelSchemaQuery';
 import { getBezierPath, getEdgeCenter, EdgeProps } from 'react-flow-renderer';
 import { EdgeButton, EdgeButtonContainer } from './styles';
 interface ModelEdgeProps extends EdgeProps {

@@ -1,7 +1,7 @@
 import { Breadcrumbs as MuiBreadcrumbs } from '@mui/material';
 import AppLink from 'components/atoms/AppLink';
 import { Text } from 'components/molecules/Text';
-import useAppNavigation from 'hooks/useAppNavigation';
+import useAppNavigation from '@hooks/useAppNavigation';
 
 const Breadcrumbs = () => {
   const { breadcrumbs } = useAppNavigation();

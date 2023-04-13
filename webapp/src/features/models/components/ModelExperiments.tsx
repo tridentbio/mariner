@@ -1,6 +1,6 @@
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import Table, { Column } from 'components/templates/Table';
-import { Model } from 'app/types/domain/models';
+import { Model } from '@app/types/domain/models';
 import { useEffect, useMemo, useState } from 'react';
 import { dateRender } from 'components/atoms/Table/render';
 import { Button, LinearProgress, Tooltip, Typography } from '@mui/material';
@@ -9,12 +9,12 @@ import StackTrace from 'components/organisms/StackTrace';
 import {
   Experiment,
   FetchExperimentsQuery,
-} from 'app/types/domain/experiments';
+} from '@app/types/domain/experiments';
 import { Box } from '@mui/system';
 import TrainingStatusChip from './TrainingStatusChip';
 import { State } from 'components/templates/Table/types';
-import { experimentsApi } from 'app/rtk/experiments';
-import { useAppSelector } from 'app/hooks';
+import { experimentsApi } from '@app/rtk/experiments';
+import { useAppSelector } from '@hooks';
 import { useDispatch } from 'react-redux';
 import { updateExperiments } from '../modelSlice';
 import Justify from 'components/atoms/Justify';

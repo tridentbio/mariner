@@ -6,10 +6,10 @@ import Table from 'components/templates/Table';
 import {
   Experiment,
   FetchExperimentsQuery,
-} from 'app/types/domain/experiments';
+} from '@app/types/domain/experiments';
 import { trainingListingColumns } from './columns';
 
-import { experimentsApi } from 'app/rtk/experiments';
+import { experimentsApi } from '@app/rtk/experiments';
 import { State } from 'components/templates/Table/types';
 
 const TraininingListing = () => {
