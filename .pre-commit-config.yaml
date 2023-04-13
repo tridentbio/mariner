@@ -2,42 +2,42 @@ default_install_hook_types:
   - pre-push
   - pre-commit
 repos:
-- repo: local
-  hooks:
-    - id: format-check
-      name: Checking staged code style (Possibly fixable with scripts/format.sh)
-      entry: poetry run sh scripts/check-format.sh
-      fail_fast: true
-      pass_filenames: true
-      language: system
-      types: [python]
-      files: '(mariner|model_builder|api|tests).*\.py'
-      stages: 
-        - commit
-    - id: format-fix
-      name: Checking staged code style (Possibly fixable with scripts/format.sh)
-      entry: poetry run sh scripts/format-single.sh
-      pass_filenames: true
-      language: system
-      types: [python]
-      files: '(mariner|model_builder|api|tests).*\.py'
-      stages:
-        - manual
-    - id: lint-single
-      name: Linting staged code with scripts/lint-single.sh
-      entry: poetry run sh scripts/lint-single.sh
-      language: system
-      types: [python]
-      pass_filenames: true
-      fail_fast: true
-      files: '(mariner|model_builder|api).*\.py'
-      stages: 
-        - commit
-    - id: test
-      name: Running short tests
-      entry: sh scripts/test.sh
-      language: system
-      pass_filenames: false
-      fail_fast: true
-      stages: 
-        - manual
+  - repo: local
+    hooks:
+      - id: format-check
+        name: Checking staged code style (Possibly fixable with scripts/format.sh)
+        entry: cd backend && poetry run sh scripts/check-format.sh
+        fail_fast: true
+        pass_filenames: true
+        language: system
+        types: [python]
+        files: '(mariner|model_builder|api|tests).*\.py'
+        stages:
+          - commit
+      - id: format-fix
+        name: Checking staged code style (Possibly fixable with scripts/format.sh)
+        entry: cd backend && poetry run sh scripts/format-single.sh
+        pass_filenames: true
+        language: system
+        types: [python]
+        files: '(mariner|model_builder|api|tests).*\.py'
+        stages:
+          - manual
+      - id: lint-single
+        name: Linting staged code with scripts/lint-single.sh
+        entry: cd backend && poetry run sh scripts/lint-single.sh
+        language: system
+        types: [python]
+        pass_filenames: true
+        fail_fast: true
+        files: '(mariner|model_builder|api).*\.py'
+        stages:
+          - commit
+      - id: test
+        name: Running short tests
+        entry: cd backend && sh scripts/test.sh
+        language: system
+        pass_filenames: false
+        fail_fast: true
+        stages:
+          - manual
