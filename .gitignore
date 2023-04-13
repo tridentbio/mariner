@@ -15,3 +15,4 @@ checkpoints/
 cov/
 .coverage
 secrets
+secrets-local/
