@@ -8,6 +8,9 @@ on:
     types: [opened, synchronize]
     paths:
       - webapp/**
+defaults:
+  run:
+    working-directory: webapp
 jobs:
   frontend-checks:
     name: Run checks
@@ -31,21 +34,16 @@ jobs:
             ${{ runner.os }}-
       - name: Install NPM packages
         run: |
-          cd webapp
           npm ci
       - name: Checks typescript
         run: |
-          cd webapp
           npm run tsc
       - name: Lint files with eslint
         run: |
-          cd webapp
           npm run eslint:check
       - name: Run unit tests
         run: |
-          cd webapp
           npm run test:unit
       - name: Checks production build
         run: |
-          cd webapp
           npm run build
