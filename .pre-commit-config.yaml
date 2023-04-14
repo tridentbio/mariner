@@ -61,8 +61,6 @@ repos:
         name: Running backend unit tests
         entry: bash -c 'cd backend && poetry run sh scripts/test.sh pytest -m \'not integration\''
         language: system
-        pass_filenames: false
-        fail_fast: true
         stages:
           - commit
       - id: test-webapp
