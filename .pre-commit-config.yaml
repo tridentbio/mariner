@@ -23,12 +23,13 @@ repos:
         stages:
           - commit
       - id: format-staged-fix-backend
+        verbose: true
         name: Format staged files in the backend
-        entry: bash -c 'echo formatting $@ && exit 1 && cd backend && poetry run sh scripts/format-single.sh $@'
+        entry: bash -c 'cd backend && poetry run sh scripts/format.sh ${@#"backend/"}' --
         pass_filenames: true
-        language: system
+        files: '^backend/'
         types: [python]
-        files: '.*'
+        language: system
         stages:
           - manual
       - id: format-staged-fix-webapp
@@ -39,10 +40,10 @@ repos:
           - manual
       - id: lint-staged-backend
         name: Linting staged code in backend
-        entry: bash -c "cd backend && poetry run sh scripts/lint-single.sh"
+        entry: bash -c 'cd backend && poetry run sh scripts/lint-single.sh ${@#"backend/"}' --
         language: system
         types: [python]
-        files: '(mariner|model_builder|api|tests).*\.py'
+        files: '^backend/'
         pass_filenames: true
         fail_fast: true
         stages:
