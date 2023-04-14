@@ -24,7 +24,7 @@ repos:
           - commit
       - id: format-staged-fix-backend
         name: Format staged files in the backend
-        entry: bash -c 'echo formatting "$@" && cd backend && poetry run sh scripts/format-single.sh "$@"'
+        entry: bash -c 'echo formatting $@ && exit 1 && cd backend && poetry run sh scripts/format-single.sh $@'
         pass_filenames: true
         language: system
         types: [python]
