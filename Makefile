@@ -84,7 +84,7 @@ test-e2e: webapp-install start  ## Runs e2e cypress tests
 	cd webapp && npx cypress run
 
 
-pre-commit: backend-install frontend-install ## Runs pre-commit hooks (formatting, linting and unit testing)
+pre-commit: backend-install webapp-install ## Runs pre-commit hooks (formatting, linting and unit testing)
 	pre-commit
 
 pre-commit-install:     ## Installs pre-commit as a git hook in .git directory

@@ -11,7 +11,7 @@
     "eject": "react-scripts eject",
     "lint": "eslint . --ext .ts,.tsx",
     "eslint:check": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "eslint:fix": "eslint --fix src/**/* --ext .ts,.tsx,.js,.jsx",
+    "eslint:fix": "eslint --fix --ext .ts,.tsx,.js,.jsx src",
     "tsc": "tsc",
     "prettier:check": "prettier 'src/**/*.(ts|tsx)' --check",
     "prettier:fix": "prettier 'src/**/*.(ts|tsx)' --write",
