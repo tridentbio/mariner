@@ -59,7 +59,7 @@ repos:
           - commit
       - id: test-backend-unit
         name: Running backend unit tests
-        entry: bash -c 'cd backend && poetry run sh scripts/test.sh -m pytest -m \"not integration\"'
+        entry: cd backend && poetry run sh scripts/test.sh -m pytest -m \"not integration\"
         language: system
         files: '^backend/'
         types: [ python ]
