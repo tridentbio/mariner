@@ -49,7 +49,7 @@ repos:
         stages:
           - commit
       - id: lint-staged-webapp
-        name: Linting staged code in backend
+        name: Linting staged code in webapp
         entry: bash -c "cd webapp && npm run eslint:check"
         language: system
         types: [ts, tsx]
@@ -61,6 +61,8 @@ repos:
         name: Running backend unit tests
         entry: bash -c 'cd backend && poetry run sh scripts/test.sh -m pytest -m \"not integration\"'
         language: system
+        files: '^backend/'
+        types: [ python ]
         stages:
           - commit
       - id: test-webapp
@@ -69,5 +71,7 @@ repos:
         language: system
         pass_filenames: false
         fail_fast: true
+        files: '^webapp/'
+        types: [ ts, tsx ]
         stages:
           - commit

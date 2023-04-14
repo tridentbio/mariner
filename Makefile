@@ -92,3 +92,10 @@ pre-commit-install:     ## Installs pre-commit as a git hook in .git directory
 
 pre-commit-uninstall:   ## Removes pre-commit managed git hooks from .git directory
 	pre-commit uninstall
+
+fix:
+	pre-commit run --hook-stage manual
+
+publish: ## Parse RELEASE.md file into mariner events that will show up as notifications
+	cd backend &&\
+		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
