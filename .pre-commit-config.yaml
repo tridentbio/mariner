@@ -25,7 +25,7 @@ repos:
       - id: format-staged-fix-backend
         verbose: true
         name: Format staged files in the backend
-        entry: bash -c 'cd backend && poetry run sh scripts/format-single.sh ${@#"backend/"}' && git add $@ --
+        entry: bash -c 'cd backend && poetry run sh scripts/format-single.sh ${@#"backend/"}' --
         pass_filenames: true
         files: '^backend/'
         types: [python]
