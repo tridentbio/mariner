@@ -1,17 +1,26 @@
-# A makefile with commands using docker-compose
+# To see what the make can do in this project
+# run make `help`
 
+# Default target to run
 .DEFAULT_GOAL:=help
 
 .PHONY: help build create-admin start pre-commit pre-commit-install pre-commit-uninstall migrate-backend migrate-mlflow backend-install webapp-install
 
+# docker compose prefix command (useful to run with
+# different environments or docker compose configurations
 DOCKER_COMPOSE = docker compose -f docker-compose.yml -f docker-compose.override.yml
 
+# the main services needed to interact with the application
 CORE_SERVICES = db mlflowdb mlflow ray-head ray-worker backend webapp
 
+# a variable to control what services are passed as input to some commands
 SERVICES = all
 
-BACKEND_DEPENDENCY_FILES = backend/pyproject.toml backend/poetry.lock
+# Allows to pass extra arguments to some commands.
+ARGS =
 
+# Files to check if it's needed to reinstall dependencies
+BACKEND_DEPENDENCY_FILES = backend/pyproject.toml backend/poetry.lock
 WEBAPP_DEPENDENCY_FILES = webapp/package.json webapp/package-lock.json
 
 ##@ Dependencies
@@ -21,9 +30,10 @@ webapp-install:         ## Install dependencies to run webapp locally and run we
 		npm install
 
 
-backend-install:        ## Install dependencies to run backend locally and run backend tools
+backend-install:        ## Install dependencies to run backend locally and run it's CLI tools
 	cd backend &&\
-		poetry install
+		poetry install &&\
+		poetry run install_deps_cpu
 
 help:                   ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -33,9 +43,9 @@ ps:                   ## Gets all services status
 
 logs:                   ## Watches logs from running services. The variable SERVICE controls the services to attach, and defaults to all running
 ifeq ($(SERVICES),all)
-	$(DOCKER_COMPOSE) logs --follow
+	$(DOCKER_COMPOSE) logs --follow $(ARGS)
 else
-	$(DOCKER_COMPOSE) logs --follow $(SERVICES)
+	$(DOCKER_COMPOSE) logs --follow $(SERVICES) $(ARGS)
 endif
 
 build:                  ## Builds needed local images to run application.
@@ -59,7 +69,7 @@ migrate-mlflow:         ## Runs mlflow alembic migrations
 migrate: migrate-backend migrate-mlflow   ## Runs all migrations
 
 test-backend:           ## Runs all tests in the backend (integration and unit)
-	$(DOCKER_COMPOSE) exec backend pytest 
+	$(DOCKER_COMPOSE) exec backend pytest $(ARGS)
 
 test-backend-unit:           ## Runs backend unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'not integration'
@@ -67,10 +77,10 @@ test-backend-unit:           ## Runs backend unit tests
 test-webapp-unit: webapp-install ## Runs webapp unit tests
 	cd webapp && npm run test:unit
 
-test-integration:           ## Runs unit tests
-	$(DOCKER_COMPOSE) exec backend pytest -m 'integration'
+test-integration: start          ## Runs unit tests
+	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
-test-e2e: start webapp-install  ## Runs e2e cypress tests
+test-e2e: webapp-install start  ## Runs e2e cypress tests
 	cd webapp && npx cypress run
 
 
