@@ -5,7 +5,7 @@ repos:
     hooks:
       - id: check-staged-backend-style
         name: Checking staged backend code style
-        entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh'
+        entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh ${@#"backend/"}'
         fail_fast: true
         pass_filenames: true
         language: system
@@ -57,14 +57,14 @@ repos:
         fail_fast: true
         stages:
           - commit
-      - id: test-backend
-        name: Running short tests
-        entry: cd backend && sh scripts/test.sh
+      - id: test-backend-unit
+        name: Running backend unit tests
+        entry: bash -c 'cd backend && poetry run sh scripts/test.sh pytest -m \'not integration\''
         language: system
         pass_filenames: false
         fail_fast: true
         stages:
-          - manual
+          - commit
       - id: test-webapp
         name: Running front end  unit tests
         entry: bash -c "cd webapp && npm run test:unit"
@@ -72,4 +72,4 @@ repos:
         pass_filenames: false
         fail_fast: true
         stages:
-          - manual
+          - commit
