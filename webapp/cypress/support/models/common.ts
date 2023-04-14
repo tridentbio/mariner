@@ -82,6 +82,7 @@ export const dragComponentsAndMapConfig = (
     }
     i += 1;
   });
+  cy.log('newSchema', newSchema);
   return newSchema;
 };
 export const dragComponents = (componentNames: string[]) => {
@@ -131,14 +132,12 @@ export const createModelFixture = (
   cy.visit('/models/new');
   fillDatasetInfo(modelData);
   cy.get('button').contains('NEXT').click();
-  cy.buildNumSmilesModel(modelData.featureCols, modelData.targetCol).then(
-    () => {
-      cy.get('button').contains('CREATE MODEL').click();
-      cy.url({ timeout: 30000 }).should('include', `#newtraining`, {
-        timeout: 30000,
-      });
-    }
-  );
+  cy.buildNumSmilesModel().then(() => {
+    cy.get('button').contains('CREATE MODEL').click();
+    cy.url({ timeout: 30000 }).should('include', `#newtraining`, {
+      timeout: 30000,
+    });
+  });
 };
 
 export const connectAndFill = ({

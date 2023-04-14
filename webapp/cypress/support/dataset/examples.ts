@@ -70,7 +70,9 @@ export const createRandomDatasetFormData = (): DatasetFormData => {
         pattern: 'mwt_group',
         dataType: {
           domainKind: 'Categorical',
+          classes: { mwt_big: 0, mwt_small: 1 },
         },
+
         description: 'A categorical column',
       },
       {

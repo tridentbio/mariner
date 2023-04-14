@@ -7,6 +7,7 @@ import { randomLowerCase } from 'utils';
 import { dragComponentsAndMapConfig, flowDropSelector } from './common';
 import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
+import { DatasetFormData } from '../dataset/create';
 
 const randomName = () => randomLowerCase(8);
 
@@ -88,17 +89,18 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
     .get('li[role="option"]')
     .first()
     .click();
-  const targetCol =
-    (modelCreate.config?.dataset?.targetColumns?.length &&
-      modelCreate.config?.dataset?.targetColumns[0] &&
-      modelCreate.config?.dataset?.targetColumns[0].name) ||
-    '';
+  const targetCols =
+    modelCreate.config?.dataset?.targetColumns?.map((col) => col?.name || '') ||
+    [];
   const featureCols =
     modelCreate.config?.dataset?.featureColumns?.map(
       (col) => col?.name || ''
     ) || [];
-  cy.get('#target-col').click();
-  cy.get('div').contains(targetCol).click();
+
+  targetCols.forEach((col) => {
+    cy.get('#target-col').click();
+    cy.get('div').contains(col).click();
+  });
   featureCols.forEach((col) => {
     cy.get('#feature-cols').click();
     cy.get('div').contains(col).click();
@@ -119,7 +121,7 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
       .get(`[data-id="${col}"]`)
       .move(flowDropSelector, idx * 100, 6)
   );
-  cy.wait(334).get(`[data-id="${targetCol}"]`).move(flowDropSelector, 500, 150);
+  // cy.wait(334).get(`[data-id="${targetCol}"]`).move(flowDropSelector, 500, 150);
 
   const config = dragComponentsAndMapConfig(
     modelCreate.config as unknown as ModelSchema
@@ -149,7 +151,7 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
   });
 };
 
-export const buildNumSmilesModel = () => {
+export const buildNumSmilesModel = (dataset: string | null = null) => {
   cy.fixture('models/schemas/small_regressor_schema.yaml').then((yamlStr) => {
     const jsonSchema = parse(yamlStr);
     buildModel({
@@ -160,7 +162,7 @@ export const buildNumSmilesModel = () => {
         ...jsonSchema,
         name: 'CCCCCCCCCCCCCC',
         dataset: {
-          name: 'ZincExtra',
+          name: dataset || 'ZincExtra',
           featureColumns: [{ name: 'smiles' }, { name: 'mwt' }],
           targetColumns: [{ name: 'tpsa' }],
         },
