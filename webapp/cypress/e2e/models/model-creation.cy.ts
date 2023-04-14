@@ -1,4 +1,6 @@
-import createDataset from '../../support/dataset/create';
+import createDataset, {
+  createDatasetDirectly,
+} from '../../support/dataset/create';
 import { deleteDatasetIfAlreadyExists } from '../../support/dataset/delete';
 import {
   createRandomDatasetFormData,
@@ -8,8 +10,9 @@ import { deleteTestModelsIfExist } from '../../support/models/common';
 
 describe('/models/new - Model creation page', () => {
   const datasetFixture = createRandomDatasetFormData();
-  before(() => {
+  before(async () => {
     cy.loginSuper();
+    await createDatasetDirectly(datasetFixture);
   });
 
   beforeEach(() => {
@@ -17,17 +20,16 @@ describe('/models/new - Model creation page', () => {
   });
 
   it('Builds Smiles-Numeric regressor', () => {
-    cy.buildNumSmilesModel(['smiles', 'mwt'], 'tpsa').then(() => {
-      // cy.get('button').contains('CREATE MODEL').click({ force: true });
-      // cy.url({ timeout: 60000 }).should('include', `#newtraining`, {
-      //   timeout: 60000,
-      // });
-    });
+    cy.buildNumSmilesModel(datasetFixture.name).then(() => {});
   });
 
   it.skip('Builds Smiles-Categorical regressor', () => {
     cy.fixture('models/schemas/');
-    cy.buildCategoricalSmilesModel(['smiles', 'mwt_group'], 'tpsa').then(() => {
+    cy.buildCategoricalSmilesModel(
+      ['smiles', 'mwt_group'],
+      'tpsa',
+      datasetFixture.name
+    ).then(() => {
       cy.get('button').contains('CREATE MODEL').click({ force: true });
       cy.url({ timeout: 60000 }).should('include', `#newtraining`, {
         timeout: 60000,

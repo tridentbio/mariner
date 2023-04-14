@@ -28,7 +28,7 @@ describe('Complete test from dataset creation to inference', () => {
         timeout: 60000,
       });
     });
-    cy.buildNumSmilesModel(['smiles', 'mwt'], 'tpsa').then(() => {
+    cy.buildNumSmilesModel().then(() => {
       cy.get('button').contains('CREATE MODEL').click({ force: true });
       cy.url({ timeout: 60000 }).should('include', `#newtraining`, {
         timeout: 60000,
