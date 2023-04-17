@@ -7,6 +7,7 @@ import { randomLowerCase } from 'utils';
 import { dragComponentsAndMapConfig, flowDropSelector } from './common';
 import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
+import { logger } from '../../../dist/logger';
 
 const randomName = () => randomLowerCase(8);
 
@@ -65,6 +66,8 @@ const parseEdgeName = (edgeName: string) => {
   if (sourceNodeId) return [sourceNodeId, tailSource.join('.')];
   return [edgeName, ''];
 };
+
+const objIsEmpty = (obj: object) => Boolean(Object.keys(obj).length);
 
 /**
  * Uses cy to connect a node handle to a target handle.
@@ -184,6 +187,41 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
       );
     })
   );
+
+  cy.then(() =>
+    cy
+      .get('[data-testid="AutoFixHighOutlinedIcon"]')
+      .its('length')
+      .then((count) => {
+        try {
+          for (let i = 0; i < count; i++) {
+            cy.get('[data-testid="AutoFixHighOutlinedIcon"]').first().click();
+            cy.wait(100);
+          }
+        } catch (_) {}
+      })
+  );
+  cy.then(() => {
+    iterateTopologically(config, (node, type) => {
+      if (['input', 'output'].includes(type)) return;
+      const args = 'constructorArgs' in node ? node.constructorArgs : {};
+      if (objIsEmpty(args)) return;
+
+      const element = cy
+        .get(`[data-id="${parseEdgeName(node.type)[0]}"]`)
+        .first();
+
+      Object.entries(args).forEach(([key, value]) => {
+        const curElement = element
+          .contains('label', key)
+          .next('div')
+          .find('input');
+        if (['number', 'string'].includes(typeof value)) curElement.type(value);
+        else if (curElement.hasAttribute('checked') !== value)
+          curElement.click();
+      });
+    });
+  });
 
   cy.get('.react-flow__node').then(($nodes) => {
     const componentTypeByDataId: {
