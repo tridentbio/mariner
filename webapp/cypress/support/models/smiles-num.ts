@@ -7,23 +7,61 @@ import { randomLowerCase } from 'utils';
 import { dragComponentsAndMapConfig, flowDropSelector } from './common';
 import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
-import { DatasetFormData } from '../dataset/create';
 
 const randomName = () => randomLowerCase(8);
 
+const getTypeByName = (config: ModelSchema, name: string): string => {
+  const [layer] = config.layers!.filter((layer) => layer.name === name);
+  if (layer) return layer.type;
+  const [featurizer] = config.featurizers!.filter(
+    (featurizer) => featurizer.name === name
+  );
+  if (featurizer) return featurizer.type;
+
+  return name;
+};
+
 // Returns [sourceHandleId, targetHandleId][]
-const getIncomingEdges = (node: NodeType): [string, string][] => {
+const getIncomingEdges = (
+  node: NodeType,
+  config: ModelSchema
+): [string, string][] => {
   if (node.type === 'input' || node.type === 'output') return [];
+
   return Object.entries(node.forwardArgs || {}).reduce(
-    (acc, [forwardArg, targetHandleId]) => {
-      if (!targetHandleId) return acc;
+    (acc, [forwardArg, targetHandleIds]) => {
+      if (!targetHandleIds) return acc;
+      if (!Array.isArray(targetHandleIds)) targetHandleIds = [targetHandleIds];
+
       return [
         ...acc,
-        [node.name + '.' + forwardArg, unwrapDollar(targetHandleId)],
+        ...targetHandleIds.map((targetHandleId: string) => {
+          const [targetOriginalName, ...tail] =
+            unwrapDollar(targetHandleId).split('.');
+
+          return [
+            node.type + '.' + forwardArg,
+            getTypeByName(config, targetOriginalName) +
+              (tail.length ? '.' + tail.join('.') : ''),
+          ];
+        }),
       ];
     },
     [] as [string, string][]
   );
+};
+
+const parseEdgeName = (edgeName: string) => {
+  let [sourceNodeId, ...tailSource] = edgeName.split('.').reduce((acc, cur) => {
+    if (acc.length) acc.push(cur);
+    else if (cur.match(/-\d+$/g)) {
+      acc.push(cur);
+    }
+    return acc;
+  }, [] as string[]);
+
+  if (sourceNodeId) return [sourceNodeId, tailSource.join('.')];
+  return [edgeName, ''];
 };
 
 /**
@@ -41,32 +79,36 @@ const connect = (sourceHandleId: string, targetHandleId: string) => {
     name: 'connect',
     displayName: `connect("${sourceHandleId}", "${targetHandleId}")`,
   });
-  const [sourceNodeId, ...tailSource] = sourceHandleId.split('.');
-  sourceHandleId = tailSource.join('.');
-  const [targetNodeId, ...tailTarget] = targetHandleId.split('.');
-  targetHandleId = tailTarget.join('.');
-  const makeNodeSelector = (nodeId: string, handleId?: string) =>
-    nodeId && handleId
-      ? `[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`
-      : `data-nodeid="${nodeId}"`;
-  cy.get(makeNodeSelector(targetNodeId, targetHandleId)).move(
-    makeNodeSelector(sourceNodeId, sourceHandleId),
-    1,
-    1
-  );
-};
 
+  const [sourceNodeId, tailSource] = parseEdgeName(sourceHandleId);
+  // sourceHandleId = tailSource.join('.');
+  const [targetNodeId, tailTarget] = parseEdgeName(targetHandleId);
+  // targetHandleId = tailTarget.join('.');
+  const makeNodeSelector = (nodeId: string, handleId?: string) => {
+    const selector =
+      nodeId && handleId
+        ? `[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`
+        : `[data-nodeid="${nodeId}"]`;
+
+    const element = cy.get(selector);
+    if (!handleId)
+      return element.filter((_, el) => !el.hasAttribute('data-handleid'));
+
+    return element;
+  };
+  const target = makeNodeSelector(targetNodeId, tailTarget);
+  const source = makeNodeSelector(sourceNodeId, tailSource);
+
+  target.trigger('mousedown', {
+    button: 0,
+  });
+  source.trigger('mousemove');
+  source.trigger('mouseup');
+};
+import { logger } from '../../../dist/logger';
 export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
   cy.visit('/models/new');
-
   // Fill model name
-  // TODO: use typing and select no click
-  //cy.get('[data-testid="model-name"]')
-  //  .click()
-  //  .type(modelCreate.name || randomName())
-  //  .get('li[role="option"]')
-  //  .first()
-  //  .click();
   cy.get('[data-testid="random-model-name"]').click();
   // Fill model description
   cy.get('[data-testid="model-description"] input')
@@ -89,6 +131,7 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
     .get('li[role="option"]')
     .first()
     .click();
+
   const targetCols =
     modelCreate.config?.dataset?.targetColumns?.map((col) => col?.name || '') ||
     [];
@@ -121,14 +164,14 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
       .get(`[data-id="${col}"]`)
       .move(flowDropSelector, idx * 100, 6)
   );
-  // cy.wait(334).get(`[data-id="${targetCol}"]`).move(flowDropSelector, 500, 150);
 
   const config = dragComponentsAndMapConfig(
     modelCreate.config as unknown as ModelSchema
   );
-
+  cy.get('div[aria-label="Apply auto vertical layout"] button').click();
+  cy.get('button[title="fit view"]').click();
   iterateTopologically(config, (node, type) => {
-    const edges: [string, string][] = getIncomingEdges(node);
+    const edges: [string, string][] = getIncomingEdges(node, config);
     edges.forEach(([sourceHandleId, targetHandleId]) =>
       connect(sourceHandleId, targetHandleId)
     );

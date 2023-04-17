@@ -5,6 +5,7 @@ dataset:
     - name: tpsa
       dataType:
         domainKind: numeric
+      outModule: LinearJoined
   featureColumns:
     - name: smiles
       dataType:
@@ -80,7 +81,7 @@ layers:
     type: model_builder.layers.GlobalPooling
     forwardArgs:
       x: ${GCN3_Activation}
-      edge_index: ${MolToGraphFeaturizer.edge_index}
+      size: ${MolToGraphFeaturizer.edge_index}
       batch: ${MolToGraphFeaturizer.batch}
     constructorArgs:
       aggr: 'sum'

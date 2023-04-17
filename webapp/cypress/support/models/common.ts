@@ -75,14 +75,21 @@ export const dragComponentsAndMapConfig = (
     dragComponent(componentName, position.x, position.y);
     if (type === 'layer') {
       //@ts-ignore
-      newSchema.layers.push({ ...node, name: `${node.type}-${i}` });
+      newSchema.layers.push({
+        ...node,
+        //@ts-ignore
+        type: `${node.type}-${i}`,
+      });
     } else if (type === 'featurizer') {
       //@ts-ignore
-      newSchema.featurizers.push({ ...node, name: `${node.type}-${i}` });
+      newSchema.featurizers.push({
+        ...node,
+        //@ts-ignore
+        type: `${node.type}-${i}`,
+      });
     }
     i += 1;
   });
-  cy.log('newSchema', newSchema);
   return newSchema;
 };
 export const dragComponents = (componentNames: string[]) => {
