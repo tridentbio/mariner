@@ -1,4 +1,4 @@
-import { buildNumSmilesModel } from './smiles-num';
+import { buildNumSmilesModel, buildYamlModel } from './smiles-num';
 import { buildCategoricalSmilesModel } from './smiles-categorical';
 import { DatasetFormData } from '../dataset/create';
 
@@ -7,6 +7,7 @@ Cypress.Commands.add(
   'buildCategoricalSmilesModel',
   buildCategoricalSmilesModel
 );
+Cypress.Commands.add('buildYamlModel', buildYamlModel);
 
 declare global {
   namespace Cypress {
@@ -17,6 +18,7 @@ declare global {
         targetCol: string,
         dataset?: string
       ): Chainable;
+      buildYamlModel(yaml: string, datasetName?: string): Chainable;
     }
   }
 }

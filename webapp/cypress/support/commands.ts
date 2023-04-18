@@ -86,6 +86,16 @@ Cypress.Commands.add(
   }
 );
 
+Cypress.Commands.add('getWithouThrow', (selector: string) => {
+  cy.get('body').then(($body) => {
+    if ($body.find(selector).length) {
+      return cy.get(selector);
+    } else {
+      return [];
+    }
+  });
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -103,6 +113,7 @@ declare global {
         x: number,
         y: number
       ): Chainable<JQuery<HTMLElement>>;
+      getWithouThrow(selector: string): Chainable<JQuery<HTMLElement>>;
     }
   }
 }

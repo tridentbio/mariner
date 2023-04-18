@@ -7,7 +7,6 @@ import { randomLowerCase } from 'utils';
 import { dragComponentsAndMapConfig, flowDropSelector } from './common';
 import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
-import { logger } from '../../../dist/logger';
 
 const randomName = () => randomLowerCase(8);
 
@@ -67,7 +66,17 @@ const parseEdgeName = (edgeName: string) => {
   return [edgeName, ''];
 };
 
-const objIsEmpty = (obj: object) => Boolean(Object.keys(obj).length);
+const objIsEmpty = (obj: object) => !Boolean(Object.keys(obj).length);
+
+const autoFixSuggestions = () =>
+  cy.getWithouThrow('[data-testid="AutoFixHighOutlinedIcon"]').then(($els) => {
+    for (let i = 0; i < $els.length; i++) {
+      cy.get('[data-testid="AutoFixHighOutlinedIcon"]')
+        .first()
+        .click({ force: true });
+      cy.wait(100);
+    }
+  });
 
 /**
  * Uses cy to connect a node handle to a target handle.
@@ -148,11 +157,11 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
 
   targetCols.forEach((col) => {
     cy.get('#target-col').click();
-    cy.get('div').contains(col).click();
+    cy.get('div').contains(col).click({ force: true });
   });
   featureCols.forEach((col) => {
     cy.get('#feature-cols').click();
-    cy.get('div').contains(col).click();
+    cy.get('div').contains(col).click({ force: true });
   });
 
   cy.get('button').contains('NEXT').click();
@@ -188,40 +197,36 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
     })
   );
 
-  cy.then(() =>
-    cy
-      .get('[data-testid="AutoFixHighOutlinedIcon"]')
-      .its('length')
-      .then((count) => {
-        try {
-          for (let i = 0; i < count; i++) {
-            cy.get('[data-testid="AutoFixHighOutlinedIcon"]').first().click();
-            cy.wait(100);
-          }
-        } catch (_) {}
-      })
-  );
   cy.then(() => {
     iterateTopologically(config, (node, type) => {
       if (['input', 'output'].includes(type)) return;
       const args = 'constructorArgs' in node ? node.constructorArgs : {};
       if (objIsEmpty(args)) return;
 
-      const element = cy
-        .get(`[data-id="${parseEdgeName(node.type)[0]}"]`)
-        .first();
-
       Object.entries(args).forEach(([key, value]) => {
-        const curElement = element
-          .contains('label', key)
-          .next('div')
-          .find('input');
-        if (['number', 'string'].includes(typeof value)) curElement.type(value);
-        else if (curElement.hasAttribute('checked') !== value)
-          curElement.click();
+        autoFixSuggestions().then(() => {
+          const element = cy
+            .get(`[data-id="${parseEdgeName(node.type)[0]}"]`)
+            .first();
+
+          const isBool = !['number', 'string'].includes(typeof value);
+
+          if (!isBool) {
+            const curElement = element
+              .contains('label', key)
+              .next('div')
+              .find('input');
+            curElement.clear().type(value);
+          } else {
+            element.get(`[id="${key}"]`).then((curElement) => {
+              if (Boolean(curElement.prop('checked')) !== value)
+                curElement.click();
+            });
+          }
+        });
       });
     });
-  });
+  }).then(() => cy.get('button').contains('CREATE').click());
 
   cy.get('.react-flow__node').then(($nodes) => {
     const componentTypeByDataId: {
@@ -254,6 +259,25 @@ export const buildNumSmilesModel = (dataset: string | null = null) => {
           name: dataset || 'ZincExtra',
           featureColumns: [{ name: 'smiles' }, { name: 'mwt' }],
           targetColumns: [{ name: 'tpsa', outModule: 'LinearJoined' }],
+        },
+      },
+    });
+  });
+};
+
+export const buildYamlModel = (yaml: string, dataset: string | null = null) => {
+  cy.fixture(yaml).then((yamlStr) => {
+    const jsonSchema: ModelSchema = parse(yamlStr);
+    buildModel({
+      name: randomName(),
+      modelVersionDescription: randomName(),
+      modelDescription: randomName(),
+      config: {
+        ...jsonSchema,
+        name: randomName(),
+        dataset: {
+          ...jsonSchema.dataset,
+          name: dataset || jsonSchema.dataset.name,
         },
       },
     });
