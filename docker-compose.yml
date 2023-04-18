@@ -3,10 +3,9 @@ services:
   webapp:
     build:
       dockerfile: ../dockerfiles/Dockerfile.webapp
-      context: webapp
+      context: ./webapp
     ports: 
-      - "3000:3000"
-    
+      - 3000:3000
   db:
     image: postgres:12
     volumes:
@@ -140,7 +139,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
       - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS}
     ports:
-      - 3000:3000
+      - 3001:3000
     networks:
       - ray_net
 
