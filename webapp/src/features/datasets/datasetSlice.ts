@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { makeS3DataLink } from '@utils';
-import api, { Status } from '@app/api';
-import { datasetsApi as rtkDatasetApi } from '@app/rtk/datasets';
-import { enhancedApi } from '@app/rtk/generated/datasets';
-import { DatasetsListingFilters, Dataset } from '@app/types/domain/datasets';
-import { gzipDecompress } from '@utils/gzipCompress';
+import { makeS3DataLink } from 'utils';
+import api, { Status } from '../../app/api';
+import { datasetsApi as rtkDatasetApi } from '../../app/rtk/datasets';
+import { enhancedApi } from 'app/rtk/generated/datasets';
+import { DatasetsListingFilters, Dataset } from 'app/types/domain/datasets';
+import { gzipDecompress } from 'utils/gzipCompress';
 
 export interface DatasetState {
   filters: DatasetsListingFilters;

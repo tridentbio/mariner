@@ -1,5 +1,5 @@
-import { DataTypeDomainKind } from '@app/types/domain/datasets';
-import { EClassPaths } from '@app/types/domain/modelOptions';
+import { DataTypeDomainKind } from 'app/types/domain/datasets';
+import { EClassPaths } from 'app/types/domain/modelOptions';
 import {
   EDeploymnetStatuses,
   ERateLimitUnits,

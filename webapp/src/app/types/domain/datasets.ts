@@ -1,4 +1,4 @@
-import * as datasetsApi from '@app/rtk/generated/datasets';
+import * as datasetsApi from 'app/rtk/generated/datasets';
 
 type PossibleKeys =
   | 'mwt'

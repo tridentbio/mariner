@@ -4,8 +4,8 @@ import {
   ExperimentHistory,
   NewTraining,
   FetchExperimentsQuery,
-} from '@app/types/domain/experiments';
-import { Paginated } from '@app/api';
+} from 'app/types/domain/experiments';
+import { Paginated } from 'app/api';
 export const experimentsApi = api
   .enhanceEndpoints({ addTagTypes: ['experiments'] })
   .injectEndpoints({

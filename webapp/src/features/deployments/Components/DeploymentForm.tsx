@@ -9,11 +9,11 @@ import {
 import { Box } from '@mui/system';
 import MDEditor from '@uiw/react-md-editor';
 import { Model } from 'app/types/domain/models';
-import ModelVersionSelect from '@features/models/components/ModelVersionSelect';
+import ModelVersionSelect from 'features/models/components/ModelVersionSelect';
 import React, { useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import rehypeSanitize from 'rehype-sanitize';
-import { required } from '@utils/reactFormRules';
+import { required } from 'utils/reactFormRules';
 import {
   Deployment,
   DeploymentFormFields,
@@ -26,7 +26,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { deploymentFormSchema } from '../formSchema';
 import PredictionsRateLimitInput from './PredictionsRateLimitInput';
 import { deploymentsApi } from '../deploymentsApi';
-import { useAppSelector } from '@hooks';
+import { useAppSelector } from 'app/hooks';
 import ConfirmationDialog from 'components/templates/ConfirmationDialog';
 
 type DeploymentFormProps = {

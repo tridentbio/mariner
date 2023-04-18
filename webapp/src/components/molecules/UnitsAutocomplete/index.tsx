@@ -5,12 +5,12 @@ import {
   MenuItem,
   TextField,
 } from '@mui/material';
-import { useAppDispatch, useAppSelector } from '@hooks';
+import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { debounce } from 'utils';
 import { isUnitValid, Unit } from 'features/units/unitsAPI';
 import { fetchUnits } from 'features/units/unitsSlice';
 import { useEffect, useMemo, useState } from 'react';
-import { useNotifications } from '@app/notifications';
+import { useNotifications } from 'app/notifications';
 
 interface UnitsAutocompleteProps {
   value?: Unit;

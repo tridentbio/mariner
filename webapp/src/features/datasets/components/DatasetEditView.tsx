@@ -1,9 +1,9 @@
 import { CircularProgress } from '@mui/material';
 import DatasetForm from './DatasetForm';
-import { UpdateDataset } from '@app/types/domain/datasets';
+import { UpdateDataset } from 'app/types/domain/datasets';
 import { useNavigate } from 'react-router-dom';
-import { useNotifications } from '@app/notifications';
-import * as datasetsApi from '@app/rtk/generated/datasets';
+import { useNotifications } from '../../../app/notifications';
+import * as datasetsApi from 'app/rtk/generated/datasets';
 
 interface DatasetEditProps {
   id: string;

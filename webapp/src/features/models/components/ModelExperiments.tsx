@@ -1,6 +1,6 @@
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import Table, { Column } from 'components/templates/Table';
-import { Model } from '@app/types/domain/models';
+import { Model } from 'app/types/domain/models';
 import { useEffect, useMemo, useState } from 'react';
 import { dateRender } from 'components/atoms/Table/render';
 import { Button, LinearProgress, Tooltip, Typography } from '@mui/material';
@@ -9,12 +9,12 @@ import StackTrace from 'components/organisms/StackTrace';
 import {
   Experiment,
   FetchExperimentsQuery,
-} from '@app/types/domain/experiments';
+} from 'app/types/domain/experiments';
 import { Box } from '@mui/system';
 import TrainingStatusChip from './TrainingStatusChip';
 import { State } from 'components/templates/Table/types';
-import { experimentsApi } from '@app/rtk/experiments';
-import { useAppSelector } from '@hooks';
+import { experimentsApi } from 'app/rtk/experiments';
+import { useAppSelector } from 'app/hooks';
 import { useDispatch } from 'react-redux';
 import { updateExperiments } from '../modelSlice';
 import Justify from 'components/atoms/Justify';
@@ -147,9 +147,11 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       render: (_row: Experiment, value: Experiment['trainMetrics']) => (
         <Justify position="end">
           {(() => {
-            if (!value) return '-';
-            else if ('train_loss' in value) {
-              return value['train_loss'].toFixed(2);
+            if (!value || !_row) return '-';
+
+            const column = _row.modelVersion.config.dataset.targetColumns[0];
+            if (`train/loss/${column.name}` in value) {
+              return value[`train/loss/${column.name}`].toFixed(2);
             }
           })()}
         </Justify>
@@ -180,9 +182,11 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       render: (_row: Experiment, value: Experiment['trainMetrics']) => (
         <Justify position="end">
           {(() => {
-            if (!value) return '-';
-            else if ('val_loss' in value) {
-              return value['val_loss'].toFixed(2);
+            if (!value || !_row) return '-';
+
+            const column = _row.modelVersion.config.dataset.targetColumns[0];
+            if (`val/loss/${column.name}` in value) {
+              return value[`val/loss/${column.name}`].toFixed(2);
             }
           })()}
         </Justify>

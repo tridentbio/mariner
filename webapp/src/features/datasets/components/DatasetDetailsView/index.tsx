@@ -1,17 +1,17 @@
-import { ColumnMeta, DatasetErrors } from '@app/types/domain/datasets';
+import { ColumnMeta, DatasetErrors } from 'app/types/domain/datasets';
 import { Button, CircularProgress, Container, Link } from '@mui/material';
 import { LargerBoldText, Text } from '../../../../components/molecules/Text';
 import { Box } from '@mui/system';
 import DatasetStats from './DatasetStats';
 import { useNavigate } from 'react-router-dom';
-import { useNotifications } from '@app/notifications';
+import { useNotifications } from '../../../../app/notifications';
 import { humanFileSize } from '../../../../utils';
 
-import * as datasetsApi from '@app/rtk/generated/datasets';
-import { downloadDataset } from '@features/datasets/datasetSlice';
+import * as datasetsApi from 'app/rtk/generated/datasets';
+import { downloadDataset } from 'features/datasets/datasetSlice';
 import { DatasetErrorsView } from './DatasetErrorsView';
 import { lazy } from 'react';
-import DataSummary from '@features/models/components/ModelVersionInferenceView/DataSummary';
+import DataSummary from 'features/models/components/ModelVersionInferenceView/DataSummary';
 
 const ModelEditorMarkdown = lazy(
   () => import('utils/codeSplittingAux/ModelEditorMarkdown')

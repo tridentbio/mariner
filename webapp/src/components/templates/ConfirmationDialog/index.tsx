@@ -8,7 +8,7 @@ import {
   DialogTitle,
   Divider,
 } from '@mui/material';
-import { useAppDispatch } from '@hooks';
+import { useAppDispatch } from 'app/hooks';
 import { cleanCurrentDeployment } from 'features/deployments/deploymentsSlice';
 import React from 'react';
 

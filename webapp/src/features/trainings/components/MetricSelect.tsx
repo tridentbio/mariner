@@ -17,7 +17,7 @@ import {
 } from 'app/rtk/generated/experiments';
 // TODO: fix MathJax in TexMath
 // import TexMath from 'components/atoms/TexMath';
-import { defaultModeIsMax } from '@utils';
+import { defaultModeIsMax } from 'utils';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ModelVersionType } from 'app/types/domain/models';
 import { TargetConfig } from 'app/rtk/generated/models';

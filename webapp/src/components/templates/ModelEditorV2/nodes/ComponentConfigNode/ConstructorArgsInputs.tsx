@@ -1,9 +1,9 @@
 import { InputLabel, Switch, TextField, Box } from '@mui/material';
 import CustomInputField from 'components/atoms/CustomInputField';
-import useModelEditor from '@hooks/useModelEditor';
-import { makeComponentEdit } from '@model-compiler/src/implementation/commands/EditComponentsCommand';
-import { getComponent } from '@model-compiler/src/implementation/modelSchemaQuery';
-import { LayerFeaturizerType } from '@model-compiler/src/interfaces/model-editor';
+import useModelEditor from 'hooks/useModelEditor';
+import { makeComponentEdit } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
+import { getComponent } from 'model-compiler/src/implementation/modelSchemaQuery';
+import { LayerFeaturizerType } from 'model-compiler/src/interfaces/model-editor';
 import EditorSelect from './EditorSelect';
 
 export interface ConstructorArgsInputsProps {

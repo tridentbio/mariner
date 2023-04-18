@@ -1,4 +1,4 @@
-import { ColumnMeta } from '@app/types/domain/datasets';
+import { ColumnMeta } from 'app/types/domain/datasets';
 
 export const findMeta = (
   column: string,
