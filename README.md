@@ -187,8 +187,24 @@ or with make
 make publish
 ```
 
-## Troubleshooting
+## Testing the application
 
+When you just want to test the application, i.e. you don't want to make changes to it, it's
+recommended to run the project without src code volumes created by default with our docker-compose
+files. To do that, you must run all make commands like following:
+
+```console
+make build DOCKER_COMPOSE="docker-compose.yml"
+```
+Causing only the docker-compose.yml file to have affect, and therefore ignoring the volumes created in docker-compose.override.yml
+
+## Troubleshooting
+- Getting pre-commit failures because of style when trying to commit
+
+  Try running the following command to run automatic formatters:
+  ```console
+  make fix
+  ```
 - Got a: `OSError: libcublas.so.11: cannot open shared object file: No such file or directory`
 
   **CPU** users:
