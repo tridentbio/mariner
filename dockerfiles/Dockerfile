@@ -20,7 +20,7 @@ RUN python3 -m venv $POETRY_VENV \
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 RUN poetry config virtualenvs.create false
 
-RUN poetry install --no-root --no-cache && poetry cache clear --no-interaction --all pypi
+RUN poetry install --no-root --no-cache --without dev && poetry cache clear --no-interaction --all pypi
 
 COPY ./mariner /app/mariner
 COPY ./api /app/api
