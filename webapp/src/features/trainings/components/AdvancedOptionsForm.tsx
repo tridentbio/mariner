@@ -12,15 +12,15 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Controller, useFormContext } from 'react-hook-form';
 import MetricSelect from './MetricSelect';
-import { required } from '@utils/reactFormRules';
+import { required } from 'utils/reactFormRules';
 import ModeRadioInput from './ModeRadioInput';
-import { TrainingRequest } from '@app/rtk/generated/experiments';
-import { MetricMode } from '@app/types/domain/experiments';
+import { TrainingRequest } from 'app/rtk/generated/experiments';
+import { MetricMode } from 'app/types/domain/experiments';
 import {
   RadioButtonCheckedOutlined,
   RadioButtonUncheckedOutlined,
 } from '@mui/icons-material';
-import { TargetConfig } from '@app/rtk/generated/models';
+import { TargetConfig } from 'app/rtk/generated/models';
 
 interface AdvancedOptionsProps {
   open?: boolean;

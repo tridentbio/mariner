@@ -19,4 +19,3 @@ const validateAdvancedFields = (
 };
 const advancedOptionsRequiredError =
   'This field is required when advanced options is open';
-

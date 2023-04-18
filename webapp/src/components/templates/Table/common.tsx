@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material';
 import { ReactNode } from 'react';
-import { title } from '@utils';
+import { title } from 'utils';
 import { Column, FilterModel } from './types';
 
 export const columnId = (title: string | number) => {

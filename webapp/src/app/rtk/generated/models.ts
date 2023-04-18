@@ -1,5 +1,5 @@
 import { api } from '../api';
-export const addTagTypes = ['models'] as const;
+export const addTagTypes = ['models', 'experiments'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -80,6 +80,15 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['models'],
       }),
+      getExperimentsMetricsForModelVersion: build.query<
+        GetExperimentsMetricsForModelVersionApiResponse,
+        GetExperimentsMetricsForModelVersionApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/experiments/${queryArg.modelVersionId}/metrics`,
+        }),
+        providesTags: ['experiments'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -129,6 +138,11 @@ export type PostModelCheckConfigApiResponse =
   /** status 200 Successful Response */ ForwardCheck;
 export type PostModelCheckConfigApiArg = {
   modelSchema: ModelSchema;
+};
+export type GetExperimentsMetricsForModelVersionApiResponse =
+  /** status 200 Successful Response */ Experiment[];
+export type GetExperimentsMetricsForModelVersionApiArg = {
+  modelVersionId: number;
 };
 export type User = {
   email?: string;
@@ -770,6 +784,35 @@ export type ForwardCheck = {
   stackTrace?: string;
   output?: any;
 };
+export type Experiment = {
+  experimentName?: string;
+  modelVersionId: number;
+  modelVersion: ModelVersion;
+  createdAt: string;
+  updatedAt: string;
+  createdById: number;
+  id: number;
+  mlflowId: string;
+  stage: 'NOT RUNNING' | 'RUNNING' | 'SUCCESS' | 'ERROR';
+  createdBy?: User;
+  hyperparams?: {
+    [key: string]: number;
+  };
+  epochs?: number;
+  trainMetrics?: {
+    [key: string]: number;
+  };
+  valMetrics?: {
+    [key: string]: number;
+  };
+  testMetrics?: {
+    [key: string]: number;
+  };
+  history?: {
+    [key: string]: number[];
+  };
+  stackTrace?: string;
+};
 export const {
   useGetModelsQuery,
   useLazyGetModelsQuery,
@@ -785,4 +828,6 @@ export const {
   useLazyGetModelQuery,
   useDeleteModelMutation,
   usePostModelCheckConfigMutation,
+  useGetExperimentsMetricsForModelVersionQuery,
+  useLazyGetExperimentsMetricsForModelVersionQuery,
 } = injectedRtkApi;

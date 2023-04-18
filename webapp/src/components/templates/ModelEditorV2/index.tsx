@@ -1,41 +1,58 @@
-import { useEffect, useRef, DragEvent, useState, useLayoutEffect } from 'react';
+import {
+  useEffect,
+  useRef,
+  DragEvent,
+  useState,
+  useLayoutEffect,
+  useCallback,
+} from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
   NodeProps,
   applyNodeChanges,
   applyEdgeChanges,
+  Edge,
 } from 'react-flow-renderer';
-import useModelEditor from '@hooks/useModelEditor';
-import ModelEditorControls from '@components/templates/ModelEditor/Components/ModelEditorControls';
+import useModelEditor from 'hooks/useModelEditor';
+import ModelEditorControls from 'components/templates/ModelEditor/Components/ModelEditorControls';
 import { Box } from '@mui/material';
 import OptionsSidebarV2, {
   HandleProtoDragStartParams,
 } from './OptionsSidebarV2';
-import { substrAfterLast } from '@utils';
+import { substrAfterLast } from 'utils';
 import ComponentConfigNode from './nodes/ComponentConfigNode';
 import InputNode from './nodes/InputNode';
 import OutputNode from './nodes/OutputNode';
 import SuggestionsList from './SuggestionsList';
 import ModelEdge from './edges/ModelEdge';
 import { StyleOverrides } from './styles';
-import { makeComponentEdit } from '@model-compiler/src/implementation/commands/EditComponentsCommand';
+import { makeComponentEdit } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
 import {
   getComponent,
   getNode,
-} from '@model-compiler/src/implementation/modelSchemaQuery';
+} from 'model-compiler/src/implementation/modelSchemaQuery';
 import {
   ModelSchema,
   NodeType,
-} from '@model-compiler/src/interfaces/model-editor';
+} from 'model-compiler/src/interfaces/model-editor';
 import { useMemo } from 'react';
-import FullScreenWrapper from '@components/organisms/FullScreenWrapper';
+import FullScreenWrapper from 'components/organisms/FullScreenWrapper';
 
 type ModelEditorProps = {
   value: ModelSchema;
   onChange?: (schema: ModelSchema) => void;
   editable?: boolean;
 };
+
+const getGoodDistance = (nodesNumber: number) => {
+  if (nodesNumber < 3) return 8;
+  else if (nodesNumber < 5) return 6;
+  else if (nodesNumber < 7) return 3;
+  else return 1;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const ModelEditor = ({
   value,
@@ -87,7 +104,6 @@ const ModelEditor = ({
     }),
     [editable]
   );
-
   const edgeTypes = useMemo(
     () => ({
       ModelEdge: (props: any) => <ModelEdge editable={editable} {...props} />,
@@ -110,38 +126,26 @@ const ModelEditor = ({
       setNodes(nodes.reverse());
       setEdges(edges);
       getSuggestions({ schema: value });
-      applyDagreLayout('LR', 5);
+      applyDagreLayout('TB', getGoodDistance(nodes.length));
     } else {
       setNodes(nodes);
-      const outputEdges = [];
-      for (const targetColumn of value.dataset.targetColumns) {
-        outputEdges.push({
-          type: 'ModelEdge',
-          id: `output-edge-${targetColumn.name}`,
-          source: targetColumn.outModule || nodes.at(-1)?.id || '',
-          target: targetColumn.name,
-        });
-      }
-      setEdges([...edges, ...outputEdges]);
+      setEdges(edges);
       getSuggestions({ schema: value });
-      applyDagreLayout('TB', 5);
+      applyDagreLayout('TB', 3, edges);
     }
   }, []);
 
-  // TODO find a better way to fix screen initial state
-  const temporalyFixScreen = async () => {
-    // temporary fix for screen not rendering correctly
-    const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
-    await sleep(500);
-    applyDagreLayout('LR', 3);
-    await sleep(100);
+  // Fit view when started
+  // Needs a delay and hook update to works
+  const temporalyFixScreen = useCallback(async () => {
+    await sleep(50);
     setFirstRenderWithElements(true);
-  };
-  useEffect(() => {
-    if (!editable) temporalyFixScreen();
   }, []);
   useEffect(() => {
-    if (!editable) fitView();
+    temporalyFixScreen();
+  }, [nodes.length > 0]);
+  useEffect(() => {
+    fitView();
   }, [firstRenderWithElements]);
 
   useEffect(() => {
@@ -359,7 +363,7 @@ const ModelEditor = ({
           )}
         </Box>
         <div>
-          {suggestions.length > 0 && (
+          {suggestions?.length > 0 && (
             <SuggestionsList suggestions={suggestions} />
           )}
         </div>

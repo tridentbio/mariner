@@ -6,13 +6,13 @@ import {
   Select,
   SelectProps,
 } from '@mui/material';
-import UnitAutocomplete from '@components/molecules/UnitsAutocomplete';
-import { DataTypeDomainKind, DataTypeGuard } from '@app/types/domain/datasets';
+import UnitAutocomplete from 'components/molecules/UnitsAutocomplete';
+import { DataTypeDomainKind, DataTypeGuard } from 'app/types/domain/datasets';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useState } from 'react';
 import { required } from 'utils/reactFormRules';
 import { DatasetForm } from '../types';
-import { DataType } from '@model-compiler/src/interfaces/model-editor';
+import { DataType } from 'model-compiler/src/interfaces/model-editor';
 
 type EventLike<T> = {
   target: {

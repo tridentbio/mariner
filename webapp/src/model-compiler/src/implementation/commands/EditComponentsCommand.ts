@@ -1,5 +1,5 @@
-import { GetModelOptionsApiResponse } from '@app/rtk/generated/models';
-import { ArrayElement } from '@utils';
+import { GetModelOptionsApiResponse } from 'app/rtk/generated/models';
+import { ArrayElement } from 'utils';
 import {
   Concat,
   FeaturizersType,

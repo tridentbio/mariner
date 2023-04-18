@@ -1,14 +1,14 @@
 import { GetModelOptionsApiResponse } from 'app/rtk/generated/models';
-import ModelEditorImpl from '@model-compiler/src/implementation/ModelEditorImpl';
-import Suggestion from '@model-compiler/src/implementation/Suggestion';
+import ModelEditorImpl from 'model-compiler/src/implementation/ModelEditorImpl';
+import Suggestion from 'model-compiler/src/implementation/Suggestion';
 import {
   LayerFeaturizerType,
   ModelSchema,
   NodeType,
-} from '@model-compiler/src/interfaces/model-editor';
+} from 'model-compiler/src/interfaces/model-editor';
 import { Dispatch } from 'react';
 import { Edge, HandleType, Node, ReactFlowInstance } from 'react-flow-renderer';
-import { ArrayElement } from '@utils';
+import { ArrayElement } from 'utils';
 
 export type MarinerNode = Node<NodeType>;
 
@@ -35,7 +35,11 @@ export interface IModelEditorContext
   /**
    * Organizes the nodes in the editor
    */
-  applyDagreLayout(director: 'TB' | 'LR', spaceValue: number): void;
+  applyDagreLayout(
+    director: 'TB' | 'LR',
+    spaceValue: number,
+    _edges?: Edge[]
+  ): void;
 
   /**
    * Adds a component with a position

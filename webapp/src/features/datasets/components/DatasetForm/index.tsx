@@ -11,14 +11,14 @@ import {
 } from '@mui/material';
 import { lazy, ReactNode, useState } from 'react';
 import { ColumnsDescriptionsInput } from './ColumnsDescriptionsInput';
-import { useNotifications } from '@app/notifications';
+import { useNotifications } from '../../../../app/notifications';
 import { sum, testNonePattern } from 'utils';
-import * as Datasets from '@app/rtk/generated/datasets';
-import { datasetsApi as dsApi } from '@app/rtk/datasets';
+import * as Datasets from 'app/rtk/generated/datasets';
+import { datasetsApi as dsApi } from 'app/rtk/datasets';
 import Loading from 'components/molecules/Loading';
 import { useForm, Controller, FormProvider } from 'react-hook-form';
 import { required } from 'utils/reactFormRules';
-import { ColumnInfo, SplitType } from '@app/types/domain/datasets';
+import { ColumnInfo, SplitType } from 'app/types/domain/datasets';
 import { DatasetForm as IDatasetForm } from './types';
 const { useGetColumnsMetadataMutation } = dsApi;
 

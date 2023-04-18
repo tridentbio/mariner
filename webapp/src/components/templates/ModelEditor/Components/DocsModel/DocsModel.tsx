@@ -6,9 +6,8 @@ import {
   Tooltip,
   Link as MuiLink,
 } from '@mui/material';
-import IconButton from '@components/atoms/IconButton';
+import IconButton from 'components/atoms/IconButton';
 import AppLink from 'components/atoms/AppLink';
-
 import { useEffect, useState } from 'react';
 import { theme } from 'theme';
 import CancelIcon from '@mui/icons-material/Cancel';

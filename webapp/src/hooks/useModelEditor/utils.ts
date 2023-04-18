@@ -1,7 +1,7 @@
 import { Edge, Node, Position } from 'react-flow-renderer';
 import dagre from 'dagre';
-import { DataTypeDomainKind } from '@app/types/domain/datasets';
-import { DataType } from '@model-compiler/src/interfaces/model-editor';
+import { DataTypeDomainKind } from 'app/types/domain/datasets';
+import { DataType } from 'model-compiler/src/interfaces/model-editor';
 
 /**
  * Apply an auto graph layout into ReactFlow's nodes.
@@ -9,22 +9,55 @@ import { DataType } from '@model-compiler/src/interfaces/model-editor';
  */
 export const positionNodes = <T>(
   nodes: Omit<Node<T>, 'position'>[],
-  edges: Edge[],
+  edges: Edge[] = [],
   direction: 'TB' | 'LR' = 'TB',
   multiplier: number = 2
 ): Node<T>[] => {
+  const firstRender = !edges.length;
   const isHorizontal = direction === 'LR';
   const dagreGraph = new dagre.graphlib.Graph();
 
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  const nodeWidth = Number((260 + ((multiplier - 1) / 4) * 250).toFixed(0));
-  const nodeHeight = Number((90 + (multiplier - 1) * 80).toFixed(0));
+  dagreGraph.setGraph({
+    rankdir: direction,
+  });
 
-  dagreGraph.setGraph({ rankdir: direction });
+  const nodeWidth = Number((260 + ((multiplier - 1) / 4) * 250).toFixed(0));
+  const nodeHeight = Number(
+    (90 + ((firstRender && multiplier < 8 ? 8 : multiplier) - 1) * 80).toFixed(
+      0
+    )
+  );
+
+  const nodesByType: Record<string, typeof nodes> = {
+    input: [],
+    output: [],
+  };
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+    let rank = 1;
+
+    if (node.type === 'input') {
+      nodesByType.input.push(node);
+      rank = 0;
+    } else if (node.type === 'output') {
+      nodesByType.output.push(node);
+      rank = 2;
+    }
+
+    dagreGraph.setNode(node.id, {
+      width: nodeWidth,
+      height: nodeHeight,
+      rank: rank,
+    });
   });
+
+  if (firstRender)
+    nodesByType.input.forEach((inputNode) => {
+      nodesByType.output.forEach((outputNode) => {
+        dagreGraph.setEdge(inputNode.id, outputNode.id, { minlen: 1 });
+      });
+    });
 
   edges.forEach((edge) => {
     dagreGraph.setEdge(edge.source, edge.target);

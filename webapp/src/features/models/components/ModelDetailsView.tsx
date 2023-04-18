@@ -11,7 +11,7 @@ import ModelInferenceView from './ModelInferenceView';
 import { modelsApi } from 'app/rtk/models';
 import ModelOverview from './ModelOverview';
 import Loading from 'components/molecules/Loading';
-// import { ModelDeployments } from '../../deployments/Pages/ModelDeployments';
+import ModelMetricsView from './ModelMetricsView';
 
 interface ModelDetailsProps {
   modelId: number;
@@ -71,15 +71,14 @@ const ModelDetailsView = ({ modelId }: ModelDetailsProps) => {
         </Box>
       ),
     },
-    // Hide for demo
-    // {
-    //   label: 'Deployment',
-    //   panel: model && (
-    //     <Box>
-
-    //     </Box>
-    //   ),
-    // },
+    {
+      label: 'Metrics',
+      panel: model?.versions.length && (
+        <Box>
+          <ModelMetricsView model={model} />
+        </Box>
+      ),
+    },
   ];
 
   if (!isModelLoading && !model) return <NotFound>Model not found</NotFound>;

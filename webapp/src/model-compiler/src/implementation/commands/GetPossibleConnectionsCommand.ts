@@ -1,7 +1,7 @@
-import { ModelSchema } from '@app/rtk/generated/models';
-import { NodeType } from '@model-compiler/src/interfaces/model-editor';
-import { unwrapDollar } from '@model-compiler/src/utils';
-import { flatten } from '@utils';
+import { ModelSchema } from 'app/rtk/generated/models';
+import { NodeType } from 'model-compiler/src/interfaces/model-editor';
+import { unwrapDollar } from 'model-compiler/src/utils';
+import { flatten } from 'utils';
 import { getNodes } from '../modelSchemaQuery';
 import Command from './Command';
 
