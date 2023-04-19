@@ -6,10 +6,12 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import { ReactNode, useEffect, useState } from 'react';
 
 const FullScreenContainer = styled.div`
+  position: relative;
+
   .full-screen-button {
     position: absolute;
     top: ${({ fullScreen }: { fullScreen: boolean }) =>
-      fullScreen ? 'unset' : '83vh'};
+      fullScreen ? 'unset' : '75vh'};
     right: 0;
     bottom: ${({ fullScreen }: { fullScreen: boolean }) =>
       fullScreen ? '1rem' : 'unset'};
@@ -18,6 +20,12 @@ const FullScreenContainer = styled.div`
   }
   .fullscreen-enabled {
     background: white;
+  }
+
+  section {
+    position: absolute;
+    right: 50vw;
+    bottom: 2rem;
   }
 `;
 

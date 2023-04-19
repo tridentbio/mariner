@@ -1,4 +1,4 @@
-import { ArrayElement, flatten } from '@utils';
+import { ArrayElement, flatten } from 'utils';
 import {
   DataType,
   FeaturizersType,

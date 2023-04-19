@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { makeHttpError, Status as HTTPStatus } from '@utils/http';
+import { makeHttpError, Status as HTTPStatus } from 'utils/http';
 import { TOKEN } from './local-storage';
 
 export type Status = 'idle' | 'loading' | 'failed';

@@ -4,7 +4,7 @@ import { ControlButton, Controls } from 'react-flow-renderer';
 import CustomAutoLayoutButton from '../CustomAutoLayoutButton';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
-import useModelEditor from '@hooks/useModelEditor';
+import useModelEditor from 'hooks/useModelEditor';
 import { Tooltip } from '@mui/material';
 
 type ModelEditorControlsProps = {

@@ -1,5 +1,5 @@
-import { keys, makeForm } from '@utils';
-import { Paginated } from '@app/api';
+import { keys, makeForm } from 'utils';
+import { Paginated } from 'app/api';
 import { api } from './api';
 import {
   NewDataset,
@@ -7,7 +7,7 @@ import {
   UpdateDataset,
   ColumnInfo,
   DatasetsListingFilters,
-} from '@app/types/domain/datasets';
+} from 'app/types/domain/datasets';
 
 const makeNewDatasetForm = (dataset: Partial<NewDataset>) => {
   const form = new FormData();
@@ -22,7 +22,7 @@ const makeNewDatasetForm = (dataset: Partial<NewDataset>) => {
   return form;
 };
 
-export const addTagTypes = ['datasets', '@utils'] as const;
+export const addTagTypes = ['datasets', 'utils'] as const;
 
 export const datasetsApi = api
   .enhanceEndpoints({

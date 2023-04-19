@@ -1,9 +1,9 @@
 import { createContext, FC, ReactNode, useRef, useEffect } from 'react';
-import { messageHandler, SocketMessageHandler } from '@app/websocket/types';
-import { useAppDispatch } from '@hooks';
+import { messageHandler, SocketMessageHandler } from 'app/websocket/types';
+import { useAppDispatch } from 'app/hooks';
 import { updateExperiment } from 'features/models/modelSlice';
-import * as datasetsApi from '@app/rtk/generated/datasets';
-import { useNotifications } from '@app/notifications';
+import * as datasetsApi from 'app/rtk/generated/datasets';
+import { useNotifications } from 'app/notifications';
 import { updateDataset } from 'features/datasets/datasetSlice';
 
 const WebSocketContext = createContext<{

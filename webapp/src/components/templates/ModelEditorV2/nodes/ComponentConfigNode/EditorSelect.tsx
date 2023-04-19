@@ -1,5 +1,5 @@
 import { MenuItem, TextField } from '@mui/material';
-import { ComponentOption } from '@app/rtk/generated/models';
+import { ComponentOption } from 'app/rtk/generated/models';
 import { useEffect, useRef, useState } from 'react';
 
 interface EditorSelectProps {

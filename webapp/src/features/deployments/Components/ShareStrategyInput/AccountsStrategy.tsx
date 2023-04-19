@@ -1,5 +1,5 @@
 import { Autocomplete, TextField } from '@mui/material';
-import { useAppSelector } from '@hooks';
+import { useAppSelector } from 'app/hooks';
 import { User } from 'app/rtk/auth';
 import React, { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';

@@ -1,4 +1,4 @@
-import { DatasetErrors } from '@app/types/domain/datasets';
+import { DatasetErrors } from 'app/types/domain/datasets';
 import StackTrace from 'components/organisms/StackTrace';
 import { Button } from '@mui/material';
 import { LargerBoldText } from '../../../../components/molecules/Text';

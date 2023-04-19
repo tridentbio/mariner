@@ -7,6 +7,7 @@ on:
     branches: [ develop, releases/** ]
     # Only when PRs are opened or there are pushs to it
     types: [opened, synchronize, closed]
+    paths: [backend/**/*.py]
 
   # Runs manually
   workflow_dispatch:

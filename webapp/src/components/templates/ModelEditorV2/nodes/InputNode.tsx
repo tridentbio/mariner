@@ -1,5 +1,5 @@
 import BaseNode from './BaseNode';
-import { Input } from '@model-compiler/src/interfaces/model-editor';
+import { Input } from 'model-compiler/src/interfaces/model-editor';
 import { NodeProps, Position } from 'react-flow-renderer';
 import CustomHandle from './CustomHandle';
 
