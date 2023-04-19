@@ -24,16 +24,16 @@ BACKEND_DEPENDENCY_FILES = backend/pyproject.toml backend/poetry.lock
 WEBAPP_DEPENDENCY_FILES = webapp/package.json webapp/package-lock.json
 
 ##@ Dependencies
-webapp-install: webapp/node_modules ## Install dependencies to run webapp locally and run webapp tools
+
+webapp-install:         ## Install dependencies to run webapp locally and run webapp tools
 	cd webapp &&\
 		npm install
 
 
-backend-install:  ## Install dependencies to run backend locally and run it's CLI tools
+backend-install:        ## Install dependencies to run backend locally and run it's CLI tools
 	cd backend &&\
 		poetry install &&\
 		poetry run install_deps_cpu
-
 
 help:                   ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -53,7 +53,7 @@ build:                  ## Builds needed local images to run application.
 	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db $(ARGS)
 
 create-admin:           ## Creates default "admin@mariner.trident.bio" with "123456" password
-	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()' || exit 0" backend
+	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
 
 start:                  ## Starts services (without building them explicitly)
 	$(DOCKER_COMPOSE) up --wait $(CORE_SERVICES)
