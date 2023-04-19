@@ -139,12 +139,7 @@ export const createModelFixture = (
   cy.visit('/models/new');
   fillDatasetInfo(modelData);
   cy.get('button').contains('NEXT').click();
-  cy.buildNumSmilesModel().then(() => {
-    cy.get('button').contains('CREATE MODEL').click();
-    cy.url({ timeout: 30000 }).should('include', `#newtraining`, {
-      timeout: 30000,
-    });
-  });
+  cy.buildYamlModel('models/schemas/small_regressor_schema.yaml');
 };
 
 export const connectAndFill = ({
@@ -271,6 +266,26 @@ export const deleteTestModelsIfExist = () => {
             $link.text()
           )
         ) {
+          cy.get('a').contains($link.text()).click();
+          cy.wait(1000);
+          cy.get('button').contains('Delete').click().wait(1000);
+        }
+      });
+    }
+  });
+};
+
+export const deleteModelIfExist = (modelName: string) => {
+  cy.intercept({
+    method: 'GET',
+    url: 'http://localhost/api/v1/models/*',
+  }).as('getModels');
+  cy.visit('/models');
+  cy.wait('@getModels');
+  cy.get('tbody').then(($tbody) => {
+    if ($tbody.find('a').length) {
+      cy.get('tbody a').each(($link) => {
+        if ($link.text() === modelName) {
           cy.get('a').contains($link.text()).click();
           cy.wait(1000);
           cy.get('button').contains('Delete').click().wait(1000);

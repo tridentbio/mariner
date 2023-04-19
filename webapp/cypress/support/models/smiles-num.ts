@@ -4,7 +4,11 @@ import { parse } from 'yaml';
 import { DeepPartial } from '@reduxjs/toolkit';
 import { ModelCreate, ModelSchema } from '@app/rtk/generated/models';
 import { randomLowerCase } from 'utils';
-import { dragComponentsAndMapConfig, flowDropSelector } from './common';
+import {
+  deleteModelIfExist,
+  dragComponentsAndMapConfig,
+  flowDropSelector,
+} from './common';
 import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
 
@@ -70,12 +74,11 @@ const objIsEmpty = (obj: object) => !Boolean(Object.keys(obj).length);
 
 const autoFixSuggestions = () =>
   cy.getWithouThrow('[data-testid="AutoFixHighOutlinedIcon"]').then(($els) => {
-    for (let i = 0; i < $els.length; i++) {
+    if ($els.length === 1)
       cy.get('[data-testid="AutoFixHighOutlinedIcon"]')
         .first()
         .click({ force: true });
-      cy.wait(100);
-    }
+    else if ($els.length !== 0) cy.get('li').contains('Fix all').click();
   });
 
 /**
@@ -120,7 +123,10 @@ const connect = (sourceHandleId: string, targetHandleId: string) => {
   source.trigger('mouseup');
 };
 
-export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
+export const buildModel = (
+  modelCreate: DeepPartial<ModelCreate>,
+  success: boolean
+) => {
   cy.once('uncaught:exception', () => false);
   cy.visit('/models/new');
   // Fill model name
@@ -148,20 +154,27 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
     .click();
 
   const targetCols =
-    modelCreate.config?.dataset?.targetColumns?.map((col) => col?.name || '') ||
-    [];
+    modelCreate.config?.dataset?.targetColumns?.map(
+      // Used to determine end of column name in regex
+      (col) => col!.name! + col!.dataType!.domainKind!
+    ) || [];
   const featureCols =
     modelCreate.config?.dataset?.featureColumns?.map(
-      (col) => col?.name || ''
+      // Used to determine end of column name in regex
+      (col) => col!.name! + col!.dataType!.domainKind!
     ) || [];
 
   targetCols.forEach((col) => {
     cy.get('#target-col').click();
-    cy.get('div').contains(col).click({ force: true });
+    cy.get('li')
+      .contains(new RegExp(`^${col}`, 'gi'))
+      .click();
   });
   featureCols.forEach((col) => {
     cy.get('#feature-cols').click();
-    cy.get('div').contains(col).click({ force: true });
+    cy.get('li')
+      .contains(new RegExp(`^${col}`, 'gi'))
+      .click();
   });
 
   cy.get('button').contains('NEXT').click();
@@ -172,13 +185,6 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
     wheelDeltaY: 2500,
     bubbles: true,
   });
-  // drag inputs and outputs to know positions:
-  featureCols.forEach((col, idx) =>
-    cy
-      .wait(333)
-      .get(`[data-id="${col}"]`)
-      .move(flowDropSelector, idx * 100, 6)
-  );
 
   const config = dragComponentsAndMapConfig(
     modelCreate.config as unknown as ModelSchema
@@ -196,6 +202,11 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
       );
     })
   );
+
+  cy.intercept({
+    method: 'POST',
+    url: 'http://localhost/api/v1/models/check-config',
+  }).as('createModel');
 
   cy.then(() => {
     iterateTopologically(config, (node, type) => {
@@ -220,13 +231,19 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
           } else {
             element.get(`[id="${key}"]`).then((curElement) => {
               if (Boolean(curElement.prop('checked')) !== value)
-                curElement.click();
+                curElement.trigger('click');
             });
           }
         });
       });
     });
   }).then(() => cy.get('button').contains('CREATE').click());
+
+  cy.wait('@createModel').then(({ response }) => {
+    expect(response?.statusCode).to.eq(200);
+    expect(response?.body).to.have.property('stackTrace');
+    expect(Boolean(response?.body.stackTrace)).to.eq(!success);
+  });
 
   cy.get('.react-flow__node').then(($nodes) => {
     const componentTypeByDataId: {
@@ -245,41 +262,29 @@ export const buildModel = (modelCreate: DeepPartial<ModelCreate>) => {
   });
 };
 
-export const buildNumSmilesModel = (dataset: string | null = null) => {
-  cy.fixture('models/schemas/small_regressor_schema.yaml').then((yamlStr) => {
-    const jsonSchema = parse(yamlStr);
-    buildModel({
-      name: 'asidjaisjd',
-      modelVersionDescription: 'AAAAAAAAAAAAAAAAAAAAa',
-      modelDescription: 'BBBBBBBBBBBBBBBB',
-      config: {
-        ...jsonSchema,
-        name: 'CCCCCCCCCCCCCC',
-        dataset: {
-          name: dataset || 'ZincExtra',
-          featureColumns: [{ name: 'smiles' }, { name: 'mwt' }],
-          targetColumns: [{ name: 'tpsa', outModule: 'LinearJoined' }],
-        },
-      },
-    });
-  });
-};
-
-export const buildYamlModel = (yaml: string, dataset: string | null = null) => {
+export const buildYamlModel = (
+  yaml: string,
+  dataset: string | null = null,
+  success = true
+) => {
+  const modelName = randomName();
   cy.fixture(yaml).then((yamlStr) => {
     const jsonSchema: ModelSchema = parse(yamlStr);
-    buildModel({
-      name: randomName(),
-      modelVersionDescription: randomName(),
-      modelDescription: randomName(),
-      config: {
-        ...jsonSchema,
-        name: randomName(),
-        dataset: {
-          ...jsonSchema.dataset,
-          name: dataset || jsonSchema.dataset.name,
+    buildModel(
+      {
+        name: modelName,
+        modelVersionDescription: randomName(),
+        modelDescription: randomName(),
+        config: {
+          ...jsonSchema,
+          name: randomName(),
+          dataset: {
+            ...jsonSchema.dataset,
+            name: dataset || jsonSchema.dataset.name,
+          },
         },
       },
-    });
+      success
+    );
   });
 };

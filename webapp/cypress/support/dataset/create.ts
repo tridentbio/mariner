@@ -48,7 +48,7 @@ const createDataset = (dataset: DatasetFormData) => {
   }
   cy.get('#dataset-split-input').type(dataset.split);
 
-  dataset.descriptions.forEach(({ pattern, dataType, description }) => {
+  dataset.descriptions?.forEach(({ pattern, dataType, description }) => {
     addDescription(pattern, dataType, description);
   });
 
