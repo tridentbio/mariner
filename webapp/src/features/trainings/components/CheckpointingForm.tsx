@@ -1,10 +1,10 @@
-import { TrainingRequest } from '@app/rtk/generated/experiments';
-import { TargetConfig } from '@app/rtk/generated/models';
-import { MetricMode } from '@app/types/domain/experiments';
-import { ModelVersionType } from '@app/types/domain/models';
+import { TrainingRequest } from 'app/rtk/generated/experiments';
+import { TargetConfig } from 'app/rtk/generated/models';
+import { MetricMode } from 'app/types/domain/experiments';
+import { ModelVersionType } from 'app/types/domain/models';
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { required } from '@utils/reactFormRules';
+import { required } from 'utils/reactFormRules';
 import MetricSelect from './MetricSelect';
 import ModeRadioInput from './ModeRadioInput';
 

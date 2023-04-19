@@ -3,10 +3,10 @@ import {
   AllowedLosses,
   useGetModelLossesQuery,
 } from 'app/rtk/generated/models';
-import useModelEditor from '@hooks/useModelEditor';
-import { makeComponentEdit } from '@model-compiler/src/implementation/commands/EditComponentsCommand';
-import { getComponent } from '@model-compiler/src/implementation/modelSchemaQuery';
-import { Output } from '@model-compiler/src/interfaces/model-editor';
+import useModelEditor from 'hooks/useModelEditor';
+import { makeComponentEdit } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
+import { getComponent } from 'model-compiler/src/implementation/modelSchemaQuery';
+import { Output } from 'model-compiler/src/interfaces/model-editor';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 

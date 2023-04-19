@@ -1,17 +1,17 @@
 import { Button, TextField, Typography } from '@mui/material';
 import { Box, SystemStyleObject } from '@mui/system';
-import { useNotifications } from '@app/notifications';
+import { useNotifications } from 'app/notifications';
 import { FormEvent, useState } from 'react';
-import { Model, ModelVersionType } from '@app/types/domain/models';
+import { Model, ModelVersionType } from 'app/types/domain/models';
 import ModelVersionSelect from '../ModelVersionSelect';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { required } from 'utils/reactFormRules';
-import CheckpointingForm from '@features/trainings/components/CheckpointingForm';
-import AdvancedOptionsForm from '@features/trainings/components/AdvancedOptionsForm';
+import CheckpointingForm from 'features/trainings/components/CheckpointingForm';
+import AdvancedOptionsForm from 'features/trainings/components/AdvancedOptionsForm';
 import { DeepPartial } from 'react-hook-form';
-import { TrainingRequest } from '@app/rtk/generated/experiments';
+import { TrainingRequest } from 'app/rtk/generated/experiments';
 import OptimizerForm from './OptimizerForm';
-import { TargetConfig } from '@app/rtk/generated/models';
+import { TargetConfig } from 'app/rtk/generated/models';
 
 export interface ModelExperimentFormProps {
   onSubmit: (value: TrainingRequest) => any;

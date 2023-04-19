@@ -1,5 +1,5 @@
-import { TrainingRequest } from '@app/rtk/generated/experiments';
-import { MetricMode } from '@app/types/domain/experiments';
+import { TrainingRequest } from 'app/rtk/generated/experiments';
+import { MetricMode } from 'app/types/domain/experiments';
 import { DeepPartial } from 'react-hook-form';
 
 const defaultExperimentFormValues: DeepPartial<TrainingRequest> = {

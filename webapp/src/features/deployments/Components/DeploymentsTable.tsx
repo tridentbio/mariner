@@ -7,7 +7,7 @@ import { Deployment } from '../types';
 import StatusChip from './StatutsChip';
 import DeploymentsTableActions from './TableActions';
 import { Box, Chip } from '@mui/material';
-import { useAppDispatch } from '@hooks';
+import { useAppDispatch } from 'app/hooks';
 import { setCurrentDeployment } from '../deploymentsSlice';
 
 interface DeploymentsTableProps {

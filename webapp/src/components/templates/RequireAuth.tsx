@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '@hooks';
-import { TOKEN } from '@app/local-storage';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { TOKEN } from '../../app/local-storage';
 import { fetchMe } from '../../features/users/usersSlice';
 import { CircularProgress } from '@mui/material';
 

@@ -1,10 +1,10 @@
 import BaseNode from './BaseNode';
-import { Input } from '@model-compiler/src/interfaces/model-editor';
+import { Input } from 'model-compiler/src/interfaces/model-editor';
 import { NodeProps, Position } from 'react-flow-renderer';
 import CustomHandle from './CustomHandle';
 import NodeHeader from './NodeHeader';
 import { ExpandOutlined } from '@mui/icons-material';
-import useModelEditor from '@hooks/useModelEditor';
+import useModelEditor from 'hooks/useModelEditor';
 import OutputNodeInputs from './ComponentConfigNode/OutputNodeInputs';
 
 interface InputNodeProps extends NodeProps<Input> {

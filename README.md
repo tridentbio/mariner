@@ -4,29 +4,32 @@
 
 ### Requirements
 
+To run the application, you simply need:
+
 - [Docker](https://www.docker.com/).
 - [Docker Compose](https://docs.docker.com/compose/install/).
+
+To contribute to the project, you might need extra requirements:
+
+- [GNU Make](https://www.gnu.org/software/make/) for helper scripts
+- [Python 3.9](https://www.python.org/downloads/) for backend and ML
 - [Poetry](https://python-poetry.org/) for Python package and environment management.
+- [Node 16](https://nodejs.org/en/download) for webapplication
 
-### Installation
+### Contributing
 
-1. (Linux users) Create a virtual environment with python3.9
+Once all requirements are installed, have a look in the commands provided by `make`
 
-```bash
-poetry env use $(which python3.9)
-```
-
-2. Install the dependencies in the repo's root folder
+We have a series of git hooks to keep up with the code standards defined for the project.
+To have them working in your machine run:
 
 ```bash
-poetry install && poetry run install_deps_cpu
+make pre-commit-install
 ```
 
-3. (optional) Install pre-commit
+#### Backend
 
-```bash
-poetry run pre-commit install
-```
+Here are some commands you can run on the `backend/` root
 
 4. Use the virtualenv as appropriate. As long as in the virtualenv, all dependencies should be found, and editor support should have autocompletion working:
 
@@ -79,6 +82,7 @@ Refer to [pytest documentation](https://docs.pytest.org/en/7.2.x/) to know how t
 If your stack is already up and you just want to run the tests, you can use:
 
 - Run default tests (short run)
+
 ```bash
 docker-compose exec backend pytest
 ```
@@ -106,7 +110,6 @@ To execute a set of benchmarks, use the following pytest options:
 - `-s` pytest option to capture the test stdout
 - `-m benchmark` otherwise the benchmarks collected will be deselected by the pytest.ini `adopts`
 
-
 ### Live development with Python Jupyter Notebooks
 
 To run jupyterlab withing the docker-compose networks (in order to access services such as the db and ray), run:
@@ -115,18 +118,28 @@ To run jupyterlab withing the docker-compose networks (in order to access servic
 docker-compose exec backend bash # get a shell in container
 $JUPYTER # use JUPYTER variable defined in docker-compose.override.yml
 ```
+
 If calling $JUPYTER fails, possible causes are:
 
 1. Docker-compose.override.yml was not used, in such case you can run in the backend container shell:
+
 ```bash
 jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
 ```
 
-2. Development dependencies were not installed, in such case you should 
-get a shell in the container and run `poetry add jupyter`. The default
-development image (Dockerfile.local) already has jupyter as a dev dependency
+2. Development dependencies were not installed, in such case you should
+   get a shell in the container and run `poetry add jupyter`. The default
+   development image (Dockerfile.local) already has jupyter as a dev dependency
 
 ### Migrations
+
+#### Running existing migrations
+
+There are 3 make commands that many help with migrations, their names are self-explanatory:
+
+1. `make migrate-backend`: Runs backend migrations
+1. `make migrate-mlflow`: Runs mlflow migrations
+1. `make migrate`: Runs all migrations
 
 As during local development your app directory is mounted as a volume inside the container, you can also run the migrations with `alembic` commands inside the container and the migration code will be in your app directory (instead of being only inside the container). So you can add it to your git repository.
 
@@ -164,29 +177,42 @@ detect it, and use it to filter the current release to publish notifications for
 You may use it from the command line for debugging like so:
 
 ```bash
-python -m app.changelog --help
-cat RELEASES.md | python -m app.changelog publish
+cd backend
+cat RELEASES.md | python -m mariner.changelog publish
 ```
 
-or from the docker compose
+or with make
 
 ```bash
-docker-compose run backend python -m mariner.changelog --help
-cat RELEASES.md | docker-compose run backend python -m app.changelog publish
+make publish
 ```
 
-## Troubleshooting
+## Testing the application
 
+When you just want to test the application, i.e. you don't want to make changes to it, it's
+recommended to run the project without src code volumes created by default with our docker-compose
+files. To do that, you must run all make commands like following:
+
+```console
+make build DOCKER_COMPOSE="docker-compose.yml"
+```
+Causing only the docker-compose.yml file to have affect, and therefore ignoring the volumes created in docker-compose.override.yml
+
+## Troubleshooting
+- Getting pre-commit failures because of style when trying to commit
+
+  Try running the following command to run automatic formatters:
+  ```console
+  make fix
+  ```
 - Got a: `OSError: libcublas.so.11: cannot open shared object file: No such file or directory`
 
-    **CPU** users:
-    
-    Reinstall torch with cpu extra deps in the correct virtual environment
-    ```
-    poetry shell
-    pip uninstall torch
-    pip install torch==2.0.0 --extra-index-url https://download.pytorch.org/whl/cpu
-    ```
+  **CPU** users:
 
+  Reinstall torch with cpu extra deps in the correct virtual environment
 
-
+  ```
+  poetry shell
+  pip uninstall torch
+  pip install torch==2.0.0 --extra-index-url https://download.pytorch.org/whl/cpu
+  ```

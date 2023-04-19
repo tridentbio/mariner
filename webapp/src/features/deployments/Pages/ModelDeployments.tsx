@@ -2,9 +2,9 @@ import { Model } from 'app/types/domain/models';
 import { Box, Button } from '@mui/material';
 import DeploymentsTable from '../Components/DeploymentsTable';
 import Modal from 'components/templates/Modal';
-import { useToggle } from '@hooks/useToogle';
+import { useToggle } from 'hooks/useToogle';
 import { DeploymentForm } from '../Components/DeploymentForm';
-import { useAppDispatch, useAppSelector } from '@hooks';
+import { useAppDispatch, useAppSelector } from 'app/hooks';
 import {
   cleanCurrentDeployment,
   setCurrentDeployment,

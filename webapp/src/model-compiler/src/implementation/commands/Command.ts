@@ -1,13 +1,11 @@
 abstract class Command<T, S> {
-  args: T
+  args: T;
 
-  abstract execute :  () => S
+  abstract execute: () => S;
 
   constructor(args: T) {
-    this.args = args
+    this.args = args;
   }
-
-
 }
 
-export default Command
+export default Command;

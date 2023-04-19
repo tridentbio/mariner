@@ -1,6 +1,6 @@
-import api from '@app/api';
-import { ColumnMeta } from '@app/types/domain/datasets';
-import { Model, ModelVersionType } from '@app/types/domain/models';
+import api from 'app/api';
+import { ColumnMeta } from 'app/types/domain/datasets';
+import { Model, ModelVersionType } from 'app/types/domain/models';
 import { range } from './arrays';
 
 export type ArrayElement<T> = T extends Array<infer C> ? C : never;

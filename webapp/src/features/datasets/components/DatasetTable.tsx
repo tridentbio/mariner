@@ -2,14 +2,14 @@ import { Avatar, IconButton } from '@mui/material';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import DownloadIcon from '@mui/icons-material/Download';
 import { downloadDataset } from '../datasetSlice';
-import { useAppSelector } from '@hooks';
+import { useAppSelector } from 'app/hooks';
 import { useEffect } from 'react';
 import Table from 'components/templates/Table';
 import { Column, State } from 'components/templates/Table/types';
 import AppLink from 'components/atoms/AppLink';
 import { dateRender } from 'components/atoms/Table/render';
-import { datasetsApi } from '@app/rtk/datasets';
-import { Dataset } from '@app/types/domain/datasets';
+import { datasetsApi } from 'app/rtk/datasets';
+import { Dataset } from 'app/types/domain/datasets';
 import { StatusButton } from './StatusButton';
 import Justify from 'components/atoms/Justify';
 
