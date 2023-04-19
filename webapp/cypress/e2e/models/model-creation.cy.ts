@@ -65,7 +65,7 @@ describe('/models/new - Model creation page', () => {
     cy.buildYamlModel(
       'models/schemas/small_regressor_schema.yaml',
       zincDatasetFixture.name,
-      true
+      false
     );
   });
 });

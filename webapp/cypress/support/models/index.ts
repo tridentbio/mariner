@@ -1,5 +1,4 @@
-import { buildYamlModel } from './smiles-num';
-import { DatasetFormData } from '../dataset/create';
+import { buildYamlModel } from './build-model';
 
 Cypress.Commands.add('buildYamlModel', buildYamlModel);
 
@@ -9,7 +8,8 @@ declare global {
       buildYamlModel(
         yaml: string,
         datasetName?: string,
-        success?: boolean
+        success?: boolean,
+        deleteModel?: boolean
       ): string;
     }
   }
