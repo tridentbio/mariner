@@ -159,8 +159,15 @@ services:
       - '--web.enable-lifecycle'
     ports:
       - 9090:9090
-    networks:
-      - ray_net
+
+  e2e:
+    image: cypress/included:12.6.0
+    working_dir: /e2e
+    environment:
+      - CYPRESS_baseUrl=http://localhost:3000/
+    command: npx cypress run --config-file /e2e/cypress.config.js --browser chrome
+    network_mode: host
+
 volumes:
   app-db-data:
   app-mlflow-data:

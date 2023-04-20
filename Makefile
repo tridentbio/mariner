@@ -110,10 +110,8 @@ test-integration: start      ## Runs unit tests
 
 
 .PHONY: e2e
-e2e: webapp-install start create-admin ## Runs test target
-	cd webapp && \
-		npx cypress install && \
-		npx cypress run
+e2e: ## Runs test target
+	$(DOCKER_COMPOSE) up e2e
 
 
 .PHONY: test-target
