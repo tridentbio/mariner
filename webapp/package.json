@@ -18,7 +18,9 @@
     "prettier": "prettier 'src/**/*.(ts|tsx)'",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "cypress:open": "cypress open --e2e -b chrome",
+    "cypress:run": "cypress run"
   },
   "dependencies": {
     "@emotion/css": "^11.10.0",

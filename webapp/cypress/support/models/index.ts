@@ -1,20 +1,16 @@
-import { buildNumSmilesModel } from './smiles-num';
-import { buildCategoricalSmilesModel } from './smiles-categorical';
+import { buildYamlModel } from './build-model';
 
-Cypress.Commands.add('buildNumSmilesModel', buildNumSmilesModel);
-Cypress.Commands.add(
-  'buildCategoricalSmilesModel',
-  buildCategoricalSmilesModel
-);
+Cypress.Commands.add('buildYamlModel', buildYamlModel);
 
 declare global {
   namespace Cypress {
     interface Chainable {
-      buildNumSmilesModel(featureCols: string[], targetCol: string): Chainable;
-      buildCategoricalSmilesModel(
-        featureCols: string[],
-        targetCol: string
-      ): Chainable;
+      buildYamlModel(
+        yaml: string,
+        datasetName?: string,
+        success?: boolean,
+        deleteModel?: boolean
+      ): string;
     }
   }
 }

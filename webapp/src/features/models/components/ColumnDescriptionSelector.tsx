@@ -64,7 +64,7 @@ const ColumnDescriptionSelector = <M extends boolean>(
         title={props.label}
         onChange={handleChange}
         value={props.value || (props.multiple ? [] : null)}
-        options={props.options}
+        options={props.options.sort((a, b) => a.name.localeCompare(b.name))}
         onBlur={props.onBlur}
         renderInput={(params) => (
           <ColumnOption label={props.label} error={props.error} {...params} />
