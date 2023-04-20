@@ -20,7 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: E2E tests
-      run: make test-e2e DOCKER_COMPOSE="docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
+      run: make e2e DOCKER_COMPOSE="docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
     - name: Start services
       run: make start DOCKER_COMPOSE="docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
     - name: Integration tests and get report
