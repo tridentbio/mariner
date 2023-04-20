@@ -27,6 +27,7 @@ jobs:
       if: 'failure() || success()'
       run: make e2e DOCKER_COMPOSE="docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
     - name: Archive e2e videos
+      if: 'failure() || success()'
       uses: actions/upload-artifact@v3
       with:
         name: code-coverage-report
