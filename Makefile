@@ -27,7 +27,7 @@ WEBAPP_DEPENDENCY_FILES = webapp/package.json webapp/package-lock.json
 
 webapp-install:         ## Install dependencies to run webapp locally and run webapp tools
 	cd webapp &&\
-		npm install
+		npm ci
 
 
 backend-install:        ## Install dependencies to run backend locally and run it's CLI tools
@@ -82,7 +82,6 @@ test-integration: start          ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 test-e2e: webapp-install start create-admin  ## Runs e2e cypress tests
-
 	cd webapp && \
 		npx cypress install && \
 		npx cypress run
