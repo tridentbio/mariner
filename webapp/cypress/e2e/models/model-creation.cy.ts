@@ -14,7 +14,7 @@ describe('/models/new - Model creation page', () => {
   before(() => {
     cy.loginSuper();
     cy.then(() => createDatasetDirectly(zincDatasetFixture));
-    cy.wrap(createDatasetDirectly(irisDatasetFixture), { timeout: 15000 });
+    cy.then(() => createDatasetDirectly(irisDatasetFixture));
   });
 
   after(() => {
