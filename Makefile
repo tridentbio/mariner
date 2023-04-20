@@ -82,7 +82,10 @@ test-integration: start          ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 test-e2e: webapp-install start create-admin  ## Runs e2e cypress tests
-	cd webapp && npx cypress run
+
+	cd webapp && \
+		npx cypress install && \
+		npx cypress run
 
 pre-commit: backend-install webapp-install ## Runs pre-commit hooks (formatting, linting and unit testing)
 	pre-commit

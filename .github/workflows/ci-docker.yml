@@ -19,28 +19,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v1
+        # - name: Cache Docker layers
+        #   uses: actions/cache@v3
+        #   with:
+        #     path: /tmp/.buildx-cache
+        #     key: ${{ runner.os }}-buildx-${{ github.sha }}
+        #     restore-keys: |
+        #       ${{ runner.os }}-buildx-
     - name: Start services
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
+      run: docker compose -f docker-compose.yml -f docker-compose-cicd.yml up -d backend
     - name: Integration tests and get report
-      run: docker-compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
-    - name: Integration tests and get report
+      run: docker compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
+    - name: E2E tests
       run: make test-e2e
-    - name: Archive video outputs from e2e testing
-      uses: actions/upload-artifact@v3
-      with:
-        name: code-coverage-report
-        path: webapp/cypress/videos/
-    - name: Archive integration coverage output
-      uses: actions/upload-artifact@v3
-      with:
-        name: code-coverage-report
-        path: backend/cov/html
+        # - name: Archive video outputs from e2e testing
+        #   uses: actions/upload-artifact@v3
+        #   with:
+        #     name: code-coverage-report
+        #     path: webapp/cypress/videos/
+        # - name: Archive integration coverage output
+        #   uses: actions/upload-artifact@v3
+        #   with:
+        #     name: code-coverage-report
+        #     path: backend/cov/html
