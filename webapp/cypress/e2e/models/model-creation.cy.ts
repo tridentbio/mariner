@@ -11,13 +11,13 @@ describe('/models/new - Model creation page', () => {
   const zincDatasetFixture = createRandomDatasetFormData();
   const irisDatasetFixture = createIrisDatasetFormData();
 
-  before(async () => {
+  before(() => {
     cy.loginSuper();
-    await createDatasetDirectly(zincDatasetFixture);
-    await createDatasetDirectly(irisDatasetFixture);
+    cy.then(() => createDatasetDirectly(zincDatasetFixture));
+    cy.wrap(createDatasetDirectly(irisDatasetFixture), { timeout: 15000 });
   });
 
-  after(async () => {
+  after(() => {
     deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
     deleteDatasetIfAlreadyExists(irisDatasetFixture.name);
   });
