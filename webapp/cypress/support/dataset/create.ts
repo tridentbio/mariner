@@ -76,63 +76,72 @@ const everyLowerCase = <T extends Record<string, any>>(obj: T): T =>
     return acc;
   }, {} as T);
 
-export const createDatasetDirectly = async (dataset: DatasetFormData) => {
-  const token = await new Promise<string>((res) =>
-    cy.window().then((win) => {
-      const value = JSON.parse(win.localStorage.getItem('app-token') || '{}');
-      res(`Bearer ${value.access_token}`);
-    })
-  );
+export const createDatasetDirectly = (dataset: DatasetFormData, trys = 5) => {
+  cy.once('uncaught:exception', () => false);
 
-  const file = await new Promise<Blob>((res) =>
-    cy.fixture(dataset.file, 'binary').then(res)
-  );
-
-  const boundary = `----${Math.random().toString().substr(2, 16)}`;
-
-  // FormData is not supported by Cypress and needs to be created manually
-  const formData =
-    `--${boundary}\r\n` +
-    `Content-Disposition: form-data; name="name"\r\n\r\n` +
-    `${dataset.name}\r\n` +
-    `--${boundary}\r\n` +
-    `Content-Disposition: form-data; name="columnsMetadata"\r\n\r\n` +
-    `${JSON.stringify(dataset.descriptions.map(everyLowerCase))}\r\n` +
-    `--${boundary}\r\n` +
-    `Content-Disposition: form-data; name="file"; filename="${dataset.file}"\r\n` +
-    `Content-Type: text/csv\r\n\r\n` +
-    `${file}\r\n` +
-    `--${boundary}\r\n` +
-    `Content-Disposition: form-data; name="splitTarget"\r\n\r\n` +
-    `${dataset.split}\r\n` +
-    `--${boundary}\r\n` +
-    `Content-Disposition: form-data; name="splitType"\r\n\r\n` +
-    `${dataset.splitType.toLowerCase()}\r\n` +
-    `--${boundary}\r\n` +
-    `Content-Disposition: form-data; name="splitOn"\r\n\r\n` +
-    `${dataset.splitType === 'Random' ? '' : dataset.splitColumn}\r\n` +
-    `--${boundary}\r\n` +
-    `Content-Disposition: form-data; name="description"\r\n\r\n` +
-    `${dataset.description}\r\n` +
-    `--${boundary}--\r\n`;
-
-  await new Promise<void>((res) =>
-    cy
-      .request({
-        method: 'POST',
-        url: 'http://localhost/api/v1/datasets/',
-        body: formData,
-        headers: {
-          'Content-Type': `multipart/form-data; boundary=${boundary}`,
-          authorization: token,
-        },
+  cy.wrap(
+    new Promise<string>((res, rej) =>
+      cy.window().then((win) => {
+        const value = JSON.parse(win.localStorage.getItem('app-token') || '{}');
+        if (!value.access_token) {
+          rej('No token found yet');
+        }
+        res(`Bearer ${value.access_token}`);
       })
-      .then((response) => {
-        expect(response.status).to.eq(200);
-        res();
-      })
-  );
+    )
+  ).then((token) => {
+    cy.wrap(
+      new Promise<Blob>((res) => cy.fixture(dataset.file, 'binary').then(res))
+    ).then((file) => {
+      const boundary = `----${Math.random().toString().slice(2, 16)}`;
 
-  await new Promise<void>((res) => cy.wait(10000).then(res));
+      // FormData is not supported by Cypress and needs to be created manually
+      const formData =
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="name"\r\n\r\n` +
+        `${dataset.name}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="columnsMetadata"\r\n\r\n` +
+        `${JSON.stringify(dataset.descriptions.map(everyLowerCase))}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="${dataset.file}"\r\n` +
+        `Content-Type: text/csv\r\n\r\n` +
+        `${file}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="splitTarget"\r\n\r\n` +
+        `${dataset.split}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="splitType"\r\n\r\n` +
+        `${dataset.splitType.toLowerCase()}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="splitOn"\r\n\r\n` +
+        `${dataset.splitType === 'Random' ? '' : dataset.splitColumn}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="description"\r\n\r\n` +
+        `${dataset.description}\r\n` +
+        `--${boundary}--\r\n`;
+
+      cy.wrap(
+        new Promise<void>((res) =>
+          cy
+            .request({
+              method: 'POST',
+              url: 'http://localhost/api/v1/datasets/',
+              body: formData,
+              headers: {
+                'Content-Type': `multipart/form-data; boundary=${boundary}`,
+                authorization: token,
+              },
+            })
+            .then((response) => {
+              expect(response.status).to.eq(200);
+              res();
+            })
+        )
+      ).then(() => {
+        cy.wrap(new Promise<void>((res) => cy.wait(10000).then(res)));
+      });
+    });
+  });
 };
 export default createDataset;
