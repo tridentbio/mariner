@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: E2E tests
-      run: make est-e2e
+      run: make test-e2e DOCKER_COMPOSE="docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
     - name: Start services
-      run: make start
+      run: make start DOCKER_COMPOSE="docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
     - name: Integration tests and get report
       run: docker compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
