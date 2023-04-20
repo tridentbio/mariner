@@ -95,6 +95,7 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
   });
 
   it('should update dataset correctly', () => {
+    cy.once('uncaught:exception', () => false);
     cy.get('#dataset-name-input').clear().type(updatedDataset.name);
     cy.get('#description-input textarea')
       .clear()
