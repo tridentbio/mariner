@@ -21,14 +21,3 @@ services:
   ray-worker:
     volumes:
       - ./backend:/app:z
-
-  e2e:
-    depends_on:
-      backend:
-        condition: service_healthy
-      webapp:
-        condition: service_started
-    volumes:
-      - ./webapp:/e2e
-      - ./webapp/cypress/e2e:/e2e/cypress/integration
-      - ./backend/tests/data:/e2e/cypress/fixtures/data
