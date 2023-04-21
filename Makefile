@@ -110,7 +110,7 @@ test-integration: start      ## Runs unit tests
 
 
 .PHONY: e2e
-e2e: ## Runs test target
+e2e: create-admin ## Runs test target
 	$(DOCKER_COMPOSE) up e2e
 
 

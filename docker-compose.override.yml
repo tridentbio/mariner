@@ -24,8 +24,10 @@ services:
 
   e2e:
     depends_on:
-      - backend
-      - webapp
+      backend:
+        condition: service_healthy
+      webapp:
+        condition: service_started
     volumes:
       - ./webapp:/e2e
       - ./webapp/cypress/e2e:/e2e/cypress/integration
