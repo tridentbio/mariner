@@ -37,11 +37,12 @@ class ModelbuilderonehotForwardArgsSummary(BaseModel):
     Generated code
     """
 
-    x1 = "typing.Union[list[str], list[int]]"
+    x1 = "typing.Union[typing.List[str], typing.List[int]]"
 
 
 class ModelbuilderonehotForwardArgsReferences(BaseModel):
-    x1: str
+
+    x1: List[str]
 
 
 class ModelbuilderonehotSummary(CamelCaseModel):
@@ -99,6 +100,7 @@ class ModelbuilderglobalpoolingForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderglobalpoolingForwardArgsReferences(BaseModel):
+
     x: str
 
     batch: Optional[str] = None
@@ -179,6 +181,7 @@ class ModelbuilderconcatForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderconcatForwardArgsReferences(BaseModel):
+
     xs: List[str]
 
 
@@ -252,6 +255,7 @@ class ModelbuilderaddpoolingForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderaddpoolingForwardArgsReferences(BaseModel):
+
     x: str
 
 
@@ -327,6 +331,7 @@ class TorchlinearForwardArgsSummary(BaseModel):
 
 
 class TorchlinearForwardArgsReferences(BaseModel):
+
     input: str
 
 
@@ -400,6 +405,7 @@ class TorchsigmoidForwardArgsSummary(BaseModel):
 
 
 class TorchsigmoidForwardArgsReferences(BaseModel):
+
     input: str
 
 
@@ -456,6 +462,7 @@ class TorchreluForwardArgsSummary(BaseModel):
 
 
 class TorchreluForwardArgsReferences(BaseModel):
+
     input: str
 
 
@@ -537,6 +544,7 @@ class TorchgeometricgcnconvForwardArgsSummary(BaseModel):
 
 
 class TorchgeometricgcnconvForwardArgsReferences(BaseModel):
+
     x: str
 
     edge_index: str
@@ -611,6 +619,7 @@ class TorchembeddingConstructorArgsSummary(BaseModel):
     scale_grad_by_freq = "<class 'bool'>?"
     sparse = "<class 'bool'>?"
     _weight = "typing.Optional[torch.Tensor]?"
+    _freeze = "<class 'bool'>?"
 
 
 class TorchembeddingForwardArgsSummary(BaseModel):
@@ -627,6 +636,7 @@ class TorchembeddingForwardArgsSummary(BaseModel):
 
 
 class TorchembeddingForwardArgsReferences(BaseModel):
+
     input: str
 
 
@@ -652,6 +662,7 @@ class TorchembeddingConstructorArgs(BaseModel):
     scale_grad_by_freq: Optional[bool] = False
     sparse: Optional[bool] = False
     _weight: Optional[Optional[torch.Tensor]] = None
+    _freeze: Optional[bool] = False
 
 
 class TorchembeddingLayerConfig(CamelCaseModel):
@@ -713,13 +724,16 @@ class TorchtransformerencoderlayerForwardArgsSummary(BaseModel):
     src = "<class 'torch.Tensor'>"
     src_mask = "typing.Optional[torch.Tensor]?"
     src_key_padding_mask = "typing.Optional[torch.Tensor]?"
+    is_causal = "<class 'bool'>?"
 
 
 class TorchtransformerencoderlayerForwardArgsReferences(BaseModel):
+
     src: str
 
     src_mask: Optional[str] = None
     src_key_padding_mask: Optional[str] = None
+    is_causal: Optional[str] = None
 
 
 class TorchtransformerencoderlayerSummary(CamelCaseModel):
@@ -805,6 +819,7 @@ class ModelbuildermoleculefeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuildermoleculefeaturizerForwardArgsReferences(BaseModel):
+
     mol: str
 
 
@@ -882,6 +897,7 @@ class ModelbuilderintegerfeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderintegerfeaturizerForwardArgsReferences(BaseModel):
+
     input_: str
 
 
@@ -940,6 +956,7 @@ class ModelbuilderdnasequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderdnasequencefeaturizerForwardArgsReferences(BaseModel):
+
     input_: str
 
 
@@ -998,6 +1015,7 @@ class ModelbuilderrnasequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderrnasequencefeaturizerForwardArgsReferences(BaseModel):
+
     input_: str
 
 
@@ -1056,6 +1074,7 @@ class ModelbuilderproteinsequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class ModelbuilderproteinsequencefeaturizerForwardArgsReferences(BaseModel):
+
     input_: str
 
 
