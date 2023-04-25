@@ -14,6 +14,7 @@ env:
     GITHUB_CLIENT_ID: --
     GITHUB_CLIENT_SECRET: --
     COMPOSE_HTTP_TIMEOUT: 600
+    COMPOSE_USER: 1000:1000
 jobs:
   all-backend-tests:
     runs-on: ubuntu-latest
@@ -31,4 +32,5 @@ jobs:
         name: code-coverage-report
         path: webapp/cypress/videos
     - name: Integration tests and get report
+      if: 'failure() || success()'
       run: docker compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
