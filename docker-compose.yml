@@ -4,12 +4,14 @@ services:
     build:
       dockerfile: ../dockerfiles/Dockerfile.webapp
       context: ./webapp
+    user: ${COMPOSE_USER}
     ports: 
       - 3000:3000
   db:
     image: postgres:12
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
+    user: ${COMPOSE_USER}
     environment:
       - POSTGRES_SERVER=db
       - POSTGRES_USER=postgres
@@ -28,6 +30,7 @@ services:
       - ray_net
   backend:
     image: 'image:latest'
+    user: ${COMPOSE_USER}
     ports:
       - 80:80
       - 8888:8888
@@ -39,8 +42,8 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
-      timeout: 3m 
-      retries: 3
+      timeout: 4m 
+      retries: 8
     restart: unless-stopped
     build:
       context: ./backend
@@ -51,6 +54,7 @@ services:
 
   mlflowdb:
     image: postgres:12
+    user: ${COMPOSE_USER}
     volumes:
       - app-mlflow-data:/var/lib/postgresql/data/pgdata
     environment:
@@ -79,6 +83,7 @@ services:
       dockerfile: ../dockerfiles/Dockerfile.local
     env_file:
       - backend/.env.secret
+    user: ${COMPOSE_USER}
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
@@ -102,6 +107,7 @@ services:
     build:
       context: ./backend
       dockerfile: ../dockerfiles/Dockerfile.local
+    user: ${COMPOSE_USER}
     env_file:
       - backend/.env
       - backend/.env.secret
@@ -118,6 +124,7 @@ services:
     build:
       context: ./backend
       dockerfile: ../dockerfiles/Dockerfile.local
+    user: ${COMPOSE_USER}
     env_file:
       - backend/.env
       - backend/.env.secret
@@ -165,8 +172,14 @@ services:
     working_dir: /e2e
     environment:
       - CYPRESS_baseUrl=http://localhost:3000/
-    command: npx cypress run --config-file /e2e/cypress.config.js --browser chrome
+    user: "${COMPOSE_USER}"
+    command: npm install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome
     network_mode: host
+    depends_on: [ backend, webapp ]
+    volumes:
+      - ./webapp:/e2e:z
+      - ./webapp/cypress/e2e:/e2e/cypress/integration:z
+      - ./backend/tests/data:/e2e/cypress/fixtures/data:z
 
 volumes:
   app-db-data:
