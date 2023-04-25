@@ -22,11 +22,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build services
-      run: make build DOCKER_COMPOSE=$DOCKER_COMPOSE CORE_SERVICES="webapp backend ray-head ray-worker mlflow mlflowdb db"
+      run: make build DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="webapp backend ray-head ray-worker mlflow mlflowdb db"
     - name: Start services
-      run: make start DOCKER_COMPOSE=$DOCKER_COMPOSE CORE_SERVICES="webapp backend ray-head ray-worker mlflow mlflowdb db"
+      run: make start DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="webapp backend ray-head ray-worker mlflow mlflowdb db"
     - name: E2E tests
-      run: make e2e DOCKER_COMPOSE=$DOCKER_COMPOSE
+      run: make e2e DOCKER_COMPOSE="$DOCKER_COMPOSE"
     - name: Archive e2e videos
       uses: actions/upload-artifact@v3
       with:
@@ -34,4 +34,4 @@ jobs:
         path: webapp/cypress/videos
     - name: Integration tests and get report
       if: 'failure() || success()'
-      run: docker compose -f docker-compose.yml -f docker-compose-cicd.yml exec -T backend bash scripts/test.sh -m pytest -m 'integration'
+      run: bash -c "$DOCKER_COMPOSE exec -T backend bash scripts/test.sh -m pytest -m 'integration'"
