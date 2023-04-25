@@ -170,7 +170,8 @@ services:
     environment:
       - CYPRESS_baseUrl=http://localhost:3000/
     user: ${COMPOSE_USER-}
-    command: npm install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome
+    command: sh -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
+    entrypoint: []
     network_mode: host
     depends_on: [ backend, webapp ]
     volumes:
