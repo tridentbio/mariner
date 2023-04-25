@@ -116,6 +116,10 @@ def parse_rest_unit(
     Expected format: <operation?><unit>
     operation: *, /, **, '' (default: *)
 
+    Args:
+        rest_unit: string with some unit followed by some operation
+        before: if the unit is before the operation
+
     Raises:
         ValueError: When the operation is invalid
 
