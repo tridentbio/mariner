@@ -1,9 +1,7 @@
-name: Integration tests CI
+name: End to End Tests CI
 on:
-  pull_request:
+  push:
     branches: [ "develop", "releases/**" ]
-    types: [opened, synchronize]
-    paths: [backend/**]
   workflow_dispatch:
 env:
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -21,8 +19,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Build services
-      run: make build DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="webapp backend ray-head ray-worker mlflow mlflowdb db"
-    - name: Integration tests and get report
-      if: 'failure() || success()'
-      run: bash -c "$DOCKER_COMPOSE exec -T backend bash scripts/test.sh -m pytest -m 'integration'"
+    - name: E2E tests
+      run: make e2e DOCKER_COMPOSE="$DOCKER_COMPOSE"
