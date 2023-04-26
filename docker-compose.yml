@@ -4,7 +4,6 @@ services:
     build:
       dockerfile: ../dockerfiles/Dockerfile.webapp
       context: ./webapp
-    user: ${COMPOSE_USER-}
     ports: 
       - 3000:3000
   db:
@@ -169,7 +168,6 @@ services:
     working_dir: /e2e
     environment:
       - CYPRESS_baseUrl=http://localhost:3000/
-    user: ${COMPOSE_USER-}
     command: sh -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
     entrypoint: []
     network_mode: host

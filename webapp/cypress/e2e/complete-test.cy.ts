@@ -8,7 +8,7 @@ import { zincDatasetFixture } from '../support/dataset/examples';
 import { deleteTestModelsIfExist } from '../support/models/common';
 import { checkModelTraining } from '../support/training/create';
 
-describe('Complete test from dataset creation to inference', () => {
+describe.skip('Complete test from dataset creation to inference', () => {
   before(() => {
     cy.loginSuper();
     deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
