@@ -80,7 +80,6 @@ services:
       dockerfile: ../dockerfiles/Dockerfile.local
     env_file:
       - backend/.env.secret
-    user: ${COMPOSE_USER-}
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
@@ -104,7 +103,6 @@ services:
     build:
       context: ./backend
       dockerfile: ../dockerfiles/Dockerfile.local
-    user: ${COMPOSE_USER-}
     env_file:
       - backend/.env
       - backend/.env.secret
@@ -121,7 +119,6 @@ services:
     build:
       context: ./backend
       dockerfile: ../dockerfiles/Dockerfile.local
-    user: ${COMPOSE_USER-}
     env_file:
       - backend/.env
       - backend/.env.secret
