@@ -24,4 +24,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: E2E tests
-      run: make e2e DOCKER_COMPOSE="$DOCKER_COMPOSE"
+      run: make test-e2e DOCKER_COMPOSE="$DOCKER_COMPOSE"
+    - uses: actions/upload-artifact@v3
+      with:
+        name: my-artifact
+        path: ./webapp/cypress/videos
+        if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`

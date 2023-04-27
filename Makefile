@@ -113,8 +113,8 @@ test-integration: start      ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 
-.PHONY: e2e
-e2e: build start create-admin ## Runs test target
+.PHONY: test-e2e
+test-e2e: build start create-admin ## Runs test target
 	$(DOCKER_COMPOSE) up e2e
 
 
