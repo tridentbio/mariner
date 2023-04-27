@@ -14,6 +14,11 @@ from sqlalchemy.orm.session import Session
 
 import mariner.events as events_ctl
 from api.websocket import WebSocketMessage, get_websockets_manager
+from fleet.model_builder.optimizers import (
+    AdamParamsSchema,
+    OptimizerSchema,
+    SGDParamsSchema,
+)
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
@@ -41,11 +46,6 @@ from mariner.stores.experiment_sql import (
 )
 from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
-from fleet.model_builder.optimizers import (
-    AdamParamsSchema,
-    OptimizerSchema,
-    SGDParamsSchema,
-)
 
 LOG = logging.getLogger(__name__)
 

@@ -37,7 +37,6 @@ def get_component_constructor_args_by_type(name: str) -> Optional[BaseModel]:
     """
     # lazy import is necessary in some cases when generating code
     # because of a possible dependency loop
-    from fleet.model_builder.layers_schema import FeaturizersType, LayersType
 
     component = get_component_config_by_type(name)
     if component:

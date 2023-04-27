@@ -6,6 +6,10 @@ from fastapi import UploadFile
 from lightning.pytorch import Trainer
 from sqlalchemy.orm.session import Session
 
+from fleet.model_builder.dataset import Collater, DataModule
+from fleet.model_builder.model import CustomModel
+from fleet.model_builder.optimizers import AdamOptimizer
+from fleet.model_builder.schemas import ModelSchema
 from mariner import datasets as dataset_ctl
 from mariner.entities import Dataset as DatasetEntity
 from mariner.schemas.dataset_schemas import (
@@ -18,10 +22,6 @@ from mariner.schemas.dataset_schemas import (
     SmileDataType,
     Split,
 )
-from fleet.model_builder.dataset import Collater, DataModule
-from fleet.model_builder.model import CustomModel
-from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.model_builder.schemas import ModelSchema
 from tests.conftest import get_test_user
 from tests.utils.utils import random_lower_string
 

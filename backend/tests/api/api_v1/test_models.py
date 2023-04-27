@@ -10,13 +10,6 @@ from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
 from torch_geometric.loader import DataLoader
 
-from mariner.core.config import settings
-from mariner.entities import Dataset as DatasetEntity
-from mariner.entities import Model as ModelEntity
-from mariner.entities import ModelVersion
-from mariner.schemas.dataset_schemas import QuantityDataType
-from mariner.schemas.model_schemas import Model, ModelCreate
-from mariner.stores import dataset_sql
 from fleet.model_builder import layers_schema as layers
 from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.model import CustomModel
@@ -26,6 +19,13 @@ from fleet.model_builder.schemas import (
     ModelSchema,
     TargetConfig,
 )
+from mariner.core.config import settings
+from mariner.entities import Dataset as DatasetEntity
+from mariner.entities import Model as ModelEntity
+from mariner.entities import ModelVersion
+from mariner.schemas.dataset_schemas import QuantityDataType
+from mariner.schemas.model_schemas import Model, ModelCreate
+from mariner.stores import dataset_sql
 from tests.fixtures.model import mock_model, model_config, setup_create_model
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string

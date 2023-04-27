@@ -1,5 +1,5 @@
 import functools
-from inspect import signature, Parameter
+from inspect import Parameter, signature
 from typing import Any, Dict, List, Literal, Optional, Union, get_type_hints
 
 import yaml

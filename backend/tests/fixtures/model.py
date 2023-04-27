@@ -6,6 +6,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from fleet.model_builder.schemas import ModelSchema
 from mariner.core.config import settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
@@ -18,7 +19,6 @@ from mariner.schemas.model_schemas import (
     ModelVersionCreateRepo,
 )
 from mariner.stores import model_sql
-from fleet.model_builder.schemas import ModelSchema
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 

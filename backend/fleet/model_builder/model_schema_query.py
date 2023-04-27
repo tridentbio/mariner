@@ -5,8 +5,7 @@ When interacting with the model schema, developers should prefer using this
 API over accessing attributes directly from the schema in order to maintain
 a single point of change (as best as possible) on schema updates.
 """
-from typing import List, Set, Union, TYPE_CHECKING
-
+from typing import TYPE_CHECKING, List, Set, Union
 
 if TYPE_CHECKING:
     from fleet.model_builder.layers_schema import FeaturizersType, LayersType

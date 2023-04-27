@@ -4,8 +4,8 @@ Base classes to help building components using context
 E.g. base class for components that need schema info to
 auto fill some argument
 """
-from abc import ABC, abstractmethod
 import typing
+from abc import ABC, abstractmethod
 
 if typing.TYPE_CHECKING:
     from fleet.model_builder.schemas import ModelSchema

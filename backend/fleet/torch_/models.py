@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, List, Literal, Optional, Union
 
+import lightning.pytorch as pl
 import networkx as nx
 import torch
 import torch.nn
@@ -12,8 +13,6 @@ from fleet.model_builder.model_schema_query import get_dependencies
 from fleet.model_builder.optimizers import Optimizer
 from fleet.model_builder.schemas import CategoricalDataType, ModelSchema
 from fleet.model_builder.utils import collect_args
-
-import lightning.pytorch as pl
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:

@@ -1,7 +1,7 @@
 """
 OneHot custom layer
 """
-from typing import TYPE_CHECKING, Union
+from typing import Union
 
 import torch
 from torch import nn
