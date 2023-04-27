@@ -4,6 +4,8 @@ Deploy related DTOs
 
 from typing import List, Optional
 
+from pydantic import root_validator
+
 from mariner.entities.deploy import (
     DeploymentStatus,
     RateLimitUnit,
@@ -120,23 +122,32 @@ class DeployUpdateRepo(DeployUpdate):
     delete = False  # when true it updates the deleted_at field
 
 
-class PermissionCreateRepo(ApiBaseModel):
+class PermissionBase(ApiBaseModel):
+    """Permission base type."""
+
+    deploy_id: int
+    user_id: int = None
+    organization: str = None
+
+    @root_validator
+    def check_redundant_fields(cls, values):
+        """Checks that only one of user_id or organization is set."""
+        if values.get("user_id") and values.get("organization"):
+            raise ValueError("Only one of user_id or organization can be set.")
+        if not values.get("user_id") and not values.get("organization"):
+            raise ValueError("One of user_id or organization must be set.")
+        return values
+
+
+class PermissionCreateRepo(PermissionBase):
     """Permission to create type.
 
     Used in the PermissionCRUD to create a permission in the database.
     """
 
-    deploy_id: int
-    user_id: int = None
-    organization: str = None
 
-
-class PermissionDeleteRepo(ApiBaseModel):
+class PermissionDeleteRepo(PermissionBase):
     """Permission to delete type.
 
     Used in the PermissionCRUD to delete a permission in the database.
     """
-
-    deploy_id: int
-    user_id: int = None
-    organization: str = None

@@ -145,13 +145,6 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
         Returns:
             Created permission
         """
-        if (obj_in.user_id and obj_in.organization) or (
-            not obj_in.user_id and not obj_in.organization
-        ):
-            raise ValueError(
-                "You must provide either a user_id or an organization, but not both"
-            )
-
         db_obj = SharePermissions(**obj_in.dict())
         db.add(db_obj)
         db.commit()
@@ -168,13 +161,15 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
         Returns:
             Deleted permission
         """
+        sub_query = (
+            SharePermissions.user_id == obj_in.user_id
+            if obj_in.user_id
+            else SharePermissions.organization == obj_in.organization
+        )
+
         db_obj = (
             db.query(SharePermissions)
-            .filter(
-                SharePermissions.deploy_id == obj_in.deploy_id,
-                SharePermissions.user_id == obj_in.user_id,
-                SharePermissions.organization == obj_in.organization,
-            )
+            .filter(SharePermissions.deploy_id == obj_in.deploy_id, sub_query)
             .first()
         )
         db.delete(db_obj)
