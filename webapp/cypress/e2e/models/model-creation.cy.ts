@@ -28,14 +28,13 @@ describe('/models/new - Model creation page', () => {
   });
 
   // TODO: fix OneHot Layer bug to this test pass
-  // notion card: https://www.notion.so/tridentbio/BUG-in-One-Hot-Layer-while-creating-a-new-model-44af40309ff94ae28ae439fe19039642
-  // it('Builds Categorical-Smiles Model', () => {
-  //   cy.buildYamlModel(
-  //     'data/yaml/categorical_features_model.yaml',
-  //     zincDatasetFixture.name,
-  //     true
-  //   );
-  // });
+  it.skip('Builds Categorical-Smiles Model', () => {
+    cy.buildYamlModel(
+      'data/yaml/categorical_features_model.yaml',
+      zincDatasetFixture.name,
+      true
+    );
+  });
 
   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
