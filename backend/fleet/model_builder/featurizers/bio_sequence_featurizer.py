@@ -3,7 +3,7 @@ Featurizers for biological data types
 """
 import torch
 
-from model_builder.featurizers.base_featurizers import ReversibleFeaturizer
+from fleet.model_builder.featurizers.base_featurizers import ReversibleFeaturizer
 
 
 class SequenceFeaturizer(ReversibleFeaturizer[str]):

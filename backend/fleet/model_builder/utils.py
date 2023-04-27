@@ -10,7 +10,7 @@ from humps import camel
 from pydantic import BaseModel
 from torch_sparse import SparseTensor
 
-from model_builder.storage import BaseStorage
+from fleet.model_builder.storage import BaseStorage
 
 
 class DataInstance(BaseStorage):
@@ -150,14 +150,7 @@ def get_class_from_path_string(pathstring: str) -> type:
     Returns:
         Any: The class.
     """
-    module_name, export = split_module_export(pathstring)
-    code = f"""
-from {module_name} import {export}
-references['cls'] = {export}
-"""
-    references: Dict[str, Any] = {}
-    exec(code, globals(), {"references": references})
-    return references["cls"]
+    return __import__(pathstring)
 
 
 def unwrap_dollar(value: str) -> tuple[str, bool]:

@@ -6,7 +6,7 @@ from typing import Annotated, Any, Iterable, Literal, Union
 from pydantic import BaseModel, Field
 from torch.optim import SGD, Adam
 
-from model_builder.utils import CamelCaseModel
+from fleet.model_builder.utils import CamelCaseModel
 
 
 class AdamParams(BaseModel):

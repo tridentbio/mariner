@@ -5,6 +5,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
 
+from fleet.model_builder.optimizers import Optimizer
 from mariner.schemas.api import (
     ApiBaseModel,
     OrderByQuery,
@@ -13,7 +14,6 @@ from mariner.schemas.api import (
 )
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
-from model_builder.optimizers import Optimizer
 
 
 class MonitoringConfig(ApiBaseModel):

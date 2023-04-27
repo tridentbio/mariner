@@ -22,16 +22,17 @@ from fastapi.datastructures import UploadFile
 from pydantic import Field, validator
 from pydantic.main import BaseModel
 
+from fleet.model_builder.schemas import \
+    CategoricalDataType as BuilderCategoricalDT
+from fleet.model_builder.schemas import DNADataType as BuilderDNADT
+from fleet.model_builder.schemas import NumericalDataType as BuilderNumericalDT
+from fleet.model_builder.schemas import ProteinDataType as BuilderProteinDT
+from fleet.model_builder.schemas import QuantityDataType as BuilderQuantityDT
+from fleet.model_builder.schemas import RNADataType as BuilderRNADT
+from fleet.model_builder.schemas import SmileDataType as BuilderSmilesDT
+from fleet.model_builder.schemas import StringDataType as BuilderStringDT
 from mariner.core.aws import Bucket, download_file_as_dataframe
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
-from model_builder.schemas import CategoricalDataType as BuilderCategoricalDT
-from model_builder.schemas import DNADataType as BuilderDNADT
-from model_builder.schemas import NumericalDataType as BuilderNumericalDT
-from model_builder.schemas import ProteinDataType as BuilderProteinDT
-from model_builder.schemas import QuantityDataType as BuilderQuantityDT
-from model_builder.schemas import RNADataType as BuilderRNADT
-from model_builder.schemas import SmileDataType as BuilderSmilesDT
-from model_builder.schemas import StringDataType as BuilderStringDT
 
 SplitType = Literal["scaffold", "random"]
 

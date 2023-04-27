@@ -18,7 +18,7 @@ from typing import (
 
 import torch
 
-from model_builder.views import ItemsView, KeysView, ValuesView
+from fleet.model_builder.views import ItemsView, KeysView, ValuesView
 
 
 def recursive_apply(data: Any, function: Callable) -> Any:

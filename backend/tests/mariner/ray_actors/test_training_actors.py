@@ -9,6 +9,8 @@ from mlflow.tracking import MlflowClient
 from sqlalchemy.orm import Session
 
 import mariner.schemas.experiment_schemas
+from fleet.model_builder.model import CustomModel
+from fleet.model_builder.optimizers import AdamOptimizer
 from mariner.core.aws import Bucket, list_s3_objects
 from mariner.entities.experiment import Experiment
 from mariner.ray_actors.training_actors import TrainingActor
@@ -20,8 +22,6 @@ from mariner.schemas.experiment_schemas import (
 )
 from mariner.schemas.model_schemas import Model, ModelVersion
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
-from model_builder.model import CustomModel
-from model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 

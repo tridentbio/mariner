@@ -9,7 +9,7 @@ from mlflow.entities.model_registry.registered_model import \
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 
-from model_builder.model import CustomModel
+from fleet.model_builder.model import CustomModel
 from tests.fixtures.model import mock_model
 from tests.utils.utils import random_lower_string
 

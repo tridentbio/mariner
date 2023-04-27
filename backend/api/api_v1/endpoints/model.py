@@ -23,7 +23,7 @@ from mariner.exceptions.model_exceptions import (
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import Model, ModelCreate, ModelsQuery
 from mariner.utils import random_pretty_name
-from model_builder.schemas import AllowedLosses, ComponentOption, ModelSchema
+from fleet.model_builder.schemas import AllowedLosses, ComponentOption, ModelSchema
 
 router = APIRouter()
 

@@ -11,19 +11,19 @@ from torch.utils.data.dataloader import default_collate
 from torch_geometric.data import Batch
 from torch_geometric.data.data import BaseData
 
-from model_builder.component_builder import AutoBuilder
-from model_builder.featurizers.base_featurizers import BaseFeaturizer
-from model_builder.featurizers.bio_sequence_featurizer import (
+from fleet.model_builder.component_builder import AutoBuilder
+from fleet.model_builder.featurizers.base_featurizers import BaseFeaturizer
+from fleet.model_builder.featurizers.bio_sequence_featurizer import (
     DNASequenceFeaturizer,
     ProteinSequenceFeaturizer,
     RNASequenceFeaturizer,
 )
-from model_builder.featurizers.integer_featurizer import IntegerFeaturizer
-from model_builder.model_schema_query import (
+from fleet.model_builder.featurizers.integer_featurizer import IntegerFeaturizer
+from fleet.model_builder.model_schema_query import (
     get_dependencies,
     get_target_columns,
 )
-from model_builder.schemas import (
+from fleet.model_builder.schemas import (
     CategoricalDataType,
     ColumnConfig,
     DNADataType,
@@ -33,7 +33,7 @@ from model_builder.schemas import (
     QuantityDataType,
     RNADataType,
 )
-from model_builder.utils import DataInstance, get_references_dict
+from fleet.model_builder.utils import DataInstance, get_references_dict
 
 
 class Collater:

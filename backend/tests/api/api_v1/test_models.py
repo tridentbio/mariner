@@ -17,10 +17,10 @@ from mariner.entities import ModelVersion
 from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from mariner.stores import dataset_sql
-from model_builder import layers_schema as layers
-from model_builder.dataset import CustomDataset
-from model_builder.model import CustomModel
-from model_builder.schemas import (
+from fleet.model_builder import layers_schema as layers
+from fleet.model_builder.dataset import CustomDataset
+from fleet.model_builder.model import CustomModel
+from fleet.model_builder.schemas import (
     ColumnConfig,
     DatasetConfig,
     ModelSchema,
@@ -50,7 +50,7 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
                 TargetConfig(
                     name="tpsa",
                     data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
-                    out_module="1"
+                    out_module="1",
                 )
             ],
         ),

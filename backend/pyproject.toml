@@ -5,7 +5,7 @@ description = "MLOps tools for biochem scientists"
 authors = ["Tyler Shimko <tyler@trident.bio>"]
 packages = [
   { include = "api" },
-  { include = "model_builder" },
+  { include = "fleet" },
   { include = "mariner" },
 ]
 

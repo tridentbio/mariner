@@ -42,10 +42,10 @@ from mariner.schemas.model_schemas import (
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
 from mariner.validation.functions import is_valid_smiles_series
-from model_builder import options
-from model_builder.dataset import CustomDataset
-from model_builder.model import CustomModel
-from model_builder.schemas import ComponentOption, DatasetConfig, SmileDataType
+from fleet.model_builder import options
+from fleet.model_builder.dataset import CustomDataset
+from fleet.model_builder.model import CustomModel
+from fleet.model_builder.schemas import ComponentOption, DatasetConfig, SmileDataType
 
 LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)

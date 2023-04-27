@@ -12,7 +12,7 @@ from rdkit.Chem.rdchem import Mol as RDKitMol
 from torch_geometric.data import Batch as PyGBatch
 from torch_geometric.data import Data as PyGData
 
-from model_builder.featurizers.base_featurizers import BaseFeaturizer
+from fleet.model_builder.featurizers.base_featurizers import BaseFeaturizer
 
 
 class MoleculeFeaturizer(BaseFeaturizer[str]):

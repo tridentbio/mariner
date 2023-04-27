@@ -4,7 +4,7 @@ from subprocess import CalledProcessError, check_output
 
 import pytest
 
-from model_builder import generate
+from fleet.model_builder import generate
 
 
 def test_generate_bundle():

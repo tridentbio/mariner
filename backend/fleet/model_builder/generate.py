@@ -15,7 +15,7 @@ from humps import camel
 from jinja2 import Environment, PackageLoader, select_autoescape
 from sphinx.application import Sphinx
 
-from model_builder.utils import get_class_from_path_string
+from fleet.model_builder.utils import get_class_from_path_string
 
 
 @dataclass
@@ -30,21 +30,21 @@ class Layer:
 featurizers = [
     Layer(name)
     for name in [
-        "model_builder.featurizers.MoleculeFeaturizer",
-        "model_builder.featurizers.IntegerFeaturizer",
-        "model_builder.featurizers.DNASequenceFeaturizer",
-        "model_builder.featurizers.RNASequenceFeaturizer",
-        "model_builder.featurizers.ProteinSequenceFeaturizer",
+        "fleet.model_builder.featurizers.MoleculeFeaturizer",
+        "fleet.model_builder.featurizers.IntegerFeaturizer",
+        "fleet.model_builder.featurizers.DNASequenceFeaturizer",
+        "fleet.model_builder.featurizers.RNASequenceFeaturizer",
+        "fleet.model_builder.featurizers.ProteinSequenceFeaturizer",
     ]
 ]
 
 layers = [
     Layer(name)
     for name in [
-        "model_builder.layers.OneHot",
-        "model_builder.layers.GlobalPooling",
-        "model_builder.layers.Concat",
-        "model_builder.layers.AddPooling",
+        "fleet.model_builder.layers.OneHot",
+        "fleet.model_builder.layers.GlobalPooling",
+        "fleet.model_builder.layers.Concat",
+        "fleet.model_builder.layers.AddPooling",
         "torch.nn.Linear",
         "torch.nn.Sigmoid",
         "torch.nn.ReLU",
@@ -271,7 +271,7 @@ def create_jinja_env() -> Environment:
         Environment: jinja environment
     """
     env = Environment(
-        loader=PackageLoader("model_builder"), autoescape=select_autoescape()
+        loader=PackageLoader("fleet.model_builder"), autoescape=select_autoescape()
     )
 
     def type_name(value):

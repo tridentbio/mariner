@@ -15,17 +15,17 @@ from pydantic import (
 )
 from typing_extensions import Annotated
 
-from model_builder import generate
-from model_builder.components_query import (
+from fleet.model_builder import generate
+from fleet.model_builder.components_query import (
     get_component_constructor_args_by_type,
 )
-from model_builder.layers_schema import (
+from fleet.model_builder.layers_schema import (
     FeaturizersArgsType,
     FeaturizersType,
     LayersArgsType,
     LayersType,
 )
-from model_builder.utils import CamelCaseModel, get_references_dict
+from fleet.model_builder.utils import CamelCaseModel, get_references_dict
 
 
 class NumericalDataType(CamelCaseModel):

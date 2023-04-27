@@ -1,4 +1,4 @@
-from model_builder.utils import DataInstance, get_ref_from_data_instance
+from fleet.model_builder.utils import DataInstance, get_ref_from_data_instance
 
 
 class Baz:

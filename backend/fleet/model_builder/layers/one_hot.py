@@ -7,10 +7,10 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from model_builder.component_builder import AutoBuilder
-from model_builder.exceptions import DataTypeMismatchException
-from model_builder.model_schema_query import get_column_config
-from model_builder.schemas import CategoricalDataType
+from fleet.model_builder.component_builder import AutoBuilder
+from fleet.model_builder.exceptions import DataTypeMismatchException
+from fleet.model_builder.model_schema_query import get_column_config
+from fleet.model_builder.schemas import CategoricalDataType
 
 
 class OneHot(nn.Module, AutoBuilder):

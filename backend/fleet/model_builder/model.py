@@ -10,12 +10,12 @@ import torch
 import torch.nn
 import torchmetrics as metrics
 
-from model_builder.component_builder import AutoBuilder
-from model_builder.dataset import DataInstance
-from model_builder.model_schema_query import get_dependencies
-from model_builder.optimizers import Optimizer
-from model_builder.schemas import CategoricalDataType, ModelSchema
-from model_builder.utils import collect_args
+from fleet.model_builder.component_builder import AutoBuilder
+from fleet.model_builder.dataset import DataInstance
+from fleet.model_builder.model_schema_query import get_dependencies
+from fleet.model_builder.optimizers import Optimizer
+from fleet.model_builder.schemas import CategoricalDataType, ModelSchema
+from fleet.model_builder.utils import collect_args
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
@@ -192,7 +192,9 @@ class CustomModel(pl.LightningModule):
                 self.metrics_dict[target_column.name] = Metrics(
                     "multilabel" if is_multilabel else target_column.column_type,
                     num_classes=len(target_column.data_type.classes.keys()),
-                    num_labels=len(config.dataset.target_columns) if is_multilabel else None,
+                    num_labels=len(config.dataset.target_columns)
+                    if is_multilabel
+                    else None,
                 )
 
     def set_optimizer(self, optimizer: Optimizer):

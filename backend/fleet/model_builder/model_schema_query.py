@@ -7,9 +7,9 @@ a single point of change (as best as possible) on schema updates.
 """
 from typing import List, Set, Union
 
-from model_builder.layers_schema import FeaturizersType, LayersType
-from model_builder.schemas import ColumnConfig, ModelSchema
-from model_builder.utils import unwrap_dollar
+from fleet.model_builder.layers_schema import FeaturizersType, LayersType
+from fleet.model_builder.schemas import ColumnConfig, ModelSchema
+from fleet.model_builder.utils import unwrap_dollar
 
 
 def get_columns_configs(config: ModelSchema) -> List[ColumnConfig]:

@@ -6,7 +6,7 @@ auto fill some argument
 """
 from abc import ABC, abstractmethod
 
-from model_builder.schemas import ModelSchema
+from fleet.model_builder.schemas import ModelSchema
 
 
 class AutoBuilder(ABC):

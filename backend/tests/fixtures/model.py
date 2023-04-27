@@ -18,7 +18,7 @@ from mariner.schemas.model_schemas import (
     ModelVersionCreateRepo,
 )
 from mariner.stores import model_sql
-from model_builder.schemas import ModelSchema
+from fleet.model_builder.schemas import ModelSchema
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 

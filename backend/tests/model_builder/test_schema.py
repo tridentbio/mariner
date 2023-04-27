@@ -1,6 +1,6 @@
 import pytest
 
-from model_builder.schemas import ModelSchema
+from fleet.model_builder.schemas import ModelSchema
 from tests.fixtures.model import model_config
 
 DEFAULT_LOSS_MAP = {

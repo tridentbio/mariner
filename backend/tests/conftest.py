@@ -27,7 +27,7 @@ from mariner.schemas.token import TokenPayload
 from mariner.stores import user_sql
 from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
-from model_builder.optimizers import AdamOptimizer
+from fleet.model_builder.optimizers import AdamOptimizer
 from tests.fixtures.dataset import (
     setup_create_dataset,
     setup_create_dataset_db,

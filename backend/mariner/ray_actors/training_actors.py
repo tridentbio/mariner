@@ -12,14 +12,14 @@ from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.trainer.trainer import Trainer
 from mlflow.tracking import MlflowClient
 
+from fleet.model_builder.dataset import DataModule
+from fleet.model_builder.model import CustomModel
 from mariner.core import config
 from mariner.core.mlflowapi import log_models_and_create_version
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.train.custom_logger import AppLogger
-from model_builder.dataset import DataModule
-from model_builder.model import CustomModel
 
 
 @ray.remote

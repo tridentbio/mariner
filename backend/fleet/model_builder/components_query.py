@@ -5,8 +5,6 @@ from typing import Optional, get_args, get_type_hints
 
 from pydantic import BaseModel
 
-from model_builder.layers_schema import FeaturizersType, LayersType
-
 
 def get_component_config_by_type(name: str) -> Optional[BaseModel]:
     """Gets a layer or featurizer class by type (.e.g "torch.nn.Linear"
@@ -17,6 +15,10 @@ def get_component_config_by_type(name: str) -> Optional[BaseModel]:
     Returns:
         the Config class for the given type
     """
+    # lazy import is necessary in some cases when generating code
+    # because of a possible dependency loop
+    from fleet.model_builder.layers_schema import FeaturizersType, LayersType
+
     layer_types = [component for component in get_args(LayersType)]
     featurizer_types = [component for component in get_args(FeaturizersType)]
     for component in layer_types + featurizer_types:
@@ -33,6 +35,10 @@ def get_component_constructor_args_by_type(name: str) -> Optional[BaseModel]:
     Returns:
         The ConstructorArgs for the given type
     """
+    # lazy import is necessary in some cases when generating code
+    # because of a possible dependency loop
+    from fleet.model_builder.layers_schema import FeaturizersType, LayersType
+
     component = get_component_config_by_type(name)
     if component:
         type_hints = get_type_hints(component)

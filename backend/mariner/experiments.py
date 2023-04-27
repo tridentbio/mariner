@@ -41,7 +41,7 @@ from mariner.stores.experiment_sql import (
 )
 from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
-from model_builder.optimizers import (
+from fleet.model_builder.optimizers import (
     AdamParamsSchema,
     OptimizerSchema,
     SGDParamsSchema,

@@ -15,7 +15,7 @@ from mariner.schemas.experiment_schemas import (
 )
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
-from model_builder.optimizers import AdamOptimizer
+from fleet.model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 

@@ -17,7 +17,7 @@ from mariner.schemas.experiment_schemas import (
     RunningHistory,
     TrainingRequest,
 )
-from model_builder.optimizers import OptimizerSchema
+from fleet.model_builder.optimizers import OptimizerSchema
 
 router = APIRouter()
 

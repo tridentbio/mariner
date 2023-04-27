@@ -1,14 +1,13 @@
 import functools
-from inspect import signature
+from inspect import signature, Parameter
 from typing import Any, Dict, List, Literal, Optional, Union, get_type_hints
 
 import yaml
-from mockito.signature import Parameter
 from pydantic import BaseModel
 
-from model_builder import generate, layers_schema
-from model_builder.schemas import ComponentOption
-from model_builder.utils import get_class_from_path_string
+from fleet.model_builder import generate, layers_schema
+from fleet.model_builder.schemas import ComponentOption
+from fleet.model_builder.utils import get_class_from_path_string
 
 
 class Overrides(BaseModel):
@@ -20,7 +19,7 @@ OptionOverrides = Dict[str, Overrides]
 
 
 def _get_option_overrides() -> OptionOverrides:
-    annotation_path = "model_builder/component_overrides.yml"
+    annotation_path = "fleet/model_builder/component_overrides.yml"
     with open(annotation_path, "r") as f:
         data = yaml.safe_load(f)
         return {key: Overrides(**value) for key, value in data.items()}

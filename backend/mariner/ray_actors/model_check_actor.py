@@ -5,11 +5,11 @@ Actors for Training, validation and testing models
 import ray
 from torch_geometric.loader import DataLoader
 
+from fleet.model_builder.dataset import Collater, CustomDataset
+from fleet.model_builder.model import CustomModel
+from fleet.model_builder.schemas import ModelSchema
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.model_schemas import ForwardCheck
-from model_builder.dataset import Collater, CustomDataset
-from model_builder.model import CustomModel
-from model_builder.schemas import ModelSchema
 
 
 @ray.remote
