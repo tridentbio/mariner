@@ -73,7 +73,7 @@ const parseEdgeName = (edgeName: string) => {
 const objIsEmpty = (obj: object) => !Boolean(Object.keys(obj).length);
 
 const autoFixSuggestions = () =>
-  cy.getWithouThrow('[data-testid="AutoFixHighOutlinedIcon"]').then(($els) => {
+  cy.getWithoutThrow('[data-testid="AutoFixHighOutlinedIcon"]').then(($els) => {
     if ($els.length === 1)
       cy.get('[data-testid="AutoFixHighOutlinedIcon"]')
         .first()

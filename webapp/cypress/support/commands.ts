@@ -86,7 +86,7 @@ Cypress.Commands.add(
   }
 );
 
-Cypress.Commands.add('getWithouThrow', (selector: string) => {
+Cypress.Commands.add('getWithoutThrow', (selector: string) => {
   cy.get('body').then(($body) => {
     if ($body.find(selector).length) {
       return cy.get(selector);
@@ -113,7 +113,7 @@ declare global {
         x: number,
         y: number
       ): Chainable<JQuery<HTMLElement>>;
-      getWithouThrow(selector: string): Chainable<JQuery<HTMLElement>>;
+      getWithoutThrow(selector: string): Chainable<JQuery<HTMLElement>>;
     }
   }
 }
