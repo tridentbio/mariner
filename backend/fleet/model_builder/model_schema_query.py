@@ -5,14 +5,17 @@ When interacting with the model schema, developers should prefer using this
 API over accessing attributes directly from the schema in order to maintain
 a single point of change (as best as possible) on schema updates.
 """
-from typing import List, Set, Union
+from typing import List, Set, Union, TYPE_CHECKING
 
-from fleet.model_builder.layers_schema import FeaturizersType, LayersType
-from fleet.model_builder.schemas import ColumnConfig, ModelSchema
+
+if TYPE_CHECKING:
+    from fleet.model_builder.layers_schema import FeaturizersType, LayersType
+    from fleet.model_builder.schemas import ColumnConfig, ModelSchema
+
 from fleet.model_builder.utils import unwrap_dollar
 
 
-def get_columns_configs(config: ModelSchema) -> List[ColumnConfig]:
+def get_columns_configs(config: "ModelSchema") -> List["ColumnConfig"]:
     """Gets the column configs from targets and featurizers of a ModelSchema object
 
     Args:
@@ -25,8 +28,8 @@ def get_columns_configs(config: ModelSchema) -> List[ColumnConfig]:
 
 
 def get_column_config(
-    config: ModelSchema, column_name: str
-) -> Union[ColumnConfig, None]:
+    config: "ModelSchema", column_name: str
+) -> Union["ColumnConfig", None]:
     """Gets the column config of any column (target or featurizer) with name
     equals ``column_name``
     Args:
@@ -43,7 +46,9 @@ def get_column_config(
     return None
 
 
-def get_dependencies(component_config: Union[LayersType, FeaturizersType]) -> Set[str]:
+def get_dependencies(
+    component_config: Union["LayersType", "FeaturizersType"]
+) -> Set[str]:
     """Get a layer or featurizer dependencies
 
     Returns set of node names that are dependencies of ``component_config`` by looking
@@ -71,7 +76,7 @@ def get_dependencies(component_config: Union[LayersType, FeaturizersType]) -> Se
     return deps
 
 
-def get_target_columns(model_schema: ModelSchema) -> List[ColumnConfig]:
+def get_target_columns(model_schema: "ModelSchema") -> List["ColumnConfig"]:
     """Gets the target columns in the model_schema
 
     Args:

@@ -5,8 +5,10 @@ E.g. base class for components that need schema info to
 auto fill some argument
 """
 from abc import ABC, abstractmethod
+import typing
 
-from fleet.model_builder.schemas import ModelSchema
+if typing.TYPE_CHECKING:
+    from fleet.model_builder.schemas import ModelSchema
 
 
 class AutoBuilder(ABC):
@@ -16,7 +18,7 @@ class AutoBuilder(ABC):
     """
 
     @abstractmethod
-    def set_from_model_schema(self, config: ModelSchema, deps: list[str]):
+    def set_from_model_schema(self, config: "ModelSchema", deps: list[str]):
         """Method to implement argument filling from ModelSchema
 
         Must be overriden

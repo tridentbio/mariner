@@ -1,7 +1,7 @@
 """
 OneHot custom layer
 """
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
 import torch
 from torch import nn
@@ -10,7 +10,9 @@ from torch.nn import functional as F
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.exceptions import DataTypeMismatchException
 from fleet.model_builder.model_schema_query import get_column_config
-from fleet.model_builder.schemas import CategoricalDataType
+
+if TYPE_CHECKING:
+    from fleet.model_builder.schemas import CategoricalDataType
 
 
 class OneHot(nn.Module, AutoBuilder):
@@ -55,7 +57,7 @@ class OneHot(nn.Module, AutoBuilder):
         column_config = get_column_config(config, input_)
         if not column_config:
             raise RuntimeError(f"Column config not found for input {input_}")
-        if not isinstance(column_config.data_type, CategoricalDataType):
+        if not isinstance(column_config.data_type, "CategoricalDataType"):
             raise DataTypeMismatchException(
                 f"Expected data type categorical but got {column_config.__class__}",
                 expected=CategoricalDataType,
