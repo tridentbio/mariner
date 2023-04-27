@@ -17,7 +17,7 @@ env:
     COMPOSE_USER: 1000:1000
     DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
 jobs:
-  all-backend-tests:
+  tests-backend-integration:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
