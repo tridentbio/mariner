@@ -10,12 +10,14 @@ export interface DatasetFormData {
     pattern: string;
     dataType: {
       domainKind: 'Numeric' | 'SMILES' | 'Categorical' | 'String';
+      classes?: any;
       unit?: string;
     };
     description: string;
   }[];
   split: string;
 }
+
 const createDataset = (dataset: DatasetFormData) => {
   cy.once('uncaught:exception', () => false);
   cy.intercept({
@@ -46,7 +48,7 @@ const createDataset = (dataset: DatasetFormData) => {
   }
   cy.get('#dataset-split-input').type(dataset.split);
 
-  dataset.descriptions.forEach(({ pattern, dataType, description }) => {
+  dataset.descriptions?.forEach(({ pattern, dataType, description }) => {
     addDescription(pattern, dataType, description);
   });
 
@@ -63,4 +65,83 @@ const createDataset = (dataset: DatasetFormData) => {
   });
 };
 
+const everyLowerCase = <T extends Record<string, any>>(obj: T): T =>
+  Object.keys(obj).reduce((acc, key: keyof T) => {
+    const value = obj[key];
+    if (typeof value === 'string') {
+      acc[key] = value.toLowerCase();
+    } else if (typeof value === 'object') {
+      acc[key] = everyLowerCase(value);
+    }
+    return acc;
+  }, {} as T);
+
+export const createDatasetDirectly = (dataset: DatasetFormData, trys = 5) => {
+  cy.once('uncaught:exception', () => false);
+
+  cy.wrap(
+    new Promise<string>((res, rej) =>
+      cy.window().then((win) => {
+        const value = JSON.parse(win.localStorage.getItem('app-token') || '{}');
+        if (!value.access_token) {
+          rej('No token found yet');
+        }
+        res(`Bearer ${value.access_token}`);
+      })
+    )
+  ).then((token) => {
+    cy.wrap(
+      new Promise<Blob>((res) => cy.fixture(dataset.file, 'binary').then(res))
+    ).then((file) => {
+      const boundary = `----${Math.random().toString().slice(2, 16)}`;
+
+      // FormData is not supported by Cypress and needs to be created manually
+      const formData =
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="name"\r\n\r\n` +
+        `${dataset.name}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="columnsMetadata"\r\n\r\n` +
+        `${JSON.stringify(dataset.descriptions.map(everyLowerCase))}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="${dataset.file}"\r\n` +
+        `Content-Type: text/csv\r\n\r\n` +
+        `${file}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="splitTarget"\r\n\r\n` +
+        `${dataset.split}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="splitType"\r\n\r\n` +
+        `${dataset.splitType.toLowerCase()}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="splitOn"\r\n\r\n` +
+        `${dataset.splitType === 'Random' ? '' : dataset.splitColumn}\r\n` +
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="description"\r\n\r\n` +
+        `${dataset.description}\r\n` +
+        `--${boundary}--\r\n`;
+
+      cy.wrap(
+        new Promise<void>((res) =>
+          cy
+            .request({
+              method: 'POST',
+              url: 'http://localhost/api/v1/datasets/',
+              body: formData,
+              headers: {
+                'Content-Type': `multipart/form-data; boundary=${boundary}`,
+                authorization: token,
+              },
+            })
+            .then((response) => {
+              expect(response.status).to.eq(200);
+              res();
+            })
+        )
+      ).then(() => {
+        cy.wrap(new Promise<void>((res) => cy.wait(10000).then(res)));
+      });
+    });
+  });
+};
 export default createDataset;

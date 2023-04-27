@@ -2,6 +2,7 @@
 Useful functions when developing on a fresh database
 """
 from sqlalchemy.orm import Session
+import sqlalchemy.exc
 
 from mariner.core.security import get_password_hash
 from mariner.db.session import SessionLocal
@@ -43,8 +44,11 @@ def create_admin_user() -> User:
             is_superuser=True,
             hashed_password=hashed_password,
         )
-        db.add(user)
-        db.flush()
-        db.refresh(user)
-        db.commit()
+        try:
+            db.add(user)
+            db.flush()
+            db.refresh(user)
+            db.commit()
+        except sqlalchemy.exc.IntegrityError as exp:
+            print("admin user already exists")
         return user

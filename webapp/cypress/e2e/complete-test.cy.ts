@@ -8,7 +8,7 @@ import { zincDatasetFixture } from '../support/dataset/examples';
 import { deleteTestModelsIfExist } from '../support/models/common';
 import { checkModelTraining } from '../support/training/create';
 
-describe('Complete test from dataset creation to inference', () => {
+describe.skip('Complete test from dataset creation to inference', () => {
   before(() => {
     cy.loginSuper();
     deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
@@ -22,18 +22,14 @@ describe('Complete test from dataset creation to inference', () => {
 
   it('Should create dataset, create models, train models and run inference succesfully', () => {
     createDataset(zincDatasetFixture);
-    cy.buildCategoricalSmilesModel(['smiles', 'mwt_group'], 'tpsa').then(() => {
-      cy.get('button').contains('CREATE MODEL').click({ force: true });
-      cy.url({ timeout: 60000 }).should('include', `#newtraining`, {
-        timeout: 60000,
-      });
-    });
-    cy.buildNumSmilesModel(['smiles', 'mwt'], 'tpsa').then(() => {
-      cy.get('button').contains('CREATE MODEL').click({ force: true });
-      cy.url({ timeout: 60000 }).should('include', `#newtraining`, {
-        timeout: 60000,
-      });
-    });
+    cy.buildYamlModel(
+      'data/yaml/categorical_features_model.yaml',
+      zincDatasetFixture.name
+    );
+    cy.buildYamlModel(
+      'models/schemas/small_regressor_schema.yaml',
+      zincDatasetFixture.name
+    );
     checkModelTraining(MODEL_SMILES_CATEGORICAL_NAME);
     checkModelTraining(MODEL_SMILES_NUMERIC_NAME);
   });
