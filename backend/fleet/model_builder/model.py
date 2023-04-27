@@ -257,8 +257,12 @@ class CustomModel(pl.LightningModule):
         for target_column in self.config.dataset.target_columns:
             args = (
                 predictions[target_column.name].squeeze(),
-                batch[target_column.name],
+                batch[target_column.name].squeeze(),
             )
+            
+            if target_column.column_type != "multiclass":
+                args = map(lambda x: x.type(torch.FloatTensor), args)
+            
             losses[target_column.name] = self.loss_dict[target_column.name](*args)
             self.log(f"test/loss/{target_column.name}", losses[target_column.name])
 

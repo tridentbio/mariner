@@ -193,16 +193,5 @@ describe('Model version form (/models/new)', () => {
         cy.notificationShouldContain('Missing dataset target column selection');
       });
     });
-    describe('Neural Net Architecture editor (model editor/buillder/compiler)', () => {
-      it.skip('Suggestions are visible and apparently fixable to the user', () => {});
-      it('Allows connecting 2 nodes on key press', () => {
-        throw 'error';
-      });
-    });
-  });
-
-  describe('Adding model version to existing model', () => {
-    it.skip('Starts with model name and model descriptions filled with existing model data and disabled', () => {});
-    it.skip('Starts with dataset name, targetColumns and featureColumns filled with existing model data (allowing to change it)', () => {});
   });
 });

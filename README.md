@@ -43,37 +43,37 @@ poetry run code . # starts vscode with the virtualenv loaded in this folder
 - Start the stack with Docker Compose (only needed to apply the changes of configuration files, code changes are captured by a volume defined in the [override file](./docker-compose.override.yml)
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 - Update dependencies on a running container
 
 ```bash
-docker-compose exec backend poetry install
+docker compose exec backend poetry install
 ```
 
 - Forces rebuilding of docker services:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 - To check the logs and attach to it
 
 ```bash
-docker-compose logs --follow
+docker compose logs --follow
 ```
 
 - To check the logs of the backend, or some specific server
 
 ```bash
-docker-compose logs --follow backend
+docker compose logs --follow backend
 ```
 
-- Tune docker-compose to your needs by changing the [override file](./docker-compose.override.yml) or ignore it with:
+- Tune docker compose to your needs by changing the [override file](./docker-compose.override.yml) or ignore it with:
 
 ```bash
-docker-compose -f ./docker-compose.yml <...> # whatever docker-compose commad you'd like to run without being overwritten by override file
+docker compose -f ./docker-compose.yml <...> # whatever docker compose commad you'd like to run without being overwritten by override file
 ```
 
 ### Automated Tests
@@ -84,19 +84,19 @@ If your stack is already up and you just want to run the tests, you can use:
 - Run default tests (short run)
 
 ```bash
-docker-compose exec backend pytest
+docker compose exec backend pytest
 ```
 
 - Run tests with HTML coverage report
 
 ```bash
-docker-compose exec backend pytest --cov-report=html
+docker compose exec backend pytest --cov-report=html
 ```
 
 - Run all tests (will take some time)
 
 ```bash
-docker-compose exec backend pytest -m 'not benchmark'
+docker compose exec backend pytest -m 'not benchmark'
 ```
 
 Some tests will fail if ran outside docker-compose.
@@ -112,10 +112,10 @@ To execute a set of benchmarks, use the following pytest options:
 
 ### Live development with Python Jupyter Notebooks
 
-To run jupyterlab withing the docker-compose networks (in order to access services such as the db and ray), run:
+To run jupyterlab withing the docker compose networks (in order to access services such as the db and ray), run:
 
 ```bash
-docker-compose exec backend bash # get a shell in container
+docker compose exec backend bash # get a shell in container
 $JUPYTER # use JUPYTER variable defined in docker-compose.override.yml
 ```
 
@@ -148,7 +148,7 @@ Make sure you create a "revision" of your models and that you "upgrade" your dat
 - Start an interactive session in the backend container:
 
 ```console
-$ docker-compose exec backend bash
+$ docker compose exec backend bash
 ```
 
 - If you created a new model in `./mariner/entities`, make sure to import it in `mariner/entities/__init__.py`, that Python module that imports all the models will be used by Alembic.

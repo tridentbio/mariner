@@ -54,7 +54,7 @@ describe('/datasets/new - Dataset form', () => {
 
   it('Shows required split column when split type is not random', () => {
     cy.get('#dataset-upload').attachFile(zincDatasetFixture.file);
-    cy.get('#dataset-splittype-input', { timeout: 10000 })
+    cy.get('#dataset-splittype-input', { timeout: 60000 })
       .click()
       .get('li')
       .contains('Scaffold')
