@@ -150,13 +150,10 @@ def get_class_from_path_string(pathstring: str) -> type:
     Returns:
         Any: The class.
     """
-    breakpoint()
     components = pathstring.split(".")
     mod = __import__(components[0])
     for comp in components[1:]:
-        breakpoint()
         mod = getattr(mod, comp)
-        print(dir(mod))
     return mod
 
 

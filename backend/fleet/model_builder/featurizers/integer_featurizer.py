@@ -7,9 +7,10 @@ import torch
 
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.exceptions import DataTypeMismatchException
-from fleet.model_builder.featurizers.base_featurizers import ReversibleFeaturizer
+from fleet.model_builder.featurizers.base_featurizers import (
+    ReversibleFeaturizer,
+)
 from fleet.model_builder.model_schema_query import get_column_config
-from fleet.model_builder.schemas import CategoricalDataType
 
 
 class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
@@ -54,7 +55,11 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         # Handle missing column information
         if not column_info:
             raise RuntimeError(f"Column {input_} was not found in the config columns")
+
+        from fleet.model_builder.schemas import CategoricalDataType
+
         # Handle column info not being from categorical
+
         if not isinstance(column_info.data_type, CategoricalDataType):
             raise DataTypeMismatchException(
                 "expecteing CategoricalDataType, but found"
