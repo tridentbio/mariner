@@ -43,7 +43,7 @@ layers:
     forwardArgs:
       src: ${transformer 1}
   - name: sequence pooling
-    type: model_builder.layers.AddPooling
+    type: fleet.model_builder.layers.AddPooling
     constructorArgs:
       dim: 1
     forwardArgs:

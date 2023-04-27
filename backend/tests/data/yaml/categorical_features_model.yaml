@@ -19,7 +19,7 @@ dataset:
 
 featurizers:
   - name: MolToGraphFeaturizer
-    type: model_builder.featurizers.MoleculeFeaturizer
+    type: fleet.model_builder.featurizers.MoleculeFeaturizer
     forwardArgs:
       mol: $smiles
     constructorArgs:
@@ -77,7 +77,7 @@ layers:
       input: $GCN3
 
   - name: AddPool
-    type: model_builder.layers.GlobalPooling
+    type: fleet.model_builder.layers.GlobalPooling
     forwardArgs:
       x: $GCN3_Activation
       batch: $MolToGraphFeaturizer.batch
@@ -87,7 +87,7 @@ layers:
 
   # Second branch would simply be linear layers in mwt
   - name: OneHotEncoded
-    type: model_builder.layers.OneHot
+    type: fleet.model_builder.layers.OneHot
     constructor_args:
     forwardArgs:
       x1: $mwt_group
@@ -99,7 +99,7 @@ layers:
     forwardArgs:
       input: $OneHotEncoded
   - name: Combiner
-    type: model_builder.layers.Concat
+    type: fleet.model_builder.layers.Concat
     constructorArgs:
       dim: -1
     forwardArgs:

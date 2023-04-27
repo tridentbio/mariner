@@ -5,9 +5,12 @@ underlying packages such as torch and sci-kit
 """
 
 from typing import Annotated, Generic, TypeVar, Union
-from typing_extensions import Protocol
-from pydantic import BaseModel, Field
 
+from pydantic import BaseModel, Field
+from typing_extensions import Protocol
+
+from fleet.model_builder.schemas import ModelSchema
+from fleet.model_builder.utils import CamelCaseModel
 
 # --------------------------------- #
 # Model Specification Definitions   #
@@ -16,12 +19,58 @@ from pydantic import BaseModel, Field
 
 class TorchModelSpec(BaseModel):
     framework = "torch"
-    ...
+    spec: ModelSchema
 
 
 class ScikitModelSpec(BaseModel):
     framework = "scikit"
     ...
+
+
+# ---------------------------------- #
+# Training Request Configuration     #
+# ---------------------------------- #
+
+
+class MonitoringConfig(CamelCaseModel):
+    """
+    Configures model checkpointing
+    """
+
+    metric_key: str
+    mode: str
+
+
+class EarlyStoppingConfig(CamelCaseModel):
+    """
+    Configures earlystopping of training
+    """
+
+    metric_key: str
+    mode: str
+    min_delta: float = 5e-2
+    patience: int = 5
+    check_finite: bool = False
+
+
+class TorchTrainingSpec(BaseModel):
+    epochs: int
+    batch_size: Union[None, int] = None
+    checkpoint_config: MonitoringConfig
+
+
+class SciKitTrainingSpec(BaseModel):
+    ...
+
+
+class TorchTrainingRequest(BaseModel):
+    framework = "torch"
+    spec: TorchTrainingSpec
+
+
+class ScikitTrainingRequest(BaseModel):
+    framework = "scikit"
+    spec: SciKitTrainingSpec
 
 
 # The ModelSpec and ModelSpecType is used to generalize the Runner interface

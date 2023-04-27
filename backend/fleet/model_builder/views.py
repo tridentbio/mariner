@@ -1,5 +1,5 @@
 """
-Dictionary like helper classes used my model_builder.storage
+Dictionary like helper classes used by model_builder.storage
 """
 from typing import Iterable, List, Mapping
 

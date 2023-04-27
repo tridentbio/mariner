@@ -22,7 +22,7 @@ dataset:
 
 layers:
   - name: Concat
-    type: model_builder.layers.Concat
+    type: fleet.model_builder.layers.Concat
     constructorArgs:
       dim: 1
     forwardArgs:

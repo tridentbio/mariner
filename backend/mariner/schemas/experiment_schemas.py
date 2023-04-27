@@ -6,6 +6,7 @@ from typing import Dict, List, Literal, Optional, Union
 from fastapi import Depends, Query
 
 from fleet.model_builder.optimizers import Optimizer
+from fleet.models import EarlyStoppingConfig, MonitoringConfig
 from mariner.schemas.api import (
     ApiBaseModel,
     OrderByQuery,
@@ -14,27 +15,6 @@ from mariner.schemas.api import (
 )
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
-
-
-class MonitoringConfig(ApiBaseModel):
-    """
-    Configures model checkpointing
-    """
-
-    metric_key: str
-    mode: str
-
-
-class EarlyStoppingConfig(ApiBaseModel):
-    """
-    Configures earlystopping of training
-    """
-
-    metric_key: str
-    mode: str
-    min_delta: float = 5e-2
-    patience: int = 5
-    check_finite: bool = False
 
 
 class TrainingRequest(ApiBaseModel):
@@ -48,7 +28,7 @@ class TrainingRequest(ApiBaseModel):
     batch_size: Optional[int] = None
     checkpoint_config: MonitoringConfig
     optimizer: Optimizer
-    early_stopping_config: Optional[EarlyStoppingConfig]
+    early_stopping_config: Optional[EarlyStoppingConfig] = None
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]

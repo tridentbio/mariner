@@ -3,19 +3,18 @@ from mlflow.tracking.client import MlflowClient
 from mockito import patch
 from sqlalchemy.orm.session import Session
 
+from fleet.model_builder.optimizers import AdamOptimizer
+from fleet.models import EarlyStoppingConfig, MonitoringConfig
 from mariner import experiments as experiments_ctl
 from mariner.entities import Experiment as ExperimentEntity
 from mariner.schemas.api import OrderByClause, OrderByQuery
 from mariner.schemas.experiment_schemas import (
-    EarlyStoppingConfig,
     Experiment,
     ListExperimentsQuery,
-    MonitoringConfig,
     TrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
-from fleet.model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 

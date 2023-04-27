@@ -11,15 +11,12 @@ from sqlalchemy.orm import Session
 import mariner.schemas.experiment_schemas
 from fleet.model_builder.model import CustomModel
 from fleet.model_builder.optimizers import AdamOptimizer
+from fleet.models import EarlyStoppingConfig, MonitoringConfig
 from mariner.core.aws import Bucket, list_s3_objects
 from mariner.entities.experiment import Experiment
 from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.dataset_schemas import Dataset
-from mariner.schemas.experiment_schemas import (
-    EarlyStoppingConfig,
-    MonitoringConfig,
-    TrainingRequest,
-)
+from mariner.schemas.experiment_schemas import TrainingRequest
 from mariner.schemas.model_schemas import Model, ModelVersion
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from tests.fixtures.user import get_test_user

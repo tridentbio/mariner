@@ -7,6 +7,8 @@ from jose import jwt
 from sqlalchemy.orm import Session
 
 from api.fastapi_app import app
+from fleet.model_builder.optimizers import AdamOptimizer
+from fleet.models import MonitoringConfig
 from mariner import experiments as experiments_ctl
 from mariner.core import security
 from mariner.core.config import settings
@@ -19,7 +21,6 @@ from mariner.entities.event import EventReadEntity
 from mariner.schemas.experiment_schemas import (
     EarlyStoppingConfig,
     Experiment,
-    MonitoringConfig,
     TrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
@@ -27,7 +28,6 @@ from mariner.schemas.token import TokenPayload
 from mariner.stores import user_sql
 from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
-from fleet.model_builder.optimizers import AdamOptimizer
 from tests.fixtures.dataset import (
     setup_create_dataset,
     setup_create_dataset_db,

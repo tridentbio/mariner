@@ -115,7 +115,7 @@
     },
     {
       "name": "GlobalPooling-yqkfljhjlijafjmm",
-      "type": "model_builder.layers.GlobalPooling",
+      "type": "fleet.model_builder.layers.GlobalPooling",
       "constructorArgs": {
         "aggr": "sum"
       },
@@ -126,7 +126,7 @@
     },
     {
       "name": "OneHot-coxfalicvdgaparx",
-      "type": "model_builder.layers.OneHot",
+      "type": "fleet.model_builder.layers.OneHot",
       "constructorArgs": {},
       "forwardArgs": {
         "x1": "$mwt_group"
@@ -134,7 +134,7 @@
     },
     {
       "name": "Concat-cjmiqkirnarxtfis",
-      "type": "model_builder.layers.Concat",
+      "type": "fleet.model_builder.layers.Concat",
       "constructorArgs": {
         "dim": 0
       },
@@ -157,7 +157,7 @@
   "featurizers": [
     {
       "name": "MoleculeFeaturizer-sydcccxojrvrbfip",
-      "type": "model_builder.featurizers.MoleculeFeaturizer",
+      "type": "fleet.model_builder.featurizers.MoleculeFeaturizer",
       "constructorArgs": {
         "allow_unknown": false,
         "sym_bond_list": true,

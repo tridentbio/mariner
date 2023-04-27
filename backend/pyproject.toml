@@ -121,7 +121,7 @@ ignore_errors = true
 [tool.coverage.report]
 include = [
     "./mariner/*",
-    "./model_builder/*",
+    "./fleet/*",
     "./api/*"
 ]
 exclude_lines = [

@@ -57,8 +57,8 @@ endif
 
 .PHONY: build
 build:                  ## Builds needed local images to run application.
-	$(DOCKER_COMPOSE) build --parallel backend webapp $(ARGS)
-	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db $(ARGS)
+	$(DOCKER_COMPOSE) build --parallel backend webapp
+	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
 
 
 .PHONY: create-admin
@@ -90,7 +90,7 @@ migrate-mlflow:         ## Runs mlflow alembic migrations
 migrate: migrate-backend migrate-mlflow   ## Runs all migrations
 
 .PHONY: test-backend
-test-backend:           ## Runs all tests in the backend (integration and unit)
+test-backend: build start          ## Runs all tests in the backend (integration and unit)
 	$(DOCKER_COMPOSE) exec backend pytest $(ARGS)
 
 

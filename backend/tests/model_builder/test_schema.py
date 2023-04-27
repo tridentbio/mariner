@@ -19,7 +19,7 @@ def schema_yaml_fixture():
 def test_schema(schema_yaml_fixture: str):
     model_config = ModelSchema.from_yaml(schema_yaml_fixture)
     assert model_config
-    assert model_config.layers[8].type == "model_builder.layers.Concat"
+    assert model_config.layers[8].type == "fleet.model_builder.layers.Concat"
 
 
 def test_schema_autofills_lossfn():
@@ -55,7 +55,7 @@ dataset:
 
 featurizers:
   - name: "MWT Cat Featurizer"
-    type: model_builder.featurizers.IntegerFeaturizer
+    type: fleet.model_builder.featurizers.IntegerFeaturizer
     forwardArgs:
       input_: $mwt_group
       

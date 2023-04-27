@@ -16,7 +16,7 @@ dataset:
 
 featurizers:
   - name: MolToGraphFeaturizer
-    type: model_builder.featurizers.MoleculeFeaturizer
+    type: fleet.model_builder.featurizers.MoleculeFeaturizer
     forwardArgs:
       mol: $smiles
     constructorArgs:
@@ -75,7 +75,7 @@ layers:
       input: ${GCN3}
 
   - name: AddPool
-    type: model_builder.layers.GlobalPooling
+    type: fleet.model_builder.layers.GlobalPooling
     forwardArgs:
       x: ${GCN3_Activation}
       edge_index: ${MolToGraphFeaturizer.edge_index}
@@ -94,7 +94,7 @@ layers:
       input: ${mwt}
 
   - name: Combiner
-    type: model_builder.layers.Concat
+    type: fleet.model_builder.layers.Concat
     constructorArgs:
       dim: -1
     forwardArgs:

@@ -2,19 +2,15 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from fleet.model_builder.optimizers import AdamOptimizer
+from fleet.models import EarlyStoppingConfig, MonitoringConfig
 from mariner import experiments as experiments_ctl
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import EventEntity
-from mariner.schemas.experiment_schemas import (
-    EarlyStoppingConfig,
-    Experiment,
-    MonitoringConfig,
-    TrainingRequest,
-)
+from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
-from fleet.model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
