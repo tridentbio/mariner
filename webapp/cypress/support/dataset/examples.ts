@@ -50,6 +50,57 @@ export const zincDatasetFixture: DatasetFormData = {
   ],
 };
 
+export const createIrisDatasetFormData = (): DatasetFormData => {
+  return {
+    name: randomLowerCase(8),
+    description: randomLowerCase(24),
+    file: 'data/csv/iris.csv',
+    split: '60-20-20',
+    splitType: 'Random',
+    splitColumn: 'species',
+    descriptions: [
+      {
+        pattern: 'sepal_length',
+        dataType: { domainKind: 'Numeric', unit: 'mole' },
+        description: randomLowerCase(12),
+      },
+      {
+        pattern: 'sepal_width',
+        dataType: { domainKind: 'Numeric', unit: 'mole' },
+        description: randomLowerCase(12),
+      },
+      {
+        pattern: 'petal_length',
+        dataType: { domainKind: 'Numeric', unit: 'mole' },
+        description: randomLowerCase(12),
+      },
+      {
+        pattern: 'petal_width',
+        dataType: { domainKind: 'Numeric', unit: 'mole' },
+        description: randomLowerCase(12),
+      },
+      {
+        pattern: 'species',
+        dataType: {
+          domainKind: 'Categorical',
+          classes: { '0': 0, '1': 1, '2': 2 },
+        },
+        description: randomLowerCase(12),
+      },
+      {
+        pattern: 'large_petal_length',
+        dataType: { domainKind: 'Categorical', classes: { '0': 0, '1': 1 } },
+        description: randomLowerCase(12),
+      },
+      {
+        pattern: 'large_petal_width',
+        dataType: { domainKind: 'Categorical', classes: { '0': 0, '1': 1 } },
+        description: randomLowerCase(12),
+      },
+    ],
+  };
+};
+
 export const createRandomDatasetFormData = (): DatasetFormData => {
   return {
     name: randomLowerCase(8),
@@ -70,7 +121,9 @@ export const createRandomDatasetFormData = (): DatasetFormData => {
         pattern: 'mwt_group',
         dataType: {
           domainKind: 'Categorical',
+          classes: { mwt_big: 0, mwt_small: 1 },
         },
+
         description: 'A categorical column',
       },
       {

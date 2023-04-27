@@ -1,12 +1,10 @@
 export const deleteDatasetIfAlreadyExists = (datasetName: string) => {
   cy.intercept({
     method: 'GET',
-    //url: http://localhost/api/v1/datasets/?page=0&perPage=25
     url: 'http://localhost/api/v1/datasets/*',
   }).as('getDatasets');
   cy.intercept({
     method: 'DELETE',
-    //url: http://localhost/api/v1/datasets/?page=0&perPage=25
     url: 'http://localhost/api/v1/datasets/*',
   }).as('delete');
   cy.visit('/datasets');
