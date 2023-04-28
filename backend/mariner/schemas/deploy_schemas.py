@@ -65,24 +65,6 @@ class Deploy(DeployBase):
     id: int
 
 
-class DeployUpdate(ApiBaseModel):
-    """Deploy to update type.
-
-    Used in the deploy update route.
-    """
-
-    name: str = None
-    readme: str = None
-    share_url: str = None
-    status: DeploymentStatus = None
-    share_strategy: ShareStrategy = None
-    users_id_allowed: List[int] = None
-    organizations_allowed: List[str] = None
-    show_training_data: bool = None
-    prediction_rate_limit_value: None
-    prediction_rate_limit_unit: RateLimitUnit = None
-
-
 class DeployUpdateInput(ApiBaseModel):
     """Payload of a deploy update.
 
@@ -113,12 +95,13 @@ class DeployUpdateInput(ApiBaseModel):
     prediction_rate_limit_unit: RateLimitUnit = None
 
 
-class DeployUpdateRepo(DeployUpdate):
+class DeployUpdateRepo(DeployUpdateInput):
     """Deploy to update type.
 
-    Accepted by the DeployCRUD to update a deploy in the database.
+    Used in the deploy update route.
     """
 
+    share_url: str = None
     delete = False  # when true it updates the deleted_at field
 
 
