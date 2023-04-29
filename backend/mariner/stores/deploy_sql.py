@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from mariner.entities.deploy import Deploy, SharePermissions
 from mariner.schemas.deploy_schemas import (
+    Deploy as DeploySchema,
     DeployCreateRepo,
     DeploymentsQuery,
     DeployUpdateRepo,
@@ -14,7 +15,7 @@ from mariner.schemas.deploy_schemas import (
     PermissionDeleteRepo,
 )
 from mariner.stores.base_sql import CRUDBase
-
+from .model_sql import model_store
 
 class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
     """CRUD for :any:`Deploy model<mariner.entities.deploy.Deploy>`
@@ -32,7 +33,7 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
         Returns:
             A tuple with the list of deploy and the total number of deploy
         """
-        sql_query = db.query(Deploy)
+        sql_query = db.query(Deploy).join(SharePermissions)
 
         # filtering
         if query.name:
@@ -99,19 +100,19 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
 
         Returns:
             Updated deploy
-        """
+        """        
         if obj_in.delete:
             db.delete(db_obj)
             db.commit()
             return db_obj
+        else:
+            del obj_in.delete
 
         if obj_in.users_id_allowed or obj_in.organizations_allowed:
             share_permissions = self.parse_share_permissions(
                 ids=obj_in.users_id_allowed or [],
                 organizations=obj_in.organizations_allowed or [],
             )
-            del obj_in.users_id_allowed
-            del obj_in.organizations_allowed
             db.query(SharePermissions).filter(
                 SharePermissions.deploy_id == db_obj.id,
             ).delete()
@@ -119,8 +120,11 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
             db_obj = db.query(Deploy).filter(Deploy.id == db_obj.id).first()
             db_obj.share_permissions = share_permissions
             db.add(db_obj)
+            
+        del obj_in.organizations_allowed
+        del obj_in.users_id_allowed
 
-        super().update(db, db_obj=db_obj, obj_in=obj_in)
+        super().update(db, db_obj=db_obj, obj_in=obj_in.dict(exclude_none=True))
         return db_obj
 
     def parse_share_permissions(
@@ -176,5 +180,27 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
         db.commit()
         return db_obj
 
+
+    def get_model_version(self, db: Session, model_version_id: int, user_id: int):
+        """Ensure that the user is the owner of the model version
+
+        Args:
+            db (Session): database session
+            model_version_id (int): model version id
+            user_id (int): user id
+
+        Raises:
+            ValueError: if the user is not the owner of the model version
+        
+        Returns:
+            ModelVersion: model version
+        """
+        model_version = model_store.get_model_version(db, model_version_id)
+        
+        model = model_store.get(db, model_version.model_id)
+        if model.created_by_id != user_id:
+            raise PermissionError("You are not the owner of this model version")
+        
+        return model_version
 
 deploy_store = CRUDDeploy(Deploy)

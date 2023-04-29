@@ -3,7 +3,7 @@ Deployment entity and core relations
 """
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, Enum, Integer, String
+from sqlalchemy import Column, Enum, Integer, String, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
@@ -55,12 +55,13 @@ class Deploy(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, unique=True)
     readme = Column(String, nullable=True)
-    shareUrl = Column(String, nullable=True)
+    share_url = Column(String, nullable=True)
     status = Column(
         Enum(DeploymentStatus), default=DeploymentStatus.STOPPED, index=True
     )
     rate_limit_unit = Column(Enum(RateLimitUnit), nullable=True)
     rate_limit_value = Column(Integer, nullable=True)
+    show_training_data = Column(Boolean, default=False)
 
     share_strategy = Column(Enum(ShareStrategy), default=ShareStrategy.PRIVATE)
     share_permissions = relationship(
