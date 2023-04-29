@@ -58,7 +58,7 @@ def get_my_deploys(
 
 
 @router.get("/{deploy_id}", response_model=Deploy)
-def get_my_deploy(
+def get_my_deploy_by_id(
     deploy_id: int,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
@@ -66,25 +66,21 @@ def get_my_deploy(
     """
     Retrieve deploys owned by requester
     """
-    dataset = controller.get_my_dataset_by_id(db, current_user, deploy_id)
-    return Deploy.from_orm(dataset)
+    deploy = controller.get_my_deploy_by_id(db, current_user, deploy_id)
+    return Deploy.from_orm(deploy)
 
 
 @router.post("/", response_model=Deploy)
-async def create_dataset(
-    deploy_input: DeployBase,
+def create_deploy(
+    data: DeployBase,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
     """
-    Create a dataset
+    Create a deploy
     """
     try:
-        payload = DeployCreateRepo(
-            **deploy_input.dict(),
-        )
-
-        db_deploy = await controller.create_deploy(db, current_user, payload)
+        db_deploy = controller.create_deploy(db, current_user, data)
 
         deploy = Deploy.from_orm(db_deploy)
         return deploy
@@ -103,7 +99,7 @@ async def create_dataset(
     response_model=Deploy,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-async def update_deploy(
+def update_deploy(
     deploy_id: int,
     deploy_input: DeployUpdateInput,
     current_user=Depends(deps.get_current_active_user),
@@ -113,7 +109,7 @@ async def update_deploy(
     Update a deploy and process again if it is needed
     """
     try:
-        deploy = await controller.update_deploy(
+        deploy = controller.update_deploy(
             db,
             current_user,
             deploy_id,

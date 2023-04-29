@@ -56,3 +56,16 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     """Hashes a password."""
     return pwd_context.hash(password)
+
+
+def generate_deploy_signed_url(sub: Union[str, Any]) -> str:
+    """Generates a signed URL for a route.
+
+    Args:
+        sub: deploy_id.
+
+    Returns:
+        Signed URL.
+    """
+    token = create_access_token(sub, timedelta(days=30))
+    return f"{settings.SERVER_HOST}{settings.API_V1_STR}/deploy?token={token}"

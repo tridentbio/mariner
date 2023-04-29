@@ -46,9 +46,8 @@ class DeployBase(ApiBaseModel):
     users_id_allowed: List[int] = []
     organizations_allowed: List[str] = []
     show_training_data: bool = False
-    prediction_rate_limit_value: int
-    prediction_rate_limit_unit: RateLimitUnit = RateLimitUnit.MONTH
-    created_by_user_id: int
+    rate_limit_value: int
+    rate_limit_unit: RateLimitUnit = RateLimitUnit.MONTH
     deleted_at: Optional[utc_datetime] = None
 
 
@@ -57,12 +56,13 @@ class DeployCreateRepo(DeployBase):
 
     Used in the DeployCRUD to create a deploy in the database.
     """
-
+    created_by_id: int
 
 class Deploy(DeployBase):
     """Deploy model type."""
 
     id: int
+    created_by_id: int
 
 
 class DeployUpdateInput(ApiBaseModel):
@@ -79,8 +79,8 @@ class DeployUpdateInput(ApiBaseModel):
         users_id_allowed (List[int]): users id allowed of the deploy
         organizations_allowed (List[str]): organizations allowed of the deploy
         show_training_data (bool): show training data of the deploy
-        prediction_rate_limit_value (int): prediction rate limit value of the deploy
-        prediction_rate_limit_unit (RateLimitUnit): prediction rate limit unit of the deploy
+        rate_limit_value (int): prediction rate limit value of the deploy
+        rate_limit_unit (RateLimitUnit): prediction rate limit unit of the deploy
 
     """
 
@@ -91,8 +91,8 @@ class DeployUpdateInput(ApiBaseModel):
     users_id_allowed: List[int] = None
     organizations_allowed: List[str] = None
     show_training_data: bool = None
-    prediction_rate_limit_value: int = None
-    prediction_rate_limit_unit: RateLimitUnit = None
+    rate_limit_value: int = None
+    rate_limit_unit: RateLimitUnit = None
 
 
 class DeployUpdateRepo(DeployUpdateInput):
@@ -103,7 +103,6 @@ class DeployUpdateRepo(DeployUpdateInput):
 
     share_url: str = None
     delete = False  # when true it updates the deleted_at field
-
 
 class PermissionBase(ApiBaseModel):
     """Permission base type."""
