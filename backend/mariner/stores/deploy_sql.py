@@ -3,11 +3,13 @@ Deploy data layer defining ways to read and write to the deploys collection
 """
 from typing import List
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from mariner.entities.deploy import Deploy, SharePermissions
+from mariner.entities.user import User
+from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
 from mariner.schemas.deploy_schemas import (
-    Deploy as DeploySchema,
     DeployCreateRepo,
     DeploymentsQuery,
     DeployUpdateRepo,
@@ -15,7 +17,9 @@ from mariner.schemas.deploy_schemas import (
     PermissionDeleteRepo,
 )
 from mariner.stores.base_sql import CRUDBase
+
 from .model_sql import model_store
+
 
 class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
     """CRUD for :any:`Deploy model<mariner.entities.deploy.Deploy>`
@@ -23,7 +27,7 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
     Responsible to handle all communication with the deploy for the Deploy model.
     """
 
-    def get_many_paginated(self, db: Session, query: DeploymentsQuery):
+    def get_many_paginated(self, db: Session, query: DeploymentsQuery, user: User):
         """Get many deploy based on the query parameters
 
         Args:
@@ -33,9 +37,29 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
         Returns:
             A tuple with the list of deploy and the total number of deploy
         """
-        sql_query = db.query(Deploy).join(SharePermissions)
+        sql_query = db.query(Deploy).join(SharePermissions, Deploy.share_permissions)
+        sql_query.filter(Deploy.deleted_at.is_(None))
 
-        # filtering
+        # filtering for accessible deploys
+        if query.created_by_id:
+            sql_query.filter(Deploy.created_by_id == query.created_by_id)
+
+        elif query.public_mode == "only":
+            sql_query.filter(Deploy.share_strategy == "public")
+
+        else:
+            filters = [
+                Deploy.created_by_id == user.id,
+                SharePermissions.user_id == user.id,
+                SharePermissions.organization == f"@{user.email.split('@')[1]}",
+            ]
+
+            if query.public_mode == "include":
+                filters.append(Deploy.share_strategy == "public")
+
+            sql_query = sql_query.filter(or_(*filters))
+
+        # filtering query
         if query.name:
             sql_query = sql_query.filter(Deploy.name.ilike(f"%{query.name}%"))
         if query.status:
@@ -48,10 +72,6 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
             sql_query = sql_query.filter(
                 Deploy.model_version_id == query.model_version_id
             )
-
-        if query.created_by_id:
-            sql_query = sql_query.filter(Deploy.created_by_id == query.created_by_id)
-
         total = sql_query.count()
         sql_query = sql_query.limit(query.per_page).offset(query.page * query.per_page)
         result = sql_query.all()
@@ -100,7 +120,7 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
 
         Returns:
             Updated deploy
-        """        
+        """
         if obj_in.delete:
             db.delete(db_obj)
             db.commit()
@@ -120,7 +140,7 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
             db_obj = db.query(Deploy).filter(Deploy.id == db_obj.id).first()
             db_obj.share_permissions = share_permissions
             db.add(db_obj)
-            
+
         del obj_in.organizations_allowed
         del obj_in.users_id_allowed
 
@@ -149,7 +169,10 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
         Returns:
             Created permission
         """
-        db_obj = SharePermissions(**obj_in.dict())
+        if not isinstance(obj_in, dict):
+            obj_in = obj_in.dict()
+
+        db_obj = SharePermissions(**obj_in)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -180,7 +203,6 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
         db.commit()
         return db_obj
 
-
     def get_model_version(self, db: Session, model_version_id: int, user_id: int):
         """Ensure that the user is the owner of the model version
 
@@ -191,16 +213,19 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
 
         Raises:
             ValueError: if the user is not the owner of the model version
-        
+
         Returns:
             ModelVersion: model version
         """
         model_version = model_store.get_model_version(db, model_version_id)
-        
+
         model = model_store.get(db, model_version.model_id)
+        if not model:
+            raise ModelVersionNotFound("Model not found")
         if model.created_by_id != user_id:
-            raise PermissionError("You are not the owner of this model version")
-        
+            raise NotCreatorOwner("You are not the owner of this model version")
+
         return model_version
+
 
 deploy_store = CRUDDeploy(Deploy)
