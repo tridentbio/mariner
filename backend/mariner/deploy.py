@@ -25,7 +25,8 @@ def get_deploys(
     db: Session, current_user: User, query: DeploymentsQuery
 ) -> Tuple[List[Deploy], int]:
     """Retrieve all deploys that requester has access to."""
-    return deploy_store.get_many_paginated(db, query, current_user)
+    db_data, total = deploy_store.get_many_paginated(db, query, current_user)
+    return db_data, total
 
 
 def create_deploy(db: Session, current_user: User, deploy_input: DeployBase) -> Deploy:
@@ -92,10 +93,8 @@ def update_deploy(
     return deploy_store.update(db, db_obj=deploy, obj_in=deploy_input)
 
 
-def delete_deploy(
-    db: Session, current_user: User, deploy_to_delete: DeployUpdateRepo
-) -> Deploy:
-    deploy = deploy_store.get(db, deploy_to_delete.id)
+def delete_deploy(db: Session, current_user: User, deploy_to_delete_id: int) -> Deploy:
+    deploy = deploy_store.get(db, deploy_to_delete_id)
     if deploy.created_by_id != current_user.id:
         raise NotCreatorOwner()
 
@@ -107,10 +106,21 @@ def delete_deploy(
 def create_permission(
     db: Session, current_user: User, permission_input: PermissionCreateRepo
 ) -> Deploy:
-    # TODO: create share permission for deploy
-    return Deploy()
+    deploy: DeployEntity = deploy_store.get(db, permission_input.deploy_id)
+    if current_user.id != deploy.created_by_id:
+        raise NotCreatorOwner("Unauthorized.")
+    deploy_store.create_permission(db, permission_input)
+
+    return Deploy.from_orm(deploy_store.get(db, permission_input.deploy_id))
 
 
-def delete_permission(db: Session, current_user: User, permission_id: int) -> Deploy:
-    # TODO: delete share permission
-    return Deploy()
+def delete_permission(
+    db: Session, current_user: User, permission_input: PermissionCreateRepo
+) -> Deploy:
+    deploy: DeployEntity = deploy_store.get(db, permission_input.deploy_id)
+    if current_user.id != deploy.created_by_id:
+        raise NotCreatorOwner("Unauthorized.")
+
+    deploy_store.delete_permission(db, permission_input)
+
+    return Deploy.from_orm(deploy_store.get(db, permission_input.deploy_id))

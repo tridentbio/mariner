@@ -25,6 +25,7 @@ from mariner.schemas.deploy_schemas import (
     DeployUpdateInput,
     DeployUpdateRepo,
     PermissionCreateRepo,
+    PermissionDeleteRepo,
 )
 
 router = APIRouter()
@@ -40,7 +41,7 @@ def get_deploys(
     Retrieve deploys owned by requester
     """
     deploy, total = controller.get_deploys(db, current_user, query)
-    return Paginated(data=[DeploymentsQuery.from_orm(ds) for ds in deploy], total=total)
+    return Paginated(data=[Deploy.from_orm(d) for d in deploy], total=total)
 
 
 @router.post("/", response_model=Deploy)
@@ -105,14 +106,12 @@ def delete_deploy(
 ):
     """Delete a deploy by id"""
     try:
-        deploy = controller.delete_deploy(
-            db, current_user, DeployUpdateRepo(id=deploy_id, delete=True)
-        )
+        deploy = controller.delete_deploy(db, current_user, deploy_id)
         return deploy
     except DeployNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except NotCreatorOwner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
 @router.post("/permissions", response_model=Deploy)
@@ -131,15 +130,15 @@ def create_permission(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.delete("/permissions/{permission_id}", response_model=Deploy)
+@router.delete("/permissions", response_model=Deploy)
 def delete_permission(
-    permission_id: int,
+    query: PermissionDeleteRepo = Depends(PermissionDeleteRepo),
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
     """Delete a permission for a deploy"""
     try:
-        deploy = controller.delete_permission(db, current_user, permission_id)
+        deploy = controller.delete_permission(db, current_user, query)
         return deploy
     except DeployNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

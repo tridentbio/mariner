@@ -1,14 +1,16 @@
 """
 Deploy data layer defining ways to read and write to the deploys collection
 """
+from datetime import datetime
 from typing import List
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from mariner.entities.deploy import Deploy, SharePermissions
+from mariner.entities.deploy import Deploy, SharePermissions, ShareStrategy
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
+from mariner.schemas.deploy_schemas import Deploy as DeploySchema
 from mariner.schemas.deploy_schemas import (
     DeployCreateRepo,
     DeploymentsQuery,
@@ -32,20 +34,28 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
 
         Args:
             db (Session): deploy session
-            query (DeployQuery): query parameters
+            query (DeploymentsQuery): query parameters
+                - name (str): name of the deploy
+                - status (DeploymentStatus): status of the deploy
+                - share_strategy (ShareStrategy): share strategy of the deploy
+                - created_after (utc_datetime): created after date
+                - modelVersionId (int): model version id
+                - created_by_id (int): created by id
 
         Returns:
             A tuple with the list of deploy and the total number of deploy
         """
-        sql_query = db.query(Deploy).join(SharePermissions, Deploy.share_permissions)
-        sql_query.filter(Deploy.deleted_at.is_(None))
+        sql_query = db.query(Deploy, SharePermissions).join(
+            SharePermissions, Deploy.share_permissions, isouter=True
+        )
+        sql_query = sql_query.filter(Deploy.deleted_at.is_(None))
 
         # filtering for accessible deploys
         if query.created_by_id:
-            sql_query.filter(Deploy.created_by_id == query.created_by_id)
+            sql_query = sql_query.filter(Deploy.created_by_id == query.created_by_id)
 
         elif query.public_mode == "only":
-            sql_query.filter(Deploy.share_strategy == "public")
+            sql_query = sql_query.filter(Deploy.share_strategy == ShareStrategy.PUBLIC)
 
         else:
             filters = [
@@ -55,7 +65,7 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
             ]
 
             if query.public_mode == "include":
-                filters.append(Deploy.share_strategy == "public")
+                filters.append(Deploy.share_strategy == "PUBLIC")
 
             sql_query = sql_query.filter(or_(*filters))
 
@@ -72,10 +82,26 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
             sql_query = sql_query.filter(
                 Deploy.model_version_id == query.model_version_id
             )
+
         total = sql_query.count()
         sql_query = sql_query.limit(query.per_page).offset(query.page * query.per_page)
-        result = sql_query.all()
-        return result, total
+
+        result = list(set(sql_query.all()))
+
+        deploys: List[DeploySchema] = []
+        for i, record in enumerate(result):
+            deploy, share_permissions = record
+
+            deploys.append(DeploySchema.from_orm(deploy))
+            if share_permissions:
+                if share_permissions.user_id:
+                    deploys[i].users_id_allowed.append(share_permissions.user_id)
+                elif share_permissions.organization:
+                    deploys[i].organizations_allowed.append(
+                        share_permissions.organization
+                    )
+
+        return deploys, total
 
     def create(self, db: Session, obj_in: DeployCreateRepo):
         """Create a new deploy
@@ -122,9 +148,8 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
             Updated deploy
         """
         if obj_in.delete:
-            db.delete(db_obj)
-            db.commit()
-            return db_obj
+            obj_in.deleted_at = datetime.utcnow()
+            del obj_in.delete
         else:
             del obj_in.delete
 
