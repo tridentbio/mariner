@@ -11,6 +11,7 @@ from fleet import fit
 from fleet.base_schemas import BaseFleetModelSpec
 from fleet.dataset_schemas import ColumnConfig
 from fleet.model_builder import optimizers
+from fleet.model_builder.schemas import TargetConfig, is_regression
 from fleet.torch_.schemas import (
     MonitoringConfig,
     TorchModelSpec,
@@ -27,6 +28,10 @@ class TestCase:
     dataset_file: Union[Path, str]
     should_fail: Union[None, Any] = None
     datamodule_args = {"split_type": "random", "split_target": "60-20-20"}
+
+
+def targets_head(spec: TorchModelSpec) -> TargetConfig:
+    return spec.dataset.target_columns[0]
 
 
 def assert_mlflow_data(spec: BaseFleetModelSpec, mlflow_experiment_id: str):
@@ -46,20 +51,31 @@ def assert_mlflow_data(spec: BaseFleetModelSpec, mlflow_experiment_id: str):
 
     object_keys = [obj for obj in objs["Contents"] if obj["Key"] in expected_artifacts]
     assert len(object_keys) == 2, "failed to trained model artifacts from s3"
-    for target_column in spec.dataset.target_columns:
-        loss_history = client.get_metric_history(
-            run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
-        )
-        assert len(loss_history) > 0
-    for target_column in spec.dataset.target_columns:
-        val_loss_history = client.get_metric_history(
-            run_id=run.info.run_id, key=f"val/mse/{target_column.name}"
-        )
-        assert len(val_loss_history) > 0
-
-
-def targets_head(spec: BaseFleetModelSpec) -> ColumnConfig:
-    return spec.dataset.target_columns[0]
+    assert isinstance(
+        spec, TorchModelSpec
+    ), "this function is only for torch model specs"
+    if is_regression(targets_head(spec)):
+        for target_column in spec.dataset.target_columns:
+            loss_history = client.get_metric_history(
+                run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
+            )
+            assert len(loss_history) > 0
+        for target_column in spec.dataset.target_columns:
+            val_loss_history = client.get_metric_history(
+                run_id=run.info.run_id, key=f"val/mse/{target_column.name}"
+            )
+            assert len(val_loss_history) > 0
+    else:
+        for target_column in spec.dataset.target_columns:
+            loss_history = client.get_metric_history(
+                run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
+            )
+            assert len(loss_history) > 0
+        for target_column in spec.dataset.target_columns:
+            val_loss_history = client.get_metric_history(
+                run_id=run.info.run_id, key=f"val/precision/{target_column.name}"
+            )
+            assert len(val_loss_history) > 0
 
 
 models_root = Path("tests") / "data" / "yaml"
@@ -67,10 +83,10 @@ datasets_root = Path("tests") / "data" / "csv"
 specs = [
     (TorchModelSpec.from_yaml(models_root / path_), datasets_root / dataset_path)
     for path_, dataset_path in [
-        ("small_regressor_schema.yaml", "zinc.csv"),
         ("binary_classification_model.yaml", "iris.csv"),
         ("categorical_features_model.yaml", "zinc_extra.csv"),
-        # ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
+        ("small_regressor_schema.yaml", "zinc.csv"),
+        ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
         # ("modelv2.yaml", "zinc_extra.csv"),
         # ("multiclass_classification_model.yaml", "iris.csv"),
         # ("multitarget_classification_model.yaml", "iris.csv"),
@@ -87,7 +103,9 @@ test_cases = [
             batch_size=32,
             checkpoint_config=MonitoringConfig(
                 mode="min",
-                metric_key=f"val/mse/{targets_head(spec).name}",
+                metric_key=f"val/mse/{targets_head(spec).name}"
+                if is_regression(targets_head(spec))
+                else f"val/precision/{targets_head(spec).name}",
             ),
             optimizer=optimizers.AdamOptimizer(),
         ),

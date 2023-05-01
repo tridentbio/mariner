@@ -53,7 +53,7 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
     def set_from_model_schema(self, config, dataset_config, deps):
         input_ = deps[0]  # featurizer has a single argument to __call__
         # Get column information from schema
-        column_info = get_column_config(config, input_)
+        column_info = get_column_config(dataset_config, input_)
         # Handle missing column information
         if not column_info:
             raise RuntimeError(f"Column {input_} was not found in the config columns")

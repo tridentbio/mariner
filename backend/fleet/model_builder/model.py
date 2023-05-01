@@ -159,7 +159,8 @@ class CustomModel(pl.LightningModule):
             layer_instance = layer.create()
             if isinstance(layer_instance, AutoBuilder):
                 layer_instance.set_from_model_schema(
-                    config, list(get_dependencies(layer))
+                    config=config,
+                    deps=list(get_dependencies(layer)),
                 )
             layers_dict[layer.name] = layer_instance
         self._model = torch.nn.ModuleDict(layers_dict)

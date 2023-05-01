@@ -5,18 +5,17 @@ When interacting with the model schema, developers should prefer using this
 API over accessing attributes directly from the schema in order to maintain
 a single point of change (as best as possible) on schema updates.
 """
-from typing import TYPE_CHECKING, List, Set, Union
-
-from fleet.model_builder.schemas import TorchDatasetConfig
+from typing import TYPE_CHECKING, List, Sequence, Set, Union
 
 if TYPE_CHECKING:
     from fleet.model_builder.layers_schema import FeaturizersType, LayersType
     from fleet.model_builder.schemas import ColumnConfig, TorchModelSchema, TargetConfig
+    from fleet.torch_.schemas import TorchDatasetConfig
 
 from fleet.model_builder.utils import unwrap_dollar
 
 
-def get_columns_configs(config: "TorchModelSchema") -> List["ColumnConfig"]:
+def get_columns_configs(config: "TorchDatasetConfig") -> Sequence["ColumnConfig"]:
     """Gets the column configs from targets and featurizers of a ModelSchema object
 
     Args:
@@ -25,11 +24,11 @@ def get_columns_configs(config: "TorchModelSchema") -> List["ColumnConfig"]:
     Returns:
         List[ColumnConfig]
     """
-    return config.dataset.feature_columns + config.dataset.target_columns
+    return config.feature_columns + config.target_columns
 
 
 def get_column_config(
-    config: "TorchModelSchema", column_name: str
+    config: "TorchDatasetConfig", column_name: str
 ) -> Union["ColumnConfig", None]:
     """Gets the column config of any column (target or featurizer) with name
     equals ``column_name``
@@ -74,3 +73,4 @@ def get_dependencies(
                 if not isref:
                     continue
                 deps.add(dep)
+    return deps

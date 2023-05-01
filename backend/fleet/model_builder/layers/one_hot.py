@@ -37,7 +37,7 @@ class OneHot(nn.Module, AutoBuilder):
         longs = torch.Tensor([self.classes[x] for x in x1]).long()
         return F.one_hot(longs, num_classes=len(self.classes)).float()
 
-    def set_from_model_schema(self, config, deps):
+    def set_from_model_schema(self, config, dataset_config, deps):
         """Sets classes dict from the model schema
 
         Args:
@@ -50,10 +50,10 @@ class OneHot(nn.Module, AutoBuilder):
             DataTypeMismatchException: When the element in
             deps is not categorical
         """
-        from fleet.model_builder.schemas import CategoricalDataType
+        from fleet.dataset_schemas import CategoricalDataType
 
         input_ = deps[0]  # this layer has a single arg to forward method
-        column_config = get_column_config(config, input_)
+        column_config = get_column_config(dataset_config, input_)
         if not column_config:
             raise RuntimeError(f"Column config not found for input {input_}")
         if not isinstance(column_config.data_type, CategoricalDataType):

@@ -160,7 +160,9 @@ class CustomDataset(Dataset):
             feat = featurizer_config.create()
             if isinstance(feat, AutoBuilder):
                 feat.set_from_model_schema(
-                    self.config, list(get_dependencies(featurizer_config))
+                    config=self.config,
+                    deps=list(get_dependencies(featurizer_config)),
+                    dataset_config=self.dataset_config,
                 )
             self._featurizers[featurizer_config.name] = feat
         self.output_featurizers = self.get_output_featurizers()
@@ -172,7 +174,11 @@ class CustomDataset(Dataset):
         feat = None
         if isinstance(column.data_type, CategoricalDataType):
             feat = IntegerFeaturizer()
-            feat.set_from_model_schema(self.config, [column.name])
+            feat.set_from_model_schema(
+                config=self.config,
+                deps=[column.name],
+                dataset_config=self.dataset_config,
+            )
         elif isinstance(column.data_type, DNADataType):
             feat = DNASequenceFeaturizer()
         elif isinstance(column.data_type, RNADataType):

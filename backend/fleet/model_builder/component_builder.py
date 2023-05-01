@@ -22,8 +22,8 @@ class AutoBuilder(ABC):
     def set_from_model_schema(
         self,
         config: "TorchModelSchema",
-        dataset_config: "TorchDatasetConfig",
-        deps: list[str],
+        dataset_config: typing.Union[None, "TorchDatasetConfig"] = None,
+        deps: list[str] = [],
     ):
         """Method to implement argument filling from ModelSchema
 
