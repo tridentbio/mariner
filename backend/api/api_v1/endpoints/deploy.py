@@ -114,7 +114,7 @@ def delete_deploy(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-@router.post("/permissions", response_model=Deploy)
+@router.post("/create-permission", response_model=Deploy)
 def create_permission(
     permission_input: PermissionCreateRepo,
     current_user: User = Depends(deps.get_current_active_user),
@@ -130,9 +130,9 @@ def create_permission(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.delete("/permissions", response_model=Deploy)
+@router.post("/delete-permission", response_model=Deploy)
 def delete_permission(
-    query: PermissionDeleteRepo = Depends(PermissionDeleteRepo),
+    query: PermissionDeleteRepo,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
