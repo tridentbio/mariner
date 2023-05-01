@@ -206,7 +206,7 @@ def test_create_permission(
     test_user = get_random_test_user(db)
     permission_data = PermissionCreateRepo(deploy_id=deploy.id, user_id=test_user.id)
     r = client.post(
-        f"{settings.API_V1_STR}/deploy/permissions",
+        f"{settings.API_V1_STR}/deploy/create-permission",
         json=permission_data.dict(exclude_none=True),
         headers=normal_user_token_headers,
     )
@@ -235,7 +235,7 @@ def test_delete_permission(
     test_user = get_random_test_user(db)
     permission_data = PermissionCreateRepo(deploy_id=deploy.id, user_id=test_user.id)
     r = client.post(
-        f"{settings.API_V1_STR}/deploy/permissions",
+        f"{settings.API_V1_STR}/deploy/create-permission",
         json=permission_data.dict(exclude_none=True),
         headers=normal_user_token_headers,
     )
@@ -243,11 +243,22 @@ def test_delete_permission(
     payload = r.json()
     assert payload["id"] == deploy.id
 
-    r = client.delete(
-        f"{settings.API_V1_STR}/deploy/permissions",
-        params=permission_data.dict(),
+    r = client.post(
+        f"{settings.API_V1_STR}/deploy/delete-permission",
+        json=permission_data.dict(),
         headers=normal_user_token_headers,
     )
     assert r.status_code == 200
     payload = r.json()
     assert payload["id"] == deploy.id
+
+    r = client.get(
+        f"{settings.API_V1_STR}/deploy",
+        headers=normal_user_token_headers,
+        params={"name": deploy.name, "created_by_id": test_user.id},
+    )
+    payload = r.json()
+
+    for api_deploy in payload["data"]:
+        if api_deploy["id"] == deploy.id:
+            assert test_user.id not in api_deploy["usersIdAllowed"]
