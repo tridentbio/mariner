@@ -2,7 +2,7 @@
 Deploy related DTOs
 """
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import root_validator
 
@@ -31,6 +31,7 @@ class DeploymentsQuery(PaginatedApiQuery):
     share_strategy: Optional[ShareStrategy]
     created_after: Optional[utc_datetime]
     model_version_id: Optional[int]
+    public_mode: Literal["include", "exclude", "only"] = "exclude"
     created_by_id: Optional[int]
 
 
@@ -56,7 +57,9 @@ class DeployCreateRepo(DeployBase):
 
     Used in the DeployCRUD to create a deploy in the database.
     """
+
     created_by_id: int
+
 
 class Deploy(DeployBase):
     """Deploy model type."""
@@ -103,6 +106,7 @@ class DeployUpdateRepo(DeployUpdateInput):
 
     share_url: str = None
     delete = False  # when true it updates the deleted_at field
+
 
 class PermissionBase(ApiBaseModel):
     """Permission base type."""

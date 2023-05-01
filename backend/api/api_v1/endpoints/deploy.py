@@ -21,7 +21,6 @@ from mariner.schemas.api import Paginated
 from mariner.schemas.deploy_schemas import (
     Deploy,
     DeployBase,
-    DeployCreateRepo,
     DeploymentsQuery,
     DeployUpdateInput,
     DeployUpdateRepo,
@@ -31,21 +30,8 @@ from mariner.schemas.deploy_schemas import (
 router = APIRouter()
 
 
-@router.get("/feed", response_model=Paginated[Deploy])
-def get_all_deploys(
-    query: DeploymentsQuery = Depends(DeploymentsQuery),
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Retrieve all deploys shared with requester
-    """
-    deploy, total = controller.get_all_deploys(db, current_user, query)
-    return Paginated(data=[DeploymentsQuery.from_orm(ds) for ds in deploy], total=total)
-
-
 @router.get("/", response_model=Paginated[Deploy])
-def get_my_deploys(
+def get_deploys(
     query: DeploymentsQuery = Depends(DeploymentsQuery),
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
@@ -53,21 +39,8 @@ def get_my_deploys(
     """
     Retrieve deploys owned by requester
     """
-    deploy, total = controller.get_my_deploys(db, current_user, query)
+    deploy, total = controller.get_deploys(db, current_user, query)
     return Paginated(data=[DeploymentsQuery.from_orm(ds) for ds in deploy], total=total)
-
-
-@router.get("/{deploy_id}", response_model=Deploy)
-def get_my_deploy_by_id(
-    deploy_id: int,
-    current_user: User = Depends(deps.get_current_active_user),
-    db: Session = Depends(deps.get_db),
-) -> Any:
-    """
-    Retrieve deploys owned by requester
-    """
-    deploy = controller.get_my_deploy_by_id(db, current_user, deploy_id)
-    return Deploy.from_orm(deploy)
 
 
 @router.post("/", response_model=Deploy)
