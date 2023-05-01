@@ -7,16 +7,17 @@ import torch
 import torch.nn
 import torchmetrics as metrics
 
+from fleet.dataset_schemas import CategoricalDataType
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
 from fleet.model_builder.optimizers import Optimizer
-from fleet.model_builder.schemas import CategoricalDataType, ModelSchema
+from fleet.model_builder.schemas import TorchDatasetConfig, TorchModelSchema
 from fleet.model_builder.utils import collect_args
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
-    """Treat something that can be either str of List[śtr] as List[str]
+    """Treat something that can be either str of List[str] as List[str]
 
     Converts str to single element lists
 
@@ -87,7 +88,7 @@ class Metrics:
     ):
         """Gets a dict with the training metrics
 
-        For each of the training metrics avaliable on the task type, return a dictionary
+        For each of the training metrics available on the task type, return a dictionary
         with the metrics value given the input ``batch`` and the model output ``prediction``
 
         Args:
@@ -119,7 +120,7 @@ class Metrics:
     ):
         """Gets a dict with the validation metrics
 
-        For each of the training metrics avaliable on the task type, return a dictionary
+        For each of the training metrics available on the task type, return a dictionary
         with the metrics value given the input ``batch`` and the model output ``prediction``
 
         Args:
@@ -140,16 +141,20 @@ class Metrics:
 class CustomModel(pl.LightningModule):
     """Neural network model encoded by a ModelSchema"""
 
+    dataset_config: TorchDatasetConfig
     optimizer: Optimizer
     loss_dict: dict
     metrics_dict: Dict[str, Metrics]
 
-    def __init__(self, config: Union[ModelSchema, str]):
+    def __init__(
+        self, config: Union[TorchModelSchema, str], dataset_config: TorchDatasetConfig
+    ):
         super().__init__()
         if isinstance(config, str):
-            config = ModelSchema.parse_raw(config)
+            config = TorchModelSchema.parse_raw(config)
         layers_dict = {}
         self.config = config
+        self.dataset_config = dataset_config
         self.layer_configs = {layer.name: layer for layer in config.layers}
         for layer in config.layers:
             layer_instance = layer.create()
@@ -164,14 +169,14 @@ class CustomModel(pl.LightningModule):
 
         self.loss_dict = {}
         self.metrics_dict = {}
-        is_multilabel = len(config.dataset.target_columns) > 1 and all(
+        is_multilabel = len(dataset_config.target_columns) > 1 and all(
             [
                 target_column.column_type == "binary"
-                for target_column in config.dataset.target_columns
+                for target_column in dataset_config.target_columns
             ]
         )
 
-        for target_column in config.dataset.target_columns:
+        for target_column in dataset_config.target_columns:
             if not target_column.loss_fn:
                 raise ValueError(f"{target_column.name}.loss_fn cannot be None")
 
@@ -189,7 +194,7 @@ class CustomModel(pl.LightningModule):
                 self.metrics_dict[target_column.name] = Metrics(
                     "multilabel" if is_multilabel else target_column.column_type,
                     num_classes=len(target_column.data_type.classes.keys()),
-                    num_labels=len(config.dataset.target_columns)
+                    num_labels=len(dataset_config.target_columns)
                     if is_multilabel
                     else None,
                 )
@@ -221,7 +226,7 @@ class CustomModel(pl.LightningModule):
             if node_name not in self.layer_configs:
                 continue  # is a featurizer, already evaluated by dataset
             if node_name in map(
-                lambda x: x.out_module, self.config.dataset.target_columns
+                lambda x: x.out_module, self.dataset_config.target_columns
             ):
                 continue  # is a target column output, evaluated separately
             layer = self.layer_configs[node_name]
@@ -230,7 +235,7 @@ class CustomModel(pl.LightningModule):
             last = input_[layer.name]
 
         result = {}
-        for target_column in self.config.dataset.target_columns:
+        for target_column in self.dataset_config.target_columns:
             result[target_column.name] = self._call_model(
                 self._model[target_column.out_module], last
             )
@@ -266,7 +271,7 @@ class CustomModel(pl.LightningModule):
         prediction = self(batch)
 
         losses = {}
-        for target_column in self.config.dataset.target_columns:
+        for target_column in self.dataset_config.target_columns:
             args = (
                 prediction[target_column.name].squeeze(),
                 batch[target_column.name].squeeze(),
@@ -296,7 +301,7 @@ class CustomModel(pl.LightningModule):
         prediction = self(batch)
 
         losses = {}
-        for target_column in self.config.dataset.target_columns:
+        for target_column in self.dataset_config.target_columns:
             args = (
                 prediction[target_column.name].squeeze(),
                 batch[target_column.name].squeeze(),
@@ -332,7 +337,7 @@ class CustomModel(pl.LightningModule):
         """
         predictions = self(batch)
 
-        for target_column in self.config.dataset.target_columns:
+        for target_column in self.dataset_config.target_columns:
             if target_column.column_type == "multiclass":
                 predictions[target_column.name] = torch.nn.functional.softmax(
                     predictions[target_column.name].squeeze(), dim=-1

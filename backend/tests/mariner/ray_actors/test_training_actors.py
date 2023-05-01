@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 import mariner.schemas.experiment_schemas
 from fleet.model_builder.model import CustomModel
 from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.models import EarlyStoppingConfig, MonitoringConfig
+from fleet.torch_.schemas import EarlyStoppingConfig, MonitoringConfig
 from mariner.core.aws import Bucket, list_s3_objects
 from mariner.entities.experiment import Experiment
 from mariner.ray_actors.training_actors import TrainingActor

@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.models import EarlyStoppingConfig, MonitoringConfig
+from fleet.torch_.schemas import EarlyStoppingConfig, MonitoringConfig
 from mariner import experiments as experiments_ctl
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
@@ -23,7 +23,7 @@ async def experiments_fixture(db: Session, some_model: Model):
     version = some_model.versions[-1]
     target_column = version.config.dataset.target_columns[0]
     experiments = [
-        await experiments_ctl.create_model_traning(
+        await experiments_ctl.create_model_training(
             db,
             user,
             TrainingRequest(
@@ -104,7 +104,7 @@ async def experiment_fixture(db: Session, some_model_integration: Model) -> Expe
             metric_key=f"val/mse/{target_column.name}", mode="min"
         ),
     )
-    exp = await experiments_ctl.create_model_traning(db, user, request)
+    exp = await experiments_ctl.create_model_training(db, user, request)
     task = get_exp_manager().get_task(exp.id)
     assert task, "Failed to get training async test"
     await task

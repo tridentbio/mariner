@@ -22,15 +22,14 @@ from fastapi.datastructures import UploadFile
 from pydantic import Field, validator
 from pydantic.main import BaseModel
 
-from fleet.model_builder.schemas import \
-    CategoricalDataType as BuilderCategoricalDT
-from fleet.model_builder.schemas import DNADataType as BuilderDNADT
-from fleet.model_builder.schemas import NumericalDataType as BuilderNumericalDT
-from fleet.model_builder.schemas import ProteinDataType as BuilderProteinDT
-from fleet.model_builder.schemas import QuantityDataType as BuilderQuantityDT
-from fleet.model_builder.schemas import RNADataType as BuilderRNADT
-from fleet.model_builder.schemas import SmileDataType as BuilderSmilesDT
-from fleet.model_builder.schemas import StringDataType as BuilderStringDT
+from fleet.dataset_schemas import CategoricalDataType as BuilderCategoricalDT
+from fleet.dataset_schemas import DNADataType as BuilderDNADT
+from fleet.dataset_schemas import NumericalDataType as BuilderNumericalDT
+from fleet.dataset_schemas import ProteinDataType as BuilderProteinDT
+from fleet.dataset_schemas import QuantityDataType as BuilderQuantityDT
+from fleet.dataset_schemas import RNADataType as BuilderRNADT
+from fleet.dataset_schemas import SmileDataType as BuilderSmilesDT
+from fleet.dataset_schemas import StringDataType as BuilderStringDT
 from mariner.core.aws import Bucket, download_file_as_dataframe
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 

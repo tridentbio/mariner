@@ -8,7 +8,7 @@ from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
 
 from fleet.model_builder.model import CustomModel
-from fleet.model_builder.schemas import LossType, ModelSchema
+from fleet.model_builder.schemas import LossType, TorchModelSchema
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
@@ -23,7 +23,7 @@ class ModelVersion(ApiBaseModel):
     description: Union[str, None] = None
     mlflow_version: Union[str, None] = None
     mlflow_model_name: str
-    config: ModelSchema
+    config: TorchModelSchema
     created_at: utc_datetime
     updated_at: datetime
 
@@ -128,7 +128,7 @@ class ModelCreate(ApiBaseModel):
     name: str
     model_description: Optional[str] = None
     model_version_description: Optional[str] = None
-    config: ModelSchema
+    config: TorchModelSchema
 
 
 class ModelVersionCreateRepo(BaseModel):
@@ -141,7 +141,7 @@ class ModelVersionCreateRepo(BaseModel):
     mlflow_model_name: str
     model_id: int
     name: str
-    config: ModelSchema
+    config: TorchModelSchema
 
 
 class ModelVersionUpdateRepo(BaseModel):

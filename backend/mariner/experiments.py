@@ -133,7 +133,7 @@ def handle_training_complete(task: Task, experiment_id: int):
         )
 
 
-async def create_model_traning(
+async def create_model_training(
     db: Session, user: UserEntity, training_request: TrainingRequest
 ) -> Experiment:
     """Creates an experiment associated with a model training

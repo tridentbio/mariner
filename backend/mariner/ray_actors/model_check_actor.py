@@ -7,14 +7,16 @@ from torch_geometric.loader import DataLoader
 
 from fleet.model_builder.dataset import Collater, CustomDataset
 from fleet.model_builder.model import CustomModel
-from fleet.model_builder.schemas import ModelSchema
+from fleet.model_builder.schemas import TorchModelSchema
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.model_schemas import ForwardCheck
 
 
 @ray.remote
 class ModelCheckActor:
-    def check_model_steps(self, dataset: Dataset, config: ModelSchema) -> ForwardCheck:
+    def check_model_steps(
+        self, dataset: Dataset, config: TorchModelSchema
+    ) -> ForwardCheck:
         """Checks the steps of a pytorch lightning model built from config.
 
         Steps are checked before creating the model on the backend, so the user may fix
@@ -27,7 +29,7 @@ class ModelCheckActor:
         Returns:
             The model output
         """
-        torch_dataset = CustomDataset(data=dataset.get_dataframe(), config=config)
+        torch_dataset = CustomDataset(data=dataset.get_dataframe(), model_config=config)
         dataloader = DataLoader(torch_dataset, collate_fn=Collater(), batch_size=4)
         model = CustomModel(config)
         sample = next(iter(dataloader))

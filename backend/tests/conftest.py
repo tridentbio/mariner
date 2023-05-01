@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from api.fastapi_app import app
 from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.models import MonitoringConfig
+from fleet.torch_.schemas import MonitoringConfig
 from mariner import experiments as experiments_ctl
 from mariner.core import security
 from mariner.core.config import settings
@@ -198,7 +198,7 @@ async def some_trained_model(
     )
     user = user_sql.user_store.get(db, model.created_by_id)
     assert user
-    exp = await experiments_ctl.create_model_traning(db, user, request)
+    exp = await experiments_ctl.create_model_training(db, user, request)
     task = get_exp_manager().get_task(exp.id)
     assert task
     await task

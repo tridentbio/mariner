@@ -7,14 +7,16 @@ a single point of change (as best as possible) on schema updates.
 """
 from typing import TYPE_CHECKING, List, Set, Union
 
+from fleet.model_builder.schemas import TorchDatasetConfig
+
 if TYPE_CHECKING:
     from fleet.model_builder.layers_schema import FeaturizersType, LayersType
-    from fleet.model_builder.schemas import ColumnConfig, ModelSchema
+    from fleet.model_builder.schemas import ColumnConfig, TorchModelSchema, TargetConfig
 
 from fleet.model_builder.utils import unwrap_dollar
 
 
-def get_columns_configs(config: "ModelSchema") -> List["ColumnConfig"]:
+def get_columns_configs(config: "TorchModelSchema") -> List["ColumnConfig"]:
     """Gets the column configs from targets and featurizers of a ModelSchema object
 
     Args:
@@ -27,7 +29,7 @@ def get_columns_configs(config: "ModelSchema") -> List["ColumnConfig"]:
 
 
 def get_column_config(
-    config: "ModelSchema", column_name: str
+    config: "TorchModelSchema", column_name: str
 ) -> Union["ColumnConfig", None]:
     """Gets the column config of any column (target or featurizer) with name
     equals ``column_name``
@@ -72,16 +74,3 @@ def get_dependencies(
                 if not isref:
                     continue
                 deps.add(dep)
-    return deps
-
-
-def get_target_columns(model_schema: "ModelSchema") -> List["ColumnConfig"]:
-    """Gets the target columns in the model_schema
-
-    Args:
-        model_schema: model config
-
-    Returns:
-        List[ColumnConfig]: list of columns
-    """
-    return model_schema.dataset.target_columns

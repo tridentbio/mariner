@@ -4,7 +4,7 @@ from mockito import patch
 from sqlalchemy.orm.session import Session
 
 from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.models import EarlyStoppingConfig, MonitoringConfig
+from fleet.torch_.schemas import EarlyStoppingConfig, MonitoringConfig
 from mariner import experiments as experiments_ctl
 from mariner.entities import Experiment as ExperimentEntity
 from mariner.schemas.api import OrderByClause, OrderByQuery
@@ -87,7 +87,7 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
             metric_key=f"val/mse/{target_column.name}", mode="min"
         ),
     )
-    exp = await experiments_ctl.create_model_traning(db, user, request)
+    exp = await experiments_ctl.create_model_training(db, user, request)
     assert exp.model_version_id == version.id
     assert exp.model_version.name == version.name
     task = get_exp_manager().get_task(exp.id)
@@ -163,7 +163,7 @@ async def test_experiment_has_stacktrace_when_training_fails(
 
     # Patch remote ray training for local
     with patch(model_builder.model.CustomModel.forward, lambda x: _raise(x)):
-        exp = await experiments_ctl.create_model_traning(db, user, request)
+        exp = await experiments_ctl.create_model_training(db, user, request)
         assert exp.model_version_id == version.id
         assert exp.model_version.name == version.name
         task = get_exp_manager().get_task(exp.id)

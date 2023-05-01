@@ -1,5 +1,5 @@
 """
-Torch and PytorchLightning build through from ModelSchema
+Torch and PytorchLightning build from ModelSchema
 """
 import logging
 from typing import Dict, List, Literal, Optional, Union
@@ -10,11 +10,12 @@ import torch
 import torch.nn
 import torchmetrics as metrics
 
+from fleet.dataset_schemas import CategoricalDataType
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
 from fleet.model_builder.optimizers import Optimizer
-from fleet.model_builder.schemas import CategoricalDataType, ModelSchema
+from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import collect_args
 
 
@@ -147,10 +148,10 @@ class CustomModel(pl.LightningModule):
     loss_dict: dict
     metrics_dict: Dict[str, Metrics]
 
-    def __init__(self, config: Union[ModelSchema, str]):
+    def __init__(self, config: Union[TorchModelSchema, str]):
         super().__init__()
         if isinstance(config, str):
-            config = ModelSchema.parse_raw(config)
+            config = TorchModelSchema.parse_raw(config)
         layers_dict = {}
         self.config = config
         self.layer_configs = {layer.name: layer for layer in config.layers}

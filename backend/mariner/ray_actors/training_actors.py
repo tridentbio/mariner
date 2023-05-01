@@ -65,7 +65,8 @@ class TrainingActor:
         df = dataset.get_dataframe()
         batch_size = self.request.batch_size or 32
         datamodule = DataModule(
-            config=modelconfig,
+            model_config=modelconfig.spec,
+            config=modelconfig.dataset,
             data=df,
             split_target=dataset.split_target,
             split_type=dataset.split_type,

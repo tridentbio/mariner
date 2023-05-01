@@ -11,6 +11,15 @@ from torch.utils.data.dataloader import default_collate
 from torch_geometric.data import Batch
 from torch_geometric.data.data import BaseData
 
+from fleet.dataset_schemas import (
+    CategoricalDataType,
+    ColumnConfig,
+    DNADataType,
+    NumericalDataType,
+    ProteinDataType,
+    QuantityDataType,
+    RNADataType,
+)
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.featurizers.base_featurizers import BaseFeaturizer
 from fleet.model_builder.featurizers.bio_sequence_featurizer import (
@@ -19,20 +28,8 @@ from fleet.model_builder.featurizers.bio_sequence_featurizer import (
     RNASequenceFeaturizer,
 )
 from fleet.model_builder.featurizers.integer_featurizer import IntegerFeaturizer
-from fleet.model_builder.model_schema_query import (
-    get_dependencies,
-    get_target_columns,
-)
-from fleet.model_builder.schemas import (
-    CategoricalDataType,
-    ColumnConfig,
-    DNADataType,
-    ModelSchema,
-    NumericalDataType,
-    ProteinDataType,
-    QuantityDataType,
-    RNADataType,
-)
+from fleet.model_builder.model_schema_query import get_dependencies
+from fleet.model_builder.schemas import TorchDatasetConfig, TorchModelSchema
 from fleet.model_builder.utils import DataInstance, get_references_dict
 
 
@@ -137,16 +134,23 @@ class CustomDataset(Dataset):
     >>> dataset = CustomDataset(data, ['mwt', 'smiles'], featurizer_config, 'tpsa')
     """
 
-    def __init__(self, data: pd.DataFrame, config: ModelSchema, target=True) -> None:
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        model_config: TorchModelSchema,
+        dataset_config: TorchDatasetConfig,
+        target=True,
+    ) -> None:
         super().__init__()
         self.data = data
-        self.config = config
+        self.config = model_config
+        self.dataset_config = dataset_config
         self.target = target
         self.setup()
 
     def get_featurizer_configs(self):
         """Gets the input featurizers"""
-        return self.config.featurizers
+        return self.dataset_config.featurizers
 
     def setup(self):
         """Instantiates input and output featurizers"""
@@ -178,10 +182,10 @@ class CustomDataset(Dataset):
 
         return feat
 
-    def get_output_featurizers(self) -> List[Union[BaseFeaturizer, None]]:
+    def get_output_featurizers(self) -> Union[List[Union[BaseFeaturizer, None]], None]:
         """Gets the output featurizer"""
         if self.target:
-            targets = get_target_columns(self.config)
+            targets = self.dataset_config.target_columns
             # Assume a single target
             return [self._get_default_featurizer(target) for target in targets]
 
@@ -204,7 +208,7 @@ class CustomDataset(Dataset):
         sample = dict(self.data.iloc[index, :])
 
         # Subset columns
-        columns_to_include = self.config.dataset.feature_columns
+        columns_to_include = self.dataset_config.feature_columns
 
         # Featurize all of the columns that pass into a
         # featurizer before including in the data instance
@@ -235,7 +239,7 @@ class CustomDataset(Dataset):
                 data[column.name] = val
 
         if self.target:
-            targets = get_target_columns(self.config)
+            targets = self.dataset_config.target_columns
             for i, target in enumerate(targets):
                 if self.output_featurizers[i]:
                     data[target.name] = self.output_featurizers[i](sample[target.name])
@@ -280,12 +284,13 @@ class DataModule(pl.LightningDataModule):
         data: pd.DataFrame,
         split_type: str,
         split_target: str,
-        config: ModelSchema,
+        model_config: TorchModelSchema,
+        config: TorchDatasetConfig,
         batch_size=32,
         collate_fn: Union[Callable, None] = Collater(),
     ):
         super().__init__()
-        self.dataset_config = config.dataset
+        self.dataset_config = config
         self.featurizers_config = config.featurizers
 
         self.data = data
@@ -297,8 +302,7 @@ class DataModule(pl.LightningDataModule):
 
         self.collate_fn = collate_fn
         self.dataset = CustomDataset(
-            self.data,
-            config,
+            self.data, model_config=model_config, dataset_config=config
         )
 
     def setup(self, stage=None):

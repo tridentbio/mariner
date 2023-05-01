@@ -8,7 +8,8 @@ import typing
 from abc import ABC, abstractmethod
 
 if typing.TYPE_CHECKING:
-    from fleet.model_builder.schemas import ModelSchema
+    from fleet.model_builder.schemas import TorchModelSchema
+    from fleet.torch_.schemas import TorchDatasetConfig
 
 
 class AutoBuilder(ABC):
@@ -18,7 +19,12 @@ class AutoBuilder(ABC):
     """
 
     @abstractmethod
-    def set_from_model_schema(self, config: "ModelSchema", deps: list[str]):
+    def set_from_model_schema(
+        self,
+        config: "TorchModelSchema",
+        dataset_config: "TorchDatasetConfig",
+        deps: list[str],
+    ):
         """Method to implement argument filling from ModelSchema
 
         Must be overriden

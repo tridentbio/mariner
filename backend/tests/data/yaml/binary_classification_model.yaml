@@ -18,51 +18,51 @@ dataset:
       dataType:
         domainKind: numeric
         unit: cm
+spec:
+  layers:
+    - name: Concat
+      type: fleet.model_builder.layers.Concat
+      constructorArgs:
+        dim: 1
+      forwardArgs:
+        xs:
+          - $sepal_length
+          - $sepal_width
 
-layers:
-  - name: Concat
-    type: fleet.model_builder.layers.Concat
-    constructorArgs:
-      dim: 1
-    forwardArgs:
-      xs:
-        - $sepal_length
-        - $sepal_width
+    - name: Linear0
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 2
+        out_features: 16
+      forwardArgs:
+        input: $Concat
 
-  - name: Linear0
-    type: torch.nn.Linear
-    constructorArgs:
-      in_features: 2
-      out_features: 16
-    forwardArgs:
-      input: $Concat
+    - name: ReLU0
+      type: torch.nn.ReLU
+      constructorArgs:
+        inplace: false
+      forwardArgs:
+        input: $Linear0
 
-  - name: ReLU0
-    type: torch.nn.ReLU
-    constructorArgs:
-      inplace: false
-    forwardArgs:
-      input: $Linear0
+    - name: Linear1
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 16
+        out_features: 16
+      forwardArgs:
+        input: $ReLU0
 
-  - name: Linear1
-    type: torch.nn.Linear
-    constructorArgs:
-      in_features: 16
-      out_features: 16
-    forwardArgs:
-      input: $ReLU0
+    - name: ReLU1
+      type: torch.nn.ReLU
+      constructorArgs:
+        inplace: false
+      forwardArgs:
+        input: $Linear1
 
-  - name: ReLU1
-    type: torch.nn.ReLU
-    constructorArgs:
-      inplace: false
-    forwardArgs:
-      input: $Linear1
-
-  - name: Linear2
-    type: torch.nn.Linear
-    constructorArgs:
-      in_features: 16
-      out_features: 1
-    forwardArgs:
-      input: $ReLU1
+    - name: Linear2
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 16
+        out_features: 1
+      forwardArgs:
+        input: $ReLU1

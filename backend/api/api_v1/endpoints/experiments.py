@@ -38,7 +38,7 @@ async def post_experiments(
     Returns:
         Created experiment.
     """
-    result = await experiments_ctl.create_model_traning(db, current_user, request)
+    result = await experiments_ctl.create_model_training(db, current_user, request)
     return result
 
 

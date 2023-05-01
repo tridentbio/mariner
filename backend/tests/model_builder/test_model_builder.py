@@ -9,7 +9,7 @@ from sqlalchemy.orm.session import Session
 from fleet.model_builder.dataset import Collater, DataModule
 from fleet.model_builder.model import CustomModel
 from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.model_builder.schemas import ModelSchema
+from fleet.model_builder.schemas import TorchModelSchema
 from mariner import datasets as dataset_ctl
 from mariner.entities import Dataset as DatasetEntity
 from mariner.schemas.dataset_schemas import (
@@ -192,7 +192,7 @@ async def test_model_building(
 ):
     dataset = await setup_dataset(db, dataset_setup)
     with open(model_config_path, "rb") as f:
-        model_config = ModelSchema.from_yaml(f.read())
+        model_config = TorchModelSchema.from_yaml_str(f.read())
     model = CustomModel(model_config)
     model.set_optimizer(optimizer=AdamOptimizer())
     data_module = DataModule(

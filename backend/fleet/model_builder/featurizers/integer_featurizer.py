@@ -4,6 +4,7 @@ Defines the integer featurizer
 from typing import Union
 
 import torch
+from typing_extensions import override
 
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.exceptions import DataTypeMismatchException
@@ -48,7 +49,8 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
             )
         return self.reversed_classes[idx]
 
-    def set_from_model_schema(self, config, deps):
+    @override
+    def set_from_model_schema(self, config, dataset_config, deps):
         input_ = deps[0]  # featurizer has a single argument to __call__
         # Get column information from schema
         column_info = get_column_config(config, input_)
@@ -56,7 +58,7 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         if not column_info:
             raise RuntimeError(f"Column {input_} was not found in the config columns")
 
-        from fleet.model_builder.schemas import CategoricalDataType
+        from fleet.dataset_schemas import CategoricalDataType
 
         # Handle column info not being from categorical
 

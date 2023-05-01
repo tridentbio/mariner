@@ -5,7 +5,7 @@ import torch
 from mockito import patch
 from sqlalchemy.orm.session import Session
 
-from fleet.model_builder.schemas import ModelSchema
+from fleet.model_builder.schemas import TorchModelSchema
 from mariner import models as model_ctl
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
@@ -60,7 +60,7 @@ async def test_check_forward_exception_good_regressor(
 async def test_check_forward_exception_bad_model(
     db: Session, some_dataset: DatasetEntity
 ):
-    broken_model: ModelSchema = model_config(dataset_name=some_dataset.name)
+    broken_model: TorchModelSchema = model_config(dataset_name=some_dataset.name)
     import model_builder.model
 
     def raise_(x: Any):

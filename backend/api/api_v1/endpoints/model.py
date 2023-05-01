@@ -16,7 +16,7 @@ from api.api_v1.endpoints.datasets import Paginated
 from fleet.model_builder.schemas import (
     AllowedLosses,
     ComponentOption,
-    ModelSchema,
+    TorchModelSchema,
 )
 from mariner.entities.user import User
 from mariner.exceptions import DatasetNotFound, ModelNameAlreadyUsed
@@ -239,7 +239,7 @@ def delete_model(
     dependencies=[Depends(deps.get_current_active_user)],
 )
 async def post_model_check_config(
-    model_config: ModelSchema, db: Session = Depends(deps.get_db)
+    model_config: TorchModelSchema, db: Session = Depends(deps.get_db)
 ):
     """Endpoint to check the forward method of a ModelSchema
 

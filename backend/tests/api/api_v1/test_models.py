@@ -15,9 +15,9 @@ from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.model import CustomModel
 from fleet.model_builder.schemas import (
     ColumnConfig,
-    DatasetConfig,
-    ModelSchema,
     TargetConfig,
+    TorchDatasetConfig,
+    TorchModelSchema,
 )
 from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetEntity
@@ -36,9 +36,9 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
     """
     Fixture of an invalid model
     """
-    config = ModelSchema(
+    config = TorchModelSchema(
         name=random_lower_string(),
-        dataset=DatasetConfig(
+        dataset=TorchDatasetConfig(
             name=some_dataset.name,
             feature_columns=[
                 ColumnConfig(
@@ -335,7 +335,7 @@ def test_post_check_config_good_model(
     normal_user_token_headers: dict[str, str],
     client: TestClient,
 ):
-    regressor: ModelSchema = model_config(dataset_name=some_dataset.name)
+    regressor: TorchModelSchema = model_config(dataset_name=some_dataset.name)
     res = client.post(
         f"{settings.API_V1_STR}/models/check-config",
         headers=normal_user_token_headers,
@@ -351,7 +351,7 @@ def test_post_check_config_good_model2(
     normal_user_token_headers: dict[str, str],
     client: TestClient,
 ):
-    regressor: ModelSchema = model_config(
+    regressor: TorchModelSchema = model_config(
         dataset_name=some_dataset.name, model_type="regressor-with-categorical"
     )
     res = client.post(
@@ -373,12 +373,12 @@ def test_post_check_config_bad_model(
 ):
     model_path = "tests/data/yaml/model_fails_on_training.yml"
     with open(model_path, "rU") as f:
-        regressor: ModelSchema = ModelSchema.from_yaml(f.read())
+        regressor: TorchModelSchema = TorchModelSchema.from_yaml_str(f.read())
         regressor.dataset.name = some_dataset.name
 
     model = CustomModel(regressor)
     dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
-    torch_dataset = CustomDataset(dataset.get_dataframe(), config=regressor)
+    torch_dataset = CustomDataset(dataset.get_dataframe(), model_config=regressor)
     dataloader = DataLoader(torch_dataset, batch_size=1)
     batch = next(iter(dataloader))
     out = model(batch)

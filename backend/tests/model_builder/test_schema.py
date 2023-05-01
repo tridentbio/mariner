@@ -1,6 +1,6 @@
 import pytest
 
-from fleet.model_builder.schemas import ModelSchema
+from fleet.model_builder.schemas import TorchModelSchema
 from tests.fixtures.model import model_config
 
 DEFAULT_LOSS_MAP = {
@@ -17,7 +17,7 @@ def schema_yaml_fixture():
 
 
 def test_schema(schema_yaml_fixture: str):
-    model_config = ModelSchema.from_yaml(schema_yaml_fixture)
+    model_config = TorchModelSchema.from_yaml_str(schema_yaml_fixture)
     assert model_config
     assert model_config.layers[8].type == "fleet.model_builder.layers.Concat"
 
@@ -72,5 +72,5 @@ layers:
     forwardArgs:
       input: $Linear1
     """
-    schema = ModelSchema.from_yaml(schema)
-    assert isinstance(schema, ModelSchema)
+    schema = TorchModelSchema.from_yaml_str(schema)
+    assert isinstance(schema, TorchModelSchema)

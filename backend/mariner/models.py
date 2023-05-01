@@ -14,14 +14,11 @@ import torch
 from sqlalchemy.orm.session import Session
 from torch_geometric.loader import DataLoader
 
+from fleet.dataset_schemas import SmileDataType
 from fleet.model_builder import options
 from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.model import CustomModel
-from fleet.model_builder.schemas import (
-    ComponentOption,
-    DatasetConfig,
-    SmileDataType,
-)
+from fleet.model_builder.schemas import ComponentOption, TorchDatasetConfig
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -42,10 +39,10 @@ from mariner.schemas.model_schemas import (
     ModelCreate,
     ModelCreateRepo,
     ModelFeaturesAndTarget,
-    ModelSchema,
     ModelsQuery,
     ModelVersion,
     ModelVersionCreateRepo,
+    TorchModelSchema,
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
@@ -56,7 +53,7 @@ LOG.setLevel(logging.INFO)
 
 
 def get_model_and_dataloader(
-    db: Session, config: ModelSchema
+    db: Session, config: TorchModelSchema
 ) -> tuple[pl.LightningModule, DataLoader]:
     """Gets the CustomModel and the DataLoader needed to train
     a model
@@ -71,13 +68,15 @@ def get_model_and_dataloader(
     dataset_entity = dataset_store.get_by_name(db, config.dataset.name)
     assert dataset_entity, f"No dataset found with name {config.dataset.name}"
     df = dataset_entity.get_dataframe()
-    dataset = CustomDataset(data=df, config=config)
+    dataset = CustomDataset(data=df, model_config=config)
     dataloader = DataLoader(dataset, batch_size=1)
     model = CustomModel(config)
     return model, dataloader
 
 
-async def check_model_step_exception(db: Session, config: ModelSchema) -> ForwardCheck:
+async def check_model_step_exception(
+    db: Session, config: TorchModelSchema
+) -> ForwardCheck:
     """Checks the steps of a pytorch lightning model built from config.
 
     Steps are checked before creating the model on the backend, so the user may fix
@@ -221,7 +220,7 @@ InvalidReason = Literal["invalid-smiles-series"]
 
 
 def _check_dataframe_conforms_dataset(
-    df: pd.DataFrame, dataset_config: DatasetConfig
+    df: pd.DataFrame, dataset_config: TorchDatasetConfig
 ) -> List[Tuple[str, InvalidReason]]:
     """Checks if dataframe conforms to data types specified in dataset_config
 
@@ -271,7 +270,7 @@ def get_model_prediction(
             f"dataframe failed {len(broken_checks)} checks",
             reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
         )
-    dataset = CustomDataset(data=df, config=modelversion.config, target=False)
+    dataset = CustomDataset(data=df, model_config=modelversion.config, target=False)
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
