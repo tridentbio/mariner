@@ -262,3 +262,25 @@ def test_delete_permission(
     for api_deploy in payload["data"]:
         if api_deploy["id"] == deploy.id:
             assert test_user.id not in api_deploy["usersIdAllowed"]
+
+
+def test_get_public_deploy(
+    client: TestClient, normal_user_token_headers: Dict[str, str], deploy: Deploy
+) -> None:
+    updated_deploy = {"share_strategy": "public"}
+    r = client.put(
+        f"{settings.API_V1_STR}/deploy/{deploy.id}",
+        json=updated_deploy,
+        headers=normal_user_token_headers,
+    )
+    assert r.status_code == 200
+    payload = r.json()
+    assert bool(
+        payload["shareUrl"]
+    ), "Should have a share url after updating to public."
+
+    r = client.get(payload["shareUrl"])
+    assert r.status_code == 200
+    payload = r.json()
+    assert payload["id"] == deploy.id, "Should have the same id."
+    assert payload["name"] == deploy.name, "Should have the same name."
