@@ -181,6 +181,21 @@ def delete_permission(
 
 
 def get_public_deploy(db: Session, token):
+    """Get a public deploy.
+    Token should be a jwt with the sub field set to the deploy id.
+    Deploy needs to have the share_strategy set to public.
+    
+    Args:
+        db (Session): SQLAlchemy session.
+        token (str): JWT token.
+        
+    Returns:
+        Deploy
+        
+    Raises:
+        DeployNotFound: If the deploy does not exist.
+        PermissionError: If the deploy is not public.
+    """
     payload = decode_deploy_url_token(token)
 
     deploy = deploy_store.get(db, payload.sub)

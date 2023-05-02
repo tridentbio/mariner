@@ -175,6 +175,16 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
     def parse_share_permissions(
         self, ids: List[int] = [], organizations: List[str] = []
     ):
+        """Parse share permissions from ids and organizations
+        to a list of SharePermissions.
+        
+        Args:
+            ids (List[int], optional): List of user ids. Defaults to [].
+            organizations (List[str], optional): List of organizations. Defaults to [].
+            
+        Returns:
+            List of SharePermissions
+        """
         share_permissions = []
         if len(ids):
             share_permissions += [SharePermissions(user_id=id) for id in ids]
