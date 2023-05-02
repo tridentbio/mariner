@@ -83,14 +83,12 @@ datasets_root = Path("tests") / "data" / "csv"
 specs = [
     (TorchModelSpec.from_yaml(models_root / path_), datasets_root / dataset_path)
     for path_, dataset_path in [
+        ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
+        ("multiclass_classification_model.yaml", "iris.csv"),
+        ("multitarget_classification_model.yaml", "iris.csv"),
         ("binary_classification_model.yaml", "iris.csv"),
         ("categorical_features_model.yaml", "zinc_extra.csv"),
         ("small_regressor_schema.yaml", "zinc.csv"),
-        ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
-        # ("modelv2.yaml", "zinc_extra.csv"),
-        # ("multiclass_classification_model.yaml", "iris.csv"),
-        # ("multitarget_classification_model.yaml", "iris.csv"),
-        # ("small_classifier_schema.yaml", "zinc_extra.csv"),
     ]
 ]
 
