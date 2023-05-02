@@ -349,7 +349,7 @@ def test_delete_permission(
 
 
 def test_get_public_deploy(
-    client: TestClient, normal_user_token_headers: Dict[str, str], deploy: Deploy
+    db:Session, client: TestClient, some_dataset: Dataset, normal_user_token_headers: Dict[str, str]
 ) -> None:
     """Test get public deploy route. Should return the deploy.
     Public deploy should be accessible by anyone by shareUrl property.
@@ -359,20 +359,27 @@ def test_get_public_deploy(
         normal_user_token_headers (dict[str, str]): Authorization header.
         deploy (Deploy): Deploy fixture.
     """
-    updated_deploy = {"share_strategy": "public"}
-    r = client.put(
-        f"{settings.API_V1_STR}/deploy/{deploy.id}",
-        json=updated_deploy,
-        headers=normal_user_token_headers,
-    )
-    assert r.status_code == 200
-    payload = r.json()
-    assert bool(
-        payload["shareUrl"]
-    ), "Should have a share url after updating to public."
+    with create_temporaly_deploy(
+        db, None, some_dataset, 'test_user'
+    ) as some_deploy:
+        # Update to public to get the share url.
+        updated_deploy = {"share_strategy": "public"}
+        r = client.put(
+            f"{settings.API_V1_STR}/deploy/{some_deploy.id}",
+            json=updated_deploy,
+            headers=normal_user_token_headers,
+        )
+        assert r.status_code == 200
+        deploy = r.json()
+        public_url = deploy["shareUrl"]
+        assert bool(
+            public_url
+        ), "Should have a public url after updating to public."
 
-    r = client.get(payload["shareUrl"])
-    assert r.status_code == 200
-    payload = r.json()
-    assert payload["id"] == deploy.id, "Should have the same id."
-    assert payload["name"] == deploy.name, "Should have the same name."
+        # Should be accessible by anyone without authorization header.
+        r = client.get(public_url)
+        assert r.status_code == 200
+        
+        payload = r.json()
+        assert payload["id"] == some_deploy.id, "Should have the same id."
+        assert payload["name"] == some_deploy.name, "Should have the same name."
