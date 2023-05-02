@@ -22,7 +22,7 @@ from tests.utils.utils import random_lower_string
 
 
 @pytest.fixture(scope="module")
-def deployment(
+def deployment_fixture(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
     db: Session,
@@ -40,25 +40,25 @@ def deployment(
 
 
 @contextmanager
-def create_temporaly_deployment(
+def create_temporary_deployment(
     db: Session,
     share_by: Literal["user", "org", "public", None],
     dataset: Dataset,
     owner: Literal["test_user", "random_user"] = "random_user",
 ):
     """Create a deployment temporaly and delete it after the test.
-    Recomended to be used with "with" statement.
+    You can set the owner and a share mode to be shared with default test_user.
 
-    Recommended to create deployments dynamically during the tests
-    by choosing an owner other than test_user and a share mode
-    to be shared with test_user.
-    If you only need a static deployment to test_user, use the "deployment" fixture.
+    Recommendations:
+        - use with "with" statement to delete the deployment after the clause ends.
+        - if you just need a deployment to test_user without any sharing, use
+        the "deployment" fixture instead.
 
     Args:
-        db (Session): SQLAlchemy session.
-        share_by (str): Share mode to be shared with test_user.
-        dataset (Dataset): Dataset to be used in the deployment.
-        owner (str, optional): Owner of the deployment. Defaults to "random_user".
+        db: SQLAlchemy session.
+        share_by: Share mode to be shared with test_user.
+        dataset: Dataset to be used in the deployment.
+        owner: Owner of the deployment. Defaults to "random_user".
 
     Return:
         Deployment: Deployment created.
@@ -115,14 +115,14 @@ def test_get_deployments(
      - Deployments with public mode. (only if publicMode filter is not "exclude")
 
     Args:
-        db (Session): SQLAlchemy session.
-        client (TestClient): FastAPI test client.
-        normal_user_token_headers (dict[str, str]): Authorization header.
-        some_dataset (Dataset): Dataset to be used in the deployment.
-        another_user_share_mode (str):
+        db: SQLAlchemy session.
+        client: FastAPI test client.
+        normal_user_token_headers: Authorization header.
+        some_dataset: Dataset fixture to be used in the deployment.
+        another_user_share_mode:
             Share mode to be shared with test_user in each case test.
     """
-    with create_temporaly_deployment(
+    with create_temporary_deployment(
         db, another_user_share_mode, some_dataset
     ) as some_deployment:
         query = None
@@ -146,16 +146,16 @@ def test_get_my_deployments(
     db: Session,
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
-    deployment: Deployment,
+    deployment_fixture: Deployment,
 ) -> None:
     """Test to route to get deployments with created_by_id filter.
     Should return a list of deployments created by user.
 
     Args:
-        db (Session): SQLAlchemy session.
-        client (TestClient): FastAPI test client.
-        normal_user_token_headers (dict[str, str]): Authorization header.
-        deployment (Deployment): Deployment fixture.
+        db: SQLAlchemy session.
+        client: FastAPI test client.
+        normal_user_token_headers: Authorization header.
+        deployment_fixture
     """
     user = get_test_user(db)
     r = client.get(
@@ -167,7 +167,7 @@ def test_get_my_deployments(
     payload = r.json()
     assert isinstance(payload["data"], list)
     assert any(
-        [deployment.id == d["id"] for d in payload["data"]]
+        [deployment_fixture.id == d["id"] for d in payload["data"]]
     ), "Should have the created deployment in the list."
 
 
@@ -180,10 +180,10 @@ def test_create_deployment(
     """Test create deployment route. Should create a deployment in the database.
 
     Args:
-        db (Session): SQLAlchemy session.
-        client (TestClient): FastAPI test client.
-        some_model (Model): Model fixture.
-        normal_user_token_headers (dict[str, str]): Authorization header.
+        db: SQLAlchemy session.
+        client: FastAPI test client.
+        some_model: Model fixture.
+        normal_user_token_headers: Authorization header.
     """
     deployment_data = mock_deployment(some_model, share_strategy="public")
     response = client.post(
@@ -202,18 +202,20 @@ def test_create_deployment(
 
 
 def test_update_deployment(
-    client: TestClient, normal_user_token_headers: Dict[str, str], deployment: Deployment
+    client: TestClient,
+    normal_user_token_headers: Dict[str, str],
+    deployment_fixture: Deployment,
 ) -> None:
     """Test update deployment route. Should update the deployment in the database.
 
     Args:
-        client (TestClient): FastAPI test client.
-        normal_user_token_headers (dict[str, str]): Authorization header.
-        deployment (Deployment): Deployment fixture.
+        client: FastAPI test client.
+        normal_user_token_headers: Authorization header.
+        deployment_fixture.
     """
     updated_deployment = {"name": "Updated Name", "share_strategy": "public"}
     r = client.put(
-        f"{settings.API_V1_STR}/deployments/{deployment.id}",
+        f"{settings.API_V1_STR}/deployments/{deployment_fixture.id}",
         json=updated_deployment,
         headers=normal_user_token_headers,
     )
@@ -235,12 +237,12 @@ def test_delete_deployment(
     """Test delete deployment route. GET route should not return the deleted deployment.
 
     Args:
-        db (Session): SQLAlchemy session.
-        client (TestClient): FastAPI test client.
-        normal_user_token_headers (dict[str, str]): Authorization header.
-        some_dataset (Dataset): Dataset to be used in the deployment.
+        db: SQLAlchemy session.
+        client: FastAPI test client.
+        normal_user_token_headers: Authorization header.
+        some_dataset: Dataset fixture to be used in the deployment.
     """
-    with create_temporaly_deployment(
+    with create_temporary_deployment(
         db, "public", some_dataset, "test_user"
     ) as some_deployment:
         r = client.delete(
@@ -267,19 +269,21 @@ def test_create_permission(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
     db: Session,
-    deployment: Deployment,
+    deployment_fixture: Deployment,
 ) -> None:
     """Test create permission route. Should create a permission in the database.
     GET route should return the deployment with the permission.
 
     Args:
-        client (TestClient): FastAPI test client.
-        normal_user_token_headers (dict[str, str]): Authorization header.
-        db (Session): SQLAlchemy session.
-        deployment (Deployment): Deployment fixture.
+        client: FastAPI test client.
+        normal_user_token_headers: Authorization header.
+        db: SQLAlchemy session.
+        deployment_fixture.
     """
     test_user = get_random_test_user(db)
-    permission_data = PermissionCreateRepo(deployment_id=deployment.id, user_id=test_user.id)
+    permission_data = PermissionCreateRepo(
+        deployment_id=deployment_fixture.id, user_id=test_user.id
+    )
     r = client.post(
         f"{settings.API_V1_STR}/deployments/create-permission",
         json=permission_data.dict(exclude_none=True),
@@ -287,17 +291,17 @@ def test_create_permission(
     )
     assert r.status_code == 200
     payload = r.json()
-    assert payload["id"] == deployment.id
+    assert payload["id"] == deployment_fixture.id
 
     r = client.get(
         f"{settings.API_V1_STR}/deployments",
         headers=normal_user_token_headers,
-        params={"name": deployment.name, "created_by_id": test_user.id},
+        params={"name": deployment_fixture.name, "created_by_id": test_user.id},
     )
     payload = r.json()
 
     for api_deployment in payload["data"]:
-        if api_deployment["id"] == deployment.id:
+        if api_deployment["id"] == deployment_fixture.id:
             assert test_user.id in api_deployment["usersIdAllowed"]
 
 
@@ -305,19 +309,21 @@ def test_delete_permission(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
     db: Session,
-    deployment: Deployment,
+    deployment_fixture: Deployment,
 ) -> None:
     """Test delete permission route. Should delete a permission in the database.
     GET route should not return the deployment after deleting the permission.
 
     Args:
-        client (TestClient): FastAPI test client.
-        normal_user_token_headers (dict[str, str]): Authorization header.
-        db (Session): SQLAlchemy session.
-        deployment (Deployment): Deployment fixture.
+        client: FastAPI test client.
+        normal_user_token_headers: Authorization header.
+        db: SQLAlchemy session.
+        deployment_fixture.
     """
     test_user = get_random_test_user(db)
-    permission_data = PermissionCreateRepo(deployment_id=deployment.id, user_id=test_user.id)
+    permission_data = PermissionCreateRepo(
+        deployment_id=deployment_fixture.id, user_id=test_user.id
+    )
     r = client.post(
         f"{settings.API_V1_STR}/deployments/create-permission",
         json=permission_data.dict(exclude_none=True),
@@ -325,7 +331,7 @@ def test_delete_permission(
     )
     assert r.status_code == 200
     payload = r.json()
-    assert payload["id"] == deployment.id
+    assert payload["id"] == deployment_fixture.id
 
     r = client.post(
         f"{settings.API_V1_STR}/deployments/delete-permission",
@@ -334,17 +340,17 @@ def test_delete_permission(
     )
     assert r.status_code == 200
     payload = r.json()
-    assert payload["id"] == deployment.id
+    assert payload["id"] == deployment_fixture.id
 
     r = client.get(
         f"{settings.API_V1_STR}/deployments",
         headers=normal_user_token_headers,
-        params={"name": deployment.name, "created_by_id": test_user.id},
+        params={"name": deployment_fixture.name, "created_by_id": test_user.id},
     )
     payload = r.json()
 
     for api_deployment in payload["data"]:
-        if api_deployment["id"] == deployment.id:
+        if api_deployment["id"] == deployment_fixture.id:
             assert test_user.id not in api_deployment["usersIdAllowed"]
 
 
@@ -358,11 +364,14 @@ def test_get_public_deployment(
     Public deployment should be accessible by anyone by shareUrl property.
 
     Args:
-        client (TestClient): FastAPI test client.
-        normal_user_token_headers (dict[str, str]): Authorization header.
-        deployment (Deployment): Deployment fixture.
+        client: FastAPI test client.
+        normal_user_token_headers: Authorization header.
+        db: SQLAlchemy session.
+        some_dataset: Dataset fixture to be used in the deployment.
     """
-    with create_temporaly_deployment(db, None, some_dataset, "test_user") as some_deployment:
+    with create_temporary_deployment(
+        db, None, some_dataset, "test_user"
+    ) as some_deployment:
         # Update to public to get the share url.
         updated_deployment = {"share_strategy": "public"}
         r = client.put(
