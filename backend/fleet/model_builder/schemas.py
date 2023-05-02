@@ -32,7 +32,7 @@ class TargetConfig(ColumnConfig):
     column_type: Optional[Literal["regression", "multiclass", "binary"]]
 
 
-class UnknownComponentType(ValueError):
+class UnknownComponentType(ValidationError):
     """
     Raised when an unknown component type is detected
 
@@ -47,7 +47,7 @@ class UnknownComponentType(ValueError):
         self.component_name = component_name
 
 
-class MissingComponentArgs(ValueError):
+class MissingComponentArgs(ValidationError):
     """
     Raised when there are missing arguments for a component.
 
@@ -195,8 +195,9 @@ class TorchDatasetConfig(DatasetConfig):
             if not allowed_losses.check(
                 target_column.loss_fn, target_column.column_type
             ):
+                print(target_column)
                 raise ValidationError(
-                    errors=f"Loss function {target_column.loss_fn if target_column else None} is not valid for {target_column.column_type if target_column else None} task",
+                    errors=f"Loss function is not valid for  task",
                     model=TorchModelSchema,
                 )
 
@@ -230,7 +231,8 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
                 layer = layer.dict()
             if layer["type"] not in layer_types:
                 raise UnknownComponentType(
-                    "A layer has unknown type", component_name=layer["name"]
+                    "A layer has unknown type",
+                    component_name=layer["name"],
                 )
 
         return values
@@ -239,7 +241,7 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
     def check_no_missing_args(cls, values):
         """Pydantic validator to check component arguments
 
-        Checks if all layers and featurizer have the nessery arguments
+        Checks if all layers and featurizer have the necessary arguments
 
         Args:
             values (dict): dict with object values
@@ -271,9 +273,6 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
             # TODO: raise all errors grouped in a single validation error
             raise errors[0]
         return values
-
-    def __str__(self):
-        return "TorchModelSchema"
 
     def make_graph(self):
         """Makes a graph of the layers and featurizers
