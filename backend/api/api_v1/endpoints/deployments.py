@@ -15,6 +15,7 @@ from mariner.entities.user import User
 from mariner.exceptions import (
     DeploymentAlreadyExists,
     DeploymentNotFound,
+    ModelVersionNotFound,
     NotCreatorOwner,
 )
 from mariner.schemas.api import Paginated
@@ -41,7 +42,7 @@ def get_deployments(
     Retrieve deployments owned by requester
     """
     deployments, total = controller.get_deployments(db, current_user, query)
-    return Paginated(data=[Deployment.from_orm(d) for d in deployments], total=total)
+    return Paginated(data=deployments, total=total)
 
 
 @router.post("/", response_model=Deployment)
@@ -59,12 +60,21 @@ def create_deployment(
         deployment = Deployment.from_orm(db_deployment)
         return deployment
 
-    except DeploymentNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
     except DeploymentAlreadyExists:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Deployment name already in use"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Deployment name already in use",
+        )
+
+    except ModelVersionNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Model version not found"
+        )
+
+    except NotCreatorOwner:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not creator owner of model version",
         )
 
 
@@ -93,9 +103,21 @@ def update_deployment(
         )
         return deployment
     except DeploymentNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+        )
+
     except NotCreatorOwner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not creator owner of deployment",
+        )
+
+    except NotImplementedError:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Started and idle are not implemented yet for a deployment",
+        )
 
 
 @router.delete("/{deployment_id}", response_model=Deployment)
@@ -109,9 +131,14 @@ def delete_deployment(
         deployment = controller.delete_deployment(db, current_user, deployment_id)
         return deployment
     except DeploymentNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+        )
     except NotCreatorOwner:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not creator owner of deployment",
+        )
 
 
 @router.post("/create-permission", response_model=Deployment)
@@ -125,9 +152,14 @@ def create_permission(
         deployment = controller.create_permission(db, current_user, permission_input)
         return deployment
     except DeploymentNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+        )
     except NotCreatorOwner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not creator owner of deployment",
+        )
 
 
 @router.post("/delete-permission", response_model=Deployment)
@@ -141,9 +173,14 @@ def delete_permission(
         deployment = controller.delete_permission(db, current_user, query)
         return deployment
     except DeploymentNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+        )
     except NotCreatorOwner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not creator owner of deployment",
+        )
 
 
 @router.get("/public/{token}", response_model=Deployment)
@@ -156,7 +193,11 @@ def get_public_deployment(
         deployment = controller.get_public_deployment(db, token)
         return deployment
     except DeploymentNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found."
+        )
 
     except PermissionError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Deployment is not public."
+        )

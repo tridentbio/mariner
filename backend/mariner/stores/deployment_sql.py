@@ -7,7 +7,11 @@ from typing import List
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from mariner.entities.deployment import Deployment, SharePermissions, ShareStrategy
+from mariner.entities.deployment import (
+    Deployment,
+    SharePermissions,
+    ShareStrategy,
+)
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
 from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
@@ -35,27 +39,26 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         Args:
             db (Session): deployment session
             query (DeploymentsQuery): query parameters
-                - name (str): name of the deployment
-                - status (DeploymentStatus): status of the deployment
-                - share_strategy (ShareStrategy): share strategy of the deployment
-                - created_after (utc_datetime): created after date
-                - modelVersionId (int): model version id
-                - created_by_id (int): created by id
 
         Returns:
             A tuple with the list of deployment and the total number of deployment
         """
-        sql_query = db.query(Deployment, SharePermissions).join(
-            SharePermissions, Deployment.share_permissions, isouter=True
+        sql_query = (
+            db.query(Deployment, SharePermissions)
+            .join(SharePermissions, Deployment.share_permissions, isouter=True)
+            .distinct(Deployment.id)
         )
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
 
-        # filtering for accessible deployments
         if query.created_by_id:
-            sql_query = sql_query.filter(Deployment.created_by_id == query.created_by_id)
+            sql_query = sql_query.filter(
+                Deployment.created_by_id == query.created_by_id
+            )
 
         elif query.public_mode == "only":
-            sql_query = sql_query.filter(Deployment.share_strategy == ShareStrategy.PUBLIC)
+            sql_query = sql_query.filter(
+                Deployment.share_strategy == ShareStrategy.PUBLIC
+            )
 
         else:
             filters = [
@@ -69,13 +72,14 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
             sql_query = sql_query.filter(or_(*filters))
 
-        # filtering query
         if query.name:
             sql_query = sql_query.filter(Deployment.name.ilike(f"%{query.name}%"))
         if query.status:
             sql_query = sql_query.filter(Deployment.status == query.status)
         if query.share_strategy:
-            sql_query = sql_query.filter(Deployment.share_strategy == query.share_strategy)
+            sql_query = sql_query.filter(
+                Deployment.share_strategy == query.share_strategy
+            )
         if query.created_after:
             sql_query = sql_query.filter(Deployment.created_at >= query.created_after)
         if query.model_version_id:
@@ -86,7 +90,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         total = sql_query.count()
         sql_query = sql_query.limit(query.per_page).offset(query.page * query.per_page)
 
-        result = list(set(sql_query.all()))
+        result = sql_query.all()
 
         deployments: List[DeploymentSchema] = []
         for i, record in enumerate(result):
@@ -161,10 +165,10 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             db.query(SharePermissions).filter(
                 SharePermissions.deployment_id == db_obj.id,
             ).delete()
-            db.commit()
             db_obj = db.query(Deployment).filter(Deployment.id == db_obj.id).first()
             db_obj.share_permissions = share_permissions
             db.add(db_obj)
+            db.commit()
 
         del obj_in.organizations_allowed
         del obj_in.users_id_allowed
@@ -173,21 +177,21 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         return db_obj
 
     def parse_share_permissions(
-        self, ids: List[int] = [], organizations: List[str] = []
+        self, users_id: List[int] = [], organizations: List[str] = []
     ):
-        """Parse share permissions from ids and organizations
+        """Parse share permissions from users_id and organizations
         to a list of SharePermissions.
-        
+
         Args:
-            ids (List[int], optional): List of user ids. Defaults to [].
+            users_id (List[int], optional): List of users id. Defaults to [].
             organizations (List[str], optional): List of organizations. Defaults to [].
-            
+
         Returns:
             List of SharePermissions
         """
         share_permissions = []
-        if len(ids):
-            share_permissions += [SharePermissions(user_id=id) for id in ids]
+        if len(users_id):
+            share_permissions += [SharePermissions(user_id=id) for id in users_id]
         if len(organizations):
             share_permissions += [
                 SharePermissions(organization=org_alias) for org_alias in organizations
@@ -239,18 +243,20 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         return db_obj
 
     def get_model_version(self, db: Session, model_version_id: int, user_id: int):
-        """Ensure that the user is the owner of the model version
+        """Safely gets the model version if it is owned by the requester,
+        or raises a 404 error.
 
         Args:
-            db (Session): database session
-            model_version_id (int): model version id
-            user_id (int): user id
+            db (Session): the database session
+            model_version_id (int): the ID of the model version to retrieve
+            user_id (int): the ID of the user making the request
 
         Raises:
-            ValueError: if the user is not the owner of the model version
+            ModelVersionNotFound: if the model version is not found
+            NotCreatorOwner: if the user is not the owner of the model version
 
         Returns:
-            ModelVersion: model version
+            ModelVersion
         """
         model_version = model_store.get_model_version(db, model_version_id)
 

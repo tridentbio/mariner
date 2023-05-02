@@ -9,7 +9,8 @@ from mariner.core.security import (
     decode_deployment_url_token,
     generate_deployment_signed_url,
 )
-from mariner.entities.deployment import Deployment as DeploymentEntity, ShareStrategy
+from mariner.entities.deployment import Deployment as DeploymentEntity
+from mariner.entities.deployment import ShareStrategy
 from mariner.entities.user import User
 from mariner.exceptions import DeploymentNotFound, NotCreatorOwner
 from mariner.schemas.deployment_schemas import (
@@ -26,7 +27,7 @@ from mariner.stores.deployment_sql import deployment_store
 def get_deployments(
     db: Session, current_user: User, query: DeploymentsQuery
 ) -> Tuple[List[Deployment], int]:
-    """Retrieve all deployments that the requester has access to.
+    """Retrieve a page of deployments that the requester has access to.
 
     Args:
         db (Session): SQLAlchemy session.
@@ -40,7 +41,9 @@ def get_deployments(
     return db_data, total
 
 
-def create_deployment(db: Session, current_user: User, deployment_input: DeploymentBase) -> Deployment:
+def create_deployment(
+    db: Session, current_user: User, deployment_input: DeploymentBase
+) -> Deployment:
     """Create a deployment for a model version.
 
     Args:
@@ -55,7 +58,9 @@ def create_deployment(db: Session, current_user: User, deployment_input: Deploym
         ModelVersionNotFound: If the model version does not exist.
         NotCreatorOwner: If the user is not the creator of the deployment.
     """
-    deployment_store.get_model_version(db, deployment_input.model_version_id, current_user.id)
+    deployment_store.get_model_version(
+        db, deployment_input.model_version_id, current_user.id
+    )
 
     deployment_create = DeploymentCreateRepo(
         **deployment_input.dict(),
@@ -65,13 +70,18 @@ def create_deployment(db: Session, current_user: User, deployment_input: Deploym
 
     if deployment_input.share_strategy == ShareStrategy.PUBLIC:
         share_url = generate_deployment_signed_url(deployment.id)
-        deployment = deployment_store.update(db, deployment, DeploymentUpdateRepo(share_url=share_url))
+        deployment = deployment_store.update(
+            db, deployment, DeploymentUpdateRepo(share_url=share_url)
+        )
 
     return Deployment.from_orm(deployment)
 
 
 def update_deployment(
-    db: Session, current_user: User, deployment_id: int, deployment_input: DeploymentUpdateRepo
+    db: Session,
+    current_user: User,
+    deployment_id: int,
+    deployment_input: DeploymentUpdateRepo,
 ) -> Deployment:
     """Update a deployment.
 
@@ -101,13 +111,17 @@ def update_deployment(
         share_url = generate_deployment_signed_url(deployment_entity.id)
         deployment_input.share_url = share_url
 
-    if deployment_input.status != deployment_entity.status:
-        ...  # TODO: change service status
+    if deployment_input.status and deployment_input.status != deployment_entity.status:
+        raise NotImplementedError("Deployment status cannot be updated yet.")
 
-    return deployment_store.update(db, db_obj=deployment_entity, obj_in=deployment_input)
+    return deployment_store.update(
+        db, db_obj=deployment_entity, obj_in=deployment_input
+    )
 
 
-def delete_deployment(db: Session, current_user: User, deployment_to_delete_id: int) -> Deployment:
+def delete_deployment(
+    db: Session, current_user: User, deployment_to_delete_id: int
+) -> Deployment:
     """Delete a deployment.
 
     Args:
@@ -146,9 +160,14 @@ def create_permission(
     Raises:
         NotCreatorOwner: If the user is not the creator of the deployment.
     """
-    deployment_entity: DeploymentEntity = deployment_store.get(db, permission_input.deployment_id)
-    if current_user.id != deployment_entity.created_by_id:
+    deployment_entity: DeploymentEntity = deployment_store.get(
+        db, permission_input.deployment_id
+    )
+    if not deployment_entity:
+        raise DeploymentNotFound()
+    elif current_user.id != deployment_entity.created_by_id:
         raise NotCreatorOwner("Unauthorized.")
+
     deployment_store.create_permission(db, permission_input)
 
     return Deployment.from_orm(deployment_store.get(db, permission_input.deployment_id))
@@ -170,8 +189,12 @@ def delete_permission(
     Raises:
         NotCreatorOwner: If the user is not the creator of the deployment.
     """
-    deployment_entity: DeploymentEntity = deployment_store.get(db, permission_input.deployment_id)
-    if current_user.id != deployment_entity.created_by_id:
+    deployment_entity: DeploymentEntity = deployment_store.get(
+        db, permission_input.deployment_id
+    )
+    if not deployment_entity:
+        raise DeploymentNotFound()
+    elif current_user.id != deployment_entity.created_by_id:
         raise NotCreatorOwner("Unauthorized.")
 
     deployment_store.delete_permission(db, permission_input)
@@ -183,14 +206,14 @@ def get_public_deployment(db: Session, token):
     """Get a public deployment.
     Token should be a jwt with the sub field set to the deployment id.
     Deployment needs to have the share_strategy set to public.
-    
+
     Args:
         db (Session): SQLAlchemy session.
         token (str): JWT token.
-        
+
     Returns:
         Deployment
-        
+
     Raises:
         DeploymentNotFound: If the deployment does not exist.
         PermissionError: If the deployment is not public.

@@ -68,19 +68,19 @@ class OneHot(nn.Module, AutoBuilder):
         self,
         classes: dict,
         xs: List[Union[list, str]],
-        T: Literal["tensor", "list"] = "tensor",
+        returns_type: Literal["tensor", "list"] = "tensor",
     ):
         """Serialize a categorical data into a list of numbers
-        
+
         e.g.:
             classes: {'a': 0, 'b': 1}
-            xs: ['a', 'b', ['a', 'b']] 
+            xs: ['a', 'b', ['a', 'b']]
             -> [0, 1, [0, 1]]
 
         Args:
             classes (dict): a dict of classes map to numbers
             xs (list): a list of keys of classes
-            T (str): return type, either 'tensor' or 'list'
+            returns_type (str): return type, either 'tensor' or 'list'
 
         Returns:
             a list of numbers or a tensor of numbers
@@ -95,7 +95,7 @@ class OneHot(nn.Module, AutoBuilder):
             [],
         )
 
-        return {
-            "list": data, 
-            "tensor": torch.Tensor(data).long()
-        }[T]
+        if returns_type == "list":
+            return data
+        elif returns_type == "tensor":
+            return torch.Tensor(data).long()
