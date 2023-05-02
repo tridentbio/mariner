@@ -36,10 +36,10 @@ class SharePermissions(Base):
     """Entity mapping to share permissions of deployment."""
 
     id = Column(Integer, primary_key=True, index=True)
-    deploy_id = Column(
-        Integer, ForeignKey("deploy.id", ondelete="CASCADE"), nullable=False
+    deployment_id = Column(
+        Integer, ForeignKey("deployment.id", ondelete="CASCADE"), nullable=False
     )
-    deploy = relationship("Deploy", back_populates="share_permissions")
+    deployment = relationship("Deployment", back_populates="share_permissions")
 
     user_id = Column(Integer, ForeignKey("user.id"), nullable=True)
     user = relationship(
@@ -49,7 +49,7 @@ class SharePermissions(Base):
     organization = Column(String, nullable=True)
 
 
-class Deploy(Base):
+class Deployment(Base):
     """Entity mapping to deployment created by users."""
 
     id = Column(Integer, primary_key=True, index=True)
@@ -65,7 +65,7 @@ class Deploy(Base):
 
     share_strategy = Column(Enum(ShareStrategy), default=ShareStrategy.PRIVATE)
     share_permissions = relationship(
-        "SharePermissions", back_populates="deploy", cascade="all,delete"
+        "SharePermissions", back_populates="deployment", cascade="all,delete"
     )
 
     model_version_id = Column(

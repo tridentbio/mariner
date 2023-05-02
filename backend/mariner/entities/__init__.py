@@ -2,8 +2,8 @@
 Data mappers defined with sqlalchemy used as entities
 """
 from .dataset import Column, ColumnsMetadata, Dataset  # noqa: F401
-from .deploy import (  # noqa: F401
-    Deploy,
+from .deployment import (  # noqa: F401
+    Deployment,
     DeploymentStatus,
     RateLimitUnit,
     SharePermissions,

@@ -59,20 +59,21 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def generate_deploy_signed_url(sub: Union[str, Any]) -> str:
+def generate_deployment_signed_url(sub: Union[str, Any]) -> str:
     """Generates a signed URL for a route.
+    Signed url make possible to get a resource without authentication.
 
     Args:
-        sub: deploy_id.
+        sub: deployment_id.
 
     Returns:
         Signed URL.
     """
     token = create_access_token(sub, timedelta(days=30))
-    return f"{settings.API_V1_STR}/deploy/public/{token}"
+    return f"{settings.API_V1_STR}/deployments/public/{token}"
 
 
-def decode_deploy_url_token(token: str):
+def decode_deployment_url_token(token: str):
     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
     token_data = TokenPayload(**payload)
     return token_data

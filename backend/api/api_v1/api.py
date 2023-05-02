@@ -5,7 +5,7 @@ from fastapi.routing import APIRouter
 
 from api.api_v1.endpoints import (
     datasets,
-    deploy,
+    deployments,
     events,
     experiments,
     login,
@@ -20,7 +20,7 @@ api_router = APIRouter()
 api_router.include_router(login.router, tags=["login"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(datasets.router, prefix="/datasets", tags=["datasets"])
-api_router.include_router(deploy.router, prefix="/deploy", tags=["deploy"])
+api_router.include_router(deployments.router, prefix="/deployments", tags=["deployments"])
 api_router.include_router(model.router, prefix="/models", tags=["models"])
 api_router.include_router(
     experiments.router, prefix="/experiments", tags=["experiments"]

@@ -1,5 +1,5 @@
 """
-Deploy data layer defining ways to read and write to the deploys collection
+Deployment data layer defining ways to read and write to the deployments collection
 """
 from datetime import datetime
 from typing import List
@@ -7,14 +7,14 @@ from typing import List
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from mariner.entities.deploy import Deploy, SharePermissions, ShareStrategy
+from mariner.entities.deployment import Deployment, SharePermissions, ShareStrategy
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
-from mariner.schemas.deploy_schemas import Deploy as DeploySchema
-from mariner.schemas.deploy_schemas import (
-    DeployCreateRepo,
+from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
+from mariner.schemas.deployment_schemas import (
+    DeploymentCreateRepo,
     DeploymentsQuery,
-    DeployUpdateRepo,
+    DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
 )
@@ -23,64 +23,64 @@ from mariner.stores.base_sql import CRUDBase
 from .model_sql import model_store
 
 
-class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
-    """CRUD for :any:`Deploy model<mariner.entities.deploy.Deploy>`
+class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdateRepo]):
+    """CRUD for :any:`Deployment model<mariner.entities.deployment.Deployment>`
 
-    Responsible to handle all communication with the deploy for the Deploy model.
+    Responsible to handle all communication with the deployment for the Deployment model.
     """
 
     def get_many_paginated(self, db: Session, query: DeploymentsQuery, user: User):
-        """Get many deploy based on the query parameters
+        """Get many deployment based on the query parameters
 
         Args:
-            db (Session): deploy session
+            db (Session): deployment session
             query (DeploymentsQuery): query parameters
-                - name (str): name of the deploy
-                - status (DeploymentStatus): status of the deploy
-                - share_strategy (ShareStrategy): share strategy of the deploy
+                - name (str): name of the deployment
+                - status (DeploymentStatus): status of the deployment
+                - share_strategy (ShareStrategy): share strategy of the deployment
                 - created_after (utc_datetime): created after date
                 - modelVersionId (int): model version id
                 - created_by_id (int): created by id
 
         Returns:
-            A tuple with the list of deploy and the total number of deploy
+            A tuple with the list of deployment and the total number of deployment
         """
-        sql_query = db.query(Deploy, SharePermissions).join(
-            SharePermissions, Deploy.share_permissions, isouter=True
+        sql_query = db.query(Deployment, SharePermissions).join(
+            SharePermissions, Deployment.share_permissions, isouter=True
         )
-        sql_query = sql_query.filter(Deploy.deleted_at.is_(None))
+        sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
 
-        # filtering for accessible deploys
+        # filtering for accessible deployments
         if query.created_by_id:
-            sql_query = sql_query.filter(Deploy.created_by_id == query.created_by_id)
+            sql_query = sql_query.filter(Deployment.created_by_id == query.created_by_id)
 
         elif query.public_mode == "only":
-            sql_query = sql_query.filter(Deploy.share_strategy == ShareStrategy.PUBLIC)
+            sql_query = sql_query.filter(Deployment.share_strategy == ShareStrategy.PUBLIC)
 
         else:
             filters = [
-                Deploy.created_by_id == user.id,
+                Deployment.created_by_id == user.id,
                 SharePermissions.user_id == user.id,
                 SharePermissions.organization == f"@{user.email.split('@')[1]}",
             ]
 
             if query.public_mode == "include":
-                filters.append(Deploy.share_strategy == "PUBLIC")
+                filters.append(Deployment.share_strategy == "PUBLIC")
 
             sql_query = sql_query.filter(or_(*filters))
 
         # filtering query
         if query.name:
-            sql_query = sql_query.filter(Deploy.name.ilike(f"%{query.name}%"))
+            sql_query = sql_query.filter(Deployment.name.ilike(f"%{query.name}%"))
         if query.status:
-            sql_query = sql_query.filter(Deploy.status == query.status)
+            sql_query = sql_query.filter(Deployment.status == query.status)
         if query.share_strategy:
-            sql_query = sql_query.filter(Deploy.share_strategy == query.share_strategy)
+            sql_query = sql_query.filter(Deployment.share_strategy == query.share_strategy)
         if query.created_after:
-            sql_query = sql_query.filter(Deploy.created_at >= query.created_after)
+            sql_query = sql_query.filter(Deployment.created_at >= query.created_after)
         if query.model_version_id:
             sql_query = sql_query.filter(
-                Deploy.model_version_id == query.model_version_id
+                Deployment.model_version_id == query.model_version_id
             )
 
         total = sql_query.count()
@@ -88,37 +88,37 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
 
         result = list(set(sql_query.all()))
 
-        deploys: List[DeploySchema] = []
+        deployments: List[DeploymentSchema] = []
         for i, record in enumerate(result):
-            deploy, share_permissions = record
+            deployment, share_permissions = record
 
-            deploys.append(DeploySchema.from_orm(deploy))
+            deployments.append(DeploymentSchema.from_orm(deployment))
             if share_permissions:
                 if share_permissions.user_id:
-                    deploys[i].users_id_allowed.append(share_permissions.user_id)
+                    deployments[i].users_id_allowed.append(share_permissions.user_id)
                 elif share_permissions.organization:
-                    deploys[i].organizations_allowed.append(
+                    deployments[i].organizations_allowed.append(
                         share_permissions.organization
                     )
 
-        return deploys, total
+        return deployments, total
 
-    def create(self, db: Session, obj_in: DeployCreateRepo):
-        """Create a new deploy
+    def create(self, db: Session, obj_in: DeploymentCreateRepo):
+        """Create a new deployment
 
         Args:
             db (Session): database session
-            obj_in (DeployCreateRepo): deploy to be created
+            obj_in (DeploymentCreateRepo): deployment to be created
 
         Returns:
-            Created deploy
+            Created deployment
         """
         obj_in_dict = obj_in.dict()
         relations_key = ["users_id_allowed", "organizations_allowed"]
         ds_data = {
             k: obj_in_dict[k] for k in obj_in_dict.keys() if k not in relations_key
         }
-        db_obj = Deploy(
+        db_obj = Deployment(
             **ds_data,
             share_permissions=self.parse_share_permissions(
                 ids=obj_in_dict["users_id_allowed"],
@@ -134,18 +134,18 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
     def update(
         self,
         db: Session,
-        db_obj: Deploy,
-        obj_in: DeployUpdateRepo,
+        db_obj: Deployment,
+        obj_in: DeploymentUpdateRepo,
     ):
-        """Update a deploy
+        """Update a deployment
 
         Args:
             db (Session): database session
-            db_obj (Deploy): deploy to be updated
-            obj_in (DeployUpdateRepo): deploy data to be updated
+            db_obj (Deployment): deployment to be updated
+            obj_in (DeploymentUpdateRepo): deployment data to be updated
 
         Returns:
-            Updated deploy
+            Updated deployment
         """
         if obj_in.delete:
             obj_in.deleted_at = datetime.utcnow()
@@ -159,10 +159,10 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
                 organizations=obj_in.organizations_allowed or [],
             )
             db.query(SharePermissions).filter(
-                SharePermissions.deploy_id == db_obj.id,
+                SharePermissions.deployment_id == db_obj.id,
             ).delete()
             db.commit()
-            db_obj = db.query(Deploy).filter(Deploy.id == db_obj.id).first()
+            db_obj = db.query(Deployment).filter(Deployment.id == db_obj.id).first()
             db_obj.share_permissions = share_permissions
             db.add(db_obj)
 
@@ -231,7 +231,7 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
 
         db_obj = (
             db.query(SharePermissions)
-            .filter(SharePermissions.deploy_id == obj_in.deploy_id, sub_query)
+            .filter(SharePermissions.deployment_id == obj_in.deployment_id, sub_query)
             .first()
         )
         db.delete(db_obj)
@@ -263,4 +263,4 @@ class CRUDDeploy(CRUDBase[Deploy, DeployCreateRepo, DeployUpdateRepo]):
         return model_version
 
 
-deploy_store = CRUDDeploy(Deploy)
+deployment_store = CRUDDeployment(Deployment)
