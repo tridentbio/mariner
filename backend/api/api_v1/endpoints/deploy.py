@@ -144,3 +144,19 @@ def delete_permission(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except NotCreatorOwner:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@router.get("/public/{token}", response_model=Deploy)
+def get_public_deploy(
+    token: str,
+    db: Session = Depends(deps.get_db),
+):
+    """Get a public deploy by token without authentication"""
+    try:
+        deploy = controller.get_public_deploy(db, token)
+        return deploy
+    except DeployNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)

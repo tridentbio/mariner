@@ -8,6 +8,7 @@ from jose import jwt
 from passlib.context import CryptContext
 
 from mariner.core.config import settings
+from mariner.schemas.token import TokenPayload
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -68,4 +69,10 @@ def generate_deploy_signed_url(sub: Union[str, Any]) -> str:
         Signed URL.
     """
     token = create_access_token(sub, timedelta(days=30))
-    return f"{settings.SERVER_HOST}{settings.API_V1_STR}/deploy?token={token}"
+    return f"{settings.API_V1_STR}/deploy/public/{token}"
+
+
+def decode_deploy_url_token(token: str):
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+    token_data = TokenPayload(**payload)
+    return token_data

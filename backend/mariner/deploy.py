@@ -5,7 +5,10 @@ from typing import List, Tuple
 
 from sqlalchemy.orm.session import Session
 
-from mariner.core.security import generate_deploy_signed_url
+from mariner.core.security import (
+    decode_deploy_url_token,
+    generate_deploy_signed_url,
+)
 from mariner.entities.deploy import Deploy as DeployEntity
 from mariner.entities.deploy import ShareStrategy
 from mariner.entities.user import User
@@ -92,7 +95,10 @@ def update_deploy(
     if deploy_entity.created_by_id != current_user.id:
         raise NotCreatorOwner()
 
-    if deploy_input.share_strategy == ShareStrategy.PUBLIC and not deploy_entity.share_url:
+    if (
+        deploy_input.share_strategy == ShareStrategy.PUBLIC
+        and not deploy_entity.share_url
+    ):
         share_url = generate_deploy_signed_url(deploy_entity.id)
         deploy_input.share_url = share_url
 
@@ -172,3 +178,16 @@ def delete_permission(
     deploy_store.delete_permission(db, permission_input)
 
     return Deploy.from_orm(deploy_store.get(db, permission_input.deploy_id))
+
+
+def get_public_deploy(db: Session, token):
+    payload = decode_deploy_url_token(token)
+
+    deploy = deploy_store.get(db, payload.sub)
+    if not deploy:
+        raise DeployNotFound()
+
+    elif not deploy.share_strategy == ShareStrategy.PUBLIC:
+        raise PermissionError()
+
+    return deploy
