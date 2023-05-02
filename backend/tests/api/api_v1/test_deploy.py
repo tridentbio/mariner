@@ -48,18 +48,18 @@ def create_temporaly_deploy(
 ):
     """Create a deploy temporaly and delete it after the test.
     Recomended to be used with "with" statement.
-    
-    Recommended to create deploys dynamically during the tests 
-    by choosing an owner other than test_user and a share mode 
+
+    Recommended to create deploys dynamically during the tests
+    by choosing an owner other than test_user and a share mode
     to be shared with test_user.
     If you only need a static deploy to test_user, use the "deploy" fixture.
-    
+
     Args:
         db (Session): SQLAlchemy session.
         share_by (str): Share mode to be shared with test_user.
         dataset (Dataset): Dataset to be used in the deploy.
         owner (str, optional): Owner of the deploy. Defaults to "random_user".
-        
+
     Return:
         Deploy: Deploy created.
     """
@@ -108,18 +108,18 @@ def test_get_deploys(
 ) -> None:
     """Test to route to get deploys. Should return a list of deploys.
     GET route should return all deploys that user has access and match filters.
-    
+
     Deploys that user has access:
      - Deploys shared with user by other users.
      - Deploys shared with user's organization (email sufix).
      - Deploys with public mode. (only if publicMode filter is not "exclude")
-     
+
     Args:
         db (Session): SQLAlchemy session.
         client (TestClient): FastAPI test client.
         normal_user_token_headers (dict[str, str]): Authorization header.
         some_dataset (Dataset): Dataset to be used in the deploy.
-        another_user_share_mode (str): 
+        another_user_share_mode (str):
             Share mode to be shared with test_user in each case test.
     """
     with create_temporaly_deploy(
@@ -150,7 +150,7 @@ def test_get_my_deploys(
 ) -> None:
     """Test to route to get deploys with created_by_id filter.
     Should return a list of deploys created by user.
-    
+
     Args:
         db (Session): SQLAlchemy session.
         client (TestClient): FastAPI test client.
@@ -178,7 +178,7 @@ def test_create_deploy(
     normal_user_token_headers: Dict[str, str],
 ) -> None:
     """Test create deploy route. Should create a deploy in the database.
-    
+
     Args:
         db (Session): SQLAlchemy session.
         client (TestClient): FastAPI test client.
@@ -205,7 +205,7 @@ def test_update_deploy(
     client: TestClient, normal_user_token_headers: Dict[str, str], deploy: Deploy
 ) -> None:
     """Test update deploy route. Should update the deploy in the database.
-    
+
     Args:
         client (TestClient): FastAPI test client.
         normal_user_token_headers (dict[str, str]): Authorization header.
@@ -233,7 +233,7 @@ def test_delete_deploy(
     some_dataset: Dataset,
 ) -> None:
     """Test delete deploy route. GET route should not return the deleted deploy.
-    
+
     Args:
         db (Session): SQLAlchemy session.
         client (TestClient): FastAPI test client.
@@ -271,7 +271,7 @@ def test_create_permission(
 ) -> None:
     """Test create permission route. Should create a permission in the database.
     GET route should return the deploy with the permission.
-    
+
     Args:
         client (TestClient): FastAPI test client.
         normal_user_token_headers (dict[str, str]): Authorization header.
@@ -309,7 +309,7 @@ def test_delete_permission(
 ) -> None:
     """Test delete permission route. Should delete a permission in the database.
     GET route should not return the deploy after deleting the permission.
-    
+
     Args:
         client (TestClient): FastAPI test client.
         normal_user_token_headers (dict[str, str]): Authorization header.
@@ -349,7 +349,10 @@ def test_delete_permission(
 
 
 def test_get_public_deploy(
-    db:Session, client: TestClient, some_dataset: Dataset, normal_user_token_headers: Dict[str, str]
+    db: Session,
+    client: TestClient,
+    some_dataset: Dataset,
+    normal_user_token_headers: Dict[str, str],
 ) -> None:
     """Test get public deploy route. Should return the deploy.
     Public deploy should be accessible by anyone by shareUrl property.
@@ -359,9 +362,7 @@ def test_get_public_deploy(
         normal_user_token_headers (dict[str, str]): Authorization header.
         deploy (Deploy): Deploy fixture.
     """
-    with create_temporaly_deploy(
-        db, None, some_dataset, 'test_user'
-    ) as some_deploy:
+    with create_temporaly_deploy(db, None, some_dataset, "test_user") as some_deploy:
         # Update to public to get the share url.
         updated_deploy = {"share_strategy": "public"}
         r = client.put(
@@ -372,14 +373,13 @@ def test_get_public_deploy(
         assert r.status_code == 200
         deploy = r.json()
         public_url = deploy["shareUrl"]
-        assert bool(
-            public_url
-        ), "Should have a public url after updating to public."
+        assert bool(public_url), "Should have a public url after updating to public."
 
-        # Should be accessible by anyone without authorization header.
         r = client.get(public_url)
-        assert r.status_code == 200
-        
+        assert (
+            r.status_code == 200
+        ), "Should be accessible by anyone without authorization."
+
         payload = r.json()
         assert payload["id"] == some_deploy.id, "Should have the same id."
         assert payload["name"] == some_deploy.name, "Should have the same name."
