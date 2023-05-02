@@ -2,7 +2,7 @@ from mariner.models import Model
 from ..utils.utils import random_lower_string
 
 
-def mock_deploy(some_model: Model, share_strategy='private'):
+def mock_deployment(some_model: Model, share_strategy='private'):
     return {
         "name": random_lower_string(),
         "readme": random_lower_string(),

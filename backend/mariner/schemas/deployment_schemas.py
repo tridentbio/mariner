@@ -1,12 +1,12 @@
 """
-Deploy related DTOs
+Deployment related DTOs
 """
 
 from typing import List, Literal, Optional
 
 from pydantic import root_validator
 
-from mariner.entities.deploy import (
+from mariner.entities.deployment import (
     DeploymentStatus,
     RateLimitUnit,
     ShareStrategy,
@@ -15,12 +15,12 @@ from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 
 
 class DeploymentsQuery(PaginatedApiQuery):
-    """Query for deploys.
+    """Query for deployments.
 
     Attributes:
-        name (Optional[str]): name of the deploy
-        status (Optional[DeploymentStatus]): status of the deploy
-        share_strategy (Optional[ShareStrategy]): share strategy of the deploy
+        name (Optional[str]): name of the deployment
+        status (Optional[DeploymentStatus]): status of the deployment
+        share_strategy (Optional[ShareStrategy]): share strategy of the deployment
         created_after (Optional[utc_datetime]): created after date
         modelVersionId (Optional[int]): model version id
         created_by_id (Optional[int]): created by id
@@ -35,8 +35,8 @@ class DeploymentsQuery(PaginatedApiQuery):
     created_by_id: Optional[int] = None
 
 
-class DeployBase(ApiBaseModel):
-    """Deploy base type."""
+class DeploymentBase(ApiBaseModel):
+    """Deployment base type."""
 
     name: str
     readme: str = ""
@@ -52,17 +52,17 @@ class DeployBase(ApiBaseModel):
     deleted_at: Optional[utc_datetime] = None
 
 
-class DeployCreateRepo(DeployBase):
-    """Deploy to create type.
+class DeploymentCreateRepo(DeploymentBase):
+    """Deployment to create type.
 
-    Used in the DeployCRUD to create a deploy in the database.
+    Used in the DeploymentCRUD to create a deployment in the database.
     """
 
     created_by_id: int
 
 
-class Deploy(DeployBase):
-    """Deploy model type."""
+class Deployment(DeploymentBase):
+    """Deployment model type."""
 
     id: int
     created_by_id: int
@@ -73,22 +73,22 @@ class Deploy(DeployBase):
         return values
 
 
-class DeployUpdateInput(ApiBaseModel):
-    """Payload of a deploy update.
+class DeploymentUpdateInput(ApiBaseModel):
+    """Payload of a deployment update.
 
 
     Attributes:
-        name (str): name of the deploy
-        readme (str): readme of the deploy
-        share_url (str): share url of the deploy
-        status (DeploymentStatus): status of the deploy
-        model_version_id (int): model version id of the deploy
-        share_strategy (ShareStrategy): share strategy of the deploy
-        users_id_allowed (List[int]): users id allowed of the deploy
-        organizations_allowed (List[str]): organizations allowed of the deploy
-        show_training_data (bool): show training data of the deploy
-        rate_limit_value (int): prediction rate limit value of the deploy
-        rate_limit_unit (RateLimitUnit): prediction rate limit unit of the deploy
+        name (str): name of the deployment
+        readme (str): readme of the deployment
+        share_url (str): share url of the deployment
+        status (DeploymentStatus): status of the deployment
+        model_version_id (int): model version id of the deployment
+        share_strategy (ShareStrategy): share strategy of the deployment
+        users_id_allowed (List[int]): users id allowed of the deployment
+        organizations_allowed (List[str]): organizations allowed of the deployment
+        show_training_data (bool): show training data of the deployment
+        rate_limit_value (int): prediction rate limit value of the deployment
+        rate_limit_unit (RateLimitUnit): prediction rate limit unit of the deployment
 
     """
 
@@ -103,10 +103,10 @@ class DeployUpdateInput(ApiBaseModel):
     rate_limit_unit: RateLimitUnit = None
 
 
-class DeployUpdateRepo(DeployUpdateInput):
-    """Deploy to update type.
+class DeploymentUpdateRepo(DeploymentUpdateInput):
+    """Deployment to update type.
 
-    Used in the deploy update route.
+    Used in the deployment update route.
     """
 
     share_url: str = None
@@ -117,7 +117,7 @@ class DeployUpdateRepo(DeployUpdateInput):
 class PermissionBase(ApiBaseModel):
     """Permission base type."""
 
-    deploy_id: int
+    deployment_id: int
     user_id: int = None
     organization: str = None
 

@@ -1,5 +1,5 @@
 """
-Handlers for api/v1/deploy* endpoints
+Handlers for api/v1/deployments* endpoints
 """
 from typing import Any
 
@@ -9,21 +9,21 @@ from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
 from starlette import status
 
-import mariner.deploy as controller
+import mariner.deployment as controller
 from api import deps
 from mariner.entities.user import User
 from mariner.exceptions import (
-    DeployAlreadyExists,
-    DeployNotFound,
+    DeploymentAlreadyExists,
+    DeploymentNotFound,
     NotCreatorOwner,
 )
 from mariner.schemas.api import Paginated
-from mariner.schemas.deploy_schemas import (
-    Deploy,
-    DeployBase,
+from mariner.schemas.deployment_schemas import (
+    Deployment,
+    DeploymentBase,
     DeploymentsQuery,
-    DeployUpdateInput,
-    DeployUpdateRepo,
+    DeploymentUpdateInput,
+    DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
 )
@@ -31,131 +31,131 @@ from mariner.schemas.deploy_schemas import (
 router = APIRouter()
 
 
-@router.get("/", response_model=Paginated[Deploy])
-def get_deploys(
+@router.get("/", response_model=Paginated[Deployment])
+def get_deployments(
     query: DeploymentsQuery = Depends(DeploymentsQuery),
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
     """
-    Retrieve deploys owned by requester
+    Retrieve deployments owned by requester
     """
-    deploy, total = controller.get_deploys(db, current_user, query)
-    return Paginated(data=[Deploy.from_orm(d) for d in deploy], total=total)
+    deployments, total = controller.get_deployments(db, current_user, query)
+    return Paginated(data=[Deployment.from_orm(d) for d in deployments], total=total)
 
 
-@router.post("/", response_model=Deploy)
-def create_deploy(
-    data: DeployBase,
+@router.post("/", response_model=Deployment)
+def create_deployment(
+    data: DeploymentBase,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
     """
-    Create a deploy
+    Create a deployment
     """
     try:
-        db_deploy = controller.create_deploy(db, current_user, data)
+        db_deployment = controller.create_deployment(db, current_user, data)
 
-        deploy = Deploy.from_orm(db_deploy)
-        return deploy
+        deployment = Deployment.from_orm(db_deployment)
+        return deployment
 
-    except DeployNotFound:
+    except DeploymentNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    except DeployAlreadyExists:
+    except DeploymentAlreadyExists:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Deploy name already in use"
+            status_code=status.HTTP_409_CONFLICT, detail="Deployment name already in use"
         )
 
 
 @router.put(
-    "/{deploy_id}",
-    response_model=Deploy,
+    "/{deployment_id}",
+    response_model=Deployment,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def update_deploy(
-    deploy_id: int,
-    deploy_input: DeployUpdateInput,
+def update_deployment(
+    deployment_id: int,
+    deployment_input: DeploymentUpdateInput,
     current_user=Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
     """
-    Update a deploy and process again if it is needed
+    Update a deployment and process again if it is needed
     """
     try:
-        deploy = controller.update_deploy(
+        deployment = controller.update_deployment(
             db,
             current_user,
-            deploy_id,
-            DeployUpdateRepo(
-                **deploy_input.dict(),
+            deployment_id,
+            DeploymentUpdateRepo(
+                **deployment_input.dict(),
             ),
         )
-        return deploy
-    except DeployNotFound:
+        return deployment
+    except DeploymentNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except NotCreatorOwner:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.delete("/{deploy_id}", response_model=Deploy)
-def delete_deploy(
-    deploy_id: int,
+@router.delete("/{deployment_id}", response_model=Deployment)
+def delete_deployment(
+    deployment_id: int,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
-    """Delete a deploy by id"""
+    """Delete a deployment by id"""
     try:
-        deploy = controller.delete_deploy(db, current_user, deploy_id)
-        return deploy
-    except DeployNotFound:
+        deployment = controller.delete_deployment(db, current_user, deployment_id)
+        return deployment
+    except DeploymentNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except NotCreatorOwner:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-@router.post("/create-permission", response_model=Deploy)
+@router.post("/create-permission", response_model=Deployment)
 def create_permission(
     permission_input: PermissionCreateRepo,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
-    """Create a permission for a deploy"""
+    """Create a permission for a deployment"""
     try:
-        deploy = controller.create_permission(db, current_user, permission_input)
-        return deploy
-    except DeployNotFound:
+        deployment = controller.create_permission(db, current_user, permission_input)
+        return deployment
+    except DeploymentNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except NotCreatorOwner:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.post("/delete-permission", response_model=Deploy)
+@router.post("/delete-permission", response_model=Deployment)
 def delete_permission(
     query: PermissionDeleteRepo,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
-    """Delete a permission for a deploy"""
+    """Delete a permission for a deployment"""
     try:
-        deploy = controller.delete_permission(db, current_user, query)
-        return deploy
-    except DeployNotFound:
+        deployment = controller.delete_permission(db, current_user, query)
+        return deployment
+    except DeploymentNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except NotCreatorOwner:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.get("/public/{token}", response_model=Deploy)
-def get_public_deploy(
+@router.get("/public/{token}", response_model=Deployment)
+def get_public_deployment(
     token: str,
     db: Session = Depends(deps.get_db),
 ):
-    """Get a public deploy by token without authentication"""
+    """Get a public deployment by token without authentication"""
     try:
-        deploy = controller.get_public_deploy(db, token)
-        return deploy
-    except DeployNotFound:
+        deployment = controller.get_public_deployment(db, token)
+        return deployment
+    except DeploymentNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     except PermissionError:
