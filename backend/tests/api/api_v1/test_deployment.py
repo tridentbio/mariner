@@ -35,8 +35,7 @@ def deployment_fixture(
         json=deployment_data,
         headers=normal_user_token_headers,
     )
-    yield Deployment(**response.json())
-    db.execute("DELETE FROM deployment where id = :id", {"id": response.json()["id"]})
+    return Deployment(**response.json())
 
 
 @contextmanager
@@ -93,9 +92,7 @@ def create_temporary_deployment(
         deployment_store.create_permission(db, permission[share_by])
 
     yield deployment
-
     teardown_create_model(db, some_model, skip_mlflow=True)
-    db.execute("delete from deployment where id = :id", {"id": deployment.id})
 
 
 @pytest.mark.parametrize("another_user_share_mode", ("user", "org", "public"))
