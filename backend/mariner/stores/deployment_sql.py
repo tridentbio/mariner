@@ -14,6 +14,8 @@ from mariner.entities.deployment import (
 )
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
+from mariner.entities.model import ModelVersion
+from mariner.schemas.model_schemas import ModelVersion as ModelVersionSchema
 from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
 from mariner.schemas.deployment_schemas import (
     DeploymentCreateRepo,
@@ -44,7 +46,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             A tuple with the list of deployment and the total number of deployment
         """
         sql_query = (
-            db.query(Deployment, SharePermissions)
+            db.query(Deployment, SharePermissions, ModelVersion)
             .join(SharePermissions, Deployment.share_permissions, isouter=True)
             .distinct(Deployment.id)
         )
@@ -94,7 +96,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         deployments: List[DeploymentSchema] = []
         for i, record in enumerate(result):
-            deployment, share_permissions = record
+            deployment, share_permissions, model_version = record
 
             deployments.append(DeploymentSchema.from_orm(deployment))
             if share_permissions:
@@ -104,6 +106,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
                     deployments[i].organizations_allowed.append(
                         share_permissions.organization
                     )
+            deployments[i].model_version = ModelVersionSchema.from_orm(model_version)
 
         return deployments, total
 

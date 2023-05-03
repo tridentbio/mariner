@@ -59,8 +59,8 @@ class Deployment(Base):
     status = Column(
         Enum(DeploymentStatus), default=DeploymentStatus.STOPPED, index=True
     )
-    rate_limit_unit = Column(Enum(RateLimitUnit), nullable=True)
-    rate_limit_value = Column(Integer, nullable=True)
+    prediction_rate_limit_unit = Column(Enum(RateLimitUnit), nullable=True)
+    prediction_rate_limit_value = Column(Integer, nullable=True)
     show_training_data = Column(Boolean, default=False)
 
     share_strategy = Column(Enum(ShareStrategy), default=ShareStrategy.PRIVATE)

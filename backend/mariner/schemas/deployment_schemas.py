@@ -12,7 +12,7 @@ from mariner.entities.deployment import (
     ShareStrategy,
 )
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
-
+from mariner.schemas.model_schemas import ModelVersion
 
 class DeploymentsQuery(PaginatedApiQuery):
     """Query object for deployments.
@@ -63,10 +63,10 @@ class DeploymentBase(ApiBaseModel):
     organizations_allowed (List[str]): list of organizations allowed to get the deployment
         organizations are identified by suffix of the users email (e.g. @mariner.ai)
     show_training_data (bool): if True, the training data will be shown on the deployment page
-    rate_limit_value (int): number of requests allowed in the rate_limit_unit
-    rate_limit_unit (RateLimitUnit): unit of time to limit the number of requests
+    prediction_rate_limit_value (int): number of requests allowed in the prediction_rate_limit_unit
+    prediction_rate_limit_unit (RateLimitUnit): unit of time to limit the number of requests
         e.g.:
-            if rate_limit_value is 10 and rate_limit_unit is RateLimitUnit.DAY,
+            if prediction_rate_limit_value is 10 and prediction_rate_limit_unit is RateLimitUnit.DAY,
             the deployment will only allow 10 requests per day
     deleted_at (Optional[utc_datetime]): date of deletion of the deployment, if it is deleted
     """
@@ -80,8 +80,8 @@ class DeploymentBase(ApiBaseModel):
     users_id_allowed: List[int] = []
     organizations_allowed: List[str] = []
     show_training_data: bool = False
-    rate_limit_value: int
-    rate_limit_unit: RateLimitUnit = RateLimitUnit.MONTH
+    prediction_rate_limit_value: int
+    prediction_rate_limit_unit: RateLimitUnit = RateLimitUnit.MONTH
     deleted_at: Optional[utc_datetime] = None
 
 
@@ -99,6 +99,7 @@ class Deployment(DeploymentBase):
 
     id: int
     created_by_id: int
+    model_version: ModelVersion = None
 
     @root_validator
     def check_fields(cls, values):
@@ -116,8 +117,8 @@ class DeploymentUpdateInput(ApiBaseModel):
     users_id_allowed: List[int] = None
     organizations_allowed: List[str] = None
     show_training_data: bool = None
-    rate_limit_value: int = None
-    rate_limit_unit: RateLimitUnit = None
+    prediction_rate_limit_value: int = None
+    prediction_rate_limit_unit: RateLimitUnit = None
 
 
 class DeploymentUpdateRepo(DeploymentUpdateInput):
