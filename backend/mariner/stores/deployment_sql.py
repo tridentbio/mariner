@@ -52,9 +52,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         )
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
 
-        if query.created_by_id:
+        if query.access_mode == "owned":
             sql_query = sql_query.filter(
-                Deployment.created_by_id == query.created_by_id
+                Deployment.created_by_id == user.id
             )
 
         elif query.public_mode == "only":
@@ -64,10 +64,12 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         else:
             filters = [
-                Deployment.created_by_id == user.id,
                 SharePermissions.user_id == user.id,
                 SharePermissions.organization == f"@{user.email.split('@')[1]}",
             ]
+
+            if not query.access_mode == "shared":
+                filters.append(Deployment.created_by_id == user.id)
 
             if query.public_mode == "include":
                 filters.append(Deployment.share_strategy == "PUBLIC")
@@ -154,12 +156,6 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         Returns:
             Updated deployment
         """
-        if obj_in.delete:
-            obj_in.deleted_at = datetime.utcnow()
-            del obj_in.delete
-        else:
-            del obj_in.delete
-
         if obj_in.users_id_allowed or obj_in.organizations_allowed:
             share_permissions = self.parse_share_permissions(
                 users_id=obj_in.users_id_allowed or [],
