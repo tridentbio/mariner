@@ -344,7 +344,7 @@ def test_delete_permission(
     r = client.get(
         f"{settings.API_V1_STR}/deployments",
         headers=normal_user_token_headers,
-        params={"name": deployment_fixture.name, "created_by_id": test_user.id},
+        params={"name": deployment_fixture.name, "accessMode": "owned"},
     )
     payload = r.json()
 
