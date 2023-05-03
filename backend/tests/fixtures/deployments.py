@@ -9,6 +9,6 @@ def mock_deployment(some_model: Model, share_strategy='private'):
         "status": 'stopped',
         "model_version_id": some_model.versions[0].id,
         "share_strategy": share_strategy,
-        "rate_limit_value": 100,
-        "rate_limit_unit": "month",
+        "prediction_rate_limit_value": 100,
+        "prediction_rate_limit_unit": "month",
     }

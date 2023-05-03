@@ -71,7 +71,7 @@ def create_temporary_deployment(
             created_by_id=some_model.created_by_id,
             name=random_lower_string(),
             model_version_id=some_model.versions[0].id,
-            rate_limit_value=100,
+            prediction_rate_limit_value=100,
             share_strategy=(
                 ShareStrategy.PUBLIC if share_by == "public" else ShareStrategy.PRIVATE
             ),
