@@ -157,11 +157,10 @@ def test_get_my_deployments(
         normal_user_token_headers: Authorization header.
         deployment_fixture
     """
-    user = get_test_user(db)
     r = client.get(
         f"{settings.API_V1_STR}/deployments",
         headers=normal_user_token_headers,
-        params={"created_by_id": user.id},
+        params={"accessMode": "owned"},
     )
     assert r.status_code == 200
     payload = r.json()

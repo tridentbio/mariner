@@ -30,10 +30,11 @@ class DeploymentsQuery(PaginatedApiQuery):
             only: only return public deployments
         created_after: created after date
         model_version_id: filter deployments by model version id
-        created_by_id:
-            prioritizes the deployments filter searching only the
-            deployments made by the requested user, excluding public
-            and shared deployments
+        access_mode: "unset" | "owned" | "shared
+            filter by the access the user has to the deployment
+            unset (default): do not filter by access mode
+            owned: only return deployments owned by the user
+            shared: only return deployments shared with the user
     """
 
     name: Optional[str] = None
@@ -42,7 +43,7 @@ class DeploymentsQuery(PaginatedApiQuery):
     created_after: Optional[utc_datetime] = None
     model_version_id: Optional[int] = None
     public_mode: Literal["include", "exclude", "only"] = "exclude"
-    created_by_id: Optional[int] = None
+    access_mode : Optional[Literal["unset", "owned", "shared"]] = "unset"
 
 
 class DeploymentBase(ApiBaseModel):
@@ -128,8 +129,12 @@ class DeploymentUpdateRepo(DeploymentUpdateInput):
     """
 
     share_url: str = None
-    delete = False  # when true it updates the deleted_at field
     deleted_at: Optional[utc_datetime] = None
+    
+    @classmethod
+    def delete(cls):
+        """Returns a DeploymentUpdateRepo with delete set to True."""
+        return cls(deleted_at=utc_datetime.now())
 
 
 class PermissionBase(ApiBaseModel):

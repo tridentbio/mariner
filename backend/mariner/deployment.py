@@ -140,7 +140,7 @@ def delete_deployment(
         raise NotCreatorOwner()
 
     return Deployment.from_orm(
-        deployment_store.update(db, deployment, DeploymentUpdateRepo(delete=True))
+        deployment_store.update(db, deployment, DeploymentUpdateRepo.delete())
     )
 
 
