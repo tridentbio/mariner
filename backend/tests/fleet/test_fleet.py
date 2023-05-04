@@ -9,7 +9,6 @@ from pandas import DataFrame, read_csv
 
 from fleet import fit
 from fleet.base_schemas import BaseFleetModelSpec
-from fleet.dataset_schemas import ColumnConfig
 from fleet.model_builder import optimizers
 from fleet.model_builder.schemas import TargetConfig, is_regression
 from fleet.torch_.schemas import (
@@ -34,6 +33,11 @@ def targets_head(spec: TorchModelSpec) -> TargetConfig:
     return spec.dataset.target_columns[0]
 
 
+def assert_mlflow_metric(client: MlflowClient, run_id: str, key: str):
+    val_metric = client.get_metric_history(run_id=run_id, key=key)
+    assert len(val_metric) > 0, f"failed to save metric {key} failed"
+
+
 def assert_mlflow_data(spec: BaseFleetModelSpec, mlflow_experiment_id: str):
     # Checks if metrics can be found in expected mlflow location
     # and models are correctly upload to s3
@@ -54,28 +58,18 @@ def assert_mlflow_data(spec: BaseFleetModelSpec, mlflow_experiment_id: str):
     assert isinstance(
         spec, TorchModelSpec
     ), "this function is only for torch model specs"
-    if is_regression(targets_head(spec)):
-        for target_column in spec.dataset.target_columns:
-            loss_history = client.get_metric_history(
-                run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
-            )
-            assert len(loss_history) > 0
-        for target_column in spec.dataset.target_columns:
-            val_loss_history = client.get_metric_history(
-                run_id=run.info.run_id, key=f"val/mse/{target_column.name}"
-            )
-            assert len(val_loss_history) > 0
-    else:
-        for target_column in spec.dataset.target_columns:
-            loss_history = client.get_metric_history(
-                run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
-            )
-            assert len(loss_history) > 0
-        for target_column in spec.dataset.target_columns:
-            val_loss_history = client.get_metric_history(
-                run_id=run.info.run_id, key=f"val/precision/{target_column.name}"
-            )
-            assert len(val_loss_history) > 0
+    for target_column in spec.dataset.target_columns:
+        loss_history = client.get_metric_history(
+            run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
+        )
+        assert len(loss_history) > 0
+        assert_mlflow_metric(
+            client=client,
+            run_id=run.info.run_id,
+            key=f"val/mse/{target_column.name}"
+            if is_regression(target_column)
+            else f"val/precision/{target_column.name}",
+        )
 
 
 models_root = Path("tests") / "data" / "yaml"
@@ -91,7 +85,6 @@ specs = [
         ("small_regressor_schema.yaml", "zinc.csv"),
     ]
 ]
-
 test_cases = [
     TestCase(
         model_spec=spec,

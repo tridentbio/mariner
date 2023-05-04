@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from fleet.model_builder.schemas import TorchModelSchema
+from fleet.torch_.schemas import TorchModelSpec
 from mariner.core.config import settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
@@ -27,20 +28,17 @@ ModelType = Literal["regressor", "regressor-with-categorical", "classifier"]
 
 def model_config(
     model_type: ModelType = "regressor", dataset_name: Optional[str] = None
-) -> TorchModelSchema:
+) -> TorchModelSpec:
     path = get_config_path_for_model_type(model_type)
-    with open(path, "rb") as f:
-        if path.endswith("yaml") or path.endswith("yml"):
-            schema = TorchModelSchema.from_yaml_str(f.read())
-        elif path.endswith("json"):
-            schema = TorchModelSchema.parse_raw(f.read())
-        else:
-            raise NotImplementedError(
-                f"Only know how to read json or yaml model configs, got file: {path}"
-            )
-        if dataset_name:
-            schema.dataset.name = dataset_name
-        return schema
+    if path.endswith("yaml") or path.endswith("yml"):
+        model = TorchModelSpec.from_yaml(path)
+    else:
+        model = TorchModelSpec.parse_file(path)
+
+    # override test dataset name
+    if dataset_name:
+        model.dataset.name = dataset_name
+    return model
 
 
 def get_config_path_for_model_type(model_type: ModelType) -> str:
@@ -64,7 +62,7 @@ def mock_model(
     model_path = get_config_path_for_model_type(model_type)
     with open(model_path, "rb") as f:
         config_dict = yaml.unsafe_load(f.read())
-        config = TorchModelSchema(**config_dict)
+        config = TorchModelSpec(**config_dict)
         if dataset_name:
             config.dataset.name = dataset_name
         model = ModelCreate(

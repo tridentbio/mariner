@@ -19,6 +19,7 @@ from fleet.model_builder import options
 from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.model import CustomModel
 from fleet.model_builder.schemas import ComponentOption, TorchDatasetConfig
+from fleet.torch_.schemas import TorchModelSpec
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -34,7 +35,6 @@ from mariner.exceptions.model_exceptions import (
 from mariner.ray_actors.model_check_actor import ModelCheckActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
-    ForwardCheck,
     Model,
     ModelCreate,
     ModelCreateRepo,
@@ -43,6 +43,8 @@ from mariner.schemas.model_schemas import (
     ModelVersion,
     ModelVersionCreateRepo,
     TorchModelSchema,
+    TrainingCheckRequest,
+    TrainingCheckResponse,
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
@@ -52,31 +54,9 @@ LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)
 
 
-def get_model_and_dataloader(
-    db: Session, config: TorchModelSchema
-) -> tuple[pl.LightningModule, DataLoader]:
-    """Gets the CustomModel and the DataLoader needed to train
-    a model
-
-    Args:
-        db: connection to the database
-        config: model config
-
-    Returns:
-        tuple[pl.LightningModule, DataLoader]
-    """
-    dataset_entity = dataset_store.get_by_name(db, config.dataset.name)
-    assert dataset_entity, f"No dataset found with name {config.dataset.name}"
-    df = dataset_entity.get_dataframe()
-    dataset = CustomDataset(data=df, model_config=config)
-    dataloader = DataLoader(dataset, batch_size=1)
-    model = CustomModel(config)
-    return model, dataloader
-
-
 async def check_model_step_exception(
-    db: Session, config: TorchModelSchema
-) -> ForwardCheck:
+    db: Session, config: TrainingCheckRequest
+) -> TrainingCheckResponse:
     """Checks the steps of a pytorch lightning model built from config.
 
     Steps are checked before creating the model on the backend, so the user may fix
@@ -90,14 +70,16 @@ async def check_model_step_exception(
         An object either with the stack trace or the model output.
     """
     try:
-        dataset = dataset_store.get_by_name(db, config.dataset.name)
+        dataset = dataset_store.get_by_name(db, config.model_spec.dataset.name)
         actor = ModelCheckActor.remote()
-        output = await actor.check_model_steps.remote(dataset=dataset, config=config)
-        return ForwardCheck(output=output)
+        output = await actor.check_model_steps.remote(
+            dataset=dataset, config=config.model_spec.spec
+        )
+        return TrainingCheckResponse(output=output)
     # Don't catch any specific exception to properly get the traceback
     except:  # noqa E722 pylint: disable=W0702
         lines = traceback.format_exc()
-        return ForwardCheck(stack_trace=lines)
+        return TrainingCheckResponse(stack_trace=lines)
 
 
 def create_model(

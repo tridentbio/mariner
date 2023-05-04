@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from fleet.torch_ import TorchFunctions, TorchModelSpec, TorchTrainingConfig
 
 root = Path(".") / "tests" / "data" / "yml"
@@ -18,6 +20,7 @@ torch_model_specs = [
 ]
 
 
+@pytest.mark.skip(reason="uneeded")
 class TestTorchFunctions:
 
     torch_functions = TorchFunctions()

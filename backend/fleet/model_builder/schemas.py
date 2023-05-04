@@ -28,8 +28,8 @@ class TargetConfig(ColumnConfig):
     """
 
     out_module: str
-    loss_fn: Optional[str]
-    column_type: Optional[Literal["regression", "multiclass", "binary"]]
+    loss_fn: Optional[str] = None
+    column_type: Optional[Literal["regression", "multiclass", "binary"]] = None
 
 
 class UnknownComponentType(ValidationError):

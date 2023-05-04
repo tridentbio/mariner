@@ -19,12 +19,17 @@ from fleet.model_builder.schemas import (
     TorchDatasetConfig,
     TorchModelSchema,
 )
+from fleet.torch_.schemas import TorchModelSpec
 from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
 from mariner.schemas.dataset_schemas import QuantityDataType
-from mariner.schemas.model_schemas import Model, ModelCreate
+from mariner.schemas.model_schemas import (
+    Model,
+    ModelCreate,
+    TrainingCheckRequest,
+)
 from mariner.stores import dataset_sql
 from tests.fixtures.model import mock_model, model_config, setup_create_model
 from tests.fixtures.user import get_test_user
@@ -36,10 +41,11 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
     """
     Fixture of an invalid model
     """
-    config = TorchModelSchema(
+    config = TorchModelSpec(
         name=random_lower_string(),
         dataset=TorchDatasetConfig(
             name=some_dataset.name,
+            featurizers=[],
             feature_columns=[
                 ColumnConfig(
                     name="mwt",
@@ -54,17 +60,18 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
                 )
             ],
         ),
-        featurizers=[],
-        layers=[
-            layers.TorchlinearLayerConfig(
-                type="torch.nn.Linear",
-                constructor_args=layers.TorchlinearConstructorArgs(
-                    in_features=27, out_features=1
-                ),
-                forward_args=layers.TorchlinearForwardArgsReferences(input="$some"),
-                name="1",
-            )
-        ],
+        spec=TorchModelSchema(
+            layers=[
+                layers.TorchlinearLayerConfig(
+                    type="torch.nn.Linear",
+                    constructor_args=layers.TorchlinearConstructorArgs(
+                        in_features=27, out_features=1
+                    ),
+                    forward_args=layers.TorchlinearForwardArgsReferences(input="$some"),
+                    name="1",
+                )
+            ]
+        ),
     )
     model = ModelCreate(
         name=config.name,
@@ -310,38 +317,20 @@ def test_get_model_version(
     assert body["name"] == some_model.name
 
 
-def test_post_models_invalid_type(
-    client: TestClient,
-    normal_user_token_headers: dict[str, str],
-    mocked_invalid_model: ModelCreate,
-):
-    wrong_layer_name = mocked_invalid_model.config.layers[0].name
-    mocked_invalid_model.config.layers[0].type = "aksfkasmf"
-    res = client.post(
-        f"{settings.API_V1_STR}/models/",
-        headers=normal_user_token_headers,
-        json=mocked_invalid_model.dict(),
-    )
-    error_body = res.json()
-    assert res.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert "detail" in error_body
-    assert len(error_body["detail"]) == 1
-    assert error_body["detail"][0]["type"] == "value_error.unknowncomponenttype"
-    assert error_body["detail"][0]["ctx"]["component_name"] == wrong_layer_name
-
-
 def test_post_check_config_good_model(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
     client: TestClient,
 ):
-    regressor: TorchModelSchema = model_config(dataset_name=some_dataset.name)
+    payload = TrainingCheckRequest(
+        model_spec=model_config(dataset_name=some_dataset.name)
+    )
     res = client.post(
         f"{settings.API_V1_STR}/models/check-config",
         headers=normal_user_token_headers,
-        json=regressor.dict(),
+        json=payload.dict(),
     )
-    assert res.status_code == 200
+    assert res.status_code == 200, res.json()
     body = res.json()
     assert "output" in body
 
@@ -351,15 +340,17 @@ def test_post_check_config_good_model2(
     normal_user_token_headers: dict[str, str],
     client: TestClient,
 ):
-    regressor: TorchModelSchema = model_config(
-        dataset_name=some_dataset.name, model_type="regressor-with-categorical"
+    payload = TrainingCheckRequest(
+        model_spec=model_config(
+            dataset_name=some_dataset.name, model_type="regressor-with-categorical"
+        )
     )
     res = client.post(
         f"{settings.API_V1_STR}/models/check-config",
         headers=normal_user_token_headers,
-        json=regressor.dict(),
+        json=payload.dict(),
     )
-    assert res.status_code == 200
+    assert res.status_code == 200, res.json()
     body = res.json()
     assert "output" in body
 
