@@ -96,7 +96,7 @@ test-backend: build start          ## Runs all tests in the backend (integration
 
 .PHONY: test-backend-unit
 test-backend-unit:           ## Runs backend unit tests
-	$(DOCKER_COMPOSE) exec backend pytest -m 'not integration'
+	$(DOCKER_COMPOSE) exec backend pytest -m 'not integration' $(ARGS)
 
 
 .PHONY: test-webapp-unit
