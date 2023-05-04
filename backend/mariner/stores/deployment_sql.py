@@ -138,7 +138,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         }
         db_obj = Deployment(
             **ds_data,
-            share_permissions=SharePermissions.build_from_lists(
+            share_permissions=SharePermissions.build(
                 users_id=obj_in_dict["users_id_allowed"],
                 organizations=obj_in_dict["organizations_allowed"],
             ),
@@ -166,7 +166,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             Updated deployment
         """
         if obj_in.users_id_allowed or obj_in.organizations_allowed:
-            share_permissions = SharePermissions.build_from_lists(
+            share_permissions = SharePermissions.build(
                 users_id=obj_in.users_id_allowed or [],
                 organizations=obj_in.organizations_allowed or [],
             )
