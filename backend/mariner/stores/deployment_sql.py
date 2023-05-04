@@ -16,7 +16,7 @@ from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
 from mariner.entities.model import ModelVersion
 from mariner.schemas.model_schemas import ModelVersion as ModelVersionSchema
-from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
+from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema, User
 from mariner.schemas.deployment_schemas import (
     DeploymentCreateRepo,
     DeploymentsQuery,
@@ -25,6 +25,7 @@ from mariner.schemas.deployment_schemas import (
     PermissionDeleteRepo,
 )
 from mariner.stores.base_sql import CRUDBase
+from mariner.stores.user_sql import user_store
 
 from .model_sql import model_store
 
@@ -104,6 +105,14 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             if share_permissions:
                 if share_permissions.user_id:
                     deployments[i].users_id_allowed.append(share_permissions.user_id)
+                    user = user_store.get(db, share_permissions.user_id)
+                    deployments[i].users_allowed.append(
+                        User(
+                            id = user.id,
+                            email = user.email,
+                            full_name = user.full_name,
+                        )
+                    )
                 elif share_permissions.organization:
                     deployments[i].organizations_allowed.append(
                         share_permissions.organization
@@ -129,7 +138,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         }
         db_obj = Deployment(
             **ds_data,
-            share_permissions=self.parse_share_permissions(
+            share_permissions=SharePermissions.build_from_lists(
                 users_id=obj_in_dict["users_id_allowed"],
                 organizations=obj_in_dict["organizations_allowed"],
             ),
@@ -157,7 +166,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             Updated deployment
         """
         if obj_in.users_id_allowed or obj_in.organizations_allowed:
-            share_permissions = self.parse_share_permissions(
+            share_permissions = SharePermissions.build_from_lists(
                 users_id=obj_in.users_id_allowed or [],
                 organizations=obj_in.organizations_allowed or [],
             )
@@ -174,28 +183,6 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         super().update(db, db_obj=db_obj, obj_in=obj_in.dict(exclude_none=True))
         return db_obj
-
-    def parse_share_permissions(
-        self, users_id: List[int] = [], organizations: List[str] = []
-    ):
-        """Parse share permissions from users_id and organizations
-        to a list of SharePermissions.
-
-        Args:
-            users_id (List[int], optional): List of users id. Defaults to [].
-            organizations (List[str], optional): List of organizations. Defaults to [].
-
-        Returns:
-            List of SharePermissions
-        """
-        share_permissions = []
-        if len(users_id):
-            share_permissions += [SharePermissions(user_id=id) for id in users_id]
-        if len(organizations):
-            share_permissions += [
-                SharePermissions(organization=org_alias) for org_alias in organizations
-            ]
-        return share_permissions
 
     def create_permission(self, db: Session, obj_in: PermissionCreateRepo):
         """Create a new permission
