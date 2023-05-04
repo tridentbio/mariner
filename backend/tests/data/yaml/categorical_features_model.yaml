@@ -90,8 +90,7 @@ layers:
     type: model_builder.layers.OneHot
     constructor_args:
     forwardArgs:
-      x1: 
-      - $mwt_group
+      x1: $mwt_group
   - name: Linear1
     type: torch.nn.Linear
     constructorArgs:
