@@ -28,10 +28,8 @@ class OneHot(nn.Module, AutoBuilder):
 
     def forward(self, x1: Union[List[str], List[int]]) -> torch.Tensor:
         """One hot representation of the input
-
         Args:
             x1: list of tensors
-
         Returns:
            one hot representation
         """
@@ -41,11 +39,9 @@ class OneHot(nn.Module, AutoBuilder):
 
     def set_from_model_schema(self, config, deps):
         """Sets classes dict from the model schema
-
         Args:
             config (ModelSchema): model schema that provides classes
             deps (list[str]): Name of the column received
-
         Raises:
             RuntimeError: If some element in deps is not
             found in the model schema
@@ -63,39 +59,3 @@ class OneHot(nn.Module, AutoBuilder):
                 got_item=column_config,
             )
         self.classes = column_config.data_type.classes
-
-    def serialize(
-        self,
-        classes: dict,
-        xs: List[Union[list, str]],
-        returns_type: Literal["tensor", "list"] = "tensor",
-    ):
-        """Serialize a categorical data into a list of numbers
-
-        e.g.:
-            classes: {'a': 0, 'b': 1}
-            xs: ['a', 'b', ['a', 'b']]
-            -> [0, 1, [0, 1]]
-
-        Args:
-            classes (dict): a dict of classes map to numbers
-            xs (list): a list of keys of classes
-            returns_type (str): return type, either 'tensor' or 'list'
-
-        Returns:
-            a list of numbers or a tensor of numbers
-        """
-        data = reduce(
-            lambda acc, cur: (
-                acc + self.serialize(classes, cur, "list")
-                if isinstance(cur, list)
-                else acc + [classes[cur]]
-            ),
-            xs,
-            [],
-        )
-
-        if returns_type == "list":
-            return data
-        elif returns_type == "tensor":
-            return torch.Tensor(data).long()
