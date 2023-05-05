@@ -27,10 +27,8 @@ class OneHot(nn.Module, AutoBuilder):
 
     def forward(self, x1: Union[list[str], list[int]]) -> torch.Tensor:
         """One hot representation of the input
-
         Args:
             x1: list of tensors
-
         Returns:
            one hot representation
         """
@@ -40,11 +38,9 @@ class OneHot(nn.Module, AutoBuilder):
 
     def set_from_model_schema(self, config, deps):
         """Sets classes dict from the model schema
-
         Args:
             config (ModelSchema): model schema that provides classes
             deps (list[str]): Name of the column received
-
         Raises:
             RuntimeError: If some element in deps is not
             found in the model schema
