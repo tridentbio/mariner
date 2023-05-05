@@ -4,13 +4,14 @@ import EditIcon from '@mui/icons-material/Edit';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import ClearIcon from '@mui/icons-material/Clear';
-import { EDeploymnetStatuses } from '../types';
+import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { useMemo } from 'react';
-import { deploymentsApi } from '../deploymentsApi';
+import { EDeploymnetStatuses } from '../types';
+// import { deploymentsApi } from '../deploymentsApi';
 
 type DeploymentsTableActionsProps = {
   id: number;
-  status: EDeploymnetStatuses;
+  status?: deploymentsApi.DeploymentStatus;
   onClickEdit: () => void;
   onClickDelete: (id: number) => void;
 };
@@ -22,8 +23,16 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   onClickDelete,
   status,
 }) => {
-  const [startDeploy, createdDeploy] =
-    deploymentsApi.useStartDeploymentMutation();
+  const [updateDeploy] = deploymentsApi.useUpdateDeploymentMutation();
+
+  const startDeploy = (id: number) => {
+    updateDeploy({
+      deploymentId: id,
+      // @ts-ignore
+      status: 'active',
+    });
+  };
+
   const handleStopDeploy = (id: number) => {};
   const handleStartDeploy = (id: number) => {
     startDeploy(id);
@@ -51,7 +60,7 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
     [EDeploymnetStatuses.STARTING]: undefined,
   };
   const StartStopIcon = useMemo(() => {
-    const currentStartStop = startStopMap[status];
+    const currentStartStop = startStopMap[status!];
     if (!currentStartStop) return;
     const { color, onClick, Icon, tooltip } = currentStartStop;
     return (

@@ -1,23 +1,23 @@
 import { Chip } from '@mui/material';
 import React, { useMemo } from 'react';
-import { EDeploymnetStatuses } from '../types';
+import { DeploymentStatus } from 'app/rtk/generated/deployments';
 
 type StatusChipProps = {
-  status: EDeploymnetStatuses;
+  status?: DeploymentStatus;
 };
 type Colors = 'success' | 'error' | 'primary' | undefined;
 
 const StatusChip: React.FC<StatusChipProps> = ({ status }) => {
-  const colorMap: Record<EDeploymnetStatuses, Colors> = useMemo(
+  const colorMap: Record<DeploymentStatus, Colors> = useMemo(
     () => ({
-      [EDeploymnetStatuses.ACTIVE]: 'success',
-      [EDeploymnetStatuses.STOPPED]: 'error',
-      [EDeploymnetStatuses.STARTING]: 'primary',
-      [EDeploymnetStatuses.IDLE]: undefined,
+      active: 'success',
+      stopped: 'error',
+      starting: 'primary',
+      idle: undefined,
     }),
     []
   );
-  return <Chip color={colorMap[status]} label={status} />;
+  return <Chip color={colorMap[status!]} label={status} />;
 };
 
 export default StatusChip;

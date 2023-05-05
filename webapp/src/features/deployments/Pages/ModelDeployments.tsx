@@ -11,7 +11,7 @@ import {
 } from '../deploymentsSlice';
 import ConfirmationDialog from 'components/templates/ConfirmationDialog';
 import { useState } from 'react';
-import { deploymentsApi } from '../deploymentsApi';
+import * as deploymentsApi from 'app/rtk/generated/deployments';
 interface ModelDeploymentsProps {
   model: Model;
 }
@@ -33,7 +33,7 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
   };
   const confirmDelete = async () => {
     if (currentDeployment) {
-      await deleteDeployment(currentDeployment.id);
+      await deleteDeployment({ deploymentId: currentDeployment.id });
       dispatch(cleanCurrentDeployment());
     }
   };

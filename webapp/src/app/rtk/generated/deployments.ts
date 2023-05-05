@@ -1,110 +1,113 @@
 import { api } from '../api';
-export const addTagTypes = ['experiments'] as const;
+export const addTagTypes = ['deployments'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      getExperiments: build.query<
-        GetExperimentsApiResponse,
-        GetExperimentsApiArg
+      getDeployments: build.query<
+        GetDeploymentsApiResponse,
+        GetDeploymentsApiArg
       >({
         query: (queryArg) => ({
-          url: `/api/v1/experiments/`,
+          url: `/api/v1/deployments/`,
           params: {
-            stage: queryArg.stage,
-            modelId: queryArg.modelId,
-            modelVersionIds: queryArg.modelVersionIds,
             page: queryArg.page,
             perPage: queryArg.perPage,
-            orderBy: queryArg.orderBy,
+            name: queryArg.name,
+            status: queryArg.status,
+            shareStrategy: queryArg.shareStrategy,
+            createdAfter: queryArg.createdAfter,
+            modelVersionId: queryArg.modelVersionId,
+            publicMode: queryArg.publicMode,
+            accessMode: queryArg.accessMode,
           },
         }),
-        providesTags: ['experiments'],
+        providesTags: ['deployments'],
       }),
-      postExperiments: build.mutation<
-        PostExperimentsApiResponse,
-        PostExperimentsApiArg
+      createDeployment: build.mutation<
+        CreateDeploymentApiResponse,
+        CreateDeploymentApiArg
       >({
         query: (queryArg) => ({
-          url: `/api/v1/experiments/`,
+          url: `/api/v1/deployments/`,
           method: 'POST',
-          body: queryArg.trainingRequest,
+          body: queryArg.deploymentBase,
         }),
-        invalidatesTags: ['experiments'],
+        invalidatesTags: ['deployments'],
       }),
-      getExperimentsRunningHistory: build.query<
-        GetExperimentsRunningHistoryApiResponse,
-        GetExperimentsRunningHistoryApiArg
-      >({
-        query: () => ({ url: `/api/v1/experiments/running-history` }),
-        providesTags: ['experiments'],
-      }),
-      getExperimentsMetrics: build.query<
-        GetExperimentsMetricsApiResponse,
-        GetExperimentsMetricsApiArg
-      >({
-        query: () => ({ url: `/api/v1/experiments/metrics` }),
-        providesTags: ['experiments'],
-      }),
-      getTrainingExperimentOptimizers: build.query<
-        GetTrainingExperimentOptimizersApiResponse,
-        GetTrainingExperimentOptimizersApiArg
-      >({
-        query: () => ({ url: `/api/v1/experiments/optimizers` }),
-        providesTags: ['experiments'],
-      }),
-      getExperimentsMetricsForModelVersion: build.query<
-        GetExperimentsMetricsForModelVersionApiResponse,
-        GetExperimentsMetricsForModelVersionApiArg
+      updateDeployment: build.mutation<
+        UpdateDeploymentApiResponse,
+        UpdateDeploymentApiArg
       >({
         query: (queryArg) => ({
-          url: `/api/v1/experiments/${queryArg.modelVersionId}/metrics`,
+          url: `/api/v1/deployments/${queryArg.deploymentId}`,
+          method: 'PUT',
+          body: queryArg.deploymentUpdateInput,
         }),
-        providesTags: ['experiments'],
+        invalidatesTags: ['deployments'],
+      }),
+      deleteDeployment: build.mutation<
+        DeleteDeploymentApiResponse,
+        DeleteDeploymentApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/deployments/${queryArg.deploymentId}`,
+          method: 'DELETE',
+        }),
+        invalidatesTags: ['deployments'],
+      }),
+      getPublicDeployment: build.query<
+        GetPublicDeploymentApiResponse,
+        GetPublicDeploymentApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/deployments/public/${queryArg.token}`,
+        }),
+        providesTags: ['deployments'],
       }),
     }),
     overrideExisting: false,
   });
 export { injectedRtkApi as enhancedApi };
-export type GetExperimentsApiResponse =
-  /** status 200 Successful Response */ PaginatedExperiment;
-export type GetExperimentsApiArg = {
-  stage?: string[];
-  modelId?: number;
-  modelVersionIds?: number[];
+export type GetDeploymentsApiResponse =
+  /** status 200 Successful Response */ PaginatedDeployment;
+export type GetDeploymentsApiArg = {
   page?: number;
   perPage?: number;
-  /** Describes how the query is to be sorted */
-  orderBy?: string;
+  name?: string;
+  status?: DeploymentStatus;
+  shareStrategy?: ShareStrategy;
+  createdAfter?: string;
+  modelVersionId?: number;
+  publicMode?: 'include' | 'exclude' | 'only';
+  accessMode?: 'unset' | 'owned' | 'shared';
 };
-export type PostExperimentsApiResponse =
-  /** status 200 Successful Response */ Experiment;
-export type PostExperimentsApiArg = {
-  trainingRequest: TrainingRequest;
+export type CreateDeploymentApiResponse =
+  /** status 200 Successful Response */ Deployment;
+export type CreateDeploymentApiArg = {
+  deploymentBase: DeploymentBase;
 };
-export type GetExperimentsRunningHistoryApiResponse =
-  /** status 200 Successful Response */ RunningHistory[];
-export type GetExperimentsRunningHistoryApiArg = void;
-export type GetExperimentsMetricsApiResponse =
-  /** status 200 Successful Response */ MonitorableMetric[];
-export type GetExperimentsMetricsApiArg = void;
-export type GetTrainingExperimentOptimizersApiResponse =
-  /** status 200 Successful Response */ (
-    | ({
-        classPath: 'torch.optim.Adam';
-      } & AdamParamsSchema)
-    | ({
-        classPath: 'torch.optim.SGD';
-      } & SgdParamsSchema)
-  )[];
-export type GetTrainingExperimentOptimizersApiArg = void;
-export type GetExperimentsMetricsForModelVersionApiResponse =
-  /** status 200 Successful Response */ Experiment[];
-export type GetExperimentsMetricsForModelVersionApiArg = {
-  modelVersionId: number;
+export type UpdateDeploymentApiResponse =
+  /** status 200 Successful Response */ Deployment;
+export type UpdateDeploymentApiArg = {
+  deploymentId: number;
+  deploymentUpdateInput: DeploymentUpdateInput;
 };
+export type DeleteDeploymentApiResponse =
+  /** status 200 Successful Response */ Deployment;
+export type DeleteDeploymentApiArg = {
+  deploymentId: number;
+};
+export type GetPublicDeploymentApiResponse =
+  /** status 200 Successful Response */ Deployment;
+export type GetPublicDeploymentApiArg = {
+  token: string;
+};
+export type DeploymentStatus = 'stopped' | 'active' | 'idle';
+export type ShareStrategy = 'public' | 'private';
+export type RateLimitUnit = 'minute' | 'hour' | 'day' | 'month';
 export type QuantityDataType = {
   domainKind?: 'numeric';
   unit: string;
@@ -414,44 +417,27 @@ export type ModelVersion = {
   createdAt: string;
   updatedAt: string;
 };
-export type User = {
-  email?: string;
-  isActive?: boolean;
-  isSuperuser?: boolean;
-  fullName?: string;
-  id?: number;
-};
-export type Experiment = {
-  experimentName?: string;
+export type Deployment = {
+  name: string;
+  readme?: string;
+  shareUrl?: string;
+  status?: DeploymentStatus;
   modelVersionId: number;
-  modelVersion: ModelVersion;
-  createdAt: string;
-  updatedAt: string;
-  createdById: number;
+  shareStrategy?: ShareStrategy;
+  usersIdAllowed?: number[];
+  organizationsAllowed?: string[];
+  showTrainingData?: boolean;
+  predictionRateLimitValue: number;
+  predictionRateLimitUnit?: RateLimitUnit;
+  deletedAt?: string;
   id: number;
-  mlflowId: string;
-  stage: 'NOT RUNNING' | 'RUNNING' | 'SUCCESS' | 'ERROR';
-  createdBy?: User;
-  hyperparams?: {
-    [key: string]: number;
-  };
-  epochs?: number;
-  trainMetrics?: {
-    [key: string]: number;
-  };
-  valMetrics?: {
-    [key: string]: number;
-  };
-  testMetrics?: {
-    [key: string]: number;
-  };
-  history?: {
-    [key: string]: number[];
-  };
-  stackTrace?: string;
+  createdById: number;
+  modelVersion?: ModelVersion;
+  createdAt?: string;
+  updatedAt?: string;
 };
-export type PaginatedExperiment = {
-  data: Experiment[];
+export type PaginatedDeployment = {
+  data: Deployment[];
   total: number;
 };
 export type ValidationError = {
@@ -462,90 +448,37 @@ export type ValidationError = {
 export type HttpValidationError = {
   detail?: ValidationError[];
 };
-export type MonitoringConfig = {
-  metricKey: string;
-  mode: string;
-};
-export type AdamParams = {
-  lr?: number;
-  beta1?: number;
-  beta2?: number;
-  eps?: number;
-};
-export type AdamOptimizer = {
-  classPath?: 'torch.optim.Adam';
-  params?: AdamParams;
-};
-export type SgdParams = {
-  lr?: number;
-  momentum?: number;
-};
-export type SgdOptimizer = {
-  classPath?: 'torch.optim.SGD';
-  params: SgdParams;
-};
-export type EarlyStoppingConfig = {
-  metricKey: string;
-  mode: string;
-  minDelta?: number;
-  patience?: number;
-  checkFinite?: boolean;
-};
-export type TrainingRequest = {
+export type DeploymentBase = {
   name: string;
+  readme?: string;
+  shareUrl?: string;
+  status?: DeploymentStatus;
   modelVersionId: number;
-  epochs: number;
-  batchSize?: number;
-  checkpointConfig: MonitoringConfig;
-  optimizer:
-    | ({
-        classPath: 'torch.optim.Adam';
-      } & AdamOptimizer)
-    | ({
-        classPath: 'torch.optim.SGD';
-      } & SgdOptimizer);
-  earlyStoppingConfig?: EarlyStoppingConfig;
+  shareStrategy?: ShareStrategy;
+  usersIdAllowed?: number[];
+  organizationsAllowed?: string[];
+  showTrainingData?: boolean;
+  predictionRateLimitValue: number;
+  predictionRateLimitUnit?: RateLimitUnit;
+  deletedAt?: string;
 };
-export type RunningHistory = {
-  experimentId: number;
-  userId: number;
-  runningHistory: {
-    [key: string]: number[];
-  };
-};
-export type MonitorableMetric = {
-  key: string;
-  label: string;
-  texLabel?: string;
-  type: 'regressor' | 'classification';
-};
-export type InputDescription = {
-  paramType: 'float' | 'float?';
-  default?: any;
-  label: string;
-};
-export type AdamParamsSchema = {
-  classPath?: 'torch.optim.Adam';
-  lr?: InputDescription;
-  beta1?: InputDescription;
-  beta2?: InputDescription;
-  eps?: InputDescription;
-};
-export type SgdParamsSchema = {
-  classPath?: 'torch.optim.SGD';
-  lr?: InputDescription;
-  momentum?: InputDescription;
+export type DeploymentUpdateInput = {
+  name?: string;
+  readme?: string;
+  status?: DeploymentStatus;
+  shareStrategy?: ShareStrategy;
+  usersIdAllowed?: number[];
+  organizationsAllowed?: string[];
+  showTrainingData?: boolean;
+  predictionRateLimitValue?: number;
+  predictionRateLimitUnit?: RateLimitUnit;
 };
 export const {
-  useGetExperimentsQuery,
-  useLazyGetExperimentsQuery,
-  usePostExperimentsMutation,
-  useGetExperimentsRunningHistoryQuery,
-  useLazyGetExperimentsRunningHistoryQuery,
-  useGetExperimentsMetricsQuery,
-  useLazyGetExperimentsMetricsQuery,
-  useGetTrainingExperimentOptimizersQuery,
-  useLazyGetTrainingExperimentOptimizersQuery,
-  useGetExperimentsMetricsForModelVersionQuery,
-  useLazyGetExperimentsMetricsForModelVersionQuery,
+  useGetDeploymentsQuery,
+  useLazyGetDeploymentsQuery,
+  useCreateDeploymentMutation,
+  useUpdateDeploymentMutation,
+  useDeleteDeploymentMutation,
+  useGetPublicDeploymentQuery,
+  useLazyGetPublicDeploymentQuery,
 } = injectedRtkApi;

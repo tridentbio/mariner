@@ -75,8 +75,8 @@ export type Output = {
   name: string;
   dataType: DataType;
   forwardArgs?: { '': string };
-  outModule?: string;
-  columnType?: TargetConfig['columnType'];
+  outModule: string;
+  columnType: TargetConfig['columnType'];
   lossFn?: TargetConfig['lossFn'];
 };
 
