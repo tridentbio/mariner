@@ -135,6 +135,7 @@ const ModelCreateV2 = () => {
       if (targetColumns)
         methods.setValue(
           'config.dataset.targetColumns',
+          // @ts-ignore - model editor doesn't need outModule when start to create
           targetColumns.map(makeColumnConfigFromDescription)
         );
     };

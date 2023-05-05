@@ -15,19 +15,19 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import rehypeSanitize from 'rehype-sanitize';
 import { required } from 'utils/reactFormRules';
 import {
-  Deployment,
   DeploymentFormFields,
   ERateLimitUnits,
   EShareStrategies,
 } from '../types';
+import { Deployment } from 'app/rtk/generated/deployments';
 import ShareStrategyInput from './ShareStrategyInput';
 import SubmitCancelButtons from './SubmitCancelButtons';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { deploymentFormSchema } from '../formSchema';
 import PredictionsRateLimitInput from './PredictionsRateLimitInput';
-import { deploymentsApi } from '../deploymentsApi';
 import { useAppSelector } from 'app/hooks';
 import ConfirmationDialog from 'components/templates/ConfirmationDialog';
+import * as deploymentApi from 'app/rtk/generated/deployments';
 
 type DeploymentFormProps = {
   model: Model;
@@ -53,8 +53,9 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
   const currentDeployment = useAppSelector(
     (state) => state.deployments.current
   );
-  const [createDeploy] = deploymentsApi.useCreateDeploymentMutation();
-  const [updateDeploy] = deploymentsApi.useUpdateDeploymentMutation();
+
+  const [createDeploy] = deploymentApi.useCreateDeploymentMutation();
+  const [updateDeploy] = deploymentApi.useUpdateDeploymentMutation();
   const hookFormMethods = useForm<DeploymentFormFields>({
     defaultValues: currentDeployment || defaultFormState,
     reValidateMode: 'onChange',
@@ -62,7 +63,7 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
     shouldFocusError: true,
     criteriaMode: 'all',
     mode: 'onChange',
-    resolver: yupResolver(deploymentFormSchema),
+    // resolver: yupResolver(deploymentFormSchema),
   });
   const {
     control,
@@ -76,11 +77,16 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
     width: '100%',
   };
 
-  const mutate = async (value: DeploymentFormFields) => {
+  const mutate = (value: DeploymentFormFields) => {
     if (currentDeployment) {
-      await updateDeploy({ deploymentId: currentDeployment.id, ...value });
+      // @ts-ignore
+      updateDeploy({
+        deploymentId: currentDeployment.id,
+        ...value,
+      });
       return;
     }
+    // @ts-ignore
     createDeploy(value);
   };
   const onSubmit = (value: DeploymentFormFields) => {
@@ -89,10 +95,12 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
       return;
     }
     mutate(value);
+    toggleModal();
   };
 
   const confirmPublicDeployment = () => {
-    handleSubmit(mutate);
+    handleSubmit(mutate)();
+    toggleModal();
   };
 
   return (

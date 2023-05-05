@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
-import { Deployment, DeploymentsState } from './types';
+import { DeploymentsState } from './types';
+import { Deployment } from 'app/rtk/generated/deployments';
 import { deploymentsApi } from './deploymentsApi';
 
 const initialState: DeploymentsState = {

@@ -60,8 +60,21 @@ const baseSchema = {
   },
 };
 
-const testConcatValidatorValid1: ModelSchema = {
+const injectBaseSchema = (outModule: string) => ({
   ...baseSchema,
+  dataset: {
+    ...baseSchema.dataset,
+    targetColumns: [
+      {
+        ...baseSchema.dataset.targetColumns[0],
+        outModule,
+      },
+    ],
+  },
+});
+
+const testConcatValidatorValid1: ModelSchema = {
+  ...injectBaseSchema('5'),
   layers: [
     {
       type: 'torch.nn.Linear',
@@ -113,7 +126,7 @@ const testConcatValidatorValid1: ModelSchema = {
 };
 export const BrokenSchemas = () => {
   const testLinearValidator1: ModelSchema = {
-    ...baseSchema,
+    ...injectBaseSchema('3'),
     layers: [
       {
         type: 'torch.nn.Linear',
@@ -135,7 +148,7 @@ export const BrokenSchemas = () => {
   };
 
   const testMolFeaturizer1: ModelSchema = {
-    ...baseSchema,
+    ...injectBaseSchema('feat'),
     featurizers: [
       {
         type: 'model_builder.featurizers.MoleculeFeaturizer',
@@ -151,7 +164,7 @@ export const BrokenSchemas = () => {
   };
 
   const testGcnConv: ModelSchema = {
-    ...baseSchema,
+    ...injectBaseSchema('1'),
     featurizers: [
       {
         type: 'model_builder.featurizers.MoleculeFeaturizer',
@@ -181,7 +194,7 @@ export const BrokenSchemas = () => {
   };
 
   const testConcatValidatorInvalid1: ModelSchema = {
-    ...baseSchema,
+    ...injectBaseSchema('5'),
     layers: [
       {
         type: 'torch.nn.Linear',
