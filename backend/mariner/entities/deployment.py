@@ -1,6 +1,7 @@
 """
 Deployment entity and core relations
 """
+from typing import List
 from enum import Enum as PyEnum
 
 from sqlalchemy import Column, Enum, Integer, String, Boolean
@@ -47,6 +48,26 @@ class SharePermissions(Base):
     )
 
     organization = Column(String, nullable=True)
+    
+    @classmethod
+    def build(cls, users_id: List[int]=[], organizations: List[str]=[]) -> list:
+        """Build a list of SharePermission from users_id and organizations.
+
+        Args:
+            users_id (List[int], optional): List of users id. Defaults to [].
+            organizations (List[str], optional): List of organizations. Defaults to [].
+
+        Returns:
+            List of SharePermissions
+        """
+        share_permissions = []
+        if len(users_id):
+            share_permissions += [cls(user_id=id) for id in users_id]
+        if len(organizations):
+            share_permissions += [
+                cls(organization=org_alias) for org_alias in organizations
+            ]
+        return share_permissions
 
 
 class Deployment(Base):

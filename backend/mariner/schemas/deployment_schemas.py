@@ -95,17 +95,23 @@ class DeploymentCreateRepo(DeploymentBase):
     created_by_id: int
 
 
+class User(ApiBaseModel):
+    """User type."""
+
+    id: int
+    email: str
+    full_name: Optional[str] = None
+
+
 class Deployment(DeploymentBase):
     """Deployment model type."""
 
     id: int
     created_by_id: int
     model_version: ModelVersion = None
-
-    @root_validator
-    def check_fields(cls, values):
-        """Checks that only one of user_id or organization is set."""
-        return values
+    users_allowed: List[User] = []
+    created_at: utc_datetime 
+    updated_at: utc_datetime
 
 
 class DeploymentUpdateInput(ApiBaseModel):
