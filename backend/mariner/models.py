@@ -6,7 +6,6 @@ import traceback
 from typing import Any, Dict, List, Literal, Tuple
 from uuid import uuid4
 
-import lightning.pytorch as pl
 import mlflow
 import mlflow.exceptions
 import pandas as pd
@@ -14,12 +13,10 @@ import torch
 from sqlalchemy.orm.session import Session
 from torch_geometric.loader import DataLoader
 
-from fleet.dataset_schemas import SmileDataType
+from fleet.data_types import SmileDataType
 from fleet.model_builder import options
 from fleet.model_builder.dataset import CustomDataset
-from fleet.model_builder.model import CustomModel
 from fleet.model_builder.schemas import ComponentOption, TorchDatasetConfig
-from fleet.torch_.schemas import TorchModelSpec
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -42,7 +39,6 @@ from mariner.schemas.model_schemas import (
     ModelsQuery,
     ModelVersion,
     ModelVersionCreateRepo,
-    TorchModelSchema,
     TrainingCheckRequest,
     TrainingCheckResponse,
 )
@@ -73,7 +69,7 @@ async def check_model_step_exception(
         dataset = dataset_store.get_by_name(db, config.model_spec.dataset.name)
         actor = ModelCheckActor.remote()
         output = await actor.check_model_steps.remote(
-            dataset=dataset, config=config.model_spec.spec
+            dataset=dataset, config=config.model_spec
         )
         return TrainingCheckResponse(output=output)
     # Don't catch any specific exception to properly get the traceback
@@ -252,7 +248,12 @@ def get_model_prediction(
             f"dataframe failed {len(broken_checks)} checks",
             reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
         )
-    dataset = CustomDataset(data=df, model_config=modelversion.config, target=False)
+    dataset = CustomDataset(
+        data=df,
+        model_config=modelversion.config.spec,
+        dataset_config=modelversion.config.dataset,
+        target=False,
+    )
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())

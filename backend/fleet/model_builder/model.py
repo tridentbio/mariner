@@ -10,13 +10,13 @@ import torch
 import torch.nn
 import torchmetrics as metrics
 
-from fleet.dataset_schemas import CategoricalDataType
+from fleet.data_types import CategoricalDataType
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
 from fleet.model_builder.optimizers import Optimizer
-from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import collect_args
+from fleet.torch_.schemas import TorchModelSpec
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
@@ -148,23 +148,23 @@ class CustomModel(pl.LightningModule):
     loss_dict: dict
     metrics_dict: Dict[str, Metrics]
 
-    def __init__(self, config: Union[TorchModelSchema, str]):
+    def __init__(self, config: Union[TorchModelSpec, str]):
         super().__init__()
         if isinstance(config, str):
-            config = TorchModelSchema.parse_raw(config)
+            config = TorchModelSpec.parse_raw(config)
         layers_dict = {}
         self.config = config
-        self.layer_configs = {layer.name: layer for layer in config.layers}
-        for layer in config.layers:
+        self.layer_configs = {layer.name: layer for layer in config.spec.layers}
+        for layer in config.spec.layers:
             layer_instance = layer.create()
             if isinstance(layer_instance, AutoBuilder):
                 layer_instance.set_from_model_schema(
-                    config=config,
+                    config=config.spec,
                     deps=list(get_dependencies(layer)),
                 )
             layers_dict[layer.name] = layer_instance
         self._model = torch.nn.ModuleDict(layers_dict)
-        self.graph = config.make_graph()
+        self.graph = config.spec.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))
 
         self.loss_dict = {}

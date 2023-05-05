@@ -5,12 +5,13 @@ Revises: 72b2fb3d122d
 Create Date: 2023-05-01 16:48:44.960040
 
 """
-import sqlalchemy as sa
-from alembic import op
+from typing import TYPE_CHECKING
 
-from fleet.torch_.schemas import TorchModelSpec
 from mariner.db.session import SessionLocal
 from mariner.entities.model import ModelVersion
+
+if TYPE_CHECKING:
+    from fleet.torch_.schemas import TorchModelSpec
 
 # revision identifiers, used by Alembic.
 revision = "40fadbde09b7"
@@ -19,7 +20,7 @@ branch_labels = None
 depends_on = None
 
 
-def convert_to_spec(old_model_schema: dict) -> TorchModelSpec:
+def convert_to_spec(old_model_schema: dict) -> "TorchModelSpec":
     new_spec = {}
     new_spec["framework"] = "torch"
     new_spec["name"] = old_model_schema["name"]

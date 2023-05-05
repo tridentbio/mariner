@@ -22,14 +22,7 @@ from fastapi.datastructures import UploadFile
 from pydantic import Field, validator
 from pydantic.main import BaseModel
 
-from fleet.dataset_schemas import CategoricalDataType as BuilderCategoricalDT
-from fleet.dataset_schemas import DNADataType as BuilderDNADT
-from fleet.dataset_schemas import NumericalDataType as BuilderNumericalDT
-from fleet.dataset_schemas import ProteinDataType as BuilderProteinDT
-from fleet.dataset_schemas import QuantityDataType as BuilderQuantityDT
-from fleet.dataset_schemas import RNADataType as BuilderRNADT
-from fleet.dataset_schemas import SmileDataType as BuilderSmilesDT
-from fleet.dataset_schemas import StringDataType as BuilderStringDT
+from fleet import data_types
 from mariner.core.aws import Bucket, download_file_as_dataframe
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 
@@ -122,23 +115,23 @@ class DatasetsQuery(PaginatedApiQuery):
     created_by_id: Optional[int]
 
 
-class NumericalDataType(ApiBaseModel, BuilderNumericalDT):
+class NumericalDataType(ApiBaseModel, data_types.NumericalDataType):
     """Numerical data type."""
 
 
-class QuantityDataType(ApiBaseModel, BuilderQuantityDT):
+class QuantityDataType(ApiBaseModel, data_types.QuantityDataType):
     """Quantity data type."""
 
 
-class StringDataType(ApiBaseModel, BuilderStringDT):
+class StringDataType(ApiBaseModel, data_types.StringDataType):
     """String data type."""
 
 
-class CategoricalDataType(BuilderCategoricalDT, ApiBaseModel):
+class CategoricalDataType(data_types.CategoricalDataType, ApiBaseModel):
     """Categorical data type."""
 
 
-class SmileDataType(ApiBaseModel, BuilderSmilesDT):
+class SmileDataType(ApiBaseModel, data_types.SmileDataType):
     """Smile data type."""
 
     domain_kind: Literal["smiles"] = Field("smiles")
@@ -148,7 +141,7 @@ class SmileDataType(ApiBaseModel, BuilderSmilesDT):
         return "smiles"
 
 
-class DNADataType(ApiBaseModel, BuilderDNADT):
+class DNADataType(ApiBaseModel, data_types.DNADataType):
     """DNA data type."""
 
     domain_kind: Literal["dna"] = Field("dna")
@@ -159,7 +152,7 @@ class DNADataType(ApiBaseModel, BuilderDNADT):
         return "dna"
 
 
-class RNADataType(ApiBaseModel, BuilderRNADT):
+class RNADataType(ApiBaseModel, data_types.RNADataType):
     """RNA data type."""
 
     domain_kind: Literal["rna"] = Field("rna")
@@ -170,7 +163,7 @@ class RNADataType(ApiBaseModel, BuilderRNADT):
         return "rna"
 
 
-class ProteinDataType(ApiBaseModel, BuilderProteinDT):
+class ProteinDataType(ApiBaseModel, data_types.ProteinDataType):
     """Protein data type."""
 
     domain_kind: Literal["protein"] = Field("protein")

@@ -7,7 +7,7 @@ import torch
 import torch.nn
 import torchmetrics as metrics
 
-from fleet.dataset_schemas import CategoricalDataType
+from fleet import data_types
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
@@ -192,7 +192,9 @@ class CustomModel(pl.LightningModule):
                     target_column.column_type
                 )
             else:
-                assert isinstance(target_column.data_type, CategoricalDataType)
+                assert isinstance(
+                    target_column.data_type, data_types.CategoricalDataType
+                )
                 self.metrics_dict[target_column.name] = Metrics(
                     "multilabel" if is_multilabel else target_column.column_type,
                     num_classes=len(target_column.data_type.classes.keys()),

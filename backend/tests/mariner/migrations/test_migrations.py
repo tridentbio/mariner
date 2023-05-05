@@ -1,5 +1,3 @@
-from pydantic import ValidationError
-
 from fleet.torch_.schemas import TorchModelSpec
 
 payload = {

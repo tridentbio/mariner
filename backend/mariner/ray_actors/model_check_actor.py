@@ -10,10 +10,8 @@ from torch_geometric.loader import DataLoader
 from fleet.base_schemas import BaseFleetModelSpec
 from fleet.model_builder.dataset import Collater, CustomDataset
 from fleet.model_builder.model import CustomModel
-from fleet.model_builder.schemas import TorchModelSchema
 from fleet.torch_.schemas import TorchModelSpec
 from mariner.schemas.dataset_schemas import Dataset
-from mariner.schemas.model_schemas import TrainingCheckResponse
 
 
 @ray.remote

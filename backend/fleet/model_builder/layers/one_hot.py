@@ -7,6 +7,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from fleet import data_types
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.exceptions import DataTypeMismatchException
 from fleet.model_builder.model_schema_query import get_column_config
@@ -50,16 +51,15 @@ class OneHot(nn.Module, AutoBuilder):
             DataTypeMismatchException: When the element in
             deps is not categorical
         """
-        from fleet.dataset_schemas import CategoricalDataType
 
         input_ = deps[0]  # this layer has a single arg to forward method
         column_config = get_column_config(dataset_config, input_)
         if not column_config:
             raise RuntimeError(f"Column config not found for input {input_}")
-        if not isinstance(column_config.data_type, CategoricalDataType):
+        if not isinstance(column_config.data_type, data_types.CategoricalDataType):
             raise DataTypeMismatchException(
                 f"Expected data type categorical but got {column_config.__class__}",
-                expected=CategoricalDataType,
+                expected=data_types.CategoricalDataType,
                 got_item=column_config,
             )
         self.classes = column_config.data_type.classes

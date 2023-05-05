@@ -1,4 +1,3 @@
-from fleet.model_builder.schemas import TorchModelSchema
 from tests.fixtures.model import model_config
 
 DEFAULT_LOSS_MAP = {

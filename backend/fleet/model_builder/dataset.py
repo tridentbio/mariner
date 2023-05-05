@@ -11,15 +11,8 @@ from torch.utils.data.dataloader import default_collate
 from torch_geometric.data import Batch
 from torch_geometric.data.data import BaseData
 
-from fleet.dataset_schemas import (
-    CategoricalDataType,
-    ColumnConfig,
-    DNADataType,
-    NumericalDataType,
-    ProteinDataType,
-    QuantityDataType,
-    RNADataType,
-)
+from fleet import data_types
+from fleet.dataset_schemas import ColumnConfig
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.featurizers.base_featurizers import BaseFeaturizer
 from fleet.model_builder.featurizers.bio_sequence_featurizer import (
@@ -172,18 +165,18 @@ class CustomDataset(Dataset):
     ) -> Union[BaseFeaturizer, None]:
         """Gets a default featurizer based on the data type"""
         feat = None
-        if isinstance(column.data_type, CategoricalDataType):
+        if isinstance(column.data_type, data_types.CategoricalDataType):
             feat = IntegerFeaturizer()
             feat.set_from_model_schema(
                 config=self.config,
                 deps=[column.name],
                 dataset_config=self.dataset_config,
             )
-        elif isinstance(column.data_type, DNADataType):
+        elif isinstance(column.data_type, data_types.DNADataType):
             feat = DNASequenceFeaturizer()
-        elif isinstance(column.data_type, RNADataType):
+        elif isinstance(column.data_type, data_types.RNADataType):
             feat = RNASequenceFeaturizer()
-        elif isinstance(column.data_type, ProteinDataType):
+        elif isinstance(column.data_type, data_types.ProteinDataType):
             feat = ProteinSequenceFeaturizer()
 
         return feat
@@ -233,10 +226,18 @@ class CustomDataset(Dataset):
         # Include all unfeaturized columns
         for column in columns_to_include:
             val = sample[column.name]
-            if isinstance(column.data_type, (NumericalDataType, QuantityDataType)):
+            if isinstance(
+                column.data_type,
+                (data_types.NumericalDataType, data_types.QuantityDataType),
+            ):
                 data[column.name] = torch.Tensor([val])
             elif isinstance(
-                column.data_type, (DNADataType, RNADataType, ProteinDataType)
+                column.data_type,
+                (
+                    data_types.DNADataType,
+                    data_types.RNADataType,
+                    data_types.ProteinDataType,
+                ),
             ):
                 feat = self._get_default_featurizer(column)
                 assert feat, "dna, rna and protein have a default featurizer"

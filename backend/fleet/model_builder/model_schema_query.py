@@ -5,11 +5,11 @@ When interacting with the model schema, developers should prefer using this
 API over accessing attributes directly from the schema in order to maintain
 a single point of change (as best as possible) on schema updates.
 """
-from typing import TYPE_CHECKING, List, Sequence, Set, Union
+from typing import TYPE_CHECKING, Sequence, Set, Union
 
 if TYPE_CHECKING:
     from fleet.model_builder.layers_schema import FeaturizersType, LayersType
-    from fleet.model_builder.schemas import ColumnConfig, TorchModelSchema, TargetConfig
+    from fleet.model_builder.schemas import ColumnConfig
     from fleet.torch_.schemas import TorchDatasetConfig
 
 from fleet.model_builder.utils import unwrap_dollar

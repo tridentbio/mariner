@@ -123,7 +123,7 @@ services:
       - backend/.env.secret
     depends_on: 
       - ray-head
-    command: ray start --address=ray-head:6379 --num-cpus=1 --block
+    command: ray start --address=ray-head:6379 --num-cpus=8 --block
     shm_size: 3g
     networks:
       - ray_net

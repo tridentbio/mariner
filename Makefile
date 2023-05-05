@@ -105,7 +105,8 @@ test-webapp-unit: webapp-install ## Runs webapp unit tests
 
 
 .PHONY: test-integration
-test-integration: start      ## Runs unit tests
+test-integration: build      ## Runs unit tests
+	$(DOCKER_COMPOSE) up --wait backend mlflow ray-head ray-worker db mlflowdb
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 

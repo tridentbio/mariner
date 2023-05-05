@@ -6,6 +6,7 @@ from typing import Union
 import torch
 from typing_extensions import override
 
+from fleet import data_types
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.exceptions import DataTypeMismatchException
 from fleet.model_builder.featurizers.base_featurizers import (
@@ -58,15 +59,13 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         if not column_info:
             raise RuntimeError(f"Column {input_} was not found in the config columns")
 
-        from fleet.dataset_schemas import CategoricalDataType
-
         # Handle column info not being from categorical
 
-        if not isinstance(column_info.data_type, CategoricalDataType):
+        if not isinstance(column_info.data_type, data_types.CategoricalDataType):
             raise DataTypeMismatchException(
                 "expecteing CategoricalDataType, but found"
                 f"{column_info.data_type.__class__}",
-                expected=CategoricalDataType,
+                expected=data_types.CategoricalDataType,
                 got_item=column_info.data_type,
             )
         self.classes = column_info.data_type.classes

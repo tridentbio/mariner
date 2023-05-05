@@ -1,15 +1,11 @@
-from typing import Any
-
 import pytest
 import torch
-from mockito import patch
 from sqlalchemy.orm.session import Session
 
-from fleet.model_builder.schemas import TorchModelSchema
 from mariner import models as model_ctl
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
-from mariner.schemas.model_schemas import Model
+from mariner.schemas.model_schemas import Model, TrainingCheckRequest
 from mariner.stores.dataset_sql import dataset_store
 from tests.fixtures.model import model_config
 from tests.fixtures.user import get_test_user
@@ -48,28 +44,13 @@ def test_delete_model(db: Session, model: Model):
 async def test_check_forward_exception_good_regressor(
     db: Session, some_dataset: DatasetEntity
 ):
-    regressor = model_config(model_type="regressor")
-    check = await model_ctl.check_model_step_exception(db, regressor)
+    regressor = model_config(model_type="regressor", dataset_name=some_dataset.name)
+    check = await model_ctl.check_model_step_exception(
+        db, TrainingCheckRequest(model_spec=regressor)
+    )
     assert regressor.dataset.target_columns[0].loss_fn
     assert check.stack_trace is None, check.stack_trace
     assert check.output is not None
-
-
-@pytest.mark.asyncio
-@pytest.mark.skip(reason="Fails to mock a method executed in ray")
-async def test_check_forward_exception_bad_model(
-    db: Session, some_dataset: DatasetEntity
-):
-    broken_model: TorchModelSchema = model_config(dataset_name=some_dataset.name)
-    import model_builder.model
-
-    def raise_(x: Any):
-        raise Exception("bad bad model")
-
-    with patch(model_builder.model.CustomModel.forward, raise_):
-        check = await model_ctl.check_model_step_exception(db, broken_model)
-        assert check.output is None
-        assert check.stack_trace is not None, check.stack_trace
 
 
 def test_get_model_options():

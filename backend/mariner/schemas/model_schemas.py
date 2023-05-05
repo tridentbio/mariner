@@ -8,8 +8,7 @@ from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
 
 from fleet.base_schemas import BaseFleetModelSpec
-from fleet.dataset_schemas import DatasetConfig
-from fleet.model_builder.schemas import LossType, TorchModelSchema
+from fleet.model_builder.schemas import LossType
 from fleet.torch_.schemas import TorchModelSpec
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
