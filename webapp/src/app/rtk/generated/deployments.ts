@@ -169,7 +169,7 @@ export type DatasetConfig = {
   featureColumns: ColumnConfig[];
 };
 export type ModelbuilderonehotForwardArgsReferences = {
-  x1: string[];
+  x1: string;
 };
 export type ModelbuilderonehotLayerConfig = {
   type?: 'model_builder.layers.OneHot';
@@ -299,7 +299,6 @@ export type TorchtransformerencoderlayerForwardArgsReferences = {
   src: string;
   src_mask?: string;
   src_key_padding_mask?: string;
-  is_causal?: string;
 };
 export type TorchtransformerencoderlayerLayerConfig = {
   type?: 'torch.nn.TransformerEncoderLayer';
@@ -417,6 +416,11 @@ export type ModelVersion = {
   createdAt: string;
   updatedAt: string;
 };
+export type User = {
+  id: number;
+  email: string;
+  fullName?: string;
+};
 export type Deployment = {
   name: string;
   readme?: string;
@@ -433,8 +437,9 @@ export type Deployment = {
   id: number;
   createdById: number;
   modelVersion?: ModelVersion;
-  createdAt?: string;
-  updatedAt?: string;
+  usersAllowed?: User[];
+  createdAt: string;
+  updatedAt: string;
 };
 export type PaginatedDeployment = {
   data: Deployment[];

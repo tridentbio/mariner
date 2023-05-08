@@ -273,7 +273,7 @@ export type DatasetConfig = {
   featureColumns: ColumnConfig[];
 };
 export type ModelbuilderonehotForwardArgsReferences = {
-  x1: string[];
+  x1: string;
 };
 export type ModelbuilderonehotLayerConfig = {
   type?: 'model_builder.layers.OneHot';
@@ -403,7 +403,6 @@ export type TorchtransformerencoderlayerForwardArgsReferences = {
   src: string;
   src_mask?: string;
   src_key_padding_mask?: string;
-  is_causal?: string;
 };
 export type TorchtransformerencoderlayerLayerConfig = {
   type?: 'torch.nn.TransformerEncoderLayer';
@@ -685,7 +684,6 @@ export type TorchtransformerencoderlayerForwardArgsSummary = {
   src?: string;
   src_mask?: string;
   src_key_padding_mask?: string;
-  is_causal?: string;
 };
 export type TorchtransformerencoderlayerSummary = {
   type?: 'torch.nn.TransformerEncoderLayer';
