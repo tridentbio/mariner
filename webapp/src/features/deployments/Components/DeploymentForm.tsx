@@ -59,11 +59,11 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
   const hookFormMethods = useForm<DeploymentFormFields>({
     defaultValues: currentDeployment || defaultFormState,
     reValidateMode: 'onChange',
-    shouldUnregister: true,
+    shouldUnregister: false,
     shouldFocusError: true,
     criteriaMode: 'all',
     mode: 'onChange',
-    // resolver: yupResolver(deploymentFormSchema),
+    resolver: yupResolver(deploymentFormSchema),
   });
   const {
     control,
