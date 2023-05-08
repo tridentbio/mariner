@@ -129,7 +129,7 @@
       "type": "model_builder.layers.OneHot",
       "constructorArgs": {},
       "forwardArgs": {
-        "x1": ["$mwt_group"]
+        "x1": "$mwt_group"
       }
     },
     {
