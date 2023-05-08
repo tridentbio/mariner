@@ -7,7 +7,7 @@ import sys
 import click
 from pylint.lint import Run, load_results, save_results
 
-modules = ["--extension-pkg-whitelist='pydantic'", "mariner", "model_builder", "api"]
+modules = ["--extension-pkg-whitelist='pydantic'", "mariner", "model_builder", "api", "--output-format=json"]
 
 PYLINT_HOME = os.path.expanduser("~/.cache/pylint")
 
