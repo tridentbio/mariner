@@ -3,8 +3,9 @@ from typing import Annotated, Sequence, Union
 from pydantic import Field
 
 from fleet import data_types
-from fleet.model_builder.layers_schema import FeaturizersType
 from fleet.model_builder.utils import CamelCaseModel
+
+from fleet.model_builder.layers_schema import FeaturizersType
 
 
 class ColumnConfig(CamelCaseModel):

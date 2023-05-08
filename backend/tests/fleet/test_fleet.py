@@ -7,7 +7,7 @@ import pytest
 from mlflow.tracking import MlflowClient
 from pandas import DataFrame, read_csv
 
-from fleet import fit
+from fleet.model_functions import fit
 from fleet.base_schemas import BaseFleetModelSpec
 from fleet.model_builder import optimizers
 from fleet.model_builder.schemas import TargetConfig, is_regression

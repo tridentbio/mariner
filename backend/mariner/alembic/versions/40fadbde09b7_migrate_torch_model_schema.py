@@ -1,11 +1,10 @@
 """Migrate model_version config property to new TorchModelSpec
 
 Revision ID: 40fadbde09b7
-Revises: 72b2fb3d122d
+Revises: 809377f238f8
 Create Date: 2023-05-01 16:48:44.960040
 
 """
-from typing import TYPE_CHECKING
 
 from sqlalchemy.exc import ProgrammingError
 
@@ -16,7 +15,7 @@ from fleet.torch_.schemas import TorchModelSpec
 
 # revision identifiers, used by Alembic.
 revision = "40fadbde09b7"
-down_revision = "72b2fb3d122d"
+down_revision = "809377f238f8"
 branch_labels = None
 depends_on = None
 
