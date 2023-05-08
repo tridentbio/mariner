@@ -18,7 +18,11 @@ from fleet.model_builder.model import CustomModel
 from mariner.core import config
 from mariner.core.mlflowapi import log_models_and_create_version
 from mariner.schemas.dataset_schemas import Dataset
-from mariner.schemas.experiment_schemas import BaseTrainingRequest, Experiment
+from mariner.schemas.experiment_schemas import (
+    BaseTrainingRequest,
+    Experiment,
+    TorchTrainingRequest,
+)
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.train.custom_logger import MarinerLogger
 
@@ -31,13 +35,13 @@ class TrainingActor:
     early_stopping_callback: Union[EarlyStopping, None] = None
     dataset: Dataset
     modelversion: ModelVersion
-    request: BaseTrainingRequest
+    request: TorchTrainingRequest
 
     def __init__(
         self,
         user_id: int,
         experiment: Experiment,
-        request: BaseTrainingRequest,
+        request: TorchTrainingRequest,
         mlflow_experiment_name: str,
     ):
         self.user_id = user_id
@@ -46,7 +50,6 @@ class TrainingActor:
         self.mlflow_experiment_name = mlflow_experiment_name
         self.loggers: List[Logger] = []
         self._setup_loggers()
-        self._setup_callbacks()
 
     def get_checkpoint_callback(self):
         """Gets the MonitoringCheckpoint passed to the trainer"""
@@ -128,22 +131,3 @@ class TrainingActor:
             ),
             MLFlowLogger(experiment_name=self.mlflow_experiment_name),
         ]
-
-    def _setup_callbacks(
-        self,
-    ):
-        monitoring_config = self.request.config.checkpoint_config
-        early_stopping_config = self.request.config.early_stopping_config
-        self.checkpoint_callback = ModelCheckpoint(
-            monitor=monitoring_config.metric_key,
-            mode=monitoring_config.mode,
-            save_last=True,
-        )
-        if early_stopping_config:
-            self.early_stopping_callback = EarlyStopping(
-                monitor=early_stopping_config.metric_key,
-                mode=early_stopping_config.mode,
-                min_delta=early_stopping_config.min_delta,
-                patience=early_stopping_config.patience,
-                check_finite=early_stopping_config.check_finite,
-            )

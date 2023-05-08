@@ -37,7 +37,7 @@ class Experiment(Base):
 
     id = Column(Integer, primary_key=True, unique=True, index=True)
     experiment_name = Column(String, nullable=False)
-    mlflow_id = Column(String, nullable=False)
+    mlflow_id = Column(String, nullable=True)
     model_version_id = Column(
         Integer, ForeignKey("modelversion.id", ondelete="CASCADE"), nullable=False
     )

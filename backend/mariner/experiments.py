@@ -11,6 +11,7 @@ from uuid import uuid4
 import mlflow
 import ray
 from sqlalchemy.orm.session import Session
+from fleet.model_functions import Result
 
 import mariner.events as events_ctl
 from api.websocket import WebSocketMessage, get_websockets_manager
@@ -104,16 +105,20 @@ def handle_training_complete(task: Task, experiment_id: int):
                 )
             )
             return
-        best_model_info: mlflow.entities.model_registry.model_version.ModelVersion = (
-            task.result()
-        )
+        result: Result = task.result()
         model_store.update_model_version(
             db,
             version_id=experiment.model_version_id,
-            obj_in=ModelVersionUpdateRepo(mlflow_version=best_model_info.version),
+            obj_in=ModelVersionUpdateRepo(
+                mlflow_version=result.mlflow_model_version.version
+            ),
         )
         experiment_store.update(
-            db, obj_in=ExperimentUpdateRepo(stage="SUCCESS"), db_obj=experiment
+            db,
+            obj_in=ExperimentUpdateRepo(
+                mlflow_id=result.mlflow_experiment_id, stage="SUCCESS"
+            ),
+            db_obj=experiment,
         )
         asyncio.ensure_future(
             get_websockets_manager().send_message(
@@ -163,12 +168,9 @@ async def create_model_training(
 
     mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
 
-    # todo: create experiment in fleet model functions
-    mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     experiment = experiment_store.create(
         db,
         obj_in=ExperimentCreateRepo(
-            mlflow_id=mlflow_experiment_id,
             experiment_name=training_request.name,
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,

@@ -12,8 +12,7 @@ from sqlalchemy.exc import ProgrammingError
 from mariner.db.session import SessionLocal
 from mariner.entities.model import ModelVersion
 
-if TYPE_CHECKING:
-    from fleet.torch_.schemas import TorchModelSpec
+from fleet.torch_.schemas import TorchModelSpec
 
 # revision identifiers, used by Alembic.
 revision = "40fadbde09b7"

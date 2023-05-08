@@ -61,7 +61,7 @@ class Experiment(ApiBaseModel):
     updated_at: utc_datetime
     created_by_id: int
     id: int
-    mlflow_id: str
+    mlflow_id: Optional[str] = None
     stage: ExperimentStage
     created_by: Optional[User] = None
     hyperparams: Optional[Dict[str, Union[float, None]]] = None
