@@ -19,14 +19,19 @@ jobs:
           poetry install
       - name: Lint with pylint
         run: |
-          poetry run python scripts/pylint_packages.py workflow_dispatch develop > pylint-report.json 
-      - name: Analyze with SonarQube
-        uses: sonarsource/sonarqube-scan-action@v1
+          poetry run python scripts/pylint_packages.py workflow_dispatch develop > pylint-report.json
+      - name: SonarQube Scan
+        uses: kitabisa/sonarqube-action@v1.2.0
         with:
-          sonar-qube-url: 'https://sonarqube.dev.mariner.trident.bio'
-          sonar-project-key: 'mariner'
-          sonar-project-name: 'Mariner'
-          sonar-project-version: '1.0'
-          extra-properties: |
-            sonar.python.pylint.reportPath=pylint-report.json
+          host: ${{ secrets.SONAR_HOST_URL }}
+          login: ${{ secrets.SONAR_TOKEN }}
+#      - name: Analyze with SonarQube
+#        uses: sonarsource/sonarqube-scan-action@v1
+#        with:
+#          sonar-qube-url: 'https://sonarqube.dev.mariner.trident.bio'
+#          sonar-project-key: 'mariner'
+#          sonar-project-name: 'Mariner'
+#          sonar-project-version: '1.0'
+#          extra-properties: |
+#            sonar.python.pylint.reportPath=pylint-report.json
 
