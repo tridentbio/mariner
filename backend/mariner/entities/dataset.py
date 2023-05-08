@@ -62,3 +62,6 @@ class Dataset(Base):
 
         df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
         return df
+
+    def get_s3_uri(self):
+        return f"s3://{self.data_url}"

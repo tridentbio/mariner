@@ -6,7 +6,11 @@ from typing import Dict, List, Literal, Optional, Union
 from fastapi import Depends, Query
 
 from fleet.model_builder.optimizers import Optimizer
-from fleet.torch_.schemas import EarlyStoppingConfig, MonitoringConfig
+from fleet.torch_.schemas import (
+    EarlyStoppingConfig,
+    MonitoringConfig,
+    TorchTrainingConfig,
+)
 from mariner.schemas.api import (
     ApiBaseModel,
     OrderByQuery,
@@ -17,18 +21,29 @@ from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
 
 
-class TrainingRequest(ApiBaseModel):
+class BaseTrainingRequest(ApiBaseModel):
     """
-    Configure options for starting a training
+    Configure options for fitting a model to a dataset
     """
 
     name: str
     model_version_id: int
-    epochs: int
-    batch_size: Optional[int] = None
-    checkpoint_config: MonitoringConfig
-    optimizer: Optimizer
-    early_stopping_config: Optional[EarlyStoppingConfig] = None
+    framework: str
+    config: TorchTrainingConfig  # a Union of different framework configs later
+
+
+class TorchTrainingRequest(BaseTrainingRequest):
+    framework = "torch"
+    config: TorchTrainingConfig
+
+    @classmethod
+    def create(cls, name: str, model_version_id: int, config: TorchTrainingConfig):
+        return cls(
+            framework="torch",
+            name=name,
+            model_version_id=model_version_id,
+            config=config,
+        )
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]

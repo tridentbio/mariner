@@ -16,7 +16,7 @@ from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
-    TrainingRequest,
+    BaseTrainingRequest,
 )
 
 router = APIRouter()
@@ -24,7 +24,7 @@ router = APIRouter()
 
 @router.post("/", response_model=Experiment)
 async def post_experiments(
-    request: TrainingRequest,
+    request: BaseTrainingRequest,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Experiment:

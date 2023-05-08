@@ -40,7 +40,7 @@ class EarlyStoppingConfig(CamelCaseModel):
     check_finite: bool = False
 
 
-class TorchTrainingConfig(BaseModel):
+class TorchTrainingConfig(CamelCaseModel):
     epochs: int
     batch_size: Optional[int] = None
     checkpoint_config: Optional[MonitoringConfig] = None

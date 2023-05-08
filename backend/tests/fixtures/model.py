@@ -59,18 +59,16 @@ def mock_model(
     model_type: ModelType = "regressor",
 ) -> ModelCreate:
     model_path = get_config_path_for_model_type(model_type)
-    with open(model_path, "rb") as f:
-        config_dict = yaml.unsafe_load(f.read())
-        config = TorchModelSpec(**config_dict)
-        if dataset_name:
-            config.dataset.name = dataset_name
-        model = ModelCreate(
-            name=name if name is not None else random_lower_string(),
-            model_description=random_lower_string(),
-            model_version_description=random_lower_string(),
-            config=config,
-        )
-        return model
+    config = TorchModelSpec.from_yaml(model_path)
+    if dataset_name:
+        config.dataset.name = dataset_name
+    model = ModelCreate(
+        name=name if name is not None else random_lower_string(),
+        model_description=random_lower_string(),
+        model_version_description=random_lower_string(),
+        config=config,
+    )
+    return model
 
 
 def setup_create_model(

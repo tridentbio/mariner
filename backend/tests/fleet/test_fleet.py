@@ -75,8 +75,8 @@ def assert_mlflow_data(spec: BaseFleetModelSpec, mlflow_experiment_id: str):
 models_root = Path("tests") / "data" / "yaml"
 datasets_root = Path("tests") / "data" / "csv"
 specs = [
-    (TorchModelSpec.from_yaml(models_root / path_), datasets_root / dataset_path)
-    for path_, dataset_path in [
+    (TorchModelSpec.from_yaml(models_root / model_file), datasets_root / dataset_file)
+    for model_file, dataset_file in [
         ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),
@@ -114,7 +114,7 @@ def test_train(case: TestCase):
     with open(case.dataset_file) as f:
         dataset: DataFrame = read_csv(f)
         if not case.should_fail:
-            result = fit(
+            mlflow_experiment_id = fit(
                 spec=case.model_spec,
                 train_config=case.train_spec,
                 dataset=dataset,
@@ -123,7 +123,7 @@ def test_train(case: TestCase):
                 datamodule_args=case.datamodule_args,
             )
             assert_mlflow_data(
-                spec=case.model_spec, mlflow_experiment_id=result.mlflow_experiment_id
+                spec=case.model_spec, mlflow_experiment_id=mlflow_experiment_id
             )
         else:
             with pytest.raises(case.should_fail):

@@ -7,6 +7,8 @@ Create Date: 2023-05-01 16:48:44.960040
 """
 from typing import TYPE_CHECKING
 
+from sqlalchemy.exc import ProgrammingError
+
 from mariner.db.session import SessionLocal
 from mariner.entities.model import ModelVersion
 
@@ -61,12 +63,17 @@ def undo_convert_to_spec(spec: dict) -> dict:
 
 def upgrade():
     with SessionLocal() as db:
-        model_versions = db.query(ModelVersion).all()
-        for model_version in model_versions:
-            spec = convert_to_spec(model_version.config)
-            model_version.config = spec.dict()
-            db.commit()
-            db.flush()
+        try:
+            model_versions = db.query(ModelVersion).all()
+            for model_version in model_versions:
+                spec = convert_to_spec(model_version.config)
+                model_version.config = spec.dict()
+                db.commit()
+                db.flush()
+        except ProgrammingError as exp:
+            if exp.code == "42P01":  # Undefined Table
+                print("Table is being created in current upgrade")
+                print("No model version specs to migrate")
 
 
 def downgrade():

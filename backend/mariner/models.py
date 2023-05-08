@@ -153,7 +153,11 @@ def create_model(
             ],
         ),
     )
-    model_store.create_model_version(
+
+    assert model_create.config.dataset.target_columns[
+        0
+    ].out_module, "missing out_module in target_column"
+    version = model_store.create_model_version(
         db,
         ModelVersionCreateRepo(
             mlflow_version=None,
@@ -164,6 +168,12 @@ def create_model(
             description=model_create.model_version_description,
         ),
     )
+    assert version.config["dataset"]["targetColumns"][0][
+        "outModule"
+    ], "missing out_module in target_column"
+    print(version)
+    print("------")
+    print(version.config)
 
     model = Model.from_orm(model)
     return model

@@ -11,12 +11,16 @@ from sqlalchemy.orm import Session
 import mariner.schemas.experiment_schemas
 from fleet.model_builder.model import CustomModel
 from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.torch_.schemas import EarlyStoppingConfig, MonitoringConfig
+from fleet.torch_.schemas import (
+    EarlyStoppingConfig,
+    MonitoringConfig,
+    TorchTrainingConfig,
+)
 from mariner.core.aws import Bucket, list_s3_objects
 from mariner.entities.experiment import Experiment
 from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.dataset_schemas import Dataset
-from mariner.schemas.experiment_schemas import TrainingRequest
+from mariner.schemas.experiment_schemas import BaseTrainingRequest, TorchTrainingRequest
 from mariner.schemas.model_schemas import Model, ModelVersion
 from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
 from tests.fixtures.user import get_test_user
@@ -29,7 +33,7 @@ class TestTrainingActor:
         self,
         db: Session,
         experiment_fixture: Experiment,
-        training_request_fixture: TrainingRequest,
+        training_request_fixture: BaseTrainingRequest,
         mlflow_experiment_name: str,
         dataset_fixture: Dataset,
     ):
@@ -114,7 +118,7 @@ class TestTrainingActor:
     def experiment_fixture(
         self,
         db: Session,
-        training_request_fixture: TrainingRequest,
+        training_request_fixture: TorchTrainingRequest,
         mlflow_experiment_name: str,
     ) -> Experiment:
         user = get_test_user(db)
@@ -126,7 +130,7 @@ class TestTrainingActor:
                 experiment_name=training_request_fixture.name,
                 created_by_id=user.id,
                 model_version_id=training_request_fixture.model_version_id,
-                epochs=training_request_fixture.epochs,
+                epochs=training_request_fixture.config.epochs,
                 stage="RUNNING",
             ),
         )
@@ -135,16 +139,18 @@ class TestTrainingActor:
     @pytest.fixture
     def training_request_fixture(self, modelversion_fixture: ModelVersion):
         target_column = modelversion_fixture.config.dataset.target_columns[0]
-        return TrainingRequest(
+        return TorchTrainingRequest.create(
             name="asdiasjd",
             model_version_id=modelversion_fixture.id,
-            epochs=3,
-            batch_size=32,
-            checkpoint_config=MonitoringConfig(
-                metric_key=f"val/mse/{target_column.name}", mode="min"
-            ),
-            optimizer=AdamOptimizer(),
-            early_stopping_config=EarlyStoppingConfig(
-                metric_key=f"val/mse/{target_column.name}", mode="min"
+            config=TorchTrainingConfig(
+                epochs=3,
+                batch_size=32,
+                checkpoint_config=MonitoringConfig(
+                    metric_key=f"val/mse/{target_column.name}", mode="min"
+                ),
+                optimizer=AdamOptimizer(),
+                early_stopping_config=EarlyStoppingConfig(
+                    metric_key=f"val/mse/{target_column.name}", mode="min"
+                ),
             ),
         )

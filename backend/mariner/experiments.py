@@ -30,12 +30,12 @@ from mariner.exceptions import (
 )
 from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.api import ApiBaseModel
-from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import (
+    BaseTrainingRequest,
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
-    TrainingRequest,
+    TorchTrainingRequest,
 )
 from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
 from mariner.stores.dataset_sql import dataset_store
@@ -134,7 +134,7 @@ def handle_training_complete(task: Task, experiment_id: int):
 
 
 async def create_model_training(
-    db: Session, user: UserEntity, training_request: TrainingRequest
+    db: Session, user: UserEntity, training_request: BaseTrainingRequest
 ) -> Experiment:
     """Creates an experiment associated with a model training
 
@@ -162,6 +162,8 @@ async def create_model_training(
     dataset = dataset_store.get_by_name(db, model_version_parsed.config.dataset.name)
 
     mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
+
+    # todo: create experiment in fleet model functions
     mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     experiment = experiment_store.create(
         db,
@@ -170,8 +172,8 @@ async def create_model_training(
             experiment_name=training_request.name,
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,
-            epochs=training_request.epochs,
-            hyperparams={"learning_rate": training_request.optimizer.params.lr},
+            epochs=training_request.config.epochs,
+            hyperparams={"learning_rate": training_request.config.optimizer.params.lr},
             stage="RUNNING",
         ),
     )
@@ -182,13 +184,23 @@ async def create_model_training(
         user_id=user.id,
         mlflow_experiment_name=mlflow_experiment_name,
     )
-
-    # ExperimentManager expect tasks
-    training_ref = training_actor.train.remote(dataset=Dataset.from_orm(dataset))
-    task = asyncio.create_task(make_coroutine_from_ray_objectref(training_ref))
-
+    training_ref = training_actor.fit.remote(
+        spec=model_version_parsed.config,
+        train_config=training_request,
+        dataset_uri=dataset.get_s3_uri(),
+        mlflow_model_name=model_version.mlflow_model_name,
+        mlflow_experiment_name=mlflow_experiment_name,
+        datamodule_args={
+            "split_target": dataset.split_target,
+            "split_type": dataset.split_type,
+        },
+    )
     get_exp_manager().add_experiment(
-        ExperimentView(experiment_id=experiment.id, user_id=user.id, task=task),
+        ExperimentView(
+            experiment_id=experiment.id,
+            user_id=user.id,
+            task=asyncio.create_task(make_coroutine_from_ray_objectref(training_ref)),
+        ),
         handle_training_complete,
     )
     return Experiment.from_orm(experiment)
@@ -351,7 +363,7 @@ async def send_ws_epoch_update(
         user_id: id of the user that created the experiment
         experiment_id: id of the experiment
         experiment_name: name of the experiment
-        metrics: dicrtionary with epoch metrics
+        metrics: dictionary with epoch metrics
         epoch: epoch
         stage: train/val/test
     """

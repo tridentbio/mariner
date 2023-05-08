@@ -4,14 +4,18 @@ from mockito import patch
 from sqlalchemy.orm.session import Session
 
 from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.torch_.schemas import EarlyStoppingConfig, MonitoringConfig
+from fleet.torch_.schemas import (
+    EarlyStoppingConfig,
+    MonitoringConfig,
+    TorchTrainingConfig,
+)
 from mariner import experiments as experiments_ctl
 from mariner.entities import Experiment as ExperimentEntity
 from mariner.schemas.api import OrderByClause, OrderByQuery
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
-    TrainingRequest,
+    TorchTrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
@@ -74,17 +78,19 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
     user = get_test_user(db)
     version = some_model_integration.versions[-1]
     target_column = version.config.dataset.target_columns[0]
-    request = TrainingRequest(
+    request = TorchTrainingRequest.create(
         model_version_id=version.id,
-        epochs=1,
         name=random_lower_string(),
-        checkpoint_config=MonitoringConfig(
-            mode="min",
-            metric_key=f"val/mse/{target_column.name}",
-        ),
-        optimizer=AdamOptimizer(),
-        early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val/mse/{target_column.name}", mode="min"
+        config=TorchTrainingConfig(
+            epochs=1,
+            checkpoint_config=MonitoringConfig(
+                mode="min",
+                metric_key=f"val/mse/{target_column.name}",
+            ),
+            optimizer=AdamOptimizer(),
+            early_stopping_config=EarlyStoppingConfig(
+                metric_key=f"val/mse/{target_column.name}", mode="min"
+            ),
         ),
     )
     exp = await experiments_ctl.create_model_training(db, user, request)
@@ -99,7 +105,7 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
     )
     assert db_exp.model_version_id == exp.model_version_id
     assert db_exp.created_by_id == user.id
-    assert db_exp.epochs == request.epochs
+    assert db_exp.epochs == request.config.epochs
 
     # Await for task
     await task
@@ -112,7 +118,9 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
     assert db_exp.history
     assert db_exp.stage == "SUCCESS"
     assert f"train/loss/{target_column.name}" in db_exp.train_metrics
-    assert len(db_exp.history[f"train/loss/{target_column.name}"]) == request.epochs
+    assert (
+        len(db_exp.history[f"train/loss/{target_column.name}"]) == request.config.epochs
+    )
     collected_regression_metrics = [
         f"train/mse/{target_column.name}",
         f"train/mae/{target_column.name}",
@@ -122,7 +130,7 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
         f"train/pearson/{target_column.name}",
     ]
     for metric in collected_regression_metrics:
-        assert len(db_exp.history[metric]) == request.epochs
+        assert len(db_exp.history[metric]) == request.config.epochs
     client = MlflowClient()
     experiment = client.get_experiment(db_exp.mlflow_id)
     runs = client.search_runs([experiment.experiment_id])
@@ -131,7 +139,7 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
     for metric_key in collected_regression_metrics:
         metric = client.get_metric_history(run_id=run.info.run_id, key=metric_key)
         assert metric
-        assert len(metric) == request.epochs
+        assert len(metric) == request.config.epochs
 
 
 @pytest.mark.asyncio
@@ -142,27 +150,29 @@ async def test_experiment_has_stacktrace_when_training_fails(
     user = get_test_user(db)
     version = some_model.versions[-1]
     target_column = version.config.dataset.target_columns[0]
-    request = TrainingRequest(
+    request = TorchTrainingRequest.create(
         model_version_id=version.id,
-        epochs=1,
         name=random_lower_string(),
-        optimizer=AdamOptimizer(),
-        checkpoint_config=MonitoringConfig(
-            mode="min",
-            metric_key=f"val/mse/{target_column.name}",
-        ),
-        early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val/mse/{target_column.name}", mode="min"
+        config=TorchTrainingConfig(
+            epochs=1,
+            optimizer=AdamOptimizer(),
+            checkpoint_config=MonitoringConfig(
+                mode="min",
+                metric_key=f"val/mse/{target_column.name}",
+            ),
+            early_stopping_config=EarlyStoppingConfig(
+                metric_key=f"val/mse/{target_column.name}", mode="min"
+            ),
         ),
     )
     # Mock CustomLogger forward to raise an Exception
-    import model_builder.model
+    import fleet.model_builder.model
 
     def _raise(_):
         raise Exception("bad bad model")
 
     # Patch remote ray training for local
-    with patch(model_builder.model.CustomModel.forward, lambda x: _raise(x)):
+    with patch(fleet.model_builder.model.CustomModel.forward, lambda x: _raise(x)):
         exp = await experiments_ctl.create_model_training(db, user, request)
         assert exp.model_version_id == version.id
         assert exp.model_version.name == version.name

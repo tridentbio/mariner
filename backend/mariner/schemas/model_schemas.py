@@ -136,7 +136,7 @@ class ModelVersionCreateRepo(BaseModel):
     mlflow_model_name: str
     model_id: int
     name: str
-    config: TorchModelSpec
+    config: BaseFleetModelSpec
 
 
 class ModelVersionUpdateRepo(BaseModel):

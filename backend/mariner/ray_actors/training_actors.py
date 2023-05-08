@@ -12,14 +12,15 @@ from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.trainer.trainer import Trainer
 from mlflow.tracking import MlflowClient
 
+import fleet
 from fleet.model_builder.dataset import DataModule
 from fleet.model_builder.model import CustomModel
 from mariner.core import config
 from mariner.core.mlflowapi import log_models_and_create_version
 from mariner.schemas.dataset_schemas import Dataset
-from mariner.schemas.experiment_schemas import Experiment, TrainingRequest
+from mariner.schemas.experiment_schemas import BaseTrainingRequest, Experiment
 from mariner.schemas.model_schemas import ModelVersion
-from mariner.train.custom_logger import AppLogger
+from mariner.train.custom_logger import MarinerLogger
 
 
 @ray.remote
@@ -30,13 +31,13 @@ class TrainingActor:
     early_stopping_callback: Union[EarlyStopping, None] = None
     dataset: Dataset
     modelversion: ModelVersion
-    request: TrainingRequest
+    request: BaseTrainingRequest
 
     def __init__(
         self,
         user_id: int,
         experiment: Experiment,
-        request: TrainingRequest,
+        request: BaseTrainingRequest,
         mlflow_experiment_name: str,
     ):
         self.user_id = user_id
@@ -50,6 +51,9 @@ class TrainingActor:
     def get_checkpoint_callback(self):
         """Gets the MonitoringCheckpoint passed to the trainer"""
         return self.checkpoint_callback
+
+    def fit(self, **args):
+        fleet.fit(**args)
 
     def train(self, dataset: Dataset):
         """Performs the training experiment on the dataset, log
@@ -117,7 +121,7 @@ class TrainingActor:
 
     def _setup_loggers(self):
         self.loggers = [
-            AppLogger(
+            MarinerLogger(
                 self.experiment.id,
                 experiment_name=self.experiment.experiment_name or "",
                 user_id=self.user_id,
@@ -128,8 +132,8 @@ class TrainingActor:
     def _setup_callbacks(
         self,
     ):
-        monitoring_config = self.request.checkpoint_config
-        early_stopping_config = self.request.early_stopping_config
+        monitoring_config = self.request.config.checkpoint_config
+        early_stopping_config = self.request.config.early_stopping_config
         self.checkpoint_callback = ModelCheckpoint(
             monitor=monitoring_config.metric_key,
             mode=monitoring_config.mode,

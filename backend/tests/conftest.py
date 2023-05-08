@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from api.fastapi_app import app
 from fleet.model_builder.optimizers import AdamOptimizer
-from fleet.torch_.schemas import MonitoringConfig
+from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
 from mariner import experiments as experiments_ctl
 from mariner.core import security
 from mariner.core.config import settings
@@ -21,7 +21,8 @@ from mariner.entities.event import EventReadEntity
 from mariner.schemas.experiment_schemas import (
     EarlyStoppingConfig,
     Experiment,
-    TrainingRequest,
+    BaseTrainingRequest,
+    TorchTrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
 from mariner.schemas.token import TokenPayload
@@ -183,17 +184,20 @@ async def some_trained_model(
     )
     version = model.versions[-1]
     target_column = version.config.dataset.target_columns[0]
-    request = TrainingRequest(
+    request = BaseTrainingRequest(
         model_version_id=version.id,
-        epochs=1,
         name=random_lower_string(),
-        optimizer=AdamOptimizer(),
-        checkpoint_config=MonitoringConfig(
-            mode="min",
-            metric_key=f"val/mse/{target_column.name}",
-        ),
-        early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val/mse/{target_column.name}", mode="min"
+        framework="torch",
+        config=TorchTrainingConfig(
+            epochs=1,
+            optimizer=AdamOptimizer(),
+            checkpoint_config=MonitoringConfig(
+                mode="min",
+                metric_key=f"val/mse/{target_column.name}",
+            ),
+            early_stopping_config=EarlyStoppingConfig(
+                metric_key=f"val/mse/{target_column.name}", mode="min"
+            ),
         ),
     )
     user = user_sql.user_store.get(db, model.created_by_id)

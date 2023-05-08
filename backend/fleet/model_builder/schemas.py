@@ -5,7 +5,7 @@ Object schemas used by the model builder
 from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
 import networkx as nx
-from pydantic import BaseModel, Field, ValidationError, root_validator
+from pydantic import BaseModel, Field, root_validator
 from typing_extensions import Annotated
 
 from fleet.dataset_schemas import ColumnConfig, DatasetConfig
@@ -32,7 +32,7 @@ class TargetConfig(ColumnConfig):
     column_type: Optional[Literal["regression", "multiclass", "binary"]] = None
 
 
-class UnknownComponentType(ValidationError):
+class UnknownComponentType(ValueError):
     """
     Raised when an unknown component type is detected
 
@@ -47,7 +47,7 @@ class UnknownComponentType(ValidationError):
         self.component_name = component_name
 
 
-class MissingComponentArgs(ValidationError):
+class MissingComponentArgs(ValueError):
     """
     Raised when there are missing arguments for a component.
 
@@ -168,16 +168,19 @@ class TorchDatasetConfig(DatasetConfig):
 
 
         Raises:
-            ValidationError: if the loss_fn is invalid for the defined task and
+            ValueError: if the loss_fn is invalid for the defined task and
             target_columns
             ValueError: if the loss_fn could not be inferred
         """
-        target_column = None
         allowed_losses = AllowedLosses()
         target_columns = values.get("target_columns")
         if not target_columns:
-            raise ValidationError("Missing target_columns", model=TorchDatasetConfig)
+            raise ValueError("Missing target_columns")
         for i, target_column in enumerate(target_columns):
+            if not target_column.out_module:
+                raise ValueError(
+                    "You must specify out_module for each target column.",
+                )
             if not target_column.column_type:
                 target_column.column_type = infer_column_type(target_column)
 
@@ -186,19 +189,12 @@ class TorchDatasetConfig(DatasetConfig):
                     target_column.column_type
                 )
 
-            if not target_column.out_module:
-                raise ValidationError(
-                    "You must specify out_module for each target column.",
-                    model=TorchModelSchema,
-                )
-
             if not allowed_losses.check(
                 target_column.loss_fn, target_column.column_type
             ):
-                print(target_column)
-                raise ValidationError(
-                    errors=f"Loss function is not valid for  task",
-                    model=TorchModelSchema,
+                print("LOSS NOT ALLOWED")
+                raise ValueError(
+                    f"Loss function is not valid for  task",
                 )
 
             values["target_columns"][i] = target_column
@@ -230,6 +226,7 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
             if not isinstance(layer, dict):
                 layer = layer.dict()
             if layer["type"] not in layer_types:
+                print("Unknown type")
                 raise UnknownComponentType(
                     "A layer has unknown type",
                     component_name=layer["name"],
@@ -259,7 +256,7 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
                 continue
             try:
                 args_cls.validate(layer["constructorArgs"])
-            except ValidationError as exp:
+            except ValueError as exp:
                 errors += [
                     MissingComponentArgs(
                         missing=[missing_arg_name for missing_arg_name in error["loc"]],
@@ -271,6 +268,7 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
 
         if len(errors) > 0:
             # TODO: raise all errors grouped in a single validation error
+            print("errors...")
             raise errors[0]
         return values
 
