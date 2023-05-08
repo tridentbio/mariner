@@ -1,8 +1,7 @@
 """
 OneHot custom layer
 """
-from functools import reduce
-from typing import List, Literal, Union
+from typing import Union
 
 import torch
 from torch import nn
@@ -26,7 +25,7 @@ class OneHot(nn.Module, AutoBuilder):
     def __init__(self):
         nn.Module.__init__(self)
 
-    def forward(self, x1: Union[List[str], List[int]]) -> torch.Tensor:
+    def forward(self, x1: Union[list[str], list[int]]) -> torch.Tensor:
         """One hot representation of the input
         Args:
             x1: list of tensors
@@ -34,7 +33,7 @@ class OneHot(nn.Module, AutoBuilder):
            one hot representation
         """
         assert self.classes, "OneHot layer is missing the classes property set"
-        longs = self.serialize(self.classes, x1, "tensor")
+        longs = torch.Tensor([self.classes[x] for x in x1]).long()
         return F.one_hot(longs, num_classes=len(self.classes)).float()
 
     def set_from_model_schema(self, config, deps):
