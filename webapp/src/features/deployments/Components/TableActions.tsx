@@ -7,7 +7,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { useMemo } from 'react';
 import { EDeploymnetStatuses } from '../types';
-// import { deploymentsApi } from '../deploymentsApi';
+import { useNotifications } from '@app/notifications';
 
 type DeploymentsTableActionsProps = {
   id: number;
@@ -24,13 +24,20 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   status,
 }) => {
   const [updateDeploy] = deploymentsApi.useUpdateDeploymentMutation();
+  const { setMessage } = useNotifications();
 
   const startDeploy = (id: number) => {
     updateDeploy({
       deploymentId: id,
       // @ts-ignore
       status: 'active',
-    });
+    })
+      .unwrap()
+      .catch(
+        (err) =>
+          err.data?.detail &&
+          setMessage({ message: err.data.detail, type: 'error' })
+      );
   };
 
   const handleStopDeploy = (id: number) => {};

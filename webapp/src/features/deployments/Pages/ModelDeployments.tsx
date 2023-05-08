@@ -33,8 +33,10 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
   };
   const confirmDelete = async () => {
     if (currentDeployment) {
-      await deleteDeployment({ deploymentId: currentDeployment.id });
+      // @ts-ignore
+      await deleteDeployment(currentDeployment.id);
       dispatch(cleanCurrentDeployment());
+      setShowDeleteConfirmation(false);
     }
   };
 
