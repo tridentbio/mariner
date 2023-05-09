@@ -1,8 +1,8 @@
-import { ModelSchema } from '../../interfaces/model-editor';
+import { TorchModelSpec } from '@app/rtk/generated/models';
 import TransversalInfo from './TransversalInfo';
 
 interface ModelValidator {
-  validate(modelSchema: ModelSchema): TransversalInfo;
+  validate(modelSchema: TorchModelSpec): TransversalInfo;
 }
 
 export default ModelValidator;

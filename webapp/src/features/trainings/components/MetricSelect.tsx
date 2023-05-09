@@ -11,8 +11,9 @@ import {
 import { ControllerRenderProps, FieldError } from 'react-hook-form';
 import { Box } from '@mui/system';
 import {
+  BaseTrainingRequest,
   GetExperimentsMetricsApiResponse,
-  TrainingRequest,
+  TorchTrainingConfig,
   useGetExperimentsMetricsQuery,
 } from 'app/rtk/generated/experiments';
 // TODO: fix MathJax in TexMath
@@ -23,7 +24,7 @@ import { ModelVersionType } from 'app/types/domain/models';
 import { TargetConfig } from 'app/rtk/generated/models';
 
 type MetricSelectProps = {
-  field: ControllerRenderProps<TrainingRequest, any>;
+  field: ControllerRenderProps<BaseTrainingRequest, any>;
   error?: FieldError;
   setValue: (value: 'min' | 'max') => void;
   reset?: () => void;

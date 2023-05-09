@@ -21,8 +21,8 @@ const CreateTraining: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleStartTraning = async (exp: experimentsApi.TrainingRequest) => {
-    await startTraining({ trainingRequest: exp })
+  const handleStartTraning = async (exp: experimentsApi.BaseTrainingRequest ) => {
+    await startTraining({ baseTrainingRequest: exp})
       .unwrap()
       .then((newExp) => {
         // @ts-ignore

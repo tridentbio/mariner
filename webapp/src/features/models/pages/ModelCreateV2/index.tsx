@@ -13,6 +13,7 @@ import StackTrace from 'components/organisms/StackTrace';
 import { ModelSchema } from 'model-compiler/src/interfaces/model-editor';
 import { Box } from '@mui/system';
 import { Stepper, Step, Container, Button, StepLabel } from '@mui/material';
+import { extendSpecWithTargetForwardArgs } from '@model-compiler/src/utils';
 
 const ModelCreateV2 = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
@@ -20,7 +21,7 @@ const ModelCreateV2 = () => {
     modelsApi.usePostModelCheckConfigMutation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { notifyError } = useNotifications();
-  const methods = useForm<modelsApi.ModelCreate & { config: ModelSchema }>({
+  const methods = useForm<modelsApi.ModelCreate & { config: modelsApi.TorchModelSpec }>({
     mode: 'all',
     defaultValues: {
       name: '',
@@ -30,10 +31,10 @@ const ModelCreateV2 = () => {
         name: '',
         dataset: {
           featureColumns: [],
+          featurizers: [],
           targetColumns: [],
         },
-        layers: [],
-        featurizers: [],
+        spec: { layers: [], }
       },
     },
   });
@@ -47,7 +48,9 @@ const ModelCreateV2 = () => {
     methods.handleSubmit(
       async (modelCreate) => {
         const result = await checkModel({
-          modelSchema: modelCreate.config,
+          trainingCheckRequest: {
+            modelSpec: { framework: 'torch', ...modelCreate.config }
+          }
         });
         if (!('error' in result) && !result.data.stackTrace)
           return createModel({
@@ -126,6 +129,15 @@ const ModelCreateV2 = () => {
           dataType: description.dataType,
         };
       };
+      const makeTargetColumnConfigFromDescription = (
+        description: modelsApi.ColumnsDescription
+      ): modelsApi.TargetConfig => {
+        return {
+          name: description.pattern,
+          dataType: description.dataType,
+          outModule: '',
+        }
+      }
       if (featureColumns)
         methods.setValue(
           'config.dataset.featureColumns',
@@ -135,7 +147,7 @@ const ModelCreateV2 = () => {
       if (targetColumns)
         methods.setValue(
           'config.dataset.targetColumns',
-          targetColumns.map(makeColumnConfigFromDescription)
+          targetColumns.map(makeTargetColumnConfigFromDescription)
         );
     };
     go();
@@ -165,7 +177,7 @@ const ModelCreateV2 = () => {
         <Box sx={{ maxWidth: '100vw' }}>
           <div>
             <ModelEditor
-              value={config}
+              value={extendSpecWithTargetForwardArgs( config)}
               onChange={(value) => {
                 setValue('config', value);
               }}

@@ -1,4 +1,5 @@
 import { expect, test } from '@jest/globals';
+import { extendSpecWithTargetForwardArgs } from '@model-compiler/src/utils';
 import {
   GcnConv,
   Linear,
@@ -21,14 +22,14 @@ describe('ModelValidation', () => {
     test.each(getValidModelSchemas())(
       'validate(%s) returns no suggestions for good schemas',
       (schema) => {
-        const info = getTestValidator().validate(schema);
+        const info = getTestValidator().validate(extendSpecWithTargetForwardArgs(schema));
         expect(info.getSuggestions()).toHaveLength(0);
       }
     );
 
     it("returns correction to linear when in_features doesn't match incoming shape", () => {
       const info = getTestValidator().validate(
-        BrokenSchemas().testLinearValidator1
+        extendSpecWithTargetForwardArgs(BrokenSchemas().testLinearValidator1)
       );
       expect(info.getSuggestions()).toHaveLength(2);
       const suggestion = info.getSuggestions().at(-1);
@@ -47,7 +48,7 @@ describe('ModelValidation', () => {
 
     it('returns correction to mol featurizer when receiving input of data type different from smiles', () => {
       const info = getTestValidator().validate(
-        BrokenSchemas().testMolFeaturizer1
+        extendSpecWithTargetForwardArgs(BrokenSchemas().testMolFeaturizer1)
       );
       expect(info.getSuggestions()).toHaveLength(1);
       const suggestion = info.getSuggestions()[0];
@@ -61,7 +62,7 @@ describe('ModelValidation', () => {
     });
 
     it("returns correction to gcn conv when in_channels doesn't match incoming shape", () => {
-      const info = getTestValidator().validate(BrokenSchemas().testGcnConv);
+      const info = getTestValidator().validate(extendSpecWithTargetForwardArgs(BrokenSchemas().testGcnConv));
       expect(info.getSuggestions()).toHaveLength(1);
       const suggestion = info.getSuggestions()[0];
       expect(suggestion.commands).toHaveLength(1);
