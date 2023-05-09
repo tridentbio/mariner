@@ -27,7 +27,7 @@ const config: ConfigFile = {
       filterEndpoints: [/login/i, /oauth/i],
     },
     './src/app/rtk/generated/deployments.ts': {
-      filterEndpoints: [/deploy/i],
+      filterEndpoints: [/deployment/i],
     },
   },
   hooks: { queries: true, mutations: true, lazyQueries: true },

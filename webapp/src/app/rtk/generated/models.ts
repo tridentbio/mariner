@@ -251,7 +251,7 @@ export type TargetConfig = {
     | DnaDataType2
     | RnaDataType2
     | ProteinDataType2;
-  outModule?: string;
+  outModule: string;
   lossFn?: string;
   columnType?: 'regression' | 'multiclass' | 'binary';
 };
