@@ -12,6 +12,7 @@ import { modelsApi } from 'app/rtk/models';
 import ModelOverview from './ModelOverview';
 import Loading from 'components/molecules/Loading';
 import ModelMetricsView from './ModelMetricsView';
+import { ModelDeployments } from '@features/deployments/Pages/ModelDeployments';
 
 interface ModelDetailsProps {
   modelId: number;
@@ -76,6 +77,14 @@ const ModelDetailsView = ({ modelId }: ModelDetailsProps) => {
       panel: model?.versions.length && (
         <Box>
           <ModelMetricsView model={model} />
+        </Box>
+      ),
+    },
+    {
+      label: 'Deployments',
+      panel: model?.versions.length && (
+        <Box>
+          <ModelDeployments model={model} />
         </Box>
       ),
     },

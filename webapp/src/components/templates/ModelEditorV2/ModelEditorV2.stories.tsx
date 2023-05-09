@@ -47,6 +47,7 @@ export const Default = () => {
         {
           name: 'exp',
           dataType: { domainKind: 'numeric', unit: 'mole' },
+          outModule: '',
         },
       ],
     },
@@ -69,6 +70,7 @@ export const InvalidSchema = () => {
         {
           name: 'exp',
           dataType: { domainKind: 'numeric', unit: 'mole' },
+          outModule: '',
         },
       ],
     },

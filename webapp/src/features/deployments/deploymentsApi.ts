@@ -1,7 +1,7 @@
 import { Paginated } from 'app/api';
 import { api } from 'app/rtk/api';
+import { Deployment } from 'app/rtk/generated/deployments';
 import {
-  Deployment,
   DeploymentCreateRequest,
   DeploymentsQuery,
   DeploymentUpdateRequest,
@@ -13,13 +13,13 @@ export const deploymentsApi = api
   .injectEndpoints({
     endpoints: (builder) => ({
       getDeployments: builder.query<Paginated<Deployment>, DeploymentsQuery>({
-        query: () => '/deployments/',
+        query: () => '/api/v1/deployments/',
         providesTags: ['deployments'],
         keepUnusedDataFor: 3,
       }),
       getDeploymentById: builder.query<Deployment, number>({
         query: (deploymentId) => ({
-          url: `/deployments/${deploymentId}`,
+          url: `/api/v1/deployments/${deploymentId}`,
         }),
         providesTags: (_result, _error, arg) => [
           { type: 'deployments', id: arg },
@@ -27,7 +27,7 @@ export const deploymentsApi = api
       }),
       createDeployment: builder.mutation<Deployment, DeploymentCreateRequest>({
         query: (params) => ({
-          url: `/models/`,
+          url: `/api/v1/deployments/`,
           body: params,
           method: 'POST',
         }),
@@ -35,7 +35,7 @@ export const deploymentsApi = api
       }),
       updateDeployment: builder.mutation<Deployment, DeploymentUpdateRequest>({
         query: ({ deploymentId, ...params }) => ({
-          url: `/models/${deploymentId}`,
+          url: `/api/v1/deployments/${deploymentId}`,
           body: params,
           method: 'PUT',
         }),
@@ -43,21 +43,21 @@ export const deploymentsApi = api
       }),
       deleteDeployment: builder.mutation<void, number>({
         query: (deploymentId) => ({
-          url: `/models/${deploymentId}`,
+          url: `/api/v1/deployments/${deploymentId}`,
           method: 'DELETE',
         }),
         invalidatesTags: ['deployments'],
       }),
       startDeployment: builder.mutation<Deployment, number>({
         query: (deploymentId) => ({
-          url: `/deployments/${deploymentId}/start`,
+          url: `/api/v1/deployments/${deploymentId}/start`,
           method: 'PUT',
         }),
         invalidatesTags: ['deployments'],
       }),
       stopDeployment: builder.mutation<Deployment, number>({
         query: (deploymentId) => ({
-          url: `/deployments/${deploymentId}/stop`,
+          url: `/api/v1/deployments/${deploymentId}/stop`,
           method: 'PUT',
         }),
         invalidatesTags: ['deployments'],
