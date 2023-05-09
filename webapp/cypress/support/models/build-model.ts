@@ -252,9 +252,10 @@ export const buildModel = (
     expect(Boolean(response?.body.stackTrace)).to.eq(!success);
   });
 
-  cy.wait('@createModel').then(({ response }) => {
-    expect(response?.statusCode).to.eq(200);
-  });
+  if (success)
+    cy.wait('@createModel').then(({ response }) => {
+      expect(response?.statusCode).to.eq(200);
+    });
 };
 
 export const buildYamlModel = (

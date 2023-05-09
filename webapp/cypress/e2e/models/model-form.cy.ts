@@ -93,8 +93,8 @@ describe('Model version form (/models/new)', () => {
         );
       });
       it('Validation on required fields (model name and model version name)', () => {
-        cy.get('[data-testid="model-name"] input').clear();
-        cy.get('[data-testid="version-name"] input').clear();
+        cy.get('[data-testid="model-name"] input').clear({ force: true });
+        cy.get('[data-testid="version-name"] input').clear({ force: true });
         cy.get('[data-testid="next"]').click();
         cy.notificationShouldContain('Missing');
         cy.get('[data-testid="model-name"] label').should(
