@@ -255,7 +255,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
 
   const detailedExperiment = useMemo(
     () =>
-      experiments.find((exp: Experiment) => exp.id === experimentDetailedId),
+      experiments.find((exp: Experiment) => exp?.id === experimentDetailedId),
     [experimentDetailedId]
   );
   const dispatch = useDispatch();

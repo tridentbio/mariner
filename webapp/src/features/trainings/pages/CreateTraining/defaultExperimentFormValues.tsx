@@ -4,6 +4,8 @@ import { DeepPartial } from 'react-hook-form';
 
 const defaultExperimentFormValues: DeepPartial<TrainingRequest> = {
   batchSize: 32,
+  modelVersionId: -1,
+  name: '',
   optimizer: {
     classPath: 'torch.optim.Adam',
     params: {
