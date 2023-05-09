@@ -76,7 +76,7 @@ const everyLowerCase = <T extends Record<string, any>>(obj: T): T =>
     return acc;
   }, {} as T);
 
-export const createDatasetDirectly = (dataset: DatasetFormData, trys = 5) => {
+export const createDatasetDirectly = (dataset: DatasetFormData) => {
   cy.once('uncaught:exception', () => false);
 
   cy.wrap(

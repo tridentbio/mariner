@@ -1,7 +1,17 @@
 import { ModelSchema } from '@app/rtk/generated/models';
 import TestUtils from '../../support/TestUtils';
+import { createRandomDatasetFormData } from '../../support/dataset/examples';
+import { createDatasetDirectly } from '../../support/dataset/create';
 
 describe('Model version form (/models/new)', () => {
+  const zincDatasetFixture = createRandomDatasetFormData();
+
+  before(() => {
+    cy.loginSuper();
+    cy.then(() => createDatasetDirectly(zincDatasetFixture));
+    cy.once('uncaught:exception', () => false);
+  });
+
   const testModel = {
     modelName: 'asidjaisd',
     modelDescription: 'iajsdijasid',
@@ -9,31 +19,21 @@ describe('Model version form (/models/new)', () => {
     modelVersionDescription: 'asdiasjd',
   };
   const testDatasetConfig = {
-    name: 'ZincExtra',
+    name: zincDatasetFixture.name,
     targetColumns: [{ name: 'tpsa' }],
     featureColumns: [{ name: 'smiles' }, { name: 'mwt' }],
   };
   const visitPage = (suffix?: string) =>
     cy.visit('/models/new' + (suffix || ''));
 
-  const clickNext = (stepperRootChildIndex: number) =>
-    cy
-      .get(
-        `.MuiStepper-root > :nth-child(${stepperRootChildIndex}) [data-testid="next"]`
-      )
-      .click();
+  const clickNext = () => cy.get(`[data-testid="next"]`).click();
 
-  const clickPrevious = (stepperRootChildIndex: number) =>
-    cy
-      .get(
-        `.MuiStepper-root > :nth-child(${stepperRootChildIndex}) [data-testid="previous"]`
-      )
-      .click();
+  const clickPrevious = () =>
+    cy.get(`[data-testid="previous"]`).click({ timeout: 10000 });
 
   const fillModelForm = (
     modelFormData?: typeof testModel,
-    datasetFormData?: typeof testDatasetConfig,
-    modelConfig?: ModelSchema
+    datasetFormData?: typeof testDatasetConfig
   ) => {
     if (modelFormData) {
       cy.get('[data-testid="model-name"] input')
@@ -49,7 +49,7 @@ describe('Model version form (/models/new)', () => {
       cy.get('[data-testid="version-description"] textarea').type(
         modelFormData.modelVersionDescription
       );
-      clickNext(1);
+      clickNext();
     }
     if (datasetFormData) {
       cy.get('#dataset-select')
@@ -65,12 +65,8 @@ describe('Model version form (/models/new)', () => {
         cy.get('#feature-cols').click();
         cy.get('div').contains(col.name).click();
       });
-      // TODO: fill data
 
-      clickNext(3);
-    }
-    if (modelConfig) {
-      // TODO: fill data
+      clickNext();
     }
   };
 
@@ -111,53 +107,50 @@ describe('Model version form (/models/new)', () => {
         );
       });
       it('Is persisted across step transitions', () => {
-        fillModelForm(testModel);
-        clickPrevious(3);
-        cy.get('[data-testid="model-description"] input').should(
-          'have.value',
-          testModel.modelDescription
-        );
-        cy.get('[data-testid="version-name"] input').should(
-          'have.value',
-          testModel.config.name
-        );
-        cy.get('[data-testid="version-description"] textarea').should(
-          'have.value',
-          testModel.modelVersionDescription
-        );
-
-        cy.get('[data-testid="model-name"] input').should(
-          'have.value',
-          testModel.modelName
-        );
+        cy.wrap(fillModelForm(testModel)).then(() => {
+          clickPrevious().then(() => {
+            cy.get('[data-testid="model-description"] input').should(
+              'have.value',
+              testModel.modelDescription
+            );
+            cy.get('[data-testid="version-name"] input').should(
+              'have.value',
+              testModel.config.name
+            );
+            cy.get('[data-testid="version-description"] textarea').should(
+              'have.value',
+              testModel.modelVersionDescription
+            );
+            cy.get('[data-testid="model-name"] input').should(
+              'have.value',
+              testModel.modelName
+            );
+          });
+        });
       });
     });
+
     describe('Features and Target inputs', () => {
-      it('Reads dataset from querystring datasetId (if present) to fill the input', () => {
-        // TODO: mock dataset fetch call
-        const knownDataset = { datasetId: 156, datasetName: 'ZincExtra' };
-        visitPage(`?datasetId=${knownDataset.datasetId}`);
-        fillModelForm(testModel);
-        cy.get('#dataset-select').should(
-          'have.value',
-          knownDataset.datasetName
-        );
-      });
       it('Is persisted across step transitions', () => {
         fillModelForm(testModel, testDatasetConfig);
-        clickPrevious(5);
-        cy.get('#target-col').should(
-          'have.value',
-          testDatasetConfig.targetColumns[0].name
-        );
+        clickPrevious().then(() => {
+          cy.get('[data-testid="dataset-target-column"]').contains(
+            testDatasetConfig.targetColumns[0].name,
+            { timeout: 10000 }
+          );
+          cy.wrap(
+            testDatasetConfig.featureColumns.forEach((col) => {
+              cy.get('[title="Feature Column"] span')
+                .contains(col.name)
+                .should('exist');
+            })
+          );
 
-        testDatasetConfig.featureColumns.forEach((col) => {
-          cy.get('[title="Feature Column"] span')
-            .contains(col.name)
-            .should('exist');
+          cy.get('[data-testid="dataset-selector"] input').should(
+            'have.value',
+            testDatasetConfig.name
+          );
         });
-
-        cy.get('#dataset-select').should('have.value', testDatasetConfig.name);
       });
       it('Validate required fields (dataset.name, dataset.targetColumns, dataset.featureColumns)', () => {
         fillModelForm(testModel);
@@ -167,7 +160,7 @@ describe('Model version form (/models/new)', () => {
           'have.class',
           TestUtils.errorClass
         );
-        clickNext(3);
+        clickNext();
 
         cy.notificationShouldContain('Missing dataset name');
 
@@ -189,7 +182,7 @@ describe('Model version form (/models/new)', () => {
           TestUtils.errorClass
         );
 
-        clickNext(3);
+        clickNext();
         cy.notificationShouldContain('Missing dataset target column selection');
       });
     });
