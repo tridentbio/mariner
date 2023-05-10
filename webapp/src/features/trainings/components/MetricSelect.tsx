@@ -92,27 +92,6 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
       >
         <>
           <Box sx={{ width: 'inherit' }}>
-            <InputLabel>Metric to monitor</InputLabel>
-            <Select
-              sx={{ width: '100%' }}
-              onChange={(event) => {
-                setSelected(event.target.value);
-                setValue(defaultModeIsMax(event.target.value) ? 'max' : 'min');
-              }}
-              value={selected || ''}
-              ref={ref}
-              name={name}
-              label={error?.message || undefined}
-            >
-              {sortedFilteredMetrics.map((metric) => (
-                <MenuItem key={metric.key} value={metric.key}>
-                  {metric.texLabel?.replace('^2', '²') || metric.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </Box>
-
-          <Box sx={{ width: 'inherit' }}>
             <InputLabel>Target Column</InputLabel>
             <Select
               sx={{ width: '100%' }}
@@ -129,6 +108,26 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
               {targetColumns.map((column) => (
                 <MenuItem key={column.name} value={column.name}>
                   {column.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+          <Box sx={{ width: 'inherit' }}>
+            <InputLabel>Metric to monitor</InputLabel>
+            <Select
+              sx={{ width: '100%' }}
+              onChange={(event) => {
+                setSelected(event.target.value);
+                setValue(defaultModeIsMax(event.target.value) ? 'max' : 'min');
+              }}
+              value={selected || ''}
+              ref={ref}
+              name={name}
+              label={error?.message || undefined}
+            >
+              {sortedFilteredMetrics.map((metric) => (
+                <MenuItem key={metric.key} value={metric.key}>
+                  {metric.texLabel?.replace('^2', '²') || metric.label}
                 </MenuItem>
               ))}
             </Select>

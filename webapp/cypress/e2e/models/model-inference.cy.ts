@@ -1,11 +1,33 @@
 import { Model } from '@app/types/domain/models';
+import { createIrisDatasetFormData } from '../../support/dataset/examples';
+import { createDatasetDirectly } from '../../support/dataset/create';
+import { checkModelTraining } from '../../support/training/create';
+import { randomLowerCase } from '@utils';
 
 describe('/models/:modelId/inference', () => {
+  const irisDatasetFixture = createIrisDatasetFormData();
+  const modelName = randomLowerCase(8);
+
   beforeEach(() => {
     cy.loginSuper();
   });
 
   it('Visits the page and inference ', () => {
+    cy.then(() => createDatasetDirectly(irisDatasetFixture));
+    cy.buildYamlModel(
+      'data/yaml/multitarget_classification_model.yaml',
+      irisDatasetFixture.name,
+      true,
+      false,
+      modelName
+    );
+    cy.then(() =>
+      checkModelTraining(modelName, {
+        batchSize: 8,
+        learningRate: 0.001,
+      })
+    );
+    cy.wait(20000);
     cy.intercept({
       method: 'GET',
       url: 'http://localhost/api/v1/models/?page=0&perPage=10',
@@ -20,7 +42,7 @@ describe('/models/:modelId/inference', () => {
     }).as('getExperiments');
     cy.visit('/models');
     cy.wait('@getModels');
-    cy.get('tbody').find('a').first().click();
+    cy.contains('a', modelName).click();
     cy.wait('@getSpecificModel').wait(500);
     cy.wait('@getExperiments').wait(500);
     cy.get('button').contains('Inference').click().wait(300);
@@ -28,17 +50,11 @@ describe('/models/:modelId/inference', () => {
     cy.get('ul[role="listbox"]').within(() => {
       cy.get('li').first().click().wait(1000);
     });
-    cy.get('span').contains('JSME Input').should('exist');
-    cy.get('div[role="graphics-document"]').should('exist');
-    cy.get('span').contains('Textbox Input').click().wait(250);
-    cy.get('[data-testid="input-textbox"]').click().type('CCCC');
-    cy.get('#categories-label')
-      .parent()
-      .click()
-      .get('li[role="option"]')
-      .first()
-      .click()
-      .wait(150);
+    cy.contains('div', 'Inputs:')
+      .find('input')
+      .each(($el) => {
+        cy.wrap($el).type(Math.random().toPrecision(3));
+      });
     cy.get('button').contains('Predict').click().wait(5000);
     cy.get('[data-testid="inference-result"]').should('exist');
   });

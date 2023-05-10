@@ -77,6 +77,7 @@ const everyLowerCase = <T extends Record<string, any>>(obj: T): T =>
   }, {} as T);
 
 export const createDatasetDirectly = (dataset: DatasetFormData) => {
+  // Creates a dataset directly with cypress promises
   cy.once('uncaught:exception', () => false);
 
   cy.wrap(

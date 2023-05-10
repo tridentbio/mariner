@@ -1,6 +1,14 @@
 import { randomLowerCase } from 'utils';
 
-export const checkModelTraining = (modelName?: string) => {
+type TrainingConfig = {
+  batchSize?: string | number;
+  epochs?: string | number;
+  learningRate?: string | number;
+};
+export const checkModelTraining = (
+  modelName?: string,
+  config: TrainingConfig = {}
+) => {
   cy.once('uncaught:exception', () => false);
   // Visits models listing page
   cy.intercept({
@@ -34,12 +42,21 @@ export const checkModelTraining = (modelName?: string) => {
   cy.contains('div', 'Experiment Name').find('input').type(randomLowerCase(8));
   cy.contains('div', 'Model Version').find('input').click();
   cy.get('li[role="option"]').first().click();
-  cy.contains('div', 'Learning Rate').find('input').clear().type('0.05');
-  cy.contains('div', 'Batch Size').find('input').clear().type('32');
-  cy.contains('div', 'Epochs').find('input').clear().type('10');
-  cy.contains('div', 'Metric to monitor').click();
-  cy.get('li[role="option"]').first().click();
+  cy.contains('div', 'Learning Rate')
+    .find('input')
+    .clear()
+    .type(config.learningRate?.toString() || '0.05');
+  cy.contains('div', 'Batch Size')
+    .find('input')
+    .clear()
+    .type(config.batchSize?.toString() || '32');
+  cy.contains('div', 'Epochs')
+    .find('input')
+    .clear()
+    .type(config.epochs?.toString() || '10');
   cy.contains('div', 'Target Column').click();
+  cy.get('li[role="option"]').first().click();
+  cy.contains('div', 'Metric to monitor').click();
   cy.get('li[role="option"]').first().click();
   // Selects CREATE EXPERIMENT
   cy.get('button').contains('CREATE').click();
