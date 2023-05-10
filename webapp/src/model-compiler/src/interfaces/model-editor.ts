@@ -1,5 +1,5 @@
 import {
-  ModelSchema as APIModelSchema,
+  TorchModelSpec,
   ColumnConfig as APIColumnConfig,
   TargetConfig as APITargetConfig,
   ColumnsDescription,
@@ -7,19 +7,19 @@ import {
   TorchreluLayerConfig,
   TorchsigmoidLayerConfig,
   TorchgeometricgcnconvLayerConfig,
-  ModelbuilderconcatLayerConfig,
-  ModelbuilderonehotLayerConfig,
-  ModelbuilderglobalpoolingLayerConfig,
-  ModelbuildermoleculefeaturizerLayerConfig,
   GetModelOptionsApiResponse,
   NumericalDataType,
-  ModelbuilderdnasequencefeaturizerLayerConfig,
-  ModelbuilderrnasequencefeaturizerLayerConfig,
-  ModelbuilderproteinsequencefeaturizerLayerConfig,
-  ModelbuilderintegerfeaturizerLayerConfig,
-  ModelbuilderaddpoolingLayerConfig,
   TorchembeddingLayerConfig,
   TorchtransformerencoderlayerLayerConfig,
+  FleetconcatLayerConfig,
+  FleetonehotLayerConfig,
+  FleetglobalpoolingLayerConfig,
+  FleetaddpoolingLayerConfig,
+  FleetmoleculefeaturizerLayerConfig,
+  FleetdnasequencefeaturizerLayerConfig,
+  FleetrnasequencefeaturizerLayerConfig,
+  FleetproteinsequencefeaturizerLayerConfig,
+  FleetintegerfeaturizerLayerConfig,
 } from 'app/rtk/generated/models';
 
 export enum EPythonClasses {
@@ -37,9 +37,9 @@ export enum EPythonClasses {
 type ArrayElement<A> = A extends readonly (infer T)[] ? T : never;
 
 export type ModelOptions = GetModelOptionsApiResponse;
-export type LayersType = ArrayElement<ModelSchema['layers']>;
+export type LayersType = ArrayElement<TorchModelSpec['spec']['layers']>;
 
-export type FeaturizersType = ArrayElement<ModelSchema['featurizers']>;
+export type FeaturizersType = ArrayElement<TorchModelSpec['dataset']['featurizers']>;
 export type ComponentType = 'layer' | 'featurizer' | 'input' | 'output';
 export type LayerFeaturizerType = LayersType | FeaturizersType;
 export type ComponentConfigs = {
@@ -75,7 +75,7 @@ export type Output = {
   name: string;
   dataType: DataType;
   forwardArgs?: { '': string };
-  outModule?: string;
+  outModule: string;
   columnType?: TargetConfig['columnType'];
   lossFn?: TargetConfig['lossFn'];
 };
@@ -90,16 +90,16 @@ export type Sigmoid = TorchsigmoidLayerConfig;
 export type GcnConv = TorchgeometricgcnconvLayerConfig;
 export type Embedding = TorchembeddingLayerConfig;
 export type TransformerEncoderLayer = TorchtransformerencoderlayerLayerConfig;
-export type Concat = ModelbuilderconcatLayerConfig;
-export type OneHot = ModelbuilderonehotLayerConfig;
-export type GlobalPooling = ModelbuilderglobalpoolingLayerConfig;
-export type AddPooling = ModelbuilderaddpoolingLayerConfig;
-export type MolFeaturizer = ModelbuildermoleculefeaturizerLayerConfig;
-export type DNAFeaturizer = ModelbuilderdnasequencefeaturizerLayerConfig;
-export type RNAFeaturizer = ModelbuilderrnasequencefeaturizerLayerConfig;
+export type Concat = FleetconcatLayerConfig;
+export type OneHot = FleetonehotLayerConfig;
+export type GlobalPooling = FleetglobalpoolingLayerConfig;
+export type AddPooling = FleetaddpoolingLayerConfig;
+export type MolFeaturizer = FleetmoleculefeaturizerLayerConfig;
+export type DNAFeaturizer = FleetdnasequencefeaturizerLayerConfig;
+export type RNAFeaturizer = FleetrnasequencefeaturizerLayerConfig;
 export type ProteinFeaturizer =
-  ModelbuilderproteinsequencefeaturizerLayerConfig;
-export type IntegerFeaturizer = ModelbuilderintegerfeaturizerLayerConfig;
+  FleetproteinsequencefeaturizerLayerConfig;
+export type IntegerFeaturizer = FleetintegerfeaturizerLayerConfig;
 
 type ColumnConfig = APIColumnConfig;
 interface ColumnConfigWithForward extends ColumnConfig {
@@ -113,7 +113,8 @@ interface DatasetWithForwards {
   name: string;
   targetColumns: TargetConfigWithForward[];
   featureColumns: ColumnConfigWithForward[];
+  featurizers: FeaturizersType[]
 }
-export interface ModelSchema extends Omit<APIModelSchema, 'dataset'> {
-  dataset: DatasetWithForwards;
+export interface ModelSchema extends TorchModelSpec {
+  dataset: DatasetWithForwards ;
 }

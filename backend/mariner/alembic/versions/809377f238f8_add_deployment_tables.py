@@ -5,8 +5,9 @@ Revises: 72b2fb3d122d
 Create Date: 2023-04-28 20:29:59.293829
 
 """
-import sqlalchemy as sa
 from alembic import op
+import sqlalchemy as sa
+
 
 # revision identifiers, used by Alembic.
 revision = "809377f238f8"
@@ -93,3 +94,4 @@ def downgrade():
     op.drop_index(op.f("ix_deployment_name"), table_name="deployment")
     op.drop_index(op.f("ix_deployment_id"), table_name="deployment")
     op.drop_table("deployment")
+    # ### end Alembic commands ###

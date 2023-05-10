@@ -45,13 +45,16 @@ export const Default = () => {
       ],
       targetColumns: [
         {
+          outModule: '',
           name: 'exp',
           dataType: { domainKind: 'numeric', unit: 'mole' },
         },
       ],
+      featurizers: [],
     },
-    layers: [],
-    featurizers: [],
+    spec: {
+      layers: [],
+    }
   });
   return <ModelEditor value={modelSchema} onChange={setModelSchema} />;
 };
@@ -67,51 +70,54 @@ export const InvalidSchema = () => {
       ],
       targetColumns: [
         {
+          outModule: '',
           name: 'exp',
           dataType: { domainKind: 'numeric', unit: 'mole' },
         },
       ],
+      featurizers: [
+        {
+          name: 'MolFeaturizer1',
+          type: 'fleet.model_builder.featurizers.MoleculeFeaturizer',
+          constructorArgs: {
+            sym_bond_list: false,
+            allow_unknown: false,
+            per_atom_fragmentation: false,
+          },
+          forwardArgs: { mol: `$mwt` },
+        },
+        {
+          name: 'MolFeaturizer2',
+          type: 'fleet.model_builder.featurizers.MoleculeFeaturizer',
+          constructorArgs: {
+            sym_bond_list: false,
+            allow_unknown: false,
+            per_atom_fragmentation: false,
+          },
+          forwardArgs: { mol: `$smiles` },
+        },
+      ],
     },
-    layers: [
-      {
-        name: 'Linear1',
-        type: 'torch.nn.Linear',
-        constructorArgs: { in_features: 0, out_features: 0 },
-        forwardArgs: { input: '$mwt' },
-      },
-      {
-        name: 'GCNConv2',
-        type: 'torch_geometric.nn.GCNConv',
-        constructorArgs: { in_channels: 0, out_channels: 0 },
-        forwardArgs: {
-          x: '$MolFeaturizer2.x',
-          edge_index: '',
-          edge_weight: '',
+    spec: {
+      layers: [
+        {
+          name: 'Linear1',
+          type: 'torch.nn.Linear',
+          constructorArgs: { in_features: 0, out_features: 0 },
+          forwardArgs: { input: '$mwt' },
         },
-      },
-    ],
-    featurizers: [
-      {
-        name: 'MolFeaturizer1',
-        type: 'model_builder.featurizers.MoleculeFeaturizer',
-        constructorArgs: {
-          sym_bond_list: false,
-          allow_unknown: false,
-          per_atom_fragmentation: false,
+        {
+          name: 'GCNConv2',
+          type: 'torch_geometric.nn.GCNConv',
+          constructorArgs: { in_channels: 0, out_channels: 0 },
+          forwardArgs: {
+            x: '$MolFeaturizer2.x',
+            edge_index: '',
+            edge_weight: '',
+          },
         },
-        forwardArgs: { mol: `$mwt` },
-      },
-      {
-        name: 'MolFeaturizer2',
-        type: 'model_builder.featurizers.MoleculeFeaturizer',
-        constructorArgs: {
-          sym_bond_list: false,
-          allow_unknown: false,
-          per_atom_fragmentation: false,
-        },
-        forwardArgs: { mol: `$smiles` },
-      },
-    ],
+      ],
+    },
   });
   return <ModelEditor value={modelSchema} onChange={setModelSchema} />;
 };

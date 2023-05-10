@@ -61,12 +61,12 @@ class Suggestion {
     for (const command of this.commands) {
       if (command instanceof EditComponentsCommand && command.args.schema) {
         let obj;
-        obj = (command.args.schema.layers || []).find(
+        obj = (command.args.schema.spec.layers || []).find(
           (schemaObj: any) => schemaObj.name === name
         );
         obj =
           obj ||
-          (command.args.schema.featurizers || []).find(
+          (command.args.schema.dataset.featurizers || []).find(
             (schemaObj: any) => schemaObj.name === name
           );
         // ignored because the constructorArgs property is not always in obj but ts doesn't know that

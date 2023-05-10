@@ -1,6 +1,6 @@
-import { ModelSchema } from 'app/rtk/generated/models';
+import { TorchModelSpec } from '@app/rtk/generated/models';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
-import { unwrapDollar } from 'model-compiler/src/utils';
+import { extendSpecWithTargetForwardArgs, unwrapDollar } from 'model-compiler/src/utils';
 import { flatten } from 'utils';
 import { getNodes } from '../modelSchemaQuery';
 import Command from './Command';
@@ -29,10 +29,10 @@ const isTargetEndpoint = (a: any): a is TargetEndpoint =>
 
 export const getConnectableArguments = (
   endpoint: Endpoint,
-  schema: ModelSchema,
+  schema: TorchModelSpec,
   _positionsMap?: Record<string, Position>
 ): Endpoint[] => {
-  const nodes = getNodes(schema);
+  const nodes = getNodes(extendSpecWithTargetForwardArgs( schema));
   if (isSourceEndpoint(endpoint)) {
     const targetEndpoints: TargetEndpoint[] = [];
     nodes.forEach((node) => {
@@ -62,7 +62,7 @@ export const getConnectableArguments = (
         } else if (node.type === 'output') {
           return [];
         } else if (
-          node.type === 'model_builder.featurizers.MoleculeFeaturizer'
+          node.type === 'fleet.model_builder.featurizers.MoleculeFeaturizer'
         ) {
           return ['x', 'edge_index', 'edge_attr', 'batch'].map(
             (output) => `${node.name}.${output}`
@@ -104,7 +104,7 @@ export const getConnectableArguments = (
 
 export const getConnectableArgumentsByNode = <T extends Endpoint>(
   endpoint: T,
-  schema: ModelSchema,
+  schema: TorchModelSpec,
   positionsMap?: Record<string, Position>
 ): T extends SourceEndpoint
   ? Record<string, TargetEndpoint[]>
@@ -127,7 +127,7 @@ export const getConnectableArgumentsByNode = <T extends Endpoint>(
 };
 
 export type GetConnectionsCommandArgs<T extends Endpoint> = {
-  schema: ModelSchema;
+  schema: TorchModelSpec;
   endpoint: T;
   positionsMap?: Record<string, Position>;
 };

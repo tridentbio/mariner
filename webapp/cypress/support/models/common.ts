@@ -14,6 +14,7 @@ type ComponentTypeByDataId = {
 
 export const flowDropSelector =
   'div[class="react-flow__pane react-flow__container"]';
+
 const dragComponent = (component: string, x: number, y: number): void => {
   const sourceSelector = 'div[draggable="true"]';
   cy.get(sourceSelector).contains(component).drag(flowDropSelector, x, y);
@@ -55,9 +56,10 @@ const generatePositions = (
 export const dragComponentsAndMapConfig = (
   config: ModelSchema
 ): ModelSchema => {
-  const layers = config.layers || [];
-  const featurizers = config.featurizers || [];
+  const layers = config.spec.layers || [];
+  const featurizers = config.dataset.featurizers || [];
   const total = layers.length + featurizers.length;
+  console.log({total})
   const xoffset = 150;
   const yoffset = 50;
   const maxwidth = 700;
@@ -66,23 +68,24 @@ export const dragComponentsAndMapConfig = (
   let newSchema = {
     ...config,
   };
-  newSchema.layers = [];
-  newSchema.featurizers = [];
+  newSchema.spec.layers = [];
+  newSchema.dataset.featurizers = [];
   iterateTopologically(config, (node, type) => {
+    console.log('Iterating on ' + node + ' ' + type)
     if (['input', 'output'].includes(type)) return;
     const position = positions[i];
     const componentName = substrAfterLast(node.type || '', '.');
     dragComponent(componentName, position.x, position.y);
     if (type === 'layer') {
       //@ts-ignore
-      newSchema.layers.push({
+      newSchema.spec.layers.push({
         ...node,
         //@ts-ignore
         type: `${node.type}-${i}`,
       });
     } else if (type === 'featurizer') {
       //@ts-ignore
-      newSchema.featurizers.push({
+      newSchema.dataset.featurizers.push({
         ...node,
         //@ts-ignore
         type: `${node.type}-${i}`,

@@ -107,6 +107,7 @@ test_cases = [
 
 
 @pytest.mark.parametrize("case", test_cases)
+@pytest.mark.integration
 def test_train(case: TestCase):
     mlflow_experiment_name = random_lower_string()
     mlflow_model_name = random_lower_string()

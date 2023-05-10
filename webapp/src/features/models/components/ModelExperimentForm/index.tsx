@@ -2,21 +2,21 @@ import { Button, TextField, Typography } from '@mui/material';
 import { Box, SystemStyleObject } from '@mui/system';
 import { useNotifications } from 'app/notifications';
 import { FormEvent, useState } from 'react';
-import { Model, ModelVersionType } from 'app/types/domain/models';
+import { Model, } from 'app/types/domain/models';
 import ModelVersionSelect from '../ModelVersionSelect';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { required } from 'utils/reactFormRules';
 import CheckpointingForm from 'features/trainings/components/CheckpointingForm';
 import AdvancedOptionsForm from 'features/trainings/components/AdvancedOptionsForm';
 import { DeepPartial } from 'react-hook-form';
-import { TrainingRequest } from 'app/rtk/generated/experiments';
 import OptimizerForm from './OptimizerForm';
 import { TargetConfig } from 'app/rtk/generated/models';
+import { BaseTrainingRequest } from '@app/rtk/generated/experiments';
 
 export interface ModelExperimentFormProps {
-  onSubmit: (value: TrainingRequest) => any;
+  onSubmit: (value: BaseTrainingRequest) => any;
   onCancel?: () => any;
-  initialValues?: DeepPartial<TrainingRequest>;
+  initialValues?: DeepPartial<BaseTrainingRequest>;
   model: Model;
   loading?: boolean;
 }
@@ -33,7 +33,7 @@ const ModelExperimentForm = ({
     [] as TargetConfig[]
   );
 
-  const methods = useForm<TrainingRequest>({
+  const methods = useForm<BaseTrainingRequest>({
     defaultValues: initialValues,
     shouldFocusError: true,
     criteriaMode: 'all',
@@ -55,7 +55,11 @@ const ModelExperimentForm = ({
     methods.handleSubmit(
       (training) => {
         if (!isUsingEarlyStopping) {
-          const { earlyStoppingConfig, ...payload } = training;
+          const { config: { earlyStoppingConfig, ...restConfig } } = training;
+          const payload = {
+            ...training,
+            config: restConfig
+          }
           onSubmit(payload);
         } else {
           onSubmit(training);
@@ -112,7 +116,7 @@ const ModelExperimentForm = ({
           <Controller
             rules={{ ...required }}
             control={control}
-            name="optimizer"
+            name="config.optimizer"
             render={({ field, fieldState: { error } }) => (
               <OptimizerForm
                 onChange={field.onChange}
@@ -131,7 +135,7 @@ const ModelExperimentForm = ({
             <Controller
               rules={{ ...required }}
               control={control}
-              name="batchSize"
+              name="config.batchSize"
               render={({ field, fieldState: { error } }) => (
                 <TextField
                   sx={fieldStyle}
@@ -149,7 +153,7 @@ const ModelExperimentForm = ({
             <Controller
               rules={{ ...required }}
               control={control}
-              name="epochs"
+              name="config.epochs"
               render={({ field, fieldState: { error } }) => (
                 <TextField
                   sx={fieldStyle}
