@@ -32,7 +32,8 @@ const AdvancedOptionsForm = ({
   onToggle,
   targetColumns,
 }: AdvancedOptionsProps) => {
-  const { control, setValue, resetField } = useFormContext<BaseTrainingRequest>();
+  const { control, setValue, resetField } =
+    useFormContext<BaseTrainingRequest>();
   return (
     <Accordion
       elevation={1}
@@ -69,7 +70,9 @@ const AdvancedOptionsForm = ({
                     setValue('config.earlyStoppingConfig.mode', value);
                   }}
                   targetColumns={targetColumns}
-                  reset={() => resetField('config.earlyStoppingConfig.metricKey')}
+                  reset={() =>
+                    resetField('config.earlyStoppingConfig.metricKey')
+                  }
                   cleanable
                 />
               )}

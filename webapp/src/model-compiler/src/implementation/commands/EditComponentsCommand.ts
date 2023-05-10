@@ -73,11 +73,11 @@ class EditComponentsCommand extends Command<
     });
     return {
       ...this.args.schema,
-      spec: { layers: updatedLayers, },
+      spec: { layers: updatedLayers },
       dataset: {
         ...this.args.schema.dataset,
         featurizers: updatedFeaturizers,
-      }
+      },
     };
   };
 }

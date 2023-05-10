@@ -64,8 +64,21 @@ const baseSchema: TorchModelSpec = {
   }
 };
 
-const testConcatValidatorValid1: TorchModelSpec = {
+const injectBaseSchema = (outModule: string) => ({
   ...baseSchema,
+  dataset: {
+    ...baseSchema.dataset,
+    targetColumns: [
+      {
+        ...baseSchema.dataset.targetColumns[0],
+        outModule,
+      },
+    ],
+  },
+});
+
+const testConcatValidatorValid1: TorchModelSpec = {
+  ...injectBaseSchema('5'),
   spec: {
     layers: [
       {

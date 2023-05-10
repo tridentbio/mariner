@@ -47,7 +47,8 @@ export const getComponent = (
   componentName: string
 ): NodeType => {
   const layer =
-    schema.spec.layers && schema.spec.layers.find((l) => l.name === componentName);
+    schema.spec.layers &&
+    schema.spec.layers.find((l) => l.name === componentName);
   if (layer) return layer;
   const featurizer =
     schema.dataset.featurizers &&

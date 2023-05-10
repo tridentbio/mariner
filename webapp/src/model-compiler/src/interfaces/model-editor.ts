@@ -39,7 +39,9 @@ type ArrayElement<A> = A extends readonly (infer T)[] ? T : never;
 export type ModelOptions = GetModelOptionsApiResponse;
 export type LayersType = ArrayElement<TorchModelSpec['spec']['layers']>;
 
-export type FeaturizersType = ArrayElement<TorchModelSpec['dataset']['featurizers']>;
+export type FeaturizersType = ArrayElement<
+  TorchModelSpec['dataset']['featurizers']
+>;
 export type ComponentType = 'layer' | 'featurizer' | 'input' | 'output';
 export type LayerFeaturizerType = LayersType | FeaturizersType;
 export type ComponentConfigs = {
@@ -97,8 +99,7 @@ export type AddPooling = FleetaddpoolingLayerConfig;
 export type MolFeaturizer = FleetmoleculefeaturizerLayerConfig;
 export type DNAFeaturizer = FleetdnasequencefeaturizerLayerConfig;
 export type RNAFeaturizer = FleetrnasequencefeaturizerLayerConfig;
-export type ProteinFeaturizer =
-  FleetproteinsequencefeaturizerLayerConfig;
+export type ProteinFeaturizer = FleetproteinsequencefeaturizerLayerConfig;
 export type IntegerFeaturizer = FleetintegerfeaturizerLayerConfig;
 
 type ColumnConfig = APIColumnConfig;
@@ -113,8 +114,8 @@ interface DatasetWithForwards {
   name: string;
   targetColumns: TargetConfigWithForward[];
   featureColumns: ColumnConfigWithForward[];
-  featurizers: FeaturizersType[]
+  featurizers: FeaturizersType[];
 }
 export interface ModelSchema extends TorchModelSpec {
-  dataset: DatasetWithForwards ;
+  dataset: DatasetWithForwards;
 }

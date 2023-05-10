@@ -2,7 +2,7 @@ import { Button, TextField, Typography } from '@mui/material';
 import { Box, SystemStyleObject } from '@mui/system';
 import { useNotifications } from 'app/notifications';
 import { FormEvent, useState } from 'react';
-import { Model, } from 'app/types/domain/models';
+import { Model } from 'app/types/domain/models';
 import ModelVersionSelect from '../ModelVersionSelect';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { required } from 'utils/reactFormRules';
@@ -55,11 +55,13 @@ const ModelExperimentForm = ({
     methods.handleSubmit(
       (training) => {
         if (!isUsingEarlyStopping) {
-          const { config: { earlyStoppingConfig, ...restConfig } } = training;
+          const {
+            config: { earlyStoppingConfig, ...restConfig },
+          } = training;
           const payload = {
             ...training,
-            config: restConfig
-          }
+            config: restConfig,
+          };
           onSubmit(payload);
         } else {
           onSubmit(training);

@@ -1,6 +1,9 @@
 import { TorchModelSpec } from '@app/rtk/generated/models';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
-import { extendSpecWithTargetForwardArgs, unwrapDollar } from 'model-compiler/src/utils';
+import {
+  extendSpecWithTargetForwardArgs,
+  unwrapDollar,
+} from 'model-compiler/src/utils';
 import { flatten } from 'utils';
 import { getNodes } from '../modelSchemaQuery';
 import Command from './Command';
@@ -32,7 +35,7 @@ export const getConnectableArguments = (
   schema: TorchModelSpec,
   _positionsMap?: Record<string, Position>
 ): Endpoint[] => {
-  const nodes = getNodes(extendSpecWithTargetForwardArgs( schema));
+  const nodes = getNodes(extendSpecWithTargetForwardArgs(schema));
   if (isSourceEndpoint(endpoint)) {
     const targetEndpoints: TargetEndpoint[] = [];
     nodes.forEach((node) => {

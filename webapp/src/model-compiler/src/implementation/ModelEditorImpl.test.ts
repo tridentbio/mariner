@@ -34,7 +34,9 @@ describe('ModelEditorImpl', () => {
         schema: extendSpecWithTargetForwardArgs(schema),
       });
       expect(newSchema.spec.layers).toBeDefined();
-      expect(newSchema.spec.layers?.length).toBe((schema.spec.layers?.length || 0) + 1);
+      expect(newSchema.spec.layers?.length).toBe(
+        (schema.spec.layers?.length || 0) + 1
+      );
       const insertedLayer = newSchema.spec.layers?.find(
         (l) => l.name === 'firstLienar'
       );
@@ -53,7 +55,10 @@ describe('ModelEditorImpl', () => {
       const newSchema = editor.editComponent({
         schema: extendSpecWithTargetForwardArgs(schema),
         data: makeComponentEdit({
-          component: getComponent(extendSpecWithTargetForwardArgs(schema), 'GCN3') as GcnConv & {
+          component: getComponent(
+            extendSpecWithTargetForwardArgs(schema),
+            'GCN3'
+          ) as GcnConv & {
             type: 'torch_geometric.nn.GCNConv';
           },
           constructorArgs: {
@@ -101,7 +106,9 @@ describe('ModelEditorImpl', () => {
       const invalidSchemas = Object.values(BrokenSchemas());
       invalidSchemas.forEach((invalidSchema) => {
         const editor = getTestModelEditor();
-        const info = editor.getSuggestions({ schema: extendSpecWithTargetForwardArgs(invalidSchema) });
+        const info = editor.getSuggestions({
+          schema: extendSpecWithTargetForwardArgs(invalidSchema),
+        });
         expect(info.getSuggestions().length).toBeGreaterThan(0);
       });
     });
@@ -112,7 +119,9 @@ describe('ModelEditorImpl', () => {
       'schema BrokenSchemas.%s is fixed on applySuggestions (if fixable)',
       (_key, invalidSchema) => {
         const editor = getTestModelEditor();
-        const info = editor.getSuggestions({ schema: extendSpecWithTargetForwardArgs(invalidSchema) });
+        const info = editor.getSuggestions({
+          schema: extendSpecWithTargetForwardArgs(invalidSchema),
+        });
         expect(info.schema).toMatchObject(invalidSchema);
         const gotTotalSuggestions = info.getSuggestions().length;
         const gotTotalFixableSuggestions = info
@@ -124,7 +133,7 @@ describe('ModelEditorImpl', () => {
         let newSchema: ModelSchema;
         newSchema = editor.applySuggestions({
           suggestions: info.getSuggestions(),
-          schema: extendSpecWithTargetForwardArgs( invalidSchema),
+          schema: extendSpecWithTargetForwardArgs(invalidSchema),
         });
 
         // good model doesn't yield suggestions

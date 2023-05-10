@@ -36,7 +36,10 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
       <ReactFlowProvider>
         <ModelEditorContextProvider>
           {modelVersion.config && (
-            <ModelEditor value={extendSpecWithTargetForwardArgs( modelVersion.config)} editable={false} />
+            <ModelEditor
+              value={extendSpecWithTargetForwardArgs(modelVersion.config)}
+              editable={false}
+            />
           )}
         </ModelEditorContextProvider>
       </ReactFlowProvider>

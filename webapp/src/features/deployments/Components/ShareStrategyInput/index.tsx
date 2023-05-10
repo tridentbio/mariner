@@ -63,7 +63,7 @@ const ShareStrategyInput: React.FC<ShareStrategyInputProps> = ({ field }) => {
         />
       </RadioGroup>
 
-      {allowedAccessInputMap[field.value]}
+      {allowedAccessInputMap[field.value as EShareStrategies]}
     </>
   );
 };

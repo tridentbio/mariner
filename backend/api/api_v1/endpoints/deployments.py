@@ -37,7 +37,7 @@ def get_deployments(
     query: DeploymentsQuery = Depends(DeploymentsQuery),
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
-) -> Any:
+) -> Paginated[Deployment]:
     """
     Retrieve deployments owned by requester
     """
@@ -47,15 +47,15 @@ def get_deployments(
 
 @router.post("/", response_model=Deployment)
 def create_deployment(
-    data: DeploymentBase,
+    deployment_base: DeploymentBase,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
-) -> Any:
+) -> Deployment:
     """
     Create a deployment
     """
     try:
-        db_deployment = controller.create_deployment(db, current_user, data)
+        db_deployment = controller.create_deployment(db, current_user, deployment_base)
 
         deployment = Deployment.from_orm(db_deployment)
         return deployment

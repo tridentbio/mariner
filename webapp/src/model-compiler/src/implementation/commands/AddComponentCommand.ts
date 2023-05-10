@@ -42,7 +42,7 @@ class AddComponentCommand<T extends ComponentType> extends Command<
         ...this.args.schema,
         spec: {
           layers,
-        }
+        },
       };
     } else if (this.args.type === 'featurizer') {
       const featurizers = [...(this.args.schema.dataset.featurizers || [])];
@@ -52,7 +52,7 @@ class AddComponentCommand<T extends ComponentType> extends Command<
         dataset: {
           ...this.args.schema.dataset,
           featurizers,
-        }
+        },
       };
     } else {
       throw new Error('Not implemented');

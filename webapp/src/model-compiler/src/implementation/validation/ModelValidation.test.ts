@@ -22,7 +22,9 @@ describe('ModelValidation', () => {
     test.each(getValidModelSchemas())(
       'validate(%s) returns no suggestions for good schemas',
       (schema) => {
-        const info = getTestValidator().validate(extendSpecWithTargetForwardArgs(schema));
+        const info = getTestValidator().validate(
+          extendSpecWithTargetForwardArgs(schema)
+        );
         expect(info.getSuggestions()).toHaveLength(0);
       }
     );
@@ -62,7 +64,9 @@ describe('ModelValidation', () => {
     });
 
     it("returns correction to gcn conv when in_channels doesn't match incoming shape", () => {
-      const info = getTestValidator().validate(extendSpecWithTargetForwardArgs(BrokenSchemas().testGcnConv));
+      const info = getTestValidator().validate(
+        extendSpecWithTargetForwardArgs(BrokenSchemas().testGcnConv)
+      );
       expect(info.getSuggestions()).toHaveLength(1);
       const suggestion = info.getSuggestions()[0];
       expect(suggestion.commands).toHaveLength(1);

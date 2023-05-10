@@ -54,7 +54,7 @@ export const Default = () => {
     },
     spec: {
       layers: [],
-    }
+    },
   });
   return <ModelEditor value={modelSchema} onChange={setModelSchema} />;
 };

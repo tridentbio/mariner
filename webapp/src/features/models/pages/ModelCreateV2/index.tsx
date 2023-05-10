@@ -21,7 +21,9 @@ const ModelCreateV2 = () => {
     modelsApi.usePostModelCheckConfigMutation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { notifyError } = useNotifications();
-  const methods = useForm<modelsApi.ModelCreate & { config: modelsApi.TorchModelSpec }>({
+  const methods = useForm<
+    modelsApi.ModelCreate & { config: modelsApi.TorchModelSpec }
+  >({
     mode: 'all',
     defaultValues: {
       name: '',
@@ -34,7 +36,7 @@ const ModelCreateV2 = () => {
           featurizers: [],
           targetColumns: [],
         },
-        spec: { layers: [], }
+        spec: { layers: [] },
       },
     },
   });
@@ -49,8 +51,8 @@ const ModelCreateV2 = () => {
       async (modelCreate) => {
         const result = await checkModel({
           trainingCheckRequest: {
-            modelSpec: { framework: 'torch', ...modelCreate.config }
-          }
+            modelSpec: { framework: 'torch', ...modelCreate.config },
+          },
         });
         if (!('error' in result) && !result.data.stackTrace)
           return createModel({
@@ -136,8 +138,8 @@ const ModelCreateV2 = () => {
           name: description.pattern,
           dataType: description.dataType,
           outModule: '',
-        }
-      }
+        };
+      };
       if (featureColumns)
         methods.setValue(
           'config.dataset.featureColumns',
@@ -177,7 +179,7 @@ const ModelCreateV2 = () => {
         <Box sx={{ maxWidth: '100vw' }}>
           <div>
             <ModelEditor
-              value={extendSpecWithTargetForwardArgs( config)}
+              value={extendSpecWithTargetForwardArgs(config)}
               onChange={(value) => {
                 setValue('config', value);
               }}

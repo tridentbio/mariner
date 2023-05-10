@@ -29,7 +29,9 @@ class Acceptor {
       visitor.visitGlobalPooling(node, type, info);
     } else if (node.type === 'fleet.model_builder.layers.AddPooling') {
       visitor.visitAddPooling(node, type, info);
-    } else if (node.type === 'fleet.model_builder.featurizers.MoleculeFeaturizer') {
+    } else if (
+      node.type === 'fleet.model_builder.featurizers.MoleculeFeaturizer'
+    ) {
       visitor.visitMolFeaturizer(node, type, info);
     } else if (
       node.type === 'fleet.model_builder.featurizers.DNASequenceFeaturizer'
@@ -43,7 +45,9 @@ class Acceptor {
       node.type === 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer'
     ) {
       visitor.visitProteinFeaturizer(node, type, info);
-    } else if (node.type === 'fleet.model_builder.featurizers.IntegerFeaturizer') {
+    } else if (
+      node.type === 'fleet.model_builder.featurizers.IntegerFeaturizer'
+    ) {
       visitor.visitIntegerFeaturizer(node, type, info);
     } else if (node.type === 'input') {
       visitor.visitInput(node, type, info);

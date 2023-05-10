@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import Table from 'components/templates/Table';
 import { Column } from 'components/templates/Table/types';
 import { dateRender } from 'components/atoms/Table/render';
-import { deploymentsApi } from '../deploymentsApi';
-import { Deployment } from '../types';
+import * as deploymentsApi from 'app/rtk/generated/deployments';
+import { Deployment } from 'app/rtk/generated/deployments';
 import StatusChip from './StatutsChip';
 import DeploymentsTableActions from './TableActions';
 import { Box, Chip } from '@mui/material';
@@ -133,7 +133,10 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         width: 30,
         height: 30,
       },
-      render: dateRender((row) => row.createdAt),
+      render: (row) => {
+        if (!row.createdAt) return '';
+        return dateRender<typeof row>((row) => new Date(row.createdAt!))(row);
+      },
     },
     {
       name: 'Action',

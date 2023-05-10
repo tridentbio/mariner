@@ -1,26 +1,7 @@
 import { ModelVersion } from 'app/types/domain/models';
 import { PaginationQueryParams } from 'app/types/paginationQuery';
 import { User } from 'features/users/usersAPI';
-
-export interface Deployment {
-  id: number;
-  name: string;
-  readme: string;
-  shareUrl: string;
-  status: EDeploymnetStatuses;
-  modelVersionId: number;
-  modelVersion?: ModelVersion;
-  shareStrategy: EShareStrategies;
-  usersIdAllowed: User['id'][];
-  usersAllowed?: User[];
-  organizationsAllowed: string[]; // check email path
-  showTrainingData: boolean;
-  predictionRateLimitValue: number;
-  predictionRateLimitUnit: ERateLimitUnits;
-  createdByUserId: User['id'];
-  createdAt: Date;
-  isDeleted: boolean;
-}
+import { Deployment } from 'app/rtk/generated/deployments';
 
 export enum EDeploymnetStatuses {
   ACTIVE = 'active',
