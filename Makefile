@@ -65,6 +65,9 @@ build:                  ## Builds needed local images to run application.
 create-admin:           ## Creates default "admin@mariner.trident.bio" with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
 
+start-backend:         ## Builds and starts backend
+	$(DOCKER_COMPOSE) build backend
+	$(DOCKER_COMPOSE) up --wait backend
 
 .PHONY: start
 start:                  ## Starts services (without building them explicitly)
@@ -95,7 +98,7 @@ test-backend: build start          ## Runs all tests in the backend (integration
 
 
 .PHONY: test-backend-unit
-test-backend-unit:           ## Runs backend unit tests
+test-backend-unit: start-backend          ## Runs backend unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'not integration' $(ARGS)
 
 
@@ -105,8 +108,7 @@ test-webapp-unit: webapp-install ## Runs webapp unit tests
 
 
 .PHONY: test-integration
-test-integration: build      ## Runs unit tests
-	$(DOCKER_COMPOSE) up --wait backend mlflow ray-head ray-worker db mlflowdb
+test-integration: start-backend ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 
