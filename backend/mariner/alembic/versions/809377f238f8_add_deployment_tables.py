@@ -93,4 +93,3 @@ def downgrade():
     op.drop_index(op.f("ix_deployment_name"), table_name="deployment")
     op.drop_index(op.f("ix_deployment_id"), table_name="deployment")
     op.drop_table("deployment")
-    # ### end Alembic commands ###
