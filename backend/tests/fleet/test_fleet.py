@@ -7,7 +7,7 @@ import pytest
 from mlflow.tracking import MlflowClient
 from pandas import DataFrame, read_csv
 
-from fleet import fit
+from fleet.model_functions import fit
 from fleet.base_schemas import BaseFleetModelSpec
 from fleet.model_builder import optimizers
 from fleet.model_builder.schemas import TargetConfig, is_regression
@@ -114,7 +114,7 @@ def test_train(case: TestCase):
     with open(case.dataset_file) as f:
         dataset: DataFrame = read_csv(f)
         if not case.should_fail:
-            mlflow_experiment_id = fit(
+            result = fit(
                 spec=case.model_spec,
                 train_config=case.train_spec,
                 dataset=dataset,
@@ -123,7 +123,7 @@ def test_train(case: TestCase):
                 datamodule_args=case.datamodule_args,
             )
             assert_mlflow_data(
-                spec=case.model_spec, mlflow_experiment_id=mlflow_experiment_id
+                spec=case.model_spec, mlflow_experiment_id=result.mlflow_experiment_id
             )
         else:
             with pytest.raises(case.should_fail):

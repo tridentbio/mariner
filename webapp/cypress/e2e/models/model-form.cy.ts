@@ -1,4 +1,4 @@
-import { ModelSchema } from '@app/rtk/generated/models';
+import { TorchModelSpec } from '@app/rtk/generated/models';
 import TestUtils from '../../support/TestUtils';
 
 describe('Model version form (/models/new)', () => {
@@ -33,7 +33,7 @@ describe('Model version form (/models/new)', () => {
   const fillModelForm = (
     modelFormData?: typeof testModel,
     datasetFormData?: typeof testDatasetConfig,
-    modelConfig?: ModelSchema
+    modelConfig?: TorchModelSpec
   ) => {
     if (modelFormData) {
       cy.get('[data-testid="model-name"] input')

@@ -19,7 +19,7 @@ from mariner.schemas.model_schemas import (
     ModelVersionCreateRepo,
 )
 from mariner.stores import model_sql
-from tests.fixtures.user import get_test_user
+from tests.fixtures.user import get_random_test_user, get_test_user
 from tests.utils.utils import random_lower_string
 
 ModelType = Literal["regressor", "regressor-with-categorical", "classifier"]
@@ -88,10 +88,11 @@ def setup_create_model(
 def setup_create_model_db(
     db: Session,
     dataset: Dataset,
+    owner: Literal["test_user", "random_user"] = "test_user",
     **mock_model_kwargs,
 ):
     model = mock_model(**mock_model_kwargs, dataset_name=dataset.name)
-    user = get_test_user(db)
+    user = get_test_user(db) if owner == "test_user" else get_random_test_user(db)
     model_create = ModelCreateRepo(
         dataset_id=dataset.id,
         name=model.name,

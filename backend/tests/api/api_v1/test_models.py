@@ -363,13 +363,15 @@ def test_post_check_config_bad_model(
     client: TestClient,
 ):
     model_path = "tests/data/yaml/model_fails_on_training.yml"
-    with open(model_path, "rU") as f:
-        regressor: TorchModelSchema = TorchModelSchema.from_yaml_str(f.read())
-        regressor.dataset.name = some_dataset.name
-
+    regressor: TorchModelSpec = TorchModelSpec.from_yaml(model_path)
     model = CustomModel(regressor)
+    regressor.dataset.name = some_dataset.name
     dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
-    torch_dataset = CustomDataset(dataset.get_dataframe(), model_config=regressor)
+    torch_dataset = CustomDataset(
+        dataset.get_dataframe(),
+        dataset_config=regressor.dataset,
+        model_config=regressor.spec,
+    )
     dataloader = DataLoader(torch_dataset, batch_size=1)
     batch = next(iter(dataloader))
     out = model(batch)

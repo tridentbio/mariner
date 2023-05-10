@@ -10,6 +10,7 @@ from typing import List, Union
 from lightning.pytorch.loggers.logger import Logger
 
 import mlflow
+from mlflow.entities.model_registry.model_version import ModelVersion
 import pandas as pd
 from lightning.pytorch.loggers.mlflow import MLFlowLogger
 from pandas import DataFrame
@@ -31,6 +32,7 @@ LOG.setLevel(logging.INFO)
 @dataclass
 class Result:
     mlflow_experiment_id: str
+    mlflow_model_version: ModelVersion
 
 
 def fit(
@@ -56,7 +58,6 @@ def fit(
     LOG.error("mlflow_experinment_id %r", mlflow_experiment_id)
 
     if dataset is None and dataset_uri is None:
-
         LOG.error("MISSING DATASET")
         raise ValueError("dataset_uri or dataset must be passed to fit()")
     elif dataset is None and dataset_uri is not None:
@@ -102,11 +103,14 @@ def fit(
         raise ValueError("Can't find functions for spec")
 
     LOG.error("FINISHED TRAINING!!!!")
-    functions.log_models(
+    mlflow_model_version = functions.log_models(
         mlflow_model_name=mlflow_model_name,
         mlflow_experiment_id=mlflow_experiment_id,
     )
 
     LOG.error("FINISHED LOGGING!!!!")
 
-    return mlflow_experiment_id
+    return Result(
+        mlflow_experiment_id=mlflow_experiment_id,
+        mlflow_model_version=mlflow_model_version,
+    )

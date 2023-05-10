@@ -103,7 +103,6 @@ class TorchFunctions(BaseModelFunctions):
         last_model = CustomModel.load_from_checkpoint(last_model_path, **model_kwargs)
         assert isinstance(last_model, CustomModel), "last_model failed to be logged"
         runs = client.search_runs(experiment_ids=[mlflow_experiment_id])
-        print(runs)
         assert len(runs) >= 1
         run = runs[0]
         run_id = run.info.run_id
