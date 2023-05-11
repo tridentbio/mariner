@@ -2,7 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from fleet.torch_ import TorchFunctions, TorchModelSpec, TorchTrainingConfig
+from fleet.base_schemas import TorchModelSpec
+from fleet.torch_ import TorchFunctions, TorchTrainingConfig
 
 root = Path(".") / "tests" / "data" / "yml"
 torch_model_specs = [

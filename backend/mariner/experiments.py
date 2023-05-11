@@ -8,10 +8,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import uuid4
 
-import mlflow
 import ray
 from sqlalchemy.orm.session import Session
-from fleet.model_functions import Result
 
 import mariner.events as events_ctl
 from api.websocket import WebSocketMessage, get_websockets_manager
@@ -20,6 +18,7 @@ from fleet.model_builder.optimizers import (
     OptimizerSchema,
     SGDParamsSchema,
 )
+from fleet.model_functions import Result
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
@@ -36,7 +35,6 @@ from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
-    TorchTrainingRequest,
 )
 from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
 from mariner.stores.dataset_sql import dataset_store

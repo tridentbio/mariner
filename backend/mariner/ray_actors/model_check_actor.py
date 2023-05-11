@@ -7,16 +7,15 @@ from typing import Any
 import ray
 from torch_geometric.loader import DataLoader
 
-from fleet.base_schemas import BaseFleetModelSpec
+from fleet.base_schemas import BaseFleetModelSpec, TorchModelSpec
 from fleet.model_builder.dataset import Collater, CustomDataset
-from fleet.model_builder.model import CustomModel
-from fleet.torch_.schemas import TorchModelSpec
+from fleet.torch_.models import CustomModel
 from mariner.schemas.dataset_schemas import Dataset
 
 
 @ray.remote
 class ModelCheckActor:
-    def check_model_steps(self, dataset: Dataset, config: BaseFleetModelSpec) -> Any:
+    def check_model_steps(self, dataset: Dataset, config: TorchModelSpec) -> Any:
         """Checks the steps of a pytorch lightning model built from config.
 
         Steps are checked before creating the model on the backend, so the user may fix
@@ -29,14 +28,14 @@ class ModelCheckActor:
         Returns:
             The model output
         """
-        if isinstance(config, TorchModelSpec):
+        if config.framework == "torch" or isinstance(config, TorchModelSpec):
             torch_dataset = CustomDataset(
                 data=dataset.get_dataframe(),
                 model_config=config.spec,
                 dataset_config=config.dataset,
             )
             dataloader = DataLoader(torch_dataset, collate_fn=Collater(), batch_size=4)
-            model = CustomModel(config)
+            model = CustomModel(config=config.spec, dataset_config=config.dataset)
             sample = next(iter(dataloader))
             model.predict_step(sample, 0)
             output = model.training_step(sample, 0)

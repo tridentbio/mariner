@@ -7,13 +7,6 @@ from fleet.model_builder import optimizers
 from fleet.model_builder.schemas import TorchDatasetConfig, TorchModelSchema
 from fleet.model_builder.utils import CamelCaseModel
 
-
-class TorchModelSpec(BaseFleetModelSpec):
-    framework: Literal["torch"] = "torch"
-    spec: TorchModelSchema
-    dataset: TorchDatasetConfig
-
-
 # ---------------------------------- #
 # Training Request Configuration     #
 # ---------------------------------- #

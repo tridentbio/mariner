@@ -8,10 +8,9 @@ Create Date: 2023-05-01 16:48:44.960040
 
 from sqlalchemy.exc import ProgrammingError
 
+from fleet.base_schemas import TorchModelSpec
 from mariner.db.session import SessionLocal
 from mariner.entities.model import ModelVersion
-
-from fleet.torch_.schemas import TorchModelSpec
 
 # revision identifiers, used by Alembic.
 revision = "40fadbde09b7"

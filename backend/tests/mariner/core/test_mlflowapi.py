@@ -9,7 +9,7 @@ from mlflow.entities.model_registry.registered_model import \
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 
-from fleet.model_builder.model import CustomModel
+from fleet.torch_.models import CustomModel
 from tests.fixtures.model import mock_model
 from tests.utils.utils import random_lower_string
 
@@ -44,7 +44,7 @@ def mlflow_model():
     client = mlflow.tracking.MlflowClient()
     model = client.create_registered_model(random_lower_string())
     model_config = mock_model().config
-    file = CustomModel(model_config)
+    file = CustomModel(config=model_config.spec, dataset_config=model_config.dataset)
     create_model_version(client, model.name, file)
     yield client.get_registered_model(model.name)
     client.delete_registered_model(model.name)

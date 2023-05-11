@@ -1,12 +1,11 @@
 from typing import Literal, Optional
 
 import mlflow.tracking
-import yaml
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from fleet.torch_.schemas import TorchModelSpec
+from fleet.base_schemas import TorchModelSpec
 from mariner.core.config import settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion

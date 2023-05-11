@@ -10,16 +10,16 @@ from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
 from torch_geometric.loader import DataLoader
 
+from fleet.base_schemas import TorchModelSpec
 from fleet.model_builder import layers_schema as layers
 from fleet.model_builder.dataset import CustomDataset
-from fleet.model_builder.model import CustomModel
 from fleet.model_builder.schemas import (
     ColumnConfig,
     TargetConfig,
     TorchDatasetConfig,
     TorchModelSchema,
 )
-from fleet.torch_.schemas import TorchModelSpec
+from fleet.torch_.models import CustomModel
 from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
@@ -364,7 +364,7 @@ def test_post_check_config_bad_model(
 ):
     model_path = "tests/data/yaml/model_fails_on_training.yml"
     regressor: TorchModelSpec = TorchModelSpec.from_yaml(model_path)
-    model = CustomModel(regressor)
+    model = CustomModel(config=regressor.spec, dataset_config=regressor.dataset)
     regressor.dataset.name = some_dataset.name
     dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
     torch_dataset = CustomDataset(
@@ -385,9 +385,9 @@ def test_post_check_config_bad_model(
     res = client.post(
         f"{settings.API_V1_STR}/models/check-config",
         headers=normal_user_token_headers,
-        json=regressor.dict(),
+        json={"modelSpec": regressor.dict()},
     )
-    assert res.status_code == 200
+    assert res.status_code == 200, res.json()
     body = res.json()
     assert body["output"] == None
     assert not body["output"]

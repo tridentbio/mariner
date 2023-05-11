@@ -7,9 +7,8 @@ from typing import Any, List, Literal, Optional, Union
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
 
-from fleet.base_schemas import BaseFleetModelSpec
+from fleet.base_schemas import BaseFleetModelSpec, TorchModelSpec
 from fleet.model_builder.schemas import LossType
-from fleet.torch_.schemas import TorchModelSpec
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
@@ -159,7 +158,7 @@ class LossOption(ApiBaseModel):
 class TrainingCheckRequest(ApiBaseModel):
     """Request to a request to check if a model version fitting/training works"""
 
-    model_spec: BaseFleetModelSpec
+    model_spec: TorchModelSpec
 
 
 class TrainingCheckResponse(ApiBaseModel):

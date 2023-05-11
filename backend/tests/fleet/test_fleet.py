@@ -7,15 +7,11 @@ import pytest
 from mlflow.tracking import MlflowClient
 from pandas import DataFrame, read_csv
 
-from fleet.model_functions import fit
-from fleet.base_schemas import BaseFleetModelSpec
+from fleet.base_schemas import BaseFleetModelSpec, TorchModelSpec
 from fleet.model_builder import optimizers
 from fleet.model_builder.schemas import TargetConfig, is_regression
-from fleet.torch_.schemas import (
-    MonitoringConfig,
-    TorchModelSpec,
-    TorchTrainingConfig,
-)
+from fleet.model_functions import fit
+from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
 from mariner.core.aws import Bucket, list_s3_objects
 from tests.utils.utils import random_lower_string
 

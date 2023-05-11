@@ -5,25 +5,28 @@ underlying packages such as torch and sci-kit
 """
 
 
+import logging
 from dataclasses import dataclass
 from typing import List, Union
-from lightning.pytorch.loggers.logger import Logger
 
 import mlflow
-from mlflow.entities.model_registry.model_version import ModelVersion
 import pandas as pd
+from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.loggers.mlflow import MLFlowLogger
+from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
 from pydantic import BaseModel
 
-from fleet.base_schemas import BaseFleetModelSpec, BaseModelFunctions
+from fleet.base_schemas import (
+    BaseFleetModelSpec,
+    BaseModelFunctions,
+    TorchModelSpec,
+)
 from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SciKitModelSpec, SciKitTrainingConfig
 from fleet.torch_.model_functions import TorchFunctions
-from fleet.torch_.schemas import TorchModelSpec, TorchTrainingConfig
+from fleet.torch_.schemas import TorchTrainingConfig
 from mariner.train.custom_logger import MarinerLogger
-
-import logging
 
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
