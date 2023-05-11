@@ -1,17 +1,20 @@
 import { TorchModelSpec } from '@app/rtk/generated/models';
 import fs from 'fs';
+import path from 'node:path'
 import { parse } from 'yaml';
 
-const datapath = `${__dirname}/../data`;
+const datapath = path.resolve(`${__dirname}/../../../backend/tests/data`)
+
 
 const datadirstats = fs.statSync(datapath);
+
 if (!datadirstats.isDirectory()) {
   console.error('Failed to find data directory');
   process.exit(1);
 }
 
-const SMALL_REGRESSOR_PATH = `${datapath}/small_regressor_schema.yaml`;
-const SMALL_CLASSIFIER_PATH = `${datapath}/small_classifier_schema.yaml`;
+const SMALL_REGRESSOR_PATH = `${datapath}/yaml/small_regressor_schema.yaml`;
+const SMALL_CLASSIFIER_PATH = `${datapath}/yaml/small_classifier_schema.yaml`;
 const modelSchemaPaths = [SMALL_REGRESSOR_PATH, SMALL_CLASSIFIER_PATH];
 
 /**

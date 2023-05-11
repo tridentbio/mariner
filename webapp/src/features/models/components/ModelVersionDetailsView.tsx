@@ -4,7 +4,7 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 import ModelEditor from 'components/templates/ModelEditorV2';
 import { modelsApi } from 'app/rtk/models';
 import { ModelEditorContextProvider } from 'hooks/useModelEditor';
-import { extendSpecWithTargetForwardArgs } from '@model-compiler/src/utils';
+import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 
 interface ModelVersionDetailsProps {
   modelName?: string;

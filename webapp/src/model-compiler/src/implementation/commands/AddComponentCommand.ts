@@ -4,7 +4,6 @@ import {
   FeaturizersType,
   LayersType,
   ModelSchema,
-  TransformerEncoderLayer,
 } from '../../interfaces/model-editor';
 import { wrapForwardArgs } from '../../utils';
 import Command from './Command';

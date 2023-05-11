@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import { extendSpecWithTargetForwardArgs } from '@model-compiler/src/utils';
+import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import {
   GcnConv,
   Linear,

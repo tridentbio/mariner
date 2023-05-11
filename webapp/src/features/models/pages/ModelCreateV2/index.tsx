@@ -13,7 +13,7 @@ import StackTrace from 'components/organisms/StackTrace';
 import { ModelSchema } from 'model-compiler/src/interfaces/model-editor';
 import { Box } from '@mui/system';
 import { Stepper, Step, Container, Button, StepLabel } from '@mui/material';
-import { extendSpecWithTargetForwardArgs } from '@model-compiler/src/utils';
+import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 
 const ModelCreateV2 = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
