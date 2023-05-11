@@ -9,7 +9,6 @@ describe('Model version form (/models/new)', () => {
   before(() => {
     cy.loginSuper();
     cy.then(() => createDatasetDirectly(zincDatasetFixture));
-    cy.once('uncaught:exception', () => false);
   });
 
   const testModel = {

@@ -27,7 +27,7 @@ describe('/models/:modelId/inference', () => {
         learningRate: 0.001,
       })
     );
-    cy.wait(20000);
+    cy.wait(50000);
     cy.intercept({
       method: 'GET',
       url: 'http://localhost/api/v1/models/?page=0&perPage=10',
