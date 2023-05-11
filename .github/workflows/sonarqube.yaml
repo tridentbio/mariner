@@ -1,7 +1,11 @@
 name: SonarQube Scan
 on:
-  push:
-    branches: [ sonarqube ]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'develop'
 jobs:
   sonarqube:
     runs-on: ubuntu-latest
