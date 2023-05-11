@@ -286,6 +286,7 @@ async def create_dataset(
         split_actual=None,
         split_target=data.split_target,
         split_type=data.split_type,
+        split_column=data.split_column,
         columns_metadata=data.columns_metadata,
         name=data.name,
         description=data.description,
