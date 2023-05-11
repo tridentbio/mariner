@@ -71,7 +71,8 @@ export const dragComponentsAndMapConfig = (
   newSchema.spec.layers = [];
   newSchema.dataset.featurizers = [];
   iterateTopologically(config, (node, type) => {
-    console.log('Iterating on ' + node + ' ' + type)
+    console.log('Iterating on', [node, type])
+    cy.log('Dragging component', node, type)
     if (['input', 'output'].includes(type)) return;
     const position = positions[i];
     const componentName = substrAfterLast(node.type || '', '.');

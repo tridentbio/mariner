@@ -35,6 +35,7 @@ export const getNodes = (schema: ModelSchema): NodeType[] => {
       dataType: col.dataType as DataType,
     }))
   );
+  console.log({layersAndFeats})
   return layersAndFeats;
 };
 

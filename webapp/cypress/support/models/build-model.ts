@@ -46,7 +46,7 @@ const getIncomingEdges = (
           return [
             node.type + '.' + forwardArg,
             getTypeByName(config, targetOriginalName) +
-              (tail.length ? '.' + tail.join('.') : ''),
+            (tail.length ? '.' + tail.join('.') : ''),
           ];
         }),
       ];
@@ -184,9 +184,18 @@ export const buildModel = (
     bubbles: true,
   });
 
+  cy.log('Dragging components',)
+  cy.log(modelCreate.config.spec?.layers?.length + modelCreate.config.dataset?.targetColumns?.length)
+
+  const mod = extendSpecWithTargetForwardArgs(modelCreate.config as unknown as TorchModelSpec)
+
+  cy.log('Dragging components',)
+  cy.log(modelCreate.config.spec?.layers?.length + modelCreate.config.dataset?.targetColumns?.length)
+
   const config = dragComponentsAndMapConfig(
-    extendSpecWithTargetForwardArgs( modelCreate.config as unknown as TorchModelSpec)
+    mod
   );
+
   cy.get('div[aria-label="Apply auto vertical layout"] button').click();
   cy.get('button[title="fit view"]').click();
   cy.get('button[aria-label="Close all components"]').click();
