@@ -184,13 +184,11 @@ export const buildModel = (
     bubbles: true,
   });
 
-  cy.log('Dragging components',)
-  cy.log(modelCreate.config.spec?.layers?.length + modelCreate.config.dataset?.targetColumns?.length)
 
   const mod = extendSpecWithTargetForwardArgs(modelCreate.config as unknown as TorchModelSpec)
 
   cy.log('Dragging components',)
-  cy.log(modelCreate.config.spec?.layers?.length + modelCreate.config.dataset?.targetColumns?.length)
+  cy.log('Total layers + featurizers', (mod.spec?.layers?.length || 0) + (mod.dataset?.targetColumns?.length || 0))
 
   const config = dragComponentsAndMapConfig(
     mod
@@ -277,6 +275,7 @@ export const buildYamlModel = (
   const modelName = randomName();
   cy.fixture(yaml).then((yamlStr) => {
     const jsonSchema: TorchModelSpec = parse(yamlStr);
+
     buildModel(
       {
         name: modelName,

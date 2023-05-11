@@ -58,20 +58,15 @@ export const dragComponentsAndMapConfig = (
 ): ModelSchema => {
   const layers = config.spec.layers || [];
   const featurizers = config.dataset.featurizers || [];
-  const total = layers.length + featurizers.length;
-  console.log({total})
+  const total = (layers?.length || 0) + (featurizers?.length || 0);
   const xoffset = 150;
   const yoffset = 50;
   const maxwidth = 700;
   const positions = generatePositions(total, xoffset, yoffset, maxwidth);
   let i = 0;
-  let newSchema = {
-    ...config,
-  };
-  newSchema.spec.layers = [];
-  newSchema.dataset.featurizers = [];
+  const newLayers = []
+  const newFeaturizers = []
   iterateTopologically(config, (node, type) => {
-    console.log('Iterating on', [node, type])
     cy.log('Dragging component', node, type)
     if (['input', 'output'].includes(type)) return;
     const position = positions[i];
@@ -79,21 +74,35 @@ export const dragComponentsAndMapConfig = (
     dragComponent(componentName, position.x, position.y);
     if (type === 'layer') {
       //@ts-ignore
-      newSchema.spec.layers.push({
+      const layer = {
         ...node,
-        //@ts-ignore
         type: `${node.type}-${i}`,
-      });
+      }
+      //@ts-ignore
+      newLayers.push(layer)
     } else if (type === 'featurizer') {
       //@ts-ignore
-      newSchema.dataset.featurizers.push({
+      const featurizer = {
         ...node,
-        //@ts-ignore
         type: `${node.type}-${i}`,
-      });
+      }
+      //@ts-ignore
+      newFeaturizers.push(featurizers)
     }
     i += 1;
   });
+  const newSchema = {
+    ...config,
+    dataset: {
+      ...config.dataset,
+      // @ts-ignore
+      featurizers: newFeaturizers
+    },
+    spec: {
+      // @ts-ignore
+      layers: newLayers
+    }
+  }
   return newSchema;
 };
 export const dragComponents = (componentNames: string[]) => {

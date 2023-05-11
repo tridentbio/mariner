@@ -55,7 +55,6 @@ export const iterateTopologically = (
   fn: (node: NodeType, type: ComponentType) => void
 ) => {
   const nodes = topologicalSort(schema);
-  console.log('NODES!', nodes);
   const typesOfNode: {
     [key: string]: ComponentType;
   } = {};
@@ -67,7 +66,6 @@ export const iterateTopologically = (
     schema.dataset.featurizers.forEach((featurizer) => {
       typesOfNode[featurizer.name] = 'featurizer';
     });
-  console.log(typesOfNode);
   nodes.forEach((node) => {
     const type = typesOfNode[node.name] || node.type;
     fn(node, type);

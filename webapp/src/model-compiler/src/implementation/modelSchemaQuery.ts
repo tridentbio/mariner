@@ -8,11 +8,13 @@ import {
 } from '../interfaces/model-editor';
 import { isArray, unwrapDollar } from '../utils';
 
+const len = (t: { length?: number } | undefined) => t?.length || 0;
 export const getNodes = (schema: ModelSchema): NodeType[] => {
   let layersAndFeats: NodeType[] = (schema.dataset.featurizers || []).concat(
     // @ts-ignore
     schema.spec.layers || []
   );
+
   layersAndFeats = layersAndFeats.concat(
     schema.dataset.targetColumns.map((targetColumn) => {
       return {
@@ -35,7 +37,6 @@ export const getNodes = (schema: ModelSchema): NodeType[] => {
       dataType: col.dataType as DataType,
     }))
   );
-  console.log({layersAndFeats})
   return layersAndFeats;
 };
 

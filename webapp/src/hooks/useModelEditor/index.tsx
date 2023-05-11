@@ -300,7 +300,6 @@ export const ModelEditorContextProvider = ({
     args,
     position
   ) => {
-    debugger;
     if (!modelOptions) throw 'too early';
     const map = getNodePositionsMap();
     map[args.name] = position;
