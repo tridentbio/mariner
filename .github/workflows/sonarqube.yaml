@@ -1,0 +1,41 @@
+name: SonarQube Scan
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'develop'
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install Poetry
+        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+      - name: Install dependencies
+        run: |
+          poetry install
+      - name: Lint with pylint
+        run: |
+          poetry run python scripts/pylint_packages.py workflow_dispatch develop > pylint-report.json
+      - name: SonarQube Scan
+        uses: kitabisa/sonarqube-action@v1.2.0
+        with:
+          host: ${{ secrets.SONAR_HOST_URL }}
+          login: ${{ secrets.SONAR_TOKEN }}
+#      - name: Analyze with SonarQube
+#        uses: sonarsource/sonarqube-scan-action@v1
+#        with:
+#          sonar-qube-url: 'https://sonarqube.dev.mariner.trident.bio'
+#          sonar-project-key: 'mariner'
+#          sonar-project-name: 'Mariner'
+#          sonar-project-version: '1.0'
+#          extra-properties: |
+#            sonar.python.pylint.reportPath=pylint-report.json
+
