@@ -9,3 +9,11 @@ class DeploymentAlreadyExists(Exception):
 
 class DeploymentNotFound(Exception):
     """Deployment not found exception"""
+
+
+class DeploymentNotRunning(Exception):
+    """Deployment not running exception"""
+
+
+class PredictionLimitReached(Exception):
+    """Prediction limit reached exception"""
