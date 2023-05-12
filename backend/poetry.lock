@@ -1849,6 +1849,17 @@ files = [
 ]
 
 [[package]]
+name = "dotenv"
+version = "0.0.5"
+description = "Handle .env files"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "dotenv-0.0.5.tar.gz", hash = "sha256:b58d2ab3f83dbd4f8a362b21158a606bee87317a9444485566b3c8f0af847091"},
+]
+
+[[package]]
 name = "ecdsa"
 version = "0.18.0"
 description = "ECDSA cryptographic signature library (pure python)"
@@ -8767,4 +8778,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "11aabc9a17673abf9fe0f80b2aea24cd9ff3d28e73f3a42b688b71f062a0d419"
+content-hash = "aa0039b977997197632431b41a16f253b764e1e9bf391c46dc4634aa78e53892"

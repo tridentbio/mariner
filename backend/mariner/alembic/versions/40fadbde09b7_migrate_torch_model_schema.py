@@ -8,7 +8,6 @@ Create Date: 2023-05-01 16:48:44.960040
 
 from sqlalchemy.exc import ProgrammingError
 
-from fleet.base_schemas import TorchModelSpec
 from mariner.db.session import SessionLocal
 from mariner.entities.model import ModelVersion
 
@@ -19,7 +18,7 @@ branch_labels = None
 depends_on = None
 
 
-def convert_to_spec(old_model_schema: dict) -> "TorchModelSpec":
+def convert_to_spec(old_model_schema: dict) -> dict:
     new_spec = {}
     new_spec["framework"] = "torch"
     new_spec["name"] = old_model_schema["name"]
@@ -35,7 +34,7 @@ def convert_to_spec(old_model_schema: dict) -> "TorchModelSpec":
         if feat["type"].startswith("model_builder"):
             feat["type"] = f"fleet.{feat['type']}"
 
-    return TorchModelSpec(**new_spec)
+    return new_spec
 
 
 def undo_convert_to_spec(spec: dict) -> dict:
@@ -64,7 +63,7 @@ def upgrade():
             model_versions = db.query(ModelVersion).all()
             for model_version in model_versions:
                 spec = convert_to_spec(model_version.config)
-                model_version.config = spec.dict()
+                model_version.config = spec
                 db.commit()
                 db.flush()
         except ProgrammingError as exp:
