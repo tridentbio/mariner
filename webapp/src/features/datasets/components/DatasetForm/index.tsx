@@ -266,7 +266,9 @@ const DatasetForm = ({ initialValues, ...props }: DatasetFormProps) => {
                   name="splitOn"
                   render={({ field }) => (
                     <Autocomplete<ColumnInfo>
-                      onChange={field.onChange}
+                      onChange={(_, column) =>
+                        field.onChange(column?.name || '')
+                      }
                       onBlur={field.onBlur}
                       ref={field.ref}
                       id="dataset-split-column-input"
