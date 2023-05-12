@@ -45,7 +45,7 @@ class TrainingActor:
         return self.checkpoint_callback
 
     def fit(self, **args):
-        fit(**args)
+        return fit(**args)
 
     def _setup_loggers(self):
         self.loggers = [

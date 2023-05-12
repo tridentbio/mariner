@@ -47,6 +47,7 @@ from mariner.stores.model_sql import model_store
 from mariner.tasks import ExperimentView, get_exp_manager
 
 LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 
 async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
@@ -185,8 +186,11 @@ async def create_model_training(
         mlflow_experiment_name=mlflow_experiment_name,
     )
     training_ref = training_actor.fit.remote(
+        experiment_id=experiment.id,
+        experiment_name=experiment.experiment_name,
+        user_id=user.id,
         spec=model_version_parsed.config,
-        train_config=training_request,
+        train_config=training_request.config,
         dataset_uri=dataset.get_s3_uri(),
         mlflow_model_name=model_version.mlflow_model_name,
         mlflow_experiment_name=mlflow_experiment_name,
