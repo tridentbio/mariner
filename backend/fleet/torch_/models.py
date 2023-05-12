@@ -310,7 +310,6 @@ class CustomModel(pl.LightningModule):
                 prediction[target_column.name].squeeze(),
                 batch[target_column.name].squeeze(),
             )
-            print(args)
 
             if target_column.column_type != "multiclass":
                 args = map(lambda x: x.type(torch.FloatTensor), args)
