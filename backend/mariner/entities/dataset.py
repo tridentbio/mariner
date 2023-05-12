@@ -8,6 +8,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import JSON, DateTime
+from mariner.core.aws import Bucket
 
 from mariner.db.base_class import Base
 
@@ -64,4 +65,4 @@ class Dataset(Base):
         return df
 
     def get_s3_uri(self):
-        return f"s3://{self.data_url}"
+        return f"s3://{Bucket.Datasets.value}/{self.data_url}"
