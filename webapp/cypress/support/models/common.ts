@@ -64,8 +64,8 @@ export const dragComponentsAndMapConfig = (
   const maxwidth = 700;
   const positions = generatePositions(total, xoffset, yoffset, maxwidth);
   let i = 0;
-  const newLayers = []
-  const newFeaturizers = []
+  const newLayers: ModelSchema['spec']['layers'] = []
+  const newFeaturizers: ModelSchema['dataset']['featurizers'] = []
   iterateTopologically(config, (node, type) => {
     cy.log('Dragging component', node, type)
     if (['input', 'output'].includes(type)) return;
@@ -87,7 +87,7 @@ export const dragComponentsAndMapConfig = (
         type: `${node.type}-${i}`,
       }
       //@ts-ignore
-      newFeaturizers.push(featurizers)
+      newFeaturizers.push(featurizer)
     }
     i += 1;
   });
@@ -95,11 +95,9 @@ export const dragComponentsAndMapConfig = (
     ...config,
     dataset: {
       ...config.dataset,
-      // @ts-ignore
       featurizers: newFeaturizers
     },
     spec: {
-      // @ts-ignore
       layers: newLayers
     }
   }
