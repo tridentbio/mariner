@@ -317,6 +317,7 @@ def test_get_model_version(
     assert body["name"] == some_model.name
 
 
+@pytest.mark.integration
 def test_post_check_config_good_model(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
@@ -335,6 +336,7 @@ def test_post_check_config_good_model(
     assert "output" in body
 
 
+@pytest.mark.integration
 def test_post_check_config_good_model2(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
@@ -355,6 +357,7 @@ def test_post_check_config_good_model2(
     assert "output" in body
 
 
+@pytest.mark.integration
 def test_post_check_config_good_model3(
     some_dataset: DatasetEntity,
     normal_user_token_headers: dict[str, str],
