@@ -218,6 +218,7 @@ class CustomModel(pl.LightningModule):
 
     @staticmethod
     def _call_model(model, args):
+        LOG.info("%r", args)
         if isinstance(args, dict):
             return model(**args)
         if isinstance(args, list):
@@ -225,23 +226,22 @@ class CustomModel(pl.LightningModule):
         return model(args)
 
     def forward(self, input_: DataInstance):  # type: ignore
-        last = input_
+        out_layers = map(lambda x: x.out_module, self.dataset_config.target_columns)
         for node_name in self.topo_sorting:
             if node_name not in self.layer_configs:
                 continue  # is a featurizer, already evaluated by dataset
-            if node_name in map(
-                lambda x: x.out_module, self.dataset_config.target_columns
-            ):
+            if node_name in out_layers:
                 continue  # is a target column output, evaluated separately
             layer = self.layer_configs[node_name]
             args = collect_args(input_, layer.forward_args.dict())
             input_[layer.name] = CustomModel._call_model(self._model[node_name], args)
-            last = input_[layer.name]
 
         result = {}
         for target_column in self.dataset_config.target_columns:
+            layer = self.layer_configs[target_column.out_module]
+            args = collect_args(input_, layer.forward_args.dict())
             result[target_column.name] = self._call_model(
-                self._model[target_column.out_module], last
+                self._model[target_column.out_module], args
             )
 
         return result
@@ -310,6 +310,7 @@ class CustomModel(pl.LightningModule):
                 prediction[target_column.name].squeeze(),
                 batch[target_column.name].squeeze(),
             )
+            print(args)
 
             if target_column.column_type != "multiclass":
                 args = map(lambda x: x.type(torch.FloatTensor), args)

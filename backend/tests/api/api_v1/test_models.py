@@ -355,6 +355,60 @@ def test_post_check_config_good_model2(
     assert "output" in body
 
 
+def test_post_check_config_good_model3(
+    some_dataset: DatasetEntity,
+    normal_user_token_headers: dict[str, str],
+    client: TestClient,
+):
+    payload = {
+        "modelSpec": {
+            "framework": "torch",
+            "name": "asd",
+            "dataset": {
+                "featureColumns": [
+                    {
+                        "name": "mwt",
+                        "dataType": {"domainKind": "numeric", "unit": "mole"},
+                    }
+                ],
+                "featurizers": [],
+                "targetColumns": [
+                    {
+                        "type": "output",
+                        "name": "tpsa",
+                        "dataType": {"domainKind": "numeric", "unit": "mole"},
+                        "forwardArgs": {"": ""},
+                        "outModule": "Linear-0",
+                        "columnType": "regression",
+                        "lossFn": "torch.nn.MSELoss",
+                    }
+                ],
+                "name": some_dataset.name,
+            },
+            "spec": {
+                "layers": [
+                    {
+                        "type": "torch.nn.Linear",
+                        "forwardArgs": {"input": "$mwt"},
+                        "constructorArgs": {
+                            "in_features": 1,
+                            "out_features": 1,
+                            "bias": True,
+                        },
+                        "name": "Linear-0",
+                    }
+                ]
+            },
+        }
+    }
+    res = client.post(
+        "api/v1/models/check-config", json=payload, headers=normal_user_token_headers
+    )
+    assert res.status_code == HTTP_200_OK, res.json()
+    assert not res.json()["stackTrace"], res.json()["stackTrace"]
+    assert res.json()["output"] is not None, "check didn't return model output"
+
+
 @pytest.mark.integration
 def test_post_check_config_bad_model(
     db: Session,
