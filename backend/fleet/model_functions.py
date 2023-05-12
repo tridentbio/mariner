@@ -26,6 +26,7 @@ from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SciKitModelSpec, SciKitTrainingConfig
 from fleet.torch_.model_functions import TorchFunctions
 from fleet.torch_.schemas import TorchTrainingConfig
+from mariner.core.aws import Bucket, download_file_as_dataframe
 from mariner.train.custom_logger import MarinerLogger
 
 LOG = logging.getLogger(__name__)
@@ -50,7 +51,6 @@ def fit(
     dataset_uri: Union[None, str] = None,
     dataset: Union[None, DataFrame] = None,
 ):
-    LOG.error("STARTING FIT")
     functions: Union[BaseModelFunctions, None] = None
     try:
         mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
@@ -58,16 +58,16 @@ def fit(
         LOG.error("%r", exp)
         raise RuntimeError("Failed to create mlflow experiment")
 
-    LOG.error("mlflow_experinment_id %r", mlflow_experiment_id)
-
     if dataset is None and dataset_uri is None:
-        LOG.error("MISSING DATASET")
         raise ValueError("dataset_uri or dataset must be passed to fit()")
     elif dataset is None and dataset_uri is not None:
-        LOG.error("READING CSV")
-        dataset = pd.read_csv(dataset_uri)
+        assert dataset_uri.startswith(
+            "s3://"
+        ), "dataset_uri is invalid: should start with s3://"
+        # Splits s3 uri into bucket and object key
+        bucket, key = dataset_uri[5:].split("/", 1)
+        dataset = download_file_as_dataframe(bucket, key)
     assert isinstance(dataset, DataFrame), "Dataset must be DataFrame"
-    LOG.error("DataFrame loaded")
 
     if isinstance(spec, TorchModelSpec):
         functions = TorchFunctions()
@@ -89,10 +89,10 @@ def fit(
                 "Not creating MarinerLogger because experiment_id or experiment_name or user_id are missing"
             )
 
-        LOG.error("DataFrame loaded")
         functions.loggers = loggers
-        assert isinstance(train_config, TorchTrainingConfig)
-        LOG.error("TRAINING NOW")
+        assert isinstance(
+            train_config, TorchTrainingConfig
+        ), f"train_config should be TorchTrainingConfig but is {train_config.__class__}"
         functions.train(
             spec=spec,
             dataset=dataset,
@@ -102,16 +102,14 @@ def fit(
     elif isinstance(spec, SciKitModelSpec):
         functions = SciKitFunctions()
         assert isinstance(train_config, SciKitTrainingConfig)
+
     if not functions:
         raise ValueError("Can't find functions for spec")
 
-    LOG.error("FINISHED TRAINING!!!!")
     mlflow_model_version = functions.log_models(
         mlflow_model_name=mlflow_model_name,
         mlflow_experiment_id=mlflow_experiment_id,
     )
-
-    LOG.error("FINISHED LOGGING!!!!")
 
     return Result(
         mlflow_experiment_id=mlflow_experiment_id,
