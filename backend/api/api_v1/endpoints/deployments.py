@@ -83,7 +83,7 @@ def create_deployment(
     response_model=Deployment,
     dependencies=[Depends(deps.get_current_active_user)],
 )
-def update_deployment(
+async def update_deployment(
     deployment_id: int,
     deployment_input: DeploymentUpdateInput,
     current_user=Depends(deps.get_current_active_user),
@@ -93,7 +93,7 @@ def update_deployment(
     Update a deployment and process again if it is needed
     """
     try:
-        deployment = controller.update_deployment(
+        deployment = await controller.update_deployment(
             db,
             current_user,
             deployment_id,

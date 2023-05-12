@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 from sqlalchemy.orm.session import Session
 
+from mariner.ray_actors.deployments_manager import get_deployments_manager
 from mariner.core.security import (
     decode_deployment_url_token,
     generate_deployment_signed_url,
@@ -77,7 +78,7 @@ def create_deployment(
     return Deployment.from_orm(deployment)
 
 
-def update_deployment(
+async def update_deployment(
     db: Session,
     current_user: User,
     deployment_id: int,
@@ -112,14 +113,25 @@ def update_deployment(
         deployment_input.share_url = share_url
 
     if deployment_input.status and deployment_input.status != deployment_entity.status:
-        raise NotImplementedError("Deployment status cannot be updated yet.")
-
+        deployment_manager = get_deployments_manager()
+        
+        if deployment_input.status == 'active':
+            deployment_manager.add_deployment.remote(deployment_entity)
+            current_deployment = await deployment_manager \
+                .start_deployment.remote(deployment_entity.id, deployment_entity.created_by_id)
+            deployment_input.status = current_deployment.status
+            
+        elif deployment_input.status == 'stopped':
+            current_deployment = await deployment_manager \
+                .stop_deployment.remote(deployment_entity.id, deployment_entity.created_by_id)
+            deployment_input.status = current_deployment.status
+        
     return deployment_store.update(
         db, db_obj=deployment_entity, obj_in=deployment_input
     )
 
 
-def delete_deployment(
+async def delete_deployment(
     db: Session, current_user: User, deployment_to_delete_id: int
 ) -> Deployment:
     """Delete a deployment.
@@ -138,6 +150,11 @@ def delete_deployment(
     deployment = deployment_store.get(db, deployment_to_delete_id)
     if deployment.created_by_id != current_user.id:
         raise NotCreatorOwner()
+
+    deployment_manager = get_deployments_manager()
+    if deployment.id in await deployment_manager.get_deployments.remote():
+        await deployment_manager.stop_deployment.remote(deployment.id, deployment.created_by_id)
+        await deployment_manager.remove_deployment.remote(deployment.id)
 
     return Deployment.from_orm(
         deployment_store.update(db, deployment, DeploymentUpdateRepo.delete())
