@@ -14,6 +14,7 @@ from mariner.entities.deployment import (
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.model_schemas import ModelVersion
 
+
 class DeploymentsQuery(PaginatedApiQuery):
     """Query object for deployments.
 
@@ -43,7 +44,7 @@ class DeploymentsQuery(PaginatedApiQuery):
     created_after: Optional[utc_datetime] = None
     model_version_id: Optional[int] = None
     public_mode: Literal["include", "exclude", "only"] = "exclude"
-    access_mode : Optional[Literal["unset", "owned", "shared"]] = "unset"
+    access_mode: Optional[Literal["unset", "owned", "shared"]] = "unset"
 
 
 class DeploymentBase(ApiBaseModel):
@@ -110,7 +111,7 @@ class Deployment(DeploymentBase):
     created_by_id: int
     model_version: ModelVersion = None
     users_allowed: List[User] = []
-    created_at: utc_datetime 
+    created_at: utc_datetime
     updated_at: utc_datetime
 
 
@@ -136,7 +137,7 @@ class DeploymentUpdateRepo(DeploymentUpdateInput):
 
     share_url: str = None
     deleted_at: Optional[utc_datetime] = None
-    
+
     @classmethod
     def delete(cls):
         """Returns a DeploymentUpdateRepo with delete set to True."""
