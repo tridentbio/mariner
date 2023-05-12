@@ -16,6 +16,7 @@ from mariner.entities import Experiment as ExperimentEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities import User
 from mariner.entities.event import EventReadEntity
+from mariner.schemas.deployment_schemas import Deployment
 from mariner.schemas.experiment_schemas import (
     EarlyStoppingConfig,
     Experiment,
@@ -204,6 +205,30 @@ async def some_trained_model(
     await task
     yield model
     teardown_create_model(db, model)
+
+
+@pytest.fixture(scope="function")
+def some_deployment(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_trained_model: Model,
+) -> Deployment:
+    """Deployment fixture. Owner: default test_user"""
+    deployment_data = {
+        "name": random_lower_string(),
+        "readme": random_lower_string(),
+        "status": "stopped",
+        "model_version_id": some_trained_model.versions[-1].id,
+        "share_strategy": "private",
+        "prediction_rate_limit_value": 100,
+        "prediction_rate_limit_unit": "month",
+    }
+    response = client.post(
+        f"{settings.API_V1_STR}/deployments/",
+        json=deployment_data,
+        headers=normal_user_token_headers,
+    )
+    return Deployment(**response.json())
 
 
 @pytest.fixture
