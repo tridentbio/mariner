@@ -112,7 +112,7 @@ services:
       - "10001:10001"
       - "8000:8000"
     # Docs on ray cli: https://docs.ray.io/en/latest/cluster/cli.html
-    command: ray start --head --port=6379 --block
+    command: ray start --head --port=6379 --block --dashboard-host 0.0.0.0
     networks:
       - ray_net
 
