@@ -7,7 +7,7 @@ from typing import Any
 import ray
 from torch_geometric.loader import DataLoader
 
-from fleet.base_schemas import BaseFleetModelSpec, TorchModelSpec
+from fleet.base_schemas import TorchModelSpec
 from fleet.model_builder.dataset import Collater, CustomDataset
 from fleet.torch_.models import CustomModel
 from mariner.schemas.dataset_schemas import Dataset
@@ -34,9 +34,10 @@ class ModelCheckActor:
                 model_config=config.spec,
                 dataset_config=config.dataset,
             )
-            dataloader = DataLoader(torch_dataset, collate_fn=Collater(), batch_size=4)
+            dataloader = DataLoader(torch_dataset, collate_fn=Collater(), batch_size=2)
             model = CustomModel(config=config.spec, dataset_config=config.dataset)
             sample = next(iter(dataloader))
+            print(sample)
             model.predict_step(sample, 0)
             output = model.training_step(sample, 0)
             model.validation_step(sample, 0)

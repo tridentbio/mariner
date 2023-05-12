@@ -19,10 +19,9 @@ from mariner.entities import Model as ModelEntity
 from mariner.entities import User
 from mariner.entities.event import EventReadEntity
 from mariner.schemas.experiment_schemas import (
+    BaseTrainingRequest,
     EarlyStoppingConfig,
     Experiment,
-    BaseTrainingRequest,
-    TorchTrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
 from mariner.schemas.token import TokenPayload

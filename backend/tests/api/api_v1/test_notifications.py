@@ -12,11 +12,7 @@ from mariner import experiments as experiments_ctl
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import EventEntity
-from mariner.schemas.experiment_schemas import (
-    Experiment,
-    BaseTrainingRequest,
-    TorchTrainingRequest,
-)
+from mariner.schemas.experiment_schemas import Experiment, TorchTrainingRequest
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
 from tests.fixtures.user import get_test_user

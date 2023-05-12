@@ -1,10 +1,6 @@
-from typing import Literal, Optional
+from typing import Optional
 
-from pydantic import BaseModel
-
-from fleet.base_schemas import BaseFleetModelSpec
 from fleet.model_builder import optimizers
-from fleet.model_builder.schemas import TorchDatasetConfig, TorchModelSchema
 from fleet.model_builder.utils import CamelCaseModel
 
 # ---------------------------------- #

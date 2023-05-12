@@ -5,12 +5,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
 
-from fleet.model_builder.optimizers import Optimizer
-from fleet.torch_.schemas import (
-    EarlyStoppingConfig,
-    MonitoringConfig,
-    TorchTrainingConfig,
-)
+from fleet.torch_.schemas import TorchTrainingConfig
 from mariner.schemas.api import (
     ApiBaseModel,
     OrderByQuery,
