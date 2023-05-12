@@ -7,7 +7,6 @@ from asyncio.tasks import Task
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import uuid4
-from mariner.core.aws import Bucket
 
 import ray
 from sqlalchemy.orm.session import Session
@@ -20,6 +19,7 @@ from fleet.model_builder.optimizers import (
     SGDParamsSchema,
 )
 from fleet.model_functions import Result
+from mariner.core.aws import Bucket
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
@@ -187,7 +187,7 @@ async def create_model_training(
         mlflow_experiment_name=mlflow_experiment_name,
     )
 
-    dataset_uri = f"s3://{Bucket.Datasets}/{dataset.data_url}"
+    dataset_uri = f"s3://{Bucket.Datasets.value}/{dataset.data_url}"
     training_ref = training_actor.fit.remote(
         experiment_id=experiment.id,
         experiment_name=experiment.experiment_name,
