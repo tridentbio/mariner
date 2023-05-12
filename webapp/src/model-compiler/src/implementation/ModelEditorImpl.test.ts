@@ -17,13 +17,13 @@ describe('ModelEditorImpl', () => {
   describe('addComponents', () => {
     it('adds single component', () => {
       const editor = getTestModelEditor();
-      const reg = getRegressorModelSchema()
-      expect(reg.name).toBe('GNNExample')
-      expect(reg.spec.layers).toHaveLength(10)
-      const schema = extendSpecWithTargetForwardArgs(reg)
-      expect(schema.name).toBe('GNNExample')
-      expect(schema.spec.layers).toHaveLength(10)
-      const oldLayersSize = (schema.spec.layers?.length || 0)
+      const reg = getRegressorModelSchema();
+      expect(reg.name).toBe('GNNExample');
+      expect(reg.spec.layers).toHaveLength(10);
+      const schema = extendSpecWithTargetForwardArgs(reg);
+      expect(schema.name).toBe('GNNExample');
+      expect(schema.spec.layers).toHaveLength(10);
+      const oldLayersSize = schema.spec.layers?.length || 0;
       const newSchema = editor.addComponent({
         type: 'layer',
         data: {
@@ -41,9 +41,7 @@ describe('ModelEditorImpl', () => {
         schema,
       });
       expect(newSchema.spec.layers).toBeDefined();
-      expect(newSchema.spec.layers?.length).toBe(
-         oldLayersSize + 1
-      );
+      expect(newSchema.spec.layers?.length).toBe(oldLayersSize + 1);
       const insertedLayer = newSchema.spec.layers?.find(
         (l) => l.name === 'firstLinear'
       );
@@ -100,9 +98,10 @@ describe('ModelEditorImpl', () => {
       );
       expect(removedLayer).toBeUndefined();
       const GCN3_GCN3Actvation_edge = Object.values(
-      // @ts-ignore
-      (newSchema.spec.layers || [] ).find((layer) => layer.name === 'GCN3_Activation')
-          ?.forwardArgs
+        // @ts-ignore
+        (newSchema.spec.layers || []).find(
+          (layer) => layer.name === 'GCN3_Activation'
+        )?.forwardArgs
       ).find((node) => typeof node === 'string' && node.includes('GCN3'));
       expect(GCN3_GCN3Actvation_edge).toBeUndefined();
     });
