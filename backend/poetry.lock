@@ -162,6 +162,21 @@ yarl = ">=1.0,<2.0"
 speedups = ["Brotli", "aiodns", "cchardet"]
 
 [[package]]
+name = "aiohttp-cors"
+version = "0.7.0"
+description = "CORS support for aiohttp"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "aiohttp-cors-0.7.0.tar.gz", hash = "sha256:4d39c6d7100fd9764ed1caf8cebf0eb01bf5e3f24e2e073fda6234bc48b19f5d"},
+    {file = "aiohttp_cors-0.7.0-py3-none-any.whl", hash = "sha256:0451ba59fdf6909d0e2cd21e4c0a43752bc0703d33fc78ae94d9d9321710193e"},
+]
+
+[package.dependencies]
+aiohttp = ">=1.1"
+
+[[package]]
 name = "aioitertools"
 version = "0.11.0"
 description = "itertools and builtins for AsyncIO and mixed iterables"
@@ -1341,6 +1356,21 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
+
+[[package]]
+name = "colorful"
+version = "0.5.5"
+description = "Terminal string styling done right, in Python."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "colorful-0.5.5-py2.py3-none-any.whl", hash = "sha256:62c187e27c1433db9463ff93b1451898d1e7e23a7e553583fd9daeb6325182e4"},
+    {file = "colorful-0.5.5.tar.gz", hash = "sha256:66f8c1264b2a26f7293b96a03bb7a76c4bc8b9634369a0bffdcd12d618056a1d"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "comm"
@@ -2600,6 +2630,26 @@ protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.1 || >4.21.1,<4
 
 [package.extras]
 grpc = ["grpcio (>=1.44.0,<2.0.0dev)"]
+
+[[package]]
+name = "gpustat"
+version = "1.1"
+description = "An utility to monitor NVIDIA GPU status and usage"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "gpustat-1.1.tar.gz", hash = "sha256:c8fc105404aac11884f70ed2fa06cfd210d3cd389ccae4a9bc38579c72460cee"},
+]
+
+[package.dependencies]
+blessed = ">=1.17.1"
+nvidia-ml-py = ">=11.450.129"
+psutil = ">=5.6.0"
+
+[package.extras]
+completion = ["shtab"]
+test = ["mockito (>=1.2.1)", "pytest (>=5.4.1)", "pytest-runner"]
 
 [[package]]
 name = "greenlet"
@@ -5074,6 +5124,18 @@ setuptools = "*"
 wheel = "*"
 
 [[package]]
+name = "nvidia-ml-py"
+version = "11.525.112"
+description = "Python Bindings for the NVIDIA Management Library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "nvidia-ml-py-11.525.112.tar.gz", hash = "sha256:c64e473953b65ec0ccc76cf3601c3130a0ac8060bbcaea912cc00fa8e4c9868d"},
+    {file = "nvidia_ml_py-11.525.112-py3-none-any.whl", hash = "sha256:bcb978afc52f44a98c48b3f619e16f567abf745d8796aaa8d36093fe7665d356"},
+]
+
+[[package]]
 name = "nvidia-nccl-cu11"
 version = "2.14.3"
 description = "NVIDIA Collective Communication Library (NCCL) Runtime"
@@ -5116,6 +5178,34 @@ files = [
 rsa = ["cryptography (>=3.0.0)"]
 signals = ["blinker (>=1.4.0)"]
 signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
+
+[[package]]
+name = "opencensus"
+version = "0.11.2"
+description = "A stats collection and distributed tracing framework"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "opencensus-0.11.2-py2.py3-none-any.whl", hash = "sha256:7a1a34b87c8db3d9984e97ff05739058342f24de1d700766d59044eee8fb3b3f"},
+    {file = "opencensus-0.11.2.tar.gz", hash = "sha256:6154042a236b9ecdd55a23dfbb2743bb3deacd0687e3e0391ec2e0c74950d66f"},
+]
+
+[package.dependencies]
+google-api-core = {version = ">=1.0.0,<3.0.0", markers = "python_version >= \"3.6\""}
+opencensus-context = ">=0.1.3"
+
+[[package]]
+name = "opencensus-context"
+version = "0.1.3"
+description = "OpenCensus Runtime Context"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "opencensus-context-0.1.3.tar.gz", hash = "sha256:a03108c3c10d8c80bb5ddf5c8a1f033161fa61972a9917f9b9b3a18517f0088c"},
+    {file = "opencensus_context-0.1.3-py2.py3-none-any.whl", hash = "sha256:073bb0590007af276853009fac7e4bab1d523c3f03baf4cb4511ca38967c6039"},
+]
 
 [[package]]
 name = "ordered-set"
@@ -5795,6 +5885,23 @@ files = [
 grpcio = ">=1.10.0"
 prometheus-client = ">=0.3.0"
 setuptools = ">=39.0.1"
+
+[[package]]
+name = "py-spy"
+version = "0.3.14"
+description = "Sampling profiler for Python programs"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "py_spy-0.3.14-py2.py3-none-macosx_10_7_x86_64.whl", hash = "sha256:5b342cc5feb8d160d57a7ff308de153f6be68dcf506ad02b4d67065f2bae7f45"},
+    {file = "py_spy-0.3.14-py2.py3-none-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:fe7efe6c91f723442259d428bf1f9ddb9c1679828866b353d539345ca40d9dd2"},
+    {file = "py_spy-0.3.14-py2.py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:590905447241d789d9de36cff9f52067b6f18d8b5e9fb399242041568d414461"},
+    {file = "py_spy-0.3.14-py2.py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:fd6211fe7f587b3532ba9d300784326d9a6f2b890af7bf6fff21a029ebbc812b"},
+    {file = "py_spy-0.3.14-py2.py3-none-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:3e8e48032e71c94c3dd51694c39e762e4bbfec250df5bf514adcdd64e79371e0"},
+    {file = "py_spy-0.3.14-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:f59b0b52e56ba9566305236375e6fc68888261d0d36b5addbe3cf85affbefc0e"},
+    {file = "py_spy-0.3.14-py2.py3-none-win_amd64.whl", hash = "sha256:8f5b311d09f3a8e33dbd0d44fc6e37b715e8e0c7efefafcda8bfd63b31ab5a31"},
+]
 
 [[package]]
 name = "pyarrow"
@@ -6690,11 +6797,15 @@ files = [
 ]
 
 [package.dependencies]
+aiohttp = {version = ">=3.7", optional = true, markers = "extra == \"default\""}
+aiohttp-cors = {version = "*", optional = true, markers = "extra == \"default\""}
 aiosignal = "*"
 attrs = "*"
 click = ">=7.0"
+colorful = {version = "*", optional = true, markers = "extra == \"default\""}
 filelock = "*"
 frozenlist = "*"
+gpustat = {version = ">=1.0.0", optional = true, markers = "extra == \"default\""}
 grpcio = [
     {version = ">=1.32.0,<=1.51.3", markers = "python_version < \"3.10\" and sys_platform != \"darwin\""},
     {version = ">=1.32.0,<=1.49.1", markers = "python_version < \"3.10\" and sys_platform == \"darwin\""},
@@ -6707,10 +6818,15 @@ numpy = [
     {version = ">=1.16", markers = "python_version < \"3.9\""},
     {version = ">=1.19.3", markers = "python_version >= \"3.9\""},
 ]
+opencensus = {version = "*", optional = true, markers = "extra == \"default\""}
 packaging = {version = "*", markers = "python_version >= \"3.10\""}
+prometheus-client = {version = ">=0.7.1", optional = true, markers = "extra == \"default\""}
 protobuf = ">=3.15.3,<3.19.5 || >3.19.5"
+py-spy = {version = ">=0.2.0", optional = true, markers = "extra == \"default\""}
+pydantic = {version = "*", optional = true, markers = "extra == \"default\""}
 pyyaml = "*"
 requests = "*"
+smart-open = {version = "*", optional = true, markers = "extra == \"default\""}
 virtualenv = ">=20.0.24,<20.21.1"
 
 [package.extras]
@@ -7146,6 +7262,28 @@ files = [
     {file = "slicer-0.0.7-py3-none-any.whl", hash = "sha256:0b94faa5251c0f23782c03f7b7eedda91d80144059645f452c4bc80fab875976"},
     {file = "slicer-0.0.7.tar.gz", hash = "sha256:f5d5f7b45f98d155b9c0ba6554fa9770c6b26d5793a3e77a1030fb56910ebeec"},
 ]
+
+[[package]]
+name = "smart-open"
+version = "6.3.0"
+description = "Utils for streaming large files (S3, HDFS, GCS, Azure Blob Storage, gzip, bz2...)"
+category = "main"
+optional = false
+python-versions = ">=3.6,<4.0"
+files = [
+    {file = "smart_open-6.3.0-py3-none-any.whl", hash = "sha256:b4c9ae193ad6d3e7add50944b86afa0d150bd821ab8ec21edb26d9a06b66f6a8"},
+    {file = "smart_open-6.3.0.tar.gz", hash = "sha256:d5238825fe9a9340645fac3d75b287c08fbb99fb2b422477de781c9f5f09e019"},
+]
+
+[package.extras]
+all = ["azure-common", "azure-core", "azure-storage-blob", "boto3", "google-cloud-storage (>=2.6.0)", "paramiko", "requests"]
+azure = ["azure-common", "azure-core", "azure-storage-blob"]
+gcs = ["google-cloud-storage (>=2.6.0)"]
+http = ["requests"]
+s3 = ["boto3"]
+ssh = ["paramiko"]
+test = ["azure-common", "azure-core", "azure-storage-blob", "boto3", "google-cloud-storage (>=2.6.0)", "moto[server]", "paramiko", "pytest", "pytest-rerunfailures", "requests", "responses"]
+webhdfs = ["requests"]
 
 [[package]]
 name = "smmap"
@@ -8629,4 +8767,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "698afa88da2ad140102475de33bc88574691d2c99ae7c0aa99085db85978f9e2"
+content-hash = "11aabc9a17673abf9fe0f80b2aea24cd9ff3d28e73f3a42b688b71f062a0d419"
