@@ -226,6 +226,19 @@ class CustomModel(pl.LightningModule):
         return model(args)
 
     def forward(self, input_: DataInstance):  # type: ignore
+        """Forward pass of the model
+
+        Runs the foward pass through the layers ordered by the topological
+        sorting on self.topo_sorting attribute.
+        If it finds a featurizer, ignores because it already evaluated by the dataset.
+        If it finds a target column output (out_module), ignores on topo_sorting iteration then evaluate this for
+        each target column on self.config.dataset.target_columns iteration.
+
+        Args:
+            input_: input data (x)
+        Returns:
+            dictionary with the output layers outputs
+        """
         out_layers = map(lambda x: x.out_module, self.dataset_config.target_columns)
         for node_name in self.topo_sorting:
             if node_name not in self.layer_configs:
