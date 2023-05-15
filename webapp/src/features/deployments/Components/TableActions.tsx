@@ -26,11 +26,11 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   const [updateDeploy] = deploymentsApi.useUpdateDeploymentMutation();
   const { setMessage } = useNotifications();
 
-  const startDeploy = (id: number) => {
+  const handleDeployStatus = (id: number, status: 'active' | 'stopped') => {
     updateDeploy({
       deploymentId: id,
       // @ts-ignore
-      status: 'active',
+      status,
     })
       .unwrap()
       .catch(
@@ -40,9 +40,11 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
       );
   };
 
-  const handleStopDeploy = (id: number) => {};
+  const handleStopDeploy = (id: number) => {
+    handleDeployStatus(id, 'stopped');
+  };
   const handleStartDeploy = (id: number) => {
-    startDeploy(id);
+    handleDeployStatus(id, 'active');
   };
 
   const startStopMap = {
@@ -59,7 +61,7 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
       tooltip: 'Start',
     },
     [EDeploymnetStatuses.IDLE]: {
-      color: 'success',
+      color: 'warning',
       Icon: PlayArrowIcon,
       onClick: handleStartDeploy,
       tooltip: 'Start',
