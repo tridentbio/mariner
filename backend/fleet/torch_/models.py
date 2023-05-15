@@ -1,3 +1,7 @@
+"""
+Trainable lightning model classes and is mapped from :py:class:`fleet.torch_.schemas.TorchModelSpec`
+as well as auxiliary classes and functions.
+"""
 import logging
 from typing import Dict, List, Literal, Optional, Union
 
@@ -22,7 +26,7 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
     Converts str to single element lists
 
     Args:
-        x: input'
+        x: input
 
     Returns:
         List[str]

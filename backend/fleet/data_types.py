@@ -1,3 +1,6 @@
+"""
+Data type schemas used to describe datasets.
+"""
 from typing import Any, Literal, Union
 
 from pydantic import Field, validator

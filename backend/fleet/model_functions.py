@@ -1,7 +1,8 @@
 """
-The fleet.models module is responsible to export abstractions
-around different machine learning algorithms provided by 
-underlying packages such as torch and sci-kit
+The fleet.models module provides a high-level interface for working with various
+machine learning algorithms, including those from popular libraries like torch 
+and scikit-learn. These algorithms are designed to tackle a range regression and
+classification problems on chemical and life science dataset.
 """
 
 

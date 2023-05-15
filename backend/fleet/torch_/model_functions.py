@@ -1,3 +1,7 @@
+"""
+Concrete implementation of :py:class:fleet.base_schemas.BaseModelFunctions for
+torch based models.
+"""
 from os import getenv
 from typing import List, Union
 
@@ -17,6 +21,20 @@ from mariner.core.mlflowapi import log_models_and_create_version
 
 
 class TorchFunctions(BaseModelFunctions):
+    """
+    Handles training, testing and publishing a model to mlflow.
+
+
+    Attributes:
+        checkpoint_callback: The :py:class:`ModelCheckpoint` lightning callback
+            used to save the model weights in different epochs, and retrieve the
+            best performing model of all checkpoints.
+        spec: The :py:class:`TorchModelSpec` to be trained, provided by the
+            :py:meth:`train` method.
+        loggers: The list of loggers to used with :py:class:`Trainer`. Must be
+            set before calling :py:meth:`train`
+    """
+
     checkpoint_callback: Union[ModelCheckpoint, None] = None
 
     spec: TorchModelSpec
@@ -24,6 +42,9 @@ class TorchFunctions(BaseModelFunctions):
     _loggers: List[Logger] = []
 
     def __init__(self):
+        """
+        Instantiates the class. Takes no arguments.
+        """
         super().__init__()
 
     @property
@@ -42,6 +63,18 @@ class TorchFunctions(BaseModelFunctions):
         params: TorchTrainingConfig,
         datamodule_args: dict = {},
     ):
+        """Trains a torch neural network.
+
+        Args:
+            dataset: The :py:class:`DataFrame` to fit the model into.
+            spec: A description of the neural network architecture, dataset columns
+
+            params: The training parameters.
+            datamodule_args: The :py:class:`DataModule` arguments.
+
+        Raises:
+            ValueError: When the `params.checkpoint_config` property is not set.
+        """
         self.spec = spec
         model = CustomModel(config=spec.spec, dataset_config=spec.dataset)
         model.set_optimizer(params.optimizer)
@@ -89,8 +122,21 @@ class TorchFunctions(BaseModelFunctions):
     def log_models(
         self, mlflow_experiment_id: str, mlflow_model_name: str
     ) -> ModelVersion:
-        """Logs best and last models to mlflow tracker, and return the model version
+        """[Logs best and last models to mlflow tracker.
+        t
+
+        Args:
+            mlflow_experiment_id: The mlflow experiment string identifier.
+            mlflow_model_name: The mlflow model string identifier.
+
+        Returns:
+            The model version
         that performed best on the monitored metric
+
+
+        Raises:
+            ValueError: When training is not previously called and therefore
+                the `checkpoint_callback` property is not set.
         """
         if not self.checkpoint_callback:
             raise ValueError("train() must be called first")

@@ -1,11 +1,12 @@
+"""
+Schemas used to specify the torch based model and how it is trained.
+
+TODO: Move fleet.base_schema subclasses to here.
+"""
 from typing import Optional
 
 from fleet.model_builder import optimizers
 from fleet.model_builder.utils import CamelCaseModel
-
-# ---------------------------------- #
-# Training Request Configuration     #
-# ---------------------------------- #
 
 
 class MonitoringConfig(CamelCaseModel):
@@ -30,6 +31,22 @@ class EarlyStoppingConfig(CamelCaseModel):
 
 
 class TorchTrainingConfig(CamelCaseModel):
+    """
+    Configures hyperparameters in torch based model training runs.
+
+    Attributes:
+        epochs: The number of iterations on the whole training dataset.
+        batch_size: The size of the batches used by the optimization
+            algorithm.
+        checkpoint_config: Defines the metric by which a model is considered
+            superior that feeds
+            :py:class:`lightning.pytorch.callbacks.ModelCheckpoint` callback.
+        optimizer: The optimization algorithm described by :py:mod:`optimizers`
+            class
+
+
+    """
+
     epochs: int
     batch_size: Optional[int] = None
     checkpoint_config: Optional[MonitoringConfig] = None
