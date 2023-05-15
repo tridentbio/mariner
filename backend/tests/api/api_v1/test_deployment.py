@@ -400,7 +400,7 @@ def predict_req_data():
         "mwt": [3, 1, 9],
     }
 
-
+@pytest.mark.long
 def test_post_make_prediction(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
