@@ -183,7 +183,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         del obj_in.organizations_allowed
         del obj_in.users_id_allowed
 
-        return super().update(db, db_obj=db_obj, obj_in=obj_in.dict(exclude_none=True))
+        return DeploymentSchema.from_orm(
+            super().update(db, db_obj=db_obj, obj_in=obj_in.dict(exclude_none=True))
+        )
 
     def create_permission(self, db: Session, obj_in: PermissionCreateRepo):
         """Create a new permission
@@ -300,9 +302,20 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         return count >= deployment.prediction_rate_limit_value
 
     def track_prediction(self, db: Session, prediction_to_track: PredictionCreateRepo):
-        prediction = db.add(Predictions(**prediction_to_track.dict()))
+        if not isinstance(prediction_to_track, dict):
+            prediction_to_track = prediction_to_track.dict()
+
+        prediction = db.add(Predictions(**prediction_to_track))
         db.commit()
         return prediction
+
+    def get_running_deployments(self, db: Session):
+        sql_query = db.query(Deployment)
+        sql_query = sql_query.filter(Deployment.status == "active")
+        sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
+        results = sql_query.all()
+        result = list(map(lambda x: DeploymentSchema.from_orm(x[0]), results))
+        return result
 
 
 deployment_store = CRUDDeployment(Deployment)

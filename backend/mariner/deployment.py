@@ -122,7 +122,9 @@ async def update_deployment(
         deployment_manager = get_deployments_manager()
 
         if deployment_input.status == "active":
-            deployment_manager.add_deployment.remote(deployment_entity)
+            await deployment_manager.add_deployment.remote(
+                Deployment.from_orm(deployment_entity)
+            )
             current_deployment = await deployment_manager.start_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
@@ -282,7 +284,12 @@ async def make_prediction(
     Raises:
         PermissionError: If the user does not have access to the deployment.
         PredictionLimitReached: If the user reached the prediction limit.
+        DeploymentNotFound: If the deployment is not running.
     """
+    manager = get_deployments_manager()
+    if not await manager.deployment_is_running.remote(deployment_id):
+        raise DeploymentNotFound()
+
     deployment = deployment_store.get_only_with_permission(
         db, deployment_id, current_user
     )
@@ -292,7 +299,6 @@ async def make_prediction(
     if deployment_store.check_prediction_limit_reached(db, deployment, current_user):
         raise PredictionLimitReached()
 
-    manager = get_deployments_manager()
     prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
         deployment_id, data
     )

@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Dict, Literal
+from typing import Any, Dict, Literal
 
 import pytest
 from fastapi.testclient import TestClient
@@ -389,12 +389,33 @@ def test_get_public_deployment(
         assert payload["name"] == some_deployment.name, "Should have the same name."
 
 
+@pytest.fixture(scope="module")
+def predict_req_data():
+    return {
+        "smiles": [
+            "CCCC",
+            "CCCCC",
+            "CCCCCCC",
+        ],
+        "mwt": [3, 1, 9],
+    }
+
+
 def test_post_make_prediction(
-    db: Session,
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
     some_deployment: Deployment,
+    predict_req_data: Dict[str, Any],
 ):
+    r = client.post(
+        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        json=predict_req_data,
+        headers=normal_user_token_headers,
+    )
+    assert (
+        r.status_code == 404
+    ), "Should not find the deployment instance on ray since it's not running."
+
     r = client.put(
         f"{settings.API_V1_STR}/deployments/{some_deployment.id}",
         json={
@@ -405,19 +426,11 @@ def test_post_make_prediction(
         },
         headers=normal_user_token_headers,
     )
-    assert r.status_code == 200
+    assert r.status_code == 200, "Should update deployment instance status to active."
 
-    data = {
-        "smiles": [
-            "CCCC",
-            "CCCCC",
-            "CCCCCCC",
-        ],
-        "mwt": [3, 1, 9],
-    }
     r = client.post(
         f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
-        json=data,
+        json=predict_req_data,
         headers=normal_user_token_headers,
     )
     assert r.status_code == 200
@@ -427,7 +440,7 @@ def test_post_make_prediction(
 
     r = client.post(
         f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
-        json=data,
+        json=predict_req_data,
         headers=normal_user_token_headers,
     )
     assert (

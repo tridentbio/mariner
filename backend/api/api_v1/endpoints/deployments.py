@@ -211,6 +211,7 @@ async def post_make_prediction(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
+    """Make a prediction in a deployment instance."""
     try:
         prediction: Dict[str, Any] = await controller.make_prediction(
             db, current_user, deployment_id, data
@@ -226,4 +227,10 @@ async def post_make_prediction(
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="You have reached the prediction limit for this deployment.",
+        )
+
+    except DeploymentNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment not found.",
         )

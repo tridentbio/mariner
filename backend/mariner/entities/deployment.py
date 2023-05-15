@@ -41,6 +41,7 @@ class Predictions(Base):
     deployment_id = Column(
         Integer, ForeignKey("deployment.id", ondelete="CASCADE"), nullable=False
     )
+    deployment = relationship("Deployment", back_populates="predictions")
 
     user_id = Column(Integer, ForeignKey("user.id"), nullable=True)
     user = relationship(User)
@@ -102,6 +103,9 @@ class Deployment(Base):
     share_strategy = Column(Enum(ShareStrategy), default=ShareStrategy.PRIVATE)
     share_permissions = relationship(
         "SharePermissions", back_populates="deployment", cascade="all,delete"
+    )
+    predictions = relationship(
+        "Predictions", back_populates="deployment", cascade="all,delete"
     )
 
     model_version_id = Column(

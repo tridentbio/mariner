@@ -113,6 +113,12 @@ class DeploymentsManager:
     def get_deployments(self):
         return self.deployments
 
+    def deployment_is_running(self, deployment_id: int):
+        return (
+            deployment_id in self.deployments.keys()
+            and self.deployments[deployment_id].is_running
+        )
+
     def add_deployment(self, deployment: Deployment):
         if not deployment.id in self.deployments.keys():
             self.deployments[deployment.id] = DeploymentInstance(deployment)
