@@ -181,3 +181,22 @@ class PermissionDeleteRepo(PermissionBase):
 
     Used in the PermissionCRUD to delete a permission in the database.
     """
+
+
+class PredictionBase(ApiBaseModel):
+    """Prediction base type.
+
+    Used to make and track predictions in deployed models.
+    Each prediction should be tracked in the database to be possible
+    to limit user predictions by deployment configuration.
+    """
+
+    deployment_id: int
+    user_id: int
+
+
+class PredictionCreateRepo(PredictionBase):
+    """Prediction to create type.
+
+    Used in the PredictionCRUD to create a prediction register in the database.
+    """

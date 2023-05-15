@@ -34,6 +34,20 @@ class RateLimitUnit(str, PyEnum):
     MONTH = "month"
 
 
+class Predictions(Base):
+    """Entity mapping to predictions of deployment."""
+
+    id = Column(Integer, primary_key=True, index=True)
+    deployment_id = Column(
+        Integer, ForeignKey("deployment.id", ondelete="CASCADE"), nullable=False
+    )
+
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=True)
+    user = relationship(User)
+
+    created_at = Column(DateTime, default=current_timestamp())
+
+
 class SharePermissions(Base):
     """Entity mapping to share permissions of deployment."""
 

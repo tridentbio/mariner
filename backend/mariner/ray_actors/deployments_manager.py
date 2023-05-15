@@ -75,7 +75,7 @@ class DeploymentInstance:
         if not self.is_running:
             raise DeploymentNotRunning("Deployment is not running")
         input_ = self.load_input(x)
-        return self.model(input_)
+        return self.model.predict_step(input_)
 
     def load_input(self, x):
         df = pd.DataFrame.from_dict(x, dtype=float)
@@ -161,7 +161,7 @@ class DeploymentsManager:
         return self.deployments[deployment_id].predict(x)
 
 
-manager = DeploymentsManager.remote()
+manager = None
 Manager = NewType("Remote Deployment Manager", DeploymentsManager)
 
 

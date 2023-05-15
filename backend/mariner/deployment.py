@@ -1,11 +1,11 @@
 """
 Module containing deployment service functions.
 """
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from sqlalchemy.orm.session import Session
+from torch import Tensor
 
-from mariner.ray_actors.deployments_manager import get_deployments_manager
 from mariner.core.security import (
     decode_deployment_url_token,
     generate_deployment_signed_url,
@@ -13,7 +13,12 @@ from mariner.core.security import (
 from mariner.entities.deployment import Deployment as DeploymentEntity
 from mariner.entities.deployment import ShareStrategy
 from mariner.entities.user import User
-from mariner.exceptions import DeploymentNotFound, NotCreatorOwner
+from mariner.exceptions import (
+    DeploymentNotFound,
+    NotCreatorOwner,
+    PredictionLimitReached,
+)
+from mariner.ray_actors.deployments_manager import get_deployments_manager
 from mariner.schemas.deployment_schemas import (
     Deployment,
     DeploymentBase,
@@ -21,6 +26,7 @@ from mariner.schemas.deployment_schemas import (
     DeploymentsQuery,
     DeploymentUpdateRepo,
     PermissionCreateRepo,
+    PredictionCreateRepo,
 )
 from mariner.stores.deployment_sql import deployment_store
 
@@ -114,18 +120,20 @@ async def update_deployment(
 
     if deployment_input.status and deployment_input.status != deployment_entity.status:
         deployment_manager = get_deployments_manager()
-        
-        if deployment_input.status == 'active':
+
+        if deployment_input.status == "active":
             deployment_manager.add_deployment.remote(deployment_entity)
-            current_deployment = await deployment_manager \
-                .start_deployment.remote(deployment_entity.id, deployment_entity.created_by_id)
+            current_deployment = await deployment_manager.start_deployment.remote(
+                deployment_entity.id, deployment_entity.created_by_id
+            )
             deployment_input.status = current_deployment.status
-            
-        elif deployment_input.status == 'stopped':
-            current_deployment = await deployment_manager \
-                .stop_deployment.remote(deployment_entity.id, deployment_entity.created_by_id)
+
+        elif deployment_input.status == "stopped":
+            current_deployment = await deployment_manager.stop_deployment.remote(
+                deployment_entity.id, deployment_entity.created_by_id
+            )
             deployment_input.status = current_deployment.status
-        
+
     return deployment_store.update(
         db, db_obj=deployment_entity, obj_in=deployment_input
     )
@@ -153,7 +161,9 @@ async def delete_deployment(
 
     deployment_manager = get_deployments_manager()
     if deployment.id in await deployment_manager.get_deployments.remote():
-        await deployment_manager.stop_deployment.remote(deployment.id, deployment.created_by_id)
+        await deployment_manager.stop_deployment.remote(
+            deployment.id, deployment.created_by_id
+        )
         await deployment_manager.remove_deployment.remote(deployment.id)
 
     return Deployment.from_orm(
@@ -245,3 +255,63 @@ def get_public_deployment(db: Session, token):
         raise PermissionError()
 
     return deployment
+
+
+async def make_prediction(
+    db: Session, current_user: User, deployment_id: int, data: Dict[str, Any]
+):
+    """Make a prediction and track it.
+
+    Prediction flow:
+    1. Check if deployment exists and user has access.
+    2. Check if user has enough "credits" to make a new prediction without
+    reach prediction limit configuration.
+    3. Make prediction.
+    4. Track prediction.
+    5. Return prediction.
+
+    Args:
+        db: SQLAlchemy session.
+        current_user: Current user.
+        deployment_id: Deployment ID.
+        data: Data to be predicted (any json).
+
+    Returns:
+        Prediction: Json with predictions for each model version target column.
+
+    Raises:
+        PermissionError: If the user does not have access to the deployment.
+        PredictionLimitReached: If the user reached the prediction limit.
+    """
+    deployment = deployment_store.get_only_with_permission(
+        db, deployment_id, current_user
+    )
+    if not deployment:
+        raise PermissionError()
+
+    if deployment_store.check_prediction_limit_reached(db, deployment, current_user):
+        raise PredictionLimitReached()
+
+    manager = get_deployments_manager()
+    prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
+        deployment_id, data
+    )
+
+    deployment_store.track_prediction(
+        db,
+        PredictionCreateRepo(
+            deployment_id=deployment_id,
+            user_id=current_user.id,
+        ),
+    )
+
+    for column, result in prediction.items():
+        assert isinstance(result, Tensor), "Result must be a Tensor"
+        serialized_result = result.tolist()
+        prediction[column] = (
+            serialized_result
+            if isinstance(serialized_result, list)
+            else [serialized_result]
+        )
+
+    return prediction

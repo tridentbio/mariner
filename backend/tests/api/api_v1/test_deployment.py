@@ -25,7 +25,6 @@ from tests.utils.utils import random_lower_string
 def deployment_fixture(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    db: Session,
     some_model: Model,
 ) -> Deployment:
     """Deployment fixture. Owner: default test_user"""
@@ -388,3 +387,49 @@ def test_get_public_deployment(
         payload = r.json()
         assert payload["id"] == some_deployment.id, "Should have the same id."
         assert payload["name"] == some_deployment.name, "Should have the same name."
+
+
+def test_post_make_prediction(
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: Dict[str, str],
+    some_deployment: Deployment,
+):
+    r = client.put(
+        f"{settings.API_V1_STR}/deployments/{some_deployment.id}",
+        json={
+            "share_strategy": "public",
+            "prediction_rate_limit_value": 1,
+            "prediction_rate_limit_unit": "day",
+            "status": "active",
+        },
+        headers=normal_user_token_headers,
+    )
+    assert r.status_code == 200
+
+    data = {
+        "smiles": [
+            "CCCC",
+            "CCCCC",
+            "CCCCCCC",
+        ],
+        "mwt": [3, 1, 9],
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        json=data,
+        headers=normal_user_token_headers,
+    )
+    assert r.status_code == 200
+    payload = r.json()
+    assert "tpsa" in payload, "'tpsa' column should be in prediction"
+    assert isinstance(payload["tpsa"], list), "'tpsa' column should be a list"
+
+    r = client.post(
+        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        json=data,
+        headers=normal_user_token_headers,
+    )
+    assert (
+        r.status_code == 429
+    ), "Should return 429 status code when rate limit is exceeded"

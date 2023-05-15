@@ -1,19 +1,22 @@
 """
 Deployment data layer defining ways to read and write to the deployments collection
 """
-from typing import List
+from datetime import timedelta
+from typing import List, Optional
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from mariner.entities.deployment import (
     Deployment,
+    Predictions,
     SharePermissions,
     ShareStrategy,
 )
 from mariner.entities.model import ModelVersion
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
+from mariner.schemas.api import utc_datetime
 from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
 from mariner.schemas.deployment_schemas import (
     DeploymentCreateRepo,
@@ -21,6 +24,7 @@ from mariner.schemas.deployment_schemas import (
     DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
+    PredictionCreateRepo,
     User,
 )
 from mariner.schemas.model_schemas import ModelVersion as ModelVersionSchema
@@ -179,8 +183,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         del obj_in.organizations_allowed
         del obj_in.users_id_allowed
 
-        super().update(db, db_obj=db_obj, obj_in=obj_in.dict(exclude_none=True))
-        return db_obj
+        return super().update(db, db_obj=db_obj, obj_in=obj_in.dict(exclude_none=True))
 
     def create_permission(self, db: Session, obj_in: PermissionCreateRepo):
         """Create a new permission
@@ -251,6 +254,55 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             raise NotCreatorOwner("You are not the owner of this model version")
 
         return model_version
+
+    def get_only_with_permission(
+        self, db: Session, deployment_id: int, user: User
+    ) -> Optional[Deployment]:
+        sql_query = (
+            db.query(Deployment)
+            .join(SharePermissions, Deployment.share_permissions, isouter=True)
+            .distinct(Deployment.id)
+        )
+        sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
+        sql_query = sql_query.filter(Deployment.id == deployment_id)
+        sql_query = sql_query.filter(
+            or_(
+                Deployment.created_by_id == user.id,
+                SharePermissions.user_id == user.id,
+                SharePermissions.organization == f"@{user.email.split('@')[1]}",
+            )
+        )
+        result = sql_query.all()
+
+        try:
+            deployment = result[0]
+            return deployment
+        except IndexError:
+            return None
+
+    def check_prediction_limit_reached(
+        self, db: Session, deployment: Deployment, user: User
+    ) -> bool:
+        created_at_rule: utc_datetime = {
+            "minute": lambda: utc_datetime.now() - timedelta(minutes=1),
+            "hour": lambda: utc_datetime.now() - timedelta(hours=1),
+            "day": lambda: utc_datetime.now() - timedelta(days=1),
+            "month": lambda: utc_datetime.now() - timedelta(days=30),
+        }[deployment.prediction_rate_limit_unit]()
+
+        sql_query = db.query(Predictions).filter(
+            Predictions.created_at >= created_at_rule.strftime("%Y-%m-%d %H:%M:%S"),
+            Predictions.deployment_id == deployment.id,
+            Predictions.user_id == user.id,
+        )
+
+        count = sql_query.count()
+        return count >= deployment.prediction_rate_limit_value
+
+    def track_prediction(self, db: Session, prediction_to_track: PredictionCreateRepo):
+        prediction = db.add(Predictions(**prediction_to_track.dict()))
+        db.commit()
+        return prediction
 
 
 deployment_store = CRUDDeployment(Deployment)

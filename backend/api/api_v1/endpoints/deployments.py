@@ -1,7 +1,7 @@
 """
 Handlers for api/v1/deployments* endpoints
 """
-from typing import Any
+from typing import Any, Dict
 
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
@@ -17,6 +17,7 @@ from mariner.exceptions import (
     DeploymentNotFound,
     ModelVersionNotFound,
     NotCreatorOwner,
+    PredictionLimitReached,
 )
 from mariner.schemas.api import Paginated
 from mariner.schemas.deployment_schemas import (
@@ -121,14 +122,14 @@ async def update_deployment(
 
 
 @router.delete("/{deployment_id}", response_model=Deployment)
-def delete_deployment(
+async def delete_deployment(
     deployment_id: int,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
     """Delete a deployment by id"""
     try:
-        deployment = controller.delete_deployment(db, current_user, deployment_id)
+        deployment = await controller.delete_deployment(db, current_user, deployment_id)
         return deployment
     except DeploymentNotFound:
         raise HTTPException(
@@ -200,4 +201,29 @@ def get_public_deployment(
     except PermissionError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Deployment is not public."
+        )
+
+
+@router.post("/{deployment_id}/predict", response_model=Dict[str, Any])
+async def post_make_prediction(
+    deployment_id: int,
+    data: Dict[str, Any],
+    current_user: User = Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db),
+):
+    try:
+        prediction: Dict[str, Any] = await controller.make_prediction(
+            db, current_user, deployment_id, data
+        )
+        return prediction
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You don't have permission to make predictions for this deployment.",
+        )
+
+    except PredictionLimitReached:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="You have reached the prediction limit for this deployment.",
         )
