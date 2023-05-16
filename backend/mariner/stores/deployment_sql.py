@@ -260,6 +260,18 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
     def get_only_with_permission(
         self, db: Session, deployment_id: int, user: User
     ) -> Optional[Deployment]:
+        """Get a deployment only if the user has permission to access it
+
+        This permission can be based on:
+        - The user is the creator of the deployment
+        - The user has a share permission to the deployment
+        - The user belongs to an organization that has a share permission to the deployment
+        - The deployment is public
+
+        Returns:
+        Deployment:
+            the deployment if the user has permission to access it, None otherwise
+        """
         sql_query = (
             db.query(Deployment)
             .join(SharePermissions, Deployment.share_permissions, isouter=True)
@@ -270,6 +282,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         sql_query = sql_query.filter(
             or_(
                 Deployment.created_by_id == user.id,
+                Deployment.share_strategy == ShareStrategy.PUBLIC,
                 SharePermissions.user_id == user.id,
                 SharePermissions.organization == f"@{user.email.split('@')[1]}",
             )
@@ -285,6 +298,11 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
     def check_prediction_limit_reached(
         self, db: Session, deployment: Deployment, user: User
     ) -> bool:
+        """Check if the user has reached the prediction limit for the deployment
+
+        Returns:
+        bool: True if the user has reached the prediction limit, False otherwise
+        """
         created_at_rule: utc_datetime = {
             "minute": lambda: utc_datetime.now() - timedelta(minutes=1),
             "hour": lambda: utc_datetime.now() - timedelta(hours=1),
@@ -302,20 +320,18 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         return count >= deployment.prediction_rate_limit_value
 
     def track_prediction(self, db: Session, prediction_to_track: PredictionCreateRepo):
+        """Register a prediction in the database.
+        To be used to check if the user has reached the prediction limit for the deployment
+
+        Returns:
+        Prediction: the prediction that was registered
+        """
         if not isinstance(prediction_to_track, dict):
             prediction_to_track = prediction_to_track.dict()
 
         prediction = db.add(Predictions(**prediction_to_track))
         db.commit()
         return prediction
-
-    def get_running_deployments(self, db: Session):
-        sql_query = db.query(Deployment)
-        sql_query = sql_query.filter(Deployment.status == "active")
-        sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
-        results = sql_query.all()
-        result = list(map(lambda x: DeploymentSchema.from_orm(x[0]), results))
-        return result
 
 
 deployment_store = CRUDDeployment(Deployment)

@@ -266,7 +266,7 @@ async def make_prediction(
 
     Prediction flow:
     1. Check if deployment exists and user has access.
-    2. Check if user has enough "credits" to make a new prediction without
+    2. Check if user is able to make a new prediction without
     reach prediction limit configuration.
     3. Make prediction.
     4. Track prediction.
