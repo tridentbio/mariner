@@ -68,7 +68,7 @@ class ScikitModelSpec(CamelCaseModel, YAML_Model):
     dataset: "TorchDatasetConfig"
 
 
-# TOD: move to fleet.schemas
+# TODO: move to fleet.schemas
 FleetModelSpec = Union[TorchModelSpec, ScikitModelSpec]
 
 

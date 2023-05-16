@@ -18,8 +18,8 @@ from pandas import DataFrame
 from pydantic import BaseModel
 
 from fleet.base_schemas import (
-    BaseFleetModelSpec,
     BaseModelFunctions,
+    FleetModelSpec,
     TorchModelSpec,
 )
 from fleet.scikit_.model_functions import SciKitFunctions
@@ -44,7 +44,7 @@ class Result:
 
 
 def fit(
-    spec: BaseFleetModelSpec,
+    spec: FleetModelSpec,
     train_config: BaseModel,  # todo: make this type narrower
     mlflow_model_name: str,
     mlflow_experiment_name: str,
