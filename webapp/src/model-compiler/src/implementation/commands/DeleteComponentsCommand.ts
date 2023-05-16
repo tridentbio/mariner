@@ -38,12 +38,17 @@ class DeleteComponentCommand extends Command<DeleteCommandArgs, ModelSchema> {
   execute = (): ModelSchema => {
     return {
       ...this.args.schema,
-      layers: (this.args.schema.layers || [])
-        .filter((layer) => layer.name !== this.args.nodeId)
-        .map(this.removeBrokenEdges),
-      featurizers: (this.args.schema.featurizers || [])
-        .filter((featurizer) => featurizer.name !== this.args.nodeId)
-        .map(this.removeBrokenEdges),
+      spec: {
+        layers: (this.args.schema.spec.layers || [])
+          .filter((layer) => layer.name !== this.args.nodeId)
+          .map(this.removeBrokenEdges),
+      },
+      dataset: {
+        ...this.args.schema.dataset,
+        featurizers: (this.args.schema.dataset.featurizers || [])
+          .filter((featurizer) => featurizer.name !== this.args.nodeId)
+          .map(this.removeBrokenEdges),
+      },
     };
   };
 }

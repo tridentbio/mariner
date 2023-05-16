@@ -57,14 +57,17 @@ endif
 
 .PHONY: build
 build:                  ## Builds needed local images to run application.
-	$(DOCKER_COMPOSE) build --parallel backend webapp $(ARGS)
-	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db $(ARGS)
+	$(DOCKER_COMPOSE) build --parallel backend webapp
+	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
 
 
 .PHONY: create-admin
 create-admin:           ## Creates default "admin@mariner.trident.bio" with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
 
+start-backend:         ## Builds and starts backend
+	$(DOCKER_COMPOSE) build backend
+	$(DOCKER_COMPOSE) up --wait backend
 
 .PHONY: start
 start:                  ## Starts services (without building them explicitly)
@@ -90,13 +93,13 @@ migrate-mlflow:         ## Runs mlflow alembic migrations
 migrate: migrate-backend migrate-mlflow   ## Runs all migrations
 
 .PHONY: test-backend
-test-backend:           ## Runs all tests in the backend (integration and unit)
+test-backend: build start          ## Runs all tests in the backend (integration and unit)
 	$(DOCKER_COMPOSE) exec backend pytest $(ARGS)
 
 
 .PHONY: test-backend-unit
-test-backend-unit:           ## Runs backend unit tests
-	$(DOCKER_COMPOSE) exec backend pytest -m 'not integration'
+test-backend-unit: start-backend          ## Runs backend unit tests
+	$(DOCKER_COMPOSE) exec backend pytest -m 'not integration' $(ARGS)
 
 
 .PHONY: test-webapp-unit
@@ -105,7 +108,7 @@ test-webapp-unit: webapp-install ## Runs webapp unit tests
 
 
 .PHONY: test-integration
-test-integration: start      ## Runs unit tests
+test-integration: start-backend ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 

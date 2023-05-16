@@ -12,7 +12,7 @@ from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 from mlflow.tracking.client import MlflowClient
 
-from mariner.models import CustomModel
+from fleet.torch_.models import CustomModel
 
 
 def log_models_and_create_version(

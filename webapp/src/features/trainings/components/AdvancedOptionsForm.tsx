@@ -9,18 +9,17 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Controller, useFormContext } from 'react-hook-form';
 import MetricSelect from './MetricSelect';
 import { required } from 'utils/reactFormRules';
 import ModeRadioInput from './ModeRadioInput';
-import { TrainingRequest } from 'app/rtk/generated/experiments';
 import { MetricMode } from 'app/types/domain/experiments';
 import {
   RadioButtonCheckedOutlined,
   RadioButtonUncheckedOutlined,
 } from '@mui/icons-material';
 import { TargetConfig } from 'app/rtk/generated/models';
+import { BaseTrainingRequest } from '@app/rtk/generated/experiments';
 
 interface AdvancedOptionsProps {
   open?: boolean;
@@ -33,7 +32,8 @@ const AdvancedOptionsForm = ({
   onToggle,
   targetColumns,
 }: AdvancedOptionsProps) => {
-  const { control, setValue, resetField } = useFormContext<TrainingRequest>();
+  const { control, setValue, resetField } =
+    useFormContext<BaseTrainingRequest>();
   return (
     <Accordion
       elevation={1}
@@ -61,16 +61,18 @@ const AdvancedOptionsForm = ({
               rules={{ ...required }}
               control={control}
               defaultValue={'min'}
-              name="earlyStoppingConfig.metricKey"
+              name="config.earlyStoppingConfig.metricKey"
               render={({ field, fieldState: { error } }) => (
                 <MetricSelect
                   field={field}
                   error={error}
                   setValue={(value: MetricMode) => {
-                    setValue('earlyStoppingConfig.mode', value);
+                    setValue('config.earlyStoppingConfig.mode', value);
                   }}
                   targetColumns={targetColumns}
-                  reset={() => resetField('earlyStoppingConfig.metricKey')}
+                  reset={() =>
+                    resetField('config.earlyStoppingConfig.metricKey')
+                  }
                   cleanable
                 />
               )}
@@ -79,7 +81,7 @@ const AdvancedOptionsForm = ({
               <Controller
                 rules={{ ...required }}
                 control={control}
-                name="earlyStoppingConfig.minDelta"
+                name="config.earlyStoppingConfig.minDelta"
                 render={({ field, fieldState: { error } }) => (
                   <Tooltip
                     title={
@@ -105,7 +107,7 @@ const AdvancedOptionsForm = ({
               <Controller
                 rules={{ ...required }}
                 control={control}
-                name="earlyStoppingConfig.patience"
+                name="config.earlyStoppingConfig.patience"
                 render={({ field, fieldState: { error } }) => (
                   <Tooltip
                     title={
@@ -138,7 +140,7 @@ const AdvancedOptionsForm = ({
                   <Controller
                     control={control}
                     defaultValue={false}
-                    name="earlyStoppingConfig.checkFinite"
+                    name="config.earlyStoppingConfig.checkFinite"
                     render={({ field }) => (
                       <Checkbox
                         {...field}

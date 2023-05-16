@@ -163,56 +163,109 @@ export type ColumnConfig = {
     | RnaDataType
     | ProteinDataType;
 };
-export type DatasetConfig = {
+export type FleetmoleculefeaturizerConstructorArgs = {
+  allow_unknown: boolean;
+  sym_bond_list: boolean;
+  per_atom_fragmentation: boolean;
+};
+export type FleetmoleculefeaturizerForwardArgsReferences = {
+  mol: string;
+};
+export type FleetmoleculefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+  name: string;
+  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
+  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
+};
+export type FleetintegerfeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetintegerfeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.IntegerFeaturizer';
+  name: string;
+  forwardArgs: FleetintegerfeaturizerForwardArgsReferences;
+};
+export type FleetdnasequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetdnasequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetdnasequencefeaturizerForwardArgsReferences;
+};
+export type FleetrnasequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetrnasequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetrnasequencefeaturizerForwardArgsReferences;
+};
+export type FleetproteinsequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetproteinsequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetproteinsequencefeaturizerForwardArgsReferences;
+};
+export type TorchDatasetConfig = {
   name: string;
   targetColumns: TargetConfig[];
   featureColumns: ColumnConfig[];
+  featurizers?: (
+    | FleetmoleculefeaturizerLayerConfig
+    | FleetintegerfeaturizerLayerConfig
+    | FleetdnasequencefeaturizerLayerConfig
+    | FleetrnasequencefeaturizerLayerConfig
+    | FleetproteinsequencefeaturizerLayerConfig
+  )[];
 };
-export type ModelbuilderonehotForwardArgsReferences = {
+export type FleetonehotForwardArgsReferences = {
   x1: string;
 };
-export type ModelbuilderonehotLayerConfig = {
-  type?: 'model_builder.layers.OneHot';
+export type FleetonehotLayerConfig = {
+  type?: 'fleet.model_builder.layers.OneHot';
   name: string;
-  forwardArgs: ModelbuilderonehotForwardArgsReferences;
+  forwardArgs: FleetonehotForwardArgsReferences;
 };
-export type ModelbuilderglobalpoolingConstructorArgs = {
+export type FleetglobalpoolingConstructorArgs = {
   aggr: string;
 };
-export type ModelbuilderglobalpoolingForwardArgsReferences = {
+export type FleetglobalpoolingForwardArgsReferences = {
   x: string;
   batch?: string;
   size?: string;
 };
-export type ModelbuilderglobalpoolingLayerConfig = {
-  type?: 'model_builder.layers.GlobalPooling';
+export type FleetglobalpoolingLayerConfig = {
+  type?: 'fleet.model_builder.layers.GlobalPooling';
   name: string;
-  constructorArgs: ModelbuilderglobalpoolingConstructorArgs;
-  forwardArgs: ModelbuilderglobalpoolingForwardArgsReferences;
+  constructorArgs: FleetglobalpoolingConstructorArgs;
+  forwardArgs: FleetglobalpoolingForwardArgsReferences;
 };
-export type ModelbuilderconcatConstructorArgs = {
+export type FleetconcatConstructorArgs = {
   dim?: number;
 };
-export type ModelbuilderconcatForwardArgsReferences = {
+export type FleetconcatForwardArgsReferences = {
   xs: string[];
 };
-export type ModelbuilderconcatLayerConfig = {
-  type?: 'model_builder.layers.Concat';
+export type FleetconcatLayerConfig = {
+  type?: 'fleet.model_builder.layers.Concat';
   name: string;
-  constructorArgs: ModelbuilderconcatConstructorArgs;
-  forwardArgs: ModelbuilderconcatForwardArgsReferences;
+  constructorArgs: FleetconcatConstructorArgs;
+  forwardArgs: FleetconcatForwardArgsReferences;
 };
-export type ModelbuilderaddpoolingConstructorArgs = {
+export type FleetaddpoolingConstructorArgs = {
   dim?: number;
 };
-export type ModelbuilderaddpoolingForwardArgsReferences = {
+export type FleetaddpoolingForwardArgsReferences = {
   x: string;
 };
-export type ModelbuilderaddpoolingLayerConfig = {
-  type?: 'model_builder.layers.AddPooling';
+export type FleetaddpoolingLayerConfig = {
+  type?: 'fleet.model_builder.layers.AddPooling';
   name: string;
-  constructorArgs: ModelbuilderaddpoolingConstructorArgs;
-  forwardArgs: ModelbuilderaddpoolingForwardArgsReferences;
+  constructorArgs: FleetaddpoolingConstructorArgs;
+  forwardArgs: FleetaddpoolingForwardArgsReferences;
 };
 export type TorchlinearConstructorArgs = {
   in_features: number;
@@ -299,6 +352,7 @@ export type TorchtransformerencoderlayerForwardArgsReferences = {
   src: string;
   src_mask?: string;
   src_key_padding_mask?: string;
+  is_causal?: string;
 };
 export type TorchtransformerencoderlayerLayerConfig = {
   type?: 'torch.nn.TransformerEncoderLayer';
@@ -306,68 +360,20 @@ export type TorchtransformerencoderlayerLayerConfig = {
   constructorArgs: TorchtransformerencoderlayerConstructorArgs;
   forwardArgs: TorchtransformerencoderlayerForwardArgsReferences;
 };
-export type ModelbuildermoleculefeaturizerConstructorArgs = {
-  allow_unknown: boolean;
-  sym_bond_list: boolean;
-  per_atom_fragmentation: boolean;
-};
-export type ModelbuildermoleculefeaturizerForwardArgsReferences = {
-  mol: string;
-};
-export type ModelbuildermoleculefeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.MoleculeFeaturizer';
-  name: string;
-  constructorArgs: ModelbuildermoleculefeaturizerConstructorArgs;
-  forwardArgs: ModelbuildermoleculefeaturizerForwardArgsReferences;
-};
-export type ModelbuilderintegerfeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type ModelbuilderintegerfeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.IntegerFeaturizer';
-  name: string;
-  forwardArgs: ModelbuilderintegerfeaturizerForwardArgsReferences;
-};
-export type ModelbuilderdnasequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type ModelbuilderdnasequencefeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.DNASequenceFeaturizer';
-  name: string;
-  forwardArgs: ModelbuilderdnasequencefeaturizerForwardArgsReferences;
-};
-export type ModelbuilderrnasequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type ModelbuilderrnasequencefeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.RNASequenceFeaturizer';
-  name: string;
-  forwardArgs: ModelbuilderrnasequencefeaturizerForwardArgsReferences;
-};
-export type ModelbuilderproteinsequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type ModelbuilderproteinsequencefeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.ProteinSequenceFeaturizer';
-  name: string;
-  forwardArgs: ModelbuilderproteinsequencefeaturizerForwardArgsReferences;
-};
-export type ModelSchema = {
-  name: string;
-  dataset: DatasetConfig;
+export type TorchModelSchema = {
   layers?: (
     | ({
-        type: 'model_builder.layers.OneHot';
-      } & ModelbuilderonehotLayerConfig)
+        type: 'fleet.model_builder.layers.OneHot';
+      } & FleetonehotLayerConfig)
     | ({
-        type: 'model_builder.layers.GlobalPooling';
-      } & ModelbuilderglobalpoolingLayerConfig)
+        type: 'fleet.model_builder.layers.GlobalPooling';
+      } & FleetglobalpoolingLayerConfig)
     | ({
-        type: 'model_builder.layers.Concat';
-      } & ModelbuilderconcatLayerConfig)
+        type: 'fleet.model_builder.layers.Concat';
+      } & FleetconcatLayerConfig)
     | ({
-        type: 'model_builder.layers.AddPooling';
-      } & ModelbuilderaddpoolingLayerConfig)
+        type: 'fleet.model_builder.layers.AddPooling';
+      } & FleetaddpoolingLayerConfig)
     | ({
         type: 'torch.nn.Linear';
       } & TorchlinearLayerConfig)
@@ -387,23 +393,12 @@ export type ModelSchema = {
         type: 'torch.nn.TransformerEncoderLayer';
       } & TorchtransformerencoderlayerLayerConfig)
   )[];
-  featurizers?: (
-    | ({
-        type: 'model_builder.featurizers.MoleculeFeaturizer';
-      } & ModelbuildermoleculefeaturizerLayerConfig)
-    | ({
-        type: 'model_builder.featurizers.IntegerFeaturizer';
-      } & ModelbuilderintegerfeaturizerLayerConfig)
-    | ({
-        type: 'model_builder.featurizers.DNASequenceFeaturizer';
-      } & ModelbuilderdnasequencefeaturizerLayerConfig)
-    | ({
-        type: 'model_builder.featurizers.RNASequenceFeaturizer';
-      } & ModelbuilderrnasequencefeaturizerLayerConfig)
-    | ({
-        type: 'model_builder.featurizers.ProteinSequenceFeaturizer';
-      } & ModelbuilderproteinsequencefeaturizerLayerConfig)
-  )[];
+};
+export type TorchModelSpec = {
+  name: string;
+  framework?: 'torch';
+  dataset: TorchDatasetConfig;
+  spec: TorchModelSchema;
 };
 export type ModelVersion = {
   id: number;
@@ -412,7 +407,7 @@ export type ModelVersion = {
   description?: string;
   mlflowVersion?: string;
   mlflowModelName: string;
-  config: ModelSchema;
+  config: TorchModelSpec;
   createdAt: string;
   updatedAt: string;
 };

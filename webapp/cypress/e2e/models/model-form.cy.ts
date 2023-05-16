@@ -1,4 +1,3 @@
-import { ModelSchema } from '@app/rtk/generated/models';
 import TestUtils from '../../support/TestUtils';
 import { createRandomDatasetFormData } from '../../support/dataset/examples';
 import { createDatasetDirectly } from '../../support/dataset/create';

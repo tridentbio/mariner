@@ -72,7 +72,7 @@ def upload_s3_file(file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket
         s3.upload_fileobj(file.file, bucket.value, key)
 
 
-def download_file_as_dataframe(bucket: Bucket, key: str) -> pd.DataFrame:
+def download_file_as_dataframe(bucket: Union[Bucket, str], key: str) -> pd.DataFrame:
     """Downloads s3 file and attempts to parse it as pd.Dataframe
 
     Will raise exceptions if object is not in csv format.
@@ -85,7 +85,9 @@ def download_file_as_dataframe(bucket: Bucket, key: str) -> pd.DataFrame:
         The pandas Dataframe stored in s3.
     """
     s3 = create_s3_client()
-    s3_res = s3.get_object(Bucket=bucket.value, Key=key)
+    s3_res = s3.get_object(
+        Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
+    )
     s3body = s3_res["Body"].read()
     data = io.BytesIO(s3body)
     df = pd.read_csv(data) if not is_compressed(data) else read_compressed_csv(s3body)

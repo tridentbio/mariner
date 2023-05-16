@@ -21,29 +21,33 @@ class Acceptor {
       visitor.visitEmbedding(node, type, info);
     } else if (node.type === 'torch.nn.TransformerEncoderLayer') {
       visitor.visitTransformerEncoderLayer(node, type, info);
-    } else if (node.type === 'model_builder.layers.OneHot') {
+    } else if (node.type === 'fleet.model_builder.layers.OneHot') {
       visitor.visitOneHot(node, type, info);
-    } else if (node.type === 'model_builder.layers.Concat') {
+    } else if (node.type === 'fleet.model_builder.layers.Concat') {
       visitor.visitConcat(node, type, info);
-    } else if (node.type === 'model_builder.layers.GlobalPooling') {
+    } else if (node.type === 'fleet.model_builder.layers.GlobalPooling') {
       visitor.visitGlobalPooling(node, type, info);
-    } else if (node.type === 'model_builder.layers.AddPooling') {
+    } else if (node.type === 'fleet.model_builder.layers.AddPooling') {
       visitor.visitAddPooling(node, type, info);
-    } else if (node.type === 'model_builder.featurizers.MoleculeFeaturizer') {
+    } else if (
+      node.type === 'fleet.model_builder.featurizers.MoleculeFeaturizer'
+    ) {
       visitor.visitMolFeaturizer(node, type, info);
     } else if (
-      node.type === 'model_builder.featurizers.DNASequenceFeaturizer'
+      node.type === 'fleet.model_builder.featurizers.DNASequenceFeaturizer'
     ) {
       visitor.visitDNAFeaturizer(node, type, info);
     } else if (
-      node.type === 'model_builder.featurizers.RNASequenceFeaturizer'
+      node.type === 'fleet.model_builder.featurizers.RNASequenceFeaturizer'
     ) {
       visitor.visitRNAFeaturizer(node, type, info);
     } else if (
-      node.type === 'model_builder.featurizers.ProteinSequenceFeaturizer'
+      node.type === 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer'
     ) {
       visitor.visitProteinFeaturizer(node, type, info);
-    } else if (node.type === 'model_builder.featurizers.IntegerFeaturizer') {
+    } else if (
+      node.type === 'fleet.model_builder.featurizers.IntegerFeaturizer'
+    ) {
       visitor.visitIntegerFeaturizer(node, type, info);
     } else if (node.type === 'input') {
       visitor.visitInput(node, type, info);

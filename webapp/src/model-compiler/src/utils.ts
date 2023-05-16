@@ -1,3 +1,4 @@
+import { TorchModelSpec } from '@app/rtk/generated/models';
 import { getDependencies, getNodes } from './implementation/modelSchemaQuery';
 import {
   ComponentType,
@@ -57,12 +58,12 @@ export const iterateTopologically = (
   const typesOfNode: {
     [key: string]: ComponentType;
   } = {};
-  if (schema.layers)
-    schema.layers.forEach((layer) => {
+  if (schema.spec.layers)
+    schema.spec.layers.forEach((layer) => {
       typesOfNode[layer.name] = 'layer' as const;
     });
-  if (schema.featurizers)
-    schema.featurizers.forEach((featurizer) => {
+  if (schema.dataset.featurizers)
+    schema.dataset.featurizers.forEach((featurizer) => {
       typesOfNode[featurizer.name] = 'featurizer';
     });
   nodes.forEach((node) => {
@@ -95,4 +96,20 @@ const topologicalSort = (schema: ModelSchema): NodeType[] => {
     }
   });
   return stack;
+};
+
+export const extendSpecWithTargetForwardArgs = (
+  spec: TorchModelSpec
+): ModelSchema => {
+  return {
+    ...spec,
+    dataset: {
+      ...spec.dataset,
+      featurizers: spec.dataset.featurizers || [],
+      targetColumns: spec.dataset.targetColumns.map((tc) => ({
+        ...tc,
+        forwardArgs: { '': '' },
+      })),
+    },
+  };
 };

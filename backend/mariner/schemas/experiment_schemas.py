@@ -5,6 +5,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
 
+from fleet.torch_.schemas import TorchTrainingConfig
 from mariner.schemas.api import (
     ApiBaseModel,
     OrderByQuery,
@@ -13,42 +14,31 @@ from mariner.schemas.api import (
 )
 from mariner.schemas.model_schemas import ModelVersion
 from mariner.schemas.user_schemas import User
-from model_builder.optimizers import Optimizer
 
 
-class MonitoringConfig(ApiBaseModel):
+class BaseTrainingRequest(ApiBaseModel):
     """
-    Configures model checkpointing
-    """
-
-    metric_key: str
-    mode: str
-
-
-class EarlyStoppingConfig(ApiBaseModel):
-    """
-    Configures earlystopping of training
-    """
-
-    metric_key: str
-    mode: str
-    min_delta: float = 5e-2
-    patience: int = 5
-    check_finite: bool = False
-
-
-class TrainingRequest(ApiBaseModel):
-    """
-    Configure options for starting a training
+    Configure options for fitting a model to a dataset
     """
 
     name: str
     model_version_id: int
-    epochs: int
-    batch_size: Optional[int] = None
-    checkpoint_config: MonitoringConfig
-    optimizer: Optimizer
-    early_stopping_config: Optional[EarlyStoppingConfig]
+    framework: str
+    config: TorchTrainingConfig  # a Union of different framework configs later
+
+
+class TorchTrainingRequest(BaseTrainingRequest):
+    framework = "torch"
+    config: TorchTrainingConfig
+
+    @classmethod
+    def create(cls, name: str, model_version_id: int, config: TorchTrainingConfig):
+        return cls(
+            framework="torch",
+            name=name,
+            model_version_id=model_version_id,
+            config=config,
+        )
 
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]
@@ -66,7 +56,7 @@ class Experiment(ApiBaseModel):
     updated_at: utc_datetime
     created_by_id: int
     id: int
-    mlflow_id: str
+    mlflow_id: Optional[str] = None
     stage: ExperimentStage
     created_by: Optional[User] = None
     hyperparams: Optional[Dict[str, Union[float, None]]] = None

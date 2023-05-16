@@ -1,8 +1,6 @@
 import { ArrayElement, flatten } from 'utils';
 import {
   DataType,
-  FeaturizersType,
-  LayersType,
   ModelOptions,
   ModelSchema,
   NodeType,
@@ -10,11 +8,13 @@ import {
 } from '../interfaces/model-editor';
 import { isArray, unwrapDollar } from '../utils';
 
+const len = (t: { length?: number } | undefined) => t?.length || 0;
 export const getNodes = (schema: ModelSchema): NodeType[] => {
-  let layersAndFeats: NodeType[] = (schema.featurizers || []).concat(
+  let layersAndFeats: NodeType[] = (schema.dataset.featurizers || []).concat(
     // @ts-ignore
-    schema.layers || []
+    schema.spec.layers || []
   );
+
   layersAndFeats = layersAndFeats.concat(
     schema.dataset.targetColumns.map((targetColumn) => {
       return {
@@ -39,6 +39,7 @@ export const getNodes = (schema: ModelSchema): NodeType[] => {
   );
   return layersAndFeats;
 };
+
 export const getNode = (schema: ModelSchema, nodeName: string) => {
   return getNodes(schema).find((node) => node.name === nodeName);
 };
@@ -48,11 +49,12 @@ export const getComponent = (
   componentName: string
 ): NodeType => {
   const layer =
-    schema.layers && schema.layers.find((l) => l.name === componentName);
+    schema.spec.layers &&
+    schema.spec.layers.find((l) => l.name === componentName);
   if (layer) return layer;
   const featurizer =
-    schema.featurizers &&
-    schema.featurizers.find((f) => f.name === componentName);
+    schema.dataset.featurizers &&
+    schema.dataset.featurizers.find((f) => f.name === componentName);
   if (featurizer) return featurizer;
   const targetColumn = schema.dataset.targetColumns.find(
     (col) => col.name === componentName
