@@ -7,12 +7,11 @@ a single point of change (as best as possible) on schema updates.
 """
 from typing import TYPE_CHECKING, Sequence, Set, Union
 
-if TYPE_CHECKING:
-    from fleet.model_builder.layers_schema import FeaturizersType, LayersType
-    from fleet.model_builder.schemas import ColumnConfig
-    from fleet.torch_.schemas import TorchDatasetConfig
-
 from fleet.model_builder.utils import unwrap_dollar
+
+if TYPE_CHECKING:
+    from fleet.dataset_schemas import ColumnConfig, TorchDatasetConfig
+    from fleet.model_builder.layers_schema import FeaturizersType, LayersType
 
 
 def get_columns_configs(config: "TorchDatasetConfig") -> Sequence["ColumnConfig"]:

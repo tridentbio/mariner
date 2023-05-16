@@ -151,6 +151,7 @@ def get_class_from_path_string(pathstring: str) -> type:
         Any: The class.
     """
     components = pathstring.split(".")
+    mod = components[:-1]
     mod = __import__(components[0])
     for comp in components[1:]:
         mod = getattr(mod, comp)
@@ -204,7 +205,7 @@ def get_references_dict(
     return result
 
 
-def get_ref_from_data_instance(accessor_str: str, input: DataInstance):
+def get_ref_from_data_instance(accessor_str: str, input_: DataInstance):
     """Gets the value of a DataInstance
 
     Used by model builder to interpret the forward_args.
@@ -225,8 +226,10 @@ def get_ref_from_data_instance(accessor_str: str, input: DataInstance):
         accessor_str.split(".")[1:],
     )
     if attribute == "input":
-        return input["".join(attribute_accessors)]  # $inputs.x is accessed as data['x']
-    value = input[attribute]
+        return input_[
+            "".join(attribute_accessors)
+        ]  # $inputs.x is accessed as data['x']
+    value = input_[attribute]
     if len(attribute_accessors) == 0:
         return value
 
@@ -236,7 +239,7 @@ def get_ref_from_data_instance(accessor_str: str, input: DataInstance):
 
 
 def get_ref_from_input(
-    accessor_str: str, input: Union[DataInstance, List[DataInstance]]
+    accessor_str: str, input_: Union[DataInstance, List[DataInstance]]
 ):
     """Gets the accessor_str of a DataInstance or a batch of DataInstance's
 
@@ -245,14 +248,14 @@ def get_ref_from_input(
         accessor_str: string represented accessor_str to get, e.g. "mol_featurizer.x", "mwt".
         input(Union[DataInstance, List[DataInstance]):
     """
-    if isinstance(input, list):
-        values = [get_ref_from_data_instance(accessor_str, item) for item in input]
+    if isinstance(input_, list):
+        values = [get_ref_from_data_instance(accessor_str, item) for item in input_]
         assert len(values) > 0, "failed to get values from input"
         if isinstance(values[0], torch.Tensor):
             return torch.cat(values)  # type: ignore
 
     else:
-        return get_ref_from_data_instance(accessor_str, input)
+        return get_ref_from_data_instance(accessor_str, input_)
 
 
 def collect_args(

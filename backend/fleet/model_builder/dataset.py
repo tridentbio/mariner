@@ -1,6 +1,6 @@
 """Dataset related classes to use for training/evaluating/testing"""
 from collections.abc import Mapping
-from typing import Any, Callable, List, Sequence, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Sequence, Union
 
 import lightning.pytorch as pl
 import pandas as pd
@@ -12,7 +12,6 @@ from torch_geometric.data import Batch
 from torch_geometric.data.data import BaseData
 
 from fleet import data_types
-from fleet.dataset_schemas import ColumnConfig
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.featurizers.base_featurizers import BaseFeaturizer
 from fleet.model_builder.featurizers.bio_sequence_featurizer import (
@@ -22,8 +21,11 @@ from fleet.model_builder.featurizers.bio_sequence_featurizer import (
 )
 from fleet.model_builder.featurizers.integer_featurizer import IntegerFeaturizer
 from fleet.model_builder.model_schema_query import get_dependencies
-from fleet.model_builder.schemas import TorchDatasetConfig, TorchModelSchema
+from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import DataInstance, get_references_dict
+
+if TYPE_CHECKING:
+    from fleet.dataset_schemas import ColumnConfig, TorchDatasetConfig
 
 
 class Collater:
@@ -131,7 +133,7 @@ class CustomDataset(Dataset):
         self,
         data: pd.DataFrame,
         model_config: TorchModelSchema,
-        dataset_config: TorchDatasetConfig,
+        dataset_config: "TorchDatasetConfig",
         target=True,
     ) -> None:
         super().__init__()
@@ -161,7 +163,7 @@ class CustomDataset(Dataset):
         self.output_featurizers = self.get_output_featurizers()
 
     def _get_default_featurizer(
-        self, column: ColumnConfig
+        self, column: "ColumnConfig"
     ) -> Union[BaseFeaturizer, None]:
         """Gets a default featurizer based on the data type"""
         feat = None
@@ -292,7 +294,7 @@ class DataModule(pl.LightningDataModule):
         split_type: str,
         split_target: str,
         model_config: TorchModelSchema,
-        config: TorchDatasetConfig,
+        config: "TorchDatasetConfig",
         batch_size=32,
         collate_fn: Union[Callable, None] = Collater(),
     ):

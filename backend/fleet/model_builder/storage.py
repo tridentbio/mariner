@@ -82,10 +82,10 @@ class BaseStorage(MutableMapping):
 
         try:
             return self[key]
-        except KeyError:
+        except KeyError as exc:
             raise AttributeError(
                 f"'{self.__class__.__name__}' object has no attribute '{key}'"
-            )
+            ) from exc
 
     def __setattr__(self, key: str, value: Any) -> None:
         if key == "_parent":

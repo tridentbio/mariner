@@ -97,7 +97,7 @@ class ScaffoldSplitter:
         scaffolds = {key: sorted(value) for key, value in scaffolds.items()}
         scaffolds_sets = [
             scaffold_set
-            for (scaffold, scaffold_set) in sorted(
+            for (_scaffold, scaffold_set) in sorted(
                 scaffolds.items(), key=lambda x: (len(x[1]), x[1][0]), reverse=True
             )
         ]

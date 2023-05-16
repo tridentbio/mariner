@@ -8,7 +8,6 @@ from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
 
 from fleet.base_schemas import BaseFleetModelSpec, TorchModelSpec
-from fleet.model_builder.schemas import LossType
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
@@ -144,6 +143,11 @@ class ModelVersionUpdateRepo(BaseModel):
     """
 
     mlflow_version: str
+
+
+LossType = Literal[
+    "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
+]
 
 
 class LossOption(ApiBaseModel):

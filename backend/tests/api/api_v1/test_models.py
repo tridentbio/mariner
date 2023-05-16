@@ -11,14 +11,10 @@ from starlette.testclient import TestClient
 from torch_geometric.loader import DataLoader
 
 from fleet.base_schemas import TorchModelSpec
+from fleet.dataset_schemas import ColumnConfig, TargetConfig, TorchDatasetConfig
 from fleet.model_builder import layers_schema as layers
 from fleet.model_builder.dataset import CustomDataset
-from fleet.model_builder.schemas import (
-    ColumnConfig,
-    TargetConfig,
-    TorchDatasetConfig,
-    TorchModelSchema,
-)
+from fleet.model_builder.schemas import TorchModelSchema
 from fleet.torch_.models import CustomModel
 from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetEntity

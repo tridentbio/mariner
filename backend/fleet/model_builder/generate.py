@@ -2,14 +2,13 @@
 Layers and Featurizers code generation related code
 """
 import functools
-import inspect
 import os
 import re
 import sys
 import tempfile
 from dataclasses import dataclass
 from inspect import Parameter, Signature, signature
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from humps import camel
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -106,14 +105,14 @@ def get_component_signature(class_def: Any, method_name: str) -> Optional[Signat
         method_name (str): Class method to inspect name
 
     Raises:
-        Exception: If the method has no __code__ attribute
+        ValueError: If the method has no __code__ attribute
 
     Returns:
         Optional[Signature]:
             The signature of the method or None if the method does not exist
     """
     if method_name not in dir(class_def):
-        raise Exception(f"{method_name} not found in class_def")
+        raise ValueError(f"{method_name} not found in class_def")
     method = getattr(class_def, method_name)
     return signature(method)
 
@@ -129,7 +128,7 @@ def is_bad(parameter: Parameter) -> bool:
     Returns:
         bool: True if the parameter is bad else False
     """
-    return parameter.annotation == inspect._empty
+    return parameter.annotation == Parameter.empty
 
 
 def is_positional(parameter: Parameter) -> bool:
@@ -163,7 +162,7 @@ def is_optional(parameter: Parameter) -> bool:
         parameter.kind == Parameter.KEYWORD_ONLY
         or (
             parameter.kind == Parameter.POSITIONAL_OR_KEYWORD
-            and parameter.default != inspect._empty
+            and parameter.default != Parameter.empty
         )
     )
 
@@ -213,11 +212,12 @@ def get_component_template_args_v2(path: str):
       - "kw":
     """
     path_parts = path.split(".")
+    component_name: Union[None, str] = None
     if "_" in path_parts[-1]:
-        compname = camel.case(path_parts[-1])
+        component_name = camel.case(path_parts[-1])
     else:
-        compname = path_parts[-1]
-    prefix = camel.case(path_parts[0]) + compname
+        component_name = path_parts[-1]
+    prefix = camel.case(path_parts[0]) + component_name
     prefix = prefix.title()
     class_def = get_class_from_path_string(path)
     ctr_signature = get_component_constructor_signature(class_def)
@@ -355,19 +355,23 @@ todo_include_todos = True"""
     )
     rst_name, out_name = src_base_name + ".rst", out_base_name + ".html"
     docstring = get_class_from_path_string(classpath).__doc__
-    with open(rst_name, "w") as file:
+    if not docstring:
+        return ""
+
+    with open(rst_name, "w", encoding="utf-8") as file:
         file.write(docstring)
 
     # Setup sphinx configuratio
     confdir = os.path.join(srcdir, "en", "introspect")
     os.makedirs(confdir)
-    with open(os.path.join(confdir, "conf.py"), "w") as file:
+    with open(os.path.join(confdir, "conf.py"), "w", encoding="utf-8") as file:
         file.write(sphinx_conf)
 
     # Setup sphixn templates dir
     templatesdir = os.path.join(confdir, "templates")
     os.makedirs(templatesdir)
-    with open(os.path.join(templatesdir, "layout.html"), "w") as file:
+    with open(os.path.join(templatesdir, "layout.html"), "w", encoding="utf-8") as file:
+
         file.write(html_template)
     doctreedir = os.path.join(srcdir, "doctrees")
     confoverrides = {"html_context": {}, "master_doc": "docstring"}
@@ -390,7 +394,7 @@ todo_include_todos = True"""
     sys.path = old_sys_path
 
     if os.path.exists(out_name):
-        with open(out_name, "r") as file:
+        with open(out_name, "r", encoding="utf-8") as file:
             output = file.read()
             # Remove spurious \(, \), \[, \].
             output = (

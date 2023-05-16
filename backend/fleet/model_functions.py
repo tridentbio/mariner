@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from typing import List, Union
 
 import mlflow
-import pandas as pd
 from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.loggers.mlflow import MLFlowLogger
 from mlflow.entities.model_registry.model_version import ModelVersion
@@ -27,7 +26,7 @@ from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SciKitModelSpec, SciKitTrainingConfig
 from fleet.torch_.model_functions import TorchFunctions
 from fleet.torch_.schemas import TorchTrainingConfig
-from mariner.core.aws import Bucket, download_file_as_dataframe
+from mariner.core.aws import download_file_as_dataframe
 from mariner.train.custom_logger import MarinerLogger
 
 LOG = logging.getLogger(__name__)
@@ -36,6 +35,10 @@ LOG.setLevel(logging.INFO)
 
 @dataclass
 class Result:
+    """
+    Holds properties created during the :py:func:`fit`.
+    """
+
     mlflow_experiment_id: str
     mlflow_model_version: ModelVersion
 
@@ -48,16 +51,38 @@ def fit(
     experiment_id: Union[None, int] = None,
     experiment_name: Union[None, str] = None,
     user_id: Union[None, int] = None,
-    datamodule_args: dict = {},
+    datamodule_args: Union[None, dict] = None,
     dataset_uri: Union[None, str] = None,
     dataset: Union[None, DataFrame] = None,
 ):
+    """
+    Fits a model to a dataset.
+
+    Depending on the spec's class, different machine learning frameworks are used.
+
+    Args:
+        spec: the model specification to be trained.
+        train_config: configuration train
+        mlflow_model_name: model string identifier used to publish the mlflow model name.
+        mlflow_experiment_name: mlflow experiment string identifier.
+        experiment_id: id of the :py:class:mariner.entities.experiment.Experiment` entity
+        experiment_name: name of the :py:class:`mariner.entities.experiment.Experiment`
+        user_id: id of the :py:class:`mariner.entities.user.User`.
+        datamodule_args: the arguments for the :py:class:`DataModule` used when training
+            torch models.
+        dataset_uri: S3 URI to download the dataset.
+        dataset: A :py:class:`DataFrame`
+
+    Raises:
+        RuntimeError: When the experiment creation in mlflow fails.
+        ValueError: dataset_uri
+    """
     functions: Union[BaseModelFunctions, None] = None
     try:
         mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     except Exception as exp:
         LOG.error("%r", exp)
-        raise RuntimeError("Failed to create mlflow experiment")
+        raise RuntimeError("Failed to create mlflow experiment") from exp
 
     if dataset is None and dataset_uri is None:
         raise ValueError("dataset_uri or dataset must be passed to fit()")
@@ -98,7 +123,7 @@ def fit(
             spec=spec,
             dataset=dataset,
             params=train_config,
-            datamodule_args=datamodule_args,
+            datamodule_args=datamodule_args if datamodule_args else {},
         )
     elif isinstance(spec, SciKitModelSpec):
         functions = SciKitFunctions()

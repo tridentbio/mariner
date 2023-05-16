@@ -8,7 +8,7 @@ import networkx as nx
 from pydantic import BaseModel, Field, root_validator
 from typing_extensions import Annotated
 
-from fleet.dataset_schemas import ColumnConfig, DatasetConfig
+from fleet.dataset_schemas import DatasetConfig, TargetConfig
 from fleet.model_builder import generate
 from fleet.model_builder.components_query import (
     get_component_constructor_args_by_type,
@@ -20,16 +20,6 @@ from fleet.model_builder.layers_schema import (
 )
 from fleet.model_builder.utils import CamelCaseModel, get_references_dict
 from fleet.yaml_model import YAML_Model
-
-
-class TargetConfig(ColumnConfig):
-    """
-    Describes a target column based on its data type and index
-    """
-
-    out_module: str
-    loss_fn: Optional[str] = None
-    column_type: Optional[Literal["regression", "multiclass", "binary"]] = None
 
 
 class UnknownComponentType(ValueError):
@@ -70,136 +60,6 @@ class MissingComponentArgs(ValueError):
 
 
 AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
-LossType = Literal[
-    "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
-]
-AllowedLossesType = List[Dict[str, str]]
-
-
-class AllowedLosses(CamelCaseModel):
-    """
-    List allowed losses for each column type
-    """
-
-    regr: AllowedLossesType = [{"key": "torch.nn.MSELoss", "value": "MSELoss"}]
-    bin_class: AllowedLossesType = [
-        {"key": "torch.nn.BCEWithLogitsLoss", "value": "BCEWithLogitsLoss"}
-    ]
-    mc_class: AllowedLossesType = [
-        {"key": "torch.nn.CrossEntropyLoss", "value": "CrossEntropyLoss"}
-    ]
-
-    @property
-    def type_map(self):
-        return {"regression": "regr", "binary": "bin_class", "multiclass": "mc_class"}
-
-    def check(
-        self, loss: str, column_type: Literal["regression", "multiclass", "binary"]
-    ):
-        """Check if loss is allowed for column_type"""
-        allowed_losses_list = map(
-            lambda x: x["key"], self.dict()[self.type_map[column_type]]
-        )
-        return loss in allowed_losses_list
-
-    def get_default(
-        self, column_type: Literal["regression", "multiclass", "binary"]
-    ) -> str:
-        """Get default loss for column_type"""
-        return self.dict()[self.type_map[column_type]][0]["key"]
-
-
-def is_regression(target_column: TargetConfig):
-    """
-    Returns ``True`` if ``target_column`` is numeric and therefore the model
-    that predicts it is a regressor
-    """
-    if not target_column.column_type:
-        return target_column.data_type.domain_kind == "numeric"
-    return target_column.column_type == "regression"
-
-
-def is_classifier(target_column: TargetConfig):
-    """
-    Returns ``True`` if the ``target_column`` is categorical and therefore the model
-    that predicts it is a classifier
-    """
-    if not target_column.column_type:
-        return target_column.data_type.domain_kind == "categorical"
-    return target_column.column_type in ["binary", "multiclass"]
-
-
-def is_binary(target_column: TargetConfig):
-    """
-    Returns ``True`` if the ``target_column`` is categorical and has only 2 classes
-    """
-    return is_classifier(target_column) and len(target_column.data_type.classes) == 2
-
-
-def infer_column_type(column: TargetConfig):
-    """
-    Infer column type based on its data type
-    """
-    if is_regression(column):
-        return "regression"
-    if is_classifier(column):
-        return "multiclass" if len(column.data_type.classes) > 2 else "binary"
-    raise ValueError(f"Unknown column type for {column.name}")
-
-
-# TODO: move featurizers to feature_columns
-class TorchDatasetConfig(DatasetConfig):
-    """
-    Describes a dataset for the model in terms of it's used columns
-    """
-
-    target_columns: Sequence[TargetConfig]
-
-    @root_validator()
-    def autofill_loss_fn(cls, values: dict) -> Any:
-        """Validates or infer the loss_fn attribute
-
-        Automatically fills and validates the loss_fn field based on the target_column
-        of the dataset.target_column field
-
-        Args:
-            value: user given value for loss_fn
-            values: values of the model schema
-
-
-        Raises:
-            ValueError: if the loss_fn is invalid for the defined task and
-            target_columns
-            ValueError: if the loss_fn could not be inferred
-        """
-        allowed_losses = AllowedLosses()
-        target_columns = values.get("target_columns")
-        if not target_columns:
-            raise ValueError("Missing target_columns")
-        for i, target_column in enumerate(target_columns):
-            if not target_column.out_module:
-                raise ValueError(
-                    "You must specify out_module for each target column.",
-                )
-            if not target_column.column_type:
-                target_column.column_type = infer_column_type(target_column)
-
-            if not target_column.loss_fn:
-                target_column.loss_fn = allowed_losses.get_default(
-                    target_column.column_type
-                )
-
-            if not allowed_losses.check(
-                target_column.loss_fn, target_column.column_type
-            ):
-                print("LOSS NOT ALLOWED")
-                raise ValueError(
-                    f"Loss function is not valid for  task",
-                )
-
-            values["target_columns"][i] = target_column
-
-        return values
 
 
 class TorchModelSchema(CamelCaseModel, YAML_Model):
@@ -268,7 +128,6 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
 
         if len(errors) > 0:
             # TODO: raise all errors grouped in a single validation error
-            print("errors...")
             raise errors[0]
         return values
 
@@ -277,9 +136,9 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
 
         The graph is used for a topological walk on the schema
         """
-        g = nx.DiGraph()
+        model_graph = nx.DiGraph()
         for layer in self.layers:
-            g.add_node(layer.name)
+            model_graph.add_node(layer.name)
 
         def _to_dict(arr: List[BaseModel]):
             return [item.dict() for item in arr]
@@ -294,15 +153,15 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
                     continue
                 if isinstance(value, str):
                     reference = value.split(".")[0]
-                    g.add_edge(reference, feat["name"], attr=key)
+                    model_graph.add_edge(reference, feat["name"], attr=key)
                 elif isinstance(value, list):
                     for reference in value:
                         reference = reference.split(".")[0]
-                        g.add_edge(reference, feat["name"], attr=key)
+                        model_graph.add_edge(reference, feat["name"], attr=key)
 
                 else:
                     continue
-        return g
+        return model_graph
 
 
 class ComponentAnnotation(CamelCaseModel):

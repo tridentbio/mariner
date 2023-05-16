@@ -3,7 +3,7 @@ Trainable lightning model classes and is mapped from :py:class:`fleet.torch_.sch
 as well as auxiliary classes and functions.
 """
 import logging
-from typing import Dict, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Union
 
 import lightning.pytorch as pl
 import networkx as nx
@@ -16,8 +16,11 @@ from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
 from fleet.model_builder.optimizers import Optimizer
-from fleet.model_builder.schemas import TorchDatasetConfig, TorchModelSchema
+from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import collect_args
+
+if TYPE_CHECKING:
+    from fleet.dataset_schemas import TorchDatasetConfig
 
 
 def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
@@ -145,13 +148,13 @@ class Metrics:
 class CustomModel(pl.LightningModule):
     """Neural network model encoded by a ModelSchema"""
 
-    dataset_config: TorchDatasetConfig
+    dataset_config: "TorchDatasetConfig"
     optimizer: Optimizer
     loss_dict: dict
     metrics_dict: Dict[str, Metrics]
 
     def __init__(
-        self, config: Union[TorchModelSchema, str], dataset_config: TorchDatasetConfig
+        self, config: Union[TorchModelSchema, str], dataset_config: "TorchDatasetConfig"
     ):
         super().__init__()
         if isinstance(config, str):
@@ -191,20 +194,23 @@ class CustomModel(pl.LightningModule):
             self.loss_dict[target_column.name] = loss_fn_class()
 
             # Set up metrics for training and validation
-            if target_column.column_type == "regression":
+            if isinstance(
+                target_column.data_type,
+                (data_types.NumericalDataType, data_types.QuantityDataType),
+            ):
+                self.metrics_dict[target_column.name] = Metrics("regression")
+            elif isinstance(target_column.data_type, data_types.CategoricalDataType):
                 self.metrics_dict[target_column.name] = Metrics(
-                    target_column.column_type
-                )
-            else:
-                assert isinstance(
-                    target_column.data_type, data_types.CategoricalDataType
-                )
-                self.metrics_dict[target_column.name] = Metrics(
-                    "multilabel" if is_multilabel else target_column.column_type,
+                    "multilabel" if is_multilabel else "multiclass",
                     num_classes=len(target_column.data_type.classes.keys()),
                     num_labels=len(dataset_config.target_columns)
                     if is_multilabel
                     else None,
+                )
+            else:
+                LOG.warning(
+                    "No metrics are defined for the data type %r. Maybe it shouldn't be a target?",
+                    target_column.data_type,
                 )
 
     def set_optimizer(self, optimizer: Optimizer):
@@ -273,7 +279,7 @@ class CustomModel(pl.LightningModule):
         ), "invalid start string for optimizer class_path"
         return self.optimizer.create(self.parameters())
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch, _batch_idx):
         predictions = self(batch)
 
         losses = {}
@@ -288,7 +294,7 @@ class CustomModel(pl.LightningModule):
         loss = sum(losses.values())
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, _batch_idx):
         prediction = self(batch)
 
         losses = {}
@@ -318,7 +324,7 @@ class CustomModel(pl.LightningModule):
         loss = sum(losses.values())
         return loss
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch, _batch_idx):
         prediction = self(batch)
 
         losses = {}
@@ -350,7 +356,7 @@ class CustomModel(pl.LightningModule):
         loss = sum(losses.values())
         return loss
 
-    def predict_step(self, batch, batch_idx=0):
+    def predict_step(self, batch, _batch_idx=0, dataloader_idx=0):
         """
         Runs the forward pass using self.forward, then, for
         classifier models, normalizes the predictions using a

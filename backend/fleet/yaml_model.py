@@ -7,7 +7,11 @@ from typing import Union
 import yaml
 
 
-class YAML_Model:
+class YAML_Model:  # pylint: disable=invalid-name
+    """
+    Adds methods to handle the model as YAML files.
+    """
+
     @classmethod
     def from_yaml_str(cls, yamlstr):
         """Parses a model schema object directly form a yaml str
@@ -25,6 +29,6 @@ class YAML_Model:
         Args:
             yamlpath (str, Path): file containing model in yaml format
         """
-        with open(yamlpath, "rU") as f:
-            yaml_str = f.read()
+        with open(yamlpath, "rU", encoding="utf-8") as file:
+            yaml_str = file.read()
             return cls.from_yaml_str(yaml_str)

@@ -52,6 +52,10 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
 
     @override
     def set_from_model_schema(self, config, dataset_config, deps):
+        if not deps or len(deps) == 0:
+            raise ValueError("deps cannot be None")
+        if not dataset_config:
+            raise ValueError("dataset_config cannot be None")
         input_ = deps[0]  # featurizer has a single argument to __call__
         # Get column information from schema
         column_info = get_column_config(dataset_config, input_)

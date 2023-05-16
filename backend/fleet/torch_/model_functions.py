@@ -49,6 +49,7 @@ class TorchFunctions(BaseModelFunctions):
 
     @property
     def loggers(self):
+        """Loggers property method."""
         return self._loggers
 
     @loggers.setter
@@ -61,7 +62,7 @@ class TorchFunctions(BaseModelFunctions):
         dataset: DataFrame,
         spec: TorchModelSpec,
         params: TorchTrainingConfig,
-        datamodule_args: dict = {},
+        datamodule_args: Union[None, dict] = None,
     ):
         """Trains a torch neural network.
 
@@ -79,6 +80,8 @@ class TorchFunctions(BaseModelFunctions):
         model = CustomModel(config=spec.spec, dataset_config=spec.dataset)
         model.set_optimizer(params.optimizer)
         batch_size = params.batch_size or 32
+        if not datamodule_args:
+            datamodule_args = {}
         datamodule = DataModule(
             config=spec.dataset,
             model_config=spec.spec,

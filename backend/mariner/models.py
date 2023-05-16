@@ -3,7 +3,7 @@ Models service
 """
 import logging
 import traceback
-from typing import Any, Dict, List, Literal, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Tuple
 from uuid import uuid4
 
 import mlflow
@@ -16,7 +16,7 @@ from torch_geometric.loader import DataLoader
 from fleet.data_types import SmileDataType
 from fleet.model_builder import options
 from fleet.model_builder.dataset import CustomDataset
-from fleet.model_builder.schemas import ComponentOption, TorchDatasetConfig
+from fleet.model_builder.schemas import ComponentOption
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -45,6 +45,10 @@ from mariner.schemas.model_schemas import (
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
 from mariner.validation.functions import is_valid_smiles_series
+
+if TYPE_CHECKING:
+    from fleet.dataset_schemas import TorchDatasetConfig
+
 
 LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)
@@ -208,7 +212,7 @@ InvalidReason = Literal["invalid-smiles-series"]
 
 
 def _check_dataframe_conforms_dataset(
-    df: pd.DataFrame, dataset_config: TorchDatasetConfig
+    df: pd.DataFrame, dataset_config: "TorchDatasetConfig"
 ) -> List[Tuple[str, InvalidReason]]:
     """Checks if dataframe conforms to data types specified in dataset_config
 

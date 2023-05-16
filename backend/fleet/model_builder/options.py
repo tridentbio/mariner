@@ -1,3 +1,8 @@
+"""
+Model builder options. Most options are get through previous code
+inspection during code generation. Options may be further updated
+using the `component_overrides.yml` file.
+"""
 import functools
 from inspect import Parameter, signature
 from typing import Any, Dict, List, Literal, Optional, Union, get_type_hints
@@ -11,6 +16,14 @@ from fleet.model_builder.utils import get_class_from_path_string
 
 
 class Overrides(BaseModel):
+    """
+    Defines the model of the component_overrides.yml file.
+
+    Attributes:
+        args_options: possibly narrow string types to a subset of possible strings.
+        defaults: override default value of an argument.
+    """
+
     args_options: Optional[Dict[str, Any]]
     defaults: Optional[Dict[str, Any]]
 
@@ -20,8 +33,8 @@ OptionOverrides = Dict[str, Overrides]
 
 def _get_option_overrides() -> OptionOverrides:
     annotation_path = "fleet/model_builder/component_overrides.yml"
-    with open(annotation_path, "r") as f:
-        data = yaml.safe_load(f)
+    with open(annotation_path, "r", encoding="utf-8") as file:
+        data = yaml.safe_load(file)
         return {key: Overrides(**value) for key, value in data.items()}
 
 

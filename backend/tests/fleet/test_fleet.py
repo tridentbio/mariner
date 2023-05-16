@@ -8,8 +8,8 @@ from mlflow.tracking import MlflowClient
 from pandas import DataFrame, read_csv
 
 from fleet.base_schemas import BaseFleetModelSpec, TorchModelSpec
+from fleet.dataset_schemas import TargetConfig, is_regression
 from fleet.model_builder import optimizers
-from fleet.model_builder.schemas import TargetConfig, is_regression
 from fleet.model_functions import fit
 from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
 from mariner.core.aws import Bucket, list_s3_objects
@@ -25,7 +25,7 @@ class TestCase:
     datamodule_args = {"split_type": "random", "split_target": "60-20-20"}
 
 
-def targets_head(spec: TorchModelSpec) -> TargetConfig:
+def targets_head(spec: TorchModelSpec) -> "TargetConfig":
     return spec.dataset.target_columns[0]
 
 
