@@ -94,6 +94,7 @@ def create_temporary_deployment(
     teardown_create_model(db, some_model, skip_mlflow=True)
 
 
+@pytest.mark.integration
 @pytest.mark.parametrize("another_user_share_mode", ("user", "org", "public"))
 def test_get_deployments(
     db: Session,
@@ -138,6 +139,7 @@ def test_get_deployments(
         ), "Should have the created deployment in the list."
 
 
+@pytest.mark.integration
 def test_get_my_deployments(
     db: Session,
     client: TestClient,
@@ -166,6 +168,7 @@ def test_get_my_deployments(
     ), "Should have the created deployment in the list."
 
 
+@pytest.mark.integration
 def test_create_deployment(
     db: Session,
     client: TestClient,
@@ -196,6 +199,7 @@ def test_create_deployment(
     assert db_data.name == deployment_data["name"], "Should have the same name."
 
 
+@pytest.mark.integration
 def test_update_deployment(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -223,6 +227,7 @@ def test_update_deployment(
     ), "Should have a share url after updating to public."
 
 
+@pytest.mark.integration
 def test_delete_deployment(
     db: Session,
     client: TestClient,
@@ -260,6 +265,7 @@ def test_delete_deployment(
         ), "Should not have the deployment in the list since it was deleted."
 
 
+@pytest.mark.integration
 def test_create_permission(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -300,6 +306,7 @@ def test_create_permission(
             assert test_user.id in api_deployment["usersIdAllowed"]
 
 
+@pytest.mark.integration
 def test_delete_permission(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -349,6 +356,7 @@ def test_delete_permission(
             assert test_user.id not in api_deployment["usersIdAllowed"]
 
 
+@pytest.mark.integration
 def test_get_public_deployment(
     db: Session,
     client: TestClient,
@@ -400,7 +408,7 @@ def predict_req_data():
         "mwt": [3, 1, 9],
     }
 
-@pytest.mark.long
+@pytest.mark.integration
 def test_post_make_prediction(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
