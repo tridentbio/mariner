@@ -91,7 +91,7 @@ async def update_deployment(
     db: Session = Depends(deps.get_db),
 ):
     """
-    Update a deployment and process again if it is needed
+    Update a deployment and handle the status on ray cluster if needed
     """
     try:
         deployment = await controller.update_deployment(
