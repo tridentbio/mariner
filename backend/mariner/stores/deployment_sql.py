@@ -2,7 +2,7 @@
 Deployment data layer defining ways to read and write to the deployments collection
 """
 from datetime import timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -51,9 +51,8 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             A tuple with the list of deployment and the total number of deployment
         """
         sql_query = (
-            db.query(Deployment, SharePermissions, ModelVersion)
+            db.query(Deployment)
             .join(SharePermissions, Deployment.share_permissions, isouter=True)
-            .distinct(Deployment.id)
         )
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
 
@@ -99,27 +98,10 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         result = sql_query.all()
 
-        deployments: List[DeploymentSchema] = []
-        for i, record in enumerate(result):
-            deployment, share_permissions, model_version = record
-
-            deployments.append(DeploymentSchema.from_orm(deployment))
-            if share_permissions:
-                if share_permissions.user_id:
-                    deployments[i].users_id_allowed.append(share_permissions.user_id)
-                    user = user_store.get(db, share_permissions.user_id)
-                    deployments[i].users_allowed.append(
-                        User(
-                            id=user.id,
-                            email=user.email,
-                            full_name=user.full_name,
-                        )
-                    )
-                elif share_permissions.organization:
-                    deployments[i].organizations_allowed.append(
-                        share_permissions.organization
-                    )
-            deployments[i].model_version = ModelVersionSchema.from_orm(model_version)
+        deployments: Dict[int, DeploymentSchema] = list(map(
+            lambda record: DeploymentSchema.from_orm(record),
+            result
+        ))
 
         return deployments, total
 
@@ -272,11 +254,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         Deployment:
             the deployment if the user has permission to access it, None otherwise
         """
-        sql_query = (
-            db.query(Deployment)
-            .join(SharePermissions, Deployment.share_permissions, isouter=True)
-            .distinct(Deployment.id)
-        )
+        sql_query = db.query(Deployment).join(SharePermissions)
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
         sql_query = sql_query.filter(Deployment.id == deployment_id)
         sql_query = sql_query.filter(
@@ -290,7 +268,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         result = sql_query.all()
 
         try:
-            deployment = result[0]
+            deployment: Deployment = result[0]
             return deployment
         except IndexError:
             return None

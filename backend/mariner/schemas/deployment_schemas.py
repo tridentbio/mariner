@@ -13,6 +13,7 @@ from mariner.entities.deployment import (
 )
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.model_schemas import ModelVersion
+from mariner.entities.deployment import Deployment as DeploymentEntity
 
 
 class DeploymentsQuery(PaginatedApiQuery):
@@ -113,7 +114,23 @@ class Deployment(DeploymentBase):
     users_allowed: List[User] = []
     created_at: utc_datetime
     updated_at: utc_datetime
-
+    
+    @classmethod
+    def from_orm(cls, obj):
+        deployment = super().from_orm(obj)
+        if isinstance(obj, DeploymentEntity):
+            if obj.model_version:
+                deployment.model_version = ModelVersion.from_orm(obj.model_version)
+            
+            if obj.share_permissions:
+                deployment.users_allowed = [
+                    User.from_orm(permission.user) for permission in obj.share_permissions if permission.user_id
+                ]
+                deployment.users_id_allowed = list(map(lambda x: x.id, deployment.users_allowed))
+                deployment.organizations_allowed = [
+                    permission.organization for permission in obj.share_permissions if permission.organization
+                ]
+        return deployment
 
 class DeploymentUpdateInput(ApiBaseModel):
     """Payload of a deployment update."""

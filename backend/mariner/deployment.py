@@ -47,6 +47,25 @@ def get_deployments(
     db_data, total = deployment_store.get_many_paginated(db, query, current_user)
     return db_data, total
 
+def get_deployment(
+    db: Session, current_user: User, deployment_id: int
+) -> Deployment:
+    """Retrieve a deployment that the requester has access to.
+
+    Args:
+        db (Session): SQLAlchemy session.
+        current_user (User): Current user.
+        deployment_id (int): Deployment ID.
+
+    Returns:
+        Deployment: Deployment.
+    """
+    deployment = deployment_store.get_only_with_permission(db, deployment_id=deployment_id, user=current_user)
+    if not deployment:
+        raise DeploymentNotFound()
+    
+    return Deployment.from_orm(deployment)
+
 
 def create_deployment(
     db: Session, current_user: User, deployment_input: DeploymentBase
@@ -168,9 +187,7 @@ async def delete_deployment(
         )
         await deployment_manager.remove_deployment.remote(deployment.id)
 
-    return Deployment.from_orm(
-        deployment_store.update(db, deployment, DeploymentUpdateRepo.delete())
-    )
+    return deployment_store.update(db, deployment, DeploymentUpdateRepo.delete())
 
 
 def create_permission(
@@ -256,7 +273,7 @@ def get_public_deployment(db: Session, token):
     elif not deployment.share_strategy == ShareStrategy.PUBLIC:
         raise PermissionError()
 
-    return deployment
+    return Deployment.from_orm(deployment)
 
 
 async def make_prediction(

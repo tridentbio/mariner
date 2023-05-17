@@ -45,6 +45,23 @@ def get_deployments(
     deployments, total = controller.get_deployments(db, current_user, query)
     return Paginated(data=deployments, total=total)
 
+@router.get("/{deployment_id}", response_model=Deployment)
+def get_deployment(
+    deployment_id: int,
+    current_user: User = Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db),
+) -> Deployment:
+    """
+    Retrieve a deployment
+    """
+    try:
+        deployment = controller.get_deployment(db, current_user, deployment_id)
+        return deployment
+    except DeploymentNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+        )
+
 
 @router.post("/", response_model=Deployment)
 def create_deployment(
