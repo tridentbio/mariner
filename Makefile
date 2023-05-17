@@ -93,7 +93,7 @@ migrate-mlflow:         ## Runs mlflow alembic migrations
 migrate: migrate-backend migrate-mlflow   ## Runs all migrations
 
 .PHONY: test-backend
-test-backend: build start          ## Runs all tests in the backend (integration and unit)
+test-backend: build start-backend          ## Runs all tests in the backend (integration and unit)
 	$(DOCKER_COMPOSE) exec backend pytest $(ARGS)
 
 
@@ -141,6 +141,10 @@ pre-commit-uninstall:   ## Removes pre-commit managed git hooks from .git direct
 fix:
 	pre-commit run --hook-stage manual
 
+.PHONY: jupyter
+jupyter: ## Parse RELEASE.md file into mariner events that will show up as notifications
+	cd backend &&\
+		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
 
 .PHONY: publish
 publish: ## Parse RELEASE.md file into mariner events that will show up as notifications
