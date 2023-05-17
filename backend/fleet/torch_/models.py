@@ -3,7 +3,7 @@ Trainable lightning model classes and is mapped from :py:class:`fleet.torch_.sch
 as well as auxiliary classes and functions.
 """
 import logging
-from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
 
 import lightning.pytorch as pl
 import networkx as nx
@@ -143,6 +143,25 @@ class Metrics:
                 prediction.squeeze(), batch.squeeze()
             )
         return metrics_dict
+
+
+def _adapt_loss_args(
+    loss_fn: type, args: Tuple[torch.Tensor, torch.Tensor]
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    # CrossEntropyLoss requires targets to be longs
+    if isinstance(
+        loss_fn,
+        (torch.nn.CrossEntropyLoss),
+    ):
+        return (args[0], args[1].long())
+
+    # BCEWithLogitsLoss counter intuitivelly requires targets to be floats
+    elif isinstance(
+        loss_fn,
+        (torch.nn.BCEWithLogitsLoss),
+    ):
+        return (args[0], args[1].float())
+    return args
 
 
 class CustomModel(pl.LightningModule):
@@ -289,17 +308,17 @@ class CustomModel(pl.LightningModule):
                 batch[target_column.name].squeeze(),
             )
 
-            if target_column.column_type != "multiclass":
-                args = map(lambda x: x.type(torch.FloatTensor), args)
+            loss_fn = self.loss_dict[target_column.name]
+            args = _adapt_loss_args(loss_fn, args)
 
-            losses[target_column.name] = self.loss_dict[target_column.name](*args)
+            losses[target_column.name] = loss_fn(*args)
             self.log(f"test/loss/{target_column.name}", losses[target_column.name])
 
         loss = sum(losses.values())
         return loss
 
     def validation_step(self, batch, _batch_idx):
-        prediction = self(batch)
+        prediction: Dict[str, torch.Tensor] = self(batch)
 
         losses = {}
         for target_column in self.dataset_config.target_columns:
@@ -308,10 +327,10 @@ class CustomModel(pl.LightningModule):
                 batch[target_column.name].squeeze(),
             )
 
-            if target_column.column_type != "multiclass":
-                args = map(lambda x: x.type(torch.FloatTensor), args)
+            loss_fn = self.loss_dict[target_column.name]
 
-            losses[target_column.name] = self.loss_dict[target_column.name](*args)
+            args = _adapt_loss_args(loss_fn, args)
+            losses[target_column.name] = loss_fn(*args)
             metrics_dict = self.metrics_dict[target_column.name].get_validation_metrics(
                 prediction[target_column.name],
                 batch[target_column.name],
@@ -329,19 +348,19 @@ class CustomModel(pl.LightningModule):
         return loss
 
     def training_step(self, batch, _batch_idx):
-        prediction = self(batch)
+        prediction: Dict[str, torch.Tensor] = self(batch)
 
         losses = {}
         for target_column in self.dataset_config.target_columns:
+
             args = (
                 prediction[target_column.name].squeeze(),
                 batch[target_column.name].squeeze(),
             )
+            loss_fn = self.loss_dict[target_column.name]
+            args = _adapt_loss_args(loss_fn, args)
 
-            if target_column.column_type != "multiclass":
-                args = map(lambda x: x.type(torch.FloatTensor), args)
-
-            losses[target_column.name] = self.loss_dict[target_column.name](*args)
+            losses[target_column.name] = loss_fn(*args)
             metrics_dict = self.metrics_dict[target_column.name].get_training_metrics(
                 prediction[target_column.name],
                 batch[target_column.name],
