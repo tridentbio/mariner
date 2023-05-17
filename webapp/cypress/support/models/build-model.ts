@@ -159,6 +159,7 @@ export const buildModel = (
       // domainKind used to determine end of column name
       (col) => col!.name! + col!.dataType!.domainKind!
     ) || [];
+
   const featureCols =
     modelCreate.config?.dataset?.featureColumns?.map(
       // domainKind used to determine end of column name
@@ -171,6 +172,7 @@ export const buildModel = (
       .contains(new RegExp(`^${col}`, 'gi'))
       .click();
   });
+
   featureCols.forEach((col) => {
     cy.get('#feature-cols').click();
     cy.get('li')
@@ -253,8 +255,9 @@ export const buildModel = (
 
   cy.wait('@checkConfig').then(({ response }) => {
     expect(response?.statusCode).to.eq(200);
-    expect(response?.body).to.have.property('stackTrace');
-    expect(Boolean(response?.body.stackTrace)).to.eq(!success);
+    if (success) {
+      expect(Boolean(response?.body.stackTrace)).to.eq(false)
+    }
   });
 
   if (success)

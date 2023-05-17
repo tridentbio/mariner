@@ -213,7 +213,6 @@ class TorchDatasetConfig(DatasetConfig):
             if not allowed_losses.check(
                 target_column.loss_fn, target_column.column_type
             ):
-                print("LOSS NOT ALLOWED")
                 raise ValueError(
                     "Loss function is not valid for  task",
                 )
