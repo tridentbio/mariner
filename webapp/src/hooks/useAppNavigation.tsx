@@ -41,6 +41,12 @@ const ModelVersionInference = lazy(
 const ModelListing = lazy(
   () => import('../features/models/pages/ModelListing')
 );
+const DeploymentsListing = lazy(
+  () => import('../features/deployments/Pages/DeploymentsListing')
+);
+const DeploymentView = lazy(
+  () => import('../features/deployments/Pages/DeploymentView')
+);
 
 type Breadcrumb = {
   label: string;
@@ -101,6 +107,18 @@ const findModelVersionParamsId = (
     });
     if (version) return { model, version };
   }
+};
+
+/**
+ * path should have `:deploymentId`
+ */
+const findDeploymentMatchingParamsId = (
+  state: RootState,
+  params: Params<string>
+) => {
+  return state.deployments.deployments.find(
+    (deployment) => deployment.id.toString() === params.deploymentId
+  );
 };
 
 const navigationTree: RouteNode<any>[] = [
@@ -255,6 +273,33 @@ const navigationTree: RouteNode<any>[] = [
                   label: ':model.name (:version.name)',
                   url: '/models/:model.id/:version.id',
                 },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        withSelector: findDeploymentMatchingParamsId,
+        path: '/deployments/',
+        breadcrumb: {
+          label: 'Deployments',
+          url: '/deployments',
+        },
+        children: [
+          {
+            path: '',
+            element: <DeploymentsListing />,
+          },
+          {
+            path: ':deploymentId/',
+            breadcrumb: {
+              label: ':name',
+              url: '/deployments/:id',
+            },
+            children: [
+              {
+                path: '',
+                element: <DeploymentView />,
               },
             ],
           },

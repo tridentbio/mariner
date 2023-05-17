@@ -6,13 +6,14 @@ import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { Deployment } from 'app/rtk/generated/deployments';
 import StatusChip from './StatutsChip';
 import DeploymentsTableActions from './TableActions';
-import { Box, Chip } from '@mui/material';
+import { Box, Chip, Link } from '@mui/material';
 import { useAppDispatch } from 'app/hooks';
 import { setCurrentDeployment } from '../deploymentsSlice';
+import { linkRender } from 'components/atoms/Table/render';
 
 interface DeploymentsTableProps {
-  toggleModal: () => void;
-  handleClickDelete: (id: number) => void;
+  toggleModal?: () => void;
+  handleClickDelete?: (id: number) => void;
 }
 
 const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
@@ -38,7 +39,10 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         variant: 'text',
         width: 60,
       },
-      render: (row) => row.name,
+      render: linkRender(
+        (row: Deployment) => `/deployments/${row.id}`,
+        (row: Deployment) => row.name
+      ),
     },
     {
       field: 'modelVersion',
@@ -138,7 +142,11 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         return dateRender<typeof row>((row) => new Date(row.createdAt!))(row);
       },
     },
-    {
+  ];
+
+  toggleModal &&
+    handleClickDelete &&
+    columns.push({
       name: 'Action',
       field: 'Actions',
       title: 'Actions',
@@ -160,8 +168,7 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
           status={row.status}
         />
       ),
-    },
-  ];
+    });
 
   return (
     <div style={{ width: '100%', overflowX: 'auto', display: 'block' }}>

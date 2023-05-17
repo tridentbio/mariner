@@ -37,6 +37,14 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['deployments'],
       }),
+      getDeployment: build.query<GetDeploymentApiResponse, GetDeploymentApiArg>(
+        {
+          query: (queryArg) => ({
+            url: `/api/v1/deployments/${queryArg.deploymentId}`,
+          }),
+          providesTags: ['deployments'],
+        }
+      ),
       updateDeployment: build.mutation<
         UpdateDeploymentApiResponse,
         UpdateDeploymentApiArg
@@ -89,6 +97,11 @@ export type CreateDeploymentApiResponse =
 export type CreateDeploymentApiArg = {
   deploymentBase: DeploymentBase;
 };
+export type GetDeploymentApiResponse =
+  /** status 200 Successful Response */ Deployment;
+export type GetDeploymentApiArg = {
+  deploymentId: number;
+};
 export type UpdateDeploymentApiResponse =
   /** status 200 Successful Response */ Deployment;
 export type UpdateDeploymentApiArg = {
@@ -105,7 +118,7 @@ export type GetPublicDeploymentApiResponse =
 export type GetPublicDeploymentApiArg = {
   token: string;
 };
-export type DeploymentStatus = 'stopped' | 'active' | 'idle';
+export type DeploymentStatus = 'stopped' | 'active' | 'idle' | 'starting';
 export type ShareStrategy = 'public' | 'private';
 export type RateLimitUnit = 'minute' | 'hour' | 'day' | 'month';
 export type QuantityDataType = {
@@ -482,6 +495,8 @@ export const {
   useGetDeploymentsQuery,
   useLazyGetDeploymentsQuery,
   useCreateDeploymentMutation,
+  useGetDeploymentQuery,
+  useLazyGetDeploymentQuery,
   useUpdateDeploymentMutation,
   useDeleteDeploymentMutation,
   useGetPublicDeploymentQuery,
