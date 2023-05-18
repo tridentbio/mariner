@@ -186,7 +186,8 @@ good-names=i,
            x1,
            x2,
            xs,
-           x
+           x,
+           y
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted

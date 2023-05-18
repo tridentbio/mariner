@@ -118,7 +118,6 @@ class BaseModelFunctions(Protocol):
         Returns:
             Returns the :py:class:`ModelVersion`
         """
-        ...
 
     def load(self) -> None:
         """Loads a model to be tested."""

@@ -2,13 +2,12 @@
 Object schemas used by the model builder
 """
 # Temporary file to hold all extracted mariner schemas
-from typing import Any, Dict, List, Literal, Optional, Sequence, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import networkx as nx
 from pydantic import BaseModel, Field, root_validator
 from typing_extensions import Annotated
 
-from fleet.dataset_schemas import DatasetConfig, TargetConfig
 from fleet.model_builder import generate
 from fleet.model_builder.components_query import (
     get_component_constructor_args_by_type,

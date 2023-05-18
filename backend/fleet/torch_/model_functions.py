@@ -1,5 +1,5 @@
 """
-Concrete implementation of :py:class:fleet.base_schemas.BaseModelFunctions for
+Concrete implementation of :py:class:`fleet.base_schemas.BaseModelFunctions` for
 torch based models.
 """
 from os import getenv

@@ -25,9 +25,6 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
     classes: dict[Union[str, int], int]
     reversed_classes: dict[int, Union[str, int]]
 
-    def __init__(self):
-        super().__init__()
-
     def __call__(self, input_: str) -> torch.Tensor:
         return self.featurize(input_)
 
@@ -51,7 +48,7 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         return self.reversed_classes[idx]
 
     @override
-    def set_from_model_schema(self, config, dataset_config, deps):
+    def set_from_model_schema(self, config, dataset_config=None, deps=None):
         if not deps or len(deps) == 0:
             raise ValueError("deps cannot be None")
         if not dataset_config:
