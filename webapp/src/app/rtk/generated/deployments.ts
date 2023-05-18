@@ -75,6 +75,17 @@ const injectedRtkApi = api
         }),
         providesTags: ['deployments'],
       }),
+      postMakePredictionDeployment: build.mutation<
+        PostMakePredictionDeploymentApiResponse,
+        PostMakePredictionDeploymentApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/deployments/${queryArg.deploymentId}/predict`,
+          method: 'POST',
+          body: queryArg.body,
+        }),
+        invalidatesTags: ['deployments'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -117,6 +128,12 @@ export type GetPublicDeploymentApiResponse =
   /** status 200 Successful Response */ Deployment;
 export type GetPublicDeploymentApiArg = {
   token: string;
+};
+export type PostMakePredictionDeploymentApiResponse =
+  /** status 200 Successful Response */ object;
+export type PostMakePredictionDeploymentApiArg = {
+  deploymentId: number;
+  body: object;
 };
 export type DeploymentStatus = 'stopped' | 'active' | 'idle' | 'starting';
 export type ShareStrategy = 'public' | 'private';
@@ -501,4 +518,5 @@ export const {
   useDeleteDeploymentMutation,
   useGetPublicDeploymentQuery,
   useLazyGetPublicDeploymentQuery,
+  usePostMakePredictionDeploymentMutation,
 } = injectedRtkApi;

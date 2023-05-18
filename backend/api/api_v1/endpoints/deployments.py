@@ -222,7 +222,7 @@ def get_public_deployment(
 
 
 @router.post("/{deployment_id}/predict", response_model=Dict[str, Any])
-async def post_make_prediction(
+async def post_make_prediction_deployment(
     deployment_id: int,
     data: Dict[str, Any],
     current_user: User = Depends(deps.get_current_active_user),
