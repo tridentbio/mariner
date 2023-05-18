@@ -16,3 +16,4 @@ cov/
 .coverage
 secrets
 secrets-local/
+./build/

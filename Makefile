@@ -21,6 +21,13 @@ ARGS =
 BACKEND_DEPENDENCY_FILES = backend/pyproject.toml backend/poetry.lock
 WEBAPP_DEPENDENCY_FILES = webapp/package.json webapp/package-lock.json
 
+# You can set these variables from the command line, and also
+# from the environment for the first two.
+SPHINXOPTS    ?= -a
+SPHINXBUILD   ?= sphinx-build
+SOURCEDIR     = source
+BUILDDIR      = build
+
 ##@ Dependencies
 
 
@@ -150,3 +157,11 @@ jupyter: ## Parse RELEASE.md file into mariner events that will show up as notif
 publish: ## Parse RELEASE.md file into mariner events that will show up as notifications
 	cd backend &&\
 		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
+
+
+.PHONY: build-docs 
+build-docs: Makefile   ## Builds the documentation
+	sphinx-apidoc -o source backend/mariner
+	sphinx-apidoc -o source backend/fleet
+	@$(SPHINXBUILD) "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
