@@ -128,7 +128,10 @@ export const buildModel = (
   cy.once('uncaught:exception', () => false);
   cy.visit('/models/new');
   // Fill model name
-  cy.get('[data-testid="random-model-name"]').click();
+  cy.get('[data-testid="model-name"] input')
+    .clear()
+    .type(modelCreate.name || randomName())
+    .type('{enter}');
   // Fill model description
   cy.get('[data-testid="model-description"] input')
     .clear()
@@ -213,6 +216,10 @@ export const buildModel = (
   cy.intercept({
     method: 'POST',
     url: 'http://localhost/api/v1/models/check-config',
+  }).as('checkConfig');
+  cy.intercept({
+    method: 'POST',
+    url: 'http://localhost/api/v1/models',
   }).as('createModel');
 
   cy.then(() => {
@@ -246,36 +253,26 @@ export const buildModel = (
     });
   }).then(() => cy.get('button').contains('CREATE').click());
 
-  cy.wait('@createModel').then(({ response }) => {
+  cy.wait('@checkConfig').then(({ response }) => {
     expect(response?.statusCode).to.eq(200);
     if (success) {
       expect(Boolean(response?.body.stackTrace)).to.eq(false)
     }
   });
 
-  cy.get('.react-flow__node').then(($nodes) => {
-    const componentTypeByDataId: {
-      [key: string]: { type: string; filled: Record<string, boolean> };
-    } = {};
-    const nodes = $nodes.get();
-
-    nodes.forEach((el) => {
-      const id = el.getAttribute('data-id');
-      const name = el.innerText;
-      if (!id) throw new Error('Node without data-id');
-      if (!name) throw new Error('Node without innerText');
-
-      componentTypeByDataId[id] = { type: name, filled: {} };
+  if (success)
+    cy.wait('@createModel').then(({ response }) => {
+      expect(response?.statusCode).to.eq(200);
     });
-  });
 };
 
 export const buildYamlModel = (
   yaml: string,
   dataset: string | null = null,
-  success = true
+  success = true,
+  deleteModel = true,
+  modelName = randomName()
 ) => {
-  const modelName = randomName();
   cy.fixture(yaml).then((yamlStr) => {
     const jsonSchema: TorchModelSpec = parse(yamlStr);
 

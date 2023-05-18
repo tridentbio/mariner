@@ -157,11 +157,11 @@ const ModelCreateV2 = () => {
 
   const handlePrevious = () => {
     const newStep = activeStep - 1;
-    setActiveStep(newStep);
+    onStepChange(newStep, activeStep);
   };
   const handleNext = () => {
     const newStep = activeStep + 1;
-    setActiveStep(newStep);
+    onStepChange(newStep, activeStep);
   };
 
   const steps = [
