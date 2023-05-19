@@ -24,6 +24,7 @@ from mariner.schemas.deployment_schemas import (
     DeploymentBase,
     DeploymentCreateRepo,
     DeploymentsQuery,
+    DeploymentStatus,
     DeploymentUpdateRepo,
     PermissionCreateRepo,
     PredictionCreateRepo,
@@ -47,9 +48,8 @@ def get_deployments(
     db_data, total = deployment_store.get_many_paginated(db, query, current_user)
     return db_data, total
 
-def get_deployment(
-    db: Session, current_user: User, deployment_id: int
-) -> Deployment:
+
+def get_deployment(db: Session, current_user: User, deployment_id: int) -> Deployment:
     """Retrieve a deployment that the requester has access to.
 
     Args:
@@ -60,10 +60,12 @@ def get_deployment(
     Returns:
         Deployment: Deployment.
     """
-    deployment = deployment_store.get_only_with_permission(db, deployment_id=deployment_id, user=current_user)
+    deployment = deployment_store.get_only_with_permission(
+        db, deployment_id=deployment_id, user=current_user
+    )
     if not deployment:
         raise DeploymentNotFound()
-    
+
     return Deployment.from_orm(deployment)
 
 
@@ -138,19 +140,17 @@ async def update_deployment(
         deployment_input.share_url = share_url
 
     if deployment_input.status and deployment_input.status != deployment_entity.status:
-        deployment_manager = get_deployments_manager()
+        manager = get_deployments_manager()
 
         if deployment_input.status == "active":
-            await deployment_manager.add_deployment.remote(
-                Deployment.from_orm(deployment_entity)
-            )
-            current_deployment = await deployment_manager.start_deployment.remote(
+            await manager.add_deployment.remote(Deployment.from_orm(deployment_entity))
+            current_deployment = await manager.start_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
             deployment_input.status = current_deployment.status
 
         elif deployment_input.status == "stopped":
-            current_deployment = await deployment_manager.stop_deployment.remote(
+            current_deployment = await manager.stop_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
             deployment_input.status = current_deployment.status
@@ -180,12 +180,10 @@ async def delete_deployment(
     if deployment.created_by_id != current_user.id:
         raise NotCreatorOwner()
 
-    deployment_manager = get_deployments_manager()
-    if deployment.id in await deployment_manager.get_deployments.remote():
-        await deployment_manager.stop_deployment.remote(
-            deployment.id, deployment.created_by_id
-        )
-        await deployment_manager.remove_deployment.remote(deployment.id)
+    manager = get_deployments_manager()
+    if deployment.id in await manager.get_deployments.remote():
+        await manager.stop_deployment.remote(deployment.id, deployment.created_by_id)
+        await manager.remove_deployment.remote(deployment.id)
 
     return deployment_store.update(db, deployment, DeploymentUpdateRepo.delete())
 
@@ -338,3 +336,22 @@ async def make_prediction(
         )
 
     return prediction
+
+
+def handle_deployment_manager_first_init(db: Session):
+    print("syncing deployments")
+    deployments = deployment_store.handle_deployment_manager_init(db)
+    return deployments
+
+
+def update_deployment_status(db: Session, deployment_id: int, status: DeploymentStatus):
+    deployment = deployment_store.get(db, deployment_id)
+    print("handle update deployment status ", deployment_id)
+    if not deployment:
+        return
+
+    deployment = deployment_store.update(
+        db, deployment, DeploymentUpdateRepo(status=status)
+    )
+
+    return Deployment.from_orm(deployment)

@@ -1,12 +1,14 @@
-from typing import Any, Dict, NewType, Optional
+from threading import Thread
+from time import sleep, time
+from typing import Any, Dict, List, NewType, Optional
 
 import pandas as pd
 import ray
-from sqlalchemy.orm import Session
+import requests
 from torch_geometric.loader import DataLoader
 
 from mariner.core import mlflowapi
-from mariner.db.session import SessionLocal
+from mariner.core.config import settings
 from mariner.entities.deployment import DeploymentStatus
 from mariner.exceptions import (
     DeploymentNotRunning,
@@ -20,21 +22,11 @@ from mariner.models import (
     CustomModel,
     _check_dataframe_conforms_dataset,
 )
-from mariner.schemas.deployment_schemas import Deployment, DeploymentUpdateRepo
-from mariner.schemas.model_schemas import ModelVersion
-from mariner.stores.deployment_sql import deployment_store
-from mariner.stores.model_sql import model_store
+from mariner.schemas.deployment_schemas import (
+    Deployment,
+    DeploymentManagerComunication,
+)
 from model_builder.dataset import CustomDataset
-
-db: Session = SessionLocal()
-
-
-def get_db() -> Session:
-    """Makes sure that only one database session is running at a time."""
-    global db
-    if not db:
-        db = SessionLocal()
-    return db
 
 
 class DeploymentInstance:
@@ -49,25 +41,32 @@ class DeploymentInstance:
     """
 
     deployment: Deployment
-    modelversion: ModelVersion
     is_running: bool
     model: Optional[CustomModel]
-    db: Session = get_db()
+    idle_time: Optional[int] = None
 
     def __init__(self, deployment: Deployment):
         self.deployment = deployment
         self.update_status(DeploymentStatus.IDLE)
 
-        self.modelversion = ModelVersion.from_orm(
-            model_store.get_model_version(db, deployment.model_version_id)
-        )
-        if not self.modelversion:
+        if not self.deployment.model_version:
             raise ModelVersionNotFound()
-        if not self.modelversion.mlflow_version:
+        if not self.deployment.model_version.mlflow_version:
             raise ModelVersionNotTrained()
 
         self.is_running = False
         self.model = None
+
+    @property
+    def idle_long(self) -> bool:
+        """Checks if the deployment is idle for a long time.
+
+        Returns:
+        True if the deployment is idle for a long time, False otherwise.
+        """
+        return (
+            self.idle_time and (time() - self.idle_time) > settings.DEPLOYMENT_IDLE_TIME
+        )
 
     def start(self) -> Deployment:
         """Starts the DeploymentInstance, which includes loading the
@@ -77,7 +76,9 @@ class DeploymentInstance:
         The updated deployment after starting the instance.
         """
         self.update_status(DeploymentStatus.STARTING)
-        self.model = mlflowapi.get_model_by_uri(self.modelversion.get_mlflow_uri())
+        self.model = mlflowapi.get_model_by_uri(
+            self.deployment.model_version.get_mlflow_uri()
+        )
         self.is_running = True
         self.update_status(DeploymentStatus.ACTIVE)
         return self.deployment
@@ -125,7 +126,7 @@ class DeploymentInstance:
         """
         df = pd.DataFrame.from_dict(x, dtype=float)
         broken_checks = _check_dataframe_conforms_dataset(
-            df, self.modelversion.config.dataset
+            df, self.deployment.model_version.config.dataset
         )
 
         if len(broken_checks) > 0:
@@ -134,7 +135,9 @@ class DeploymentInstance:
                 reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
             )
 
-        dataset = CustomDataset(data=df, config=self.modelversion.config, target=False)
+        dataset = CustomDataset(
+            data=df, config=self.deployment.model_version.config, target=False
+        )
         dataloader = DataLoader(dataset, batch_size=len(df))
         return next(iter(dataloader))
 
@@ -145,13 +148,22 @@ class DeploymentInstance:
         Args:
         status (DeploymentStatus): The new status for the deployment.
         """
-        if not self.deployment:
-            return
+        if status == DeploymentStatus.IDLE:
+            self.idle_time = time()
+        else:
+            self.idle_time = None
 
-        self.deployment = deployment_store.update(
-            self.db, self.deployment, DeploymentUpdateRepo(status=status.value)
+        data = DeploymentManagerComunication(
+            deployment_id=self.deployment.id, status=status
         )
-        # TODO: notify user by websocket
+        res = requests.post(
+            f"{settings.SERVER_HOST}/api/v1/deployments/deployment-manager",
+            json=data.dict(),
+            headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
+        )
+        assert res.status_code == 200
+
+        self.deployment = Deployment(**res.json())
 
 
 @ray.remote
@@ -165,6 +177,8 @@ class DeploymentsManager:
 
     def __init__(self):
         self.deployments = {}
+        self.load()
+        Thread(target=self.check_idle_long_loop).start()
 
     def get_deployments(self):
         """Returns a dictionary containing all the registered
@@ -299,6 +313,37 @@ class DeploymentsManager:
 
         return self.deployments[deployment_id].predict(x)
 
+    def load(self):
+        res = requests.post(
+            f"{settings.SERVER_HOST}/api/v1/deployments/deployment-manager",
+            json=DeploymentManagerComunication(first_init=True).dict(),
+            headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
+        )
+        deployments = map(lambda x: Deployment(**x), res.json())
+        for deployment in deployments:
+            try:
+                self.add_deployment(deployment)
+                self.start_deployment(deployment.id, deployment.created_by_id)
+            except Exception as e:
+                print(e)
+        return True
+
+    @staticmethod
+    def get_idle_deployments(deployments: Dict[int, DeploymentInstance]) -> List[int]:
+        return [
+            deployment_id
+            for deployment_id, deployment in deployments.items()
+            if deployment.deployment.status == DeploymentStatus.IDLE
+        ]
+
+    def check_idle_long_loop(self):
+        while True:
+            sleep(5)
+            idle_deployments = self.get_idle_deployments(self.deployments)
+            for deployment_id in idle_deployments:
+                if self.deployments[deployment_id].idle_long:
+                    self.remove_deployment(deployment_id)
+
 
 manager = None
 Manager = NewType("Remote Deployment Manager", DeploymentsManager)
@@ -309,6 +354,4 @@ def get_deployments_manager() -> Manager:
     global manager
     if not manager:
         manager = DeploymentsManager.remote()
-        # TODO: add a periodic task to check for idle deployments and stop them
-        # TODO: load currently running deployments from database when starting
     return manager

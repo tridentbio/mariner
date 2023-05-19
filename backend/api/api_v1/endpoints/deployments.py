@@ -1,7 +1,7 @@
 """
 Handlers for api/v1/deployments* endpoints
 """
-from typing import Any, Dict
+from typing import Any, Dict, Union, List
 
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
@@ -28,6 +28,7 @@ from mariner.schemas.deployment_schemas import (
     DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
+    DeploymentManagerComunication
 )
 
 router = APIRouter()
@@ -248,6 +249,29 @@ async def post_make_prediction_deployment(
 
     except DeploymentNotFound:
         raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment not found.",
+        )
+
+
+
+@router.post(
+    "/deployment-manager", 
+    response_model=Union[Deployment, List[Deployment]],  
+    dependencies=[Depends(deps.assert_trusted_service)]
+)
+def handle_deployment_manager(
+    message: DeploymentManagerComunication,
+    db: Session = Depends(deps.get_db),
+):
+    try:
+        if message.first_init:
+            return controller.handle_deployment_manager_first_init(db)
+        else:
+            return controller.update_deployment_status(db, message.deployment_id, message.status)
+    
+    except DeploymentNotFound:
+        return HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Deployment not found.",
         )

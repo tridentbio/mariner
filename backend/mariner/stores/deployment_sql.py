@@ -2,7 +2,7 @@
 Deployment data layer defining ways to read and write to the deployments collection
 """
 from datetime import timedelta
-from typing import List, Optional, Dict
+from typing import Dict, Optional
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -13,7 +13,6 @@ from mariner.entities.deployment import (
     SharePermissions,
     ShareStrategy,
 )
-from mariner.entities.model import ModelVersion
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
 from mariner.schemas.api import utc_datetime
@@ -21,15 +20,14 @@ from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
 from mariner.schemas.deployment_schemas import (
     DeploymentCreateRepo,
     DeploymentsQuery,
+    DeploymentStatus,
     DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
     PredictionCreateRepo,
     User,
 )
-from mariner.schemas.model_schemas import ModelVersion as ModelVersionSchema
 from mariner.stores.base_sql import CRUDBase
-from mariner.stores.user_sql import user_store
 
 from .model_sql import model_store
 
@@ -50,9 +48,8 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         Returns:
             A tuple with the list of deployment and the total number of deployment
         """
-        sql_query = (
-            db.query(Deployment)
-            .join(SharePermissions, Deployment.share_permissions, isouter=True)
+        sql_query = db.query(Deployment).join(
+            SharePermissions, Deployment.share_permissions, isouter=True
         )
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
 
@@ -98,10 +95,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         result = sql_query.all()
 
-        deployments: Dict[int, DeploymentSchema] = list(map(
-            lambda record: DeploymentSchema.from_orm(record),
-            result
-        ))
+        deployments: Dict[int, DeploymentSchema] = list(
+            map(lambda record: DeploymentSchema.from_orm(record), result)
+        )
 
         return deployments, total
 
@@ -254,7 +250,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         Deployment:
             the deployment if the user has permission to access it, None otherwise
         """
-        sql_query = db.query(Deployment).join(SharePermissions)
+        sql_query = db.query(Deployment).join(SharePermissions, isouter=True)
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
         sql_query = sql_query.filter(Deployment.id == deployment_id)
         sql_query = sql_query.filter(
@@ -310,6 +306,28 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         prediction = db.add(Predictions(**prediction_to_track))
         db.commit()
         return prediction
+
+    def handle_deployment_manager_init(self, db: Session):
+        """Get all deployments
+
+        Returns:
+        List[Deployment]: all deployments
+        """
+        deployments = (
+            db.query(Deployment)
+            .filter(Deployment.status == DeploymentStatus.ACTIVE)
+            .all()
+        )
+        deployments = list(
+            map(lambda deployment: DeploymentSchema.from_orm(deployment), deployments)
+        )
+
+        db.execute(
+            f"UPDATE deployment SET status = :status",
+            {"status": DeploymentStatus.STOPPED.value.upper()},
+        )
+        db.commit()
+        return deployments
 
 
 deployment_store = CRUDDeployment(Deployment)

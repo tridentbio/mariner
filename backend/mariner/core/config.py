@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
 
+    DEPLOYMENT_IDLE_TIME: int = 60 * 10  # 10 minutes
+
     SERVER_NAME: str
     SERVER_HOST: AnyHttpUrl
     WEBAPP_URL: str
