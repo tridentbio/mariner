@@ -6,7 +6,8 @@
 from typing import Callable, List, Literal, Optional, Union
 
 import torch
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 
 from fleet.model_builder.utils import CamelCaseModel, get_class_from_path_string
 
@@ -1123,44 +1124,56 @@ class FleetproteinsequencefeaturizerLayerConfig(CamelCaseModel):
     forward_args: FleetproteinsequencefeaturizerForwardArgsReferences
 
 
-LayersType = Union[
-    FleetonehotLayerConfig,
-    FleetglobalpoolingLayerConfig,
-    FleetconcatLayerConfig,
-    FleetaddpoolingLayerConfig,
-    TorchlinearLayerConfig,
-    TorchsigmoidLayerConfig,
-    TorchreluLayerConfig,
-    TorchgeometricgcnconvLayerConfig,
-    TorchembeddingLayerConfig,
-    TorchtransformerencoderlayerLayerConfig,
+LayersType = Annotated[
+    Union[
+        FleetonehotLayerConfig,
+        FleetglobalpoolingLayerConfig,
+        FleetconcatLayerConfig,
+        FleetaddpoolingLayerConfig,
+        TorchlinearLayerConfig,
+        TorchsigmoidLayerConfig,
+        TorchreluLayerConfig,
+        TorchgeometricgcnconvLayerConfig,
+        TorchembeddingLayerConfig,
+        TorchtransformerencoderlayerLayerConfig,
+    ],
+    Field(discriminator="type"),
 ]
 
-FeaturizersType = Union[
-    FleetmoleculefeaturizerLayerConfig,
-    FleetintegerfeaturizerLayerConfig,
-    FleetdnasequencefeaturizerLayerConfig,
-    FleetrnasequencefeaturizerLayerConfig,
-    FleetproteinsequencefeaturizerLayerConfig,
+FeaturizersType = Annotated[
+    Union[
+        FleetmoleculefeaturizerLayerConfig,
+        FleetintegerfeaturizerLayerConfig,
+        FleetdnasequencefeaturizerLayerConfig,
+        FleetrnasequencefeaturizerLayerConfig,
+        FleetproteinsequencefeaturizerLayerConfig,
+    ],
+    Field(discriminator="type"),
 ]
 
-LayersArgsType = Union[
-    FleetonehotSummary,
-    FleetglobalpoolingSummary,
-    FleetconcatSummary,
-    FleetaddpoolingSummary,
-    TorchlinearSummary,
-    TorchsigmoidSummary,
-    TorchreluSummary,
-    TorchgeometricgcnconvSummary,
-    TorchembeddingSummary,
-    TorchtransformerencoderlayerSummary,
+LayersArgsType = Annotated[
+    Union[
+        FleetonehotSummary,
+        FleetglobalpoolingSummary,
+        FleetconcatSummary,
+        FleetaddpoolingSummary,
+        TorchlinearSummary,
+        TorchsigmoidSummary,
+        TorchreluSummary,
+        TorchgeometricgcnconvSummary,
+        TorchembeddingSummary,
+        TorchtransformerencoderlayerSummary,
+    ],
+    Field(discriminator="type"),
 ]
 
-FeaturizersArgsType = Union[
-    FleetmoleculefeaturizerSummary,
-    FleetintegerfeaturizerSummary,
-    FleetdnasequencefeaturizerSummary,
-    FleetrnasequencefeaturizerSummary,
-    FleetproteinsequencefeaturizerSummary,
+FeaturizersArgsType = Annotated[
+    Union[
+        FleetmoleculefeaturizerSummary,
+        FleetintegerfeaturizerSummary,
+        FleetdnasequencefeaturizerSummary,
+        FleetrnasequencefeaturizerSummary,
+        FleetproteinsequencefeaturizerSummary,
+    ],
+    Field(discriminator="type"),
 ]

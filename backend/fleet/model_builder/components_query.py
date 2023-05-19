@@ -19,8 +19,14 @@ def get_component_config_by_type(name: str) -> Optional[BaseModel]:
     """
     # lazy import is necessary to avoid a tricky dependency loop during
     # code generation
-    layer_types = [component for component in get_args(LayersType)]
-    featurizer_types = [component for component in get_args(FeaturizersType)]
+    layer_types = [component for component in get_args(get_args(LayersType)[0])]
+    featurizer_types = [
+        component for component in get_args(get_args(FeaturizersType)[0])
+    ]
+    print("layer_types")
+    print(layer_types)
+    print("featurizer_types")
+    print(featurizer_types)
     for component in layer_types + featurizer_types:
         if component.construct().type == name:
             return component

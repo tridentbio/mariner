@@ -5,7 +5,7 @@ Object schemas used by the model builder
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import networkx as nx
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, root_validator
 from typing_extensions import Annotated
 
 from fleet.model_builder import generate
@@ -58,15 +58,12 @@ class MissingComponentArgs(ValueError):
         self.missing = missing
 
 
-AnnotatedLayersType = Annotated[LayersType, Field(discriminator="type")]
-
-
 class TorchModelSchema(CamelCaseModel, YAML_Model):
     """
     A serializable neural net architecture.
     """
 
-    layers: List[AnnotatedLayersType] = []
+    layers: List[LayersType] = []
 
     @root_validator(pre=True)
     def check_types_defined(cls, values):
@@ -79,7 +76,7 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
         Raises:
             UnknownComponentType: in case a layer of featurizer has unknown ``type``
         """
-        layers: List[AnnotatedLayersType] = values.get("layers")
+        layers: List[LayersType] = values.get("layers")
         layer_types = [layer.name for layer in generate.layers]
         for layer in layers:
             if not isinstance(layer, dict):
@@ -105,7 +102,7 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
         Raises:
             MissingComponentArgs: if some component is missing required args
         """
-        layers: List[AnnotatedLayersType] = values.get("layers")
+        layers: List[LayersType] = values.get("layers")
         errors = []
         for layer in layers:
             if not isinstance(layer, dict):
@@ -173,6 +170,9 @@ class ComponentAnnotation(CamelCaseModel):
     output_type: Optional[str]
     class_path: str
     type: Literal["featurizer", "layer"]
+
+
+AnnotatedLayersArgsType = Annotated
 
 
 class ComponentOption(ComponentAnnotation):
