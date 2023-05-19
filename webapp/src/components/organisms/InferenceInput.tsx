@@ -101,7 +101,15 @@ export const InferenceInputs = ({
   values,
   handleChange,
 }: InferenceInputsProps) => (
-  <>
+  <Box
+    sx={{
+      mb: '1rem',
+      ml: '5px',
+      border: '1px solid rgba(0, 0, 0, 0.12)',
+      padding: '1rem',
+      borderRadius: '4px',
+    }}
+  >
     {inferenceColumns.map((inferenceColumn) => (
       <Box sx={{ mb: '1rem' }}>
         <InferenceInput
@@ -114,5 +122,5 @@ export const InferenceInputs = ({
         />
       </Box>
     ))}
-  </>
+  </Box>
 );

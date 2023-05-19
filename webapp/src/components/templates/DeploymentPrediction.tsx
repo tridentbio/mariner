@@ -83,8 +83,13 @@ export const DeploymentPrediction = ({
           alignItems: 'center',
         }}
       >
-        <Text fontWeight="bold">Prediction:</Text>
-        <Button onClick={handlePrediction} sx={{ ml: 1, p: '1rem' }}>
+        <Text fontWeight="bold">Input:</Text>
+        <Button
+          onClick={handlePrediction}
+          variant="contained"
+          color="primary"
+          sx={{ ml: 3 }}
+        >
           Predict
         </Button>
       </Box>
@@ -93,6 +98,11 @@ export const DeploymentPrediction = ({
         handleChange={handleInputValues}
         values={inputValues}
       />
+
+      <Text fontWeight="bold" marginBottom={'0.5rem'} marginTop={'2rem'}>
+        Output:
+      </Text>
+
       {outputValues && (
         <InferenceOutput
           outputValues={outputValues}

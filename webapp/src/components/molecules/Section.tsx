@@ -10,9 +10,7 @@ export const Section = ({ children, title, ...rest }: SectionProps) => {
   return (
     <Box sx={{ mb: 1 }}>
       <Text fontWeight="bold">{title}:</Text>
-      <Box sx={{ ml: 1 }} {...rest}>
-        {children}
-      </Box>
+      <Box {...rest}>{children}</Box>
     </Box>
   );
 };
