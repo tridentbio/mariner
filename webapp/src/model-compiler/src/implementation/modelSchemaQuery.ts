@@ -115,6 +115,22 @@ export const getDependencies = (
   return deps;
 };
 
+export const getDependents = (
+  node: NodeType,
+  schema: ModelSchema
+): NodeType[] => {
+  const nodes = getNodes(schema);
+  const nodesByName: { [key: string]: NodeType } = {};
+  nodes.forEach((n) => {
+    nodesByName[n.name] = n;
+  });
+  const dependents = nodes.filter((n) => {
+    const deps = getDependenciesNames(n);
+    return deps.includes(node.name);
+  });
+  return dependents;
+};
+
 type HandleData = {
   nodeId: string;
   handle: string;
