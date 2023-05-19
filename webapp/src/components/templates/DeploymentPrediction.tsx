@@ -17,7 +17,6 @@ const getPrediction = async (
       // @ts-ignore
       inputValues[key] = [inputValues[key]];
   });
-
   const response = await api.post(
     `api/v1/deployments/${deployment.id}/predict`,
     inputValues
@@ -60,15 +59,19 @@ export const DeploymentPrediction = ({
     if (loadingPrediction) return;
     setLoadingPrediction(true);
 
-    if (Object.values(inputValues).some((v) => !v))
+    if (
+      Object.values(inputValues).some((v: any) =>
+        [null, undefined, ''].includes(v)
+      )
+    )
       return setOutputValues(null);
 
     getPrediction(deployment, inputValues)
       .then(setOutputValues)
       .catch(
         (err) =>
-          err.data?.detail &&
-          setMessage({ message: err.data.detail, type: 'error' })
+          err.response?.data?.detail &&
+          setMessage({ message: err.response.data.detail, type: 'error' })
       )
       .finally(() => setLoadingPrediction(false));
   };
@@ -98,10 +101,6 @@ export const DeploymentPrediction = ({
         handleChange={handleInputValues}
         values={inputValues}
       />
-
-      <Text fontWeight="bold" marginBottom={'0.5rem'} marginTop={'2rem'}>
-        Output:
-      </Text>
 
       {outputValues && (
         <InferenceOutput

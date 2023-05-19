@@ -12,8 +12,8 @@ import { useNotifications } from '@app/notifications';
 type DeploymentsTableActionsProps = {
   id: number;
   status?: deploymentsApi.DeploymentStatus;
-  onClickEdit: () => void;
-  onClickDelete: (id: number) => void;
+  onClickEdit?: () => void;
+  onClickDelete?: (id: number) => void;
 };
 type Colors = PropTypes.Color | 'success' | 'error' | 'info' | 'warning';
 
@@ -29,8 +29,7 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   const handleDeployStatus = (id: number, status: 'active' | 'stopped') => {
     updateDeploy({
       deploymentId: id,
-      // @ts-ignore
-      status,
+      deploymentUpdateInput: { status },
     })
       .unwrap()
       .catch(
@@ -96,34 +95,38 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
         justifyContent: 'center',
       }}
     >
-      <Tooltip title={'Edit'} placement="top">
-        <Fab
-          size="small"
-          sx={{
-            background: '#384E77',
-            boxShadow: 'none',
-            '&:hover': { background: '#17294b' },
-          }}
-          aria-label="edit"
-          onClick={() => onClickEdit()}
-        >
-          <EditIcon fontSize="inherit" sx={{ color: '#fff' }} />
-        </Fab>
-      </Tooltip>
+      {onClickEdit && (
+        <Tooltip title={'Edit'} placement="top">
+          <Fab
+            size="small"
+            sx={{
+              background: '#384E77',
+              boxShadow: 'none',
+              '&:hover': { background: '#17294b' },
+            }}
+            aria-label="edit"
+            onClick={() => onClickEdit()}
+          >
+            <EditIcon fontSize="inherit" sx={{ color: '#fff' }} />
+          </Fab>
+        </Tooltip>
+      )}
       {StartStopIcon}
-      <Tooltip title="Delete" placement="top">
-        <Fab
-          size="small"
-          sx={{
-            boxShadow: 'none',
-            '&:hover': { background: '#b3b3b3' },
-          }}
-          aria-label="delete"
-          onClick={() => onClickDelete(id)}
-        >
-          <ClearIcon fontSize="inherit" />
-        </Fab>
-      </Tooltip>
+      {onClickDelete && (
+        <Tooltip title="Delete" placement="top">
+          <Fab
+            size="small"
+            sx={{
+              boxShadow: 'none',
+              '&:hover': { background: '#b3b3b3' },
+            }}
+            aria-label="delete"
+            onClick={() => onClickDelete(id)}
+          >
+            <ClearIcon fontSize="inherit" />
+          </Fab>
+        </Tooltip>
+      )}
     </Box>
   );
 };

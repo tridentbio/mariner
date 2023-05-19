@@ -6,29 +6,64 @@ import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { Deployment } from 'app/rtk/generated/deployments';
 import StatusChip from './StatutsChip';
 import DeploymentsTableActions from './TableActions';
-import { Box, Chip, Link } from '@mui/material';
+import { Box, Chip, Link, Tab, Tabs } from '@mui/material';
 import { useAppDispatch } from 'app/hooks';
 import { setCurrentDeployment } from '../deploymentsSlice';
 import { linkRender } from 'components/atoms/Table/render';
+import AppTabs from '@components/organisms/Tabs';
+import { GetDeploymentsApiArg } from 'app/rtk/generated/deployments';
 
 interface DeploymentsTableProps {
   toggleModal?: () => void;
   handleClickDelete?: (id: number) => void;
+  simple?: boolean;
 }
+
+const TabOptions: {
+  name: string;
+  filter: GetDeploymentsApiArg;
+}[] = [
+  {
+    name: 'All',
+    filter: {},
+  },
+  {
+    name: 'Public',
+    filter: {
+      publicMode: 'only',
+    },
+  },
+  {
+    name: 'Shared',
+    filter: {
+      accessMode: 'shared',
+    },
+  },
+  {
+    name: 'Mine',
+    filter: {
+      accessMode: 'owned',
+    },
+  },
+];
 
 const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
   toggleModal,
   handleClickDelete,
+  simple = false,
 }) => {
+  const [option, setOption] = useState(simple ? 0 : 3);
   const [getDeployments, { isLoading, data, originalArgs }] =
     deploymentsApi.useLazyGetDeploymentsQuery();
   const dispatch = useAppDispatch();
   useEffect(() => {
+    const optionChosed = TabOptions[option];
     getDeployments({
       page: 0,
       perPage: 10,
+      ...optionChosed.filter,
     });
-  }, []);
+  }, [option]);
 
   const columns: Column<Deployment, any>[] = [
     {
@@ -142,11 +177,7 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         return dateRender<typeof row>((row) => new Date(row.createdAt!))(row);
       },
     },
-  ];
-
-  toggleModal &&
-    handleClickDelete &&
-    columns.push({
+    {
       name: 'Action',
       field: 'Actions',
       title: 'Actions',
@@ -157,21 +188,33 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         textAlign: 'center',
       },
       bold: true,
-      render: (row) => (
-        <DeploymentsTableActions
-          onClickDelete={handleClickDelete}
-          onClickEdit={() => {
-            toggleModal();
-            dispatch(setCurrentDeployment(row));
-          }}
-          id={row.id}
-          status={row.status}
-        />
-      ),
-    });
+      render: (row) =>
+        row.createdById === 1 && (
+          <DeploymentsTableActions
+            onClickDelete={handleClickDelete}
+            onClickEdit={
+              toggleModal &&
+              (() => {
+                toggleModal();
+                dispatch(setCurrentDeployment(row));
+              })
+            }
+            id={row.id}
+            status={row.status}
+          />
+        ),
+    },
+  ];
 
   return (
     <div style={{ width: '100%', overflowX: 'auto', display: 'block' }}>
+      {!simple && (
+        <Tabs value={option} onChange={(_, v) => setOption(v)}>
+          {TabOptions.map((tab, index) => (
+            <Tab key={tab.name} label={tab.name} value={index} />
+          ))}
+        </Tabs>
+      )}
       <Table<Deployment>
         loading={isLoading}
         rowKey={(row) => row.name}

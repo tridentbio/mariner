@@ -111,9 +111,8 @@ export const InferenceInputs = ({
     }}
   >
     {inferenceColumns.map((inferenceColumn) => (
-      <Box sx={{ mb: '1rem' }}>
+      <Box sx={{ mb: '1rem' }} key={inferenceColumn.name}>
         <InferenceInput
-          key={inferenceColumn.name}
           inferenceColumn={inferenceColumn}
           value={values[inferenceColumn.name]}
           handleChange={(value: string | number) =>

@@ -87,7 +87,7 @@ const injectedRtkApi = api
         invalidatesTags: ['deployments'],
       }),
     }),
-    overrideExisting: false,
+    overrideExisting: true,
   });
 export { injectedRtkApi as enhancedApi };
 export type GetDeploymentsApiResponse =

@@ -33,8 +33,7 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
   };
   const confirmDelete = async () => {
     if (currentDeployment) {
-      // @ts-ignore
-      await deleteDeployment(currentDeployment.id);
+      await deleteDeployment({ deploymentId: currentDeployment.id });
       dispatch(cleanCurrentDeployment());
       setShowDeleteConfirmation(false);
     }
@@ -72,7 +71,7 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
         >
           Deploy Model
         </Button>
-        <DeploymentsTable {...{ toggleModal, handleClickDelete }} />
+        <DeploymentsTable {...{ toggleModal, handleClickDelete }} simple />
       </Box>
     </>
   );
