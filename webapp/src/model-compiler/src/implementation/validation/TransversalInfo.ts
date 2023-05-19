@@ -26,7 +26,7 @@ const setMap = <T>(key1: string, key2: string, value: T, map: EdgeMap<T>) => {
 
 class TransversalInfo {
   suggestions: Suggestion[] = [];
-  shapes: EdgeMap<number[]> = {};
+  outgoingShapes: EdgeMap<number[]> = {};
   dataTypes: EdgeMap<DataType> = {};
   readonly schema: ModelSchema;
   readonly nodesByName: {
@@ -52,19 +52,21 @@ class TransversalInfo {
    * Get's shape of a node and an outgoing edge. If component outputs
    * a simple single value, outgoingEdge must be '' (empty string).
    *
-   * Prefer using {@link getShapeSimple}
+   * Prefer using {@link getOutgoingShapeSimple}
    *
    * @param {string} nodeName - node identifier
    * @param {string} outgoingEdge - node output attribute
    * @returns {(number[] | undefined)} shape if known in forward order pass
    */
-  getShape = (nodeName: string, outgoingEdge: string): number[] | undefined =>
-    getFromMap(nodeName, outgoingEdge, this.shapes);
+  getOutgoingShape = (
+    nodeName: string,
+    outgoingEdge: string
+  ): number[] | undefined => getFromMap(nodeName, outgoingEdge, this.outgoingShapes);
 
-  getShapeSimple = (nodeName: string): number[] | undefined => {
+  getOutgoingShapeSimple = (nodeName: string): number[] | undefined => {
     const [head, ...tail] = nodeName.split('.');
     if (!head) return;
-    return getFromMap(head, tail.join('.'), this.shapes);
+    return getFromMap(head, tail.join('.'), this.outgoingShapes);
   };
 
   /**
@@ -93,16 +95,16 @@ class TransversalInfo {
     this.suggestions.push(suggestion);
   };
 
-  setShapeSimple(name: string, shape: number[]) {
-    setMap(name, '', shape, this.shapes);
+  setOutgoingShapeSimple(name: string, shape: number[]) {
+    setMap(name, '', shape, this.outgoingShapes);
   }
 
-  setShape = (
+  setOutgoingShape = (
     nodeName: string,
     outgoingEdge: string,
     shape: number[]
   ): void => {
-    setMap(nodeName, outgoingEdge, shape, this.shapes);
+    setMap(nodeName, outgoingEdge, shape, this.outgoingShapes);
   };
 
   setDataType = (

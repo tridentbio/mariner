@@ -45,13 +45,11 @@ export type FeaturizersType = ArrayElement<
 export type ComponentType = 'layer' | 'featurizer' | 'input' | 'output';
 export type LayerFeaturizerType = LayersType | FeaturizersType;
 export type ComponentConfigs = {
-  // @ts-ignore
   [K in LayerFeaturizerType as K['type']]: K;
 };
 export type ComponentConfigTypeMap<
   T extends { type: LayerFeaturizerType['type'] }
 > = {
-  // @ts-ignore
   [K in T as K['type']]: K;
 };
 export type RequiredType<T extends { type?: K }, K extends string> = T & {
@@ -60,7 +58,6 @@ export type RequiredType<T extends { type?: K }, K extends string> = T & {
 export type ComponentConfigClassPathMap<
   T extends { classPath: LayerFeaturizerType['type'] }
 > = {
-  // @ts-ignore
   [K in T as K['classPath']]: K;
 };
 export type ComponentConfigType<T extends LayerFeaturizerType['type']> =

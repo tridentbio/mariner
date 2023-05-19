@@ -54,25 +54,27 @@ describe('ModelValidation', () => {
         name: 'test',
         dataset: {
           name: 'test-ds',
-          featureColumns: [{
-            name: 'col1',
-            dataType: {
-              unit: 'mole',
-              domainKind: 'numeric'
-            }
-          }],
+          featureColumns: [
+            {
+              name: 'col1',
+              dataType: {
+                unit: 'mole',
+                domainKind: 'numeric',
+              },
+            },
+          ],
           targetColumns: [
             {
               name: 'col1',
               dataType: {
                 unit: 'mole',
-                domainKind: 'numeric'
+                domainKind: 'numeric',
               },
               outModule: 'L1',
-              lossFn: 'torch.nn.MSELoss'
-            }
+              lossFn: 'torch.nn.MSELoss',
+            },
           ],
-          featurizers: []
+          featurizers: [],
         },
         spec: {
           layers: [
@@ -85,11 +87,11 @@ describe('ModelValidation', () => {
               constructorArgs: {
                 in_features: 1,
                 out_features: 24, // should be 1 since it's final layer
-              }
-            }
-          ]
-        }
-      }
+              },
+            },
+          ],
+        },
+      };
       const info = getTestValidator().validate(
         extendSpecWithTargetForwardArgs(spec)
       );
@@ -105,9 +107,6 @@ describe('ModelValidation', () => {
         );
       }
     });
-
-
-    })
 
     it('returns correction to mol featurizer when receiving input of data type different from smiles', () => {
       const info = getTestValidator().validate(

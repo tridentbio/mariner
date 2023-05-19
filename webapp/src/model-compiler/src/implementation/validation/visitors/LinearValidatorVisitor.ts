@@ -20,7 +20,7 @@ class LinearValidatorVisitor extends ComponentVisitor {
     info,
   }) => {
     const nodeId = unwrapDollar(component.forwardArgs.input);
-    const shape = info.getShapeSimple(nodeId);
+    const shape = info.getOutgoingShapeSimple(nodeId);
     if (!shape) return;
     if (!component || !component.type) return;
     if (component.constructorArgs.in_features !== shape.at(-1)) {

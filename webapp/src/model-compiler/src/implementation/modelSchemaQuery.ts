@@ -84,7 +84,8 @@ export const getComponent = (
 export const getDependenciesNames = (node: NodeType): string[] => {
   const deps: string[] = [];
   if (node.type === 'input') return [];
-  else if (node.type === 'output') return node.outModule ? [node.outModule] : []
+  else if (node.type === 'output')
+    return node.outModule ? [node.outModule] : [];
   Object.values(node.forwardArgs).forEach((value) => {
     if (isArray(value)) {
       value.forEach((val) => {

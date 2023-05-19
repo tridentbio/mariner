@@ -13,9 +13,9 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
       component.constructorArgs.sym_bond_list &&
       component.constructorArgs.allow_unknown
     ) {
-      info.setShape(component.name, 'x', [1, 30]);
+      info.setOutgoingShape(component.name, 'x', [1, 30]);
     } else {
-      info.setShape(component.name, 'x', [1, 26]);
+      info.setOutgoingShape(component.name, 'x', [1, 26]);
     }
   };
 
@@ -26,13 +26,13 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
     const x = component.forwardArgs.x;
     if (!x) return;
     const dep = unwrapDollar(x);
-    const xShape = info.getShapeSimple(dep);
-    if (xShape) info.setShapeSimple(component.name, xShape);
+    const xShape = info.getOutgoingShapeSimple(dep);
+    if (xShape) info.setOutgoingShapeSimple(component.name, xShape);
   };
 
   visitLinear: ComponentVisitor['visitLinear'] = ({ component, info }) => {
     if (component.constructorArgs.out_features)
-      info.setShapeSimple(component.name, [
+      info.setOutgoingShapeSimple(component.name, [
         1,
         component.constructorArgs.out_features,
       ]);
@@ -40,7 +40,7 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
 
   visitGCN: ComponentVisitor['visitGCN'] = ({ component, info }) => {
     if (component.constructorArgs.out_channels)
-      info.setShapeSimple(component.name, [
+      info.setOutgoingShapeSimple(component.name, [
         1,
         component.constructorArgs.out_channels,
       ]);
@@ -49,7 +49,7 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
   visitConcat: ComponentVisitor['visitConcat'] = ({ component, info }) => {
     const deps = getDependenciesNames(component);
     let dim = component.constructorArgs.dim || 0;
-    const shapes = deps.map(info.getShapeSimple);
+    const shapes = deps.map(info.getOutgoingShapeSimple);
     const shape = shapes.find((some) => !!some);
     if (!shape) return;
     const totalNewDim = shapes
@@ -58,7 +58,7 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
     let newShape = [...shape];
     if (dim < 0) dim += shape.length;
     newShape[dim] = totalNewDim;
-    info.setShapeSimple(component.name, newShape);
+    info.setOutgoingShapeSimple(component.name, newShape);
   };
 
   visitOneHot: ComponentVisitor['visitOneHot'] = (_input) => {};
@@ -66,7 +66,7 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
   visitInput: ComponentVisitor['visitInput'] = ({ component, info }) => {
     info.setDataTypeSimple(component.name, component.dataType);
     if (component.dataType.domainKind === 'numeric') {
-      info.setShapeSimple(component.name, [1, 1]);
+      info.setOutgoingShapeSimple(component.name, [1, 1]);
     }
   };
 
@@ -81,8 +81,8 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
   }) => {
     const [dep] = getDependenciesNames(component);
     if (!dep) return;
-    const shape = info.getShapeSimple(dep);
-    if (shape) info.setShapeSimple(component.name, shape);
+    const shape = info.getOutgoingShapeSimple(dep);
+    if (shape) info.setOutgoingShapeSimple(component.name, shape);
   };
 
   visitRelu: ComponentVisitor['visitRelu'] = this.visitActivation;

@@ -96,7 +96,6 @@ const OptimizerForm = ({
                 type="number"
                 key={key}
                 label={paramSchema.label}
-                // @ts-ignore
                 inputProps={{ step: '0.001' }}
                 // @ts-ignore
                 value={value.params[key]}

@@ -46,16 +46,22 @@ export class SocketMessageHandler {
   private address: string;
   socket?: WebSocket;
 
-  callbacks: Partial<CallbackMap>;
+  callbacks: CallbackMap;
 
   constructor(address = import.meta.env.VITE_WS_URL) {
     this.address = address;
-    this.callbacks = {};
+    this.callbacks = {
+      'dataset-process-finish': () => {},
+      'update-running-metrics': () => {},
+    };
     this.setListeners();
   }
   setListeners = () => {
     if (this.socket) {
-      this.socket.onerror = (event) => {};
+      this.socket.onerror = (event) => {
+        // eslint-disable-next-line
+        console.error('[WEBSOCKET]: ', event);
+      };
       this.socket.onmessage = (event) => this.handleOnMessage(event);
     }
   };
@@ -101,13 +107,11 @@ export class SocketMessageHandler {
     // eslint-disable-next-line
     if (isDev()) console.log('[WEBSOCKET]: ', event.data);
     const data: MessageType = JSON.parse(event.data);
-    const eventType = data.type;
-
-    // @ts-ignore
-    const callback = this.callbacks[eventType];
-
-    // @ts-ignore
-    if (callback) callback(data);
+    if (data.type === 'update-running-metrics') {
+      this.callbacks['update-running-metrics'](data);
+    } else if (data.type === 'dataset-process-finish') {
+      this.callbacks['dataset-process-finish'](data);
+    }
   };
 }
 

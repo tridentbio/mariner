@@ -17,7 +17,7 @@ class GCNValidatorVisitor extends ComponentVisitor {
       return;
     }
     const x = unwrapDollar(component.forwardArgs.x);
-    const shape = info.getShapeSimple(x);
+    const shape = info.getOutgoingShapeSimple(x);
     if (!shape) return;
     const lastDim = shape.at(-1);
     if (lastDim === undefined) return;

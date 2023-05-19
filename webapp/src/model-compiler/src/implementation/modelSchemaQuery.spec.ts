@@ -1,7 +1,5 @@
 import { expect } from '@jest/globals';
-import {
-  getRegressorModelSchema,
-} from '../../../../tests/fixtures/model-schemas';
+import { getRegressorModelSchema } from '../../../../tests/fixtures/model-schemas';
 import { ModelSchema } from '../interfaces/model-editor';
 import { getDependencies, getDependents } from './modelSchemaQuery';
 
@@ -34,38 +32,42 @@ describe('modelSchemaQuery', () => {
         name: 'L1',
         constructorArgs: {
           in_features: 1,
-          out_features: 1
+          out_features: 1,
         },
         forwardArgs: {
-          input: '$col1'
-        }
-      } as const
+          input: '$col1',
+        },
+      } as const;
       const schema: ModelSchema = {
         name: 'test',
         dataset: {
           name: 'test dataset',
-          featureColumns: [{
-            name: 'col1',
-            dataType: {
-              domainKind: 'numeric'
-            }
-          }],
-          targetColumns: [{
-            name: 'col2',
-            dataType: {
-              domainKind: 'numeric'
+          featureColumns: [
+            {
+              name: 'col1',
+              dataType: {
+                domainKind: 'numeric',
+              },
             },
-            outModule: 'L1',
-          }],
-          featurizers: []
+          ],
+          targetColumns: [
+            {
+              name: 'col2',
+              dataType: {
+                domainKind: 'numeric',
+              },
+              outModule: 'L1',
+            },
+          ],
+          featurizers: [],
         },
         spec: {
-          layers: [layer]
-        }
-      }
-      const dependents = getDependents(layer, schema)
-      expect(dependents.length).toBe(1)
-      expect(dependents[0].name).toBe('col2')
-    })
+          layers: [layer],
+        },
+      };
+      const dependents = getDependents(layer, schema);
+      expect(dependents.length).toBe(1);
+      expect(dependents[0].name).toBe('col2');
+    });
   });
 });

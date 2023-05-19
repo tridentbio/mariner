@@ -13,10 +13,9 @@ class ConcatValidatorVisitor extends ComponentVisitor {
     component,
     info,
   }) => {
-    // @ts-ignore
     const deps = getDependenciesNames(component);
     const shapes = deps
-      .map(info.getShapeSimple)
+      .map(info.getOutgoingShapeSimple)
       .filter((shape) => !!shape) as number[][]; // filter unknown shapes
     const dim = component.constructorArgs.dim || 0;
     if (!this.allTheSameExceptOn(shapes, dim)) {
