@@ -75,7 +75,7 @@ def normal_user_token_headers_payload(
 ) -> Dict[str, str]:
     """Get the payload from the token"""
     token = normal_user_token_headers["Authorization"].split(" ")[1]
-    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
+    payload = jwt.decode(token, settings.AUTHENTICATION_SECRET_KEY, algorithms=[security.ALGORITHM])
     return TokenPayload(**payload)
 
 

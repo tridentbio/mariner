@@ -11,7 +11,6 @@ from mariner.core.config import settings
 from mariner.schemas.token import TokenPayload
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-deployment_secret_sufix = "deployment"
 
 ALGORITHM = "HS256"
 
@@ -19,7 +18,6 @@ ALGORITHM = "HS256"
 def create_access_token(
     subject: Union[str, Any],
     expires_delta: Optional[timedelta] = None,
-    secret_sufix: str = "",
 ) -> str:
     """Creates an access token.
 
@@ -40,7 +38,7 @@ def create_access_token(
         )
     to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY + secret_sufix, algorithm=ALGORITHM
+        to_encode, settings.AUTHENTICATION_SECRET_KEY, algorithm=ALGORITHM
     )
     return encoded_jwt
 
@@ -76,18 +74,22 @@ def generate_deployment_signed_url(sub: Union[str, Any]) -> str:
     Returns:
         Signed URL.
     """
-    token = create_access_token(sub, timedelta(days=30), deployment_secret_sufix)
-    return f"{settings.API_V1_STR}/deployments/public/{token}"
+    encoded_jwt = jwt.encode(
+        {"sub": sub}, 
+        settings.DEPLOYMENT_URL_SIGNATURE_SECRET_KEY, 
+        algorithm=ALGORITHM
+    )
+    return f"{settings.WEBAPP_URL}/deployments/public/{encoded_jwt}"
 
 
 def decode_deployment_url_token(token: str):
     """Decodes a signed URL token for a public deployment.
 
-    Token should be valid and signed by the deployment_secret_sufix.
+    Token should be valid and signed by the deployment signature.
     Token should have deployment_id as subject.
     """
     payload = jwt.decode(
-        token, settings.SECRET_KEY + deployment_secret_sufix, algorithms=[ALGORITHM]
+        token, settings.DEPLOYMENT_URL_SIGNATURE_SECRET_KEY, algorithms=[ALGORITHM]
     )
     token_data = TokenPayload(**payload)
     return token_data
