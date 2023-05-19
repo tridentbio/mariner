@@ -50,11 +50,13 @@ export const normalizeNegativeIndex = (index: number, length: number) => {
   if (index < 0) return index + length;
   else return index;
 };
+
 export const iterateTopologically = (
   schema: ModelSchema,
-  fn: (node: NodeType, type: ComponentType) => void
+  fn: (node: NodeType, type: ComponentType) => void,
+  backward = false
 ) => {
-  const nodes = topologicalSort(schema);
+  const nodes = topologicalSort(schema, backward);
   const typesOfNode: {
     [key: string]: ComponentType;
   } = {};
@@ -86,7 +88,7 @@ const topologicalSortHelper = (
   stack.push(node);
 };
 
-const topologicalSort = (schema: ModelSchema): NodeType[] => {
+const topologicalSort = (schema: ModelSchema, backward = false): NodeType[] => {
   const stack: NodeType[] = [];
   const explored = new Set<string>();
   const nodes = getNodes(schema);

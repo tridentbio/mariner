@@ -7,18 +7,23 @@ import Suggestion from '../../Suggestion';
 import ComponentVisitor from './ComponentVisitor';
 
 class GCNValidatorVisitor extends ComponentVisitor {
-  visitGCN: ComponentVisitor['visitGCN'] = (comp, _type, info) => {
-    if (!comp.forwardArgs.x) {
+  visitGCN: ComponentVisitor['visitGCN'] = (input) => {
+    if (input.backward) return this.visitGCNBackward(input);
+    else return this.visitGCNForward(input);
+  };
+
+  visitGCNForward: ComponentVisitor['visitGCN'] = ({ component, info }) => {
+    if (!component.forwardArgs.x) {
       return;
     }
-    const x = unwrapDollar(comp.forwardArgs.x);
+    const x = unwrapDollar(component.forwardArgs.x);
     const shape = info.getShapeSimple(x);
     if (!shape) return;
     const lastDim = shape.at(-1);
     if (lastDim === undefined) return;
-    if (!isNaN(lastDim) && lastDim !== comp.constructorArgs.in_channels) {
+    if (!isNaN(lastDim) && lastDim !== component.constructorArgs.in_channels) {
       const data = makeComponentEdit({
-        component: comp as GcnConv & {
+        component: component as GcnConv & {
           type: 'torch_geometric.nn.GcnConv';
         },
         constructorArgs: {
@@ -33,11 +38,13 @@ class GCNValidatorVisitor extends ComponentVisitor {
               data,
             }),
           ],
-          { nodeId: comp.name }
+          { nodeId: component.name }
         )
       );
     }
   };
+
+  visitGCNBackward: ComponentVisitor['visitGCN'] = ({ component, info }) => {};
 }
 
 export default GCNValidatorVisitor;

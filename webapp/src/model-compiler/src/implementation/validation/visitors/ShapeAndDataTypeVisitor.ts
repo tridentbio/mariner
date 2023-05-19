@@ -1,19 +1,13 @@
-import {
-  ComponentType,
-  FeaturizersType,
-  LayersType,
-} from '../../../interfaces/model-editor';
 import { unwrapDollar } from '../../../utils';
 import { getDependenciesNames } from '../../modelSchemaQuery';
 import TransversalInfo from '../TransversalInfo';
 import ComponentVisitor from './ComponentVisitor';
 
 export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
-  visitMolFeaturizer: ComponentVisitor['visitMolFeaturizer'] = (
+  visitMolFeaturizer: ComponentVisitor['visitMolFeaturizer'] = ({
     component,
-    type,
-    info
-  ) => {
+    info,
+  }) => {
     if (!component.constructorArgs) return;
     if (
       component.constructorArgs.sym_bond_list &&
@@ -25,11 +19,10 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
     }
   };
 
-  visitGlobalPooling: ComponentVisitor['visitGlobalPooling'] = (
+  visitGlobalPooling: ComponentVisitor['visitGlobalPooling'] = ({
     component,
-    type,
-    info
-  ) => {
+    info,
+  }) => {
     const x = component.forwardArgs.x;
     if (!x) return;
     const dep = unwrapDollar(x);
@@ -37,7 +30,7 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
     if (xShape) info.setShapeSimple(component.name, xShape);
   };
 
-  visitLinear: ComponentVisitor['visitLinear'] = (component, type, info) => {
+  visitLinear: ComponentVisitor['visitLinear'] = ({ component, info }) => {
     if (component.constructorArgs.out_features)
       info.setShapeSimple(component.name, [
         1,
@@ -45,7 +38,7 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
       ]);
   };
 
-  visitGCN: ComponentVisitor['visitGCN'] = (component, type, info) => {
+  visitGCN: ComponentVisitor['visitGCN'] = ({ component, info }) => {
     if (component.constructorArgs.out_channels)
       info.setShapeSimple(component.name, [
         1,
@@ -53,7 +46,7 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
       ]);
   };
 
-  visitConcat: ComponentVisitor['visitConcat'] = (component, type, info) => {
+  visitConcat: ComponentVisitor['visitConcat'] = ({ component, info }) => {
     // @ts-ignore
     const deps = getDependenciesNames(component);
     let dim = component.constructorArgs.dim || 0;
@@ -69,31 +62,31 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
     info.setShapeSimple(component.name, newShape);
   };
 
-  visitOneHot: ComponentVisitor['visitOneHot'] = (component, type, info) => {};
+  visitOneHot: ComponentVisitor['visitOneHot'] = (_input) => {};
 
-  visitInput: ComponentVisitor['visitInput'] = (comp, type, info) => {
-    info.setDataTypeSimple(comp.name, comp.dataType);
-    if (comp.dataType.domainKind === 'numeric') {
-      info.setShapeSimple(comp.name, [1, 1]);
+  visitInput: ComponentVisitor['visitInput'] = ({ component, info }) => {
+    info.setDataTypeSimple(component.name, component.dataType);
+    if (component.dataType.domainKind === 'numeric') {
+      info.setShapeSimple(component.name, [1, 1]);
     }
   };
 
-  visitOutput: ComponentVisitor['visitOutput'] = (comp, type, info) => {};
+  visitOutput: ComponentVisitor['visitOutput'] = (_input) => {};
 
-  private visitActivation = (
-    component: LayersType | FeaturizersType,
-    _type: ComponentType,
-    info: TransversalInfo
-  ) => {
+  private visitActivation = ({
+    component,
+    info,
+  }: {
+    component: any;
+    info: TransversalInfo;
+  }) => {
     const [dep] = getDependenciesNames(component);
     if (!dep) return;
     const shape = info.getShapeSimple(dep);
     if (shape) info.setShapeSimple(component.name, shape);
   };
 
-  // @ts-ignore
   visitRelu: ComponentVisitor['visitRelu'] = this.visitActivation;
 
-  // @ts-ignore
   visitSigmoid: ComponentVisitor['visitSigmoid'] = this.visitActivation;
 }

@@ -23,9 +23,15 @@ class ModelValidation extends Acceptor implements ModelValidator {
     const info = new TransversalInfo(modelSchema);
     const visitors = this.getVisitors();
 
-    this.iterateTopologically(modelSchema, (node, type) => {
+    this.iterateTopologicallyForward(modelSchema, (node, type) => {
       visitors.forEach((visitor) => {
-        this.accept(visitor, node, info, type);
+        this.accept(visitor, { component: node, info, type, backward: false });
+      });
+    });
+
+    this.iterateTopologicallyBackward(modelSchema, (node, type) => {
+      visitors.forEach((visitor) => {
+        this.accept(visitor, { component: node, info, type, backward: true });
       });
     });
 
@@ -46,11 +52,18 @@ class ModelValidation extends Acceptor implements ModelValidator {
     ];
   };
 
-  private iterateTopologically = (
+  private iterateTopologicallyForward = (
     schema: ModelSchema,
     fn: (node: NodeType, type: ComponentType) => void
   ) => {
-    iterateTopologically(schema, fn);
+    iterateTopologically(schema, fn, false);
+  };
+
+  private iterateTopologicallyBackward = (
+    schema: ModelSchema,
+    fn: (node: NodeType, type: ComponentType) => void
+  ) => {
+    iterateTopologically(schema, fn, true);
   };
 }
 
