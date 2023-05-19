@@ -12,6 +12,7 @@ import {
 
 import EditComponentsCommand from '../commands/EditComponentsCommand';
 import ModelValidation from './ModelValidation';
+import { TorchModelSpec } from '@app/rtk/generated/models';
 
 const getTestValidator = (): ModelValidation => {
   return new ModelValidation();
@@ -47,6 +48,66 @@ describe('ModelValidation', () => {
         );
       }
     });
+
+    it("return correction to linear when out_features doesn't match next layer dimension restriction", () => {
+      const spec: TorchModelSpec = {
+        name: 'test',
+        dataset: {
+          name: 'test-ds',
+          featureColumns: [{
+            name: 'col1',
+            dataType: {
+              unit: 'mole',
+              domainKind: 'numeric'
+            }
+          }],
+          targetColumns: [
+            {
+              name: 'col1',
+              dataType: {
+                unit: 'mole',
+                domainKind: 'numeric'
+              },
+              outModule: 'L1',
+              lossFn: 'torch.nn.MSELoss'
+            }
+          ],
+          featurizers: []
+        },
+        spec: {
+          layers: [
+            {
+              type: 'torch.nn.Linear',
+              name: 'L1',
+              forwardArgs: {
+                input: '$col1',
+              },
+              constructorArgs: {
+                in_features: 1,
+                out_features: 24, // should be 1 since it's final layer
+              }
+            }
+          ]
+        }
+      }
+      const info = getTestValidator().validate(
+        extendSpecWithTargetForwardArgs(spec)
+      );
+      expect(info.getSuggestions()).toHaveLength(1);
+      const suggestion = info.getSuggestions()[0];
+      expect(suggestion.commands).toHaveLength(1);
+      const command = suggestion.commands[0];
+      expect(command).toBeInstanceOf(EditComponentsCommand);
+      if (command instanceof EditComponentsCommand) {
+        expect(command.args.data.name).toBe('L1');
+        expect((command.args.data as Linear).constructorArgs.out_features).toBe(
+          1
+        );
+      }
+    });
+
+
+    })
 
     it('returns correction to mol featurizer when receiving input of data type different from smiles', () => {
       const info = getTestValidator().validate(
