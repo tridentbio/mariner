@@ -108,7 +108,7 @@ export const getDependencies = (
   nodes.forEach((n) => {
     nodesByName[n.name] = n;
   });
-  const depsNames = getDependenciesNames(node);
+  const depsNames = [...new Set(getDependenciesNames(node))];
   const deps = depsNames
     .map((nodeId) => nodesByName[nodeId])
     .filter((name) => !!name);
