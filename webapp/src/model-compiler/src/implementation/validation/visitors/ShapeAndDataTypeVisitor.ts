@@ -47,7 +47,6 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
   };
 
   visitConcat: ComponentVisitor['visitConcat'] = ({ component, info }) => {
-    // @ts-ignore
     const deps = getDependenciesNames(component);
     let dim = component.constructorArgs.dim || 0;
     const shapes = deps.map(info.getShapeSimple);

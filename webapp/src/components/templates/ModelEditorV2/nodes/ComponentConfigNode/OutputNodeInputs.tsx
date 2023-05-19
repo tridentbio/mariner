@@ -52,6 +52,7 @@ const columnTypeMapInverse = Object.entries(columnTypeMap).reduce(
 
 const friendlyColumnType = (columnType: keyof AllowedLosses): string =>
   (columnType &&
+    columnType !== 'typeMap' &&
     columnTypeMap[columnType] &&
     columnTypeMap[columnType].replace(/./, (c) => c.toUpperCase())) ||
   '';
@@ -114,7 +115,9 @@ const OutputNodeInputs = ({ editable, name }: OutputNodeInputsProps) => {
         data: makeComponentEdit({
           component,
           lossFn: selectedLoss?.key,
-          columnType: taskType && columnTypeMap[taskType],
+          columnType:
+            (taskType && taskType !== 'typeMap' && columnTypeMap[taskType]) ||
+            undefined,
         }),
       });
   }, [selectedLoss, taskType]);
