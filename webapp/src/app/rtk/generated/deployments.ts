@@ -86,6 +86,17 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['deployments'],
       }),
+      postMakePredictionDeploymentPublic: build.mutation<
+        PostMakePredictionDeploymentPublicApiResponse,
+        PostMakePredictionDeploymentPublicApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/deployments/${queryArg.deploymentId}/predict-public`,
+          method: 'POST',
+          body: queryArg.body,
+        }),
+        invalidatesTags: ['deployments'],
+      }),
       handleDeploymentManager: build.mutation<
         HandleDeploymentManagerApiResponse,
         HandleDeploymentManagerApiArg
@@ -137,13 +148,19 @@ export type DeleteDeploymentApiArg = {
   deploymentId: number;
 };
 export type GetPublicDeploymentApiResponse =
-  /** status 200 Successful Response */ Deployment;
+  /** status 200 Successful Response */ DeploymentWithTrainingData;
 export type GetPublicDeploymentApiArg = {
   token: string;
 };
 export type PostMakePredictionDeploymentApiResponse =
   /** status 200 Successful Response */ object;
 export type PostMakePredictionDeploymentApiArg = {
+  deploymentId: number;
+  body: object;
+};
+export type PostMakePredictionDeploymentPublicApiResponse =
+  /** status 200 Successful Response */ object;
+export type PostMakePredictionDeploymentPublicApiArg = {
   deploymentId: number;
   body: object;
 };
@@ -572,6 +589,7 @@ export const {
   useGetPublicDeploymentQuery,
   useLazyGetPublicDeploymentQuery,
   usePostMakePredictionDeploymentMutation,
+  usePostMakePredictionDeploymentPublicMutation,
   useHandleDeploymentManagerMutation,
   endpoints,
 } = injectedRtkApi;

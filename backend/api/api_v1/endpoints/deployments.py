@@ -204,7 +204,7 @@ def delete_permission(
         )
 
 
-@router.get("/public/{token}", response_model=Deployment)
+@router.get("/public/{token}", response_model=DeploymentWithTrainingData)
 def get_public_deployment(
     token: str,
     db: Session = Depends(deps.get_db),
@@ -249,6 +249,31 @@ async def post_make_prediction_deployment(
             detail="You have reached the prediction limit for this deployment.",
         )
 
+    except DeploymentNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment instance not running.",
+        )
+    
+
+@router.post("/{deployment_id}/predict-public", response_model=Dict[str, Any])
+async def post_make_prediction_deployment_public(
+    deployment_id: int,
+    data: Dict[str, Any],
+    db: Session = Depends(deps.get_db),
+):
+    """Make a prediction in a deployment instance."""
+    try:
+        prediction: Dict[str, Any] = await controller.make_prediction_public(
+            db, deployment_id, data
+        )
+        return prediction
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You don't have permission to make predictions for this deployment.",
+        )
+        
     except DeploymentNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

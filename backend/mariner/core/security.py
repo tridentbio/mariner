@@ -79,7 +79,8 @@ def generate_deployment_signed_url(sub: Union[str, Any]) -> str:
         settings.DEPLOYMENT_URL_SIGNATURE_SECRET_KEY,
         algorithm=ALGORITHM,
     )
-    return f"{settings.WEBAPP_URL}/deployments/public/{encoded_jwt}"
+    token = encoded_jwt.replace(".", "/") # replace . with / to avoid problems with browser
+    return f"{settings.WEBAPP_URL}/public-model/{token}"
 
 
 def decode_deployment_url_token(token: str):

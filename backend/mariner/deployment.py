@@ -157,13 +157,13 @@ async def update_deployment(
             manager.start_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
-            del deployment_input.status
+            del deployment_input.status # status will by handled asynchronously
 
         elif deployment_input.status == "stopped":
             manager.stop_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
-            del deployment_input.status
+            del deployment_input.status # status will by handled asynchronously
 
     return deployment_store.update(
         db, db_obj=deployment_entity, obj_in=deployment_input
@@ -256,7 +256,7 @@ def delete_permission(
     return Deployment.from_orm(deployment_store.get(db, permission_input.deployment_id))
 
 
-def get_public_deployment(db: Session, token):
+def get_public_deployment(db: Session, token: str):
     """Get a public deployment.
     Token should be a jwt with the sub field set to the deployment id.
     Deployment needs to have the share_strategy set to public.
@@ -280,8 +280,13 @@ def get_public_deployment(db: Session, token):
 
     elif not deployment.share_strategy == ShareStrategy.PUBLIC:
         raise PermissionError()
+    
+    deployment = DeploymentWithTrainingData.from_orm(deployment)
+    
+    if deployment.show_training_data:
+        deployment.training_data = deployment_store.get_training_data(db, deployment)
 
-    return Deployment.from_orm(deployment)
+    return deployment
 
 
 async def make_prediction(
@@ -334,6 +339,34 @@ async def make_prediction(
             deployment_id=deployment_id,
             user_id=current_user.id,
         ),
+    )
+
+    for column, result in prediction.items():
+        assert isinstance(result, Tensor), "Result must be a Tensor"
+        serialized_result = result.tolist()
+        prediction[column] = (
+            serialized_result
+            if isinstance(serialized_result, list)
+            else [serialized_result]
+        )
+
+    return prediction
+
+
+async def make_prediction_public(
+    db: Session, deployment_id: int, data: Dict[str, Any]
+):
+    manager = get_deployments_manager()
+    if not await manager.deployment_is_running.remote(deployment_id):
+        raise DeploymentNotFound()
+    
+    deployment = deployment_store.get(db, deployment_id)
+    if not deployment or not deployment.share_strategy == ShareStrategy.PUBLIC:
+        raise PermissionError('Deployment is not public.')
+
+    # TODO: find a way to track public predictions
+    prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
+        deployment_id, data
     )
 
     for column, result in prediction.items():

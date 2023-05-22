@@ -47,6 +47,9 @@ const DeploymentsListing = lazy(
 const DeploymentView = lazy(
   () => import('../features/deployments/Pages/DeploymentView')
 );
+const PublicDeploymentView = lazy(
+  () => import('../features/deployments/Pages/DeploymentViewPublic')
+);
 
 type Breadcrumb = {
   label: string;
@@ -125,6 +128,15 @@ const navigationTree: RouteNode<any>[] = [
   {
     path: '/login',
     element: <AuthenticationPage />,
+  },
+  {
+    path: '/public-model/*',
+    children: [
+      {
+        path: ':token1/:token2/:token3',
+        element: <PublicDeploymentView />,
+      },
+    ],
   },
   {
     breadcrumb: {

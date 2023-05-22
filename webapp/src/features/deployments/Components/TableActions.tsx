@@ -4,6 +4,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import ClearIcon from '@mui/icons-material/Clear';
+import PublicIcon from '@mui/icons-material/Public';
 import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { useMemo } from 'react';
 import { EDeploymnetStatuses } from '../types';
@@ -12,6 +13,7 @@ import { useNotifications } from '@app/notifications';
 type DeploymentsTableActionsProps = {
   id: number;
   status?: deploymentsApi.DeploymentStatus;
+  shareUrl?: string;
   onClickEdit?: () => void;
   onClickDelete?: (id: number) => void;
 };
@@ -22,6 +24,7 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   onClickEdit,
   onClickDelete,
   status,
+  shareUrl,
 }) => {
   const [updateDeploy] = deploymentsApi.useUpdateDeploymentMutation();
   const { setMessage } = useNotifications();
@@ -124,6 +127,21 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
             onClick={() => onClickDelete(id)}
           >
             <ClearIcon fontSize="inherit" />
+          </Fab>
+        </Tooltip>
+      )}
+      {shareUrl && (
+        <Tooltip title="Share" placement="top">
+          <Fab
+            size="small"
+            sx={{
+              boxShadow: 'none',
+              '&:hover': { background: '#b3b3b3' },
+            }}
+            aria-label="share"
+            onClick={() => navigator.clipboard.writeText(shareUrl)}
+          >
+            <PublicIcon fontSize="inherit" />
           </Fab>
         </Tooltip>
       )}

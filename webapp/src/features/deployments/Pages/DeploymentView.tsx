@@ -79,6 +79,42 @@ const readmeSx: SxProps = {
   borderRadius: '4px',
 };
 
+export const DeploymentScreen = ({
+  deployment,
+  publicDeployment = false,
+}: {
+  deployment: DeploymentWithTrainingData;
+  publicDeployment?: boolean;
+}) => (
+  <>
+    <DeploymentHeader deployment={deployment} />
+    <Section title="Readme">
+      <Box sx={readmeSx}>
+        <ModelEditorMarkdown
+          source={deployment.readme}
+          warpperElement={{
+            'data-color-mode': 'light',
+          }}
+        />
+      </Box>
+    </Section>
+    <DeploymentPrediction
+      deployment={deployment}
+      publicDeployment={publicDeployment}
+    />
+    {deployment.trainingData?.datasetSummary && (
+      <Section title="Training Data">
+        <DataSummary
+          columnsData={
+            deployment.trainingData
+              .datasetSummary as DataSummaryProps['columnsData']
+          }
+        />
+      </Section>
+    )}
+  </>
+);
+
 const DeploymentView = () => {
   const deploymentIdMatch = useMatch('/deployments/:deploymentId');
   const deploymentId =
@@ -94,31 +130,10 @@ const DeploymentView = () => {
   if (!deployment) {
     return <Loading isLoading={true} />;
   }
-  console.log({ deployment });
+
   return (
     <Content>
-      <DeploymentHeader deployment={deployment} />
-      <Section title="Readme">
-        <Box sx={readmeSx}>
-          <ModelEditorMarkdown
-            source={deployment.readme}
-            warpperElement={{
-              'data-color-mode': 'light',
-            }}
-          />
-        </Box>
-      </Section>
-      <DeploymentPrediction deployment={deployment} />
-      {deployment.trainingData?.datasetSummary && (
-        <Section title="Training Data">
-          <DataSummary
-            columnsData={
-              deployment.trainingData
-                .datasetSummary as DataSummaryProps['columnsData']
-            }
-          />
-        </Section>
-      )}
+      <DeploymentScreen deployment={deployment} />
     </Content>
   );
 };

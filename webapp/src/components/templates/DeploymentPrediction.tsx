@@ -8,7 +8,7 @@ import { useNotifications } from '@app/notifications';
 import { Text } from '@components/molecules/Text';
 import { InferenceOutput } from '@components/organisms/InferenceOutput';
 
-const getPrediction = async (
+const getPredictionPrivate = async (
   deployment: Deployment,
   inputValues: Record<string, string | number | string[] | number[]>
 ) => {
@@ -24,11 +24,33 @@ const getPrediction = async (
   return response.data;
 };
 
+const getPredictionPublic = async (
+  deployment: Deployment,
+  inputValues: Record<string, string | number | string[] | number[]>
+) => {
+  Object.keys(inputValues).forEach((key) => {
+    if (!Array.isArray(inputValues[key]))
+      // @ts-ignore
+      inputValues[key] = [inputValues[key]];
+  });
+  const response = await api.post(
+    `api/v1/deployments/${deployment.id}/predict-public`,
+    inputValues
+  );
+  return response.data;
+};
+
 export const DeploymentPrediction = ({
   deployment,
+  publicDeployment,
 }: {
   deployment: Deployment;
+  publicDeployment: boolean;
 }) => {
+  const getPrediction = publicDeployment
+    ? getPredictionPublic
+    : getPredictionPrivate;
+
   const inferenceColumns = useMemo(
     () => deployment.modelVersion?.config.dataset?.featureColumns,
     [deployment.id]

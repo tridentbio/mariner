@@ -25,7 +25,9 @@ const TabOptions: {
 }[] = [
   {
     name: 'All',
-    filter: {},
+    filter: {
+      publicMode: 'include',
+    },
   },
   {
     name: 'Public',
@@ -40,7 +42,7 @@ const TabOptions: {
     },
   },
   {
-    name: 'Mine',
+    name: 'My',
     filter: {
       accessMode: 'owned',
     },
@@ -205,6 +207,7 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
             }
             id={row.id}
             status={row.status}
+            shareUrl={row.shareUrl}
           />
         ),
     });
