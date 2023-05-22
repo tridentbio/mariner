@@ -70,7 +70,9 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
     }
   };
 
-  visitOutput: ComponentVisitor['visitOutput'] = (_input) => {};
+  visitOutput: ComponentVisitor['visitOutput'] = ({component, info}) => {
+    info.setRequiredShapeSimple(component.name, [1])
+  };
 
   private visitActivation = ({
     component,

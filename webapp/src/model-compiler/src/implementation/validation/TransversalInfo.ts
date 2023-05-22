@@ -27,6 +27,7 @@ const setMap = <T>(key1: string, key2: string, value: T, map: EdgeMap<T>) => {
 class TransversalInfo {
   suggestions: Suggestion[] = [];
   outgoingShapes: EdgeMap<number[]> = {};
+  requiredShapes: EdgeMap<number[]> = {};
   dataTypes: EdgeMap<DataType> = {};
   readonly schema: ModelSchema;
   readonly nodesByName: {
@@ -70,7 +71,27 @@ class TransversalInfo {
   };
 
   /**
-   * [TODO:description]
+   * Get's required input matrix dimension (shape)
+   *
+   * Prefer using {@link getRequiredShapeSimple}
+   *
+   * @param {string} nodeName - node identifier
+   * @param {string} outgoingEdge - node output attribute
+   * @returns {(number[] | undefined)} shape if known in forward order pass
+   */
+  getRequiredShape = (
+    nodeName: string,
+    outgoingEdge: string
+  ): number[] | undefined => getFromMap(nodeName, outgoingEdge, this.requiredShapes);
+
+  getRequiredShapeSimple = (nodeName: string): number[] | undefined => {
+    const [head, ...tail] = nodeName.split('.');
+    if (!head) return;
+    return getFromMap(head, tail.join('.'), this.requiredShapes);
+  };
+
+  /**
+   * Get the data type of the outgoing edge of the node with `nodeName`
    *
    * @param {string} nodeName - [TODO:description]
    * @param {string} outgoingEdge - [TODO:description]
@@ -105,6 +126,18 @@ class TransversalInfo {
     shape: number[]
   ): void => {
     setMap(nodeName, outgoingEdge, shape, this.outgoingShapes);
+  };
+
+  setRequiredShapeSimple(name: string, shape: number[]) {
+    setMap(name, '', shape, this.requiredShapes);
+  }
+
+  setRequiredShape = (
+    nodeName: string,
+    outgoingEdge: string,
+    shape: number[]
+  ): void => {
+    setMap(nodeName, outgoingEdge, shape, this.requiredShapes);
   };
 
   setDataType = (

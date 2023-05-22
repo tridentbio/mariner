@@ -47,7 +47,9 @@ class LinearValidatorVisitor extends ComponentVisitor {
   visitLinearBackward: ComponentVisitor['visitLinear'] = ({
     component,
     info,
-  }) => {};
+  }) => {
+      
+  };
 }
 
 export default LinearValidatorVisitor;
