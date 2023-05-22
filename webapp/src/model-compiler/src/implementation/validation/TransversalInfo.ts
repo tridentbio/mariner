@@ -8,8 +8,8 @@ import { getNodes } from '../modelSchemaQuery';
 import Suggestion from '../Suggestion';
 
 type EdgeMap<V> = {
-  [key: string]: {
-    [key: string]: V;
+  [key1: string]: {
+    [key2: string]: V;
   };
 };
 
@@ -29,6 +29,10 @@ class TransversalInfo {
   outgoingShapes: EdgeMap<number[]> = {};
   requiredShapes: EdgeMap<number[]> = {};
   dataTypes: EdgeMap<DataType> = {};
+  // Used to answer queries: "What node is connected to node key1 following
+  // the edge key2?"
+  edgesMap: EdgeMap<string> = {};
+
   readonly schema: ModelSchema;
   readonly nodesByName: {
     [key: string]: LayersType | FeaturizersType;
@@ -40,6 +44,11 @@ class TransversalInfo {
     getNodes(schema).forEach((node) => {
       if (node.type === 'input' || node.type === 'output') return;
       this.nodesByName[node.name] = node;
+    });
+    schema.dataset.targetColumns.forEach((targetColumn) => {
+      this.edgesMap[targetColumn.outModule] = {
+        '': targetColumn.name,
+      };
     });
   }
 
@@ -62,7 +71,8 @@ class TransversalInfo {
   getOutgoingShape = (
     nodeName: string,
     outgoingEdge: string
-  ): number[] | undefined => getFromMap(nodeName, outgoingEdge, this.outgoingShapes);
+  ): number[] | undefined =>
+    getFromMap(nodeName, outgoingEdge, this.outgoingShapes);
 
   getOutgoingShapeSimple = (nodeName: string): number[] | undefined => {
     const [head, ...tail] = nodeName.split('.');
@@ -82,7 +92,8 @@ class TransversalInfo {
   getRequiredShape = (
     nodeName: string,
     outgoingEdge: string
-  ): number[] | undefined => getFromMap(nodeName, outgoingEdge, this.requiredShapes);
+  ): number[] | undefined =>
+    getFromMap(nodeName, outgoingEdge, this.requiredShapes);
 
   getRequiredShapeSimple = (nodeName: string): number[] | undefined => {
     const [head, ...tail] = nodeName.split('.');

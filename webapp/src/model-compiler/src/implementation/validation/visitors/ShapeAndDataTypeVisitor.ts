@@ -36,6 +36,11 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
         1,
         component.constructorArgs.out_features,
       ]);
+    if (component.constructorArgs.in_features)
+      info.setRequiredShapeSimple(component.name, [
+        1,
+        component.constructorArgs.in_features,
+      ]);
   };
 
   visitGCN: ComponentVisitor['visitGCN'] = ({ component, info }) => {
@@ -70,8 +75,8 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
     }
   };
 
-  visitOutput: ComponentVisitor['visitOutput'] = ({component, info}) => {
-    info.setRequiredShapeSimple(component.name, [1])
+  visitOutput: ComponentVisitor['visitOutput'] = ({ component, info }) => {
+    info.setRequiredShapeSimple(component.name, [1]);
   };
 
   private visitActivation = ({
