@@ -2,7 +2,7 @@
 Deployment related DTOs
 """
 
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Any
 
 from pydantic import root_validator
 
@@ -137,6 +137,14 @@ class Deployment(DeploymentBase):
                     if permission.organization
                 ]
         return deployment
+    
+    
+
+class DeploymentWithStats(Deployment):
+    """Deployment model type with stats field."""
+    
+    training_data_stats: dict = None
+
 
 
 class DeploymentUpdateInput(ApiBaseModel):

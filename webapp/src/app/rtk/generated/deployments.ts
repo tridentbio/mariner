@@ -86,6 +86,18 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['deployments'],
       }),
+      handleDeploymentManager: build.mutation<
+        HandleDeploymentManagerApiResponse,
+        HandleDeploymentManagerApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/deployments/deployment-manager`,
+          method: 'POST',
+          body: queryArg.deploymentManagerComunication,
+          headers: { authorization: queryArg.authorization },
+        }),
+        invalidatesTags: ['deployments'],
+      }),
     }),
     overrideExisting: true,
   });
@@ -109,7 +121,7 @@ export type CreateDeploymentApiArg = {
   deploymentBase: DeploymentBase;
 };
 export type GetDeploymentApiResponse =
-  /** status 200 Successful Response */ Deployment;
+  /** status 200 Successful Response */ DeploymentWithStats;
 export type GetDeploymentApiArg = {
   deploymentId: number;
 };
@@ -134,6 +146,12 @@ export type PostMakePredictionDeploymentApiResponse =
 export type PostMakePredictionDeploymentApiArg = {
   deploymentId: number;
   body: object;
+};
+export type HandleDeploymentManagerApiResponse =
+  /** status 200 Successful Response */ Deployment | Deployment[];
+export type HandleDeploymentManagerApiArg = {
+  authorization?: string;
+  deploymentManagerComunication: DeploymentManagerComunication;
 };
 export type DeploymentStatus = 'stopped' | 'active' | 'idle' | 'starting';
 export type ShareStrategy = 'public' | 'private';
@@ -497,6 +515,27 @@ export type DeploymentBase = {
   predictionRateLimitUnit?: RateLimitUnit;
   deletedAt?: string;
 };
+export type DeploymentWithStats = {
+  name: string;
+  readme?: string;
+  shareUrl?: string;
+  status?: DeploymentStatus;
+  modelVersionId: number;
+  shareStrategy?: ShareStrategy;
+  usersIdAllowed?: number[];
+  organizationsAllowed?: string[];
+  showTrainingData?: boolean;
+  predictionRateLimitValue: number;
+  predictionRateLimitUnit?: RateLimitUnit;
+  deletedAt?: string;
+  id: number;
+  createdById: number;
+  modelVersion?: ModelVersion;
+  usersAllowed?: User[];
+  createdAt: string;
+  updatedAt: string;
+  trainingDataStats?: object;
+};
 export type DeploymentUpdateInput = {
   name?: string;
   readme?: string;
@@ -507,6 +546,11 @@ export type DeploymentUpdateInput = {
   showTrainingData?: boolean;
   predictionRateLimitValue?: number;
   predictionRateLimitUnit?: RateLimitUnit;
+};
+export type DeploymentManagerComunication = {
+  deploymentId?: number;
+  status?: DeploymentStatus;
+  firstInit?: boolean;
 };
 export const {
   useGetDeploymentsQuery,
@@ -519,4 +563,5 @@ export const {
   useGetPublicDeploymentQuery,
   useLazyGetPublicDeploymentQuery,
   usePostMakePredictionDeploymentMutation,
+  useHandleDeploymentManagerMutation,
 } = injectedRtkApi;

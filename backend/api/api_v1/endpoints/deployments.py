@@ -28,7 +28,8 @@ from mariner.schemas.deployment_schemas import (
     DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
-    DeploymentManagerComunication
+    DeploymentManagerComunication,
+    DeploymentWithStats
 )
 
 router = APIRouter()
@@ -46,12 +47,12 @@ def get_deployments(
     deployments, total = controller.get_deployments(db, current_user, query)
     return Paginated(data=deployments, total=total)
 
-@router.get("/{deployment_id}", response_model=Deployment)
+@router.get("/{deployment_id}", response_model=DeploymentWithStats)
 def get_deployment(
     deployment_id: int,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
-) -> Deployment:
+) -> DeploymentWithStats:
     """
     Retrieve a deployment
     """
@@ -250,9 +251,8 @@ async def post_make_prediction_deployment(
     except DeploymentNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Deployment not found.",
+            detail="Deployment instance not running.",
         )
-
 
 
 @router.post(

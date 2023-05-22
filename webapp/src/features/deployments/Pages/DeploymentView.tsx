@@ -9,6 +9,7 @@ import ModelEditorMarkdown from '@utils/codeSplittingAux/ModelEditorMarkdown';
 import { Section } from '@components/molecules/Section';
 import { DeploymentPrediction } from '@components/templates/DeploymentPrediction';
 import StatusChip from '../Components/StatutsChip';
+import DataSummary from '@features/models/components/ModelVersionInferenceView/DataSummary';
 
 const DeploymentView = () => {
   const deploymentIdMatch = useMatch('/deployments/:deploymentId');
@@ -90,6 +91,12 @@ const DeploymentView = () => {
         </Box>
       </Section>
       <DeploymentPrediction deployment={deployment} />
+      {deployment.trainingDataStats && (
+        <Section title="Training Data">
+          {/* @ts-ignore */}
+          <DataSummary columnsData={deployment.trainingDataStats} />
+        </Section>
+      )}
     </Content>
   );
 };

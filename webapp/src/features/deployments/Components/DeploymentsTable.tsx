@@ -16,7 +16,7 @@ import { GetDeploymentsApiArg } from 'app/rtk/generated/deployments';
 interface DeploymentsTableProps {
   toggleModal?: () => void;
   handleClickDelete?: (id: number) => void;
-  simple?: boolean;
+  fixedTab?: number;
 }
 
 const TabOptions: {
@@ -50,9 +50,9 @@ const TabOptions: {
 const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
   toggleModal,
   handleClickDelete,
-  simple = false,
+  fixedTab,
 }) => {
-  const [option, setOption] = useState(simple ? 0 : 3);
+  const [option, setOption] = useState(fixedTab || 0);
   const [getDeployments, { isLoading, data, originalArgs }] =
     deploymentsApi.useLazyGetDeploymentsQuery();
   const dispatch = useAppDispatch();
@@ -177,7 +177,10 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         return dateRender<typeof row>((row) => new Date(row.createdAt!))(row);
       },
     },
-    {
+  ];
+
+  option === 3 &&
+    columns.push({
       name: 'Action',
       field: 'Actions',
       title: 'Actions',
@@ -203,12 +206,11 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
             status={row.status}
           />
         ),
-    },
-  ];
+    });
 
   return (
     <div style={{ width: '100%', overflowX: 'auto', display: 'block' }}>
-      {!simple && (
+      {fixedTab === undefined && (
         <Tabs value={option} onChange={(_, v) => setOption(v)}>
           {TabOptions.map((tab, index) => (
             <Tab key={tab.name} label={tab.name} value={index} />

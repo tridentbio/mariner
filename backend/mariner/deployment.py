@@ -21,6 +21,7 @@ from mariner.exceptions import (
 from mariner.ray_actors.deployments_manager import get_deployments_manager
 from mariner.schemas.deployment_schemas import (
     Deployment,
+    DeploymentWithStats,
     DeploymentBase,
     DeploymentCreateRepo,
     DeploymentsQuery,
@@ -49,7 +50,7 @@ def get_deployments(
     return db_data, total
 
 
-def get_deployment(db: Session, current_user: User, deployment_id: int) -> Deployment:
+def get_deployment(db: Session, current_user: User, deployment_id: int) -> DeploymentWithStats:
     """Retrieve a deployment that the requester has access to.
 
     Args:
@@ -65,8 +66,13 @@ def get_deployment(db: Session, current_user: User, deployment_id: int) -> Deplo
     )
     if not deployment:
         raise DeploymentNotFound()
-
-    return Deployment.from_orm(deployment)
+    deployment = DeploymentWithStats.from_orm(deployment)
+    
+    if deployment.show_training_data:
+        deployment.training_data_stats = deployment_store.get_training_data_stats(db, deployment)
+    
+    return deployment
+        
 
 
 def create_deployment(

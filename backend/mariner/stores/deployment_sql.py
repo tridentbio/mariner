@@ -28,6 +28,7 @@ from mariner.schemas.deployment_schemas import (
     User,
 )
 from mariner.stores.base_sql import CRUDBase
+from mariner.stores.dataset_sql import dataset_store
 
 from .model_sql import model_store
 
@@ -328,6 +329,13 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         )
         db.commit()
         return deployments
+
+    def get_training_data_stats(self, db: Session, deployment: DeploymentSchema) -> dict:
+        """Get the training data stats for a deployment"""
+        dataset_name = deployment.model_version.config.dataset.name
+        dataset = dataset_store.get_by_name(db, dataset_name)
+        
+        return dataset.stats
 
 
 deployment_store = CRUDDeployment(Deployment)

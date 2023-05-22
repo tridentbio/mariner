@@ -71,7 +71,10 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
         >
           Deploy Model
         </Button>
-        <DeploymentsTable {...{ toggleModal, handleClickDelete }} simple />
+        <DeploymentsTable
+          {...{ toggleModal, handleClickDelete }}
+          fixedTab={3}
+        />
       </Box>
     </>
   );
