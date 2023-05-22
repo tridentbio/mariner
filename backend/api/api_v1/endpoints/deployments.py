@@ -1,7 +1,7 @@
 """
 Handlers for api/v1/deployments* endpoints
 """
-from typing import Any, Dict, Union, List
+from typing import Any, Dict, List, Union
 
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
@@ -23,13 +23,13 @@ from mariner.schemas.api import Paginated
 from mariner.schemas.deployment_schemas import (
     Deployment,
     DeploymentBase,
+    DeploymentManagerComunication,
     DeploymentsQuery,
     DeploymentUpdateInput,
     DeploymentUpdateRepo,
+    DeploymentWithTrainingData,
     PermissionCreateRepo,
     PermissionDeleteRepo,
-    DeploymentManagerComunication,
-    DeploymentWithStats
 )
 
 router = APIRouter()
@@ -47,12 +47,13 @@ def get_deployments(
     deployments, total = controller.get_deployments(db, current_user, query)
     return Paginated(data=deployments, total=total)
 
-@router.get("/{deployment_id}", response_model=DeploymentWithStats)
+
+@router.get("/{deployment_id}", response_model=DeploymentWithTrainingData)
 def get_deployment(
     deployment_id: int,
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
-) -> DeploymentWithStats:
+) -> DeploymentWithTrainingData:
     """
     Retrieve a deployment
     """
@@ -256,11 +257,11 @@ async def post_make_prediction_deployment(
 
 
 @router.post(
-    "/deployment-manager", 
-    response_model=Union[Deployment, List[Deployment]],  
-    dependencies=[Depends(deps.assert_trusted_service)]
+    "/deployment-manager",
+    response_model=Union[Deployment, List[Deployment]],
+    dependencies=[Depends(deps.assert_trusted_service)],
 )
-def handle_deployment_manager(
+async def handle_deployment_manager(
     message: DeploymentManagerComunication,
     db: Session = Depends(deps.get_db),
 ):
@@ -268,8 +269,10 @@ def handle_deployment_manager(
         if message.first_init:
             return controller.handle_deployment_manager_first_init(db)
         else:
-            return controller.update_deployment_status(db, message.deployment_id, message.status)
-    
+            return await controller.update_deployment_status(
+                db, message.deployment_id, message.status
+            )
+
     except DeploymentNotFound:
         return HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

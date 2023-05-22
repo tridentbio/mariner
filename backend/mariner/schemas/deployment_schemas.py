@@ -2,7 +2,7 @@
 Deployment related DTOs
 """
 
-from typing import List, Literal, Optional, Any
+from typing import List, Literal, Optional
 
 from pydantic import root_validator
 
@@ -13,6 +13,7 @@ from mariner.entities.deployment import (
     ShareStrategy,
 )
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
+from mariner.schemas.dataset_schemas import DatasetSummary
 from mariner.schemas.model_schemas import ModelVersion
 
 
@@ -137,14 +138,18 @@ class Deployment(DeploymentBase):
                     if permission.organization
                 ]
         return deployment
-    
-    
 
-class DeploymentWithStats(Deployment):
+
+class TrainingData(ApiBaseModel):
+    """Training Data of deployment Model Version."""
+
+    dataset_summary: DatasetSummary = None
+
+
+class DeploymentWithTrainingData(Deployment):
     """Deployment model type with stats field."""
-    
-    training_data_stats: dict = None
 
+    training_data: TrainingData = None
 
 
 class DeploymentUpdateInput(ApiBaseModel):

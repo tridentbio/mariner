@@ -10,8 +10,8 @@ import { Box, Chip, Link, Tab, Tabs } from '@mui/material';
 import { useAppDispatch } from 'app/hooks';
 import { setCurrentDeployment } from '../deploymentsSlice';
 import { linkRender } from 'components/atoms/Table/render';
-import AppTabs from '@components/organisms/Tabs';
 import { GetDeploymentsApiArg } from 'app/rtk/generated/deployments';
+import { useAppSelector } from '@hooks';
 
 interface DeploymentsTableProps {
   toggleModal?: () => void;
@@ -53,8 +53,9 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
   fixedTab,
 }) => {
   const [option, setOption] = useState(fixedTab || 0);
-  const [getDeployments, { isLoading, data, originalArgs }] =
+  const [getDeployments, { isLoading, originalArgs, data }] =
     deploymentsApi.useLazyGetDeploymentsQuery();
+  const { deployments } = useAppSelector((state) => state.deployments);
   const dispatch = useAppDispatch();
   useEffect(() => {
     const optionChosed = TabOptions[option];
@@ -220,11 +221,12 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
       <Table<Deployment>
         loading={isLoading}
         rowKey={(row) => row.name}
-        rows={data?.data || []}
+        rows={deployments || []}
         onStateChange={(state) => {
           getDeployments({
             page: state.paginationModel?.page || 0,
             perPage: state.paginationModel?.rowsPerPage || 10,
+            ...TabOptions[option].filter,
           });
         }}
         pagination={{

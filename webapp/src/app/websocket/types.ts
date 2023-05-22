@@ -1,13 +1,6 @@
+import { DeploymentStatus } from '@app/rtk/generated/deployments';
 import { TOKEN } from 'app/local-storage';
-import { User } from 'app/rtk/auth';
-import {
-  ColumnMeta,
-  Dataset,
-  DatasetErrors,
-  DatasetMetadata,
-  DataSummary,
-  SplitType,
-} from 'app/types/domain/datasets';
+import { Dataset } from 'app/types/domain/datasets';
 import { isDev } from 'utils';
 
 export type UpdateExperiment = {
@@ -30,8 +23,16 @@ export type DatasetProcessed = {
   };
 };
 
+export type UpdateDeployment = {
+  type: 'update-deployment';
+  data: {
+    deploymentId: number;
+    status: DeploymentStatus;
+  };
+};
+
 // Union type for all websocket incoming messages
-type MessageType = UpdateExperiment | DatasetProcessed;
+type MessageType = UpdateExperiment | DatasetProcessed | UpdateDeployment;
 
 type CallbackMap = {
   [MT in MessageType as MT['type']]: (message: MT) => void;

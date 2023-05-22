@@ -25,6 +25,7 @@ from mariner.schemas.deployment_schemas import (
     PermissionCreateRepo,
     PermissionDeleteRepo,
     PredictionCreateRepo,
+    TrainingData,
     User,
 )
 from mariner.stores.base_sql import CRUDBase
@@ -330,12 +331,19 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         db.commit()
         return deployments
 
-    def get_training_data_stats(self, db: Session, deployment: DeploymentSchema) -> dict:
+    def get_training_data(
+        self, db: Session, deployment: DeploymentSchema
+    ) -> TrainingData:
         """Get the training data stats for a deployment"""
         dataset_name = deployment.model_version.config.dataset.name
+
         dataset = dataset_store.get_by_name(db, dataset_name)
-        
-        return dataset.stats
+
+        training_data = TrainingData(
+            dataset_summary=dataset.stats,
+        )
+
+        return training_data
 
 
 deployment_store = CRUDDeployment(Deployment)

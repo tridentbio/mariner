@@ -1,11 +1,13 @@
 """
 Module containing deployment service functions.
 """
+import asyncio
 from typing import Any, Dict, List, Tuple
 
 from sqlalchemy.orm.session import Session
 from torch import Tensor
 
+from api.websocket import WebSocketMessage, get_websockets_manager
 from mariner.core.security import (
     decode_deployment_url_token,
     generate_deployment_signed_url,
@@ -21,16 +23,17 @@ from mariner.exceptions import (
 from mariner.ray_actors.deployments_manager import get_deployments_manager
 from mariner.schemas.deployment_schemas import (
     Deployment,
-    DeploymentWithStats,
     DeploymentBase,
     DeploymentCreateRepo,
     DeploymentsQuery,
     DeploymentStatus,
     DeploymentUpdateRepo,
+    DeploymentWithTrainingData,
     PermissionCreateRepo,
     PredictionCreateRepo,
 )
 from mariner.stores.deployment_sql import deployment_store
+from mariner.tasks import TaskView, get_manager
 
 
 def get_deployments(
@@ -50,7 +53,9 @@ def get_deployments(
     return db_data, total
 
 
-def get_deployment(db: Session, current_user: User, deployment_id: int) -> DeploymentWithStats:
+def get_deployment(
+    db: Session, current_user: User, deployment_id: int
+) -> DeploymentWithTrainingData:
     """Retrieve a deployment that the requester has access to.
 
     Args:
@@ -66,13 +71,12 @@ def get_deployment(db: Session, current_user: User, deployment_id: int) -> Deplo
     )
     if not deployment:
         raise DeploymentNotFound()
-    deployment = DeploymentWithStats.from_orm(deployment)
-    
+    deployment = DeploymentWithTrainingData.from_orm(deployment)
+
     if deployment.show_training_data:
-        deployment.training_data_stats = deployment_store.get_training_data_stats(db, deployment)
-    
+        deployment.training_data = deployment_store.get_training_data(db, deployment)
+
     return deployment
-        
 
 
 def create_deployment(
@@ -150,16 +154,16 @@ async def update_deployment(
 
         if deployment_input.status == "active":
             await manager.add_deployment.remote(Deployment.from_orm(deployment_entity))
-            current_deployment = await manager.start_deployment.remote(
+            manager.start_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
-            deployment_input.status = current_deployment.status
+            del deployment_input.status
 
         elif deployment_input.status == "stopped":
-            current_deployment = await manager.stop_deployment.remote(
+            manager.stop_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
-            deployment_input.status = current_deployment.status
+            del deployment_input.status
 
     return deployment_store.update(
         db, db_obj=deployment_entity, obj_in=deployment_input
@@ -345,19 +349,47 @@ async def make_prediction(
 
 
 def handle_deployment_manager_first_init(db: Session):
-    print("syncing deployments")
     deployments = deployment_store.handle_deployment_manager_init(db)
     return deployments
 
 
-def update_deployment_status(db: Session, deployment_id: int, status: DeploymentStatus):
+def notify_users_about_status_update(deployment: Deployment):
+    manager = get_manager("deployment")
+    task = asyncio.ensure_future(
+        get_websockets_manager().broadcast(
+            WebSocketMessage(
+                type="update-deployment",
+                data={
+                    "deploymentId": deployment.id,
+                    "status": (
+                        deployment.status
+                        if isinstance(deployment.status, str)
+                        else deployment.status.value
+                    ),
+                },
+            )
+        )
+    )
+    manager.add_new_task(
+        TaskView(
+            id=deployment.id,
+            task=task,
+            user_id=deployment.created_by_id,
+        )
+    )
+
+
+async def update_deployment_status(
+    db: Session, deployment_id: int, status: DeploymentStatus
+):
     deployment = deployment_store.get(db, deployment_id)
-    print("handle update deployment status ", deployment_id)
     if not deployment:
         return
 
     deployment = deployment_store.update(
         db, deployment, DeploymentUpdateRepo(status=status)
     )
+    deployment = Deployment.from_orm(deployment)
 
-    return Deployment.from_orm(deployment)
+    notify_users_about_status_update(deployment)
+    return deployment

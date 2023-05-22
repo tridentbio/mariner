@@ -121,7 +121,7 @@ export type CreateDeploymentApiArg = {
   deploymentBase: DeploymentBase;
 };
 export type GetDeploymentApiResponse =
-  /** status 200 Successful Response */ DeploymentWithStats;
+  /** status 200 Successful Response */ DeploymentWithTrainingData;
 export type GetDeploymentApiArg = {
   deploymentId: number;
 };
@@ -515,7 +515,16 @@ export type DeploymentBase = {
   predictionRateLimitUnit?: RateLimitUnit;
   deletedAt?: string;
 };
-export type DeploymentWithStats = {
+export type DatasetSummary = {
+  train: object;
+  val: object;
+  test: object;
+  full: object;
+};
+export type TrainingData = {
+  datasetSummary?: DatasetSummary;
+};
+export type DeploymentWithTrainingData = {
   name: string;
   readme?: string;
   shareUrl?: string;
@@ -534,7 +543,7 @@ export type DeploymentWithStats = {
   usersAllowed?: User[];
   createdAt: string;
   updatedAt: string;
-  trainingDataStats?: object;
+  trainingData?: TrainingData;
 };
 export type DeploymentUpdateInput = {
   name?: string;
@@ -564,4 +573,5 @@ export const {
   useLazyGetPublicDeploymentQuery,
   usePostMakePredictionDeploymentMutation,
   useHandleDeploymentManagerMutation,
+  endpoints,
 } = injectedRtkApi;

@@ -1,6 +1,9 @@
 import { Paginated } from 'app/api';
 import { api } from 'app/rtk/api';
-import { Deployment, DeploymentWithStats } from 'app/rtk/generated/deployments';
+import {
+  Deployment,
+  DeploymentWithTrainingData,
+} from 'app/rtk/generated/deployments';
 import {
   DeploymentCreateRequest,
   DeploymentsQuery,
@@ -17,7 +20,7 @@ export const deploymentsApi = api
         providesTags: ['deployments'],
         keepUnusedDataFor: 3,
       }),
-      getDeploymentById: builder.query<DeploymentWithStats, number>({
+      getDeploymentById: builder.query<DeploymentWithTrainingData, number>({
         query: (deploymentId) => ({
           url: `/api/v1/deployments/${deploymentId}`,
         }),
