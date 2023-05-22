@@ -386,8 +386,9 @@ def test_get_public_deployment(
         deployment = r.json()
         public_url = deployment["shareUrl"]
         assert bool(public_url), "Should have a public url after updating to public."
+        token = public_url.split("/")[-1]
 
-        r = client.get(public_url)
+        r = client.get(f"{settings.API_V1_STR}/deployments/public/{token}")
         assert (
             r.status_code == 200
         ), "Should be accessible by anyone without authorization."
@@ -407,6 +408,7 @@ def predict_req_data():
         ],
         "mwt": [3, 1, 9],
     }
+
 
 @pytest.mark.integration
 def test_post_make_prediction(
