@@ -161,7 +161,10 @@ publish: ## Parse RELEASE.md file into mariner events that will show up as notif
 
 .PHONY: build-docs 
 build-docs: Makefile   ## Builds the documentation
-	sphinx-apidoc -o source backend/mariner
-	sphinx-apidoc -o source backend/fleet
-	@$(SPHINXBUILD) "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	cd backend &&\
+		poetry shell &&\
+		cd .. &&\
+		sphinx-apidoc -o source backend/mariner &&\
+		sphinx-apidoc -o source backend/fleet &&\
+		$(SPHINXBUILD) "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
