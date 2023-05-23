@@ -386,9 +386,10 @@ def test_get_public_deployment(
         deployment = r.json()
         public_url = deployment["shareUrl"]
         assert bool(public_url), "Should have a public url after updating to public."
-        token = public_url.split("/")[-1]
-
+        
+        token = '.'.join(public_url.split("/")[-3:])
         r = client.get(f"{settings.API_V1_STR}/deployments/public/{token}")
+        
         assert (
             r.status_code == 200
         ), "Should be accessible by anyone without authorization."

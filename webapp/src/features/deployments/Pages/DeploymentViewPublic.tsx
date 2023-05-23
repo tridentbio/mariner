@@ -2,6 +2,7 @@ import { useMatch } from 'react-router-dom';
 import { DeploymentScreen } from './DeploymentView';
 import * as deploymentsApi from '@app/rtk/generated/deployments';
 import NotFound from '@components/atoms/NotFound';
+import Content from '@components/templates/AppLayout/Content';
 
 const DeploymentViewPublic = () => {
   const deploymentTokenMatch = useMatch(
@@ -16,7 +17,11 @@ const DeploymentViewPublic = () => {
 
   if (!deployment) return <NotFound>Deployment not found</NotFound>;
 
-  return <DeploymentScreen deployment={deployment} publicDeployment />;
+  return (
+    <Content>
+      <DeploymentScreen deployment={deployment} publicDeployment />
+    </Content>
+  );
 };
 
 export default DeploymentViewPublic;
