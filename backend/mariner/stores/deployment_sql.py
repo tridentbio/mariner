@@ -310,10 +310,12 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         return prediction
 
     def handle_deployment_manager_init(self, db: Session):
-        """Get all deployments
-
+        """Syncronize the deployment manager with last state of database.
+        Stop all deployments on database and return a list of the deployments
+        that were running.
+    
         Returns:
-        List[Deployment]: all deployments
+        List of deployments that were running
         """
         deployments = (
             db.query(Deployment)
@@ -334,7 +336,15 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
     def get_training_data(
         self, db: Session, deployment: DeploymentSchema
     ) -> TrainingData:
-        """Get the training data stats for a deployment"""
+        """Get the training data for a deployment
+        
+        Args:
+            db: database session
+            deployment: deployment to get the training data from
+            
+        Returns:
+            TrainingData: dataset summary from dataset used on model training
+        """
         dataset_name = deployment.model_version.config.dataset.name
 
         dataset = dataset_store.get_by_name(db, dataset_name)

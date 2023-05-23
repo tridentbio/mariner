@@ -1,8 +1,9 @@
 import { useMatch } from 'react-router-dom';
-import { DeploymentScreen } from './DeploymentView';
 import * as deploymentsApi from '@app/rtk/generated/deployments';
 import NotFound from '@components/atoms/NotFound';
 import Content from '@components/templates/AppLayout/Content';
+import { DeploymentHeader } from '../Components/DeploymentHeader';
+import { DeploymentInferenceScreen } from '../Components/DeploymentInfereceScreen';
 
 const DeploymentViewPublic = () => {
   const deploymentTokenMatch = useMatch(
@@ -19,7 +20,8 @@ const DeploymentViewPublic = () => {
 
   return (
     <Content>
-      <DeploymentScreen deployment={deployment} publicDeployment />
+      <DeploymentHeader deployment={deployment} />
+      <DeploymentInferenceScreen deployment={deployment} publicDeployment />
     </Content>
   );
 };

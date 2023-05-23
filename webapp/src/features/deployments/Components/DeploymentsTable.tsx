@@ -191,9 +191,8 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         position: 'sticky',
         right: -1,
         background: '#f3f3f3',
-        textAlign: 'center',
+        textAlign: 'left',
       },
-      bold: true,
       render: (row) =>
         row.createdById === 1 && (
           <DeploymentsTableActions

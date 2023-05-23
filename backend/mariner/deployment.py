@@ -356,6 +356,20 @@ async def make_prediction(
 async def make_prediction_public(
     db: Session, deployment_id: int, data: Dict[str, Any]
 ):
+    """Make a prediction for a public deployment.
+    Follow same rules as make_prediction but track the predictions 
+    generically.
+    The prediction rate limit rules will be applyed to the deployment
+    instead of the user.
+    
+    Args:
+        db: SQLAlchemy session.
+        deployment_id: Deployment ID.
+        data: Data to be predicted (any json).
+        
+    Returns:
+        Prediction: Json with predictions for each model version target column.
+    """
     manager = get_deployments_manager()
     if not await manager.deployment_is_running.remote(deployment_id):
         raise DeploymentNotFound()
@@ -382,11 +396,28 @@ async def make_prediction_public(
 
 
 def handle_deployment_manager_first_init(db: Session):
+    """To run when the deployment manager starts.
+    Responsible to make sure that the deployment status on database
+    is the same as the one on the deployment manager.
+    
+    Args:
+        db: database session.
+    
+    Returns:
+        list of deployments that was running on the deployment manager.
+    """
     deployments = deployment_store.handle_deployment_manager_init(db)
     return deployments
 
 
 def notify_users_about_status_update(deployment: Deployment):
+    """Notify the user using websocket about the deployment status updated.
+    This function will start the broadcast on websocket and add it as a task 
+    to the task manager to finish asynchoronously.
+    
+    Args:
+        deployment: Deployment object.
+    """
     manager = get_manager("deployment")
     task = asyncio.ensure_future(
         get_websockets_manager().broadcast(
@@ -415,6 +446,17 @@ def notify_users_about_status_update(deployment: Deployment):
 async def update_deployment_status(
     db: Session, deployment_id: int, status: DeploymentStatus
 ):
+    """Update the deployment status on database and notify the user about it.
+    To be used by the deployment manager.
+    
+    Args:
+        db: database session.
+        deployment_id,
+        status: new status.
+        
+    Returns:
+        Updated deployment.
+    """
     deployment = deployment_store.get(db, deployment_id)
     if not deployment:
         return

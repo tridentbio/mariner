@@ -15,7 +15,12 @@ const QuantityInput = ({
   onChange,
 }: QuantityInputProps) => {
   return (
-    <>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <FormLabel id="demo-radio-buttons-group-label">{label}:</FormLabel>
       <Box
         sx={{
@@ -33,7 +38,7 @@ const QuantityInput = ({
         />
         <Text>{unit}</Text>
       </Box>
-    </>
+    </Box>
   );
 };
 

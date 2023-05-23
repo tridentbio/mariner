@@ -262,7 +262,7 @@ async def post_make_prediction_deployment_public(
     data: Dict[str, Any],
     db: Session = Depends(deps.get_db),
 ):
-    """Make a prediction in a deployment instance."""
+    """Make a prediction in a public deployment instance."""
     try:
         prediction: Dict[str, Any] = await controller.make_prediction_public(
             db, deployment_id, data
@@ -290,6 +290,7 @@ async def handle_deployment_manager(
     message: DeploymentManagerComunication,
     db: Session = Depends(deps.get_db),
 ):
+    """Handle messages from deployment manager."""
     try:
         if message.first_init:
             return controller.handle_deployment_manager_first_init(db)
