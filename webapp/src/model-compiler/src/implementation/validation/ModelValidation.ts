@@ -17,7 +17,7 @@ import MolFeaturizerValidatorVisitor from './visitors/MolFeaturizerValidatorVisi
 import ShapeAndDataTypeVisitor from './visitors/ShapeAndDataTypeVisitor';
 import SmilesRecommenderVisitor from './visitors/SmilesRecommenderVisitor';
 import SoftmaxValidatorVisitor from './visitors/SoftmaxValidatorVisitor';
-import { isArray } from 'util';
+import { isArray } from '@utils';
 
 class ModelValidation extends Acceptor implements ModelValidator {
   validate = (modelSchema: ModelSchema): TransversalInfo => {
@@ -73,23 +73,29 @@ class ModelValidation extends Acceptor implements ModelValidator {
     info: TransversalInfo,
     node: NodeType
   ): void => {
+    const setString = (str: any) => {
+      const [sourceNodeName, ...nodeOutputs] = str.split('.');
+      const key1 = unwrapDollar(sourceNodeName);
+      // If output is a torch.Tensor, then key is "". If output is has multiple attributes
+      // or is a dictionary-like object, key is the attributes/keys joined by ".".
+      // E.g. MoleculeFeaturizer outputs {'x': torch.Tensor, 'edge_index': torch.Tensor, ...}
+      // while Linear ouputs only torch.Tensor
+      const key2 = nodeOutputs.join('.');
+      if (!info.edgesMap[key1]) {
+        info.edgesMap[key1] = {};
+      }
+      info.edgesMap[key1][key2] = node.name;
+    };
     if (node && 'forwardArgs' in node) {
       Object.entries(node.forwardArgs as object).forEach(
         ([_forwardArg, nodeAndEdge]) => {
-          // todo: fix so concat works
-          if (isArray(nodeAndEdge)) return;
-          const [sourceNodeName, ...nodeOutputs] = nodeAndEdge.split('.');
-          const key1 = unwrapDollar(sourceNodeName);
-          // If output is a torch.Tensor, then key is "". If output is has multiple attributes 
-          // or is a dictionary-like object, key is the attributes/keys joined by ".".
-          // E.g. MoleculeFeaturizer outputs {'x': torch.Tensor, 'edge_index': torch.Tensor, ...}
-          // while Linear ouputs only torch.Tensor
-          const key2 = nodeOutputs.join('.');
-          if (!info.edgesMap[key1]) {
-            info.edgesMap[key1] = {};
+          if (isArray(nodeAndEdge)) {
+            nodeAndEdge.forEach((node) => {
+              setString(node);
+            });
+          } else {
+            setString(nodeAndEdge);
           }
-          console.log(`${key1}.${key2} <- ${node.name}`);
-          info.edgesMap[key1][key2] = node.name;
         }
       );
     }
