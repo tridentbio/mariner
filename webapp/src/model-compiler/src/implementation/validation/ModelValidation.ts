@@ -80,7 +80,10 @@ class ModelValidation extends Acceptor implements ModelValidator {
           if (isArray(nodeAndEdge)) return;
           const [sourceNodeName, ...nodeOutputs] = nodeAndEdge.split('.');
           const key1 = unwrapDollar(sourceNodeName);
-          // If output is a tensor, then key is "". If output is a
+          // If output is a torch.Tensor, then key is "". If output is has multiple attributes 
+          // or is a dictionary-like object, key is the attributes/keys joined by ".".
+          // E.g. MoleculeFeaturizer outputs {'x': torch.Tensor, 'edge_index': torch.Tensor, ...}
+          // while Linear ouputs only torch.Tensor
           const key2 = nodeOutputs.join('.');
           if (!info.edgesMap[key1]) {
             info.edgesMap[key1] = {};
