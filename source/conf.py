@@ -1,8 +1,8 @@
 import sys, os
 
 
-sys.path.insert(0, os.path.abspath("../backend/mariner"))
-sys.path.insert(0, os.path.abspath("../backend/fleet"))
+sys.path.insert(0, os.path.abspath("mariner"))
+sys.path.insert(0, os.path.abspath("fleet"))
 print(sys.path[-2:])
 # Configuration file for the Sphinx documentation builder.
 #
@@ -34,8 +34,10 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "alabaster"
-html_static_path = ["_static"]
+html_theme = "classic"
+html_sidebars = {
+    "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
+}
 
 # Napoleon settings
 napoleon_google_docstring = True

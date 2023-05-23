@@ -17,3 +17,4 @@ cov/
 secrets
 secrets-local/
 ./build/
+build/
