@@ -25,7 +25,13 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.autosummary",
+    'sphinx_rtd_theme',
+    'sphinx_toolbox.confval',
+    'sphinx_copybutton',
 ]
+
+copybutton_exclude = '.linenos, .gp, .go'
 
 templates_path = ["_templates"]
 exclude_patterns = []
@@ -34,7 +40,7 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "classic"
+html_theme = "sphinx_rtd_theme"
 html_sidebars = {
     "**": ["globaltoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
 }

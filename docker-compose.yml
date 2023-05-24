@@ -48,6 +48,10 @@ services:
     networks:
       - ray_net
     command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
+    volumes:
+      - ./backend:/app:z
+      - ./source:/source:z
+      - ./build:/build:z
 
   mlflowdb:
     image: postgres:12

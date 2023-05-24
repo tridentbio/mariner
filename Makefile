@@ -152,12 +152,9 @@ publish: ## Parse RELEASE.md file into mariner events that will show up as notif
 	cd backend &&\
 		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
 
-
-.PHONY: build-docs 
+.PHONY: docker-build-docs 
 build-docs: Makefile   ## Builds the documentation
-	cd backend &&\
-		poetry shell &&\
-		SPHINX_APIDOC_OPTIONS=members,show-inheritances sphinx-apidoc -o ../source ./mariner &&\
-		SPHINX_APIDOC_OPTIONS=members,show-inheritance sphinx-apidoc -o ../source ./fleet &&\
-		sphinx-build ../source ../build -a $(O)
+	docker compose -f docker-compose.yml run -e SPHINX_APIDOC_OPTIONS=members,show-inheritance --entrypoint sphinx-apidoc backend --module-first -o ../source ./mariner &&\
+	docker compose -f docker-compose.yml run -e SPHINX_APIDOC_OPTIONS=members,show-inheritance --entrypoint sphinx-apidoc backend --module-first -o ../source ./fleet &&\
+	docker compose -f docker-compose.yml run --entrypoint 'sphinx-build' backend ../source ../build -a $(O)
 
