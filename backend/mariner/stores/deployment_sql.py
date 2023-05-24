@@ -272,12 +272,18 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             return None
 
     def check_prediction_limit_reached(
-        self, db: Session, deployment: Deployment, user: User
+        self, db: Session, deployment: Deployment, user: User = None
     ) -> bool:
         """Check if the user has reached the prediction limit for the deployment
 
+        Args:
+            db: database session
+            deployment: deployment to check the prediction limit
+            user: if a user is passed, the prediction limit will be checked for the user,
+                otherwise it will check only public predictions
+
         Returns:
-        bool: True if the user has reached the prediction limit, False otherwise
+           True if the user has reached the prediction limit, False otherwise
         """
         created_at_rule: utc_datetime = {
             "minute": lambda: utc_datetime.now() - timedelta(minutes=1),
@@ -289,8 +295,11 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         sql_query = db.query(Predictions).filter(
             Predictions.created_at >= created_at_rule.strftime("%Y-%m-%d %H:%M:%S"),
             Predictions.deployment_id == deployment.id,
-            Predictions.user_id == user.id,
         )
+        if user:
+            sql_query = sql_query.filter(Predictions.user_id == user.id)
+        else:
+            sql_query = sql_query.filter(Predictions.user_id.is_(None))
 
         count = sql_query.count()
         return count >= deployment.prediction_rate_limit_value

@@ -293,15 +293,7 @@ async def make_prediction(
     db: Session, current_user: User, deployment_id: int, data: Dict[str, Any]
 ):
     """Make a prediction and track it.
-
-    Prediction flow:
-    1. Check if deployment exists and user has access.
-    2. Check if user is able to make a new prediction without
-    reach prediction limit configuration.
-    3. Make prediction.
-    4. Track prediction.
-    5. Return prediction.
-
+    
     Args:
         db: SQLAlchemy session.
         current_user: Current user.
@@ -357,10 +349,6 @@ async def make_prediction_public(
     db: Session, deployment_id: int, data: Dict[str, Any]
 ):
     """Make a prediction for a public deployment.
-    Follow same rules as make_prediction but track the predictions 
-    generically.
-    The prediction rate limit rules will be applyed to the deployment
-    instead of the user.
     
     Args:
         db: SQLAlchemy session.
@@ -378,9 +366,16 @@ async def make_prediction_public(
     if not deployment or not deployment.share_strategy == ShareStrategy.PUBLIC:
         raise PermissionError('Deployment is not public.')
 
-    # TODO: find a way to track public predictions
+    if deployment_store.check_prediction_limit_reached(db, deployment):
+        raise PredictionLimitReached()
+    
     prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
         deployment_id, data
+    )
+
+    deployment_store.track_prediction(
+        db,
+        PredictionCreateRepo(deployment_id=deployment_id),
     )
 
     for column, result in prediction.items():

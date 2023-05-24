@@ -18,27 +18,7 @@ from mariner.schemas.model_schemas import ModelVersion
 
 
 class DeploymentsQuery(PaginatedApiQuery):
-    """Query object for deployments.
-
-    Attributes:
-        name: to filter deployments by name
-        status: to filter deployments by status (stopped, running, idle)
-        share_strategy:
-            to filter deployments by share strategy (private, public)
-            "public" will not work if public_mode is set to "exclude"
-        public_mode: "include" | "exclude" | "only"
-            to include or exclude public deployments from a query
-            exclude (default): exclude public deployments on result
-            include: include public deployments on result
-            only: only return public deployments
-        created_after: created after date
-        model_version_id: filter deployments by model version id
-        access_mode: "unset" | "owned" | "shared
-            filter by the access the user has to the deployment
-            unset (default): do not filter by access mode
-            owned: only return deployments owned by the user
-            shared: only return deployments shared with the user
-    """
+    """Query object for deployments."""
 
     name: Optional[str] = None
     status: Optional[DeploymentStatus] = None
@@ -50,30 +30,7 @@ class DeploymentsQuery(PaginatedApiQuery):
 
 
 class DeploymentBase(ApiBaseModel):
-    """Deployment base type.
-
-    Attributes:
-    name (str): name of the deployment
-    readme (str): readme of the deployment
-    share_url (str): signed URL to get the deployment without authentication
-        only exists if the deployment share_strategy is public
-    status (DeploymentStatus): the current status of the deployment
-    model_version_id (int): the ID of the model version associated with the deployment
-    share_strategy (ShareStrategy): change share mode of the deployment
-        - PUBLIC: anyone on the internet can access the deployment with the share_url
-            anyone logged in can see the deployment on the list of deployments
-        - PRIVATE: only users with access to the deployment can access it
-    user_ids_allowed (List[int]): list of user IDs allowed to get the deployment
-    organizations_allowed (List[str]): list of organizations allowed to get the deployment
-        organizations are identified by suffix of the users email (e.g. @mariner.ai)
-    show_training_data (bool): if True, the training data will be shown on the deployment page
-    prediction_rate_limit_value (int): number of requests allowed in the prediction_rate_limit_unit
-    prediction_rate_limit_unit (RateLimitUnit): unit of time to limit the number of requests
-        e.g.:
-            if prediction_rate_limit_value is 10 and prediction_rate_limit_unit is RateLimitUnit.DAY,
-            the deployment will only allow 10 requests per day
-    deleted_at (Optional[utc_datetime]): date of deletion of the deployment, if it is deleted
-    """
+    """Deployment base type."""
 
     name: str
     readme: str = ""
@@ -229,7 +186,7 @@ class PredictionBase(ApiBaseModel):
     """
 
     deployment_id: int
-    user_id: int
+    user_id: int = None
 
 
 class PredictionCreateRepo(PredictionBase):
