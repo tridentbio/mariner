@@ -6,11 +6,11 @@ Here is some information about deploying using this chart
 
 `/health`
 
-You need to create two configmaps with the following variables
+You need to create three configmaps with the following variables
 
 ### ConfigMap  1
 
-the name of this configmap needs to be the same as the implementation of this helm chart, let's use the name mariner-backend as an example
+the name of this configmap needs to be the same as the implementation of this helm chart, let's use the name `mariner-backend` as an example
 
 | Environment Variabel | Description | Value |
 | --- | --- | --- |
@@ -40,8 +40,29 @@ the name of this configmap needs to be the same as the implementation of this he
 
 ### ConfigMap  2
 
-the name of this configmap needs to be the same as the implementation of this helm chart, adding “-emails” at the end
+the name of this configmap needs to be the same as the implementation of this helm chart, adding “-emails” at the end e.g `mariner-backend-emails`
 
 | Environment Variabel | Description | Value |
 | --- | --- | --- |
 | ALLOWED_GITHUB_AUTH_EMAILS | List of allowed emails for frontend login with Github SSO | ["tshimko@trident.bio"] |
+
+### ConfigMap  3
+
+the name of this configmap needs to be the same as the implementation of this helm chart, adding “-secret” at the end e.g  `mariner-backend-secrets`
+
+| Environment Variabel | Description | Example |
+| --- | --- | --- |
+| APPLICATION_SECRET | Random secret for the app | "” |
+| AWS_ACCESS_KEY_ID | Access ID AWS | "” |
+| AWS_SECRET_ACCESS_KEY | Secret Access Key AWS | "” |
+| AWS_SECRET_KEY | Secret Access Key AWS | "” |
+| AWS_SECRET_KEY_ID | Access ID AWS | "” |
+| FIRST_SUPERUSER_PASSWORD | Random password | "” |
+| GITHUB_CLIENT_SECRET | Github client secret | "” |
+| POSTGRES_DB | Name of Database | "” |
+| POSTGRES_PASSWORD | Password of postgres user | "” |
+| POSTGRES_SERVER | Hostname of database | "” |
+| POSTGRES_USER: | Username of postgres | "” |
+| SECRET_KEY | Random secret for the app | "” |
+| SMTP_PASSWORD: | SMTP Password | "” |
+| Secret: | Random secret for the app | "” |
