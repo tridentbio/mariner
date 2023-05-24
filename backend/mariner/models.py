@@ -236,6 +236,9 @@ def get_model_prediction(
 ) -> Dict[str, torch.Tensor]:
     """(Slowly) Loads a model version and apply it to a sample input
 
+    .. warning::
+        Avoid using this function until it is adapted to run from ray worker.
+
     Args:
         db: Session with the database
         request: prediction request data
