@@ -4,7 +4,9 @@ Here is some information about deploying using this chart
 
 ### ConfigMap  Ray Head
 
-the name of this configmap needs to be the same as the implementation of this helm chart, let's use the name ray-head as an example
+You need to create two configmaps with the following variables
+
+the name of this configmap needs to be the same as the implementation of this helm chart, let's use the name `ray-head` as an example
 
 | Environment Variabel | Description | Value |
 | --- | --- | --- |
@@ -32,3 +34,21 @@ the name of this configmap needs to be the same as the implementation of this he
 | SMTP_USER | User SMTP | admin@mariner.trident.bio |
 | USERS_OPEN_REGISTRATION |  | False |
 | STACK_NAME | Name of stack | mariner-trident-bio |
+
+### ConfigMap  2
+
+the name of this configmap needs to be the same as the implementation of this helm chart, adding “-secret” at the end e.g `ray-head-secrets`
+
+| Environment Variabel | Description | Example |
+| --- | --- | --- |
+| APPLICATION_SECRET | Random secret for the app | "” |
+| AWS_SECRET_KEY | Secret Access Key AWS | "” |
+| AWS_SECRET_KEY_ID | Access ID AWS | "” |
+| FIRST_SUPERUSER_PASSWORD | Random password | "” |
+| POSTGRES_DB | Name of Database | "” |
+| POSTGRES_PASSWORD | Password of postgres user | "” |
+| POSTGRES_SERVER | Hostname of database | "” |
+| POSTGRES_USER: | Username of postgres | "” |
+| SECRET_KEY | Random secret for the app | "” |
+| SMTP_PASSWORD: | SMTP Password | "” |
+| Secret: | Random secret for the app | "” |
