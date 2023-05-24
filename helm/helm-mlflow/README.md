@@ -8,7 +8,9 @@ Here is some information about deploying using this chart
 
 ### ConfigMap  MLFLow
 
-the name of this configmap needs to be the same as the implementation of this helm chart, let's use the name mlflow as an example
+You need to create two configmaps with the following variables
+
+the name of this configmap needs to be the same as the implementation of this helm chart, let's use the name `mlflow` as an example
 
 | Environment Variabel | Description | Value |
 | --- | --- | --- |
@@ -35,3 +37,33 @@ the name of this configmap needs to be the same as the implementation of this he
 | OAUTH2_PROXY_HTTP_ADDRESS | Oauth proxy address inside pod | http://0.0.0.0:4180/ |
 | OAUTH2_PROXY_PROVIDER | Provider Oauth | github |
 | OAUTH2_PROXY_UPSTREAMS | Oauth proxy upstream inside pod | http://127.0.0.1:5000/ |
+
+### ConfigMap  2
+
+the name of this configmap needs to be the same as the implementation of this helm chart, adding “-secret” at the end e.g `mlflow-secrets`
+
+| Environment Variables | Description | Example |
+| --- | --- | --- |
+| APPLICATION_SECRET | Random secret for the app | "” |
+| AWS_ACCESS_KEY_ID | Access ID AWS | "” |
+| AWS_SECRET_ACCESS_KEY | Secret Access Key AWS | "” |
+| AWS_SECRET_KEY | Secret Access Key AWS | "” |
+| AWS_SECRET_KEY_ID | Access ID AWS | "” |
+| FIRST_SUPERUSER_PASSWORD | Random password | "” |
+| GITHUB_CLIENT_SECRET | Github client secret | "” |
+| POSTGRES_DB | Name of Database | "” |
+| POSTGRES_PASSWORD | Password of postgres user | "” |
+| POSTGRES_SERVER | Hostname of database | "” |
+| POSTGRES_USER | Username of postgres | "” |
+| SECRET_KEY | Random secret for the app | "” |
+| SMTP_PASSWORD | SMTP Password | "” |
+| Secret | Random secret for the app | "” |
+| MLFLOW_DB_DATABASE | Name of Database | "” |
+| MLFLOW_DB_DIALECT | Type of database | "postgresql” |
+| MLFLOW_DB_HOST | Hostname of database | "” |
+| MLFLOW_DB_PASSWORD | Password of postgres user | "” |
+| MLFLOW_DB_PORT | Port of database | "5432” |
+| MLFLOW_DB_USERNAME | Username of postgres | "” |
+| MLFLOW_TRACKING_TOKEN | Token for MLFlow | "” |
+| OAUTH2_PROXY_CLIENT_SECRET | Secret of Oauth app  | "” |
+| OAUTH2_PROXY_COOKIE_SECRET | Random cookie secret fo OAuth app | "” |
