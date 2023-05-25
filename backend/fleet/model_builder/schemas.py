@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 import networkx as nx
 from pydantic import BaseModel, root_validator
-from typing_extensions import Annotated
 
 from fleet.model_builder import generate
 from fleet.model_builder.components_query import (
@@ -170,9 +169,6 @@ class ComponentAnnotation(CamelCaseModel):
     output_type: Optional[str]
     class_path: str
     type: Literal["featurizer", "layer"]
-
-
-AnnotatedLayersArgsType = Annotated
 
 
 class ComponentOption(ComponentAnnotation):

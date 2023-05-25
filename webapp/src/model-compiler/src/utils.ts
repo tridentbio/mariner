@@ -89,11 +89,11 @@ const topologicalSortHelper = (
 
   type DepCollector = (node: NodeType, schema: ModelSchema) => NodeType[];
 
-  let collector: DepCollector;
+  let collect: DepCollector;
 
-  if (backward) collector = getDependents;
-  else collector = getDependencies;
-  collector(node, schema).forEach((n) => {
+  if (backward) collect = getDependents;
+  else collect = getDependencies;
+  collect(node, schema).forEach((n) => {
     if (!explored.has(n.name))
       topologicalSortHelper(n, explored, stack, schema);
   });

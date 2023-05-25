@@ -23,10 +23,6 @@ def get_component_config_by_type(name: str) -> Optional[BaseModel]:
     featurizer_types = [
         component for component in get_args(get_args(FeaturizersType)[0])
     ]
-    print("layer_types")
-    print(layer_types)
-    print("featurizer_types")
-    print(featurizer_types)
     for component in layer_types + featurizer_types:
         if component.construct().type == name:
             return component
