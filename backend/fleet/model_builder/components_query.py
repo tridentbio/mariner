@@ -17,8 +17,6 @@ def get_component_config_by_type(name: str) -> Optional[BaseModel]:
     Returns:
         the Config class for the given type
     """
-    # lazy import is necessary to avoid a tricky dependency loop during
-    # code generation
     layer_types = [component for component in get_args(get_args(LayersType)[0])]
     featurizer_types = [
         component for component in get_args(get_args(FeaturizersType)[0])
