@@ -75,11 +75,13 @@ class ModelValidation extends Acceptor implements ModelValidator {
   ): void => {
     const setString = (str: any) => {
       const [sourceNodeName, ...nodeOutputs] = str.split('.');
+      // Keys depend on the layer output. If the layer output is simply a tensor
+      // , e.g. a Linear layer, then key1 is the layer's name and key2 is "". If
+      // the layer output is a structured object or a dictionary, then key1 is the
+      // layer's name and key2 is the attributes joined by ".", e.g. if layer is
+      // a GCNLayer named G1, key1 is "G1" and key2 could be
+      // "x", "edge_index" or "batch" 
       const key1 = unwrapDollar(sourceNodeName);
-      // If output is a torch.Tensor, then key is "". If output is has multiple attributes
-      // or is a dictionary-like object, key is the attributes/keys joined by ".".
-      // E.g. MoleculeFeaturizer outputs {'x': torch.Tensor, 'edge_index': torch.Tensor, ...}
-      // while Linear ouputs only torch.Tensor
       const key2 = nodeOutputs.join('.');
       if (!info.edgesMap[key1]) {
         info.edgesMap[key1] = {};
