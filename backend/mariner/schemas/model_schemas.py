@@ -7,7 +7,11 @@ from typing import Any, List, Literal, Optional, Union
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
 
-from fleet.base_schemas import BaseFleetModelSpec, TorchModelSpec
+from fleet.base_schemas import (
+    BaseFleetModelSpec,
+    FleetModelSpec,
+    TorchModelSpec,
+)
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
@@ -134,7 +138,7 @@ class ModelVersionCreateRepo(BaseModel):
     mlflow_model_name: str
     model_id: int
     name: str
-    config: BaseFleetModelSpec
+    config: FleetModelSpec
 
 
 class ModelVersionUpdateRepo(BaseModel):
