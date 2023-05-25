@@ -8,8 +8,8 @@ import { getNodes } from '../modelSchemaQuery';
 import Suggestion from '../Suggestion';
 
 type EdgeMap<V> = {
-  [key: string]: {
-    [key: string]: V;
+  [key1: string]: {
+    [key2: string]: V;
   };
 };
 
@@ -26,8 +26,13 @@ const setMap = <T>(key1: string, key2: string, value: T, map: EdgeMap<T>) => {
 
 class TransversalInfo {
   suggestions: Suggestion[] = [];
-  shapes: EdgeMap<number[]> = {};
+  outgoingShapes: EdgeMap<number[]> = {};
+  requiredShapes: EdgeMap<number[]> = {};
   dataTypes: EdgeMap<DataType> = {};
+  // Used to answer queries: "What node is connected to node key1 following
+  // the edge key2?"
+  edgesMap: EdgeMap<string> = {};
+
   readonly schema: ModelSchema;
   readonly nodesByName: {
     [key: string]: LayersType | FeaturizersType;
@@ -39,6 +44,11 @@ class TransversalInfo {
     getNodes(schema).forEach((node) => {
       if (node.type === 'input' || node.type === 'output') return;
       this.nodesByName[node.name] = node;
+    });
+    schema.dataset.targetColumns.forEach((targetColumn) => {
+      this.edgesMap[targetColumn.outModule] = {
+        '': targetColumn.name,
+      };
     });
   }
 
@@ -52,23 +62,47 @@ class TransversalInfo {
    * Get's shape of a node and an outgoing edge. If component outputs
    * a simple single value, outgoingEdge must be '' (empty string).
    *
-   * Prefer using {@link getShapeSimple}
+   * Prefer using {@link getOutgoingShapeSimple}
    *
    * @param {string} nodeName - node identifier
    * @param {string} outgoingEdge - node output attribute
    * @returns {(number[] | undefined)} shape if known in forward order pass
    */
-  getShape = (nodeName: string, outgoingEdge: string): number[] | undefined =>
-    getFromMap(nodeName, outgoingEdge, this.shapes);
+  getOutgoingShape = (
+    nodeName: string,
+    outgoingEdge: string
+  ): number[] | undefined =>
+    getFromMap(nodeName, outgoingEdge, this.outgoingShapes);
 
-  getShapeSimple = (nodeName: string): number[] | undefined => {
+  getOutgoingShapeSimple = (nodeName: string): number[] | undefined => {
     const [head, ...tail] = nodeName.split('.');
     if (!head) return;
-    return getFromMap(head, tail.join('.'), this.shapes);
+    return getFromMap(head, tail.join('.'), this.outgoingShapes);
   };
 
   /**
-   * [TODO:description]
+   * Get's required input matrix dimension (shape)
+   *
+   * Prefer using {@link getRequiredShapeSimple}
+   *
+   * @param {string} nodeName - node identifier
+   * @param {string} outgoingEdge - node output attribute
+   * @returns {(number[] | undefined)} shape if known in forward order pass
+   */
+  getRequiredShape = (
+    nodeName: string,
+    outgoingEdge: string
+  ): number[] | undefined =>
+    getFromMap(nodeName, outgoingEdge, this.requiredShapes);
+
+  getRequiredShapeSimple = (nodeName: string): number[] | undefined => {
+    const [head, ...tail] = nodeName.split('.');
+    if (!head) return;
+    return getFromMap(head, tail.join('.'), this.requiredShapes);
+  };
+
+  /**
+   * Get the data type of the outgoing edge of the node with `nodeName`
    *
    * @param {string} nodeName - [TODO:description]
    * @param {string} outgoingEdge - [TODO:description]
@@ -93,16 +127,28 @@ class TransversalInfo {
     this.suggestions.push(suggestion);
   };
 
-  setShapeSimple(name: string, shape: number[]) {
-    setMap(name, '', shape, this.shapes);
+  setOutgoingShapeSimple(name: string, shape: number[]) {
+    setMap(name, '', shape, this.outgoingShapes);
   }
 
-  setShape = (
+  setOutgoingShape = (
     nodeName: string,
     outgoingEdge: string,
     shape: number[]
   ): void => {
-    setMap(nodeName, outgoingEdge, shape, this.shapes);
+    setMap(nodeName, outgoingEdge, shape, this.outgoingShapes);
+  };
+
+  setRequiredShapeSimple(name: string, shape: number[]) {
+    setMap(name, '', shape, this.requiredShapes);
+  }
+
+  setRequiredShape = (
+    nodeName: string,
+    outgoingEdge: string,
+    shape: number[]
+  ): void => {
+    setMap(nodeName, outgoingEdge, shape, this.requiredShapes);
   };
 
   setDataType = (

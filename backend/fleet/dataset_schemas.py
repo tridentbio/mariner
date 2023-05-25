@@ -3,16 +3,7 @@ Classes used to describe datasets. They can be extended, but
 it is not encouraged since it will required adapting the implementation
 of some methods.
 """
-from typing import (
-    Annotated,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
 from humps import camel
 from pydantic import BaseModel, Field, root_validator
@@ -73,9 +64,6 @@ class TargetConfig(ColumnConfig):
     out_module: str
     loss_fn: Optional[str] = None
     column_type: Optional[Literal["regression", "multiclass", "binary"]] = None
-
-
-AnnotatedFeaturizersType = Annotated[FeaturizersType, Field(discriminator="type")]
 
 
 class DatasetConfig(BaseDatasetModel):

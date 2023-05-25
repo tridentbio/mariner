@@ -20,12 +20,12 @@ import { range } from 'utils';
 import Filters from 'components/organisms/Table/Filters';
 import { colTitle, columnId, isColumnSortable } from './common';
 import SortingButton from './SortingButton';
+
 const isKeyOf = <O,>(
   key: string | number | symbol | null,
   obj: O
 ): key is keyof O => {
   if (!key) return false;
-  //@ts-ignore
   return key in obj;
 };
 

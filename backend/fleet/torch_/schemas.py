@@ -43,8 +43,6 @@ class TorchTrainingConfig(CamelCaseModel):
             :py:class:`lightning.pytorch.callbacks.ModelCheckpoint` callback.
         optimizer: The optimization algorithm described by :py:mod:`optimizers`
             class
-
-
     """
 
     epochs: int

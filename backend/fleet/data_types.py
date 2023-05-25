@@ -2,8 +2,8 @@
 Data type schemas used to describe datasets.
 """
 from typing import Any, Literal, Union
-from humps import camel
 
+from humps import camel
 from pydantic import BaseModel, Field, validator
 
 

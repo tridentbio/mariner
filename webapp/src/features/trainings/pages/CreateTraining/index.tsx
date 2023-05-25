@@ -25,8 +25,8 @@ const CreateTraining: React.FC = () => {
     exp: experimentsApi.BaseTrainingRequest
   ) => {
     await startTraining({
-        baseTrainingRequest: { ...exp, framework: 'torch' }
-      })
+      baseTrainingRequest: { ...exp, framework: 'torch' },
+    })
       .unwrap()
       .then((newExp) => {
         // @ts-ignore
