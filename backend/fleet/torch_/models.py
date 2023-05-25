@@ -155,7 +155,7 @@ def _adapt_loss_args(
     ):
         return (args[0], args[1].long())
 
-    # BCEWithLogitsLoss counter intuitivelly requires targets to be floats
+    # BCEWithLogitsLoss requires targets to be floats
     elif isinstance(
         loss_fn,
         (torch.nn.BCEWithLogitsLoss),
