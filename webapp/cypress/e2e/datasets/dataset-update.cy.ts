@@ -56,6 +56,7 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
     description: randomLowerCase(24),
   };
   before(() => {
+    cy.once('uncaught:exception', () => false);
     let datasetAlreadyExists = false;
     cy.loginSuper();
     cy.visit('/datasets').wait(2000);
@@ -95,7 +96,6 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
   });
 
   it('should update dataset correctly', () => {
-    cy.once('uncaught:exception', () => false);
     cy.get('#dataset-name-input').clear().type(updatedDataset.name);
     cy.get('#description-input textarea')
       .clear()

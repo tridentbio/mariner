@@ -11,8 +11,8 @@ from Bio.SeqUtils import molecular_weight as calc_molecular_weight
 from pandas.core.frame import DataFrame
 from rdkit.Chem import Descriptors
 
+from fleet.model_builder.constants import TrainingStep
 from mariner.schemas.dataset_schemas import ColumnsDescription, StatsType
-from model_builder.constants import TrainingStep
 
 
 def get_chemical_props(smiles: str) -> tuple:

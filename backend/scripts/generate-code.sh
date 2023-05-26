@@ -1,2 +1,2 @@
 #!/bin/sh -e
-python -m model_builder.generate base > model_builder/layers_schema.py
+python fleet/model_builder/generate.py base 1> fleet/model_builder/layers_schema.py

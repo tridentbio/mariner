@@ -1,8 +1,8 @@
-from model_builder.components_query import (
+from fleet.model_builder.components_query import (
     get_component_config_by_type,
     get_component_constructor_args_by_type,
 )
-from model_builder.layers_schema import (
+from fleet.model_builder.layers_schema import (
     TorchlinearConstructorArgs,
     TorchlinearLayerConfig,
 )

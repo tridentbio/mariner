@@ -4,6 +4,7 @@ module.exports = {
   moduleNameMapper: {
     '@app/(.*)': './src/app/$1',
     '@utils/(.*)': './utils/$1',
-    '@utils': 'utils'
+    '@utils': 'utils',
+    '@model-compiler/(.*)': './src/model-compiler/$1'
   }
 };

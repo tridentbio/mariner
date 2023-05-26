@@ -6,11 +6,17 @@ import Suggestion from '../../Suggestion';
 import ComponentVisitor from './ComponentVisitor';
 
 export default class MolFeaturizerValidatorVisitor extends ComponentVisitor {
-  visitMolFeaturizer: ComponentVisitor['visitMolFeaturizer'] = (
+  visitMolFeaturizer: ComponentVisitor['visitMolFeaturizer'] = (input) => {
+    if (input.backward) {
+      return this.visitMolFeaturizerBackward(input);
+    } else {
+      return this.visitMolFeaturizerForward(input);
+    }
+  };
+  visitMolFeaturizerForward: ComponentVisitor['visitMolFeaturizer'] = ({
     component,
-    _type,
-    info
-  ) => {
+    info,
+  }) => {
     // @ts-ignore
     const [mol] = getDependenciesNames(component);
     if (!mol) return;
@@ -37,4 +43,8 @@ export default class MolFeaturizerValidatorVisitor extends ComponentVisitor {
       );
     }
   };
+
+  visitMolFeaturizerBackward: ComponentVisitor['visitMolFeaturizer'] = (
+    _input
+  ) => {};
 }

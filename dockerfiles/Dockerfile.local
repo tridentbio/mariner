@@ -21,7 +21,7 @@ RUN python -m deps
 
 COPY ./mariner /app/mariner
 COPY ./api /app/api
-COPY ./model_builder /app/model_builder
+COPY ./fleet /app/fleet
 COPY ./tests /app/tests
 
 RUN poetry install

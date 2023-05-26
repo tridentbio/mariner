@@ -13,6 +13,8 @@ from starlette import status
 import mariner.models as controller
 from api import deps
 from api.api_v1.endpoints.datasets import Paginated
+from fleet.dataset_schemas import AllowedLosses
+from fleet.model_builder.schemas import ComponentOption
 from mariner.entities.user import User
 from mariner.exceptions import DatasetNotFound, ModelNameAlreadyUsed
 from mariner.exceptions.model_exceptions import (
@@ -21,9 +23,14 @@ from mariner.exceptions.model_exceptions import (
     ModelVersionNotTrained,
 )
 from mariner.schemas.api import ApiBaseModel
-from mariner.schemas.model_schemas import Model, ModelCreate, ModelsQuery
+from mariner.schemas.model_schemas import (
+    Model,
+    ModelCreate,
+    ModelsQuery,
+    TrainingCheckRequest,
+    TrainingCheckResponse,
+)
 from mariner.utils import random_pretty_name
-from model_builder.schemas import AllowedLosses, ComponentOption, ModelSchema
 
 router = APIRouter()
 
@@ -231,11 +238,11 @@ def delete_model(
 
 @router.post(
     "/check-config",
-    response_model=controller.ForwardCheck,
+    response_model=TrainingCheckResponse,
     dependencies=[Depends(deps.get_current_active_user)],
 )
 async def post_model_check_config(
-    model_config: ModelSchema, db: Session = Depends(deps.get_db)
+    model_config: TrainingCheckRequest, db: Session = Depends(deps.get_db)
 ):
     """Endpoint to check the forward method of a ModelSchema
 

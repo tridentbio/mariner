@@ -1,8 +1,6 @@
 import { ArrayElement, flatten } from 'utils';
 import {
   DataType,
-  FeaturizersType,
-  LayersType,
   ModelOptions,
   ModelSchema,
   NodeType,
@@ -10,11 +8,13 @@ import {
 } from '../interfaces/model-editor';
 import { isArray, unwrapDollar } from '../utils';
 
+const len = (t: { length?: number } | undefined) => t?.length || 0;
 export const getNodes = (schema: ModelSchema): NodeType[] => {
-  let layersAndFeats: NodeType[] = (schema.featurizers || []).concat(
+  let layersAndFeats: NodeType[] = (schema.dataset.featurizers || []).concat(
     // @ts-ignore
-    schema.layers || []
+    schema.spec.layers || []
   );
+
   layersAndFeats = layersAndFeats.concat(
     schema.dataset.targetColumns.map((targetColumn) => {
       return {
@@ -39,6 +39,7 @@ export const getNodes = (schema: ModelSchema): NodeType[] => {
   );
   return layersAndFeats;
 };
+
 export const getNode = (schema: ModelSchema, nodeName: string) => {
   return getNodes(schema).find((node) => node.name === nodeName);
 };
@@ -48,11 +49,12 @@ export const getComponent = (
   componentName: string
 ): NodeType => {
   const layer =
-    schema.layers && schema.layers.find((l) => l.name === componentName);
+    schema.spec.layers &&
+    schema.spec.layers.find((l) => l.name === componentName);
   if (layer) return layer;
   const featurizer =
-    schema.featurizers &&
-    schema.featurizers.find((f) => f.name === componentName);
+    schema.dataset.featurizers &&
+    schema.dataset.featurizers.find((f) => f.name === componentName);
   if (featurizer) return featurizer;
   const targetColumn = schema.dataset.targetColumns.find(
     (col) => col.name === componentName
@@ -81,7 +83,9 @@ export const getComponent = (
 
 export const getDependenciesNames = (node: NodeType): string[] => {
   const deps: string[] = [];
-  if (node.type === 'input' || node.type === 'output') return [];
+  if (node.type === 'input') return [];
+  else if (node.type === 'output')
+    return node.outModule ? [node.outModule] : [];
   Object.values(node.forwardArgs).forEach((value) => {
     if (isArray(value)) {
       value.forEach((val) => {
@@ -106,11 +110,27 @@ export const getDependencies = (
   nodes.forEach((n) => {
     nodesByName[n.name] = n;
   });
-  const depsNames = getDependenciesNames(node);
+  const depsNames = [...new Set(getDependenciesNames(node))];
   const deps = depsNames
     .map((nodeId) => nodesByName[nodeId])
     .filter((name) => !!name);
   return deps;
+};
+
+export const getDependents = (
+  node: NodeType,
+  schema: ModelSchema
+): NodeType[] => {
+  const nodes = getNodes(schema);
+  const nodesByName: { [key: string]: NodeType } = {};
+  nodes.forEach((n) => {
+    nodesByName[n.name] = n;
+  });
+  const dependents = nodes.filter((n) => {
+    const deps = getDependenciesNames(n);
+    return deps.includes(node.name);
+  });
+  return dependents;
 };
 
 type HandleData = {

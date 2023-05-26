@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from model_builder.featurizers import (
+from fleet.model_builder.featurizers import (
     DNASequenceFeaturizer,
     ProteinSequenceFeaturizer,
     RNASequenceFeaturizer,

@@ -1,10 +1,10 @@
 """
 Deployment entity and core relations
 """
-from typing import List
 from enum import Enum as PyEnum
+from typing import List
 
-from sqlalchemy import Column, Enum, Integer, String, Boolean
+from sqlalchemy import Boolean, Column, Enum, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
@@ -48,9 +48,9 @@ class SharePermissions(Base):
     )
 
     organization = Column(String, nullable=True)
-    
+
     @classmethod
-    def build(cls, users_id: List[int]=[], organizations: List[str]=[]) -> list:
+    def build(cls, users_id: List[int] = [], organizations: List[str] = []) -> list:
         """Build a list of SharePermission from users_id and organizations.
 
         Args:

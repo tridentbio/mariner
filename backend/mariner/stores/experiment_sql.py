@@ -16,10 +16,10 @@ from mariner.stores.base_sql import CRUDBase
 class ExperimentCreateRepo(pydantic.BaseModel):
     """Payload to record an experiment in experiments collection."""
 
-    mlflow_id: str
     model_version_id: int
     created_by_id: int
     epochs: int
+    mlflow_id: Optional[str] = None
     experiment_name: Optional[str] = None
     stage: Literal[
         "NOT RUNNING", "STARTED", "RUNNING", "FAILED", "SUCCESS"
@@ -34,6 +34,7 @@ class ExperimentCreateRepo(pydantic.BaseModel):
 class ExperimentUpdateRepo(pydantic.BaseModel):
     """Payload to update an experiment in experiments collection."""
 
+    mlflow_id: Optional[str] = None
     stage: Optional[
         Literal["NOT RUNNING", "STARTED", "RUNNING", "ERROR", "SUCCESS"]
     ] = None

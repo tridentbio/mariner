@@ -28,21 +28,24 @@ def mocked_experiment_payload(some_model: Model):
     target_column = version.config.dataset.target_columns[0]
     return {
         "name": experiment_name,
-        "optimizer": {
-            "classPath": "torch.optim.Adam",
-            "params": {
-                "lr": 0.05,
-            },
-        },
-        "epochs": 1,
         "modelVersionId": version.id,
-        "checkpointConfig": {
-            "metricKey": f"val/mse/{target_column.name}",
-            "mode": "min",
-        },
-        "earlyStoppingConfig": {
-            "metricKey": f"val/mse/{target_column.name}",
-            "mode": "min",
+        "framework": "torch",
+        "config": {
+            "optimizer": {
+                "classPath": "torch.optim.Adam",
+                "params": {
+                    "lr": 0.05,
+                },
+            },
+            "epochs": 1,
+            "checkpointConfig": {
+                "metricKey": f"val/mse/{target_column.name}",
+                "mode": "min",
+            },
+            "earlyStoppingConfig": {
+                "metricKey": f"val/mse/{target_column.name}",
+                "mode": "min",
+            },
         },
     }
 

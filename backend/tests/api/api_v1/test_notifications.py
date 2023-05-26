@@ -2,19 +2,19 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from fleet.model_builder.optimizers import AdamOptimizer
+from fleet.torch_.schemas import (
+    EarlyStoppingConfig,
+    MonitoringConfig,
+    TorchTrainingConfig,
+)
 from mariner import experiments as experiments_ctl
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
 from mariner.entities import EventEntity
-from mariner.schemas.experiment_schemas import (
-    EarlyStoppingConfig,
-    Experiment,
-    MonitoringConfig,
-    TrainingRequest,
-)
+from mariner.schemas.experiment_schemas import Experiment, TorchTrainingRequest
 from mariner.schemas.model_schemas import Model
 from mariner.tasks import get_exp_manager
-from model_builder.optimizers import AdamOptimizer
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
@@ -27,19 +27,21 @@ async def experiments_fixture(db: Session, some_model: Model):
     version = some_model.versions[-1]
     target_column = version.config.dataset.target_columns[0]
     experiments = [
-        await experiments_ctl.create_model_traning(
+        await experiments_ctl.create_model_training(
             db,
             user,
-            TrainingRequest(
+            TorchTrainingRequest.create(
                 name=random_lower_string(),
-                epochs=1,
                 model_version_id=version.id,
-                optimizer=AdamOptimizer(),
-                checkpoint_config=MonitoringConfig(
-                    metric_key=f"val/mse/{target_column.name}", mode="min"
-                ),
-                early_stopping_config=EarlyStoppingConfig(
-                    metric_key=f"val/mse/{target_column.name}", mode="min"
+                config=TorchTrainingConfig(
+                    epochs=1,
+                    optimizer=AdamOptimizer(),
+                    checkpoint_config=MonitoringConfig(
+                        metric_key=f"val/mse/{target_column.name}", mode="min"
+                    ),
+                    early_stopping_config=EarlyStoppingConfig(
+                        metric_key=f"val/mse/{target_column.name}", mode="min"
+                    ),
                 ),
             ),
         )
@@ -95,20 +97,22 @@ async def experiment_fixture(db: Session, some_model_integration: Model) -> Expe
     db.flush()
     version = some_model_integration.versions[-1]
     target_column = version.config.dataset.target_columns[0]
-    request = TrainingRequest(
+    request = TorchTrainingRequest.create(
         model_version_id=version.id,
-        epochs=1,
         name=random_lower_string(),
-        checkpoint_config=MonitoringConfig(
-            mode="min",
-            metric_key=f"val/mse/{target_column.name}",
-        ),
-        optimizer=AdamOptimizer(),
-        early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val/mse/{target_column.name}", mode="min"
+        config=TorchTrainingConfig(
+            epochs=1,
+            checkpoint_config=MonitoringConfig(
+                mode="min",
+                metric_key=f"val/mse/{target_column.name}",
+            ),
+            optimizer=AdamOptimizer(),
+            early_stopping_config=EarlyStoppingConfig(
+                metric_key=f"val/mse/{target_column.name}", mode="min"
+            ),
         ),
     )
-    exp = await experiments_ctl.create_model_traning(db, user, request)
+    exp = await experiments_ctl.create_model_training(db, user, request)
     task = get_exp_manager().get_task(exp.id)
     assert task, "Failed to get training async test"
     await task

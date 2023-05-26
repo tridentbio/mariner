@@ -61,20 +61,23 @@ class EditComponentsCommand extends Command<
         },
       };
     }
-    const layers = this.args.schema.layers || [];
+    const layers = this.args.schema.spec.layers || [];
     const updatedLayers = layers.map((layer) => {
       if (layer.name !== this.args.data.name) return layer;
       return this.args.data as LayersType;
     });
-    const featurizers = this.args.schema.featurizers || [];
+    const featurizers = this.args.schema.dataset.featurizers || [];
     const updatedFeaturizers = featurizers.map((featurizer) => {
       if (featurizer.name !== this.args.data.name) return featurizer;
       else return this.args.data as FeaturizersType;
     });
     return {
       ...this.args.schema,
-      layers: updatedLayers,
-      featurizers: updatedFeaturizers,
+      spec: { layers: updatedLayers },
+      dataset: {
+        ...this.args.schema.dataset,
+        featurizers: updatedFeaturizers,
+      },
     };
   };
 }

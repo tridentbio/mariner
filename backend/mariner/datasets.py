@@ -197,13 +197,15 @@ async def process_dataset(
         )
         return event
 
-    except Exception as e:
-        LOG.error(f'Unexpected error while processing dataset "{dataset.name}":\n{e}')
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        LOG.error(
+            'Unexpected error while processing dataset "%s":\n%r', dataset.name, exc
+        )
         # Handle unexpected errors
         dataset_update = DatasetUpdateRepo(
             id=dataset.id,
             ready_status="failed",
-            errors={"log": ["Unexpected error.", str(e)]},
+            errors={"log": ["Unexpected error.", str(exc)]},
         )
 
         dataset = dataset_store.update(db, dataset, dataset_update)

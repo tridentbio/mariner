@@ -3,10 +3,9 @@ Models service
 """
 import logging
 import traceback
-from typing import Any, Dict, List, Literal, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Tuple
 from uuid import uuid4
 
-import lightning.pytorch as pl
 import mlflow
 import mlflow.exceptions
 import pandas as pd
@@ -14,6 +13,10 @@ import torch
 from sqlalchemy.orm.session import Session
 from torch_geometric.loader import DataLoader
 
+from fleet.data_types import SmileDataType
+from fleet.model_builder import options
+from fleet.model_builder.dataset import CustomDataset
+from fleet.model_builder.schemas import ComponentOption
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -29,51 +32,31 @@ from mariner.exceptions.model_exceptions import (
 from mariner.ray_actors.model_check_actor import ModelCheckActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
-    ForwardCheck,
     Model,
     ModelCreate,
     ModelCreateRepo,
     ModelFeaturesAndTarget,
-    ModelSchema,
     ModelsQuery,
     ModelVersion,
     ModelVersionCreateRepo,
+    TrainingCheckRequest,
+    TrainingCheckResponse,
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
 from mariner.validation.functions import is_valid_smiles_series
-from model_builder import options
-from model_builder.dataset import CustomDataset
-from model_builder.model import CustomModel
-from model_builder.schemas import ComponentOption, DatasetConfig, SmileDataType
+
+if TYPE_CHECKING:
+    from fleet.dataset_schemas import TorchDatasetConfig
+
 
 LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)
 
 
-def get_model_and_dataloader(
-    db: Session, config: ModelSchema
-) -> tuple[pl.LightningModule, DataLoader]:
-    """Gets the CustomModel and the DataLoader needed to train
-    a model
-
-    Args:
-        db: connection to the database
-        config: model config
-
-    Returns:
-        tuple[pl.LightningModule, DataLoader]
-    """
-    dataset_entity = dataset_store.get_by_name(db, config.dataset.name)
-    assert dataset_entity, f"No dataset found with name {config.dataset.name}"
-    df = dataset_entity.get_dataframe()
-    dataset = CustomDataset(data=df, config=config)
-    dataloader = DataLoader(dataset, batch_size=1)
-    model = CustomModel(config)
-    return model, dataloader
-
-
-async def check_model_step_exception(db: Session, config: ModelSchema) -> ForwardCheck:
+async def check_model_step_exception(
+    db: Session, config: TrainingCheckRequest
+) -> TrainingCheckResponse:
     """Checks the steps of a pytorch lightning model built from config.
 
     Steps are checked before creating the model on the backend, so the user may fix
@@ -87,14 +70,16 @@ async def check_model_step_exception(db: Session, config: ModelSchema) -> Forwar
         An object either with the stack trace or the model output.
     """
     try:
-        dataset = dataset_store.get_by_name(db, config.dataset.name)
+        dataset = dataset_store.get_by_name(db, config.model_spec.dataset.name)
         actor = ModelCheckActor.remote()
-        output = await actor.check_model_steps.remote(dataset=dataset, config=config)
-        return ForwardCheck(output=output)
+        output = await actor.check_model_steps.remote(
+            dataset=dataset, config=config.model_spec
+        )
+        return TrainingCheckResponse(output=output)
     # Don't catch any specific exception to properly get the traceback
     except:  # noqa E722 pylint: disable=W0702
         lines = traceback.format_exc()
-        return ForwardCheck(stack_trace=lines)
+        return TrainingCheckResponse(stack_trace=lines)
 
 
 def create_model(
@@ -172,6 +157,10 @@ def create_model(
             ],
         ),
     )
+
+    assert model_create.config.dataset.target_columns[
+        0
+    ].out_module, "missing out_module in target_column"
     model_store.create_model_version(
         db,
         ModelVersionCreateRepo(
@@ -217,7 +206,7 @@ InvalidReason = Literal["invalid-smiles-series"]
 
 
 def _check_dataframe_conforms_dataset(
-    df: pd.DataFrame, dataset_config: DatasetConfig
+    df: pd.DataFrame, dataset_config: "TorchDatasetConfig"
 ) -> List[Tuple[str, InvalidReason]]:
     """Checks if dataframe conforms to data types specified in dataset_config
 
@@ -267,7 +256,12 @@ def get_model_prediction(
             f"dataframe failed {len(broken_checks)} checks",
             reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
         )
-    dataset = CustomDataset(data=df, config=modelversion.config, target=False)
+    dataset = CustomDataset(
+        data=df,
+        model_config=modelversion.config.spec,
+        dataset_config=modelversion.config.dataset,
+        target=False,
+    )
     dataloader = DataLoader(dataset, batch_size=len(df))
     modelinput = next(iter(dataloader))
     pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())

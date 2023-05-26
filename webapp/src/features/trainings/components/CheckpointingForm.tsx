@@ -1,7 +1,6 @@
-import { TrainingRequest } from 'app/rtk/generated/experiments';
+import { BaseTrainingRequest } from 'app/rtk/generated/experiments';
 import { TargetConfig } from 'app/rtk/generated/models';
 import { MetricMode } from 'app/types/domain/experiments';
-import { ModelVersionType } from 'app/types/domain/models';
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { required } from 'utils/reactFormRules';
@@ -11,19 +10,19 @@ import ModeRadioInput from './ModeRadioInput';
 const CheckpointingForm: React.FC<{ targetColumns: TargetConfig[] }> = ({
   targetColumns,
 }) => {
-  const { control, setValue } = useFormContext<TrainingRequest>();
+  const { control, setValue } = useFormContext<BaseTrainingRequest>();
   return (
     <>
       <Controller
         rules={{ ...required }}
         control={control}
-        name="checkpointConfig.metricKey"
+        name="config.checkpointConfig.metricKey"
         render={({ field, fieldState: { error } }) => (
           <MetricSelect
             field={field}
             error={error}
             setValue={(value: MetricMode) =>
-              setValue('checkpointConfig.mode', value)
+              setValue('config.checkpointConfig.mode', value)
             }
             targetColumns={targetColumns}
           />

@@ -1,17 +1,20 @@
-import { ModelSchema } from '@app/rtk/generated/models';
+import { TorchModelSpec } from '@app/rtk/generated/models';
 import fs from 'fs';
+import path from 'node:path'
 import { parse } from 'yaml';
 
-const datapath = `${__dirname}/../data`;
+const datapath = path.resolve(`${__dirname}/../../../backend/tests/data`)
+
 
 const datadirstats = fs.statSync(datapath);
+
 if (!datadirstats.isDirectory()) {
   console.error('Failed to find data directory');
   process.exit(1);
 }
 
-const SMALL_REGRESSOR_PATH = `${datapath}/small_regressor_schema.yaml`;
-const SMALL_CLASSIFIER_PATH = `${datapath}/small_classifier_schema.yaml`;
+const SMALL_REGRESSOR_PATH = `${datapath}/yaml/small_regressor_schema.yaml`;
+const SMALL_CLASSIFIER_PATH = `${datapath}/yaml/small_classifier_schema.yaml`;
 const modelSchemaPaths = [SMALL_REGRESSOR_PATH, SMALL_CLASSIFIER_PATH];
 
 /**
@@ -27,14 +30,14 @@ const loadJsonFromYamlFile = (yamlPath: string) => {
   return parse(fs.readFileSync(yamlPath).toString());
 };
 
-export const getRegressorModelSchema = (): ModelSchema => {
+export const getRegressorModelSchema = (): TorchModelSpec => {
   return loadJsonFromYamlFile(SMALL_REGRESSOR_PATH);
 };
-export const getClassfierModelSchema = (): ModelSchema => {
+export const getClassfierModelSchema = (): TorchModelSpec => {
   return loadJsonFromYamlFile(SMALL_CLASSIFIER_PATH);
 };
 
-const baseSchema = {
+const baseSchema: TorchModelSpec = {
   name: 'asd',
   dataset: {
     name: 'das',
@@ -45,6 +48,7 @@ const baseSchema = {
           classes: { yes: 1, no: 0 },
           domainKind: 'categorical' as const,
         },
+        outModule: ''
       },
     ],
     featureColumns: [
@@ -58,6 +62,9 @@ const baseSchema = {
       },
     ],
   },
+  spec: {
+    layers: []
+  }
 };
 
 const injectBaseSchema = (outModule: string) => ({
@@ -73,128 +80,9 @@ const injectBaseSchema = (outModule: string) => ({
   },
 });
 
-const testConcatValidatorValid1: ModelSchema = {
+const testConcatValidatorValid1: TorchModelSpec = {
   ...injectBaseSchema('5'),
-  layers: [
-    {
-      type: 'torch.nn.Linear',
-      forwardArgs: {
-        input: '$mwt',
-      },
-      constructorArgs: {
-        in_features: 1,
-        out_features: 16,
-      },
-      name: '1',
-    },
-    {
-      type: 'torch.nn.Sigmoid',
-      forwardArgs: {
-        input: '$1',
-      },
-      name: '2',
-    },
-    {
-      type: 'torch.nn.Linear',
-      forwardArgs: {
-        input: '$mwt',
-      },
-      constructorArgs: {
-        in_features: 1,
-        out_features: 16,
-      },
-      name: '3',
-    },
-    {
-      type: 'torch.nn.Sigmoid',
-      forwardArgs: {
-        input: '$3',
-      },
-      name: '4',
-    },
-    {
-      name: '5',
-      type: 'model_builder.layers.Concat',
-      forwardArgs: {
-        xs: ['$2', '$4'],
-      },
-      constructorArgs: {
-        dim: -1,
-      },
-    },
-  ],
-};
-export const BrokenSchemas = () => {
-  const testLinearValidator1: ModelSchema = {
-    ...injectBaseSchema('3'),
-    layers: [
-      {
-        type: 'torch.nn.Linear',
-        name: '1',
-        forwardArgs: { input: '$mwt' },
-        constructorArgs: {
-          in_features: 2,
-          out_features: 8,
-        },
-      },
-      { type: 'torch.nn.Sigmoid', name: '2', forwardArgs: { input: '$1' } },
-      {
-        type: 'torch.nn.Linear',
-        name: '3',
-        forwardArgs: { input: '$2' },
-        constructorArgs: { in_features: 1, out_features: 32 },
-      },
-    ],
-  };
-
-  const testMolFeaturizer1: ModelSchema = {
-    ...injectBaseSchema('feat'),
-    featurizers: [
-      {
-        type: 'model_builder.featurizers.MoleculeFeaturizer',
-        name: 'feat',
-        forwardArgs: { mol: '$mwt' },
-        constructorArgs: {
-          allow_unknown: false,
-          per_atom_fragmentation: false,
-          sym_bond_list: false,
-        },
-      },
-    ],
-  };
-
-  const testGcnConv: ModelSchema = {
-    ...injectBaseSchema('1'),
-    featurizers: [
-      {
-        type: 'model_builder.featurizers.MoleculeFeaturizer',
-        name: 'feat',
-        forwardArgs: { mol: '$smiles' },
-        constructorArgs: {
-          sym_bond_list: true,
-          allow_unknown: false,
-          per_atom_fragmentation: false,
-        },
-      },
-    ],
-    layers: [
-      {
-        type: 'torch_geometric.nn.GCNConv',
-        name: '1',
-        forwardArgs: {
-          x: '$feat.x',
-          edge_index: '$feat.edge_index',
-        },
-        constructorArgs: {
-          in_channels: 10,
-          out_channels: 30,
-        },
-      },
-    ],
-  };
-
-  const testConcatValidatorInvalid1: ModelSchema = {
-    ...injectBaseSchema('5'),
+  spec: {
     layers: [
       {
         type: 'torch.nn.Linear',
@@ -221,7 +109,7 @@ export const BrokenSchemas = () => {
         },
         constructorArgs: {
           in_features: 1,
-          out_features: 17,
+          out_features: 16,
         },
         name: '3',
       },
@@ -234,15 +122,147 @@ export const BrokenSchemas = () => {
       },
       {
         name: '5',
-        type: 'model_builder.layers.Concat',
+        type: 'fleet.model_builder.layers.Concat',
         forwardArgs: {
           xs: ['$2', '$4'],
         },
         constructorArgs: {
-          dim: 0,
+          dim: -1,
         },
       },
     ],
+  }
+};
+export const BrokenSchemas = () => {
+  const testLinearValidator1: TorchModelSpec = {
+    ...baseSchema,
+    spec: {
+      layers: [
+        {
+          type: 'torch.nn.Linear',
+          name: '1',
+          forwardArgs: { input: '$mwt' },
+          constructorArgs: {
+            in_features: 2,
+            out_features: 8,
+          },
+        },
+        { type: 'torch.nn.Sigmoid', name: '2', forwardArgs: { input: '$1' } },
+        {
+          type: 'torch.nn.Linear',
+          name: '3',
+          forwardArgs: { input: '$2' },
+          constructorArgs: { in_features: 1, out_features: 32 },
+        },
+      ],
+    }
+  };
+
+  const testMolFeaturizer1: TorchModelSpec = {
+    ...baseSchema,
+    dataset: {
+      ...baseSchema.dataset,
+      featurizers: [
+        {
+          type: 'fleet.model_builder.featurizers.MoleculeFeaturizer',
+          name: 'feat',
+          forwardArgs: { mol: '$mwt' },
+          constructorArgs: {
+            allow_unknown: false,
+            per_atom_fragmentation: false,
+            sym_bond_list: false,
+          },
+        },
+      ],
+    }
+  }
+
+  const testGcnConv: TorchModelSpec = {
+    ...baseSchema,
+    dataset: {
+      ...baseSchema.dataset,
+      featurizers: [
+        {
+          type: 'fleet.model_builder.featurizers.MoleculeFeaturizer',
+          name: 'feat',
+          forwardArgs: { mol: '$smiles' },
+          constructorArgs: {
+            sym_bond_list: true,
+            allow_unknown: false,
+            per_atom_fragmentation: false,
+          },
+        },
+      ],
+    }, spec: {
+      layers: [
+        {
+          type: 'torch_geometric.nn.GCNConv',
+          name: '1',
+          forwardArgs: {
+            x: '$feat.x',
+            edge_index: '$feat.edge_index',
+          },
+          constructorArgs: {
+            in_channels: 10,
+            out_channels: 30,
+          },
+        },
+      ],
+    }
+  };
+
+  const testConcatValidatorInvalid1: TorchModelSpec = {
+    ...baseSchema,
+    spec: {
+      layers: [
+        {
+          type: 'torch.nn.Linear',
+          forwardArgs: {
+            input: '$mwt',
+          },
+          constructorArgs: {
+            in_features: 1,
+            out_features: 16,
+          },
+          name: '1',
+        },
+        {
+          type: 'torch.nn.Sigmoid',
+          forwardArgs: {
+            input: '$1',
+          },
+          name: '2',
+        },
+        {
+          type: 'torch.nn.Linear',
+          forwardArgs: {
+            input: '$mwt',
+          },
+          constructorArgs: {
+            in_features: 1,
+            out_features: 17,
+          },
+          name: '3',
+        },
+        {
+          type: 'torch.nn.Sigmoid',
+          forwardArgs: {
+            input: '$3',
+          },
+          name: '4',
+        },
+        {
+          name: '5',
+          type: 'fleet.model_builder.layers.Concat',
+          forwardArgs: {
+            xs: ['$2', '$4'],
+          },
+          constructorArgs: {
+            dim: 0,
+          },
+        },
+      ],
+    }
   };
   return {
     testMolFeaturizer1,
@@ -255,9 +275,9 @@ export const BrokenSchemas = () => {
 /**
  * Gets valid model schemas examples
  *
- * @returns {ModelSchema} [TODO:description]
+ * @returns {TorchModelSpec} [TODO:description]
  */
-export const getValidModelSchemas = (): ModelSchema[] => {
+export const getValidModelSchemas = (): TorchModelSpec[] => {
   return modelSchemaPaths
     .map(loadJsonFromYamlFile)
     .concat(testConcatValidatorValid1);
