@@ -208,7 +208,7 @@ class CustomModel(pl.LightningModule):
                 raise ValueError(f"{target_column.name}.loss_fn cannot be None")
 
             # This is safe as long ModelSchema was validated
-            loss_fn_class = __import__(target_column.loss_fn)
+            loss_fn_class = eval(target_column.loss_fn)
             self.loss_dict[target_column.name] = loss_fn_class()
 
             # Set up metrics for training and validation
