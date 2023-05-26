@@ -2,7 +2,7 @@ import { PaginationQueryParams } from '../paginationQuery';
 import { DataType } from './datasets';
 import * as modelsApi from 'app/rtk/generated/models';
 
-export type ForwardCheck = modelsApi.ForwardCheck;
+export type ForwardCheck = modelsApi.TrainingCheckRequest;
 
 export interface ModelCreationError {
   type: 'value_error.missingcomponentargs';
@@ -11,15 +11,15 @@ export interface ModelCreationError {
   ctx: { [key: string]: unknown };
 }
 
-export type ModelConfigDataset = modelsApi.ModelSchema['dataset'];
+export type ModelConfigDataset = modelsApi.TorchModelSpec['dataset'];
 
 export type ArrayElement<T> = T extends Array<infer C> ? C : never;
 export type Required<T> = T extends undefined ? never : T;
 export type Component = Required<
-  | ArrayElement<modelsApi.ModelSchema['layers']>
-  | ArrayElement<modelsApi.ModelSchema['featurizers']>
+  | ArrayElement<modelsApi.TorchModelSpec['spec']['layers']>
+  | ArrayElement<modelsApi.TorchModelSpec['dataset']['featurizers']>
 >;
-export type ModelConfig = modelsApi.ModelSchema;
+export type ModelConfig = modelsApi.TorchModelSpec;
 export type ModelVersion = modelsApi.ModelVersion;
 export type ModelVersionType = 'classification' | 'regressor';
 export type ModelColumn = modelsApi.ModelFeaturesAndTarget;

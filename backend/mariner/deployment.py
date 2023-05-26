@@ -4,36 +4,27 @@ Module containing deployment service functions.
 import asyncio
 from typing import Any, Dict, List, Tuple
 
-from sqlalchemy.orm.session import Session
-from torch import Tensor
-
 from api.websocket import WebSocketMessage, get_websockets_manager
-from mariner.core.security import (
-    decode_deployment_url_token,
-    generate_deployment_signed_url,
-)
+from mariner.core.security import (decode_deployment_url_token,
+                                   generate_deployment_signed_url)
 from mariner.entities.deployment import Deployment as DeploymentEntity
 from mariner.entities.deployment import ShareStrategy
 from mariner.entities.user import User
-from mariner.exceptions import (
-    DeploymentNotFound,
-    NotCreatorOwner,
-    PredictionLimitReached,
-)
+from mariner.exceptions import (DeploymentNotFound, NotCreatorOwner,
+                                PredictionLimitReached)
 from mariner.ray_actors.deployments_manager import get_deployments_manager
-from mariner.schemas.deployment_schemas import (
-    Deployment,
-    DeploymentBase,
-    DeploymentCreateRepo,
-    DeploymentsQuery,
-    DeploymentStatus,
-    DeploymentUpdateRepo,
-    DeploymentWithTrainingData,
-    PermissionCreateRepo,
-    PredictionCreateRepo,
-)
+from mariner.schemas.deployment_schemas import (Deployment, DeploymentBase,
+                                                DeploymentCreateRepo,
+                                                DeploymentsQuery,
+                                                DeploymentStatus,
+                                                DeploymentUpdateRepo,
+                                                DeploymentWithTrainingData,
+                                                PermissionCreateRepo,
+                                                PredictionCreateRepo)
 from mariner.stores.deployment_sql import deployment_store
 from mariner.tasks import TaskView, get_manager
+from sqlalchemy.orm.session import Session
+from torch import Tensor
 
 
 def get_deployments(
@@ -157,13 +148,13 @@ async def update_deployment(
             manager.start_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
-            del deployment_input.status # status will by handled asynchronously
+            del deployment_input.status  # status will by handled asynchronously
 
         elif deployment_input.status == "stopped":
             manager.stop_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
-            del deployment_input.status # status will by handled asynchronously
+            del deployment_input.status  # status will by handled asynchronously
 
     return deployment_store.update(
         db, db_obj=deployment_entity, obj_in=deployment_input
@@ -280,9 +271,9 @@ def get_public_deployment(db: Session, token: str):
 
     elif not deployment.share_strategy == ShareStrategy.PUBLIC:
         raise PermissionError()
-    
+
     deployment = DeploymentWithTrainingData.from_orm(deployment)
-    
+
     if deployment.show_training_data:
         deployment.training_data = deployment_store.get_training_data(db, deployment)
 
@@ -293,7 +284,7 @@ async def make_prediction(
     db: Session, current_user: User, deployment_id: int, data: Dict[str, Any]
 ):
     """Make a prediction and track it.
-    
+
     Args:
         db: SQLAlchemy session.
         current_user: Current user.
@@ -345,30 +336,28 @@ async def make_prediction(
     return prediction
 
 
-async def make_prediction_public(
-    db: Session, deployment_id: int, data: Dict[str, Any]
-):
+async def make_prediction_public(db: Session, deployment_id: int, data: Dict[str, Any]):
     """Make a prediction for a public deployment.
-    
+
     Args:
         db: SQLAlchemy session.
         deployment_id: Deployment ID.
         data: Data to be predicted (any json).
-        
+
     Returns:
         Prediction: Json with predictions for each model version target column.
     """
     manager = get_deployments_manager()
     if not await manager.deployment_is_running.remote(deployment_id):
         raise DeploymentNotFound()
-    
+
     deployment = deployment_store.get(db, deployment_id)
     if not deployment or not deployment.share_strategy == ShareStrategy.PUBLIC:
-        raise PermissionError('Deployment is not public.')
+        raise PermissionError("Deployment is not public.")
 
     if deployment_store.check_prediction_limit_reached(db, deployment):
         raise PredictionLimitReached()
-    
+
     prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
         deployment_id, data
     )
@@ -394,10 +383,10 @@ def handle_deployment_manager_first_init(db: Session):
     """To run when the deployment manager starts.
     Responsible to make sure that the deployment status on database
     is the same as the one on the deployment manager.
-    
+
     Args:
         db: database session.
-    
+
     Returns:
         list of deployments that was running on the deployment manager.
     """
@@ -407,9 +396,9 @@ def handle_deployment_manager_first_init(db: Session):
 
 def notify_users_about_status_update(deployment: Deployment):
     """Notify the user using websocket about the deployment status updated.
-    This function will start the broadcast on websocket and add it as a task 
+    This function will start the broadcast on websocket and add it as a task
     to the task manager to finish asynchoronously.
-    
+
     Args:
         deployment: Deployment object.
     """
@@ -443,12 +432,12 @@ async def update_deployment_status(
 ):
     """Update the deployment status on database and notify the user about it.
     To be used by the deployment manager.
-    
+
     Args:
         db: database session.
         deployment_id,
         status: new status.
-        
+
     Returns:
         Updated deployment.
     """

@@ -4,7 +4,6 @@ import {
   FeaturizersType,
   LayersType,
   ModelSchema,
-  TransformerEncoderLayer,
 } from '../../interfaces/model-editor';
 import { wrapForwardArgs } from '../../utils';
 import Command from './Command';
@@ -29,7 +28,7 @@ class AddComponentCommand<T extends ComponentType> extends Command<
   execute = (): ModelSchema => {
     this.args.data.forwardArgs = wrapForwardArgs(this.args.data.forwardArgs);
     if (this.args.type === 'layer') {
-      const layers = [...(this.args.schema.layers || [])];
+      const layers = [...(this.args.schema.spec.layers || [])];
       // Hack to make up for deffective backend default construction arguments
       // for the Embedding layer
       if (this.args.data.type === 'torch.nn.Embedding') {
@@ -40,14 +39,19 @@ class AddComponentCommand<T extends ComponentType> extends Command<
       } else layers.push(this.args.data as LayersType);
       return {
         ...this.args.schema,
-        layers,
+        spec: {
+          layers,
+        },
       };
     } else if (this.args.type === 'featurizer') {
-      const featurizers = [...(this.args.schema.featurizers || [])];
+      const featurizers = [...(this.args.schema.dataset.featurizers || [])];
       featurizers.push(this.args.data as FeaturizersType);
       return {
         ...this.args.schema,
-        featurizers,
+        dataset: {
+          ...this.args.schema.dataset,
+          featurizers,
+        },
       };
     } else {
       throw new Error('Not implemented');

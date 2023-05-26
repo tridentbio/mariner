@@ -65,7 +65,7 @@ class AbstractManager:
 
         Args:
             new_task (TaskView): TaskView object.
-            done_callback (Optional[Callable[[Task, int], Any]], optional):
+            done_callback (Optional[Callable[[Task, int], Any]]):
                 Callback function. Defaults to None.
 
         Raises:

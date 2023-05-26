@@ -28,13 +28,13 @@ describe('/models/new - Model creation page', () => {
   });
 
   // TODO: fix OneHot Layer bug to this test pass
-  it.skip('Builds Categorical-Smiles Model', () => {
-    cy.buildYamlModel(
-      'data/yaml/categorical_features_model.yaml',
-      zincDatasetFixture.name,
-      true
-    );
-  });
+  // it.skip('Builds Categorical-Smiles Model', () => {
+  //   cy.buildYamlModel(
+  //     'data/yaml/categorical_features_model.yaml',
+  //     zincDatasetFixture.name,
+  //     true
+  //   );
+  // });
 
   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(

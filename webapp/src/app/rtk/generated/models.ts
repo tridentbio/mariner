@@ -76,7 +76,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/v1/models/check-config`,
           method: 'POST',
-          body: queryArg.modelSchema,
+          body: queryArg.trainingCheckRequest,
         }),
         invalidatesTags: ['models'],
       }),
@@ -135,9 +135,9 @@ export type DeleteModelApiArg = {
   modelId: number;
 };
 export type PostModelCheckConfigApiResponse =
-  /** status 200 Successful Response */ ForwardCheck;
+  /** status 200 Successful Response */ TrainingCheckResponse;
 export type PostModelCheckConfigApiArg = {
-  modelSchema: ModelSchema;
+  trainingCheckRequest: TrainingCheckRequest;
 };
 export type GetExperimentsMetricsForModelVersionApiResponse =
   /** status 200 Successful Response */ Experiment[];
@@ -212,111 +212,51 @@ export type Dataset = {
     [key: string]: string[] | string;
   };
 };
-export type QuantityDataType2 = {
-  domainKind?: 'numeric';
-  unit: string;
-};
-export type NumericalDataType = {
-  domainKind?: 'numeric';
-};
-export type StringDataType2 = {
-  domainKind?: 'string';
-};
-export type SmileDataType2 = {
-  domainKind?: 'smiles';
-};
-export type CategoricalDataType2 = {
-  domainKind?: 'categorical';
-  classes: {
-    [key: string]: number;
-  };
-};
-export type DnaDataType2 = {
-  domainKind?: 'dna';
-};
-export type RnaDataType2 = {
-  domainKind?: 'rna';
-};
-export type ProteinDataType2 = {
-  domainKind?: 'protein';
-};
-export type TargetConfig = {
-  name: string;
-  dataType:
-    | QuantityDataType2
-    | NumericalDataType
-    | StringDataType2
-    | SmileDataType2
-    | CategoricalDataType2
-    | DnaDataType2
-    | RnaDataType2
-    | ProteinDataType2;
-  outModule: string;
-  lossFn?: string;
-  columnType?: 'regression' | 'multiclass' | 'binary';
-};
-export type ColumnConfig = {
-  name: string;
-  dataType:
-    | QuantityDataType2
-    | NumericalDataType
-    | StringDataType2
-    | SmileDataType2
-    | CategoricalDataType2
-    | DnaDataType2
-    | RnaDataType2
-    | ProteinDataType2;
-};
-export type DatasetConfig = {
-  name: string;
-  targetColumns: TargetConfig[];
-  featureColumns: ColumnConfig[];
-};
-export type ModelbuilderonehotForwardArgsReferences = {
+export type FleetonehotForwardArgsReferences = {
   x1: string;
 };
-export type ModelbuilderonehotLayerConfig = {
-  type?: 'model_builder.layers.OneHot';
+export type FleetonehotLayerConfig = {
+  type?: 'fleet.model_builder.layers.OneHot';
   name: string;
-  forwardArgs: ModelbuilderonehotForwardArgsReferences;
+  forwardArgs: FleetonehotForwardArgsReferences;
 };
-export type ModelbuilderglobalpoolingConstructorArgs = {
+export type FleetglobalpoolingConstructorArgs = {
   aggr: string;
 };
-export type ModelbuilderglobalpoolingForwardArgsReferences = {
+export type FleetglobalpoolingForwardArgsReferences = {
   x: string;
   batch?: string;
   size?: string;
 };
-export type ModelbuilderglobalpoolingLayerConfig = {
-  type?: 'model_builder.layers.GlobalPooling';
+export type FleetglobalpoolingLayerConfig = {
+  type?: 'fleet.model_builder.layers.GlobalPooling';
   name: string;
-  constructorArgs: ModelbuilderglobalpoolingConstructorArgs;
-  forwardArgs: ModelbuilderglobalpoolingForwardArgsReferences;
+  constructorArgs: FleetglobalpoolingConstructorArgs;
+  forwardArgs: FleetglobalpoolingForwardArgsReferences;
 };
-export type ModelbuilderconcatConstructorArgs = {
+export type FleetconcatConstructorArgs = {
   dim?: number;
 };
-export type ModelbuilderconcatForwardArgsReferences = {
+export type FleetconcatForwardArgsReferences = {
   xs: string[];
 };
-export type ModelbuilderconcatLayerConfig = {
-  type?: 'model_builder.layers.Concat';
+export type FleetconcatLayerConfig = {
+  type?: 'fleet.model_builder.layers.Concat';
   name: string;
-  constructorArgs: ModelbuilderconcatConstructorArgs;
-  forwardArgs: ModelbuilderconcatForwardArgsReferences;
+  constructorArgs: FleetconcatConstructorArgs;
+  forwardArgs: FleetconcatForwardArgsReferences;
 };
-export type ModelbuilderaddpoolingConstructorArgs = {
+export type FleetaddpoolingConstructorArgs = {
   dim?: number;
 };
-export type ModelbuilderaddpoolingForwardArgsReferences = {
+export type FleetaddpoolingForwardArgsReferences = {
   x: string;
 };
-export type ModelbuilderaddpoolingLayerConfig = {
-  type?: 'model_builder.layers.AddPooling';
+export type FleetaddpoolingLayerConfig = {
+  type?: 'fleet.model_builder.layers.AddPooling';
   name: string;
-  constructorArgs: ModelbuilderaddpoolingConstructorArgs;
-  forwardArgs: ModelbuilderaddpoolingForwardArgsReferences;
+  constructorArgs: FleetaddpoolingConstructorArgs;
+  forwardArgs: FleetaddpoolingForwardArgsReferences;
 };
 export type TorchlinearConstructorArgs = {
   in_features: number;
@@ -403,6 +343,7 @@ export type TorchtransformerencoderlayerForwardArgsReferences = {
   src: string;
   src_mask?: string;
   src_key_padding_mask?: string;
+  is_causal?: string;
 };
 export type TorchtransformerencoderlayerLayerConfig = {
   type?: 'torch.nn.TransformerEncoderLayer';
@@ -410,68 +351,20 @@ export type TorchtransformerencoderlayerLayerConfig = {
   constructorArgs: TorchtransformerencoderlayerConstructorArgs;
   forwardArgs: TorchtransformerencoderlayerForwardArgsReferences;
 };
-export type ModelbuildermoleculefeaturizerConstructorArgs = {
-  allow_unknown: boolean;
-  sym_bond_list: boolean;
-  per_atom_fragmentation: boolean;
-};
-export type ModelbuildermoleculefeaturizerForwardArgsReferences = {
-  mol: string;
-};
-export type ModelbuildermoleculefeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.MoleculeFeaturizer';
-  name: string;
-  constructorArgs: ModelbuildermoleculefeaturizerConstructorArgs;
-  forwardArgs: ModelbuildermoleculefeaturizerForwardArgsReferences;
-};
-export type ModelbuilderintegerfeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type ModelbuilderintegerfeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.IntegerFeaturizer';
-  name: string;
-  forwardArgs: ModelbuilderintegerfeaturizerForwardArgsReferences;
-};
-export type ModelbuilderdnasequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type ModelbuilderdnasequencefeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.DNASequenceFeaturizer';
-  name: string;
-  forwardArgs: ModelbuilderdnasequencefeaturizerForwardArgsReferences;
-};
-export type ModelbuilderrnasequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type ModelbuilderrnasequencefeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.RNASequenceFeaturizer';
-  name: string;
-  forwardArgs: ModelbuilderrnasequencefeaturizerForwardArgsReferences;
-};
-export type ModelbuilderproteinsequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type ModelbuilderproteinsequencefeaturizerLayerConfig = {
-  type?: 'model_builder.featurizers.ProteinSequenceFeaturizer';
-  name: string;
-  forwardArgs: ModelbuilderproteinsequencefeaturizerForwardArgsReferences;
-};
-export type ModelSchema = {
-  name: string;
-  dataset: DatasetConfig;
+export type TorchModelSchema = {
   layers?: (
     | ({
-        type: 'model_builder.layers.OneHot';
-      } & ModelbuilderonehotLayerConfig)
+        type: 'fleet.model_builder.layers.OneHot';
+      } & FleetonehotLayerConfig)
     | ({
-        type: 'model_builder.layers.GlobalPooling';
-      } & ModelbuilderglobalpoolingLayerConfig)
+        type: 'fleet.model_builder.layers.GlobalPooling';
+      } & FleetglobalpoolingLayerConfig)
     | ({
-        type: 'model_builder.layers.Concat';
-      } & ModelbuilderconcatLayerConfig)
+        type: 'fleet.model_builder.layers.Concat';
+      } & FleetconcatLayerConfig)
     | ({
-        type: 'model_builder.layers.AddPooling';
-      } & ModelbuilderaddpoolingLayerConfig)
+        type: 'fleet.model_builder.layers.AddPooling';
+      } & FleetaddpoolingLayerConfig)
     | ({
         type: 'torch.nn.Linear';
       } & TorchlinearLayerConfig)
@@ -491,23 +384,135 @@ export type ModelSchema = {
         type: 'torch.nn.TransformerEncoderLayer';
       } & TorchtransformerencoderlayerLayerConfig)
   )[];
+};
+export type QuantityDataType2 = {
+  domainKind?: 'numeric';
+  unit: string;
+};
+export type NumericalDataType = {
+  domainKind?: 'numeric';
+};
+export type StringDataType2 = {
+  domainKind?: 'string';
+};
+export type SmileDataType2 = {
+  domainKind?: 'smiles';
+};
+export type CategoricalDataType2 = {
+  domainKind?: 'categorical';
+  classes: {
+    [key: string]: number;
+  };
+};
+export type DnaDataType2 = {
+  domainKind?: 'dna';
+};
+export type RnaDataType2 = {
+  domainKind?: 'rna';
+};
+export type ProteinDataType2 = {
+  domainKind?: 'protein';
+};
+export type TargetConfig = {
+  name: string;
+  dataType:
+    | QuantityDataType2
+    | NumericalDataType
+    | StringDataType2
+    | SmileDataType2
+    | CategoricalDataType2
+    | DnaDataType2
+    | RnaDataType2
+    | ProteinDataType2;
+  outModule: string;
+  lossFn?: string;
+  columnType?: 'regression' | 'multiclass' | 'binary';
+};
+export type ColumnConfig = {
+  name: string;
+  dataType:
+    | QuantityDataType2
+    | NumericalDataType
+    | StringDataType2
+    | SmileDataType2
+    | CategoricalDataType2
+    | DnaDataType2
+    | RnaDataType2
+    | ProteinDataType2;
+};
+export type FleetmoleculefeaturizerConstructorArgs = {
+  allow_unknown: boolean;
+  sym_bond_list: boolean;
+  per_atom_fragmentation: boolean;
+};
+export type FleetmoleculefeaturizerForwardArgsReferences = {
+  mol: string;
+};
+export type FleetmoleculefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+  name: string;
+  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
+  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
+};
+export type FleetintegerfeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetintegerfeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.IntegerFeaturizer';
+  name: string;
+  forwardArgs: FleetintegerfeaturizerForwardArgsReferences;
+};
+export type FleetdnasequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetdnasequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetdnasequencefeaturizerForwardArgsReferences;
+};
+export type FleetrnasequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetrnasequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetrnasequencefeaturizerForwardArgsReferences;
+};
+export type FleetproteinsequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetproteinsequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetproteinsequencefeaturizerForwardArgsReferences;
+};
+export type TorchDatasetConfig = {
+  name: string;
+  targetColumns: TargetConfig[];
+  featureColumns: ColumnConfig[];
   featurizers?: (
     | ({
-        type: 'model_builder.featurizers.MoleculeFeaturizer';
-      } & ModelbuildermoleculefeaturizerLayerConfig)
+        type: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+      } & FleetmoleculefeaturizerLayerConfig)
     | ({
-        type: 'model_builder.featurizers.IntegerFeaturizer';
-      } & ModelbuilderintegerfeaturizerLayerConfig)
+        type: 'fleet.model_builder.featurizers.IntegerFeaturizer';
+      } & FleetintegerfeaturizerLayerConfig)
     | ({
-        type: 'model_builder.featurizers.DNASequenceFeaturizer';
-      } & ModelbuilderdnasequencefeaturizerLayerConfig)
+        type: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
+      } & FleetdnasequencefeaturizerLayerConfig)
     | ({
-        type: 'model_builder.featurizers.RNASequenceFeaturizer';
-      } & ModelbuilderrnasequencefeaturizerLayerConfig)
+        type: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
+      } & FleetrnasequencefeaturizerLayerConfig)
     | ({
-        type: 'model_builder.featurizers.ProteinSequenceFeaturizer';
-      } & ModelbuilderproteinsequencefeaturizerLayerConfig)
+        type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
+      } & FleetproteinsequencefeaturizerLayerConfig)
   )[];
+};
+export type TorchModelSpec = {
+  name: string;
+  framework?: 'torch';
+  spec: TorchModelSchema;
+  dataset: TorchDatasetConfig;
 };
 export type ModelVersion = {
   id: number;
@@ -516,7 +521,7 @@ export type ModelVersion = {
   description?: string;
   mlflowVersion?: string;
   mlflowModelName: string;
-  config: ModelSchema;
+  config: TorchModelSpec;
   createdAt: string;
   updatedAt: string;
 };
@@ -555,51 +560,51 @@ export type ModelCreate = {
   name: string;
   modelDescription?: string;
   modelVersionDescription?: string;
-  config: ModelSchema;
+  config: TorchModelSpec;
 };
-export type ModelbuilderonehotConstructorArgsSummary = {};
-export type ModelbuilderonehotForwardArgsSummary = {
+export type FleetonehotConstructorArgsSummary = {};
+export type FleetonehotForwardArgsSummary = {
   x1?: string;
 };
-export type ModelbuilderonehotSummary = {
-  type?: 'model_builder.layers.OneHot';
-  constructorArgsSummary?: ModelbuilderonehotConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuilderonehotForwardArgsSummary;
+export type FleetonehotSummary = {
+  type?: 'fleet.model_builder.layers.OneHot';
+  constructorArgsSummary?: FleetonehotConstructorArgsSummary;
+  forwardArgsSummary?: FleetonehotForwardArgsSummary;
 };
-export type ModelbuilderglobalpoolingConstructorArgsSummary = {
+export type FleetglobalpoolingConstructorArgsSummary = {
   aggr?: string;
 };
-export type ModelbuilderglobalpoolingForwardArgsSummary = {
+export type FleetglobalpoolingForwardArgsSummary = {
   x?: string;
   batch?: string;
   size?: string;
 };
-export type ModelbuilderglobalpoolingSummary = {
-  type?: 'model_builder.layers.GlobalPooling';
-  constructorArgsSummary?: ModelbuilderglobalpoolingConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuilderglobalpoolingForwardArgsSummary;
+export type FleetglobalpoolingSummary = {
+  type?: 'fleet.model_builder.layers.GlobalPooling';
+  constructorArgsSummary?: FleetglobalpoolingConstructorArgsSummary;
+  forwardArgsSummary?: FleetglobalpoolingForwardArgsSummary;
 };
-export type ModelbuilderconcatConstructorArgsSummary = {
+export type FleetconcatConstructorArgsSummary = {
   dim?: string;
 };
-export type ModelbuilderconcatForwardArgsSummary = {
+export type FleetconcatForwardArgsSummary = {
   xs?: string;
 };
-export type ModelbuilderconcatSummary = {
-  type?: 'model_builder.layers.Concat';
-  constructorArgsSummary?: ModelbuilderconcatConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuilderconcatForwardArgsSummary;
+export type FleetconcatSummary = {
+  type?: 'fleet.model_builder.layers.Concat';
+  constructorArgsSummary?: FleetconcatConstructorArgsSummary;
+  forwardArgsSummary?: FleetconcatForwardArgsSummary;
 };
-export type ModelbuilderaddpoolingConstructorArgsSummary = {
+export type FleetaddpoolingConstructorArgsSummary = {
   dim?: string;
 };
-export type ModelbuilderaddpoolingForwardArgsSummary = {
+export type FleetaddpoolingForwardArgsSummary = {
   x?: string;
 };
-export type ModelbuilderaddpoolingSummary = {
-  type?: 'model_builder.layers.AddPooling';
-  constructorArgsSummary?: ModelbuilderaddpoolingConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuilderaddpoolingForwardArgsSummary;
+export type FleetaddpoolingSummary = {
+  type?: 'fleet.model_builder.layers.AddPooling';
+  constructorArgsSummary?: FleetaddpoolingConstructorArgsSummary;
+  forwardArgsSummary?: FleetaddpoolingForwardArgsSummary;
 };
 export type TorchlinearConstructorArgsSummary = {
   in_features?: string;
@@ -684,60 +689,61 @@ export type TorchtransformerencoderlayerForwardArgsSummary = {
   src?: string;
   src_mask?: string;
   src_key_padding_mask?: string;
+  is_causal?: string;
 };
 export type TorchtransformerencoderlayerSummary = {
   type?: 'torch.nn.TransformerEncoderLayer';
   constructorArgsSummary?: TorchtransformerencoderlayerConstructorArgsSummary;
   forwardArgsSummary?: TorchtransformerencoderlayerForwardArgsSummary;
 };
-export type ModelbuildermoleculefeaturizerConstructorArgsSummary = {
+export type FleetmoleculefeaturizerConstructorArgsSummary = {
   allow_unknown?: string;
   sym_bond_list?: string;
   per_atom_fragmentation?: string;
 };
-export type ModelbuildermoleculefeaturizerForwardArgsSummary = {
+export type FleetmoleculefeaturizerForwardArgsSummary = {
   mol?: string;
 };
-export type ModelbuildermoleculefeaturizerSummary = {
-  type?: 'model_builder.featurizers.MoleculeFeaturizer';
-  constructorArgsSummary?: ModelbuildermoleculefeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuildermoleculefeaturizerForwardArgsSummary;
+export type FleetmoleculefeaturizerSummary = {
+  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+  constructorArgsSummary?: FleetmoleculefeaturizerConstructorArgsSummary;
+  forwardArgsSummary?: FleetmoleculefeaturizerForwardArgsSummary;
 };
-export type ModelbuilderintegerfeaturizerConstructorArgsSummary = {};
-export type ModelbuilderintegerfeaturizerForwardArgsSummary = {
+export type FleetintegerfeaturizerConstructorArgsSummary = {};
+export type FleetintegerfeaturizerForwardArgsSummary = {
   input_?: string;
 };
-export type ModelbuilderintegerfeaturizerSummary = {
-  type?: 'model_builder.featurizers.IntegerFeaturizer';
-  constructorArgsSummary?: ModelbuilderintegerfeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuilderintegerfeaturizerForwardArgsSummary;
+export type FleetintegerfeaturizerSummary = {
+  type?: 'fleet.model_builder.featurizers.IntegerFeaturizer';
+  constructorArgsSummary?: FleetintegerfeaturizerConstructorArgsSummary;
+  forwardArgsSummary?: FleetintegerfeaturizerForwardArgsSummary;
 };
-export type ModelbuilderdnasequencefeaturizerConstructorArgsSummary = {};
-export type ModelbuilderdnasequencefeaturizerForwardArgsSummary = {
+export type FleetdnasequencefeaturizerConstructorArgsSummary = {};
+export type FleetdnasequencefeaturizerForwardArgsSummary = {
   input_?: string;
 };
-export type ModelbuilderdnasequencefeaturizerSummary = {
-  type?: 'model_builder.featurizers.DNASequenceFeaturizer';
-  constructorArgsSummary?: ModelbuilderdnasequencefeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuilderdnasequencefeaturizerForwardArgsSummary;
+export type FleetdnasequencefeaturizerSummary = {
+  type?: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
+  constructorArgsSummary?: FleetdnasequencefeaturizerConstructorArgsSummary;
+  forwardArgsSummary?: FleetdnasequencefeaturizerForwardArgsSummary;
 };
-export type ModelbuilderrnasequencefeaturizerConstructorArgsSummary = {};
-export type ModelbuilderrnasequencefeaturizerForwardArgsSummary = {
+export type FleetrnasequencefeaturizerConstructorArgsSummary = {};
+export type FleetrnasequencefeaturizerForwardArgsSummary = {
   input_?: string;
 };
-export type ModelbuilderrnasequencefeaturizerSummary = {
-  type?: 'model_builder.featurizers.RNASequenceFeaturizer';
-  constructorArgsSummary?: ModelbuilderrnasequencefeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuilderrnasequencefeaturizerForwardArgsSummary;
+export type FleetrnasequencefeaturizerSummary = {
+  type?: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
+  constructorArgsSummary?: FleetrnasequencefeaturizerConstructorArgsSummary;
+  forwardArgsSummary?: FleetrnasequencefeaturizerForwardArgsSummary;
 };
-export type ModelbuilderproteinsequencefeaturizerConstructorArgsSummary = {};
-export type ModelbuilderproteinsequencefeaturizerForwardArgsSummary = {
+export type FleetproteinsequencefeaturizerConstructorArgsSummary = {};
+export type FleetproteinsequencefeaturizerForwardArgsSummary = {
   input_?: string;
 };
-export type ModelbuilderproteinsequencefeaturizerSummary = {
-  type?: 'model_builder.featurizers.ProteinSequenceFeaturizer';
-  constructorArgsSummary?: ModelbuilderproteinsequencefeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: ModelbuilderproteinsequencefeaturizerForwardArgsSummary;
+export type FleetproteinsequencefeaturizerSummary = {
+  type?: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
+  constructorArgsSummary?: FleetproteinsequencefeaturizerConstructorArgsSummary;
+  forwardArgsSummary?: FleetproteinsequencefeaturizerForwardArgsSummary;
 };
 export type ComponentOption = {
   docsLink?: string;
@@ -746,21 +752,25 @@ export type ComponentOption = {
   classPath: string;
   type: 'featurizer' | 'layer';
   component:
-    | ModelbuilderonehotSummary
-    | ModelbuilderglobalpoolingSummary
-    | ModelbuilderconcatSummary
-    | ModelbuilderaddpoolingSummary
-    | TorchlinearSummary
-    | TorchsigmoidSummary
-    | TorchreluSummary
-    | TorchgeometricgcnconvSummary
-    | TorchembeddingSummary
-    | TorchtransformerencoderlayerSummary
-    | ModelbuildermoleculefeaturizerSummary
-    | ModelbuilderintegerfeaturizerSummary
-    | ModelbuilderdnasequencefeaturizerSummary
-    | ModelbuilderrnasequencefeaturizerSummary
-    | ModelbuilderproteinsequencefeaturizerSummary;
+    | (
+        | FleetonehotSummary
+        | FleetglobalpoolingSummary
+        | FleetconcatSummary
+        | FleetaddpoolingSummary
+        | TorchlinearSummary
+        | TorchsigmoidSummary
+        | TorchreluSummary
+        | TorchgeometricgcnconvSummary
+        | TorchembeddingSummary
+        | TorchtransformerencoderlayerSummary
+      )
+    | (
+        | FleetmoleculefeaturizerSummary
+        | FleetintegerfeaturizerSummary
+        | FleetdnasequencefeaturizerSummary
+        | FleetrnasequencefeaturizerSummary
+        | FleetproteinsequencefeaturizerSummary
+      );
   defaultArgs?: object;
   argsOptions?: {
     [key: string]: string[];
@@ -779,10 +789,14 @@ export type AllowedLosses = {
   mcClass?: {
     [key: string]: string;
   }[];
+  typeMap?: object;
 };
-export type ForwardCheck = {
+export type TrainingCheckResponse = {
   stackTrace?: string;
   output?: any;
+};
+export type TrainingCheckRequest = {
+  modelSpec: TorchModelSpec;
 };
 export type Experiment = {
   experimentName?: string;
@@ -792,7 +806,7 @@ export type Experiment = {
   updatedAt: string;
   createdById: number;
   id: number;
-  mlflowId: string;
+  mlflowId?: string;
   stage: 'NOT RUNNING' | 'RUNNING' | 'SUCCESS' | 'ERROR';
   createdBy?: User;
   hyperparams?: {

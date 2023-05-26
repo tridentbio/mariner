@@ -7,11 +7,10 @@ from typing import Any, List, Literal, Optional, Union
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
 
+from fleet.base_schemas import FleetModelSpec, TorchModelSpec
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
-from model_builder.model import CustomModel
-from model_builder.schemas import LossType, ModelSchema
 
 
 class ModelVersion(ApiBaseModel):
@@ -23,15 +22,9 @@ class ModelVersion(ApiBaseModel):
     description: Union[str, None] = None
     mlflow_version: Union[str, None] = None
     mlflow_model_name: str
-    config: ModelSchema
+    config: TorchModelSpec
     created_at: utc_datetime
     updated_at: datetime
-
-    def build_torch_model(self):
-        """Gets a untrained ``CustomModel`` instance based on the config
-        of this version"""
-
-        return CustomModel(self.config)
 
     def get_mlflow_uri(self):
         """Gets the mlflow model uri to load this model"""
@@ -128,7 +121,7 @@ class ModelCreate(ApiBaseModel):
     name: str
     model_description: Optional[str] = None
     model_version_description: Optional[str] = None
-    config: ModelSchema
+    config: TorchModelSpec
 
 
 class ModelVersionCreateRepo(BaseModel):
@@ -141,7 +134,7 @@ class ModelVersionCreateRepo(BaseModel):
     mlflow_model_name: str
     model_id: int
     name: str
-    config: ModelSchema
+    config: FleetModelSpec
 
 
 class ModelVersionUpdateRepo(BaseModel):
@@ -150,6 +143,11 @@ class ModelVersionUpdateRepo(BaseModel):
     """
 
     mlflow_version: str
+
+
+LossType = Literal[
+    "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
+]
 
 
 class LossOption(ApiBaseModel):
@@ -161,8 +159,14 @@ class LossOption(ApiBaseModel):
     label: str
 
 
-class ForwardCheck(ApiBaseModel):
-    """Response to a request to check if a model version forward works"""
+class TrainingCheckRequest(ApiBaseModel):
+    """Request to a request to check if a model version fitting/training works"""
+
+    model_spec: TorchModelSpec
+
+
+class TrainingCheckResponse(ApiBaseModel):
+    """Response to a request to check if a model version fitting/training works"""
 
     stack_trace: Optional[str] = None
     output: Optional[Any] = None

@@ -9,6 +9,7 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 import pandas as pd
 import ray
 
+from fleet.model_builder.splitters import RandomSplitter, ScaffoldSplitter
 from mariner.core.aws import Bucket, upload_s3_compressed
 from mariner.schemas.dataset_schemas import (
     BiologicalDataType,
@@ -31,7 +32,6 @@ from mariner.validation.functions import (
     is_valid_smiles_series,
     validate_column_pattern,
 )
-from model_builder.splitters import RandomSplitter, ScaffoldSplitter
 
 LOG = logging.getLogger(__name__)
 

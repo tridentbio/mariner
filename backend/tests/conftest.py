@@ -7,6 +7,12 @@ from jose import jwt
 from sqlalchemy.orm import Session
 
 from api.fastapi_app import app
+from fleet.model_builder.optimizers import AdamOptimizer
+from fleet.torch_.schemas import (
+    EarlyStoppingConfig,
+    MonitoringConfig,
+    TorchTrainingConfig,
+)
 from mariner import experiments as experiments_ctl
 from mariner.core import security
 from mariner.core.config import settings
@@ -18,17 +24,15 @@ from mariner.entities import User
 from mariner.entities.event import EventReadEntity
 from mariner.schemas.deployment_schemas import Deployment
 from mariner.schemas.experiment_schemas import (
-    EarlyStoppingConfig,
     Experiment,
-    MonitoringConfig,
-    TrainingRequest,
+    BaseTrainingRequest,
 )
+from fleet.torch_.schemas import MonitoringConfig, EarlyStoppingConfig
 from mariner.schemas.model_schemas import Model
 from mariner.schemas.token import TokenPayload
-from mariner.stores import user_sql
+from mariner.stores.user_sql import user_store
 from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
-from model_builder.optimizers import AdamOptimizer
 from tests.fixtures.dataset import (
     setup_create_dataset,
     setup_create_dataset_db,
@@ -72,7 +76,7 @@ def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]
 @pytest.fixture(scope="module")
 def normal_user_token_headers_payload(
     normal_user_token_headers: Dict[str, str]
-) -> Dict[str, str]:
+) -> TokenPayload:
     """Get the payload from the token"""
     token = normal_user_token_headers["Authorization"].split(" ")[1]
     payload = jwt.decode(token, settings.AUTHENTICATION_SECRET_KEY, algorithms=[security.ALGORITHM])
@@ -184,22 +188,25 @@ async def some_trained_model(
     )
     version = model.versions[-1]
     target_column = version.config.dataset.target_columns[0]
-    request = TrainingRequest(
+    request = BaseTrainingRequest(
         model_version_id=version.id,
-        epochs=1,
         name=random_lower_string(),
-        optimizer=AdamOptimizer(),
-        checkpoint_config=MonitoringConfig(
-            mode="min",
-            metric_key=f"val/mse/{target_column.name}",
-        ),
-        early_stopping_config=EarlyStoppingConfig(
-            metric_key=f"val/mse/{target_column.name}", mode="min"
+        framework="torch",
+        config=TorchTrainingConfig(
+            epochs=1,
+            optimizer=AdamOptimizer(),
+            checkpoint_config=MonitoringConfig(
+                mode="min",
+                metric_key=f"val/mse/{target_column.name}",
+            ),
+            early_stopping_config=EarlyStoppingConfig(
+                metric_key=f"val/mse/{target_column.name}", mode="min"
+            ),
         ),
     )
-    user = user_sql.user_store.get(db, model.created_by_id)
+    user = user_store.get(db, model.created_by_id)
     assert user
-    exp = await experiments_ctl.create_model_traning(db, user, request)
+    exp = await experiments_ctl.create_model_training(db, user, request)
     task = get_exp_manager().get_task(exp.id)
     assert task
     await task

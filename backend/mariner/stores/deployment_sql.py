@@ -4,32 +4,24 @@ Deployment data layer defining ways to read and write to the deployments collect
 from datetime import timedelta
 from typing import Dict, Optional
 
-from sqlalchemy import or_
-from sqlalchemy.orm import Session
-
-from mariner.entities.deployment import (
-    Deployment,
-    Predictions,
-    SharePermissions,
-    ShareStrategy,
-)
+from mariner.entities.deployment import (Deployment, Predictions,
+                                         SharePermissions, ShareStrategy)
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
 from mariner.schemas.api import utc_datetime
 from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
-from mariner.schemas.deployment_schemas import (
-    DeploymentCreateRepo,
-    DeploymentsQuery,
-    DeploymentStatus,
-    DeploymentUpdateRepo,
-    PermissionCreateRepo,
-    PermissionDeleteRepo,
-    PredictionCreateRepo,
-    TrainingData,
-    User,
-)
+from mariner.schemas.deployment_schemas import (DeploymentCreateRepo,
+                                                DeploymentsQuery,
+                                                DeploymentStatus,
+                                                DeploymentUpdateRepo,
+                                                PermissionCreateRepo,
+                                                PermissionDeleteRepo,
+                                                PredictionCreateRepo,
+                                                TrainingData, User)
 from mariner.stores.base_sql import CRUDBase
 from mariner.stores.dataset_sql import dataset_store
+from sqlalchemy import or_
+from sqlalchemy.orm import Session
 
 from .model_sql import model_store
 
@@ -322,7 +314,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         """Syncronize the deployment manager with last state of database.
         Stop all deployments on database and return a list of the deployments
         that were running.
-    
+
         Returns:
         List of deployments that were running
         """
@@ -346,11 +338,11 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         self, db: Session, deployment: DeploymentSchema
     ) -> TrainingData:
         """Get the training data for a deployment
-        
+
         Args:
             db: database session
             deployment: deployment to get the training data from
-            
+
         Returns:
             TrainingData: dataset summary from dataset used on model training
         """

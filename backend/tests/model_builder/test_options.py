@@ -1,4 +1,4 @@
-from model_builder import options
+from fleet.model_builder import options
 
 
 # Tests if model_options uses information from file at model_builder/component_overrides.yml

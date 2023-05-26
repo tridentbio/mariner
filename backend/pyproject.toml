@@ -5,7 +5,7 @@ description = "MLOps tools for biochem scientists"
 authors = ["Tyler Shimko <tyler@trident.bio>"]
 packages = [
   { include = "api" },
-  { include = "model_builder" },
+  { include = "fleet" },
   { include = "mariner" },
 ]
 
@@ -43,7 +43,7 @@ numba = "^0.56.4"
 lightning = "^2.0.0"
 s3fs = "^2023.3.0"
 boto3 = "1.24.59"
-ray = "2.3.1"
+ray = {version = "2.4.0", extras = ["default"]}
 scikit-learn = "^1.2.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -121,7 +121,7 @@ ignore_errors = true
 [tool.coverage.report]
 include = [
     "./mariner/*",
-    "./model_builder/*",
+    "./fleet/*",
     "./api/*"
 ]
 exclude_lines = [

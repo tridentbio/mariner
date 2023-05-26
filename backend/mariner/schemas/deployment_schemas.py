@@ -4,21 +4,40 @@ Deployment related DTOs
 
 from typing import List, Literal, Optional
 
-from pydantic import root_validator
-
 from mariner.entities.deployment import Deployment as DeploymentEntity
-from mariner.entities.deployment import (
-    DeploymentStatus,
-    RateLimitUnit,
-    ShareStrategy,
-)
+from mariner.entities.deployment import (DeploymentStatus, RateLimitUnit,
+                                         ShareStrategy)
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import DatasetSummary
 from mariner.schemas.model_schemas import ModelVersion
+from pydantic import root_validator
 
 
 class DeploymentsQuery(PaginatedApiQuery):
-    """Query object for deployments."""
+    """Query object for deployments.
+
+    Args:
+        query:
+            name: to filter deployments by name
+            status: to filter deployments by status (stopped, running, idle)
+            share_strategy:
+                to filter deployments by share strategy (private, public)
+                "public" will not work if public_mode is set to "exclude"
+            public_mode: "include" | "exclude" | "only"
+                to include or exclude public deployments from a query
+                exclude (default): exclude public deployments on result
+                include: include public deployments on result
+                only: only return public deployments
+            created_after: created after date
+            model_version_id: filter deployments by model version id
+            access_mode: "unset" | "owned" | "shared
+                filter by the access the user has to the deployment
+                unset (default): do not filter by access mode
+                owned: only return deployments owned by the user
+                shared: only return deployments shared with the user
+        current_user: user must be authenticated
+        db: database session
+    """
 
     name: Optional[str] = None
     status: Optional[DeploymentStatus] = None

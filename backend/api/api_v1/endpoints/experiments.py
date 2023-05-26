@@ -9,22 +9,22 @@ from sqlalchemy.orm.session import Session
 
 import mariner.experiments as experiments_ctl
 from api import deps
+from fleet.model_builder.optimizers import OptimizerSchema
 from mariner.entities.user import User
 from mariner.schemas.api import ApiBaseModel, Paginated
 from mariner.schemas.experiment_schemas import (
+    BaseTrainingRequest,
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
-    TrainingRequest,
 )
-from model_builder.optimizers import OptimizerSchema
 
 router = APIRouter()
 
 
 @router.post("/", response_model=Experiment)
 async def post_experiments(
-    request: TrainingRequest,
+    request: BaseTrainingRequest,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Experiment:
@@ -38,7 +38,7 @@ async def post_experiments(
     Returns:
         Created experiment.
     """
-    result = await experiments_ctl.create_model_traning(db, current_user, request)
+    result = await experiments_ctl.create_model_training(db, current_user, request)
     return result
 
 

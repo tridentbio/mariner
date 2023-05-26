@@ -20,100 +20,41 @@ import {
 } from '../../../interfaces/model-editor';
 import TransversalInfo from '../TransversalInfo';
 
+type VisitorInput<T extends {}> = {
+  component: T;
+  type: ComponentType;
+  info: TransversalInfo;
+  backward?: boolean;
+};
+
 abstract class ComponentVisitor {
-  visitLinear = (
-    _component: Linear,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
+  visitLinear = (_input: VisitorInput<Linear>) => {};
 
-  visitRelu = (
-    _component: Relu,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
+  visitRelu = (_input: VisitorInput<Relu>) => {};
 
-  visitSigmoid = (
-    _component: Sigmoid,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
+  visitSigmoid = (_input: VisitorInput<Sigmoid>) => {};
 
-  visitGCN = (
-    _component: GcnConv,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
+  visitGCN = (_input: VisitorInput<GcnConv>) => {};
 
-  visitEmbedding = (
-    _component: Embedding,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
+  visitEmbedding = (_input: VisitorInput<Embedding>) => {};
 
   visitTransformerEncoderLayer = (
-    _component: TransformerEncoderLayer,
-    _type: ComponentType,
-    _info: TransversalInfo
+    _input: VisitorInput<TransformerEncoderLayer>
   ) => {};
 
-  visitConcat = (
-    _component: Concat,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
+  visitConcat = (_input: VisitorInput<Concat>) => {};
 
-  visitOneHot = (
-    _component: OneHot,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
+  visitOneHot = (_input: VisitorInput<OneHot>) => {};
 
-  visitGlobalPooling = (
-    _component: GlobalPooling,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
-  visitAddPooling = (
-    _component: AddPooling,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
-  visitMolFeaturizer = (
-    _component: MolFeaturizer,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
-  visitDNAFeaturizer = (
-    _component: DNAFeaturizer,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
-  visitRNAFeaturizer = (
-    _component: RNAFeaturizer,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
-  visitProteinFeaturizer = (
-    _component: ProteinFeaturizer,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
-  visitIntegerFeaturizer = (
-    _component: IntegerFeaturizer,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
-  visitInput = (
-    _component: Input,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
-  visitOutput = (
-    _component: Output,
-    _type: ComponentType,
-    _info: TransversalInfo
-  ) => {};
+  visitGlobalPooling = (_input: VisitorInput<GlobalPooling>) => {};
+  visitAddPooling = (_input: VisitorInput<AddPooling>) => {};
+  visitMolFeaturizer = (_input: VisitorInput<MolFeaturizer>) => {};
+  visitDNAFeaturizer = (_input: VisitorInput<DNAFeaturizer>) => {};
+  visitRNAFeaturizer = (_input: VisitorInput<RNAFeaturizer>) => {};
+  visitProteinFeaturizer = (_input: VisitorInput<ProteinFeaturizer>) => {};
+  visitIntegerFeaturizer = (_input: VisitorInput<IntegerFeaturizer>) => {};
+  visitInput = (_input: VisitorInput<Input>) => {};
+  visitOutput = (_input: VisitorInput<Output>) => {};
 }
 
 export default ComponentVisitor;

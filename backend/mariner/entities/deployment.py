@@ -4,15 +4,14 @@ Deployment entity and core relations
 from enum import Enum as PyEnum
 from typing import List
 
+from mariner.db.base_class import Base
+from mariner.entities.model import ModelVersion
+from mariner.entities.user import User
 from sqlalchemy import Boolean, Column, Enum, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import DateTime
-
-from mariner.db.base_class import Base
-from mariner.entities.model import ModelVersion
-from mariner.entities.user import User
 
 
 class DeploymentStatus(str, PyEnum):

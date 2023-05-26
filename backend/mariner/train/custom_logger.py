@@ -14,7 +14,7 @@ from mariner.core.config import settings
 LOG = logging.getLogger(__name__)
 
 
-class AppLogger(Logger):
+class MarinerLogger(Logger):
     """
     Custom logger that sends the metrics collected to the mariner API
     through HTTP requests. The API saves the metrics and forwards to the

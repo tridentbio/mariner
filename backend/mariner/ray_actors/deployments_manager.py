@@ -5,28 +5,18 @@ from typing import Any, Dict, List, NewType, Optional
 import pandas as pd
 import ray
 import requests
-from torch_geometric.loader import DataLoader
-
+from fleet.model_builder.dataset import CustomDataset
+from fleet.torch_.models import CustomModel
 from mariner.core import mlflowapi
 from mariner.core.config import settings
 from mariner.entities.deployment import DeploymentStatus
-from mariner.exceptions import (
-    DeploymentNotRunning,
-    InvalidDataframe,
-    ModelVersionNotFound,
-    ModelVersionNotTrained,
-    NotCreatorOwner,
-)
-from mariner.models import (
-    CustomDataset,
-    CustomModel,
-    _check_dataframe_conforms_dataset,
-)
-from mariner.schemas.deployment_schemas import (
-    Deployment,
-    DeploymentManagerComunication,
-)
-from model_builder.dataset import CustomDataset
+from mariner.exceptions import (DeploymentNotRunning, InvalidDataframe,
+                                ModelVersionNotFound, ModelVersionNotTrained,
+                                NotCreatorOwner)
+from mariner.models import _check_dataframe_conforms_dataset
+from mariner.schemas.deployment_schemas import (Deployment,
+                                                DeploymentManagerComunication)
+from torch_geometric.loader import DataLoader
 
 
 class DeploymentInstance:
@@ -134,9 +124,11 @@ class DeploymentInstance:
                 f"dataframe failed {len(broken_checks)} checks",
                 reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
             )
-
         dataset = CustomDataset(
-            data=df, config=self.deployment.model_version.config, target=False
+            data=df,
+            model_config=self.deployment.model_version.config.spec,
+            dataset_config=self.deployment.model_version.config.dataset,
+            target=False,
         )
         dataloader = DataLoader(dataset, batch_size=len(df))
         return next(iter(dataloader))

@@ -4,6 +4,7 @@ import {
   getRegressorModelSchema,
 } from '../../../../tests/fixtures/model-schemas';
 import { Linear, GcnConv, ModelSchema } from '../interfaces/model-editor';
+import { extendSpecWithTargetForwardArgs } from '../utils';
 import { makeComponentEdit } from './commands/EditComponentsCommand';
 import ModelEditorImpl from './ModelEditorImpl';
 import { getComponent } from './modelSchemaQuery';
@@ -11,15 +12,22 @@ import { getComponent } from './modelSchemaQuery';
 const getTestModelEditor = () => {
   return new ModelEditorImpl();
 };
+
 describe('ModelEditorImpl', () => {
   describe('addComponents', () => {
     it('adds single component', () => {
       const editor = getTestModelEditor();
-      const schema = getRegressorModelSchema();
+      const reg = getRegressorModelSchema();
+      expect(reg.name).toBe('GNNExample');
+      expect(reg.spec.layers).toHaveLength(10);
+      const schema = extendSpecWithTargetForwardArgs(reg);
+      expect(schema.name).toBe('GNNExample');
+      expect(schema.spec.layers).toHaveLength(10);
+      const oldLayersSize = schema.spec.layers?.length || 0;
       const newSchema = editor.addComponent({
         type: 'layer',
         data: {
-          name: 'firstLienar',
+          name: 'firstLinear',
           type: 'torch.nn.Linear',
           constructorArgs: {
             in_features: 1,
@@ -32,10 +40,10 @@ describe('ModelEditorImpl', () => {
         },
         schema,
       });
-      expect(newSchema.layers).toBeDefined();
-      expect(newSchema.layers?.length).toBe((schema.layers?.length || 0) + 1);
-      const insertedLayer = newSchema.layers?.find(
-        (l) => l.name === 'firstLienar'
+      expect(newSchema.spec.layers).toBeDefined();
+      expect(newSchema.spec.layers?.length).toBe(oldLayersSize + 1);
+      const insertedLayer = newSchema.spec.layers?.find(
+        (l) => l.name === 'firstLinear'
       );
       expect(insertedLayer).toBeDefined();
       expect(insertedLayer?.forwardArgs).toHaveProperty('input');
@@ -50,9 +58,12 @@ describe('ModelEditorImpl', () => {
       const editor = getTestModelEditor();
       const schema = getRegressorModelSchema();
       const newSchema = editor.editComponent({
-        schema,
+        schema: extendSpecWithTargetForwardArgs(schema),
         data: makeComponentEdit({
-          component: getComponent(schema, 'GCN3') as GcnConv & {
+          component: getComponent(
+            extendSpecWithTargetForwardArgs(schema),
+            'GCN3'
+          ) as GcnConv & {
             type: 'torch_geometric.nn.GCNConv';
           },
           constructorArgs: {
@@ -62,7 +73,7 @@ describe('ModelEditorImpl', () => {
       });
 
       // @ts-ignore
-      const editedLayer = newSchema.layers.find(
+      const editedLayer = newSchema.spec.layers.find(
         (layer) => layer.name === 'GCN3'
       );
       expect(editedLayer).toBeDefined();
@@ -79,18 +90,19 @@ describe('ModelEditorImpl', () => {
       const editor = getTestModelEditor();
       const schema = getRegressorModelSchema();
       const newSchema = editor.deleteComponents({
-        schema,
+        schema: extendSpecWithTargetForwardArgs(schema),
         nodeId: 'GCN3',
       });
-      const removedLayer = newSchema.layers!.find(
+      const removedLayer = newSchema.spec.layers!.find(
         (layer) => layer.name === 'GCN3'
       );
       expect(removedLayer).toBeUndefined();
       const GCN3_GCN3Actvation_edge = Object.values(
         // @ts-ignore
-        newSchema.layers!.find((layer) => layer.name === 'GCN3_Activation')
-          ?.forwardArgs
-      ).find((node) => node.includes('GCN3'));
+        (newSchema.spec.layers || []).find(
+          (layer) => layer.name === 'GCN3_Activation'
+        )?.forwardArgs
+      ).find((node) => typeof node === 'string' && node.includes('GCN3'));
       expect(GCN3_GCN3Actvation_edge).toBeUndefined();
     });
   });
@@ -100,7 +112,9 @@ describe('ModelEditorImpl', () => {
       const invalidSchemas = Object.values(BrokenSchemas());
       invalidSchemas.forEach((invalidSchema) => {
         const editor = getTestModelEditor();
-        const info = editor.getSuggestions({ schema: invalidSchema });
+        const info = editor.getSuggestions({
+          schema: extendSpecWithTargetForwardArgs(invalidSchema),
+        });
         expect(info.getSuggestions().length).toBeGreaterThan(0);
       });
     });
@@ -111,7 +125,9 @@ describe('ModelEditorImpl', () => {
       'schema BrokenSchemas.%s is fixed on applySuggestions (if fixable)',
       (_key, invalidSchema) => {
         const editor = getTestModelEditor();
-        const info = editor.getSuggestions({ schema: invalidSchema });
+        const info = editor.getSuggestions({
+          schema: extendSpecWithTargetForwardArgs(invalidSchema),
+        });
         expect(info.schema).toMatchObject(invalidSchema);
         const gotTotalSuggestions = info.getSuggestions().length;
         const gotTotalFixableSuggestions = info
@@ -123,7 +139,7 @@ describe('ModelEditorImpl', () => {
         let newSchema: ModelSchema;
         newSchema = editor.applySuggestions({
           suggestions: info.getSuggestions(),
-          schema: invalidSchema,
+          schema: extendSpecWithTargetForwardArgs(invalidSchema),
         });
 
         // good model doesn't yield suggestions
