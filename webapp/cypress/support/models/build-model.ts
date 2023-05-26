@@ -28,7 +28,7 @@ const getIncomingEdges = (
   node: NodeType,
   config: TorchModelSpec
 ): [string, string][] => {
-  if (node.type === 'input' /*  || node.type === 'output' */) return [];
+  if (node.type === 'input') return [];
   if (node.type === 'output')
     return [[node.name, getTypeByName(config, node.outModule!)]];
 

@@ -1,10 +1,5 @@
 from __future__ import with_statement
 
-from dotenv import load_dotenv
-
-load_dotenv(".env")
-load_dotenv(".env.secret")
-
 import os
 from logging.config import fileConfig
 

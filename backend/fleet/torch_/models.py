@@ -209,27 +209,19 @@ class CustomModel(pl.LightningModule):
                 raise ValueError(f"{target_column.name}.loss_fn cannot be None")
 
             # This is safe as long ModelSchema was validated
-            loss_fn_class = eval(target_column.loss_fn)
+            loss_fn_class = __import__(target_column.loss_fn)
             self.loss_dict[target_column.name] = loss_fn_class()
 
             # Set up metrics for training and validation
-            if isinstance(
-                target_column.data_type,
-                (data_types.NumericalDataType, data_types.QuantityDataType),
-            ):
+            if target_column.column_type == "regression":
                 self.metrics_dict[target_column.name] = Metrics("regression")
-            elif isinstance(target_column.data_type, data_types.CategoricalDataType):
+            else:
                 self.metrics_dict[target_column.name] = Metrics(
                     "multilabel" if is_multilabel else "multiclass",
                     num_classes=len(target_column.data_type.classes.keys()),
                     num_labels=len(dataset_config.target_columns)
                     if is_multilabel
                     else None,
-                )
-            else:
-                LOG.warning(
-                    "No metrics are defined for the data type %r. Maybe it shouldn't be a target?",
-                    target_column.data_type,
                 )
 
     def set_optimizer(self, optimizer: Optimizer):
@@ -247,7 +239,6 @@ class CustomModel(pl.LightningModule):
 
     @staticmethod
     def _call_model(model, args):
-        LOG.info("%r", args)
         if isinstance(args, dict):
             return model(**args)
         if isinstance(args, list):
