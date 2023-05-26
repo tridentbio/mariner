@@ -30,6 +30,14 @@ class SingleModelDeploymentControl:
     - STARTING: The deployment is starting.
     - ACTIVE: The deployment was loaded from mlflow and it's running.
     - STOPPED: The deployment don't have a :class:`SingleModelDeploymentControl`.
+    
+    Attributes:
+        deployment (Deployment): The deployment to be managed.
+        is_running (bool): Real status of deployment in the manager.
+            More trustworthy than the deployment status, since it is updated
+            by a third party.
+        model (Optional[CustomModel]): The model loaded from mlflow.
+        idle_time (Optional[int]): The time when the deployment became idle.
     """
 
     deployment: Deployment
@@ -163,12 +171,14 @@ class DeploymentsManager:
     """Ray Actor responsible for managing multiple instances
     of :class:`SingleModelDeploymentControl` and handling their life cycle
     (starting, stopping, etc.). Should be used as a singleton.
+    
+    .. warning:: Should not be instantiated directly, call :func:`get_deployments_manager` instead.
     """
 
-    deployments: Dict[int, SingleModelDeploymentControl]
+    deployments_map: Dict[int, SingleModelDeploymentControl]
 
     def __init__(self):
-        self.deployments = {}
+        self.deployments_map = {}
         self.load()
         Thread(target=self.check_idle_long_loop).start()
 
@@ -176,7 +186,7 @@ class DeploymentsManager:
         """Returns a dictionary containing all the registered
         :class:`SingleModelDeploymentControl` objects.
         """
-        return self.deployments
+        return self.deployments_map
 
     def is_deployment_running(self, deployment_id: int) -> bool:
         """Checks if the specified deployment is running on
@@ -189,8 +199,8 @@ class DeploymentsManager:
             True if the deployment is running, False otherwise.
         """
         return (
-            deployment_id in self.deployments.keys()
-            and self.deployments[deployment_id].is_running
+            deployment_id in self.deployments_map.keys()
+            and self.deployments_map[deployment_id].is_running
         )
 
     def add_deployment(self, deployment: Deployment) -> Deployment:
@@ -213,9 +223,13 @@ class DeploymentsManager:
         if not deployment.model_version.mlflow_version:
             raise ModelVersionNotTrained()
         
-        if not deployment.id in self.deployments.keys():
-            self.deployments[deployment.id] = SingleModelDeploymentControl(deployment)
-        return self.deployments[deployment.id].deployment
+        if not deployment.id in self.deployments_map.keys():
+            self.deployments_map[deployment.id] = SingleModelDeploymentControl(deployment)
+            assert (
+                self.deployments_map[deployment.id].deployment.status == DeploymentStatus.IDLE,
+                "Deployment must be idle when added.",
+            )
+        return self.deployments_map[deployment.id].deployment
 
     def remove_deployment(self, deployment_id: int):
         """Removes a deployment from the DeploymentsManager.
@@ -229,12 +243,12 @@ class DeploymentsManager:
             DeploymentNotRunning:
                 If the deployment is not mapped to a :class:`SingleModelDeploymentControl`.
         """
-        if not deployment_id in self.deployments.keys():
+        if not deployment_id in self.deployments_map.keys():
             raise DeploymentNotRunning(
                 "Deployment must be either running or idle to be removed"
             )
-        self.deployments[deployment_id].update_status(DeploymentStatus.STOPPED)
-        del self.deployments[deployment_id]
+        self.deployments_map[deployment_id].update_status(DeploymentStatus.STOPPED)
+        del self.deployments_map[deployment_id]
 
     def start_deployment(self, deployment_id: int, user_id: int) -> Deployment:
         """Starts a deployment with the given deployment_id and user_id.
@@ -255,18 +269,18 @@ class DeploymentsManager:
             NotCreatorOwner:
                 If the user attempting to start the deployment is not the creator.
         """
-        if not deployment_id in self.deployments.keys():
+        if not deployment_id in self.deployments_map.keys():
             raise DeploymentNotRunning(
                 "Deployment must be either stopped or idle to be started"
             )
 
-        if self.deployments[deployment_id].is_running:
-            return self.deployments[deployment_id].deployment
+        if self.deployments_map[deployment_id].is_running:
+            return self.deployments_map[deployment_id].deployment
 
-        if self.deployments[deployment_id].deployment.created_by_id != user_id:
+        if self.deployments_map[deployment_id].deployment.created_by_id != user_id:
             raise NotCreatorOwner("Only the creator of the deployment can start it")
 
-        return self.deployments[deployment_id].start()
+        return self.deployments_map[deployment_id].start()
 
     def stop_deployment(self, deployment_id: int, user_id: int) -> Deployment:
         """Stops a deployment with the given deployment_id and user_id.
@@ -292,10 +306,10 @@ class DeploymentsManager:
                 "Deployment must be either running or idle to be stopped"
             )
 
-        if self.deployments[deployment_id].deployment.created_by_id != user_id:
+        if self.deployments_map[deployment_id].deployment.created_by_id != user_id:
             raise NotCreatorOwner("Only the creator of the deployment can stop it")
 
-        return self.deployments[deployment_id].stop()
+        return self.deployments_map[deployment_id].stop()
 
     def make_prediction(self, deployment_id: int, x: Any) -> Any:
         """Makes a prediction using the deployment model with the given
@@ -317,7 +331,7 @@ class DeploymentsManager:
         if not self.is_deployment_running(deployment_id):
             raise DeploymentNotRunning("Deployment must be running to make predictions")
 
-        return self.deployments[deployment_id].predict(x)
+        return self.deployments_map[deployment_id].predict(x)
 
     def load(self):
         res = requests.post(
@@ -345,17 +359,16 @@ class DeploymentsManager:
     def check_idle_long_loop(self):
         while True:
             sleep(5)
-            idle_deployments = self.get_idle_deployments(self.deployments)
+            idle_deployments = self.get_idle_deployments(self.deployments_map)
             for deployment_id in idle_deployments:
-                if self.deployments[deployment_id].idle_long:
+                if self.deployments_map[deployment_id].idle_long:
                     self.remove_deployment(deployment_id)
 
 
 manager = None
-Manager = NewType("Remote Deployment Manager", DeploymentsManager)
 
 
-def get_deployments_manager() -> Manager:
+def get_deployments_manager() -> DeploymentsManager:
     """Make sure that only one instance of the manager is created."""
     global manager
     if not manager:

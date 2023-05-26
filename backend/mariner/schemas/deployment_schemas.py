@@ -139,16 +139,10 @@ class Deployment(DeploymentBase):
         return deployment
 
 
-class TrainingData(ApiBaseModel):
-    """Training Data of deployment Model Version."""
-
-    dataset_summary: DatasetSummary = None
-
-
 class DeploymentWithTrainingData(Deployment):
     """Deployment model type with stats field."""
 
-    training_data: TrainingData = None
+    dataset_summary: DatasetSummary = None
 
 
 class DeploymentUpdateInput(ApiBaseModel):

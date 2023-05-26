@@ -49,7 +49,7 @@ class Predictions(Base):
     created_at = Column(DateTime, default=current_timestamp())
 
 
-class SharePermissions(Base):
+class SharePermission(Base):
     """Entity mapping to share permissions of deployment."""
 
     id = Column(Integer, primary_key=True, index=True)
@@ -74,7 +74,7 @@ class SharePermissions(Base):
             organizations (List[str], optional): List of organizations. Defaults to [].
 
         Returns:
-            List of SharePermissions
+            List of SharePermission
         """
         share_permissions = []
         if len(users_id):
@@ -102,7 +102,7 @@ class Deployment(Base):
 
     share_strategy = Column(Enum(ShareStrategy), default=ShareStrategy.PRIVATE)
     share_permissions = relationship(
-        "SharePermissions", back_populates="deployment", cascade="all,delete"
+        "SharePermission", back_populates="deployment", cascade="all,delete"
     )
     predictions = relationship(
         "Predictions", back_populates="deployment", cascade="all,delete"

@@ -38,12 +38,11 @@ export const DeploymentInferenceScreen = ({
       deployment={deployment}
       publicDeployment={publicDeployment}
     />
-    {deployment.trainingData?.datasetSummary && (
+    {deployment?.datasetSummary && (
       <Section title="Training Data">
         <DataSummary
           columnsData={
-            deployment.trainingData
-              .datasetSummary as DataSummaryProps['columnsData']
+            deployment.datasetSummary as DataSummaryProps['columnsData']
           }
         />
       </Section>

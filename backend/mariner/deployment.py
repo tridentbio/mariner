@@ -69,7 +69,7 @@ def get_deployment(
     deployment = DeploymentWithTrainingData.from_orm(deployment)
 
     if deployment.show_training_data:
-        deployment.training_data = deployment_store.get_training_data(db, deployment)
+        deployment.dataset_summary = deployment_store.get_training_data(db, deployment)
 
     return deployment
 
@@ -280,7 +280,7 @@ def get_public_deployment(db: Session, token: str):
     deployment = DeploymentWithTrainingData.from_orm(deployment)
 
     if deployment.show_training_data:
-        deployment.training_data = deployment_store.get_training_data(db, deployment)
+        deployment.dataset_summary = deployment_store.get_training_data(db, deployment)
 
     return deployment
 
@@ -322,7 +322,7 @@ async def make_prediction(
         deployment_id, data
     )
 
-    deployment_store.track_prediction(
+    deployment_store.create_prediction_entry(
         db,
         PredictionCreateRepo(
             deployment_id=deployment_id,
@@ -369,7 +369,7 @@ async def make_prediction_public(db: Session, deployment_id: int, data: Dict[str
         deployment_id, data
     )
 
-    deployment_store.track_prediction(
+    deployment_store.create_prediction_entry(
         db,
         PredictionCreateRepo(deployment_id=deployment_id),
     )

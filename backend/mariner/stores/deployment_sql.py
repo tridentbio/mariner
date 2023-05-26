@@ -11,12 +11,13 @@ from sqlalchemy.orm import Session
 from mariner.entities.deployment import (
     Deployment, 
     Predictions,
-    SharePermissions, 
+    SharePermission, 
     ShareStrategy
 )
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
 from mariner.schemas.api import utc_datetime
+from mariner.schemas.dataset_schemas import DatasetSummary
 from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
 from mariner.schemas.deployment_schemas import (
     DeploymentCreateRepo,
@@ -25,8 +26,7 @@ from mariner.schemas.deployment_schemas import (
     DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
-    PredictionCreateRepo,
-    TrainingData
+    PredictionCreateRepo
 )
 from mariner.stores.base_sql import CRUDBase
 from mariner.stores.dataset_sql import dataset_store
@@ -51,7 +51,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             A tuple with the list of deployment and the total number of deployment
         """
         sql_query = db.query(Deployment).join(
-            SharePermissions, Deployment.share_permissions, isouter=True
+            SharePermission, Deployment.share_permissions, isouter=True
         )
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
 
@@ -65,8 +65,8 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         else:
             filters = [
-                SharePermissions.user_id == user.id,
-                SharePermissions.organization == f"@{user.email.split('@')[1]}",
+                SharePermission.user_id == user.id,
+                SharePermission.organization == f"@{user.email.split('@')[1]}",
             ]
 
             if not query.access_mode == "shared":
@@ -120,7 +120,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         }
         db_obj = Deployment(
             **ds_data,
-            share_permissions=SharePermissions.build(
+            share_permissions=SharePermission.build(
                 users_id=obj_in_dict["users_id_allowed"],
                 organizations=obj_in_dict["organizations_allowed"],
             ),
@@ -148,12 +148,12 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             Updated deployment
         """
         if obj_in.users_id_allowed or obj_in.organizations_allowed:
-            share_permissions = SharePermissions.build(
+            share_permissions = SharePermission.build(
                 users_id=obj_in.users_id_allowed or [],
                 organizations=obj_in.organizations_allowed or [],
             )
-            db.query(SharePermissions).filter(
-                SharePermissions.deployment_id == db_obj.id,
+            db.query(SharePermission).filter(
+                SharePermission.deployment_id == db_obj.id,
             ).delete()
             db_obj = db.query(Deployment).filter(Deployment.id == db_obj.id).first()
             db_obj.share_permissions = share_permissions
@@ -180,7 +180,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         if not isinstance(obj_in, dict):
             obj_in = obj_in.dict()
 
-        db_obj = SharePermissions(**obj_in)
+        db_obj = SharePermission(**obj_in)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -197,14 +197,14 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             Deleted permission
         """
         sub_query = (
-            SharePermissions.user_id == obj_in.user_id
+            SharePermission.user_id == obj_in.user_id
             if obj_in.user_id
-            else SharePermissions.organization == obj_in.organization
+            else SharePermission.organization == obj_in.organization
         )
 
         db_obj = (
-            db.query(SharePermissions)
-            .filter(SharePermissions.deployment_id == obj_in.deployment_id, sub_query)
+            db.query(SharePermission)
+            .filter(SharePermission.deployment_id == obj_in.deployment_id, sub_query)
             .first()
         )
         db.delete(db_obj)
@@ -252,15 +252,15 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         Deployment:
             the deployment if the user has permission to access it, None otherwise
         """
-        sql_query = db.query(Deployment).join(SharePermissions, isouter=True)
+        sql_query = db.query(Deployment).join(SharePermission, isouter=True)
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
         sql_query = sql_query.filter(Deployment.id == deployment_id)
         sql_query = sql_query.filter(
             or_(
                 Deployment.created_by_id == user.id,
                 Deployment.share_strategy == ShareStrategy.PUBLIC,
-                SharePermissions.user_id == user.id,
-                SharePermissions.organization == f"@{user.email.split('@')[1]}",
+                SharePermission.user_id == user.id,
+                SharePermission.organization == f"@{user.email.split('@')[1]}",
             )
         )
         result = sql_query.all()
@@ -305,7 +305,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         count = sql_query.count()
         return count
 
-    def track_prediction(self, db: Session, prediction_to_track: PredictionCreateRepo):
+    def create_prediction_entry(self, db: Session, prediction_to_track: PredictionCreateRepo):
         """Register a prediction in the database.
         To be used to check if the user has reached the prediction limit for the deployment
 
@@ -345,7 +345,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
     def get_training_data(
         self, db: Session, deployment: DeploymentSchema
-    ) -> TrainingData:
+    ) -> DatasetSummary:
         """Get the training data for a deployment
 
         Args:
@@ -353,17 +353,15 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             deployment: deployment to get the training data from
 
         Returns:
-            TrainingData: dataset summary from dataset used on model training
+            DatasetSummary: dataset summary from dataset used on model training
         """
         dataset_name = deployment.model_version.config.dataset.name
 
         dataset = dataset_store.get_by_name(db, dataset_name)
 
-        training_data = TrainingData(
-            dataset_summary=dataset.stats,
-        )
+        dataset_summary = DatasetSummary(**dataset.stats)
 
-        return training_data
+        return dataset_summary
 
 
 deployment_store = CRUDDeployment(Deployment)

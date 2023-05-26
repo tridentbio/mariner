@@ -543,9 +543,6 @@ export type DatasetSummary = {
   test: object;
   full: object;
 };
-export type TrainingData = {
-  datasetSummary?: DatasetSummary;
-};
 export type DeploymentWithTrainingData = {
   name: string;
   readme?: string;
@@ -565,7 +562,7 @@ export type DeploymentWithTrainingData = {
   usersAllowed?: User[];
   createdAt: string;
   updatedAt: string;
-  trainingData?: TrainingData;
+  datasetSummary?: DatasetSummary;
 };
 export type DeploymentUpdateInput = {
   name?: string;
@@ -596,5 +593,4 @@ export const {
   usePostMakePredictionDeploymentMutation,
   usePostMakePredictionDeploymentPublicMutation,
   useHandleDeploymentManagerMutation,
-  endpoints,
 } = injectedRtkApi;
