@@ -54,6 +54,7 @@ export class SocketMessageHandler {
     this.callbacks = {
       'dataset-process-finish': () => {},
       'update-running-metrics': () => {},
+      'update-deployment': () => {},
     };
     this.setListeners();
   }
