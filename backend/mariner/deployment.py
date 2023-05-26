@@ -55,7 +55,11 @@ def get_deployment(
         deployment_id (int): Deployment ID.
 
     Returns:
-        Deployment: Deployment.
+        A deployment with training data object.
+        
+    Raises:
+        DeploymentNotFound: If the deployment does not exist.
+        NotCreatorOwner: If the user is not the creator of the deployment.
     """
     deployment = deployment_store.get_if_has_permission(
         db, deployment_id=deployment_id, user=current_user
@@ -249,6 +253,7 @@ def delete_permission(
 
 def get_public_deployment(db: Session, token: str):
     """Get a public deployment.
+    
     Token should be a jwt with the sub field set to the deployment id.
     Deployment needs to have the share_strategy set to public.
 
@@ -300,7 +305,7 @@ async def make_prediction(
         DeploymentNotFound: If the deployment is not running.
     """
     manager = get_deployments_manager()
-    if not await manager.deployment_is_running.remote(deployment_id):
+    if not await manager.is_deployment_running.remote(deployment_id):
         raise DeploymentNotFound()
 
     deployment = deployment_store.get_if_has_permission(
@@ -349,7 +354,7 @@ async def make_prediction_public(db: Session, deployment_id: int, data: Dict[str
         Prediction: Json with predictions for each model version target column.
     """
     manager = get_deployments_manager()
-    if not await manager.deployment_is_running.remote(deployment_id):
+    if not await manager.is_deployment_running.remote(deployment_id):
         raise DeploymentNotFound()
 
     deployment = deployment_store.get(db, deployment_id)
@@ -383,6 +388,7 @@ async def make_prediction_public(db: Session, deployment_id: int, data: Dict[str
 
 def handle_deployment_manager_first_init(db: Session):
     """To run when the deployment manager starts.
+    
     Responsible to make sure that the deployment status on database
     is the same as the one on the deployment manager.
 
@@ -398,6 +404,7 @@ def handle_deployment_manager_first_init(db: Session):
 
 def notify_users_about_status_update(deployment: Deployment):
     """Notify the user using websocket about the deployment status updated.
+    
     This function will start the broadcast on websocket and add it as a task
     to the task manager to finish asynchoronously.
 
