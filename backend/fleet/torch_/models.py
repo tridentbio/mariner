@@ -11,7 +11,6 @@ import torch
 import torch.nn
 import torchmetrics as metrics
 
-from fleet import data_types
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
