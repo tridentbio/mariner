@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Iterable, Tuple
+from typing import Dict, Iterable, Literal, Tuple
 
 from humps import camel
 
@@ -63,9 +63,9 @@ def build_columns_numpy(dataset_config: DatasetConfig):
 
     def apply(feat_or_transform, numpy_col):
         if isinstance(feat_or_transform, torch.nn.Module):
-            featurized = feat_or_transform(value)
+            feat_or_transform(value)
         elif isinstance(feat_or_transform, sklearn.base.TransformerMixin):
-            featurized = feat_or_transform.fit_transform(value)
+            feat_or_transform.fit_transform(value)
         raise RuntimeError()
 
     for feat in feats:

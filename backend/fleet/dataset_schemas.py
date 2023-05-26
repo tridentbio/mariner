@@ -85,6 +85,9 @@ class DatasetConfig(BaseDatasetModel):
     feature_columns: List[ColumnConfig]
     featurizers: List[FeaturizersType] = []
 
+    def topological_sort(self):
+        ...
+
 
 AllowedLossesType = List[Dict[str, str]]
 

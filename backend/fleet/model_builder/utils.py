@@ -279,7 +279,6 @@ def collect_args(
                     value_.append(get_ref_from_input(item_value, input_))
                 else:
                     value_.append(item_value)
-            result[key] = value_
         elif isinstance(value, str):
             if not value:
                 continue

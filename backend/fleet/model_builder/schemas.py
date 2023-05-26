@@ -4,8 +4,7 @@ Object schemas used by the model builder
 # Temporary file to hold all extracted mariner schemas
 from typing import Any, Dict, List, Literal, Optional, Union
 
-import networkx as nx
-from pydantic import BaseModel, root_validator
+from pydantic import root_validator
 
 from fleet.model_builder import generate
 from fleet.model_builder.components_query import (
@@ -16,7 +15,8 @@ from fleet.model_builder.layers_schema import (
     LayersArgsType,
     LayersType,
 )
-from fleet.model_builder.utils import CamelCaseModel, get_references_dict
+from fleet.model_builder.utils import CamelCaseModel
+from fleet.utils import graph
 from fleet.yaml_model import YAML_Model
 
 
@@ -127,36 +127,13 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
         return values
 
     def make_graph(self):
-        """Makes a graph of the layers and featurizers
+        """Makes a graph of the layers and featurizers.
 
-        The graph is used for a topological walk on the schema
+        The graph is used for a topological walk on the schema.
         """
-        model_graph = nx.DiGraph()
-        for layer in self.layers:
-            model_graph.add_node(layer.name)
-
-        def _to_dict(arr: List[BaseModel]):
-            return [item.dict() for item in arr]
-
-        layers_and_featurizers = _to_dict(self.layers)
-        for feat in layers_and_featurizers:
-            if "forward_args" not in feat:
-                continue
-            references = get_references_dict(feat["forward_args"])
-            for key, value in references.items():
-                if not value:  # optional forward_arg that was not set
-                    continue
-                if isinstance(value, str):
-                    reference = value.split(".")[0]
-                    model_graph.add_edge(reference, feat["name"], attr=key)
-                elif isinstance(value, list):
-                    for reference in value:
-                        reference = reference.split(".")[0]
-                        model_graph.add_edge(reference, feat["name"], attr=key)
-
-                else:
-                    continue
-        return model_graph
+        return graph.make_graph_from_forward_args(
+            [layer.dict() for layer in self.layers]
+        )
 
 
 class ComponentAnnotation(CamelCaseModel):
