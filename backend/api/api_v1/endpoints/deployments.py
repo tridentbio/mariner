@@ -1,5 +1,5 @@
 """
-Handlers for api/v1/deployments* endpoints
+Handlers for api/v1/deployments* endpoints.
 """
 
 from fastapi.exceptions import HTTPException
@@ -38,7 +38,7 @@ def get_deployments(
     Retrieve deployments that the requester has access to.
 
     Returns:
-        Paginated[Deployment]: paginated list of deployments
+        Paginated[Deployment]: paginated list of deployments.
     """
     deployments, total = controller.get_deployments(db, current_user, query)
     return Paginated(data=deployments, total=total)
@@ -55,17 +55,17 @@ def get_deployment(
     Includes the training data when Deployment.display_training_data is True.
 
     Args:
-        deployment_id
-        current_user: user must be authenticated
-        db: database session
+        deployment_id.
+        current_user: user must be authenticated.
+        db: database session.
 
     Returns:
         DeploymentWithTrainingData:
-            deployment including the dataset summary from training data
-            if available
+            deployment including the dataset summary from training data.
+            if available.
 
     Raises:
-        HTTPException(status_code=404): if deployment is not found
+        HTTPException(status_code=404): if deployment is not found.
     """
     try:
         deployment = controller.get_deployment(db, current_user, deployment_id)
@@ -86,36 +86,17 @@ def create_deployment(
     Create a deployment
 
     Args:
-        deployment_base:
-            name (str): name of the deployment
-            readme (str): readme of the deployment
-            share_url (str): signed URL to get the deployment without authentication
-                only exists if the deployment share_strategy is public
-            status (DeploymentStatus): the current status of the deployment
-            model_version_id (int): the ID of the model version associated with the deployment
-            share_strategy (ShareStrategy): change share mode of the deployment
-                - PUBLIC: anyone on the internet can access the deployment with the share_url
-                    anyone logged in can see the deployment on the list of deployments
-                - PRIVATE: only users with access to the deployment can access it
-            user_ids_allowed (List[int]): list of user IDs allowed to get the deployment
-            organizations_allowed (List[str]): list of organizations allowed to get the deployment
-                organizations are identified by suffix of the users email (e.g. @mariner.ai)
-            show_training_data (bool): if True, the training data will be shown on the deployment page
-            prediction_rate_limit_value (int): number of requests allowed in the prediction_rate_limit_unit
-            prediction_rate_limit_unit (RateLimitUnit): unit of time to limit the number of requests
-                e.g.:
-                    if prediction_rate_limit_value is 10 and prediction_rate_limit_unit is RateLimitUnit.DAY,
-                    the deployment will only allow 10 requests per day
-        current_user: user must be authenticated
-        db: database session
+        deployment_base.
+        current_user: user must be authenticated.
+        db: database session.
 
     Returns:
-        Deployment: the created deployment
+        Deployment: the created deployment.
 
     Raises:
-        HTTPException(status_code=409): if deployment name already exists
-        HTTPException(status_code=404): if model version does not exist
-        HTTPException(status_code=401): if user is not the creator owner of the model version
+        HTTPException(status_code=409): if deployment name already exists.
+        HTTPException(status_code=404): if model version does not exist.
+        HTTPException(status_code=401): if user is not the creator owner of the model version.
     """
     try:
         db_deployment = controller.create_deployment(db, current_user, deployment_base)
@@ -153,7 +134,7 @@ async def update_deployment(
     db: Session = Depends(deps.get_db),
 ):
     """
-    Update a deployment and handle the status on ray cluster if needed
+    Update a deployment and handle the status on ray cluster if needed.
     """
     try:
         deployment = await controller.update_deployment(
@@ -189,19 +170,19 @@ async def delete_deployment(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
-    """Delete a deployment by id by setting a value to deleted_at
+    """Delete a deployment by id by setting a value to deleted_at.
 
     Args:
-        deployment_id
-        current_user: user must be authenticated
-        db: database session
+        deployment_id.
+        current_user: user must be authenticated.
+        db: database session.
 
     Returns:
-        Deployment: the deleted deployment
+        Deployment: the deleted deployment.
 
     Raises:
-        HTTPException(status_code=404): if deployment is not found
-        HTTPException(status_code=401): if user is not the creator owner of the deployment
+        HTTPException(status_code=404): if deployment is not found.
+        HTTPException(status_code=401): if user is not the creator owner of the deployment.
     """
     try:
         deployment = await controller.delete_deployment(db, current_user, deployment_id)
@@ -223,24 +204,24 @@ def create_permission(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
-    """Create a permission for a deployment
-    Used to create a new single share permission for a deployment
-    This permission can be for a user or an organization
+    """Create a permission for a deployment.
+    Used to create a new single share permission for a deployment.
+    This permission can be for a user or an organization.
 
     Args:
         permission_input:
             deployment_id
             user_id
             organization
-        current_user: user must be authenticated
-        db: database session
+        current_user: user must be authenticated.
+        db: database session.
 
     Returns:
-        Deployment: the deployment with the new permission
+        Deployment: the deployment with the new permission.
 
     Raises:
-        HTTPException(status_code=404): if deployment is not found
-        HTTPException(status_code=404): if user is not the creator owner of the deployment
+        HTTPException(status_code=404): if deployment is not found.
+        HTTPException(status_code=404): if user is not the creator owner of the deployment.
     """
     try:
         deployment = controller.create_permission(db, current_user, permission_input)
@@ -262,23 +243,23 @@ def delete_permission(
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ):
-    """Delete a permission for a deployment
-    Used to delete a single share permission for a deployment
+    """Delete a permission for a deployment.
+    Used to delete a single share permission for a deployment.
 
     Args:
         query:
-            deployment_id
-            user_id
-            organization
-        current_user: user must be authenticated
-        db: database session
+            deployment_id.
+            user_id.
+            organization.
+        current_user: user must be authenticated.
+        db: database session.
 
     Returns:
-        Deployment: the deployment with the deleted permission
+        Deployment: the deployment with the deleted permission.
 
     Raises:
-        HTTPException(status_code=404): if deployment is not found
-        HTTPException(status_code=404): if user is not the creator owner of the deployment
+        HTTPException(status_code=404): if deployment is not found.
+        HTTPException(status_code=404): if user is not the creator owner of the deployment.
     """
     try:
         deployment = controller.delete_permission(db, current_user, query)
@@ -299,24 +280,24 @@ def get_public_deployment(
     token: str,
     db: Session = Depends(deps.get_db),
 ):
-    """Get a public deployment by token without authentication
+    """Get a public deployment by token without authentication.
     Includes the training data when Deployment.display_training_data is True.
 
     Args:
         token:
             JWT token that is generated when a deployment have theshare_permission
             value set to public.
-            This token must be signed by DEPLOYMENT_URL_SIGNATURE_SECRET_KEY
+            This token must be signed by DEPLOYMENT_URL_SIGNATURE_SECRET_KEY.
             variable and must have the following payload:
-                sub: some public deployment id
-        db: database session
+                sub: some public deployment id.
+        db: database session.
 
     Returns:
-        DeploymentWithTrainingData: the public deployment
+        DeploymentWithTrainingData: the public deployment.
 
     Raises:
-        HTTPException(status_code=404): if deployment is not found
-        HTTPException(status_code=401): if deployment is not public
+        HTTPException(status_code=404): if deployment is not found.
+        HTTPException(status_code=401): if deployment is not public.
     """
     try:
         deployment = controller.get_public_deployment(db, token)
@@ -342,26 +323,26 @@ async def post_make_prediction_deployment(
     """Make a prediction in a deployment instance.
 
     Prediction flow:
-        1. Check if deployment exists and user has access.
-        2. Check if user is able to make a new prediction without
-        reach prediction limit configuration.
-        3. Make prediction.
-        4. Track prediction.
-        5. Return prediction.
+    1. Check if deployment exists and user has access.
+    2. Check if user is able to make a new prediction without
+    reach prediction limit configuration.
+    3. Make prediction.
+    4. Track prediction.
+    5. Return prediction.
 
     Args:
-        deployment_id
-        data (any json): data to make prediction
-        current_user: user must be authenticated
-        db: database session
+        deployment_id.
+        data (any json): data to make prediction.
+        current_user: user must be authenticated.
+        db: database session.
 
     Returns:
-        prediction result
+        prediction result.
 
     Raises:
-        HTTPException(status_code=404): if deployment is not found
-        HTTPException(status_code=401): if user is not the creator owner of the deployment
-        HTTPException(status_code=429): if user has reached the prediction limit
+        HTTPException(status_code=404): if deployment is not found.
+        HTTPException(status_code=401): if user is not the creator owner of the deployment.
+        HTTPException(status_code=429): if user has reached the prediction limit.
     """
     try:
         prediction: Dict[str, Any] = await controller.make_prediction(
@@ -400,17 +381,17 @@ async def post_make_prediction_deployment_public(
     the user.
 
     Args:
-        deployment_id
-        data (any json): data to make prediction
-        db: database session
+        deployment_id.
+        data (any json): data to make prediction.
+        db: database session.
 
     Returns:
-        prediction result
+        prediction result.
 
     Raises:
-        HTTPException(status_code=404): if deployment is not found
-        HTTPException(status_code=401): if user is not the creator owner of the deployment
-        HTTPException(status_code=429): if user has reached the prediction limit
+        HTTPException(status_code=404): if deployment is not found.
+        HTTPException(status_code=401): if user is not the creator owner of the deployment.
+        HTTPException(status_code=429): if user has reached the prediction limit.
     """
     try:
         prediction: Dict[str, Any] = await controller.make_prediction_public(
@@ -455,14 +436,14 @@ async def handle_deployment_manager(
             Update the deployment status on database and notify the user about it.
 
     Args:
-        message: message from Deployment Manager
-        db: database session
+        message: message from Deployment Manager.
+        db: database session.
 
     Returns:
-        Deployment: the deployment with the updated status
+        Deployment: the deployment with the updated status.
 
     Raises:
-        HTTPException(status_code=404): if deployment is not found
+        HTTPException(status_code=404): if deployment is not found.
     """
     try:
         if message.first_init:

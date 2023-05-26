@@ -342,7 +342,7 @@ Manager = NewType("Remote Deployment Manager", DeploymentsManager)
 
 
 def get_deployments_manager() -> Manager:
-    """Make sure that only one instance of the manager is created"""
+    """Make sure that only one instance of the manager is created."""
     global manager
     if not manager:
         manager = DeploymentsManager.remote()

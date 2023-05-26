@@ -17,7 +17,7 @@ from pydantic import root_validator
 class DeploymentsQuery(PaginatedApiQuery):
     """Query object for deployments.
 
-    Args:
+    Arguments:
         query:
             name: to filter deployments by name
             status: to filter deployments by status (stopped, running, idle)
@@ -50,7 +50,29 @@ class DeploymentsQuery(PaginatedApiQuery):
 
 
 class DeploymentBase(ApiBaseModel):
-    """Deployment base type."""
+    """Deployment base type.
+    
+    Arguments:
+        name (str): name of the deployment.
+        readme (str): readme of the deployment.
+        share_url (str): signed URL to get the deployment without authentication
+            only exists if the deployment share_strategy is public.
+        status (DeploymentStatus): the current status of the deployment.
+        model_version_id (int): the ID of the model version associated with the deployment.
+        share_strategy (ShareStrategy): change share mode of the deployment.
+            - PUBLIC: anyone on the internet can access the deployment with the share_url.
+                anyone logged in can see the deployment on the list of deployments.
+            - PRIVATE: only users with access to the deployment can access it.
+        user_ids_allowed (List[int]): list of user IDs allowed to get the deployment.
+        organizations_allowed (List[str]): list of organizations allowed to get the deployment.
+            organizations are identified by suffix of the users email (e.g. @mariner.ai).
+        show_training_data (bool): if True, the training data will be shown on the deployment page.
+        prediction_rate_limit_value (int): number of requests allowed in the prediction_rate_limit_unit.
+        prediction_rate_limit_unit (RateLimitUnit): unit of time to limit the number of requests.
+            e.g.:
+                if prediction_rate_limit_value is 10 and prediction_rate_limit_unit is RateLimitUnit.DAY,
+                the deployment will only allow 10 requests per day.
+    """
 
     name: str
     readme: str = ""

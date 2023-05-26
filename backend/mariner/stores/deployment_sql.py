@@ -26,8 +26,7 @@ from mariner.schemas.deployment_schemas import (
     PermissionCreateRepo,
     PermissionDeleteRepo,
     PredictionCreateRepo,
-    TrainingData, 
-    User
+    TrainingData
 )
 from mariner.stores.base_sql import CRUDBase
 from mariner.stores.dataset_sql import dataset_store
@@ -238,7 +237,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         return model_version
 
-    def get_only_with_permission(
+    def get_if_has_permission(
         self, db: Session, deployment_id: int, user: User
     ) -> Optional[Deployment]:
         """Get a deployment only if the user has permission to access it
@@ -272,10 +271,11 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         except IndexError:
             return None
 
-    def check_prediction_limit_reached(
+    def get_predictions_count(
         self, db: Session, deployment: Deployment, user: User = None
     ) -> bool:
-        """Check if the user has reached the prediction limit for the deployment
+        """Count the number of predictions made in the last minute, hour, day or month
+        depending on the prediction rate limit unit of the deployment.
 
         Args:
             db: database session
@@ -303,7 +303,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             sql_query = sql_query.filter(Predictions.user_id.is_(None))
 
         count = sql_query.count()
-        return count >= deployment.prediction_rate_limit_value
+        return count
 
     def track_prediction(self, db: Session, prediction_to_track: PredictionCreateRepo):
         """Register a prediction in the database.

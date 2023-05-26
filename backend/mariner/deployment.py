@@ -57,7 +57,7 @@ def get_deployment(
     Returns:
         Deployment: Deployment.
     """
-    deployment = deployment_store.get_only_with_permission(
+    deployment = deployment_store.get_if_has_permission(
         db, deployment_id=deployment_id, user=current_user
     )
     if not deployment:
@@ -303,13 +303,14 @@ async def make_prediction(
     if not await manager.deployment_is_running.remote(deployment_id):
         raise DeploymentNotFound()
 
-    deployment = deployment_store.get_only_with_permission(
+    deployment = deployment_store.get_if_has_permission(
         db, deployment_id, current_user
     )
     if not deployment:
         raise PermissionError()
 
-    if deployment_store.check_prediction_limit_reached(db, deployment, current_user):
+    prediction_count = deployment_store.get_predictions_count(db, deployment, current_user)
+    if prediction_count >= deployment.prediction_rate_limit_value:
         raise PredictionLimitReached()
 
     prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
@@ -355,7 +356,8 @@ async def make_prediction_public(db: Session, deployment_id: int, data: Dict[str
     if not deployment or not deployment.share_strategy == ShareStrategy.PUBLIC:
         raise PermissionError("Deployment is not public.")
 
-    if deployment_store.check_prediction_limit_reached(db, deployment):
+    prediction_count = deployment_store.get_predictions_count(db, deployment)
+    if prediction_count >= deployment.prediction_rate_limit_value:
         raise PredictionLimitReached()
 
     prediction: Dict[str, Tensor] = await manager.make_prediction.remote(

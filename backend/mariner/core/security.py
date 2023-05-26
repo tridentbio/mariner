@@ -65,9 +65,6 @@ def generate_deployment_signed_url(sub: Union[str, Any]) -> str:
     """Generates a signed URL for a route.
     Signed url make possible to get a resource without authentication.
 
-    Needs to use a sufix on the secret key to avoid using the same token for
-    different purposes.
-
     Args:
         sub: deployment_id.
 
