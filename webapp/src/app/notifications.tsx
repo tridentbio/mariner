@@ -1,4 +1,5 @@
 import { AlertColor } from '@mui/material';
+
 import {
   createContext,
   FC,
@@ -32,7 +33,7 @@ const notImplemented = () => {
 };
 
 const NotificationContext = createContext<INotificationContext>({
-  setMessage: notImplemented,
+  setMessage: () => null,
   closeMessage: notImplemented,
   success: notImplemented,
   notifyError: notImplemented,

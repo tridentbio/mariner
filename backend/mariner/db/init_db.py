@@ -1,8 +1,8 @@
 """
 Useful functions when developing on a fresh database
 """
-from sqlalchemy.orm import Session
 import sqlalchemy.exc
+from sqlalchemy.orm import Session
 
 from mariner.core.security import get_password_hash
 from mariner.db.session import SessionLocal

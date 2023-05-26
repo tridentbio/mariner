@@ -102,6 +102,7 @@ services:
     build:
       context: ./backend
       dockerfile: ../dockerfiles/Dockerfile.local
+    shm_size: '4.91gb'
     env_file:
       - backend/.env
       - backend/.env.secret
@@ -110,23 +111,25 @@ services:
       - "8265:8265"
       - "10001:10001"
       - "8000:8000"
-    command: ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block
-    shm_size: 3g
+    # Docs on ray cli: https://docs.ray.io/en/latest/cluster/cli.html
+    command: ray start --head --port=6379 --block --dashboard-host 0.0.0.0
     networks:
       - ray_net
+
   ray-worker:
     build:
       context: ./backend
       dockerfile: ../dockerfiles/Dockerfile.local
+    shm_size: '4.91gb'
     env_file:
       - backend/.env
       - backend/.env.secret
     depends_on: 
       - ray-head
-    command: ray start --address=ray-head:6379 --num-cpus=1 --block
-    shm_size: 3g
+    command: ray start --address=ray-head:6379 --num-cpus=8 --block
     networks:
       - ray_net
+
   grafana:
     image: grafana/grafana:9.3.1
     container_name: grafana
@@ -159,6 +162,7 @@ services:
       - '--web.enable-lifecycle'
     ports:
       - 9090:9090
+
   e2e:
     image: cypress/included:12.6.0
     working_dir: /e2e
@@ -172,7 +176,6 @@ services:
       - ./webapp:/e2e:z
       - ./backend/tests/data:/e2e/cypress/fixtures/data:z
 
-
 volumes:
   app-db-data:
   app-mlflow-data:
@@ -185,3 +188,4 @@ networks:
       driver: default
       config:
         - subnet: 172.63.0.0/16
+

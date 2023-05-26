@@ -24,7 +24,7 @@ RUN poetry install --no-root --no-cache --without dev && poetry cache clear --no
 
 COPY ./mariner /app/mariner
 COPY ./api /app/api
-COPY ./model_builder /app/model_builder
+COPY ./fleet /app/fleet
 COPY ./scripts /app/scripts
 COPY ./tests /app/tests
 COPY ./alembic.ini /app/alembic.ini

@@ -1,11 +1,11 @@
 from typing import Literal, Optional
 
 import mlflow.tracking
-import yaml
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from fleet.base_schemas import TorchModelSpec
 from mariner.core.config import settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
@@ -18,7 +18,6 @@ from mariner.schemas.model_schemas import (
     ModelVersionCreateRepo,
 )
 from mariner.stores import model_sql
-from model_builder.schemas import ModelSchema
 from tests.fixtures.user import get_random_test_user, get_test_user
 from tests.utils.utils import random_lower_string
 
@@ -27,20 +26,17 @@ ModelType = Literal["regressor", "regressor-with-categorical", "classifier"]
 
 def model_config(
     model_type: ModelType = "regressor", dataset_name: Optional[str] = None
-) -> ModelSchema:
+) -> TorchModelSpec:
     path = get_config_path_for_model_type(model_type)
-    with open(path, "rb") as f:
-        if path.endswith("yaml") or path.endswith("yml"):
-            schema = ModelSchema.from_yaml(f.read())
-        elif path.endswith("json"):
-            schema = ModelSchema.parse_raw(f.read())
-        else:
-            raise NotImplementedError(
-                f"Only know how to read json or yaml model configs, got file: {path}"
-            )
-        if dataset_name:
-            schema.dataset.name = dataset_name
-        return schema
+    if path.endswith("yaml") or path.endswith("yml"):
+        model = TorchModelSpec.from_yaml(path)
+    else:
+        model = TorchModelSpec.parse_file(path)
+
+    # override test dataset name
+    if dataset_name:
+        model.dataset.name = dataset_name
+    return model
 
 
 def get_config_path_for_model_type(model_type: ModelType) -> str:
@@ -62,18 +58,16 @@ def mock_model(
     model_type: ModelType = "regressor",
 ) -> ModelCreate:
     model_path = get_config_path_for_model_type(model_type)
-    with open(model_path, "rb") as f:
-        config_dict = yaml.unsafe_load(f.read())
-        config = ModelSchema(**config_dict)
-        if dataset_name:
-            config.dataset.name = dataset_name
-        model = ModelCreate(
-            name=name if name is not None else random_lower_string(),
-            model_description=random_lower_string(),
-            model_version_description=random_lower_string(),
-            config=config,
-        )
-        return model
+    config = TorchModelSpec.from_yaml(model_path)
+    if dataset_name:
+        config.dataset.name = dataset_name
+    model = ModelCreate(
+        name=name if name is not None else random_lower_string(),
+        model_description=random_lower_string(),
+        model_version_description=random_lower_string(),
+        config=config,
+    )
+    return model
 
 
 def setup_create_model(

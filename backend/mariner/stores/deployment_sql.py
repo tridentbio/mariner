@@ -1,7 +1,6 @@
 """
 Deployment data layer defining ways to read and write to the deployments collection
 """
-from datetime import datetime
 from typing import List
 
 from sqlalchemy import or_
@@ -12,18 +11,19 @@ from mariner.entities.deployment import (
     SharePermissions,
     ShareStrategy,
 )
+from mariner.entities.model import ModelVersion
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
-from mariner.entities.model import ModelVersion
-from mariner.schemas.model_schemas import ModelVersion as ModelVersionSchema
-from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema, User
+from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
 from mariner.schemas.deployment_schemas import (
     DeploymentCreateRepo,
     DeploymentsQuery,
     DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
+    User,
 )
+from mariner.schemas.model_schemas import ModelVersion as ModelVersionSchema
 from mariner.stores.base_sql import CRUDBase
 from mariner.stores.user_sql import user_store
 
@@ -54,9 +54,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         sql_query = sql_query.filter(Deployment.deleted_at.is_(None))
 
         if query.access_mode == "owned":
-            sql_query = sql_query.filter(
-                Deployment.created_by_id == user.id
-            )
+            sql_query = sql_query.filter(Deployment.created_by_id == user.id)
 
         elif query.public_mode == "only":
             sql_query = sql_query.filter(
@@ -108,9 +106,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
                     user = user_store.get(db, share_permissions.user_id)
                     deployments[i].users_allowed.append(
                         User(
-                            id = user.id,
-                            email = user.email,
-                            full_name = user.full_name,
+                            id=user.id,
+                            email=user.email,
+                            full_name=user.full_name,
                         )
                     )
                 elif share_permissions.organization:

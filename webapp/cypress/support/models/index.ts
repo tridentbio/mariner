@@ -9,7 +9,8 @@ declare global {
         yaml: string,
         datasetName?: string,
         success?: boolean,
-        deleteModel?: boolean
+        deleteModel?: boolean,
+        modelName?: string
       ): string;
     }
   }

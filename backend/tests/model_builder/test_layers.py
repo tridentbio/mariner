@@ -1,6 +1,6 @@
 import torch
 
-from model_builder.layers import OneHot
+from fleet.model_builder.layers import OneHot
 
 
 def test_OneHot_int():

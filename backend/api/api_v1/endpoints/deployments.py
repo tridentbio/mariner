@@ -1,7 +1,6 @@
 """
 Handlers for api/v1/deployments* endpoints
 """
-from typing import Any
 
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends

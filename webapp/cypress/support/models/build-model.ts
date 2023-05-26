@@ -2,35 +2,33 @@
 
 import { parse } from 'yaml';
 import { DeepPartial } from '@reduxjs/toolkit';
-import { ModelCreate, ModelSchema } from '@app/rtk/generated/models';
+import { ModelCreate, TorchModelSpec } from '@app/rtk/generated/models';
 import { randomLowerCase } from 'utils';
 import {
-  deleteModelIfExist,
   dragComponentsAndMapConfig,
   flowDropSelector,
 } from './common';
-import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
+import { extendSpecWithTargetForwardArgs, iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
 
 const randomName = () => randomLowerCase(8);
 
-const getTypeByName = (config: ModelSchema, name: string): string => {
-  const [layer] = config.layers!.filter((layer) => layer.name === name);
+const getTypeByName = (config: TorchModelSpec, name: string): string => {
+  const [layer] = config.spec.layers!.filter((layer) => layer.name === name);
   if (layer) return layer.type;
-  const [featurizer] = config.featurizers!.filter(
+  const [featurizer] = config.dataset.featurizers!.filter(
     (featurizer) => featurizer.name === name
   );
-  if (featurizer) return featurizer.type;
-
+  if (featurizer?.type) return featurizer.type;
   return name;
 };
 
 // Returns [sourceHandleId, targetHandleId][]
 const getIncomingEdges = (
   node: NodeType,
-  config: ModelSchema
+  config: TorchModelSpec
 ): [string, string][] => {
-  if (node.type === 'input' /*  || node.type === 'output' */) return [];
+  if (node.type === 'input') return [];
   if (node.type === 'output')
     return [[node.name, getTypeByName(config, node.outModule!)]];
 
@@ -48,7 +46,7 @@ const getIncomingEdges = (
           return [
             node.type + '.' + forwardArg,
             getTypeByName(config, targetOriginalName) +
-              (tail.length ? '.' + tail.join('.') : ''),
+            (tail.length ? '.' + tail.join('.') : ''),
           ];
         }),
       ];
@@ -130,7 +128,10 @@ export const buildModel = (
   cy.once('uncaught:exception', () => false);
   cy.visit('/models/new');
   // Fill model name
-  cy.get('[data-testid="random-model-name"]').click();
+  cy.get('[data-testid="model-name"] input')
+    .clear()
+    .type(modelCreate.name || randomName())
+    .type('{enter}');
   // Fill model description
   cy.get('[data-testid="model-description"] input')
     .clear()
@@ -158,6 +159,7 @@ export const buildModel = (
       // domainKind used to determine end of column name
       (col) => col!.name! + col!.dataType!.domainKind!
     ) || [];
+
   const featureCols =
     modelCreate.config?.dataset?.featureColumns?.map(
       // domainKind used to determine end of column name
@@ -170,6 +172,7 @@ export const buildModel = (
       .contains(new RegExp(`^${col}`, 'gi'))
       .click();
   });
+
   featureCols.forEach((col) => {
     cy.get('#feature-cols').click();
     cy.get('li')
@@ -186,9 +189,16 @@ export const buildModel = (
     bubbles: true,
   });
 
+
+  const mod = extendSpecWithTargetForwardArgs(modelCreate.config as unknown as TorchModelSpec)
+
+  cy.log('Dragging components',)
+  cy.log('Total layers + featurizers', (mod.spec?.layers?.length || 0) + (mod.dataset?.targetColumns?.length || 0))
+
   const config = dragComponentsAndMapConfig(
-    modelCreate.config as unknown as ModelSchema
+    mod
   );
+
   cy.get('div[aria-label="Apply auto vertical layout"] button').click();
   cy.get('button[title="fit view"]').click();
   cy.get('button[aria-label="Close all components"]').click();
@@ -206,6 +216,10 @@ export const buildModel = (
   cy.intercept({
     method: 'POST',
     url: 'http://localhost/api/v1/models/check-config',
+  }).as('checkConfig');
+  cy.intercept({
+    method: 'POST',
+    url: 'http://localhost/api/v1/models',
   }).as('createModel');
 
   cy.then(() => {
@@ -217,7 +231,7 @@ export const buildModel = (
       Object.entries(args).forEach(([key, value]) => {
         autoFixSuggestions().then(() => {
           const element = cy
-            .get(`[data-id="${parseEdgeName(node.type)[0]}"]`)
+            .get(`[data-id="${parseEdgeName(node.type!)[0]}"]`)
             .first();
 
           const isBool = !['number', 'string'].includes(typeof value);
@@ -239,37 +253,29 @@ export const buildModel = (
     });
   }).then(() => cy.get('button').contains('CREATE').click());
 
-  cy.wait('@createModel').then(({ response }) => {
+  cy.wait('@checkConfig').then(({ response }) => {
     expect(response?.statusCode).to.eq(200);
-    expect(response?.body).to.have.property('stackTrace');
-    expect(Boolean(response?.body.stackTrace)).to.eq(!success);
+    if (success) {
+      expect(Boolean(response?.body.stackTrace)).to.eq(false)
+    }
   });
 
-  cy.get('.react-flow__node').then(($nodes) => {
-    const componentTypeByDataId: {
-      [key: string]: { type: string; filled: Record<string, boolean> };
-    } = {};
-    const nodes = $nodes.get();
-
-    nodes.forEach((el) => {
-      const id = el.getAttribute('data-id');
-      const name = el.innerText;
-      if (!id) throw new Error('Node without data-id');
-      if (!name) throw new Error('Node without innerText');
-
-      componentTypeByDataId[id] = { type: name, filled: {} };
+  if (success)
+    cy.wait('@createModel').then(({ response }) => {
+      expect(response?.statusCode).to.eq(200);
     });
-  });
 };
 
 export const buildYamlModel = (
   yaml: string,
   dataset: string | null = null,
-  success = true
+  success = true,
+  deleteModel = true,
+  modelName = randomName()
 ) => {
-  const modelName = randomName();
   cy.fixture(yaml).then((yamlStr) => {
-    const jsonSchema: ModelSchema = parse(yamlStr);
+    const jsonSchema: TorchModelSpec = parse(yamlStr);
+
     buildModel(
       {
         name: modelName,

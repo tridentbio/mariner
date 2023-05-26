@@ -75,7 +75,7 @@ def test_post_experiments(
         json=mocked_experiment_payload,
         headers=user_headers_fixture,
     )
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTP_200_OK, res.json()
 
 
 @pytest.fixture(scope="module")

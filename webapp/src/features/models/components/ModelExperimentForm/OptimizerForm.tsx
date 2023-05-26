@@ -1,13 +1,13 @@
 import { MenuItem, TextFieldProps, Box, TextField } from '@mui/material';
 import {
   useGetTrainingExperimentOptimizersQuery,
-  TrainingRequest,
   GetTrainingExperimentOptimizersApiResponse,
+  TorchTrainingConfig,
 } from 'app/rtk/generated/experiments';
 
 interface OptimizerProps extends Omit<TextFieldProps, 'value' | 'onChange'> {
-  onChange: (optimizerConfig: TrainingRequest['optimizer']) => void;
-  value: TrainingRequest['optimizer'];
+  onChange: (optimizerConfig: TorchTrainingConfig['optimizer']) => void;
+  value: TorchTrainingConfig['optimizer'];
   helperText?: string;
 }
 
@@ -96,7 +96,6 @@ const OptimizerForm = ({
                 type="number"
                 key={key}
                 label={paramSchema.label}
-                // @ts-ignore
                 inputProps={{ step: '0.001' }}
                 // @ts-ignore
                 value={value.params[key]}

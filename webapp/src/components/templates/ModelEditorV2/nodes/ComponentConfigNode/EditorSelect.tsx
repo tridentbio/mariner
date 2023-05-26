@@ -26,8 +26,6 @@ const EditorSelect = (props: EditorSelectProps) => {
 
   const selectRef = useRef<HTMLSelectElement>(null);
   if (!option?.argsOptions || !(props.argKey in option.argsOptions)) {
-    console.warn('Rendering a select without options');
-
     return null;
   }
 
