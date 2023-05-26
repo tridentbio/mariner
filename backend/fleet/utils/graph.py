@@ -58,10 +58,10 @@ class AnyNode(Protocol):
     """
 
     name: str
-    forward_args: Dict[str, Union[str, List[str]]]
+    forward_args: Union[None, Dict[str, Union[str, List[str]]]] = None
 
 
-def make_graph_from_forward_args(nodes: Iterable[AnyNode]) -> nx.DiGraph:
+def make_graph_from_forward_args(nodes: Iterable[dict]) -> nx.DiGraph:
     """Creates a graph from objects with ``forward_args``.
 
     Args:
@@ -71,9 +71,12 @@ def make_graph_from_forward_args(nodes: Iterable[AnyNode]) -> nx.DiGraph:
         The graph.
     """
 
-    def get_edges_from_forward_args(node: AnyNode) -> List[Edge]:
+    def get_edges_from_forward_args(node: dict) -> List[Edge]:
+        forward_args = node["forwardArgs"]
+        if forward_args is None:
+            return []
         edges: List[Edge] = []
-        for key, value in node.forward_args.items():
+        for key, value in forward_args.items():
             if isinstance(value, str):
                 dst_and_attrs, _ = unwrap_dollar(value)
                 dst = dst_and_attrs.split(".", 1)[0]
@@ -85,4 +88,4 @@ def make_graph_from_forward_args(nodes: Iterable[AnyNode]) -> nx.DiGraph:
                     edges.append((dst, key))
         return edges
 
-    return make_graph(nodes, lambda node: node.name, get_edges_from_forward_args)
+    return make_graph(nodes, lambda node: node["name"], get_edges_from_forward_args)
