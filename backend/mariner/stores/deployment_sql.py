@@ -2,26 +2,35 @@
 Deployment data layer defining ways to read and write to the deployments collection
 """
 from datetime import timedelta
-from typing import Dict, Optional
 
-from mariner.entities.deployment import (Deployment, Predictions,
-                                         SharePermissions, ShareStrategy)
+from typing import Optional
+
+from sqlalchemy import or_
+from sqlalchemy.orm import Session
+
+from mariner.entities.deployment import (
+    Deployment, 
+    Predictions,
+    SharePermissions, 
+    ShareStrategy
+)
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
 from mariner.schemas.api import utc_datetime
 from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
-from mariner.schemas.deployment_schemas import (DeploymentCreateRepo,
-                                                DeploymentsQuery,
-                                                DeploymentStatus,
-                                                DeploymentUpdateRepo,
-                                                PermissionCreateRepo,
-                                                PermissionDeleteRepo,
-                                                PredictionCreateRepo,
-                                                TrainingData, User)
+from mariner.schemas.deployment_schemas import (
+    DeploymentCreateRepo,
+    DeploymentsQuery,
+    DeploymentStatus,
+    DeploymentUpdateRepo,
+    PermissionCreateRepo,
+    PermissionDeleteRepo,
+    PredictionCreateRepo,
+    TrainingData, 
+    User
+)
 from mariner.stores.base_sql import CRUDBase
 from mariner.stores.dataset_sql import dataset_store
-from sqlalchemy import or_
-from sqlalchemy.orm import Session
 
 from .model_sql import model_store
 
@@ -89,7 +98,7 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         result = sql_query.all()
 
-        deployments: Dict[int, DeploymentSchema] = list(
+        deployments = list(
             map(lambda record: DeploymentSchema.from_orm(record), result)
         )
 

@@ -1,13 +1,16 @@
 """
 Handlers for api/v1/deployments* endpoints
 """
+
+from fastapi.exceptions import HTTPException
+from fastapi.param_functions import Depends
+from fastapi.routing import APIRouter
+from sqlalchemy.orm.session import Session
+from starlette import status
 from typing import Any, Dict, List, Union
 
 import mariner.deployment as controller
 from api import deps
-from fastapi.exceptions import HTTPException
-from fastapi.param_functions import Depends
-from fastapi.routing import APIRouter
 from mariner.entities.user import User
 from mariner.exceptions import (DeploymentAlreadyExists, DeploymentNotFound,
                                 ModelVersionNotFound, NotCreatorOwner,
@@ -21,8 +24,6 @@ from mariner.schemas.deployment_schemas import (Deployment, DeploymentBase,
                                                 DeploymentWithTrainingData,
                                                 PermissionCreateRepo,
                                                 PermissionDeleteRepo)
-from sqlalchemy.orm.session import Session
-from starlette import status
 
 router = APIRouter()
 

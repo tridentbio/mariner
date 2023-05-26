@@ -13,6 +13,7 @@ from mariner.schemas.model_schemas import ModelVersion
 from pydantic import root_validator
 
 
+
 class DeploymentsQuery(PaginatedApiQuery):
     """Query object for deployments.
 
