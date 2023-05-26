@@ -88,7 +88,7 @@ ingress:
     - ray-test.dev.mariner.trident.bio
 
 istio_url: ray-test.dev.mariner.trident.bio
-
+istio_enabled: true
 resources:
   limits:
     cpu: 200m
