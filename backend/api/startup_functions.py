@@ -17,7 +17,7 @@ async def deployments_manager_startup():
     """
     db = SessionLocal()
 
-    # Map all deployments that were running in the server before it was stopped
+    # Map all deployments that were running in the server before it was stopped.
     running_deployments = (
         db.query(Deployment).filter(Deployment.status == DeploymentStatus.ACTIVE).all()
     )
@@ -28,7 +28,7 @@ async def deployments_manager_startup():
         )
     )
 
-    # Stop all other deployments since they were not running when the server was stopped
+    # Stop all other deployments since they were not running when the server was stopped.
     db.execute(
         f"UPDATE deployment SET status = :stopped where status <> :active",
         {
@@ -37,9 +37,11 @@ async def deployments_manager_startup():
         },
     )
 
-    # Load all deployments that were running in the new deployments manager instance
-    manager = get_deployments_manager()
-    await manager.load_deployments.remote(deployments)
+    # Load all deployments that were running in the new deployments manager instance.
+    if len(deployments):
+        manager = get_deployments_manager()
+        await manager.load_deployments.remote(deployments)
 
+    # Commit the changes to the database.
     db.commit()
     db.close()
