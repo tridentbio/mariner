@@ -20,7 +20,7 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup_event():
     """
-    Startup event
+    Runs the startup functions once the server is started.
     """
     await startup_functions.deployments_manager_startup()
 
