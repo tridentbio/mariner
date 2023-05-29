@@ -1,36 +1,43 @@
 from threading import Thread
 from time import sleep, time
-from typing import Any, Dict, List, NewType, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import ray
 import requests
+from torch_geometric.loader import DataLoader
+
 from fleet.model_builder.dataset import CustomDataset
 from fleet.torch_.models import CustomModel
 from mariner.core import mlflowapi
 from mariner.core.config import settings
 from mariner.entities.deployment import DeploymentStatus
-from mariner.exceptions import (DeploymentNotRunning, InvalidDataframe,
-                                ModelVersionNotFound, ModelVersionNotTrained,
-                                NotCreatorOwner)
+from mariner.exceptions import (
+    DeploymentNotRunning,
+    InvalidDataframe,
+    ModelVersionNotFound,
+    ModelVersionNotTrained,
+    NotCreatorOwner,
+)
 from mariner.models import _check_dataframe_conforms_dataset
-from mariner.schemas.deployment_schemas import (Deployment,
-                                                DeploymentManagerComunication)
-from torch_geometric.loader import DataLoader
+from mariner.schemas.deployment_schemas import (
+    Deployment,
+    DeploymentManagerComunication,
+)
 
 
 class SingleModelDeploymentControl:
     """Responsible for managing the deployment of a model.
-    
+
     Used by the :class:`DeploymentsManager` to manage the lifecycle of a deployment.
 
     Possible status of a deployment:
-    
+
     - IDLE: The deployment already have a :class:`SingleModelDeploymentControl` but it is not running.
     - STARTING: The deployment is starting.
     - ACTIVE: The deployment was loaded from mlflow and it's running.
     - STOPPED: The deployment don't have a :class:`SingleModelDeploymentControl`.
-    
+
     Attributes:
         deployment (Deployment): The deployment to be managed.
         is_running (bool): Real status of deployment in the manager.
@@ -45,9 +52,20 @@ class SingleModelDeploymentControl:
     model: Optional[CustomModel]
     idle_time: Optional[int] = None
 
-    def __init__(self, deployment: Deployment):
+    def __init__(self, deployment: Deployment, quiet: bool = False):
+        """Initialization method.
+
+        Args:
+            deployment (Deployment): The deployment to be managed.
+            quiet (bool, optional):
+                Defines if the instance should update the deployment status in the database on init.
+                True if it should not, False otherwise.
+                Useful when the instance is being loaded from the database and the server is
+                not running yet.
+        """
         self.deployment = deployment
-        self.update_status(DeploymentStatus.IDLE)
+        if not quiet:
+            self.update_status(DeploymentStatus.IDLE)
 
         self.is_running = False
         self.model = None
@@ -159,11 +177,30 @@ class SingleModelDeploymentControl:
             headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
         )
         assert (
-            res.status_code == 200, 
-            f"Request to update deployment failed with status  {res.status_code}"
+            res.status_code == 200,
+            f"Request to update deployment failed with status  {res.status_code}",
         )
 
         self.deployment = Deployment(**res.json())
+
+    @classmethod
+    def build_and_run(cls, deployment):
+        """Method used by the :class:`DeploymentsManager` to build a new instance
+        of :class:`SingleModelDeploymentControl` and start it.
+
+        Since it will not use the database to store the deployment, this method should
+        be used on first initialization of the deployment manager for all deployments
+        that already have status ACTIVE in the database.
+
+        Args:
+            deployment (Deployment): The deployment to be managed.
+        """
+        instance = cls(deployment, quiet=True)
+        instance.model = mlflowapi.get_model_by_uri(
+            instance.deployment.model_version.get_mlflow_uri()
+        )
+        instance.is_running = True
+        return instance
 
 
 @ray.remote
@@ -171,7 +208,7 @@ class DeploymentsManager:
     """Ray Actor responsible for managing multiple instances
     of :class:`SingleModelDeploymentControl` and handling their life cycle
     (starting, stopping, etc.). Should be used as a singleton.
-    
+
     .. warning:: Should not be instantiated directly, call :func:`get_deployments_manager` instead.
     """
 
@@ -179,7 +216,6 @@ class DeploymentsManager:
 
     def __init__(self):
         self.deployments_map = {}
-        self.load()
         Thread(target=self.check_idle_long_loop).start()
 
     def get_deployments(self):
@@ -205,7 +241,7 @@ class DeploymentsManager:
 
     def add_deployment(self, deployment: Deployment) -> Deployment:
         """Adds a new deployment to the DeploymentsManager.
-        
+
         New deployment should be in the IDLE state when added.
 
         Args:
@@ -213,7 +249,7 @@ class DeploymentsManager:
 
         Returns:
             The added deployment.
-        
+
         Raises:
             ModelVersionNotFound when the deployment does not have a model version.
             ModelVersionNotTrained when the deployment's model version is not trained yet.
@@ -222,18 +258,21 @@ class DeploymentsManager:
             raise ModelVersionNotFound()
         if not deployment.model_version.mlflow_version:
             raise ModelVersionNotTrained()
-        
+
         if not deployment.id in self.deployments_map.keys():
-            self.deployments_map[deployment.id] = SingleModelDeploymentControl(deployment)
+            self.deployments_map[deployment.id] = SingleModelDeploymentControl(
+                deployment
+            )
             assert (
-                self.deployments_map[deployment.id].deployment.status == DeploymentStatus.IDLE,
+                self.deployments_map[deployment.id].deployment.status
+                == DeploymentStatus.IDLE,
                 "Deployment must be idle when added.",
             )
         return self.deployments_map[deployment.id].deployment
 
     def remove_deployment(self, deployment_id: int):
         """Removes a deployment from the DeploymentsManager.
-        
+
         A deployment should be in STOPPED state after removed.
 
         Args:
@@ -252,7 +291,7 @@ class DeploymentsManager:
 
     def start_deployment(self, deployment_id: int, user_id: int) -> Deployment:
         """Starts a deployment with the given deployment_id and user_id.
-        
+
         The deployment should already be added to the DeploymentsManager
         before starting it.
 
@@ -284,7 +323,7 @@ class DeploymentsManager:
 
     def stop_deployment(self, deployment_id: int, user_id: int) -> Deployment:
         """Stops a deployment with the given deployment_id and user_id.
-        
+
         A deployment should be in RUNNING state to be stopped.
         A deployment should be in IDLE state after stopped.
 
@@ -314,7 +353,7 @@ class DeploymentsManager:
     def make_prediction(self, deployment_id: int, x: Any) -> Any:
         """Makes a prediction using the deployment model with the given
         deployment_id and input data x.
-        
+
         A deployment should be in RUNNING state to make predictions.
 
         Args:
@@ -333,23 +372,26 @@ class DeploymentsManager:
 
         return self.deployments_map[deployment_id].predict(x)
 
-    def load(self):
-        res = requests.post(
-            f"{settings.SERVER_HOST}/api/v1/deployments/deployment-manager",
-            json=DeploymentManagerComunication(first_init=True).dict(),
-            headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
-        )
-        deployments = map(lambda x: Deployment(**x), res.json())
+    def load_deployments(self, deployments: List[Deployment]):
+        """Used to start a list of deployments when the DeploymentsManager.
+
+        Should be used on first initialization of the DeploymentsManager to load
+        all deployments from the database that were running before the server was
+        stopped.
+
+        Args:
+            deployments (List[Deployment]): The list of deployments to start.
+        """
         for deployment in deployments:
-            try:
-                self.add_deployment(deployment)
-                self.start_deployment(deployment.id, deployment.created_by_id)
-            except Exception as e:
-                print(e)
-        return True
+            if deployment.id not in self.deployments_map.keys():
+                self.deployments_map[
+                    deployment.id
+                ] = SingleModelDeploymentControl.build_and_run(deployment)
 
     @staticmethod
-    def get_idle_deployments(deployments: Dict[int, SingleModelDeploymentControl]) -> List[int]:
+    def get_idle_deployments(
+        deployments: Dict[int, SingleModelDeploymentControl]
+    ) -> List[int]:
         return [
             deployment_id
             for deployment_id, deployment in deployments.items()

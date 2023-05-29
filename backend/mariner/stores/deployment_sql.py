@@ -2,17 +2,16 @@
 Deployment data layer defining ways to read and write to the deployments collection
 """
 from datetime import timedelta
-
 from typing import Optional
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from mariner.entities.deployment import (
-    Deployment, 
+    Deployment,
     Predictions,
-    SharePermission, 
-    ShareStrategy
+    SharePermission,
+    ShareStrategy,
 )
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
@@ -22,11 +21,10 @@ from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
 from mariner.schemas.deployment_schemas import (
     DeploymentCreateRepo,
     DeploymentsQuery,
-    DeploymentStatus,
     DeploymentUpdateRepo,
     PermissionCreateRepo,
     PermissionDeleteRepo,
-    PredictionCreateRepo
+    PredictionCreateRepo,
 )
 from mariner.stores.base_sql import CRUDBase
 from mariner.stores.dataset_sql import dataset_store
@@ -305,7 +303,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         count = sql_query.count()
         return count
 
-    def create_prediction_entry(self, db: Session, prediction_to_track: PredictionCreateRepo):
+    def create_prediction_entry(
+        self, db: Session, prediction_to_track: PredictionCreateRepo
+    ):
         """Register a prediction in the database.
         To be used to check if the user has reached the prediction limit for the deployment
 
@@ -318,30 +318,6 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         prediction = db.add(Predictions(**prediction_to_track))
         db.commit()
         return prediction
-
-    def handle_deployment_manager_init(self, db: Session):
-        """Syncronize the deployment manager with last state of database.
-        Stop all deployments on database and return a list of the deployments
-        that were running.
-
-        Returns:
-        List of deployments that were running
-        """
-        deployments = (
-            db.query(Deployment)
-            .filter(Deployment.status == DeploymentStatus.ACTIVE)
-            .all()
-        )
-        deployments = list(
-            map(lambda deployment: DeploymentSchema.from_orm(deployment), deployments)
-        )
-
-        db.execute(
-            f"UPDATE deployment SET status = :status",
-            {"status": DeploymentStatus.STOPPED.value.upper()},
-        )
-        db.commit()
-        return deployments
 
     def get_training_data(
         self, db: Session, deployment: DeploymentSchema

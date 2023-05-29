@@ -4,27 +4,36 @@ Module containing deployment service functions.
 import asyncio
 from typing import Any, Dict, List, Tuple
 
+from sqlalchemy.orm.session import Session
+from torch import Tensor
+
 from api.websocket import WebSocketMessage, get_websockets_manager
-from mariner.core.security import (decode_deployment_url_token,
-                                   generate_deployment_signed_url)
+from mariner.core.security import (
+    decode_deployment_url_token,
+    generate_deployment_signed_url,
+)
 from mariner.entities.deployment import Deployment as DeploymentEntity
 from mariner.entities.deployment import ShareStrategy
 from mariner.entities.user import User
-from mariner.exceptions import (DeploymentNotFound, NotCreatorOwner,
-                                PredictionLimitReached)
+from mariner.exceptions import (
+    DeploymentNotFound,
+    NotCreatorOwner,
+    PredictionLimitReached,
+)
 from mariner.ray_actors.deployments_manager import get_deployments_manager
-from mariner.schemas.deployment_schemas import (Deployment, DeploymentBase,
-                                                DeploymentCreateRepo,
-                                                DeploymentsQuery,
-                                                DeploymentStatus,
-                                                DeploymentUpdateRepo,
-                                                DeploymentWithTrainingData,
-                                                PermissionCreateRepo,
-                                                PredictionCreateRepo)
+from mariner.schemas.deployment_schemas import (
+    Deployment,
+    DeploymentBase,
+    DeploymentCreateRepo,
+    DeploymentsQuery,
+    DeploymentStatus,
+    DeploymentUpdateRepo,
+    DeploymentWithTrainingData,
+    PermissionCreateRepo,
+    PredictionCreateRepo,
+)
 from mariner.stores.deployment_sql import deployment_store
 from mariner.tasks import TaskView, get_manager
-from sqlalchemy.orm.session import Session
-from torch import Tensor
 
 
 def get_deployments(
@@ -56,7 +65,7 @@ def get_deployment(
 
     Returns:
         A deployment with training data object.
-        
+
     Raises:
         DeploymentNotFound: If the deployment does not exist.
         NotCreatorOwner: If the user is not the creator of the deployment.
@@ -253,7 +262,7 @@ def delete_permission(
 
 def get_public_deployment(db: Session, token: str):
     """Get a public deployment.
-    
+
     Token should be a jwt with the sub field set to the deployment id.
     Deployment needs to have the share_strategy set to public.
 
@@ -308,13 +317,13 @@ async def make_prediction(
     if not await manager.is_deployment_running.remote(deployment_id):
         raise DeploymentNotFound()
 
-    deployment = deployment_store.get_if_has_permission(
-        db, deployment_id, current_user
-    )
+    deployment = deployment_store.get_if_has_permission(db, deployment_id, current_user)
     if not deployment:
         raise PermissionError()
 
-    prediction_count = deployment_store.get_predictions_count(db, deployment, current_user)
+    prediction_count = deployment_store.get_predictions_count(
+        db, deployment, current_user
+    )
     if prediction_count >= deployment.prediction_rate_limit_value:
         raise PredictionLimitReached()
 
@@ -386,25 +395,9 @@ async def make_prediction_public(db: Session, deployment_id: int, data: Dict[str
     return prediction
 
 
-def handle_deployment_manager_first_init(db: Session):
-    """To run when the deployment manager starts.
-    
-    Responsible to make sure that the deployment status on database
-    is the same as the one on the deployment manager.
-
-    Args:
-        db: database session.
-
-    Returns:
-        list of deployments that was running on the deployment manager.
-    """
-    deployments = deployment_store.handle_deployment_manager_init(db)
-    return deployments
-
-
 def notify_users_about_status_update(deployment: Deployment):
     """Notify the user using websocket about the deployment status updated.
-    
+
     This function will start the broadcast on websocket and add it as a task
     to the task manager to finish asynchoronously.
 

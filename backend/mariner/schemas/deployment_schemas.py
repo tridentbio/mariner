@@ -4,14 +4,17 @@ Deployment related DTOs
 
 from typing import List, Literal, Optional
 
+from pydantic import root_validator
+
 from mariner.entities.deployment import Deployment as DeploymentEntity
-from mariner.entities.deployment import (DeploymentStatus, RateLimitUnit,
-                                         ShareStrategy)
+from mariner.entities.deployment import (
+    DeploymentStatus,
+    RateLimitUnit,
+    ShareStrategy,
+)
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import DatasetSummary
 from mariner.schemas.model_schemas import ModelVersion
-from pydantic import root_validator
-
 
 
 class DeploymentsQuery(PaginatedApiQuery):
@@ -51,7 +54,7 @@ class DeploymentsQuery(PaginatedApiQuery):
 
 class DeploymentBase(ApiBaseModel):
     """Deployment base type.
-    
+
     Arguments:
         name (str): name of the deployment.
         readme (str): readme of the deployment.
@@ -239,6 +242,5 @@ class DeploymentManagerComunication(ApiBaseModel):
     of deployment manager ray actor
     """
 
-    first_init = False
-    deployment_id: Optional[int] = None
-    status: Optional[DeploymentStatus] = None
+    deployment_id: int
+    status: DeploymentStatus

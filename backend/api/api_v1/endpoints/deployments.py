@@ -2,28 +2,36 @@
 Handlers for api/v1/deployments* endpoints.
 """
 
+from typing import Any, Dict, List, Union
+
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
 from sqlalchemy.orm.session import Session
 from starlette import status
-from typing import Any, Dict, List, Union
 
 import mariner.deployment as controller
 from api import deps
 from mariner.entities.user import User
-from mariner.exceptions import (DeploymentAlreadyExists, DeploymentNotFound,
-                                ModelVersionNotFound, NotCreatorOwner,
-                                PredictionLimitReached)
+from mariner.exceptions import (
+    DeploymentAlreadyExists,
+    DeploymentNotFound,
+    ModelVersionNotFound,
+    NotCreatorOwner,
+    PredictionLimitReached,
+)
 from mariner.schemas.api import Paginated
-from mariner.schemas.deployment_schemas import (Deployment, DeploymentBase,
-                                                DeploymentManagerComunication,
-                                                DeploymentsQuery,
-                                                DeploymentUpdateInput,
-                                                DeploymentUpdateRepo,
-                                                DeploymentWithTrainingData,
-                                                PermissionCreateRepo,
-                                                PermissionDeleteRepo)
+from mariner.schemas.deployment_schemas import (
+    Deployment,
+    DeploymentBase,
+    DeploymentManagerComunication,
+    DeploymentsQuery,
+    DeploymentUpdateInput,
+    DeploymentUpdateRepo,
+    DeploymentWithTrainingData,
+    PermissionCreateRepo,
+    PermissionDeleteRepo,
+)
 
 router = APIRouter()
 
@@ -428,12 +436,9 @@ async def handle_deployment_manager(
     db: Session = Depends(deps.get_db),
 ):
     """Handle messages from Deployment Manager.
-    Deployment Manager uses this endpoint to:
-        - handle_deployment_manager_first_init:
-            Make sure that the deployment status on databaseis the same as the one
-            on the Deployment Manager.
-        - update_deployment_status:
-            Update the deployment status on database and notify the user about it.
+
+    Deployment Manager uses this endpoint to update the deployment status on database
+    and notify the user about it.
 
     Args:
         message: message from Deployment Manager.
@@ -446,12 +451,9 @@ async def handle_deployment_manager(
         HTTPException(status_code=404): if deployment is not found.
     """
     try:
-        if message.first_init:
-            return controller.handle_deployment_manager_first_init(db)
-        else:
-            return await controller.update_deployment_status(
-                db, message.deployment_id, message.status
-            )
+        return await controller.update_deployment_status(
+            db, message.deployment_id, message.status
+        )
 
     except DeploymentNotFound:
         return HTTPException(
