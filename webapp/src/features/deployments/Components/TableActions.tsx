@@ -29,6 +29,14 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   const [updateDeploy] = deploymentsApi.useUpdateDeploymentMutation();
   const { setMessage } = useNotifications();
 
+  const handleShare = (shareUrl: string) => {
+    navigator.clipboard.writeText(shareUrl);
+    setMessage({
+      type: 'success',
+      message: 'Public URL copied to clipboard.',
+    });
+  };
+
   const handleDeployStatus = (id: number, status: 'active' | 'stopped') => {
     updateDeploy({
       deploymentId: id,
@@ -90,14 +98,7 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   }, [status]);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <>
       {onClickEdit && (
         <Tooltip title={'Edit'} placement="top">
           <Fab
@@ -139,13 +140,13 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
               '&:hover': { background: '#b3b3b3' },
             }}
             aria-label="share"
-            onClick={() => navigator.clipboard.writeText(shareUrl)}
+            onClick={() => handleShare(shareUrl)}
           >
             <PublicIcon fontSize="inherit" />
           </Fab>
         </Tooltip>
       )}
-    </Box>
+    </>
   );
 };
 

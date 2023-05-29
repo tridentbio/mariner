@@ -18,6 +18,10 @@ import { useAppSelector } from 'app/hooks';
 import { useDispatch } from 'react-redux';
 import { updateExperiments } from '../modelSlice';
 import Justify from 'components/atoms/Justify';
+import {
+  TableActionsWrapper,
+  tableActionsSx,
+} from '@components/atoms/TableActions';
 
 interface ModelExperimentsProps {
   model: Model;
@@ -237,9 +241,10 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
     },
     {
       name: 'Actions',
-      title: '',
+      title: 'Actions',
+      customSx: tableActionsSx,
       render: (row: Experiment) => (
-        <Justify position="center">
+        <TableActionsWrapper>
           <Button
             onClick={() => setExperimentDetailedId(row.id)}
             variant="text"
@@ -248,7 +253,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
           >
             <ReadMoreIcon />
           </Button>
-        </Justify>
+        </TableActionsWrapper>
       ),
     },
   ];

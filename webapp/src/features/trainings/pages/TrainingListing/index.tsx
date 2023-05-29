@@ -60,7 +60,7 @@ const TraininingListing = () => {
         color="primary"
         onClick={() => navigate(`/trainings/new`)}
         id="go-to-create-training"
-        sx={{ my: 1, float: 'right' }}
+        sx={{ my: 1, float: 'left' }}
       >
         Create Training
       </Button>

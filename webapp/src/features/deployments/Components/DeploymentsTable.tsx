@@ -12,6 +12,10 @@ import { setCurrentDeployment } from '../deploymentsSlice';
 import { linkRender } from 'components/atoms/Table/render';
 import { GetDeploymentsApiArg } from 'app/rtk/generated/deployments';
 import { useAppSelector } from '@hooks';
+import {
+  TableActionsWrapper,
+  tableActionsSx,
+} from '@components/atoms/TableActions';
 
 interface DeploymentsTableProps {
   toggleModal?: () => void;
@@ -187,27 +191,24 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
       name: 'Action',
       field: 'Actions',
       title: 'Actions',
-      customSx: {
-        position: 'sticky',
-        right: -1,
-        background: '#f3f3f3',
-        textAlign: 'left',
-      },
+      customSx: tableActionsSx,
       render: (row) =>
         row.createdById === 1 && (
-          <DeploymentsTableActions
-            onClickDelete={handleClickDelete}
-            onClickEdit={
-              toggleModal &&
-              (() => {
-                toggleModal();
-                dispatch(setCurrentDeployment(row));
-              })
-            }
-            id={row.id}
-            status={row.status}
-            shareUrl={row.shareUrl}
-          />
+          <TableActionsWrapper>
+            <DeploymentsTableActions
+              onClickDelete={handleClickDelete}
+              onClickEdit={
+                toggleModal &&
+                (() => {
+                  toggleModal();
+                  dispatch(setCurrentDeployment(row));
+                })
+              }
+              id={row.id}
+              status={row.status}
+              shareUrl={row.shareUrl}
+            />
+          </TableActionsWrapper>
         ),
     });
 
