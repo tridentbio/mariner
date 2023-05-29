@@ -37,6 +37,7 @@ async def deployments_manager_startup():
         },
     )
 
+    # Load all deployments that were running in the new deployments manager instance
     manager = get_deployments_manager()
     await manager.load_deployments.remote(deployments)
 
