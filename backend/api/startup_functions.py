@@ -5,28 +5,26 @@ from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
 
 
 async def deployments_manager_startup():
-    """Startup function for the deployments manager.
+    """Startup function for the :class:`mariner.ray_actors.DeploymentsManager`.
 
     Should be called when the server starts.
 
     Deployment Manager initialization flow:
     1. Get all deployments that were running before the server was stopped (status = ACTIVE).
+    3. Load all deployments that were running in :class:`mariner.ray_actors.DeploymentsManager`.
     2. Stop all other deployments in the database (status in IDLE, STOPPED, STARTING).
-    3. Load all deployments that were running in the new deployments manager instance.
-    4. Commit the changes to the database.
     """
     db = SessionLocal()
 
     # Map all deployments that were running in the server before it was stopped.
-    running_deployments = (
+    deployments = DeploymentSchema.from_orm_array(
         db.query(Deployment).filter(Deployment.status == DeploymentStatus.ACTIVE).all()
     )
-    deployments = list(
-        map(
-            lambda deployment: DeploymentSchema.from_orm(deployment),
-            running_deployments,
-        )
-    )
+
+    # Load all deployments that were running in the new deployments manager instance.
+    if len(deployments):
+        manager = get_deployments_manager()
+        await manager.load_deployments.remote(deployments)
 
     # Stop all other deployments since they were not running when the server was stopped.
     db.execute(
@@ -36,12 +34,4 @@ async def deployments_manager_startup():
             "active": DeploymentStatus.ACTIVE.value.upper(),
         },
     )
-
-    # Load all deployments that were running in the new deployments manager instance.
-    if len(deployments):
-        manager = get_deployments_manager()
-        await manager.load_deployments.remote(deployments)
-
-    # Commit the changes to the database.
-    db.commit()
     db.close()
