@@ -132,7 +132,7 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
         The graph is used for a topological walk on the schema.
         """
         return graph.make_graph_from_forward_args(
-            [layer.dict() for layer in self.layers]
+            [layer.dict(by_alias=True) for layer in self.layers]
         )
 
 
