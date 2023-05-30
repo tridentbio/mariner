@@ -87,10 +87,6 @@ def dataset_topo_sort(
     topo_sort = nx.topological_sort(graph)
     featurizers, transforms = [], []
 
-    print("%r" % topo_sort)
-    print("featurizers %r" % [f for f in featurizers_dict])
-    print("transforms %r" % [t for t in transforms_dict])
-
     # TODO: check that featurizers come before transforms
     for item in topo_sort:
         if item in featurizers_dict:
@@ -102,8 +98,6 @@ def dataset_topo_sort(
 
 
 def apply(feat_or_transform, numpy_col):
-    print(feat_or_transform)
-    print(feat_or_transform.__class__)
     if isinstance(feat_or_transform, torch.nn.Module):
         return feat_or_transform(numpy_col)
     elif isinstance(feat_or_transform, sklearn.base.TransformerMixin):
@@ -165,9 +159,6 @@ def build_columns_numpy(
     # Get featurizers and transformers in order
     feats, transforms = map(list, dataset_topo_sort(dataset_config))
 
-    print("Number of feats: %d" % len(feats))
-    print("Number of transforms: %d" % len(transforms))
-
     # Index preprocessing_steps by name
     preprocessing_steps = {}
 
@@ -176,13 +167,11 @@ def build_columns_numpy(
         feat = featurizer_config.create()
         preprocessing_steps[featurizer_config.name] = feat
 
-    print("%r" % preprocessing_steps)
     # Add featurized columns into dataframe.
     for feat in feats:
         value = get_args(df, feat)
         df[feat.name] = apply(feat.create(), value)
 
-    print("%r" % df.columns)
     # Add default featurizers into dataframe.
     for column in dataset_config.feature_columns:
         if isinstance(
