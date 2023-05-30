@@ -7,6 +7,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi_utils.openapi import simplify_operation_ids
 from starlette.middleware.cors import CORSMiddleware
 
+from api import startup_functions
 from api.api_v1.api import api_router
 from api.websocket import ws_router
 from mariner.core.config import settings
@@ -14,6 +15,14 @@ from mariner.core.config import settings
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Runs the startup functions once the server is started.
+    """
+    await startup_functions.deployments_manager_startup()
 
 
 @app.get("/health", response_model=str)

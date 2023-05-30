@@ -23,7 +23,7 @@ import SortingButton from './SortingButton';
 
 const isKeyOf = <O,>(
   key: string | number | symbol | null,
-  obj: O
+  obj: O extends object ? O : never
 ): key is keyof O => {
   if (!key) return false;
   return key in obj;

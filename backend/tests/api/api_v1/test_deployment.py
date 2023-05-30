@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Dict, Literal
+from typing import Any, Dict, Literal
 
 import pytest
 from fastapi.testclient import TestClient
@@ -25,7 +25,6 @@ from tests.utils.utils import random_lower_string
 def deployment_fixture(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    db: Session,
     some_model: Model,
 ) -> Deployment:
     """Deployment fixture. Owner: default test_user"""
@@ -95,6 +94,7 @@ def create_temporary_deployment(
     teardown_create_model(db, some_model, skip_mlflow=True)
 
 
+@pytest.mark.integration
 @pytest.mark.parametrize("another_user_share_mode", ("user", "org", "public"))
 def test_get_deployments(
     db: Session,
@@ -139,6 +139,7 @@ def test_get_deployments(
         ), "Should have the created deployment in the list."
 
 
+@pytest.mark.integration
 def test_get_my_deployments(
     db: Session,
     client: TestClient,
@@ -167,6 +168,7 @@ def test_get_my_deployments(
     ), "Should have the created deployment in the list."
 
 
+@pytest.mark.integration
 def test_create_deployment(
     db: Session,
     client: TestClient,
@@ -197,6 +199,7 @@ def test_create_deployment(
     assert db_data.name == deployment_data["name"], "Should have the same name."
 
 
+@pytest.mark.integration
 def test_update_deployment(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -224,6 +227,7 @@ def test_update_deployment(
     ), "Should have a share url after updating to public."
 
 
+@pytest.mark.integration
 def test_delete_deployment(
     db: Session,
     client: TestClient,
@@ -261,6 +265,7 @@ def test_delete_deployment(
         ), "Should not have the deployment in the list since it was deleted."
 
 
+@pytest.mark.integration
 def test_create_permission(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -301,6 +306,7 @@ def test_create_permission(
             assert test_user.id in api_deployment["usersIdAllowed"]
 
 
+@pytest.mark.integration
 def test_delete_permission(
     client: TestClient,
     normal_user_token_headers: Dict[str, str],
@@ -350,6 +356,7 @@ def test_delete_permission(
             assert test_user.id not in api_deployment["usersIdAllowed"]
 
 
+@pytest.mark.integration
 def test_get_public_deployment(
     db: Session,
     client: TestClient,
@@ -379,8 +386,10 @@ def test_get_public_deployment(
         deployment = r.json()
         public_url = deployment["shareUrl"]
         assert bool(public_url), "Should have a public url after updating to public."
-
-        r = client.get(public_url)
+        
+        token = '.'.join(public_url.split("/")[-3:])
+        r = client.get(f"{settings.API_V1_STR}/deployments/public/{token}")
+        
         assert (
             r.status_code == 200
         ), "Should be accessible by anyone without authorization."
@@ -388,3 +397,63 @@ def test_get_public_deployment(
         payload = r.json()
         assert payload["id"] == some_deployment.id, "Should have the same id."
         assert payload["name"] == some_deployment.name, "Should have the same name."
+
+
+@pytest.fixture(scope="module")
+def predict_req_data():
+    return {
+        "smiles": [
+            "CCCC",
+            "CCCCC",
+            "CCCCCCC",
+        ],
+        "mwt": [3, 1, 9],
+    }
+
+
+@pytest.mark.integration
+def test_post_make_prediction(
+    client: TestClient,
+    normal_user_token_headers: Dict[str, str],
+    some_deployment: Deployment,
+    predict_req_data: Dict[str, Any],
+):
+    r = client.post(
+        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        json=predict_req_data,
+        headers=normal_user_token_headers,
+    )
+    assert (
+        r.status_code == 404
+    ), "Should not find the deployment instance on ray since it's not running."
+
+    r = client.put(
+        f"{settings.API_V1_STR}/deployments/{some_deployment.id}",
+        json={
+            "share_strategy": "public",
+            "prediction_rate_limit_value": 1,
+            "prediction_rate_limit_unit": "day",
+            "status": "active",
+        },
+        headers=normal_user_token_headers,
+    )
+    assert r.status_code == 200, "Should update deployment instance status to active."
+
+    r = client.post(
+        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        json=predict_req_data,
+        headers=normal_user_token_headers,
+    )
+    assert r.status_code == 200
+    payload = r.json()
+    assert "tpsa" in payload, "'tpsa' column should be in prediction"
+    assert isinstance(payload["tpsa"], list), "'tpsa' column should be a list"
+
+    r = client.post(
+        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        json=predict_req_data,
+        headers=normal_user_token_headers,
+    )
+    assert (
+        r.status_code == 429
+    ), "Should return 429 status code when rate limit is exceeded"

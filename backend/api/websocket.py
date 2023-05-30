@@ -21,7 +21,9 @@ class WebSocketMessage(ApiBaseModel):
     Base class for messages exchanged with client
     """
 
-    type: Literal["pong", "update-running-metrics", "dataset-process-finish"]
+    type: Literal[
+        "pong", "update-running-metrics", "dataset-process-finish", "update-deployment"
+    ]
     data: Any
 
 
@@ -83,14 +85,14 @@ class ConnectionManager:
             return
         await self.active_connections[user_id].send_text(message.json(by_alias=True))
 
-    async def broadcast(self, message: str):
+    async def broadcast(self, message: WebSocketMessage):
         """Sends message to all active connections.
 
         Args:
             message: message to send.
         """
         for connection in self.active_connections.values():
-            await connection.send_text(message)
+            await connection.send_text(message.json(by_alias=True))
 
 
 _manager = None

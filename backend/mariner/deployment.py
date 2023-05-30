@@ -1,10 +1,13 @@
 """
 Module containing deployment service functions.
 """
-from typing import List, Tuple
+import asyncio
+from typing import Any, Dict, List, Tuple
 
 from sqlalchemy.orm.session import Session
+from torch import Tensor
 
+from api.websocket import WebSocketMessage, get_websockets_manager
 from mariner.core.security import (
     decode_deployment_url_token,
     generate_deployment_signed_url,
@@ -12,16 +15,25 @@ from mariner.core.security import (
 from mariner.entities.deployment import Deployment as DeploymentEntity
 from mariner.entities.deployment import ShareStrategy
 from mariner.entities.user import User
-from mariner.exceptions import DeploymentNotFound, NotCreatorOwner
+from mariner.exceptions import (
+    DeploymentNotFound,
+    NotCreatorOwner,
+    PredictionLimitReached,
+)
+from mariner.ray_actors.deployments_manager import get_deployments_manager
 from mariner.schemas.deployment_schemas import (
     Deployment,
     DeploymentBase,
     DeploymentCreateRepo,
     DeploymentsQuery,
+    DeploymentStatus,
     DeploymentUpdateRepo,
+    DeploymentWithTrainingData,
     PermissionCreateRepo,
+    PredictionCreateRepo,
 )
 from mariner.stores.deployment_sql import deployment_store
+from mariner.tasks import TaskView, get_manager
 
 
 def get_deployments(
@@ -39,6 +51,36 @@ def get_deployments(
     """
     db_data, total = deployment_store.get_many_paginated(db, query, current_user)
     return db_data, total
+
+
+def get_deployment(
+    db: Session, current_user: User, deployment_id: int
+) -> DeploymentWithTrainingData:
+    """Retrieve a deployment that the requester has access to.
+
+    Args:
+        db (Session): SQLAlchemy session.
+        current_user (User): Current user.
+        deployment_id (int): Deployment ID.
+
+    Returns:
+        A deployment with training data object.
+
+    Raises:
+        DeploymentNotFound: If the deployment does not exist.
+        NotCreatorOwner: If the user is not the creator of the deployment.
+    """
+    deployment = deployment_store.get_if_has_permission(
+        db, deployment_id=deployment_id, user=current_user
+    )
+    if not deployment:
+        raise DeploymentNotFound()
+    deployment = DeploymentWithTrainingData.from_orm(deployment)
+
+    if deployment.show_training_data:
+        deployment.dataset_summary = deployment_store.get_training_data(db, deployment)
+
+    return deployment
 
 
 def create_deployment(
@@ -77,7 +119,7 @@ def create_deployment(
     return Deployment.from_orm(deployment)
 
 
-def update_deployment(
+async def update_deployment(
     db: Session,
     current_user: User,
     deployment_id: int,
@@ -112,14 +154,27 @@ def update_deployment(
         deployment_input.share_url = share_url
 
     if deployment_input.status and deployment_input.status != deployment_entity.status:
-        raise NotImplementedError("Deployment status cannot be updated yet.")
+        manager = get_deployments_manager()
+
+        if deployment_input.status == "active":
+            await manager.add_deployment.remote(Deployment.from_orm(deployment_entity))
+            manager.start_deployment.remote(
+                deployment_entity.id, deployment_entity.created_by_id
+            )
+            del deployment_input.status  # status will by handled asynchronously
+
+        elif deployment_input.status == "stopped":
+            manager.stop_deployment.remote(
+                deployment_entity.id, deployment_entity.created_by_id
+            )
+            del deployment_input.status  # status will by handled asynchronously
 
     return deployment_store.update(
         db, db_obj=deployment_entity, obj_in=deployment_input
     )
 
 
-def delete_deployment(
+async def delete_deployment(
     db: Session, current_user: User, deployment_to_delete_id: int
 ) -> Deployment:
     """Delete a deployment.
@@ -139,9 +194,12 @@ def delete_deployment(
     if deployment.created_by_id != current_user.id:
         raise NotCreatorOwner()
 
-    return Deployment.from_orm(
-        deployment_store.update(db, deployment, DeploymentUpdateRepo.delete())
-    )
+    manager = get_deployments_manager()
+    if deployment.id in await manager.get_deployments.remote():
+        await manager.stop_deployment.remote(deployment.id, deployment.created_by_id)
+        await manager.remove_deployment.remote(deployment.id)
+
+    return deployment_store.update(db, deployment, DeploymentUpdateRepo.delete())
 
 
 def create_permission(
@@ -202,8 +260,9 @@ def delete_permission(
     return Deployment.from_orm(deployment_store.get(db, permission_input.deployment_id))
 
 
-def get_public_deployment(db: Session, token):
+def get_public_deployment(db: Session, token: str):
     """Get a public deployment.
+
     Token should be a jwt with the sub field set to the deployment id.
     Deployment needs to have the share_strategy set to public.
 
@@ -227,4 +286,171 @@ def get_public_deployment(db: Session, token):
     elif not deployment.share_strategy == ShareStrategy.PUBLIC:
         raise PermissionError()
 
+    deployment = DeploymentWithTrainingData.from_orm(deployment)
+
+    if deployment.show_training_data:
+        deployment.dataset_summary = deployment_store.get_training_data(db, deployment)
+
+    return deployment
+
+
+async def make_prediction(
+    db: Session, current_user: User, deployment_id: int, data: Dict[str, Any]
+):
+    """Make a prediction and track it.
+
+    Args:
+        db: SQLAlchemy session.
+        current_user: Current user.
+        deployment_id: Deployment ID.
+        data: Data to be predicted (any json).
+
+    Returns:
+        Prediction: Json with predictions for each model version target column.
+
+    Raises:
+        PermissionError: If the user does not have access to the deployment.
+        PredictionLimitReached: If the user reached the prediction limit.
+        DeploymentNotFound: If the deployment is not running.
+    """
+    manager = get_deployments_manager()
+    if not await manager.is_deployment_running.remote(deployment_id):
+        raise DeploymentNotFound()
+
+    deployment = deployment_store.get_if_has_permission(db, deployment_id, current_user)
+    if not deployment:
+        raise PermissionError()
+
+    prediction_count = deployment_store.get_predictions_count(
+        db, deployment, current_user
+    )
+    if prediction_count >= deployment.prediction_rate_limit_value:
+        raise PredictionLimitReached()
+
+    prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
+        deployment_id, data
+    )
+
+    deployment_store.create_prediction_entry(
+        db,
+        PredictionCreateRepo(
+            deployment_id=deployment_id,
+            user_id=current_user.id,
+        ),
+    )
+
+    for column, result in prediction.items():
+        assert isinstance(result, Tensor), "Result must be a Tensor"
+        serialized_result = result.tolist()
+        prediction[column] = (
+            serialized_result
+            if isinstance(serialized_result, list)
+            else [serialized_result]
+        )
+
+    return prediction
+
+
+async def make_prediction_public(db: Session, deployment_id: int, data: Dict[str, Any]):
+    """Make a prediction for a public deployment.
+
+    Args:
+        db: SQLAlchemy session.
+        deployment_id: Deployment ID.
+        data: Data to be predicted (any json).
+
+    Returns:
+        Prediction: Json with predictions for each model version target column.
+    """
+    manager = get_deployments_manager()
+    if not await manager.is_deployment_running.remote(deployment_id):
+        raise DeploymentNotFound()
+
+    deployment = deployment_store.get(db, deployment_id)
+    if not deployment or not deployment.share_strategy == ShareStrategy.PUBLIC:
+        raise PermissionError("Deployment is not public.")
+
+    prediction_count = deployment_store.get_predictions_count(db, deployment)
+    if prediction_count >= deployment.prediction_rate_limit_value:
+        raise PredictionLimitReached()
+
+    prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
+        deployment_id, data
+    )
+
+    deployment_store.create_prediction_entry(
+        db,
+        PredictionCreateRepo(deployment_id=deployment_id),
+    )
+
+    for column, result in prediction.items():
+        assert isinstance(result, Tensor), "Result must be a Tensor"
+        serialized_result = result.tolist()
+        prediction[column] = (
+            serialized_result
+            if isinstance(serialized_result, list)
+            else [serialized_result]
+        )
+
+    return prediction
+
+
+def notify_users_about_status_update(deployment: Deployment):
+    """Notify the user using websocket about the deployment status updated.
+
+    This function will start the broadcast on websocket and add it as a task
+    to the task manager to finish asynchoronously.
+
+    Args:
+        deployment: Deployment object.
+    """
+    manager = get_manager("deployment")
+    task = asyncio.ensure_future(
+        get_websockets_manager().broadcast(
+            WebSocketMessage(
+                type="update-deployment",
+                data={
+                    "deploymentId": deployment.id,
+                    "status": (
+                        deployment.status
+                        if isinstance(deployment.status, str)
+                        else deployment.status.value
+                    ),
+                },
+            )
+        )
+    )
+    manager.add_new_task(
+        TaskView(
+            id=deployment.id,
+            task=task,
+            user_id=deployment.created_by_id,
+        )
+    )
+
+
+async def update_deployment_status(
+    db: Session, deployment_id: int, status: DeploymentStatus
+):
+    """Update the deployment status on database and notify the user about it.
+    To be used by the deployment manager.
+
+    Args:
+        db: database session.
+        deployment_id,
+        status: new status.
+
+    Returns:
+        Updated deployment.
+    """
+    deployment = deployment_store.get(db, deployment_id)
+    if not deployment:
+        return
+
+    deployment = deployment_store.update(
+        db, deployment, DeploymentUpdateRepo(status=status)
+    )
+    deployment = Deployment.from_orm(deployment)
+
+    notify_users_about_status_update(deployment)
     return deployment

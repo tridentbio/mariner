@@ -11,7 +11,7 @@ import { VegaLite } from 'react-vega';
 import { keys } from 'utils';
 import { datasetsGraphTitlesMapper } from './utils';
 
-interface DataSummaryProps {
+export interface DataSummaryProps {
   columnsData: {
     train: APIDataSummary;
     val: APIDataSummary;
