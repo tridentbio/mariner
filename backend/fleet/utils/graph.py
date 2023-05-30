@@ -38,7 +38,7 @@ def make_graph(
         node_id = get_node_id(node)
         edges = get_edges(node)
         for dst, attr in edges:
-            graph.add_edge(node_id, dst, attr=attr)
+            graph.add_edge(dst, node_id, attr=attr)
     return graph
 
 

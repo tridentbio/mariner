@@ -243,7 +243,6 @@ def get_ref_from_input(
 ):
     """Gets the accessor_str of a DataInstance or a batch of DataInstance's
 
-
     Args:
         accessor_str: string represented accessor_str to get, e.g. "mol_featurizer.x", "mwt".
         input(Union[DataInstance, List[DataInstance]):
@@ -253,7 +252,6 @@ def get_ref_from_input(
         assert len(values) > 0, "failed to get values from input"
         if isinstance(values[0], torch.Tensor):
             return torch.cat(values)  # type: ignore
-
     else:
         return get_ref_from_data_instance(accessor_str, input_)
 
@@ -279,6 +277,7 @@ def collect_args(
                     value_.append(get_ref_from_input(item_value, input_))
                 else:
                     value_.append(item_value)
+            result[key] = value_
         elif isinstance(value, str):
             if not value:
                 continue
