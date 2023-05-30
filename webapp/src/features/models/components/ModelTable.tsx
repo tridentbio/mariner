@@ -7,6 +7,10 @@ import { Model } from 'app/types/domain/models';
 import Table from 'components/templates/Table';
 import { Column } from 'components/templates/Table/types';
 import { linkRender } from 'components/atoms/Table/render';
+import {
+  TableActionsWrapper,
+  tableActionsSx,
+} from '@components/atoms/TableActions';
 
 interface IModelTable {
   onOpenDetails: (model: Model) => void;
@@ -32,8 +36,8 @@ const ModelTable = (props: IModelTable) => {
   const columns: Column<Model, any>[] = [
     {
       field: 'name',
-      title: 'NAME',
-      name: 'NAME',
+      title: 'Name',
+      name: 'Name',
       skeletonProps: {
         variant: 'text',
         width: 60,
@@ -46,7 +50,7 @@ const ModelTable = (props: IModelTable) => {
     {
       field: 'description',
       name: 'Description',
-      title: 'DESCRIPTION',
+      title: 'Description',
       skeletonProps: {
         variant: 'rectangular',
         height: 50,
@@ -55,7 +59,7 @@ const ModelTable = (props: IModelTable) => {
     {
       field: null,
       render: (row) => row.versions[row.versions.length - 1]?.name,
-      title: 'LATEST VERSION',
+      title: 'Latest Version',
       name: 'Latest Version',
       skeletonProps: {
         variant: 'text',
@@ -64,7 +68,7 @@ const ModelTable = (props: IModelTable) => {
     },
     {
       field: 'createdBy',
-      title: 'CREATED BY',
+      title: 'Created By',
       name: 'Created By',
       render: (_, value) => <Avatar src={value?.avatarUrl} />,
       skeletonProps: {
@@ -76,9 +80,12 @@ const ModelTable = (props: IModelTable) => {
     {
       name: 'Action',
       field: null,
-      title: '',
+      title: 'Actions',
+      customSx: tableActionsSx,
       render: (row) => (
-        <TableActions onOpenDetails={() => props.onOpenDetails(row)} />
+        <TableActionsWrapper>
+          <TableActions onOpenDetails={() => props.onOpenDetails(row)} />
+        </TableActionsWrapper>
       ),
     },
   ];

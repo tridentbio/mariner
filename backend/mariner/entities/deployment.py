@@ -1,14 +1,14 @@
 """
 Deployment entity and core relations
 """
-from enum import Enum as PyEnum
-from typing import List
 
+from enum import Enum as PyEnum
 from sqlalchemy import Boolean, Column, Enum, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import DateTime
+from typing import List
 
 from mariner.db.base_class import Base
 from mariner.entities.model import ModelVersion
@@ -19,6 +19,7 @@ class DeploymentStatus(str, PyEnum):
     STOPPED = "stopped"
     ACTIVE = "active"
     IDLE = "idle"
+    STARTING = "starting"
 
 
 class ShareStrategy(str, PyEnum):
@@ -33,7 +34,22 @@ class RateLimitUnit(str, PyEnum):
     MONTH = "month"
 
 
-class SharePermissions(Base):
+class Predictions(Base):
+    """Entity mapping to predictions of deployment."""
+
+    id = Column(Integer, primary_key=True, index=True)
+    deployment_id = Column(
+        Integer, ForeignKey("deployment.id", ondelete="CASCADE"), nullable=False
+    )
+    deployment = relationship("Deployment", back_populates="predictions")
+
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=True)
+    user = relationship(User)
+
+    created_at = Column(DateTime, default=current_timestamp())
+
+
+class SharePermission(Base):
     """Entity mapping to share permissions of deployment."""
 
     id = Column(Integer, primary_key=True, index=True)
@@ -50,7 +66,7 @@ class SharePermissions(Base):
     organization = Column(String, nullable=True)
 
     @classmethod
-    def build(cls, users_id: List[int] = [], organizations: List[str] = []) -> list:
+    def build(cls, users_id: List[int]=[], organizations: List[str]=[]) -> list:
         """Build a list of SharePermission from users_id and organizations.
 
         Args:
@@ -58,7 +74,7 @@ class SharePermissions(Base):
             organizations (List[str], optional): List of organizations. Defaults to [].
 
         Returns:
-            List of SharePermissions
+            List of SharePermission
         """
         share_permissions = []
         if len(users_id):
@@ -86,7 +102,10 @@ class Deployment(Base):
 
     share_strategy = Column(Enum(ShareStrategy), default=ShareStrategy.PRIVATE)
     share_permissions = relationship(
-        "SharePermissions", back_populates="deployment", cascade="all,delete"
+        "SharePermission", back_populates="deployment", cascade="all,delete"
+    )
+    predictions = relationship(
+        "Predictions", back_populates="deployment", cascade="all,delete"
     )
 
     model_version_id = Column(

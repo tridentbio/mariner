@@ -1,8 +1,8 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
 import { DeploymentsState } from './types';
-import { Deployment } from 'app/rtk/generated/deployments';
-import { deploymentsApi } from './deploymentsApi';
+import { Deployment, DeploymentStatus } from 'app/rtk/generated/deployments';
+import * as deploymentsApi from '@app/rtk/generated/deployments';
 
 const initialState: DeploymentsState = {
   deployments: [],
@@ -27,6 +27,18 @@ export const deploymentSlice = createSlice({
     cleanCurrentDeployment: (state) => {
       state.current = undefined;
     },
+    updateDeploymentStatus: (
+      state,
+      action: PayloadAction<{ deploymentId: number; status: DeploymentStatus }>
+    ) => {
+      state.deployments = state.deployments.map((deployment) =>
+        deployment.id === action.payload.deploymentId
+          ? { ...deployment, status: action.payload.status }
+          : deployment
+      );
+      if (state.current?.id === action.payload.deploymentId)
+        state.current.status = action.payload.status;
+    },
   },
   extraReducers: (builder) => {
     builder.addMatcher(
@@ -36,9 +48,8 @@ export const deploymentSlice = createSlice({
         state.totalDeployments = action.payload.total;
       }
     );
-
     builder.addMatcher(
-      deploymentsApi.endpoints.getDeploymentById.matchFulfilled,
+      deploymentsApi.endpoints.getDeployment.matchFulfilled,
       (state, action) => {
         state.current = action.payload;
       }
@@ -55,6 +66,9 @@ export const selectDeploymentById =
     }
   };
 
-export const { setCurrentDeployment, cleanCurrentDeployment } =
-  deploymentSlice.actions;
+export const {
+  setCurrentDeployment,
+  cleanCurrentDeployment,
+  updateDeploymentStatus,
+} = deploymentSlice.actions;
 export default deploymentSlice.reducer;

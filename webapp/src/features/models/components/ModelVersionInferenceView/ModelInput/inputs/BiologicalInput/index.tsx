@@ -6,7 +6,7 @@ import {
   Highlight,
 } from 'react-highlight-within-textarea';
 import { Box } from '@mui/system';
-import { Radio } from '@mui/material';
+import { FormLabel, Radio } from '@mui/material';
 import { generateSeqvizSx, inputContainerSx, SeqContainer } from './styles';
 import { getRange, getRulePattern } from './utils';
 
@@ -66,10 +66,12 @@ export const BiologicalInput = (props: BiologicalInputProps) => {
 
   return (
     <>
+      <FormLabel id="demo-radio-buttons-group-label">{props.label}:</FormLabel>
       <SeqContainer>
         <Box
           sx={{
             width: '45vw',
+            mt: '-0.8rem',
           }}
         >
           Visualization:

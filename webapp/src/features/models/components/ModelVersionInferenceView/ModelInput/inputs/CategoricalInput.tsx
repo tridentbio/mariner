@@ -1,4 +1,10 @@
-import { MenuItem, FormControl, InputLabel, Select } from '@mui/material';
+import {
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  FormLabel,
+} from '@mui/material';
 
 interface CategoricalInputProps<T extends {}> {
   options: T[];
@@ -17,9 +23,8 @@ const CategoricalInput = <T extends {}>({
 }: CategoricalInputProps<T>) => {
   return (
     <FormControl sx={{ width: 300 }}>
-      <InputLabel id="categories-label">{label}</InputLabel>
+      <FormLabel id="demo-radio-buttons-group-label">{label}:</FormLabel>
       <Select
-        label={label}
         value={getLabel(value)}
         labelId="categories-label"
         onChange={(event) => onChange(event.target.value)}

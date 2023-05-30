@@ -3,8 +3,10 @@ import { messageHandler, SocketMessageHandler } from 'app/websocket/types';
 import { useAppDispatch } from 'app/hooks';
 import { updateExperiment } from 'features/models/modelSlice';
 import * as datasetsApi from 'app/rtk/generated/datasets';
+import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { useNotifications } from 'app/notifications';
 import { updateDataset } from 'features/datasets/datasetSlice';
+import { updateDeploymentStatus } from '@features/deployments/deploymentsSlice';
 
 const WebSocketContext = createContext<{
   socketHandler: SocketMessageHandler | null;
@@ -19,6 +21,7 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
   const dispatch = useAppDispatch();
 
   const [fetchDatasetById] = datasetsApi.useLazyGetMyDatasetQuery();
+  const [fetchDeploymentById] = deploymentsApi.useLazyGetDeploymentQuery();
   const { setMessage } = useNotifications();
 
   useEffect(() => {
@@ -35,6 +38,11 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
         message: event.data.message,
         type: dataset.readyStatus === 'failed' ? 'error' : 'success',
       });
+    });
+    socketHandler.on('update-deployment', (event) => {
+      const updatedData = event.data;
+      fetchDeploymentById({ deploymentId: updatedData.deploymentId }, false);
+      dispatch(updateDeploymentStatus(updatedData));
     });
     socketHandlerRef.current = socketHandler;
 
