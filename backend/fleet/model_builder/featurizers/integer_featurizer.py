@@ -48,7 +48,7 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         return self.reversed_classes[idx]
 
     @override
-    def set_from_model_schema(self, config, dataset_config=None, deps=None):
+    def set_from_model_schema(self, config=None, dataset_config=None, deps=None):
         if not deps or len(deps) == 0:
             raise ValueError("deps cannot be None")
         if not dataset_config:
@@ -61,7 +61,6 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
             raise RuntimeError(f"Column {input_} was not found in the config columns")
 
         # Handle column info not being from categorical
-
         if not isinstance(column_info.data_type, data_types.CategoricalDataType):
             raise DataTypeMismatchException(
                 "expecteing CategoricalDataType, but found"

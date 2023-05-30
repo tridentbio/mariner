@@ -112,7 +112,7 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
         bond_features = "bond = {}".format(
             ", ".join([f"{i}: {s}" for i, s in self.EDGE_FEATURE_SLICES.items()])
         )
-        return f"Featurizer({atom_features}; {bond_features})"
+        return f"MoleculeFeaturizer({atom_features}; {bond_features})"
 
     def _get_slices(self):
         if self.allow_unknown:
