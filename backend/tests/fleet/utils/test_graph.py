@@ -16,10 +16,10 @@ def test_make_graph():
     ]
     graph = make_graph(nodes, lambda node: node["name"], lambda node: node["edges"])
     assert set(graph.nodes) == {"a", "b", "c"}
-    assert set(graph.edges) == {("a", "b"), ("a", "c"), ("b", "c")}
-    assert graph["a"]["b"]["attr"] == 1
-    assert graph["a"]["c"]["attr"] == 2
-    assert graph["b"]["c"]["attr"] == 3
+    assert set(graph.edges) == {("b", "a"), ("c", "a"), ("c", "b")}
+    assert graph["b"]["a"]["attr"] == 1
+    assert graph["c"]["a"]["attr"] == 2
+    assert graph["c"]["b"]["attr"] == 3
 
 
 @dataclass
@@ -41,12 +41,12 @@ def test_make_graph_from_forward_args():
     graph = make_graph_from_forward_args(nodes)
     assert set(graph.nodes) == {"a", "b", "c", "d"}
     assert set(graph.edges) == {
-        ("a", "b"),
-        ("b", "c"),
-        ("b", "d"),
+        ("b", "a"),
+        ("c", "b"),
+        ("d", "b"),
         ("c", "c"),
         ("d", "d"),
     }
-    assert graph["a"]["b"]["attr"] == "inputa"
-    assert graph["b"]["c"]["attr"] == "inputb"
-    assert graph["b"]["d"]["attr"] == "inputb"
+    assert graph["b"]["a"]["attr"] == "inputa"
+    assert graph["c"]["b"]["attr"] == "inputb"
+    assert graph["d"]["b"]["attr"] == "inputb"
