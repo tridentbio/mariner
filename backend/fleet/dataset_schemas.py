@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, root_validator
 
 from fleet import data_types
 from fleet.model_builder.layers_schema import FeaturizersType
+from fleet.yaml_model import YAML_Model
 
 
 class BaseDatasetModel(BaseModel):
@@ -38,7 +39,7 @@ class ColumnConfig(BaseDatasetModel):
     name: str
     data_type: Union[
         data_types.QuantityDataType,
-        data_types.NumericalDataType,
+        data_types.NumericDataType,
         data_types.StringDataType,
         data_types.SmileDataType,
         data_types.CategoricalDataType,
@@ -66,7 +67,7 @@ class TargetConfig(ColumnConfig):
     column_type: Optional[Literal["regression", "multiclass", "binary"]] = None
 
 
-class DatasetConfig(BaseDatasetModel):
+class DatasetConfig(BaseDatasetModel, YAML_Model):
     """
     Describes a dataset for the model.
 
@@ -84,6 +85,7 @@ class DatasetConfig(BaseDatasetModel):
     target_columns: List[ColumnConfig]
     feature_columns: List[ColumnConfig]
     featurizers: List[FeaturizersType] = []
+    transforms: List[Any] = []  # TODO: add type
 
     def topological_sort(self):
         ...

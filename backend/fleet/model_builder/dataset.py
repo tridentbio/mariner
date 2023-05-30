@@ -230,7 +230,7 @@ class CustomDataset(Dataset):
             val = sample[column.name]
             if isinstance(
                 column.data_type,
-                (data_types.NumericalDataType, data_types.QuantityDataType),
+                (data_types.NumericDataType, data_types.QuantityDataType),
             ):
                 data[column.name] = torch.Tensor([val])
             elif isinstance(
