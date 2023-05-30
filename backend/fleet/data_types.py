@@ -21,7 +21,7 @@ class BaseDataType(BaseModel):
         underscore_attrs_are_private = True
 
 
-class NumericalDataType(BaseDataType):
+class NumericDataType(BaseDataType):
     """
     Data type for a numerical series.
     """
@@ -34,7 +34,7 @@ class NumericalDataType(BaseDataType):
         return "numeric"
 
 
-class QuantityDataType(NumericalDataType):
+class QuantityDataType(NumericDataType):
     """
     Data type for a numerical series bound to a unit
     """
@@ -119,3 +119,13 @@ class ProteinDataType(BaseDataType):
     def check_domain_kind(cls, _value: Any):
         """Validates domain_kind"""
         return "protein"
+
+
+DataType = Union[
+    NumericDataType,
+    QuantityDataType,
+    SmileDataType,
+    DNADataType,
+    RNADataType,
+    ProteinDataType,
+]

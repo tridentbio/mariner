@@ -115,7 +115,7 @@ class DatasetsQuery(PaginatedApiQuery):
     created_by_id: Optional[int]
 
 
-class NumericalDataType(ApiBaseModel, data_types.NumericalDataType):
+class NumericalDataType(ApiBaseModel, data_types.NumericDataType):
     """Numerical data type."""
 
 
