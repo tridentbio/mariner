@@ -1,6 +1,7 @@
 """
 Featurizers for biological data types
 """
+import numpy as np
 import torch
 
 from fleet.model_builder.featurizers.base_featurizers import (
@@ -9,9 +10,9 @@ from fleet.model_builder.featurizers.base_featurizers import (
 
 
 class SequenceFeaturizer(ReversibleFeaturizer[str]):
-    """Sequnce base featurizer. All biological sequence
+    """Sequence base featurizer. All biological sequence
     featurizer inherit from this class by specifying
-    its own alphabet dictionary
+    its own alphabet dictionary.
     """
 
     alphabet: dict[str, int]
@@ -26,12 +27,15 @@ class SequenceFeaturizer(ReversibleFeaturizer[str]):
         # Get the number of tokes in the alphabet for use with embedding layers later
         self.num_embeddings = len(self.alphabet.keys())
 
-    def __call__(self, input_: str) -> torch.Tensor:
+    def __call__(self, input_: str) -> np.ndarray:
         """Featurize sequence"""
         return self.featurize(input_)
 
-    def featurize(self, input_: str) -> torch.Tensor:
+    def featurize(self, input_: str) -> np.ndarray:
         """Featurize sequence to pytorch LongTensor"""
+        assert isinstance(
+            input_, str
+        ), f"Sequence featurizer must receive single strings but got {input_.__class__}"
         # Initialize an empty sequence
         sequence = []
 
@@ -44,8 +48,7 @@ class SequenceFeaturizer(ReversibleFeaturizer[str]):
 
             sequence.append(self.alphabet[i])
 
-        # Return the torch tensor
-        return torch.tensor(sequence, dtype=torch.long)
+        return np.array(sequence, dtype=np.int64)
 
     def unfeaturize(self, input_: torch.Tensor) -> str:
         """Unfeaturize pytorch LongTensor to sequence"""
