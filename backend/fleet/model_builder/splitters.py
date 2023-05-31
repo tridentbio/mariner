@@ -1,7 +1,7 @@
 """
 Dataset splitting strategies
 """
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -9,6 +9,42 @@ from rdkit import Chem
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
 
 from .constants import TrainingStep
+
+
+def apply_split_indexes(
+    df: pd.DataFrame,
+    split_type: Literal["random", "scaffold"],
+    split_target: str,
+    split_column: Union[str, None] = None,
+):
+    """Separates dataframe row into training, testing and validation
+
+    Adds a 'step' column to the current dataframe, associating the row to
+    some data science model stage, i.e. training, testing or validation
+
+    Args:
+        split_type: "random" or "scaffold", strategy used to to split examples
+        split_target: The wanted distribution of training/validation/testing
+        split_column: Only required for scaffold, must be a columns of Smiles
+        data type
+
+    Raises:
+        NotImplementedError: in case the split_type is not recognized
+    """
+    train_size, val_size, test_size = map(
+        lambda x: int(x) / 100, split_target.split("-")
+    )
+    if split_type == "random":
+        splitter = RandomSplitter()
+        df = splitter.split(df, train_size, test_size, val_size)
+    elif split_type == "scaffold":
+        splitter = ScaffoldSplitter()
+        assert (
+            split_column is not None
+        ), "split column can't be none when split_type is scaffold"
+        df = splitter.split(df, split_column, train_size, test_size, val_size)
+    else:
+        raise NotImplementedError(f"{split_type} splitting is not implemented")
 
 
 class RandomSplitter:
