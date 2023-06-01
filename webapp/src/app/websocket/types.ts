@@ -46,7 +46,7 @@ if (!import.meta.env.VITE_WS_URL)
 export class SocketMessageHandler {
   private address: string;
   socket?: WebSocket;
-
+  connectionType?: 'authenticated' | 'anonymous';
   callbacks: CallbackMap;
 
   constructor(address = import.meta.env.VITE_WS_URL) {
@@ -58,13 +58,14 @@ export class SocketMessageHandler {
     };
     this.setListeners();
   }
-  setListeners = () => {
+  setListeners = (connectionType?: 'authenticated' | 'anonymous') => {
     if (this.socket) {
       this.socket.onerror = (event) => {
         // eslint-disable-next-line
         console.error('[WEBSOCKET]: ', event);
       };
       this.socket.onmessage = (event) => this.handleOnMessage(event);
+      this.connectionType = connectionType;
     }
   };
 
@@ -72,9 +73,7 @@ export class SocketMessageHandler {
     return this.socket?.readyState !== WebSocket.OPEN;
   };
 
-  connect = () => {
-    const token = localStorage.getItem(TOKEN);
-    if (!token) return;
+  connectAuthenticated = (token: string) => {
     let access_token: string = '';
     try {
       access_token = JSON.parse(token)?.access_token;
@@ -84,8 +83,29 @@ export class SocketMessageHandler {
       if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
         this.socket = new WebSocket(`${this.address}?token=${access_token}`);
       }
-      this.setListeners();
+      this.setListeners('authenticated');
     }
+  };
+
+  connectAnonymous = (token: string) => {
+    if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
+      this.socket = new WebSocket(`${this.address}-public?token=${token}`);
+    }
+    this.setListeners('anonymous');
+  };
+
+  connect = () => {
+    const authToken = localStorage.getItem(TOKEN);
+    if (authToken) return this.connectAuthenticated(authToken);
+
+    const url = window.location.href;
+    if (!url.includes('public-model/')) return;
+
+    const publicDeploymentToken = url
+      .split('public-model/')[1]
+      .split('/')
+      .join('.');
+    this.connectAnonymous(publicDeploymentToken);
   };
   disconnect = () => {
     if (this.socket) {

@@ -11,12 +11,12 @@ const DeploymentView = () => {
   const deploymentId =
     deploymentIdMatch?.params.deploymentId &&
     parseInt(deploymentIdMatch.params.deploymentId);
-  const [fetchDataset, { data: deployment, isFetching }] =
+  const [fetchDeployment, { data: deployment, isFetching }] =
     deploymentsApi.useLazyGetDeploymentQuery();
 
   useEffect(() => {
-    fetchDataset && deploymentId && fetchDataset({ deploymentId });
-  }, [deploymentId, fetchDataset]);
+    fetchDeployment && deploymentId && fetchDeployment({ deploymentId });
+  }, [deploymentId, fetchDeployment]);
 
   if (!deployment) {
     return <Loading isLoading={true} />;

@@ -78,10 +78,10 @@ def get_deployment(
     try:
         deployment = controller.get_deployment(db, current_user, deployment_id)
         return deployment
-    except DeploymentNotFound:
+    except DeploymentNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
-        )
+        ) from e
 
 
 @router.post("/", response_model=Deployment)
@@ -112,22 +112,22 @@ def create_deployment(
         deployment = Deployment.from_orm(db_deployment)
         return deployment
 
-    except DeploymentAlreadyExists:
+    except DeploymentAlreadyExists as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Deployment name already in use",
-        )
+        ) from e
 
-    except ModelVersionNotFound:
+    except ModelVersionNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Model version not found"
-        )
+        ) from e
 
-    except NotCreatorOwner:
+    except NotCreatorOwner as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not creator owner of model version",
-        )
+        ) from e
 
 
 @router.put(
@@ -154,22 +154,22 @@ async def update_deployment(
             ),
         )
         return deployment
-    except DeploymentNotFound:
+    except DeploymentNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
-        )
+        ) from e
 
-    except NotCreatorOwner:
+    except NotCreatorOwner as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Not creator owner of deployment",
-        )
+        ) from e
 
-    except NotImplementedError:
+    except NotImplementedError as e:
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
             detail="Started and idle are not implemented yet for a deployment",
-        )
+        ) from e
 
 
 @router.delete("/{deployment_id}", response_model=Deployment)
@@ -195,15 +195,15 @@ async def delete_deployment(
     try:
         deployment = await controller.delete_deployment(db, current_user, deployment_id)
         return deployment
-    except DeploymentNotFound:
+    except DeploymentNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
-        )
-    except NotCreatorOwner:
+        ) from e
+    except NotCreatorOwner as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not creator owner of deployment",
-        )
+        ) from e
 
 
 @router.post("/create-permission", response_model=Deployment)
@@ -234,15 +234,15 @@ def create_permission(
     try:
         deployment = controller.create_permission(db, current_user, permission_input)
         return deployment
-    except DeploymentNotFound:
+    except DeploymentNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
-        )
-    except NotCreatorOwner:
+        ) from e
+    except NotCreatorOwner as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Not creator owner of deployment",
-        )
+        ) from e
 
 
 @router.post("/delete-permission", response_model=Deployment)
@@ -272,15 +272,15 @@ def delete_permission(
     try:
         deployment = controller.delete_permission(db, current_user, query)
         return deployment
-    except DeploymentNotFound:
+    except DeploymentNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
-        )
-    except NotCreatorOwner:
+        ) from e
+    except NotCreatorOwner as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Not creator owner of deployment",
-        )
+        ) from e
 
 
 @router.get("/public/{token}", response_model=DeploymentWithTrainingData)
@@ -357,23 +357,23 @@ async def post_make_prediction_deployment(
             db, current_user, deployment_id, data
         )
         return prediction
-    except PermissionError:
+    except PermissionError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You don't have permission to make predictions for this deployment.",
-        )
+        ) from e
 
-    except PredictionLimitReached:
+    except PredictionLimitReached as e:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="You have reached the prediction limit for this deployment.",
-        )
+        ) from e
 
-    except DeploymentNotFound:
+    except DeploymentNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Deployment instance not running.",
-        )
+        ) from e
 
 
 @router.post("/{deployment_id}/predict-public", response_model=Dict[str, Any])
@@ -407,23 +407,23 @@ async def post_make_prediction_deployment_public(
         )
         return prediction
 
-    except PermissionError:
+    except PermissionError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You don't have permission to make predictions for this deployment.",
-        )
+        ) from e
 
-    except PredictionLimitReached:
+    except PredictionLimitReached as e:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="You have reached the prediction limit for this deployment.",
-        )
+        ) from e
 
-    except DeploymentNotFound:
+    except DeploymentNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Deployment instance not running.",
-        )
+        ) from e
 
 
 @router.post(
@@ -455,8 +455,8 @@ async def handle_deployment_manager(
             db, message.deployment_id, message.status
         )
 
-    except DeploymentNotFound:
-        return HTTPException(
+    except DeploymentNotFound as e:
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Deployment not found.",
-        )
+        ) from e
