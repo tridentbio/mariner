@@ -3,6 +3,7 @@ Defines the integer featurizer
 """
 from typing import Union
 
+import numpy as np
 import torch
 from typing_extensions import override
 
@@ -25,7 +26,7 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
     classes: dict[Union[str, int], int]
     reversed_classes: dict[int, Union[str, int]]
 
-    def __call__(self, input_: str) -> torch.Tensor:
+    def __call__(self, input_: str) -> np.ndarray:
         return self.featurize(input_)
 
     def featurize(self, input_: Union[str, int, float]):
@@ -36,7 +37,7 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
                 f"Element {input_} of type {input_.__class__} is not defined"
                 f" in the classes dictionary {self.classes}"
             )
-        return torch.Tensor([self.classes[str(input_)]]).long()
+        return np.array([self.classes[str(input_)]], dtype=np.int64)
 
     def unfeaturize(self, input_: torch.Tensor):
         idx = int(input_.item())

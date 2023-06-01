@@ -14,9 +14,10 @@ from pandas import DataFrame
 from typing_extensions import override
 
 from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
-from fleet.model_builder.dataset import Collater, DataModule
+from fleet.model_builder.dataset import Collater
 from fleet.torch_.models import CustomModel
 from fleet.torch_.schemas import TorchTrainingConfig
+from fleet.utils.data import DataModule
 from mariner.core.mlflowapi import log_models_and_create_version
 
 

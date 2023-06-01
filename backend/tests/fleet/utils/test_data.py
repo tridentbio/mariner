@@ -1,10 +1,18 @@
 """
 Tests fleet.utils.data submodule.
 """
-import pandas as pd
+import math
+from pathlib import Path
 
+import pandas as pd
+import torch
+from torch.utils.data import Subset
+
+from fleet.base_schemas import TorchModelSpec
 from fleet.dataset_schemas import DatasetConfig
-from fleet.utils.data import build_columns_numpy
+from fleet.model_builder.constants import TrainingStep
+from fleet.model_builder.splitters import apply_split_indexes
+from fleet.utils.data import MarinerTorchDataset, build_columns_numpy
 
 
 def test_build_columns_numpy2():
@@ -40,3 +48,132 @@ featurizers:
     df = pd.read_csv(dataset_path)
     df = build_columns_numpy(config, df)
     assert "MolToGraphFeaturizer" in df.columns, "Missing featurized column in df"
+
+
+dataset_configs = [
+    ("multiclass_classification_schema.yaml", "iris.csv"),
+    ("small_regressor_schema.yaml", "zinc.csv"),
+]
+
+
+def test_build_columns_numpy():
+    """
+    Tests build_columns_numpy function.
+    """
+
+    config_path = (
+        Path.cwd() / "tests" / "data" / "yaml" / "multiclass_classification_model.yaml"
+    )
+    dataset_path = Path.cwd() / "tests" / "data" / "csv" / "iris.csv"
+
+    config = TorchModelSpec.from_yaml(config_path)
+    dataset_config = config.dataset
+
+    df = pd.read_csv(dataset_path)
+    df = build_columns_numpy(dataset_config, df)
+    print(df.columns)
+
+
+class TestMarinerTorchDataset:
+    """
+    Tests MarinerTorchDataset class.
+    """
+
+    def dataset_fixture(
+        self, model="multiclass_classification_model.yaml", csv="iris.csv"
+    ):
+        """
+        Returns MarinerTorchDataset instance.
+        """
+        config_path = Path.cwd() / "tests" / "data" / "yaml" / model
+        dataset_path = Path.cwd() / "tests" / "data" / "csv" / csv
+
+        config = TorchModelSpec.from_yaml(config_path)
+
+        df = pd.read_csv(dataset_path)
+        apply_split_indexes(df, split_target="60-20-20", split_type="random")
+
+        return MarinerTorchDataset(
+            data=df, dataset_config=config.dataset, model_config=config.spec
+        )
+
+    def test_len(self):
+        """
+        Tests __len__ method.
+        """
+        for (model, csv, expected_len) in zip(
+            [
+                "small_regressor_schema.yaml",
+                "multitarget_classification_model.yaml",
+                "dna_example.yml",
+            ],
+            ["zinc_extra.csv", "iris.csv", "sarkisyan_full_seq_data.csv"],
+            [501, 150, 999],
+        ):
+            dataset = self.dataset_fixture(model=model, csv=csv)
+            assert len(dataset) == expected_len
+            train_dataset = Subset(
+                dataset, dataset.get_subset_idx(TrainingStep.TRAIN.value)
+            )
+            test_dataset = Subset(
+                dataset, dataset.get_subset_idx(TrainingStep.TEST.value)
+            )
+            val_dataset = Subset(
+                dataset, dataset.get_subset_idx(TrainingStep.VAL.value)
+            )
+
+            assert len(train_dataset) == math.floor(0.6 * len(dataset))
+            assert len(test_dataset) == math.floor(0.2 * len(dataset))
+            assert len(val_dataset) == math.floor(0.2 * len(dataset))
+
+    def test_lookup(self):
+        """
+        Tests __getitem__ method.
+        """
+        dataset = self.dataset_fixture()
+        assert "sepal_length" in dataset[0]
+        assert "sepal_width" in dataset[0]
+        assert "species" in dataset[0]
+        assert dataset[0]["species"].dtype == torch.int64
+        assert isinstance(dataset[0]["species"], torch.Tensor)
+        print("SPECIES", dataset[0]["species"])
+        # assert dataset[0]["species"].shape == (1,)
+
+    def test_get_subset_idx(self):
+        """
+        Tests get_subset_idx method.
+        """
+        for (model, csv, expected_len) in zip(
+            [
+                "small_regressor_schema.yaml",
+                "multitarget_classification_model.yaml",
+                "dna_example.yml",
+            ],
+            ["zinc_extra.csv", "iris.csv", "sarkisyan_full_seq_data.csv"],
+            [501, 150, 999],
+        ):
+            config_path = Path.cwd() / "tests" / "data" / "yaml" / model
+            dataset_path = Path.cwd() / "tests" / "data" / "csv" / csv
+            config = TorchModelSpec.from_yaml(config_path)
+
+            df = pd.read_csv(dataset_path)
+            total = len(df)
+            apply_split_indexes(df, split_target="60-20-20", split_type="random")
+
+            assert (df["step"] == TrainingStep.TRAIN.value).sum() == math.floor(
+                0.6 * total
+            )
+            assert (df["step"] == TrainingStep.TEST.value).sum() == math.floor(
+                0.2 * total
+            )
+            assert (df["step"] == TrainingStep.VAL.value).sum() == math.floor(
+                0.2 * total
+            )
+
+            dataset = MarinerTorchDataset(
+                data=df, dataset_config=config.dataset, model_config=config.spec
+            )
+            indices = dataset.get_subset_idx(TrainingStep.TRAIN.value)
+            assert len(indices) == len(
+                (df["step"] == TrainingStep.TRAIN.value).sum()
+            ), "training indices length differs from training dataset"
