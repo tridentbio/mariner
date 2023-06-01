@@ -89,7 +89,7 @@ def handle_training_complete(task: Task, experiment_id: int):
                 db_obj=experiment,
             )
             asyncio.ensure_future(
-                get_websockets_manager().send_message(  # noqa
+                get_websockets_manager().send_message_to_user(  # noqa
                     user_id=experiment.created_by_id,
                     message=WebSocketMessage(
                         type="update-running-metrics",
@@ -121,7 +121,7 @@ def handle_training_complete(task: Task, experiment_id: int):
             db_obj=experiment,
         )
         asyncio.ensure_future(
-            get_websockets_manager().send_message(
+            get_websockets_manager().send_message_to_user(
                 user_id=experiment.created_by_id,
                 message=WebSocketMessage(
                     type="update-running-metrics",
@@ -381,7 +381,7 @@ async def send_ws_epoch_update(
         if metric_name not in running_history:
             running_history[metric_name] = []
         running_history[metric_name].append(metric_value)
-    await get_websockets_manager().send_message(
+    await get_websockets_manager().send_message_to_user(
         user_id,
         WebSocketMessage(
             type="update-running-metrics",

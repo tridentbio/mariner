@@ -417,7 +417,8 @@ def notify_users_about_status_update(deployment: Deployment):
                         else deployment.status.value
                     ),
                 },
-            )
+            ),
+            public=deployment.share_strategy == ShareStrategy.PUBLIC,
         )
     )
     manager.add_new_task(

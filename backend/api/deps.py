@@ -17,8 +17,10 @@ from sqlalchemy.orm import Session
 from mariner.core import security
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
+from mariner.entities.deployment import Deployment
 from mariner.entities.user import User
 from mariner.schemas.token import TokenPayload
+from mariner.stores.deployment_sql import deployment_store
 from mariner.stores.user_sql import user_store
 
 reusable_oauth2 = OAuth2PasswordBearer(
@@ -149,3 +151,30 @@ def get_current_websocket_user(
         User from token.
     """
     return get_current_user(db, token)
+
+
+def get_current_websocket_deployment(
+    db: Session = Depends(get_db), token: str = Depends(get_cookie_or_token)
+) -> Deployment:
+    """Gets the deployment entity encoded in an authentication token.
+
+    Args:
+        db: Connection to the database.
+        token: Authentication token passed in request.
+
+    Returns:
+        Deployment from token.
+
+    Raises:
+        HTTPException: 403 authentication error.
+    """
+    try:
+        assert token is not None
+        payload = security.decode_deployment_url_token(token)
+
+        deployment = deployment_store.get(db, id=payload.sub)
+        assert deployment.share_strategy == "public"
+
+        return deployment
+    except (AssertionError, JWTError, ValidationError) as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from e

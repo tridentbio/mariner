@@ -4,6 +4,7 @@ import NotFound from '@components/atoms/NotFound';
 import Content from '@components/templates/AppLayout/Content';
 import { DeploymentHeader } from '../Components/DeploymentHeader';
 import { DeploymentInferenceScreen } from '../Components/DeploymentInfereceScreen';
+import { useAppSelector } from '@app/hooks';
 
 const DeploymentViewPublic = () => {
   const deploymentTokenMatch = useMatch(
@@ -12,9 +13,11 @@ const DeploymentViewPublic = () => {
   const params = deploymentTokenMatch?.params || {};
   const tokens = Object.values(params);
 
-  const { data: deployment } = deploymentsApi.useGetPublicDeploymentQuery({
+  deploymentsApi.useGetPublicDeploymentQuery({
     token: tokens && tokens.length === 3 ? tokens.join('.') : '',
   });
+
+  const deployment = useAppSelector((state) => state.deployments.current);
 
   if (!deployment) return <NotFound>Deployment not found</NotFound>;
 

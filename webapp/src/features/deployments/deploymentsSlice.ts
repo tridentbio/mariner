@@ -31,11 +31,12 @@ export const deploymentSlice = createSlice({
       state,
       action: PayloadAction<{ deploymentId: number; status: DeploymentStatus }>
     ) => {
-      state.deployments = state.deployments.map((deployment) =>
-        deployment.id === action.payload.deploymentId
-          ? { ...deployment, status: action.payload.status }
-          : deployment
-      );
+      if (state.deployments)
+        state.deployments = state.deployments.map((deployment) =>
+          deployment.id === action.payload.deploymentId
+            ? { ...deployment, status: action.payload.status }
+            : deployment
+        );
       if (state.current?.id === action.payload.deploymentId)
         state.current.status = action.payload.status;
     },
@@ -50,6 +51,12 @@ export const deploymentSlice = createSlice({
     );
     builder.addMatcher(
       deploymentsApi.endpoints.getDeployment.matchFulfilled,
+      (state, action) => {
+        state.current = action.payload;
+      }
+    );
+    builder.addMatcher(
+      deploymentsApi.endpoints.getPublicDeployment.matchFulfilled,
       (state, action) => {
         state.current = action.payload;
       }
