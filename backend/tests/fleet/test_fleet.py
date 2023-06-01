@@ -7,9 +7,9 @@ import pytest
 from mlflow.tracking import MlflowClient
 from pandas import DataFrame, read_csv
 
-from fleet.base_schemas import BaseFleetModelSpec, TorchModelSpec
+from fleet.base_schemas import FleetModelSpec, TorchModelSpec
 from fleet.dataset_schemas import TargetConfig, is_regression
-from fleet.model_builder import optimizers
+from fleet.model_builder import optimizers, splitters
 from fleet.model_functions import fit
 from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
 from mariner.core.aws import Bucket, list_s3_objects
@@ -18,7 +18,7 @@ from tests.utils.utils import random_lower_string
 
 @dataclass
 class TestCase:
-    model_spec: BaseFleetModelSpec
+    model_spec: FleetModelSpec
     train_spec: Any
     dataset_file: Union[Path, str]
     should_fail: Union[None, Any] = None
@@ -34,7 +34,7 @@ def assert_mlflow_metric(client: MlflowClient, run_id: str, key: str):
     assert len(val_metric) > 0, f"failed to save metric {key} failed"
 
 
-def assert_mlflow_data(spec: BaseFleetModelSpec, mlflow_experiment_id: str):
+def assert_mlflow_data(spec: FleetModelSpec, mlflow_experiment_id: str):
     # Checks if metrics can be found in expected mlflow location
     # and models are correctly upload to s3
     client = MlflowClient()
@@ -73,12 +73,12 @@ datasets_root = Path("tests") / "data" / "csv"
 specs = [
     (TorchModelSpec.from_yaml(models_root / model_file), datasets_root / dataset_file)
     for model_file, dataset_file in [
+        ("small_regressor_schema.yaml", "zinc.csv"),
         ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),
         ("binary_classification_model.yaml", "iris.csv"),
         ("categorical_features_model.yaml", "zinc_extra.csv"),
-        ("small_regressor_schema.yaml", "zinc.csv"),
     ]
 ]
 test_cases = [
@@ -110,6 +110,12 @@ def test_train(case: TestCase):
     mlflow.client.MlflowClient().create_registered_model(mlflow_model_name)
     with open(case.dataset_file) as f:
         dataset: DataFrame = read_csv(f)
+        splitters.apply_split_indexes(
+            df=dataset,
+            split_type="random",
+            split_target="60-20-20",
+        )
+        assert "step" in dataset.columns, "step column is missing in dataset"
         if not case.should_fail:
             result = fit(
                 spec=case.model_spec,

@@ -9,7 +9,7 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 import pandas as pd
 import ray
 
-from fleet.model_builder.splitters import RandomSplitter, ScaffoldSplitter
+from fleet.model_builder.splitters import apply_split_indexes
 from mariner.core.aws import Bucket, upload_s3_compressed
 from mariner.schemas.dataset_schemas import (
     BiologicalDataType,
@@ -50,10 +50,11 @@ class DatasetTransforms:
     def __init__(
         self,
         is_compressed: bool = False,
+        df: Union[pd.DataFrame, None] = None,
     ):
         self._file_input = io.BytesIO()
         self._is_dataset_fully_loaded = False
-        self._df = None
+        self._df = df
         self.is_compressed = is_compressed
 
     def write_dataset_buffer(self, chunk: bytes):
@@ -187,22 +188,12 @@ class DatasetTransforms:
         Raises:
             NotImplementedError: in case the split_type is not recognized
         """
-        train_size, val_size, test_size = map(
-            lambda x: int(x) / 100, split_target.split("-")
+        apply_split_indexes(
+            self.df,
+            split_type=split_type,
+            split_target=split_target,
+            split_column=split_column,
         )
-        if split_type == "random":
-            splitter = RandomSplitter()
-            self.df = splitter.split(self.df, train_size, test_size, val_size)
-        elif split_type == "scaffold":
-            splitter = ScaffoldSplitter()
-            assert (
-                split_column is not None
-            ), "split column can't be none when split_type is scaffold"
-            self.df = splitter.split(
-                self.df, split_column, train_size, test_size, val_size
-            )
-        else:
-            raise NotImplementedError(f"{split_type} splitting is not implemented")
 
     def _infer_domain_type_from_series(self, series: pd.Series) -> Any:
         """Infers the domain type from a pd.Series
