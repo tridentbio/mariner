@@ -113,6 +113,8 @@ export class SocketMessageHandler {
       this.callbacks['update-running-metrics'](data);
     } else if (data.type === 'dataset-process-finish') {
       this.callbacks['dataset-process-finish'](data);
+    } else if (data.type === 'update-deployment') {
+      this.callbacks['update-deployment'](data);
     }
   };
 }
