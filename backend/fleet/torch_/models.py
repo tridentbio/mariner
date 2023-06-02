@@ -175,6 +175,7 @@ class CustomModel(pl.LightningModule):
         self, config: Union[TorchModelSchema, str], dataset_config: "TorchDatasetConfig"
     ):
         super().__init__()
+        self.save_hyperparameters(ignore=["config", "dataset_config"])
         if isinstance(config, str):
             config = TorchModelSchema.parse_raw(config)
         layers_dict = {}
@@ -231,10 +232,6 @@ class CustomModel(pl.LightningModule):
             training_request:
         """
         self.optimizer = optimizer
-
-        self.save_hyperparameters(
-            {"config": self.config.json(), "learning_rate": self.optimizer.params.lr}
-        )
 
     @staticmethod
     def _call_model(model, args):
