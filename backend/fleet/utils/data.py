@@ -17,6 +17,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import sklearn.base
+import torch
 import torch.nn
 from humps import camel
 from pydantic import Field
@@ -205,7 +206,6 @@ def build_columns_numpy(
     """
     # Get featurizers and transformers in order
     feats, transforms = map(list, dataset_topo_sort(dataset_config))
-    print(feats, transforms)
 
     # Add featurized columns into dataframe.
     for feat in feats:
@@ -232,7 +232,7 @@ def build_columns_numpy(
     return df
 
 
-def adapt_numpy_to_tensor(arr: np.ndarray) -> torch.Tensor:
+def adapt_numpy_to_tensor(arr: Union[list[np.ndarray], np.ndarray]) -> torch.Tensor:
     """
     Creates a tensor with the same shape and type as the numpy array.
 
@@ -242,10 +242,17 @@ def adapt_numpy_to_tensor(arr: np.ndarray) -> torch.Tensor:
     Returns:
         The tensor with the same shape and type as the numpy array.
     """
-    tensor = torch.from_numpy(arr)
-    if arr.dtype == np.int64:
+    # Check if arr is a list of numpy floats or ints
+    if isinstance(arr, list):
+        is_float = isinstance(arr[0], (np.float64, np.float32))
+        is_int = isinstance(arr[0], (np.int64, np.int32))
+    else:
+        is_float = isinstance(arr, (np.float64, np.float32))
+        is_int = isinstance(arr, (np.int64, np.int32))
+    tensor = torch.as_tensor(arr)
+    if is_int:
         tensor = tensor.long()
-    elif arr.dtype == np.float64:
+    elif is_float:
         tensor = tensor.float()
     return tensor
 
@@ -264,7 +271,6 @@ class MarinerTorchDataset(Dataset):
         self,
         data: pd.DataFrame,
         dataset_config: DatasetConfig,
-        model_config: TorchModelSchema,
     ):
         """MarinerTorchDataset constructor.
 
@@ -274,7 +280,6 @@ class MarinerTorchDataset(Dataset):
             model_config: The object describing the model architecture and hyperparameters.
         """
         self.dataset_config = dataset_config
-        self.model_config = model_config
         self.data = build_columns_numpy(self.dataset_config, data)
 
     def get_subset_idx(self, step=None) -> list[int]:
@@ -291,7 +296,8 @@ class MarinerTorchDataset(Dataset):
         """
         if step is None:
             return list(range(len(self.data)))
-        return (self.data["step"] == step).index.tolist()
+        assert len(self.data["step"] == step) == len(self.data), "will break."
+        return (self.data[self.data["step"] == step]).index.tolist()
 
     def __getitem__(self, idx: int):
         """Gets a sample from the dataset.
@@ -306,18 +312,14 @@ class MarinerTorchDataset(Dataset):
         sample = dict(self.data.iloc[idx, :])
 
         for col in self.dataset_config.feature_columns:
-            print("here: ", sample[col.name])
-            item[col.name] = torch.as_tensor(sample[col.name])
+            item[col.name] = adapt_numpy_to_tensor([sample[col.name]])
         for col in self.dataset_config.featurizers:
-            print("here2: ", sample[col.name])
-            item[col.name] = torch.as_tensor(sample[col.name])
+            item[col.name] = adapt_numpy_to_tensor([sample[col.name]])
         for col in self.dataset_config.transforms:
-            print("here3: ", sample[col.name])
-            item[col.name] = torch.as_tensor(sample[col.name])
+            item[col.name] = adapt_numpy_to_tensor([sample[col.name]])
 
         for target in self.dataset_config.target_columns:
-            print("here3: ", sample[target.name])
-            item[target.name] = torch.as_tensor(sample[target.name])
+            item[target.name] = adapt_numpy_to_tensor([sample[target.name]])
 
         return item
 
@@ -377,9 +379,7 @@ class DataModule(pl.LightningDataModule):
         self.split_target = split_target
 
         self.collate_fn = collate_fn
-        self.dataset = MarinerTorchDataset(
-            data=self.data, model_config=model_config, dataset_config=config
-        )
+        self.dataset = MarinerTorchDataset(data=self.data, dataset_config=config)
 
     def setup(self, stage=None):
         """Method used for pytorch lightning to setup the data

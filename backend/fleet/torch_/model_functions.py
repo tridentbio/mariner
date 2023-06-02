@@ -130,7 +130,7 @@ class TorchFunctions(BaseModelFunctions):
     @override
     def log_models(
         self, mlflow_experiment_id: str, mlflow_model_name: str
-    ) -> ModelVersion:
+    ) -> Union[ModelVersion, None]:
         """[Logs best and last models to mlflow tracker.
 
         Args:
@@ -147,7 +147,10 @@ class TorchFunctions(BaseModelFunctions):
                 the `checkpoint_callback` property is not set.
         """
         if not self.checkpoint_callback:
-            raise ValueError("train() must be called first")
+            LOG.warning(
+                "Skipping logging models because checkpoint_callback is missing."
+            )
+            return
         client = MlflowClient()
         best_model_path = self.checkpoint_callback.best_model_path
         model_kwargs = {"dataset_config": self.spec.dataset}
