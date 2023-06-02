@@ -40,7 +40,7 @@ class Result:
     """
 
     mlflow_experiment_id: str
-    mlflow_model_version: ModelVersion
+    mlflow_model_version: Union[None, ModelVersion]
 
 
 def fit(

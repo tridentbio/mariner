@@ -172,12 +172,19 @@ class CustomModel(pl.LightningModule):
     metrics_dict: Dict[str, Metrics]
 
     def __init__(
-        self, config: Union[TorchModelSchema, str], dataset_config: "TorchDatasetConfig"
+        self,
+        config: Union[TorchModelSchema, str],
+        dataset_config: Union["TorchDatasetConfig", str],
     ):
         super().__init__()
-        self.save_hyperparameters(ignore=["config", "dataset_config"])
         if isinstance(config, str):
             config = TorchModelSchema.parse_raw(config)
+        if isinstance(dataset_config, str):
+            dataset_config = TorchDatasetConfig.parse_raw(dataset_config)
+
+        self.save_hyperparameters(
+            {"config": config.json(), "dataset_config": dataset_config.json()}
+        )
         layers_dict = {}
         self.config = config
         self.dataset_config = dataset_config

@@ -1,3 +1,6 @@
+"""
+Tests for fleet.
+"""
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Union
@@ -5,7 +8,7 @@ from typing import Any, Union
 import mlflow
 import pytest
 from mlflow.tracking import MlflowClient
-from pandas import DataFrame, read_csv
+import pandas as pd
 
 from fleet.base_schemas import FleetModelSpec, TorchModelSpec
 from fleet.dataset_schemas import TargetConfig, is_regression
@@ -35,8 +38,10 @@ def assert_mlflow_metric(client: MlflowClient, run_id: str, key: str):
 
 
 def assert_mlflow_data(spec: FleetModelSpec, mlflow_experiment_id: str):
-    # Checks if metrics can be found in expected mlflow location
-    # and models are correctly upload to s3
+    """
+    Checks if metrics can be found in expected mlflow location
+    and models are correctly upload to s3
+    """
     client = MlflowClient()
     run = client.search_runs(experiment_ids=[mlflow_experiment_id])[0]
     exp = client.get_experiment(mlflow_experiment_id)
@@ -73,12 +78,15 @@ datasets_root = Path("tests") / "data" / "csv"
 specs = [
     (TorchModelSpec.from_yaml(models_root / model_file), datasets_root / dataset_file)
     for model_file, dataset_file in [
-        ("small_regressor_schema.yaml", "zinc.csv"),
-        ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),
         ("binary_classification_model.yaml", "iris.csv"),
+        ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
         ("categorical_features_model.yaml", "zinc_extra.csv"),
+        (
+            "small_regressor_schema.yaml",
+            "zinc.csv",
+        ),  # currently fails due a bug in the molecule featurizer
     ]
 ]
 test_cases = [
@@ -105,11 +113,14 @@ test_cases = [
 @pytest.mark.parametrize("case", test_cases)
 @pytest.mark.integration
 def test_train(case: TestCase):
+    """
+    Tests if training works with mlflow
+    """
     mlflow_experiment_name = random_lower_string()
     mlflow_model_name = random_lower_string()
     mlflow.client.MlflowClient().create_registered_model(mlflow_model_name)
-    with open(case.dataset_file) as f:
-        dataset: DataFrame = read_csv(f)
+    with open(case.dataset_file, encoding="utf-8") as file:
+        dataset: pd.DataFrame = pd.read_csv(file)
         splitters.apply_split_indexes(
             df=dataset,
             split_type="random",

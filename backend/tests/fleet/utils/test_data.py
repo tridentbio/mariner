@@ -8,8 +8,9 @@ import pandas as pd
 import torch
 from torch.utils.data import Subset
 
+from fleet import data_types
 from fleet.base_schemas import TorchModelSpec
-from fleet.dataset_schemas import DatasetConfig
+from fleet.dataset_schemas import DatasetConfig, DatasetConfigBuilder
 from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.splitters import apply_split_indexes
 from fleet.utils.data import MarinerTorchDataset, build_columns_numpy
@@ -71,7 +72,6 @@ def test_build_columns_numpy():
 
     df = pd.read_csv(dataset_path)
     df = build_columns_numpy(dataset_config, df)
-    print(df.columns)
 
 
 class TestMarinerTorchDataset:
@@ -136,44 +136,25 @@ class TestMarinerTorchDataset:
         assert "species" in dataset[0]
         assert dataset[0]["species"].dtype == torch.int64
         assert isinstance(dataset[0]["species"], torch.Tensor)
-        print("SPECIES", dataset[0]["species"])
         # assert dataset[0]["species"].shape == (1,)
 
     def test_get_subset_idx(self):
         """
         Tests get_subset_idx method.
         """
-        for (model, csv, expected_len) in zip(
-            [
-                "small_regressor_schema.yaml",
-                "multitarget_classification_model.yaml",
-                "dna_example.yml",
-            ],
-            ["zinc_extra.csv", "iris.csv", "sarkisyan_full_seq_data.csv"],
-            [501, 150, 999],
-        ):
-            config_path = Path.cwd() / "tests" / "data" / "yaml" / model
-            dataset_path = Path.cwd() / "tests" / "data" / "csv" / csv
-            config = TorchModelSpec.from_yaml(config_path)
+        df = pd.DataFrame(
+            {"a": list(map(float, range(100))), "b": list(map(float, range(100)))}
+        )
+        dataset_config = (
+            DatasetConfigBuilder(name="Test")
+            .with_features(a=data_types.NumericDataType())
+            .with_targets(out_module="linear", b=data_types.NumericDataType())
+            .build_torch()
+        )
 
-            df = pd.read_csv(dataset_path)
-            total = len(df)
-            apply_split_indexes(df, split_target="60-20-20", split_type="random")
+        dataset = MarinerTorchDataset(data=df, dataset_config=dataset_config)
+        assert len(dataset) == 100
 
-            assert (df["step"] == TrainingStep.TRAIN.value).sum() == math.floor(
-                0.6 * total
-            )
-            assert (df["step"] == TrainingStep.TEST.value).sum() == math.floor(
-                0.2 * total
-            )
-            assert (df["step"] == TrainingStep.VAL.value).sum() == math.floor(
-                0.2 * total
-            )
+        apply_split_indexes(df, split_target="60-20-20", split_type="random")
 
-            dataset = MarinerTorchDataset(
-                data=df, dataset_config=config.dataset, model_config=config.spec
-            )
-            indices = dataset.get_subset_idx(TrainingStep.TRAIN.value)
-            assert len(indices) == len(
-                (df["step"] == TrainingStep.TRAIN.value).sum()
-            ), "training indices length differs from training dataset"
+        assert len(dataset.get_subset_idx(TrainingStep.TRAIN.value)) == 60
