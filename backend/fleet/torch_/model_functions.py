@@ -5,6 +5,7 @@ torch based models.
 from os import getenv
 from typing import List, Union
 
+import logging
 from lightning.pytorch import Callback, Trainer
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import Logger
@@ -19,6 +20,8 @@ from fleet.torch_.models import CustomModel
 from fleet.torch_.schemas import TorchTrainingConfig
 from fleet.utils.data import DataModule
 from mariner.core.mlflowapi import log_models_and_create_version
+
+LOG = logging.getLogger(__name__)
 
 
 class TorchFunctions(BaseModelFunctions):
@@ -92,15 +95,17 @@ class TorchFunctions(BaseModelFunctions):
             **datamodule_args,
         )
 
+        callbacks: List[Callback] = []
         if not params.checkpoint_config:
-            raise ValueError("params.checkpoint_config is required to log models")
+            LOG.warning("params.checkpoint_config is required to log models")
+        else:
+            self.checkpoint_callback = ModelCheckpoint(
+                monitor=params.checkpoint_config.metric_key,
+                mode=params.checkpoint_config.mode,
+                save_last=True,
+            )
+            callbacks.append(self.checkpoint_callback)
 
-        self.checkpoint_callback = ModelCheckpoint(
-            monitor=params.checkpoint_config.metric_key,
-            mode=params.checkpoint_config.mode,
-            save_last=True,
-        )
-        callbacks: List[Callback] = [self.checkpoint_callback]
         if params.early_stopping_config is not None:
             callbacks.append(
                 EarlyStopping(
@@ -127,7 +132,6 @@ class TorchFunctions(BaseModelFunctions):
         self, mlflow_experiment_id: str, mlflow_model_name: str
     ) -> ModelVersion:
         """[Logs best and last models to mlflow tracker.
-        t
 
         Args:
             mlflow_experiment_id: The mlflow experiment string identifier.
