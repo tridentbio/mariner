@@ -93,9 +93,7 @@ class TestMarinerTorchDataset:
         df = pd.read_csv(dataset_path)
         apply_split_indexes(df, split_target="60-20-20", split_type="random")
 
-        return MarinerTorchDataset(
-            data=df, dataset_config=config.dataset, model_config=config.spec
-        )
+        return MarinerTorchDataset(data=df, dataset_config=config.dataset)
 
     def test_len(self):
         """
