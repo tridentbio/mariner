@@ -65,8 +65,9 @@ export class SocketMessageHandler {
         console.error('[WEBSOCKET]: ', event);
       };
       this.socket.onmessage = (event) => this.handleOnMessage(event);
-      this.connectionType = connectionType;
     }
+    if (connectionType && !this.connectionType)
+      this.connectionType = connectionType;
   };
 
   isDisconnected = () => {
@@ -95,17 +96,14 @@ export class SocketMessageHandler {
   };
 
   connect = () => {
+    const url = window.location.href;
+    const publicDeploymentToken = this.getTokenFromUrl(url);
+    if (publicDeploymentToken) {
+      this.connectAnonymous(publicDeploymentToken);
+    }
+
     const authToken = localStorage.getItem(TOKEN);
     if (authToken) return this.connectAuthenticated(authToken);
-
-    const url = window.location.href;
-    if (!url.includes('public-model/')) return;
-
-    const publicDeploymentToken = url
-      .split('public-model/')[1]
-      .split('/')
-      .join('.');
-    this.connectAnonymous(publicDeploymentToken);
   };
   disconnect = () => {
     if (this.socket) {
@@ -136,6 +134,11 @@ export class SocketMessageHandler {
     } else if (data.type === 'update-deployment') {
       this.callbacks['update-deployment'](data);
     }
+  };
+
+  private getTokenFromUrl = (url: string) => {
+    const result = url.match(RegExp('public-model\\/\\w+\\/\\w+\\/\\w+', 'g'));
+    if (result) return result[0].split('public-model/')[1].replaceAll('/', '.');
   };
 }
 
