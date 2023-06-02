@@ -133,7 +133,7 @@ const navigationTree: RouteNode<any>[] = [
     path: '/public-model/*',
     children: [
       {
-        path: ':token1/:token2/:token3',
+        path: ':token1/:token2/:token3/*',
         element: <PublicDeploymentView />,
       },
     ],
