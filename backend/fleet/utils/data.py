@@ -35,6 +35,7 @@ from fleet.model_builder.featurizers import (
     RNASequenceFeaturizer,
 )
 from fleet.model_builder.featurizers.base_featurizers import BaseFeaturizer
+from fleet.model_builder.featurizers.small_molecule_featurizer import MoleculeFeaturizer
 from fleet.model_builder.layers_schema import FeaturizersType
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import DataInstance, get_references_dict
@@ -151,6 +152,8 @@ def apply(feat_or_transform, numpy_col):
         for item in numpy_col:
             featurized_item = feat_or_transform(item)
             arr.append(featurized_item)
+        if isinstance(feat_or_transform, MoleculeFeaturizer):
+            return torch.Tensor(arr)
         return np.array(arr)
     raise RuntimeError()
 
@@ -158,7 +161,29 @@ def apply(feat_or_transform, numpy_col):
 def get_default_data_type_featurizer(
     dataset_config: DatasetConfig, column: "ColumnConfig"
 ) -> Union[Callable, None]:
-    """Gets a default featurizer based on the data type"""
+    """Gets a default featurizer based on the data type.
+
+    Here is a table with the default featurizers for each data type:
+
+    +--------------------------+--------------------------+
+    | Data Type                | Default Featurizer       |
+    +==========================+==========================+
+    | CategoricalDataType      | IntegerFeaturizer        |
+    +--------------------------+--------------------------+
+    | DNADataType              | DNASequenceFeaturizer    |
+    +--------------------------+--------------------------+
+    | RNADataType              | RNASequenceFeaturizer    |
+    +--------------------------+--------------------------+
+    | ProteinDataType          | ProteinSequenceFeaturizer|
+    +--------------------------+--------------------------+
+
+    Args:
+        dataset_config(DatasetConfig): The dataset configuration.
+        column(ColumnConfig): The column configuration.
+
+    Returns:
+        A featurizer callable or None if there is no default featurizer for the data type.
+    """
     feat = None
     if isinstance(column.data_type, data_types.CategoricalDataType):
         feat = IntegerFeaturizer()
@@ -242,19 +267,32 @@ def adapt_numpy_to_tensor(arr: Union[list[np.ndarray], np.ndarray]) -> torch.Ten
     Returns:
         The tensor with the same shape and type as the numpy array.
     """
-    # Check if arr is a list of numpy floats or ints
-    if isinstance(arr, list):
-        is_float = isinstance(arr[0], (np.float64, np.float32))
-        is_int = isinstance(arr[0], (np.int64, np.int32))
-    else:
-        is_float = isinstance(arr, (np.float64, np.float32))
-        is_int = isinstance(arr, (np.int64, np.int32))
-    tensor = torch.as_tensor(arr)
-    if is_int:
+
+    def _get_type(arr):
+        if isinstance(arr, (list, np.ndarray)):
+            return _get_type(arr[0])
+        if isinstance(arr, str):
+            return "str"
+        if issubclass(type(arr), (np.int64, np.int32)):  # type: ignore
+            return "int"
+        elif isinstance(arr, (np.float32, np.float64)):  # type: ignore
+            return "float"
+
+    arr_type = _get_type(arr)
+    if arr_type == "int":
+        tensor = torch.as_tensor(arr)
         tensor = tensor.long()
-    elif is_float:
+        return tensor
+    elif arr_type == "float":
+        tensor = torch.as_tensor(arr)
         tensor = tensor.float()
-    return tensor
+        return tensor
+    else:
+        print("arr is not a list of numpy floats or ints")
+        print("arr is of type: ", type(arr))
+        if isinstance(arr, list):
+            print("arr[0] is of type: ", type(arr[0]))
+    return arr
 
 
 class MarinerTorchDataset(Dataset):
