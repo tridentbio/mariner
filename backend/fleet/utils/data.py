@@ -416,7 +416,10 @@ class DataModule(pl.LightningDataModule):
         self.split_type = split_type
         self.split_target = split_target
 
-        self.collate_fn = collate_fn
+        if collate_fn is None:
+            self.collate_fn = Collater()
+        else:
+            self.collate_fn = collate_fn
         self.dataset = MarinerTorchDataset(data=self.data, dataset_config=config)
 
     def setup(self, stage=None):
