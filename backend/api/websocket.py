@@ -80,7 +80,7 @@ class ConnectionManager:
     """Manages all active connections to the server
 
     Attributes:
-        active_connections (Dict[int, :class:`UserConnection`])):
+        active_connections (Dict[int, UserConnection])):
             dictionary mapping user ids to their websockets.
     """
 
