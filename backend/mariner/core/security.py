@@ -76,7 +76,9 @@ def generate_deployment_signed_url(sub: Union[str, Any]) -> str:
         settings.DEPLOYMENT_URL_SIGNATURE_SECRET_KEY,
         algorithm=ALGORITHM,
     )
-    token = encoded_jwt.replace(".", "/") # replace . with / to avoid problems with browser
+    token = encoded_jwt.replace(
+        ".", "/"
+    )  # replace . with / to avoid problems with browser
     return f"{settings.WEBAPP_URL}/public-model/{token}"
 
 
@@ -85,6 +87,13 @@ def decode_deployment_url_token(token: str):
 
     Token should be valid and signed by the deployment signature.
     Token should have deployment_id as subject.
+
+    Returns:
+        TokenPayload with deployment_id as subject.
+
+    Raises:
+        JWTError: If token is invalid.
+        ValidationError: If token payload is invalid.
     """
     payload = jwt.decode(
         token, settings.DEPLOYMENT_URL_SIGNATURE_SECRET_KEY, algorithms=[ALGORITHM]

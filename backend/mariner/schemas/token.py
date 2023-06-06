@@ -17,16 +17,13 @@ class Token(BaseModel):
 class TokenPayload(BaseModel):
     sub: Optional[int] = None
 
-    @validator('sub')
+    @validator("sub")
     def sub_cast_validator(cls, v):
         """Converts sub to int if it's a string.
-        
+
         Raises:
             ValueError: If sub is not a string or int.
         """
         if isinstance(v, str):
-            try:
-                return int(v)
-            except ValueError:
-                raise ValueError('sub must be a number.')
+            return int(v)
         return v
