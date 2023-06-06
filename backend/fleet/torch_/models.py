@@ -253,8 +253,10 @@ class CustomModel(pl.LightningModule):
 
         Runs the foward pass through the layers ordered by the topological
         sorting on self.topo_sorting attribute.
-        If it finds a featurizer, ignores because it already evaluated by the dataset.
-        If it finds a target column output (out_module), ignores on topo_sorting iteration then evaluate this for
+        If it finds a featurizer, ignores because it already evaluated by the
+        dataset.
+        If it finds a target column output (out_module), ignores on topo_sorting
+        iteration then evaluate this for
         each target column on self.config.dataset.target_columns iteration.
 
         Args:

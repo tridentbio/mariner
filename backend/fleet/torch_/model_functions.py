@@ -87,13 +87,12 @@ class TorchFunctions(BaseModelFunctions):
         if not datamodule_args:
             datamodule_args = {}
         datamodule = DataModule(
-            config=spec.dataset,
-            model_config=spec.spec,
             data=dataset,
+            config=spec.dataset,
             batch_size=batch_size,
-            collate_fn=Collater(),
             **datamodule_args,
         )
+        datamodule.setup()
 
         callbacks: List[Callback] = []
         if not params.checkpoint_config:
@@ -124,7 +123,7 @@ class TorchFunctions(BaseModelFunctions):
             default_root_dir=getenv("LIGHTNING_LOGS_DIR") or "lightning_logs/",
             logger=self.loggers,
         )
-        datamodule.setup()
+
         trainer.fit(model, datamodule)
 
     @override

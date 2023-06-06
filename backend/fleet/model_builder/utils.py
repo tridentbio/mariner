@@ -151,11 +151,8 @@ def get_class_from_path_string(pathstring: str) -> type:
         Any: The class.
     """
     components = pathstring.split(".")
-    mod = components[:-1]
-    mod = __import__(components[0])
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return mod
+    submodule = __import__(".".join(components[:-1]), fromlist=[components[-1]])
+    return getattr(submodule, components[-1])
 
 
 def unwrap_dollar(value: str) -> tuple[str, bool]:
