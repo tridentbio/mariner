@@ -6,6 +6,7 @@ API over accessing attributes directly from the schema in order to maintain
 a single point of change (as best as possible) on schema updates.
 """
 from typing import TYPE_CHECKING, Sequence, Set, Union
+from fleet.dataset_schemas import DatasetConfig
 
 from fleet.model_builder.utils import unwrap_dollar
 
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
     from fleet.model_builder.layers_schema import FeaturizersType, LayersType
 
 
-def get_columns_configs(config: "TorchDatasetConfig") -> Sequence["ColumnConfig"]:
+def get_columns_configs(config: "DatasetConfig") -> Sequence["ColumnConfig"]:
     """Gets the column configs from targets and featurizers of a ModelSchema object
 
     Args:
@@ -27,7 +28,7 @@ def get_columns_configs(config: "TorchDatasetConfig") -> Sequence["ColumnConfig"
 
 
 def get_column_config(
-    config: "TorchDatasetConfig", column_name: str
+    config: "DatasetConfig", column_name: str
 ) -> Union["ColumnConfig", None]:
     """Gets the column config of any column (target or featurizer) with name
     equals ``column_name``

@@ -1,13 +1,10 @@
 """
-Utilities to build dataset.
+Utilities to build datasets.
 """
 from typing import (
-    Annotated,
     Any,
     Callable,
-    Dict,
     Iterable,
-    Literal,
     Tuple,
     Union,
 )
@@ -19,8 +16,6 @@ import pandas as pd
 import sklearn.base
 import torch
 import torch.nn
-from humps import camel
-from pydantic import Field
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
@@ -34,70 +29,15 @@ from fleet.model_builder.featurizers import (
     ProteinSequenceFeaturizer,
     RNASequenceFeaturizer,
 )
-from fleet.model_builder.featurizers.base_featurizers import BaseFeaturizer
 from fleet.model_builder.featurizers.small_molecule_featurizer import MoleculeFeaturizer
 from fleet.model_builder.layers_schema import FeaturizersType
-from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import DataInstance, get_references_dict
 from fleet.utils.graph import make_graph_from_forward_args
 
 
-def _get_default_featurizer(
-    column: "ColumnConfig",
-    config: Union[None, TorchModelSchema] = None,
-    dataset_config: Union[None, DatasetConfig] = None,
-) -> Union[BaseFeaturizer, None]:
-    """Gets a default featurizer based on the data type"""
-    feat = None
-    if isinstance(column.data_type, data_types.CategoricalDataType):
-        feat = IntegerFeaturizer()
-        feat.set_from_model_schema(
-            config=config,
-            deps=[column.name],
-            dataset_config=dataset_config,
-        )
-    elif isinstance(column.data_type, data_types.DNADataType):
-        feat = DNASequenceFeaturizer()
-    elif isinstance(column.data_type, data_types.RNADataType):
-        feat = RNASequenceFeaturizer()
-    elif isinstance(column.data_type, data_types.ProteinDataType):
-        feat = ProteinSequenceFeaturizer()
-
-    return feat
-
-
-class TransformerNormalizer:
-    """
-    Temporary class
-    """
-
-    name: str
-    type: Literal[
-        "sklearn.preprocessing.Normalizer"
-    ] = "sklearn.preprocessing.Normalizer"
-    forward_args: Dict[str, str]
-    constructor_args: Dict[str, str]
-
-    def create(self):
-        ...
-
-    class Config:
-        """Configures the wrapper class to work as intended."""
-
-        alias_generator = camel.case
-        allow_population_by_field_name = True
-        allow_population_by_alias = True
-        underscore_attrs_are_private = True
-
-
-FeatOrTransf = Annotated[
-    Union[FeaturizersType, TransformerNormalizer], Field(discriminator="type")
-]
-
-
 def dataset_topo_sort(
     dataset_config: DatasetConfig,
-) -> Tuple[Iterable[FeaturizersType], Iterable[TransformerNormalizer]]:
+) -> Tuple[Iterable[FeaturizersType], Iterable[Any]]:
     """Get's the preprocessing pipeline steps in their topological order.
 
     Uses the ``forward_args`` from ``dataset_config.featurizers`` and ``dataset_config.transformer``
@@ -153,9 +93,30 @@ def apply(feat_or_transform, numpy_col):
             featurized_item = feat_or_transform(item)
             arr.append(featurized_item)
         if isinstance(feat_or_transform, MoleculeFeaturizer):
-            return torch.Tensor(arr)
+            return arr
         return np.array(arr)
     raise RuntimeError()
+
+
+def has_default_featurizer(column: ColumnConfig):
+    """
+    Checks if the column has a default featurizer.
+
+    Args:
+        dataset_config(DatasetConfig): The dataset configuration.
+        column(ColumnConfig): The column configuration.
+    """
+    if column.data_type is None:
+        return False
+    if isinstance(column.data_type, data_types.CategoricalDataType):
+        return True
+    if isinstance(column.data_type, data_types.DNADataType):
+        return True
+    if isinstance(column.data_type, data_types.RNADataType):
+        return True
+    if isinstance(column.data_type, data_types.ProteinDataType):
+        return True
+    return False
 
 
 def get_default_data_type_featurizer(
@@ -227,7 +188,7 @@ def build_columns_numpy(
         df: The :class:`pd.DataFrame` that holds the dataset data.
 
     Returns:
-        The updated ``DataFrame`` with the preprocessed dataset.
+        A tuple of the updated dataframe and a dictionary of the featurizers and transforms.
     """
     # Get featurizers and transformers in order
     feats, transforms = map(list, dataset_topo_sort(dataset_config))
@@ -257,7 +218,9 @@ def build_columns_numpy(
     return df
 
 
-def adapt_numpy_to_tensor(arr: Union[list[np.ndarray], np.ndarray]) -> torch.Tensor:
+def adapt_numpy_to_tensor(
+    arr: Union[list[np.ndarray], np.ndarray]
+) -> Union[list[np.ndarray], np.ndarray, torch.Tensor]:
     """
     Creates a tensor with the same shape and type as the numpy array.
 
@@ -287,11 +250,7 @@ def adapt_numpy_to_tensor(arr: Union[list[np.ndarray], np.ndarray]) -> torch.Ten
         tensor = torch.as_tensor(arr)
         tensor = tensor.float()
         return tensor
-    else:
-        print("arr is not a list of numpy floats or ints")
-        print("arr is of type: ", type(arr))
-        if isinstance(arr, list):
-            print("arr[0] is of type: ", type(arr[0]))
+
     return arr
 
 
@@ -352,9 +311,9 @@ class MarinerTorchDataset(Dataset):
         for col in self.dataset_config.feature_columns:
             item[col.name] = adapt_numpy_to_tensor([sample[col.name]])
         for col in self.dataset_config.featurizers:
-            item[col.name] = adapt_numpy_to_tensor([sample[col.name]])
+            item[col.name] = adapt_numpy_to_tensor(sample[col.name])
         for col in self.dataset_config.transforms:
-            item[col.name] = adapt_numpy_to_tensor([sample[col.name]])
+            item[col.name] = adapt_numpy_to_tensor(sample[col.name])
 
         for target in self.dataset_config.target_columns:
             item[target.name] = adapt_numpy_to_tensor([sample[target.name]])
@@ -400,10 +359,9 @@ class DataModule(pl.LightningDataModule):
         data: pd.DataFrame,
         split_type: str,
         split_target: str,
-        model_config: TorchModelSchema,
         config: DatasetConfig,
         batch_size=32,
-        collate_fn: Union[Callable, None] = Collater(),
+        collate_fn: Union[Callable, None] = None,
     ):
         super().__init__()
         self.dataset_config = config

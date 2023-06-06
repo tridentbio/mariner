@@ -31,6 +31,7 @@ def test_get_ref_from_data_instace():
 @pytest.mark.parametrize(
     "class_path",
     [
+        "sklearn.preprocessing.OneHotEncoder",
         "torch.nn.Linear",
         "torch_geometric.nn.GCNConv",
         "fleet.model_builder.layers.OneHot",
