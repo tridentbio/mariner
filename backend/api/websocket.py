@@ -53,7 +53,8 @@ class BaseConnection:
     async def send_message(self, message: WebSocketMessage):
         """Sends a message to all active connections."""
         for session in self.sessions.values():
-            await session.send_text(message.json(by_alias=True))
+            if session.application_state == WebSocketState.CONNECTED:
+                await session.send_text(message.json(by_alias=True))
 
     def add_session(self, session: WebSocket):
         """Adds a session to the active connections."""
@@ -97,8 +98,8 @@ class ConnectionManager:
             connection_id:
                 for authenticated users: id of the user.
                 for anonymous users in public deployments: id of the deployment.
-            websocket: instance of the server's socket keeping.
-            the connection
+            websocket: instance of the server's socket keeping the connection.
+            public: whether the connection is public or not.
 
         Returns:
             str: id of the connection in the list of connections.
@@ -124,6 +125,8 @@ class ConnectionManager:
 
         Args:
             connection_id: id from connection to have websocket disconnected
+            session_id: id from session to be disconnected
+            public: whether the connection is public or not.
         """
         if public:
             if connection_id in self.active_connections_public:
@@ -158,6 +161,7 @@ class ConnectionManager:
 
         Args:
             message: message to send.
+            public: If True, sends the message to all connections, send only to private connections otherwise.
         """
         for connection in [
             *self.active_connections.values(),
