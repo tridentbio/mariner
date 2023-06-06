@@ -1,3 +1,4 @@
+import { matchPath } from 'react-router-dom';
 import { DeploymentStatus } from '@app/rtk/generated/deployments';
 import { TOKEN } from 'app/local-storage';
 import { Dataset } from 'app/types/domain/datasets';
@@ -97,7 +98,7 @@ export class SocketMessageHandler {
 
   connect = () => {
     const url = window.location.href;
-    const publicDeploymentToken = this.getTokenFromUrl(url);
+    const publicDeploymentToken = this.getTokenFromPublicDeploymentUrl(url);
     if (publicDeploymentToken) {
       this.connectAnonymous(publicDeploymentToken);
     }
@@ -136,9 +137,13 @@ export class SocketMessageHandler {
     }
   };
 
-  private getTokenFromUrl = (url: string) => {
-    const result = url.match(RegExp('public-model\\/\\w+\\/\\w+\\/\\w+', 'g'));
-    if (result) return result[0].split('public-model/')[1].replaceAll('/', '.');
+  private getTokenFromPublicDeploymentUrl = (url: string) => {
+    url = new URL(url).pathname;
+    const parsedUrl = matchPath('public-model/:token1/:token2/:token3', url);
+    const { token1, token2, token3 } = parsedUrl?.params || {};
+    if (!token1 || !token2 || !token3) return null;
+
+    return `${token1}.${token2}.${token3}`;
   };
 }
 
