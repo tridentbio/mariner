@@ -246,7 +246,7 @@ def start_process(
             _ (_type_): unused parameter
         """
         asyncio.ensure_future(
-            get_websockets_manager().send_message(
+            get_websockets_manager().send_message_to_user(
                 user_id=dataset.created_by_id,
                 message=WebSocketMessage(
                     data=task.result(), type="dataset-process-finish"

@@ -1,4 +1,11 @@
-import { createContext, FC, ReactNode, useRef, useEffect } from 'react';
+import {
+  createContext,
+  FC,
+  ReactNode,
+  useRef,
+  useEffect,
+  useCallback,
+} from 'react';
 import { messageHandler, SocketMessageHandler } from 'app/websocket/types';
 import { useAppDispatch } from 'app/hooks';
 import { updateExperiment } from 'features/models/modelSlice';
@@ -24,26 +31,51 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
   const [fetchDeploymentById] = deploymentsApi.useLazyGetDeploymentQuery();
   const { setMessage } = useNotifications();
 
+  const applyAuthenticatedCallbacks = useCallback(
+    (socketHandler: SocketMessageHandler) => {
+      socketHandler.on('update-running-metrics', (event) => {
+        dispatch(updateExperiment(event.data));
+      });
+      socketHandler.on('dataset-process-finish', (event) => {
+        const dataset = event.data.dataset;
+        dispatch(updateDataset(dataset));
+        fetchDatasetById({ datasetId: dataset.id });
+        setMessage({
+          message: event.data.message,
+          type: dataset.readyStatus === 'failed' ? 'error' : 'success',
+        });
+      });
+      socketHandler.on('update-deployment', (event) => {
+        const updatedData = event.data;
+        fetchDeploymentById({ deploymentId: updatedData.deploymentId }, false);
+        dispatch(updateDeploymentStatus(updatedData));
+      });
+      return socketHandler;
+    },
+    []
+  );
+
+  const applyAnonymousCallbacks = useCallback(
+    (socketHandler: SocketMessageHandler) => {
+      socketHandler.on('update-deployment', (event) => {
+        const updatedData = event.data;
+        dispatch(updateDeploymentStatus(updatedData));
+      });
+      return socketHandler;
+    },
+    []
+  );
+
   useEffect(() => {
     let socketHandler = socketHandlerRef.current;
     if (socketHandler.isDisconnected()) socketHandler.connect();
-    socketHandler.on('update-running-metrics', (event) => {
-      dispatch(updateExperiment(event.data));
-    });
-    socketHandler.on('dataset-process-finish', (event) => {
-      const dataset = event.data.dataset;
-      dispatch(updateDataset(dataset));
-      fetchDatasetById({ datasetId: dataset.id });
-      setMessage({
-        message: event.data.message,
-        type: dataset.readyStatus === 'failed' ? 'error' : 'success',
-      });
-    });
-    socketHandler.on('update-deployment', (event) => {
-      const updatedData = event.data;
-      fetchDeploymentById({ deploymentId: updatedData.deploymentId }, false);
-      dispatch(updateDeploymentStatus(updatedData));
-    });
+
+    if (socketHandler.connectionType === 'authenticated') {
+      socketHandler = applyAuthenticatedCallbacks(socketHandler);
+    } else if (socketHandler.connectionType === 'anonymous') {
+      socketHandler = applyAnonymousCallbacks(socketHandler);
+    }
+
     socketHandlerRef.current = socketHandler;
 
     return () => {
