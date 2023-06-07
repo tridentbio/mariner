@@ -20,8 +20,6 @@ def make_list_from_array_string(v: Union[str, list[str]]):
     raise ValueError(v)
 
 
-# Make settings be the aggregation of several settings
-# Possibly using multi-inheritance
 class Settings(BaseSettings):
     """Models the environment variables used around the application."""
 

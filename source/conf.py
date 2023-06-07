@@ -1,9 +1,8 @@
-import sys, os
-
+import os
+import sys
 
 sys.path.insert(0, os.path.abspath("mariner"))
 sys.path.insert(0, os.path.abspath("fleet"))
-print(sys.path[-2:])
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -26,12 +25,12 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
-    'sphinx_rtd_theme',
-    'sphinx_toolbox.confval',
-    'sphinx_copybutton',
+    "sphinx_rtd_theme",
+    "sphinx_toolbox.confval",
+    "sphinx_copybutton",
 ]
 
-copybutton_exclude = '.linenos, .gp, .go'
+copybutton_exclude = ".linenos, .gp, .go"
 
 templates_path = ["_templates"]
 exclude_patterns = []

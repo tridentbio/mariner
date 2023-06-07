@@ -31,6 +31,8 @@ services:
     ports:
       - 80:80
       - 8888:8888
+      - 8000:8000
+
     environment:
       - RESTART=true
     env_file:
