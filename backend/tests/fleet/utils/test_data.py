@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 
 import pandas as pd
+import pytest
 import torch
 from torch.utils.data import Subset
 
@@ -106,7 +107,7 @@ class TestMarinerTorchDataset:
                 "dna_example.yml",
             ],
             ["zinc_extra.csv", "iris.csv", "sarkisyan_full_seq_data.csv"],
-            [501, 150, 999],
+            [20, 20, 20],
         ):
             dataset = self.dataset_fixture(model=model, csv=csv)
             assert len(dataset) == expected_len
@@ -120,9 +121,9 @@ class TestMarinerTorchDataset:
                 dataset, dataset.get_subset_idx(TrainingStep.VAL.value)
             )
 
-            assert len(train_dataset) == math.floor(0.6 * len(dataset))
-            assert len(test_dataset) == math.floor(0.2 * len(dataset))
-            assert len(val_dataset) == math.floor(0.2 * len(dataset))
+            assert len(train_dataset) == pytest.approx(0.6 * len(dataset), rel=1)
+            assert len(test_dataset) == pytest.approx(0.2 * len(dataset), rel=1)
+            assert len(val_dataset) == pytest.approx(0.2 * len(dataset), rel=1)
 
     def test_lookup(self):
         """

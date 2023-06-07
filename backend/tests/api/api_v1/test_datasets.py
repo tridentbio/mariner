@@ -59,10 +59,10 @@ def test_post_datasets(
             assert "created successfully" in message["data"].get("message", "")
 
         ds = dataset_store.get(db, id)
-        assert is_close(ds.bytes, 287_750)
+        assert is_close(ds.bytes, 1360)
         assert ds is not None
         assert ds.name == response["name"]
-        assert ds.columns == 3
+        assert ds.columns == 4
         assert len(ds.columns_metadata) == 2
 
 
@@ -98,7 +98,7 @@ def test_post_datasets_invalid(
         assert ds.name == response["name"]
         assert ds.errors is not None
         assert len(ds.errors["columns"]) == 2
-        assert len(ds.errors["rows"]) == 18
+        assert len(ds.errors["rows"]) == 2
         assert isinstance(ds.errors["dataset_error_key"], str)
 
 

@@ -49,7 +49,7 @@ def mock_dataset(name: Optional[str] = None):
         "description": "Test description",
         "splitType": "random",
         "splitTarget": "60-20-20",
-        "dataUrl": "datasets/fa6691b5cd14cabf0db3d325e7da59e3.csv",
+        "dataUrl": "datasets/zinc_extra.csv",
         "columnsMetadata": json.dumps(mock_columns_metadatas()),
     }
 
