@@ -3,16 +3,7 @@ Classes used to describe datasets. They can be extended, but
 it is not encouraged since it will required adapting the implementation
 of some methods.
 """
-from typing import (
-    Annotated,
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from humps import camel
 from pydantic import BaseModel, Field, root_validator
@@ -75,9 +66,6 @@ class TargetConfig(ColumnConfig):
     column_type: Optional[Literal["regression", "multiclass", "binary"]] = None
 
 
-AnnotatedFeaturizersType = Annotated[FeaturizersType, Field(discriminator="type")]
-
-
 class DatasetConfig(BaseDatasetModel):
     """
     Describes a dataset for the model.
@@ -93,9 +81,9 @@ class DatasetConfig(BaseDatasetModel):
     """
 
     name: str
-    target_columns: Sequence[ColumnConfig]
-    feature_columns: Sequence[ColumnConfig]
-    featurizers: Sequence[FeaturizersType] = []
+    target_columns: List[ColumnConfig]
+    feature_columns: List[ColumnConfig]
+    featurizers: List[FeaturizersType] = []
 
 
 AllowedLossesType = List[Dict[str, str]]
@@ -174,7 +162,7 @@ class TorchDatasetConfig(DatasetConfig):
     Describes a dataset for the model in terms of it's used columns
     """
 
-    target_columns: Sequence["TargetConfig"]
+    target_columns: List["TargetConfig"]
 
     @root_validator()
     def autofill_loss_fn(cls, values: dict) -> Any:

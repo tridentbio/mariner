@@ -10,6 +10,7 @@ const config: ConfigFile = {
     },
     './src/app/rtk/generated/datasets.ts': {
       filterEndpoints: [/dataset/i, 'getS3Data'],
+      endpointOverrides: false
     },
     './src/app/rtk/generated/models.ts': {
       filterEndpoints: [/model/i],

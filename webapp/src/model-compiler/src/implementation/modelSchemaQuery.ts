@@ -83,7 +83,9 @@ export const getComponent = (
 
 export const getDependenciesNames = (node: NodeType): string[] => {
   const deps: string[] = [];
-  if (node.type === 'input' || node.type === 'output') return [];
+  if (node.type === 'input') return [];
+  else if (node.type === 'output')
+    return node.outModule ? [node.outModule] : [];
   Object.values(node.forwardArgs).forEach((value) => {
     if (isArray(value)) {
       value.forEach((val) => {
@@ -108,11 +110,27 @@ export const getDependencies = (
   nodes.forEach((n) => {
     nodesByName[n.name] = n;
   });
-  const depsNames = getDependenciesNames(node);
+  const depsNames = [...new Set(getDependenciesNames(node))];
   const deps = depsNames
     .map((nodeId) => nodesByName[nodeId])
     .filter((name) => !!name);
   return deps;
+};
+
+export const getDependents = (
+  node: NodeType,
+  schema: ModelSchema
+): NodeType[] => {
+  const nodes = getNodes(schema);
+  const nodesByName: { [key: string]: NodeType } = {};
+  nodes.forEach((n) => {
+    nodesByName[n.name] = n;
+  });
+  const dependents = nodes.filter((n) => {
+    const deps = getDependenciesNames(n);
+    return deps.includes(node.name);
+  });
+  return dependents;
 };
 
 type HandleData = {

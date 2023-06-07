@@ -1,5 +1,9 @@
 import { TorchModelSpec } from '@app/rtk/generated/models';
-import { getDependencies, getNodes } from './implementation/modelSchemaQuery';
+import {
+  getDependencies,
+  getDependents,
+  getNodes,
+} from './implementation/modelSchemaQuery';
 import {
   ComponentType,
   ModelSchema,
@@ -50,11 +54,13 @@ export const normalizeNegativeIndex = (index: number, length: number) => {
   if (index < 0) return index + length;
   else return index;
 };
+
 export const iterateTopologically = (
   schema: ModelSchema,
-  fn: (node: NodeType, type: ComponentType) => void
+  fn: (node: NodeType, type: ComponentType) => void,
+  backward = false
 ) => {
-  const nodes = topologicalSort(schema);
+  const nodes = topologicalSort(schema, backward);
   const typesOfNode: {
     [key: string]: ComponentType;
   } = {};
@@ -76,23 +82,48 @@ const topologicalSortHelper = (
   node: NodeType,
   explored: Set<string>,
   stack: NodeType[],
-  schema: ModelSchema
+  schema: ModelSchema,
+  backward = false
 ) => {
   explored.add(node.name);
-  getDependencies(node, schema).forEach((n) => {
+
+  type DepCollector = (node: NodeType, schema: ModelSchema) => NodeType[];
+
+  let collect: DepCollector;
+
+  if (backward) collect = getDependents;
+  else collect = getDependencies;
+  collect(node, schema).forEach((n) => {
     if (!explored.has(n.name))
       topologicalSortHelper(n, explored, stack, schema);
   });
   stack.push(node);
 };
 
-const topologicalSort = (schema: ModelSchema): NodeType[] => {
+const topologicalSort = (schema: ModelSchema, backward = false): NodeType[] => {
+  if (backward) return topologicalSortBackward(schema);
+  else return topologicalSortForward(schema);
+};
+
+const topologicalSortForward = (schema: ModelSchema): NodeType[] => {
   const stack: NodeType[] = [];
   const explored = new Set<string>();
   const nodes = getNodes(schema);
   nodes.forEach((node) => {
     if (!explored.has(node.name)) {
       topologicalSortHelper(node, explored, stack, schema);
+    }
+  });
+  return stack;
+};
+
+const topologicalSortBackward = (schema: ModelSchema): NodeType[] => {
+  const stack: NodeType[] = [];
+  const explored = new Set<string>();
+  const nodes = getNodes(schema);
+  nodes.forEach((node) => {
+    if (!explored.has(node.name)) {
+      topologicalSortHelper(node, explored, stack, schema, true);
     }
   });
   return stack;

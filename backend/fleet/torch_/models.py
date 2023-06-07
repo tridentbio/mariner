@@ -11,7 +11,6 @@ import torch
 import torch.nn
 import torchmetrics as metrics
 
-from fleet import data_types
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
@@ -155,7 +154,7 @@ def _adapt_loss_args(
     ):
         return (args[0], args[1].long())
 
-    # BCEWithLogitsLoss counter intuitivelly requires targets to be floats
+    # BCEWithLogitsLoss requires targets to be floats
     elif isinstance(
         loss_fn,
         (torch.nn.BCEWithLogitsLoss),
@@ -213,23 +212,15 @@ class CustomModel(pl.LightningModule):
             self.loss_dict[target_column.name] = loss_fn_class()
 
             # Set up metrics for training and validation
-            if isinstance(
-                target_column.data_type,
-                (data_types.NumericalDataType, data_types.QuantityDataType),
-            ):
+            if target_column.column_type == "regression":
                 self.metrics_dict[target_column.name] = Metrics("regression")
-            elif isinstance(target_column.data_type, data_types.CategoricalDataType):
+            else:
                 self.metrics_dict[target_column.name] = Metrics(
                     "multilabel" if is_multilabel else "multiclass",
                     num_classes=len(target_column.data_type.classes.keys()),
                     num_labels=len(dataset_config.target_columns)
                     if is_multilabel
                     else None,
-                )
-            else:
-                LOG.warning(
-                    "No metrics are defined for the data type %r. Maybe it shouldn't be a target?",
-                    target_column.data_type,
                 )
 
     def set_optimizer(self, optimizer: Optimizer):

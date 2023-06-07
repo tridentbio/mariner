@@ -4,8 +4,9 @@
 ############################################################################
 
 from typing import Optional, Literal, Union, List, Any, Callable
+from typing_extensions import Annotated
 import torch
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fleet.model_builder.utils import get_class_from_path_string, CamelCaseModel
 
 {% block imports %}
@@ -26,27 +27,27 @@ def is_func(obj):
 {%- include "componentv2.py.jinja" -%}
 {%- endfor %}
 
-LayersType = Union[
+LayersType = Annotated[Union[
     {% for component in layer_components: -%}
     {{ component['prefix'] + "LayerConfig" }},
     {% endfor %}
-]
+], Field(discriminator="type")]
 
-FeaturizersType = Union[
+FeaturizersType = Annotated[Union[
     {% for component in featurizer_components: -%}
     {{ component['prefix'] + "LayerConfig" }},
     {% endfor %}
-]
+], Field(discriminator="type")]
 
-LayersArgsType = Union[
+LayersArgsType = Annotated[Union[
     {% for component in layer_components: -%}
     {{ component['prefix'] + "Summary" }},
     {% endfor %}
-]
+], Field(discriminator="type")]
 
-FeaturizersArgsType = Union[
+FeaturizersArgsType = Annotated[Union[
     {% for component in featurizer_components: -%}
     {{ component['prefix'] + "Summary" }},
     {%- endfor %}
-]
+], Field(discriminator="type")]
 

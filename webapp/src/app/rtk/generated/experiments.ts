@@ -105,119 +105,6 @@ export type GetExperimentsMetricsForModelVersionApiResponse =
 export type GetExperimentsMetricsForModelVersionApiArg = {
   modelVersionId: number;
 };
-export type QuantityDataType = {
-  domainKind?: 'numeric';
-  unit: string;
-};
-export type NumericalDataType = {
-  domainKind?: 'numeric';
-};
-export type StringDataType = {
-  domainKind?: 'string';
-};
-export type SmileDataType = {
-  domainKind?: 'smiles';
-};
-export type CategoricalDataType = {
-  domainKind?: 'categorical';
-  classes: {
-    [key: string]: number;
-  };
-};
-export type DnaDataType = {
-  domainKind?: 'dna';
-};
-export type RnaDataType = {
-  domainKind?: 'rna';
-};
-export type ProteinDataType = {
-  domainKind?: 'protein';
-};
-export type TargetConfig = {
-  name: string;
-  dataType:
-    | QuantityDataType
-    | NumericalDataType
-    | StringDataType
-    | SmileDataType
-    | CategoricalDataType
-    | DnaDataType
-    | RnaDataType
-    | ProteinDataType;
-  outModule: string;
-  lossFn?: string;
-  columnType?: 'regression' | 'multiclass' | 'binary';
-};
-export type ColumnConfig = {
-  name: string;
-  dataType:
-    | QuantityDataType
-    | NumericalDataType
-    | StringDataType
-    | SmileDataType
-    | CategoricalDataType
-    | DnaDataType
-    | RnaDataType
-    | ProteinDataType;
-};
-export type FleetmoleculefeaturizerConstructorArgs = {
-  allow_unknown: boolean;
-  sym_bond_list: boolean;
-  per_atom_fragmentation: boolean;
-};
-export type FleetmoleculefeaturizerForwardArgsReferences = {
-  mol: string;
-};
-export type FleetmoleculefeaturizerLayerConfig = {
-  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
-  name: string;
-  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
-  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
-};
-export type FleetintegerfeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type FleetintegerfeaturizerLayerConfig = {
-  type?: 'fleet.model_builder.featurizers.IntegerFeaturizer';
-  name: string;
-  forwardArgs: FleetintegerfeaturizerForwardArgsReferences;
-};
-export type FleetdnasequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type FleetdnasequencefeaturizerLayerConfig = {
-  type?: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
-  name: string;
-  forwardArgs: FleetdnasequencefeaturizerForwardArgsReferences;
-};
-export type FleetrnasequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type FleetrnasequencefeaturizerLayerConfig = {
-  type?: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
-  name: string;
-  forwardArgs: FleetrnasequencefeaturizerForwardArgsReferences;
-};
-export type FleetproteinsequencefeaturizerForwardArgsReferences = {
-  input_: string;
-};
-export type FleetproteinsequencefeaturizerLayerConfig = {
-  type?: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
-  name: string;
-  forwardArgs: FleetproteinsequencefeaturizerForwardArgsReferences;
-};
-export type TorchDatasetConfig = {
-  name: string;
-  targetColumns: TargetConfig[];
-  featureColumns: ColumnConfig[];
-  featurizers?: (
-    | FleetmoleculefeaturizerLayerConfig
-    | FleetintegerfeaturizerLayerConfig
-    | FleetdnasequencefeaturizerLayerConfig
-    | FleetrnasequencefeaturizerLayerConfig
-    | FleetproteinsequencefeaturizerLayerConfig
-  )[];
-};
 export type FleetonehotForwardArgsReferences = {
   x1: string;
 };
@@ -391,11 +278,134 @@ export type TorchModelSchema = {
       } & TorchtransformerencoderlayerLayerConfig)
   )[];
 };
+export type QuantityDataType = {
+  domainKind?: 'numeric';
+  unit: string;
+};
+export type NumericalDataType = {
+  domainKind?: 'numeric';
+};
+export type StringDataType = {
+  domainKind?: 'string';
+};
+export type SmileDataType = {
+  domainKind?: 'smiles';
+};
+export type CategoricalDataType = {
+  domainKind?: 'categorical';
+  classes: {
+    [key: string]: number;
+  };
+};
+export type DnaDataType = {
+  domainKind?: 'dna';
+};
+export type RnaDataType = {
+  domainKind?: 'rna';
+};
+export type ProteinDataType = {
+  domainKind?: 'protein';
+};
+export type TargetConfig = {
+  name: string;
+  dataType:
+    | QuantityDataType
+    | NumericalDataType
+    | StringDataType
+    | SmileDataType
+    | CategoricalDataType
+    | DnaDataType
+    | RnaDataType
+    | ProteinDataType;
+  outModule: string;
+  lossFn?: string;
+  columnType?: 'regression' | 'multiclass' | 'binary';
+};
+export type ColumnConfig = {
+  name: string;
+  dataType:
+    | QuantityDataType
+    | NumericalDataType
+    | StringDataType
+    | SmileDataType
+    | CategoricalDataType
+    | DnaDataType
+    | RnaDataType
+    | ProteinDataType;
+};
+export type FleetmoleculefeaturizerConstructorArgs = {
+  allow_unknown: boolean;
+  sym_bond_list: boolean;
+  per_atom_fragmentation: boolean;
+};
+export type FleetmoleculefeaturizerForwardArgsReferences = {
+  mol: string;
+};
+export type FleetmoleculefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+  name: string;
+  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
+  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
+};
+export type FleetintegerfeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetintegerfeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.IntegerFeaturizer';
+  name: string;
+  forwardArgs: FleetintegerfeaturizerForwardArgsReferences;
+};
+export type FleetdnasequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetdnasequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetdnasequencefeaturizerForwardArgsReferences;
+};
+export type FleetrnasequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetrnasequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetrnasequencefeaturizerForwardArgsReferences;
+};
+export type FleetproteinsequencefeaturizerForwardArgsReferences = {
+  input_: string;
+};
+export type FleetproteinsequencefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
+  name: string;
+  forwardArgs: FleetproteinsequencefeaturizerForwardArgsReferences;
+};
+export type TorchDatasetConfig = {
+  name: string;
+  targetColumns: TargetConfig[];
+  featureColumns: ColumnConfig[];
+  featurizers?: (
+    | ({
+        type: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+      } & FleetmoleculefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.IntegerFeaturizer';
+      } & FleetintegerfeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
+      } & FleetdnasequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
+      } & FleetrnasequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
+      } & FleetproteinsequencefeaturizerLayerConfig)
+  )[];
+};
 export type TorchModelSpec = {
   name: string;
   framework?: 'torch';
-  dataset: TorchDatasetConfig;
   spec: TorchModelSchema;
+  dataset: TorchDatasetConfig;
 };
 export type ModelVersion = {
   id: number;
