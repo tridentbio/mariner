@@ -174,18 +174,14 @@ class CustomModel(pl.LightningModule):
     def __init__(
         self,
         config: Union[TorchModelSchema, str],
-        dataset_config: Union["TorchDatasetConfig", str],
+        dataset_config: "TorchDatasetConfig",
     ):
         super().__init__()
         if isinstance(config, str):
             config = TorchModelSchema.parse_raw(config)
-        if isinstance(dataset_config, str):
-            dataset_config = TorchDatasetConfig.parse_raw(dataset_config)
-
         self.save_hyperparameters({"config": config.json()})
         layers_dict = {}
         self.config = config
-        self.dataset_config = dataset_config
         self.layer_configs = {layer.name: layer for layer in config.layers}
         for layer in config.layers:
             layer_instance = layer.create()
@@ -196,6 +192,8 @@ class CustomModel(pl.LightningModule):
                     deps=list(get_dependencies(layer)),
                 )
             layers_dict[layer.name] = layer_instance
+
+        self.dataset_config = dataset_config
         self._model = torch.nn.ModuleDict(layers_dict)
         self.graph = config.make_graph()
         self.topo_sorting = list(nx.topological_sort(self.graph))

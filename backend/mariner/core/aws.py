@@ -147,3 +147,21 @@ def upload_s3_compressed(
     key = f"datasets/{file_md5}.csv"
     upload_s3_file(file=file_instance, bucket=bucket, key=key)
     return key, file_size
+
+
+def is_in_s3(key: str, bucket: Bucket) -> bool:
+    """Check if a file is in S3
+
+    Args:
+        key (str): s3 file key
+        bucket (Bucket): s3 bucket
+
+    Returns:
+        bool: True if file is in S3, False otherwise
+    """
+    s3 = create_s3_client()
+    try:
+        s3.head_object(Bucket=bucket.value, Key=key)
+        return True
+    except s3.exceptions.NoSuchKey:
+        return False

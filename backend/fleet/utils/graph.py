@@ -42,25 +42,6 @@ def make_graph(
     return graph
 
 
-class AnyNode(Protocol):
-    """
-    A generic protocol for nodes used in the application.
-
-    Attributes:
-        name: the node identifier.
-        forwardArgs: dictionary with edges data. Keys in this dictionary are
-            function parameters (e.g. ``torch.nn.Linear``'s ``forward(input=...)``,
-            ``input``is a function parameter that would be in the ``forward_arg``'s key of
-            the layer's node representation). Values are strings or list of strings
-            describing the value to be applied on that parameter (.e.g.
-            ``"$foo.a.b"`` represents the parameter value is gotten from the ``foo``'s
-            output, then accessing it's ``a`` and ``b`` attributes respectively.
-    """
-
-    name: str
-    forward_args: Union[None, Dict[str, Union[str, List[str]]]] = None
-
-
 def make_graph_from_forward_args(nodes: Iterable[dict]) -> nx.DiGraph:
     """Creates a graph from objects with ``forward_args``.
 
