@@ -79,11 +79,11 @@ class TestDatasetTransforms:
             cols_count,
             stats,
         ) = await hiv_transformer_fixture.get_entity_info_from_csv.remote()
-        assert rows_count == 41_127
-        assert cols_count == 3
+        assert rows_count == 20
+        assert cols_count == 4
 
         # check stats colulmns
-        expected_stats_cols = ["smiles", "activity", "HIV_active"]
+        expected_stats_cols = ["smiles", "activity", "HIV_active", "step"]
         got_stats_cols = list(stats.keys())
         assert got_stats_cols == expected_stats_cols
 
@@ -111,9 +111,9 @@ class TestDatasetTransforms:
         metadata_list: List[
             ColumnsMeta
         ] = await bio_transformer_fixture.get_columns_metadata.remote()
-        assert len(metadata_list) == 4
+        assert len(metadata_list) == 5
 
-        expected_domain = ["string", "rna", "dna", "protein"]
+        expected_domain = ["string", "rna", "dna", "protein", "categorical"]
 
         for i, metadata in enumerate(metadata_list):
             assert isinstance(metadata, ColumnsMeta)
@@ -130,6 +130,8 @@ class TestDatasetTransforms:
     @pytest.mark.asyncio
     async def test_apply_indexes_scaffold(self, hiv_transformer_fixture):
         initial_df = await hiv_transformer_fixture.get_dataframe.remote()
+        # Remove step column from initial_df
+        initial_df = initial_df.drop(columns=["step"])
         expected_len = len(initial_df.columns) + 1
         await hiv_transformer_fixture.apply_split_indexes.remote(
             split_type="scaffold", split_target="60-20-20", split_column="smiles"

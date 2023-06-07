@@ -13,9 +13,9 @@ from torch_geometric.loader import DataLoader
 from fleet.base_schemas import TorchModelSpec
 from fleet.dataset_schemas import ColumnConfig, TargetConfig, TorchDatasetConfig
 from fleet.model_builder import layers_schema as layers
-from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.torch_.models import CustomModel
+from fleet.utils.data import MarinerTorchDataset
 from mariner.core.config import settings
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
@@ -420,10 +420,9 @@ def test_post_check_config_bad_model(
     model = CustomModel(config=regressor.spec, dataset_config=regressor.dataset)
     regressor.dataset.name = some_dataset.name
     dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
-    torch_dataset = CustomDataset(
+    torch_dataset = MarinerTorchDataset(
         dataset.get_dataframe(),
         dataset_config=regressor.dataset,
-        model_config=regressor.spec,
     )
     dataloader = DataLoader(torch_dataset, batch_size=1)
     batch = next(iter(dataloader))

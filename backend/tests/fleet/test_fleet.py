@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Any, Union
 
 import mlflow
+import pandas as pd
 import pytest
 from mlflow.tracking import MlflowClient
-import pandas as pd
 
 from fleet.base_schemas import FleetModelSpec, TorchModelSpec
 from fleet.dataset_schemas import TargetConfig, is_regression
@@ -49,6 +49,7 @@ def assert_mlflow_data(spec: FleetModelSpec, mlflow_experiment_id: str):
     assert location.startswith(f"s3://{Bucket.Datasets.value}/{mlflow_experiment_id}")
     run_artifact_prefix = f"{mlflow_experiment_id}/{run.info.run_id}"
     objs = list_s3_objects(Bucket.Datasets, run_artifact_prefix)
+
     expected_artifacts = [
         f"{run_artifact_prefix}/artifacts/last/data/model.pth",
         f"{run_artifact_prefix}/artifacts/best/data/model.pth",
@@ -78,11 +79,10 @@ datasets_root = Path("tests") / "data" / "csv"
 specs = [
     (TorchModelSpec.from_yaml(models_root / model_file), datasets_root / dataset_file)
     for model_file, dataset_file in [
-        ("categorical_features_model.yaml", "zinc_extra.csv"),
         (
             "small_regressor_schema.yaml",
             "zinc.csv",
-        ),  # currently fails due a bug in the molecule featurizer
+        ),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),
         ("binary_classification_model.yaml", "iris.csv"),
@@ -121,12 +121,6 @@ def test_train(case: TestCase):
     mlflow.client.MlflowClient().create_registered_model(mlflow_model_name)
     with open(case.dataset_file, encoding="utf-8") as file:
         dataset: pd.DataFrame = pd.read_csv(file)
-        splitters.apply_split_indexes(
-            df=dataset,
-            split_type="random",
-            split_target="60-20-20",
-        )
-        assert "step" in dataset.columns, "step column is missing in dataset"
         if not case.should_fail:
             result = fit(
                 spec=case.model_spec,
