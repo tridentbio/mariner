@@ -1,4 +1,6 @@
 import { addDescription } from '../commands';
+import { createIrisDatasetFormData } from './examples';
+import { IRIS_DATASET_NAME } from '../constants';
 
 export interface DatasetFormData {
   name: string;
@@ -185,4 +187,38 @@ export const createDatasetDirectly = (
     });
   });
 };
+
+export const datasetExists = (
+  dataset: DatasetFormData
+): Cypress.Chainable<boolean> =>
+  cy.getCurrentAuthString().then((authorization) =>
+    cy
+      .request({
+        method: 'GET',
+        url:
+          'http://localhost/api/v1/datasets?page=0&perPage=100&search_by_name=' +
+          dataset.name,
+        headers: {
+          authorization,
+        },
+      })
+      .then((response) => {
+        expect(response?.status).to.eq(200);
+        const datasets: any[] = response?.body.data || [];
+        return cy.wrap(datasets.some((d) => d.name === dataset.name));
+      })
+  );
+
+export const irisDatasetFixture = createIrisDatasetFormData(IRIS_DATASET_NAME);
+export const useIrisDataset = () =>
+  datasetExists(irisDatasetFixture).then((exists) => {
+    if (!exists) {
+      return cy.wrap({
+        setup: () => createDatasetDirectly(irisDatasetFixture),
+        fixture: irisDatasetFixture,
+      });
+    }
+    return cy.wrap({ fixture: irisDatasetFixture, setup: () => {} });
+  });
+
 export default createDataset;

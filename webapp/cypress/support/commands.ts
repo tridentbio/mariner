@@ -3,6 +3,7 @@
 import 'cypress-plugin-tab';
 import 'cypress-file-upload';
 import './models';
+import './dataset';
 import { drag, move } from './dragdrop';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
 import createDataset from './dataset/create';
@@ -96,6 +97,16 @@ Cypress.Commands.add('getWithoutThrow', (selector: string) => {
   });
 });
 
+Cypress.Commands.add('getCurrentAuthString', () =>
+  cy.window().then((win) => {
+    const value = JSON.parse(win.localStorage.getItem('app-token') || '{}');
+    if (!value.access_token) {
+      throw new Error('No access token found');
+    }
+    return cy.wrap(`Bearer ${value.access_token}`);
+  })
+);
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -114,6 +125,7 @@ declare global {
         y: number
       ): Chainable<JQuery<HTMLElement>>;
       getWithoutThrow(selector: string): Chainable<JQuery<HTMLElement>>;
+      getCurrentAuthString(): Chainable<string>;
     }
   }
 }

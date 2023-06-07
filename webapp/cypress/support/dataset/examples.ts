@@ -50,9 +50,9 @@ export const zincDatasetFixture: DatasetFormData = {
   ],
 };
 
-export const createIrisDatasetFormData = (): DatasetFormData => {
+export const createIrisDatasetFormData = (name?: string): DatasetFormData => {
   return {
-    name: randomLowerCase(8),
+    name: name || randomLowerCase(8),
     description: randomLowerCase(24),
     file: 'data/csv/iris.csv',
     split: '60-20-20',

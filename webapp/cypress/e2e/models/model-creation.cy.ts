@@ -1,4 +1,5 @@
 import createDataset, {
+  DatasetFormData,
   createDatasetDirectly,
 } from '../../support/dataset/create';
 import { deleteDatasetIfAlreadyExists } from '../../support/dataset/delete';
@@ -9,17 +10,21 @@ import {
 
 describe('/models/new - Model creation page', () => {
   const zincDatasetFixture = createRandomDatasetFormData();
-  const irisDatasetFixture = createIrisDatasetFormData();
+  let irisDatasetFixture: DatasetFormData | null = null;
 
   before(() => {
     cy.loginSuper();
-    cy.then(() => createDatasetDirectly(zincDatasetFixture));
-    cy.then(() => createDatasetDirectly(irisDatasetFixture));
+    cy.createDatasetDirectly(zincDatasetFixture);
+
+    return cy.useIrisDataset().then(({ fixture, setup }) => {
+      irisDatasetFixture = fixture;
+      setup();
+    });
   });
 
   after(() => {
     deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
-    deleteDatasetIfAlreadyExists(irisDatasetFixture.name);
+    cy.then(() => deleteDatasetIfAlreadyExists(irisDatasetFixture!.name));
   });
 
   beforeEach(() => {
@@ -39,7 +44,7 @@ describe('/models/new - Model creation page', () => {
   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
       'data/yaml/binary_classification_model.yaml',
-      irisDatasetFixture.name,
+      irisDatasetFixture!.name,
       true
     );
   });
@@ -47,7 +52,7 @@ describe('/models/new - Model creation page', () => {
   it('Builds Multiclass Classification Model', () => {
     cy.buildYamlModel(
       'data/yaml/multiclass_classification_model.yaml',
-      irisDatasetFixture.name,
+      irisDatasetFixture!.name,
       true
     );
   });
@@ -55,7 +60,7 @@ describe('/models/new - Model creation page', () => {
   it('Builds Multitarget Model', () => {
     cy.buildYamlModel(
       'data/yaml/multitarget_classification_model.yaml',
-      irisDatasetFixture.name,
+      irisDatasetFixture!.name,
       true
     );
   });
