@@ -8,8 +8,8 @@ import ray
 from torch_geometric.loader import DataLoader
 
 from fleet.base_schemas import TorchModelSpec
-from fleet.model_builder.dataset import Collater, CustomDataset
 from fleet.torch_.models import CustomModel
+from fleet.utils.data import MarinerTorchDataset
 from mariner.schemas.dataset_schemas import Dataset
 
 
@@ -29,12 +29,11 @@ class ModelCheckActor:
             The model output
         """
         if config.framework == "torch" or isinstance(config, TorchModelSpec):
-            torch_dataset = CustomDataset(
+            torch_dataset = MarinerTorchDataset(
                 data=dataset.get_dataframe(),
-                model_config=config.spec,
                 dataset_config=config.dataset,
             )
-            dataloader = DataLoader(torch_dataset, collate_fn=Collater(), batch_size=2)
+            dataloader = DataLoader(torch_dataset, batch_size=2)
             model = CustomModel(config=config.spec, dataset_config=config.dataset)
             sample = next(iter(dataloader))
             model.predict_step(sample, 0)
