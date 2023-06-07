@@ -93,7 +93,10 @@ def apply(feat_or_transform, numpy_col):
             return arr
         arr = np.array(arr)
         return np.array(arr)
-    raise RuntimeError()
+    raise TypeError(
+        f"feat_or_transform should be a torch.nn.Module or a callable, \
+                got {type(feat_or_transform)}"
+    )
 
 
 def has_default_featurizer(column: ColumnConfig):

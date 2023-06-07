@@ -1,8 +1,6 @@
 """
 Tests fleet.utils.graph
 """
-from dataclasses import dataclass
-from typing import Dict, List, Union
 
 from fleet.utils.graph import make_graph, make_graph_from_forward_args
 
@@ -20,14 +18,6 @@ def test_make_graph():
     assert graph["b"]["a"]["attr"] == 1
     assert graph["c"]["a"]["attr"] == 2
     assert graph["c"]["b"]["attr"] == 3
-
-
-@dataclass
-class TestAnyNode:
-    """Example class showing the functions work with duck typing."""
-
-    name: str
-    forward_args: Dict[str, Union[str, List[str]]]
 
 
 def test_make_graph_from_forward_args():

@@ -6,6 +6,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from mariner.core import aws
 from mariner.core.config import settings
 from mariner.entities.dataset import Dataset
 from mariner.schemas.dataset_schemas import DatasetCreateRepo
@@ -44,12 +45,17 @@ def mock_columns_metadatas():
 
 
 def mock_dataset(name: Optional[str] = None):
+    key = "datasets/zinc_extra.csv"
+    if not aws.is_in_s3(key=key, bucket=aws.Bucket.Datasets):
+        with open("tests/data/csv/zinc_extra.csv", "rb") as f:
+            aws.upload_s3_file(f, key=key, bucket=aws.Bucket.Datasets)
+
     return {
         "name": name if name else "Small Zinc dataset",
         "description": "Test description",
         "splitType": "random",
         "splitTarget": "60-20-20",
-        "dataUrl": "datasets/zinc_extra.csv",
+        "dataUrl": key,
         "columnsMetadata": json.dumps(mock_columns_metadatas()),
     }
 
