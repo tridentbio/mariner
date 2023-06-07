@@ -2,10 +2,10 @@
 Concrete implementation of :py:class:`fleet.base_schemas.BaseModelFunctions` for
 torch based models.
 """
+import logging
 from os import getenv
 from typing import List, Union
 
-import logging
 from lightning.pytorch import Callback, Trainer
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import Logger
@@ -15,7 +15,6 @@ from pandas import DataFrame
 from typing_extensions import override
 
 from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
-from fleet.model_builder.dataset import Collater
 from fleet.torch_.models import CustomModel
 from fleet.torch_.schemas import TorchTrainingConfig
 from fleet.utils.data import DataModule
@@ -92,7 +91,6 @@ class TorchFunctions(BaseModelFunctions):
             batch_size=batch_size,
             **datamodule_args,
         )
-        datamodule.setup()
 
         callbacks: List[Callback] = []
         if not params.checkpoint_config:
@@ -115,6 +113,7 @@ class TorchFunctions(BaseModelFunctions):
                     check_finite=params.early_stopping_config.check_finite,
                 )
             )
+
         trainer = Trainer(
             max_epochs=params.epochs,
             log_every_n_steps=max(batch_size // 2, 10),
