@@ -182,9 +182,7 @@ class CustomModel(pl.LightningModule):
         if isinstance(dataset_config, str):
             dataset_config = TorchDatasetConfig.parse_raw(dataset_config)
 
-        self.save_hyperparameters(
-            {"config": config.json(), "dataset_config": dataset_config.json()}
-        )
+        self.save_hyperparameters({"config": config.json()})
         layers_dict = {}
         self.config = config
         self.dataset_config = dataset_config
