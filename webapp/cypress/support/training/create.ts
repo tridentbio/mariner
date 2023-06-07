@@ -5,10 +5,7 @@ type TrainingConfig = {
   epochs?: string | number;
   learningRate?: string | number;
 };
-export const checkModelTraining = (
-  modelName?: string,
-  config: TrainingConfig = {}
-) => {
+export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
   cy.once('uncaught:exception', () => false);
   // Visits models listing page
   cy.intercept({
@@ -61,7 +58,10 @@ export const checkModelTraining = (
   // Selects CREATE EXPERIMENT
   cy.get('button').contains('CREATE').click();
   // Assert API call is successfull
-  cy.wait('@createExperiment', { timeout: 30000 }).then(({ response }) => {
-    expect(response?.statusCode).to.eq(200);
-  });
+  return cy
+    .wait('@createExperiment', { timeout: 30000 })
+    .then(({ response }) => {
+      expect(response?.statusCode).to.eq(200);
+      return cy.wrap(experimentName);
+    });
 };

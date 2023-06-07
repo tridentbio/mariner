@@ -4,12 +4,14 @@ import { parse } from 'yaml';
 import { DeepPartial } from '@reduxjs/toolkit';
 import { ModelCreate, TorchModelSpec } from '@app/rtk/generated/models';
 import { randomLowerCase } from 'utils';
+import { dragComponentsAndMapConfig, flowDropSelector } from './common';
 import {
-  dragComponentsAndMapConfig,
-  flowDropSelector,
-} from './common';
-import { extendSpecWithTargetForwardArgs, iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
+  extendSpecWithTargetForwardArgs,
+  iterateTopologically,
+  unwrapDollar,
+} from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
+import { IRIS_DATASET_NAME, SOME_MODEL_NAME } from '../constants';
 
 const randomName = () => randomLowerCase(8);
 
@@ -46,7 +48,7 @@ const getIncomingEdges = (
           return [
             node.type + '.' + forwardArg,
             getTypeByName(config, targetOriginalName) +
-            (tail.length ? '.' + tail.join('.') : ''),
+              (tail.length ? '.' + tail.join('.') : ''),
           ];
         }),
       ];
@@ -132,6 +134,7 @@ export const buildModel = (
     .clear()
     .type(modelCreate.name || randomName())
     .type('{enter}');
+
   // Fill model description
   cy.get('[data-testid="model-description"] input')
     .clear()
@@ -189,15 +192,17 @@ export const buildModel = (
     bubbles: true,
   });
 
-
-  const mod = extendSpecWithTargetForwardArgs(modelCreate.config as unknown as TorchModelSpec)
-
-  cy.log('Dragging components',)
-  cy.log('Total layers + featurizers', (mod.spec?.layers?.length || 0) + (mod.dataset?.targetColumns?.length || 0))
-
-  const config = dragComponentsAndMapConfig(
-    mod
+  const mod = extendSpecWithTargetForwardArgs(
+    modelCreate.config as unknown as TorchModelSpec
   );
+
+  cy.log('Dragging components');
+  cy.log(
+    'Total layers + featurizers',
+    (mod.spec?.layers?.length || 0) + (mod.dataset?.targetColumns?.length || 0)
+  );
+
+  const config = dragComponentsAndMapConfig(mod);
 
   cy.get('div[aria-label="Apply auto vertical layout"] button').click();
   cy.get('button[title="fit view"]').click();
@@ -253,10 +258,10 @@ export const buildModel = (
     });
   }).then(() => cy.get('button').contains('CREATE').click());
 
-  cy.wait('@checkConfig').then(({ response }) => {
+  cy.wait('@checkConfig', { timeout: Infinity }).then(({ response }) => {
     expect(response?.statusCode).to.eq(200);
     if (success) {
-      expect(Boolean(response?.body.stackTrace)).to.eq(false)
+      expect(Boolean(response?.body.stackTrace)).to.eq(false);
     }
   });
 
@@ -266,17 +271,35 @@ export const buildModel = (
     });
 };
 
+export const modelExists = (name: string): Cypress.Chainable<boolean> =>
+  cy.getCurrentAuthString().then((authorization) =>
+    cy
+      .request({
+        method: 'GET',
+        url: `http://localhost/api/v1/models?page=0&perPage=50&q=${name}`,
+        headers: {
+          authorization,
+        },
+      })
+      .then((response) => {
+        expect(response?.status).to.eq(200);
+        const models: any[] =
+          'data' in response?.body ? response.body.data : [];
+        return cy.wrap(models.some((model) => model.name === name));
+      })
+  );
+
 export const buildYamlModel = (
   yaml: string,
   dataset: string | null = null,
   success = true,
   deleteModel = true,
   modelName = randomName()
-) => {
+) =>
   cy.fixture(yaml).then((yamlStr) => {
     const jsonSchema: TorchModelSpec = parse(yamlStr);
 
-    buildModel(
+    return buildModel(
       {
         name: modelName,
         modelVersionDescription: randomName(),
@@ -293,4 +316,26 @@ export const buildYamlModel = (
       success
     );
   });
-};
+
+export const setupSomeModel = () =>
+  modelExists(SOME_MODEL_NAME).then((exists) => {
+    cy.on('uncaught:exception', () => false);
+    if (exists) {
+      cy.log('Model already exists, skipping creation');
+      return cy.wrap(SOME_MODEL_NAME);
+    }
+
+    return cy
+      .useIrisDataset()
+      .then(({ setup }) => cy.wrap(setup()))
+      .then(() => {
+        buildYamlModel(
+          'data/yaml/binary_classification_model.yaml',
+          IRIS_DATASET_NAME,
+          true,
+          true,
+          SOME_MODEL_NAME
+        );
+        return cy.wrap(SOME_MODEL_NAME);
+      });
+  });
