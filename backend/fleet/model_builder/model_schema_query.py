@@ -6,12 +6,11 @@ API over accessing attributes directly from the schema in order to maintain
 a single point of change (as best as possible) on schema updates.
 """
 from typing import TYPE_CHECKING, Sequence, Set, Union
-from fleet.dataset_schemas import DatasetConfig
 
 from fleet.model_builder.utils import unwrap_dollar
 
 if TYPE_CHECKING:
-    from fleet.dataset_schemas import ColumnConfig, TorchDatasetConfig
+    from fleet.dataset_schemas import ColumnConfig, TorchDatasetConfig, DatasetConfig
     from fleet.model_builder.layers_schema import FeaturizersType, LayersType
 
 
