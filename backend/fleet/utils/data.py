@@ -1,13 +1,7 @@
 """
 Utilities to build datasets.
 """
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Iterable, Literal, Tuple, Union
 
 import lightning.pytorch as pl
 import networkx as nx
@@ -29,8 +23,11 @@ from fleet.model_builder.featurizers import (
     ProteinSequenceFeaturizer,
     RNASequenceFeaturizer,
 )
-from fleet.model_builder.featurizers.small_molecule_featurizer import MoleculeFeaturizer
+from fleet.model_builder.featurizers.small_molecule_featurizer import (
+    MoleculeFeaturizer,
+)
 from fleet.model_builder.layers_schema import FeaturizersType
+from fleet.model_builder.splitters import apply_split_indexes
 from fleet.model_builder.utils import DataInstance, get_references_dict
 from fleet.utils.graph import make_graph_from_forward_args
 
@@ -94,6 +91,7 @@ def apply(feat_or_transform, numpy_col):
             arr.append(featurized_item)
         if isinstance(feat_or_transform, MoleculeFeaturizer):
             return arr
+        arr = np.array(arr)
         return np.array(arr)
     raise RuntimeError()
 
@@ -193,6 +191,17 @@ def build_columns_numpy(
     # Get featurizers and transformers in order
     feats, transforms = map(list, dataset_topo_sort(dataset_config))
 
+    # Add default featurizers into dataframe.
+    for column in dataset_config.feature_columns:
+        feat = get_default_data_type_featurizer(dataset_config, column)
+        if feat is not None:
+            df[column.name] = apply(feat, df[column.name])
+
+    for target in dataset_config.target_columns:
+        feat = get_default_data_type_featurizer(dataset_config, target)
+        if feat is not None:
+            df[target.name] = apply(feat, df[target.name])
+
     # Add featurized columns into dataframe.
     for feat in feats:
         value = get_args(df, feat)
@@ -202,18 +211,6 @@ def build_columns_numpy(
     for transform in transforms:
         value = get_args(df, transform)
         df[transform.name] = apply(transform.create(), value)
-
-    # Apply default featurizers to output columns.
-    if featurize_outputs:
-        # Add default featurizers into dataframe.
-        for column in dataset_config.feature_columns:
-            feat = get_default_data_type_featurizer(dataset_config, column)
-            if feat is not None:
-                df[column.name] = apply(feat, df[column.name])
-        for target in dataset_config.target_columns:
-            feat = get_default_data_type_featurizer(dataset_config, target)
-            if feat is not None:
-                df[target.name] = apply(feat, df[target.name])
 
     return df
 
@@ -306,17 +303,16 @@ class MarinerTorchDataset(Dataset):
             The sample at the given index.
         """
         item = DataInstance()
-        sample = dict(self.data.iloc[idx, :])
-
         for col in self.dataset_config.feature_columns:
-            item[col.name] = adapt_numpy_to_tensor([sample[col.name]])
+            item[col.name] = adapt_numpy_to_tensor([self.data.loc[idx, col.name]])
         for col in self.dataset_config.featurizers:
-            item[col.name] = adapt_numpy_to_tensor(sample[col.name])
+            item[col.name] = adapt_numpy_to_tensor(self.data.loc[idx, col.name])
+
         for col in self.dataset_config.transforms:
-            item[col.name] = adapt_numpy_to_tensor(sample[col.name])
+            item[col.name] = adapt_numpy_to_tensor(self.data.loc[idx, col.name])
 
         for target in self.dataset_config.target_columns:
-            item[target.name] = adapt_numpy_to_tensor([sample[target.name]])
+            item[target.name] = adapt_numpy_to_tensor([self.data.loc[idx, target.name]])
 
         return item
 
@@ -357,10 +353,11 @@ class DataModule(pl.LightningDataModule):
     def __init__(
         self,
         data: pd.DataFrame,
-        split_type: str,
-        split_target: str,
         config: DatasetConfig,
         batch_size=32,
+        split_type: Union[None, Literal["random", "scaffold"]] = None,
+        split_target: Union[None, str] = None,
+        split_column: Union[None, str] = None,
         collate_fn: Union[Callable, None] = None,
     ):
         super().__init__()
@@ -373,12 +370,12 @@ class DataModule(pl.LightningDataModule):
 
         self.split_type = split_type
         self.split_target = split_target
+        self.split_column = split_column
 
         if collate_fn is None:
             self.collate_fn = Collater()
         else:
             self.collate_fn = collate_fn
-        self.dataset = MarinerTorchDataset(data=self.data, dataset_config=config)
 
     def setup(self, stage=None):
         """Method used for pytorch lightning to setup the data
@@ -392,6 +389,16 @@ class DataModule(pl.LightningDataModule):
         Args:
             stage (_type_, optional): _description_. Defaults to None.
         """
+        if "step" not in self.data.columns:
+            apply_split_indexes(
+                df=self.data,
+                split_type=self.split_type or "random",
+                split_target=self.split_target or "60-20-20",
+                split_column=self.split_column,
+            )
+        self.dataset = MarinerTorchDataset(
+            data=self.data, dataset_config=self.dataset_config
+        )
         self.train_dataset = Subset(
             dataset=self.dataset,
             indices=self.dataset.get_subset_idx(TrainingStep.TRAIN.value),
@@ -427,7 +434,7 @@ class DataModule(pl.LightningDataModule):
             DataLoader: instance used in test steps.
         """
         return DataLoader(
-            self.val_dataset,
+            self.test_dataset,
             self.batch_size,
             collate_fn=self.collate_fn,
         )
