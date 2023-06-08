@@ -2,7 +2,6 @@ import {
   MODEL_SMILES_CATEGORICAL_NAME,
   MODEL_SMILES_NUMERIC_NAME,
 } from '../support/constants';
-import createDataset from '../support/dataset/create';
 import { deleteDatasetIfAlreadyExists } from '../support/dataset/delete';
 import { zincDatasetFixture } from '../support/dataset/examples';
 import { deleteTestModelsIfExist } from '../support/models/common';
@@ -16,12 +15,11 @@ describe.skip('Complete test from dataset creation to inference', () => {
   });
   after(() => {
     cy.loginSuper();
-    deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
     deleteTestModelsIfExist();
   });
 
   it('Should create dataset, create models, train models and run inference succesfully', () => {
-    createDataset(zincDatasetFixture);
+    cy.createDataset(zincDatasetFixture);
     cy.buildYamlModel(
       'data/yaml/categorical_features_model.yaml',
       zincDatasetFixture.name

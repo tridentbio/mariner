@@ -1,5 +1,5 @@
 import { randomLowerCase } from '@utils';
-import { DATASET_NAME } from '../constants';
+import { DATASET_NAME, IRIS_DATASET_NAME } from '../constants';
 import { DatasetFormData } from './create';
 
 export const zincDatasetFixture: DatasetFormData = {
@@ -21,6 +21,7 @@ export const zincDatasetFixture: DatasetFormData = {
       pattern: 'mwt_group',
       dataType: {
         domainKind: 'Categorical',
+        classes: { mwt_big: 0, mwt_small: 1 },
       },
       description: 'A categorical column',
     },
@@ -152,6 +153,7 @@ export const createRandomDatasetFormData = (): DatasetFormData => {
     ],
   };
 };
+export const irisDatasetFixture = createIrisDatasetFormData(IRIS_DATASET_NAME);
 
 export const getDatasetsMock = {
   data: [

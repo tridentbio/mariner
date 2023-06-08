@@ -1,6 +1,5 @@
 import { addDescription } from '../commands';
-import { createIrisDatasetFormData } from './examples';
-import { IRIS_DATASET_NAME } from '../constants';
+import { irisDatasetFixture, zincDatasetFixture } from './examples';
 
 export interface DatasetFormData {
   name: string;
@@ -62,7 +61,7 @@ const createDataset = (dataset: DatasetFormData) => {
     expect(response?.body.name).to.eq(dataset.name);
   });
 
-  cy.url({ timeout: 30000 }).should('include', `/datasets`, {
+  return cy.url({ timeout: 30000 }).should('include', `/datasets`, {
     timeout: 30000,
   });
 };
@@ -124,9 +123,9 @@ class FormData {
     return this.form + `--${this.boundary}--\r\n`;
   }
 
-  public getHeaders(token: string): Record<string, string> {
+  public getHeaders(authorization: string): Record<string, string> {
     return {
-      authorization: token,
+      authorization,
       'Content-Type': `multipart/form-data; boundary=${this.boundary}`,
     };
   }
@@ -136,20 +135,9 @@ export const createDatasetDirectly = (
   dataset: DatasetFormData,
   numRows: number = 10
 ) => {
-  // Creates a dataset directly with cypress promises
   cy.once('uncaught:exception', () => false);
 
-  cy.wrap(
-    new Promise<string>((res, rej) =>
-      cy.window().then((win) => {
-        const value = JSON.parse(win.localStorage.getItem('app-token') || '{}');
-        if (!value.access_token) {
-          rej('No token found yet');
-        }
-        res(`Bearer ${value.access_token}`);
-      })
-    )
-  ).then((token) => {
+  cy.getCurrentAuthString().then((authorization) => {
     cy.wrap(
       new Promise<Blob>((res) => cy.fixture(dataset.file, 'binary').then(res))
     ).then((file) => {
@@ -169,21 +157,16 @@ export const createDatasetDirectly = (
         formData.setFormValue('splitOn', dataset.splitColumn);
       formData.setFormValue('description', dataset.description);
 
-      cy.wrap(
-        new Promise<void>((res) =>
-          cy
-            .request({
-              method: 'POST',
-              url: 'http://localhost/api/v1/datasets/',
-              body: formData.getBody(),
-              headers: formData.getHeaders(token as string),
-            })
-            .then((response) => {
-              expect(response.status).to.eq(200);
-              res();
-            })
-        )
-      );
+      return cy
+        .request({
+          method: 'POST',
+          url: 'http://localhost/api/v1/datasets/',
+          body: formData.getBody(),
+          headers: formData.getHeaders(authorization as string),
+        })
+        .then((response) => {
+          expect(response.status).to.eq(200);
+        });
     });
   });
 };
@@ -209,16 +192,24 @@ export const datasetExists = (
       })
   );
 
-export const irisDatasetFixture = createIrisDatasetFormData(IRIS_DATASET_NAME);
-export const useIrisDataset = () =>
+export const setupIrisDatset = () =>
   datasetExists(irisDatasetFixture).then((exists) => {
+    cy.on('uncaught:exception', () => false);
+
     if (!exists) {
-      return cy.wrap({
-        setup: () => createDatasetDirectly(irisDatasetFixture),
-        fixture: irisDatasetFixture,
-      });
+      createDatasetDirectly(irisDatasetFixture);
     }
-    return cy.wrap({ fixture: irisDatasetFixture, setup: () => {} });
+    return cy.wrap(irisDatasetFixture);
+  });
+
+export const setupZincDataset = () =>
+  datasetExists(zincDatasetFixture).then((exists) => {
+    cy.on('uncaught:exception', () => false);
+
+    if (!exists) {
+      createDatasetDirectly(zincDatasetFixture);
+    }
+    return cy.wrap(zincDatasetFixture);
   });
 
 export default createDataset;

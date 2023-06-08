@@ -19,7 +19,8 @@ describe('/models/:modelId/inference', () => {
       })
     );
 
-    cy.wait(50000);
+    cy.wait(4000);
+
     cy.intercept({
       method: 'GET',
       url: 'http://localhost/api/v1/models/?page=0&perPage=10',
