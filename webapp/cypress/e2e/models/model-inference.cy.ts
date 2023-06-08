@@ -19,7 +19,7 @@ describe('/models/:modelId/inference', () => {
       })
     );
 
-    cy.wait(4000);
+    cy.wait(15000);
 
     cy.intercept({
       method: 'GET',

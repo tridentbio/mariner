@@ -1,4 +1,5 @@
-import { buildYamlModel, setupSomeModel } from './build-model';
+import { buildYamlModel } from './build-model';
+import { setupSomeModel } from './create';
 
 Cypress.Commands.add('buildYamlModel', buildYamlModel);
 Cypress.Commands.add('setupSomeModel', setupSomeModel);

@@ -13,9 +13,9 @@ Cypress.Commands.add('notificationShouldContain', (text: string) => {
     .should('contain.text', text);
 });
 
-Cypress.Commands.add('loginSuper', () => {
+Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
   cy.visit('/login');
-  cy.get('#username-input').type('admin@mariner.trident.bio');
+  cy.get('#username-input', { timeout }).type('admin@mariner.trident.bio');
   cy.get('#password-input').type('123456');
   cy.get('button[type="submit"]').click();
   cy.url().should('eq', Cypress.config('baseUrl'));
@@ -105,7 +105,7 @@ Cypress.Commands.add('getCurrentAuthString', () =>
 declare global {
   namespace Cypress {
     interface Chainable {
-      loginSuper(): Chainable<void>;
+      loginSuper(timeout?: number): Chainable<void>;
       createZINCDataset(): Chainable<void>;
       deleteZINCDataset(): Chainable<void>;
       notificationShouldContain(text: string): Chainable<JQuery<HTMLElement>>;

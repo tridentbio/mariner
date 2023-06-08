@@ -11,7 +11,6 @@ import {
   unwrapDollar,
 } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
-import { SOME_MODEL_NAME } from '../constants';
 
 const randomName = () => randomLowerCase(8);
 
@@ -271,24 +270,6 @@ export const buildModel = (
     });
 };
 
-export const modelExists = (name: string): Cypress.Chainable<boolean> =>
-  cy.getCurrentAuthString().then((authorization) =>
-    cy
-      .request({
-        method: 'GET',
-        url: `http://localhost/api/v1/models?page=0&perPage=50&q=${name}`,
-        headers: {
-          authorization,
-        },
-      })
-      .then((response) => {
-        expect(response?.status).to.eq(200);
-        const models: any[] =
-          'data' in response?.body ? response.body.data : [];
-        return cy.wrap(models.some((model) => model.name === name));
-      })
-  );
-
 export const buildYamlModel = (
   yaml: string,
   dataset: string | null = null,
@@ -315,24 +296,4 @@ export const buildYamlModel = (
       },
       success
     );
-  });
-
-export const setupSomeModel = () =>
-  modelExists(SOME_MODEL_NAME).then((exists) => {
-    cy.on('uncaught:exception', () => false);
-    if (exists) {
-      cy.log('Model already exists, skipping creation');
-      return cy.wrap(SOME_MODEL_NAME);
-    }
-
-    return cy.setupIrisDatset().then((irisDataset) => {
-      buildYamlModel(
-        'data/yaml/binary_classification_model.yaml',
-        irisDataset.name,
-        true,
-        true,
-        SOME_MODEL_NAME
-      );
-      return cy.wrap(SOME_MODEL_NAME);
-    });
   });
