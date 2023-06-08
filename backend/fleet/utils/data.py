@@ -1,7 +1,16 @@
 """
 Utilities to build datasets.
 """
-from typing import Any, Callable, Iterable, Literal, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Literal,
+    Protocol,
+    Tuple,
+    Union,
+)
 
 import lightning.pytorch as pl
 import networkx as nx
@@ -10,6 +19,7 @@ import pandas as pd
 import sklearn.base
 import torch
 import torch.nn
+from pydantic import BaseModel
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
@@ -84,6 +94,8 @@ def apply(feat_or_transform, numpy_col):
         return feat_or_transform(numpy_col)
     elif isinstance(feat_or_transform, sklearn.base.TransformerMixin):
         return feat_or_transform.fit_transform(numpy_col)
+    elif isinstance(feat_or_transform, sklearn.base.TransformerMixin):
+        return feat_or_transform.transform(numpy_col)
     elif callable(feat_or_transform):
         arr = []
         for item in numpy_col:
@@ -163,15 +175,26 @@ def get_default_data_type_featurizer(
     return feat
 
 
-def get_args(data: pd.DataFrame, feat: FeaturizersType) -> np.ndarray:
+class ForwardProtocol(Protocol):
+    forward_args: Union[Dict[str, str], BaseModel]
+
+
+def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
     """
     Get the parameters necessary to pass to feat by processing it's forward_args and looking
-    previously computed values in ``data``
+    previously computed values in ``data``.
+
+    Args
+        data: The dataframe that holds the dataset data.
+        feat: The featurizer or transform.
     """
-    references = get_references_dict(feat.forward_args.dict())
-    assert (
-        len(references) == 1
-    ), "only 1 forward arg for featurizer/tranform is allowed currently"
+
+    forward_args = (
+        feat.forward_args.dict()
+        if not isinstance(feat.forward_args, dict)
+        else feat.forward_args
+    )
+    references = get_references_dict(forward_args)
     col_name = list(references.values())[0]
     return data[col_name].to_numpy()
 

@@ -83,7 +83,7 @@ class BaseModelFunctions(Protocol):
         dataset: DataFrame,
         spec: BaseFleetModelSpec,
         params: BaseModel,
-        datamodule_args: Union[None, dict] = None,
+        **kwargs,
     ) -> None:
         """Trains a model.
 

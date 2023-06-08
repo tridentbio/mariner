@@ -179,6 +179,19 @@ def get_references_dict(
 
     Returns:
         dictionary mapping forward argument keys to schema references.
+
+    Example:
+    >>> forward_args_dict = {
+    ...     "x": "${data.x}",
+    ...     "y": ["${data.y}", "${data.y}"],
+    ...     "z": "z"
+    ... }
+    >>> get_references_dict(forward_args_dict)
+    {
+        "x": "data.x",
+        "y": ["data.y", "data.y"],
+        "z": "z"
+    }
     """
 
     # Init a dict
@@ -198,7 +211,6 @@ def get_references_dict(
             ref, is_ref = unwrap_dollar(value)
             if is_ref:
                 result[key] = ref
-
     return result
 
 
