@@ -258,7 +258,7 @@ export const buildModel = (
     });
   }).then(() => cy.get('button').contains('CREATE').click());
 
-  cy.wait('@checkConfig', { timeout: Infinity }).then(({ response }) => {
+  cy.wait('@checkConfig', { timeout: 15 }).then(({ response }) => {
     expect(response?.statusCode).to.eq(200);
     if (success) {
       expect(Boolean(response?.body.stackTrace)).to.eq(false);
