@@ -2,7 +2,7 @@ import { createRandomDatasetFormData } from '../../support/dataset/examples';
 
 describe('/datasets/new - Dataset creation page', () => {
   beforeEach(() => {
-    cy.loginSuper();
+    cy.loginSuper(15000);
     cy.visit('/datasets');
 
     cy.intercept({
