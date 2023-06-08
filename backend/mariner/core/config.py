@@ -24,9 +24,13 @@ class Settings(BaseSettings):
     """Models the environment variables used around the application."""
 
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = secrets.token_urlsafe(32)
-    # 60 minutes * 24 hours * 8 = 8 days
+    AUTHENTICATION_SECRET_KEY: str = secrets.token_urlsafe(32)
+    DEPLOYMENT_URL_SIGNATURE_SECRET_KEY: str = secrets.token_urlsafe(32)
+
+    # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+
+    DEPLOYMENT_IDLE_TIME: int = 60 * 10  # 10 minutes
 
     SERVER_NAME: str
     SERVER_HOST: AnyHttpUrl

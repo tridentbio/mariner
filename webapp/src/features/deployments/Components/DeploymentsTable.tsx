@@ -6,28 +6,71 @@ import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { Deployment } from 'app/rtk/generated/deployments';
 import StatusChip from './StatutsChip';
 import DeploymentsTableActions from './TableActions';
-import { Box, Chip } from '@mui/material';
+import { Box, Chip, Link, Tab, Tabs } from '@mui/material';
 import { useAppDispatch } from 'app/hooks';
 import { setCurrentDeployment } from '../deploymentsSlice';
+import { linkRender } from 'components/atoms/Table/render';
+import { GetDeploymentsApiArg } from 'app/rtk/generated/deployments';
+import { useAppSelector } from '@hooks';
+import {
+  TableActionsWrapper,
+  tableActionsSx,
+} from '@components/atoms/TableActions';
 
 interface DeploymentsTableProps {
-  toggleModal: () => void;
-  handleClickDelete: (id: number) => void;
+  toggleModal?: () => void;
+  handleClickDelete?: (id: number) => void;
+  fixedTab?: number;
 }
+
+const TabOptions: {
+  name: string;
+  filter: GetDeploymentsApiArg;
+}[] = [
+  {
+    name: 'All',
+    filter: {
+      publicMode: 'include',
+    },
+  },
+  {
+    name: 'Public',
+    filter: {
+      publicMode: 'only',
+    },
+  },
+  {
+    name: 'Shared',
+    filter: {
+      accessMode: 'shared',
+    },
+  },
+  {
+    name: 'My',
+    filter: {
+      accessMode: 'owned',
+    },
+  },
+];
 
 const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
   toggleModal,
   handleClickDelete,
+  fixedTab,
 }) => {
-  const [getDeployments, { isLoading, data, originalArgs }] =
+  const [option, setOption] = useState(fixedTab || 0);
+  const [getDeployments, { isLoading, originalArgs, data }] =
     deploymentsApi.useLazyGetDeploymentsQuery();
+  const { deployments } = useAppSelector((state) => state.deployments);
   const dispatch = useAppDispatch();
   useEffect(() => {
+    const optionChosed = TabOptions[option];
     getDeployments({
       page: 0,
       perPage: 10,
+      ...optionChosed.filter,
     });
-  }, []);
+  }, [option]);
 
   const columns: Column<Deployment, any>[] = [
     {
@@ -38,7 +81,10 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         variant: 'text',
         width: 60,
       },
-      render: (row) => row.name,
+      render: linkRender(
+        (row: Deployment) => `/deployments/${row.id}`,
+        (row: Deployment) => row.name
+      ),
     },
     {
       field: 'modelVersion',
@@ -138,41 +184,52 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         return dateRender<typeof row>((row) => new Date(row.createdAt!))(row);
       },
     },
-    {
+  ];
+
+  option === 3 &&
+    columns.push({
       name: 'Action',
       field: 'Actions',
       title: 'Actions',
-      customSx: {
-        position: 'sticky',
-        right: -1,
-        background: '#f3f3f3',
-        textAlign: 'center',
-      },
-      bold: true,
-      render: (row) => (
-        <DeploymentsTableActions
-          onClickDelete={handleClickDelete}
-          onClickEdit={() => {
-            toggleModal();
-            dispatch(setCurrentDeployment(row));
-          }}
-          id={row.id}
-          status={row.status}
-        />
-      ),
-    },
-  ];
+      customSx: tableActionsSx,
+      render: (row) =>
+        row.createdById === 1 && (
+          <TableActionsWrapper>
+            <DeploymentsTableActions
+              onClickDelete={handleClickDelete}
+              onClickEdit={
+                toggleModal &&
+                (() => {
+                  toggleModal();
+                  dispatch(setCurrentDeployment(row));
+                })
+              }
+              id={row.id}
+              status={row.status}
+              shareUrl={row.shareUrl}
+            />
+          </TableActionsWrapper>
+        ),
+    });
 
   return (
     <div style={{ width: '100%', overflowX: 'auto', display: 'block' }}>
+      {fixedTab === undefined && (
+        <Tabs value={option} onChange={(_, v) => setOption(v)}>
+          {TabOptions.map((tab, index) => (
+            <Tab key={tab.name} label={tab.name} value={index} />
+          ))}
+        </Tabs>
+      )}
       <Table<Deployment>
         loading={isLoading}
         rowKey={(row) => row.name}
-        rows={data?.data || []}
+        rows={deployments || []}
         onStateChange={(state) => {
           getDeployments({
             page: state.paginationModel?.page || 0,
             perPage: state.paginationModel?.rowsPerPage || 10,
+            ...TabOptions[option].filter,
           });
         }}
         pagination={{

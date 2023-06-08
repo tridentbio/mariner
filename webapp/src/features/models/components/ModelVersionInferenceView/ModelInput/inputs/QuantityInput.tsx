@@ -1,4 +1,4 @@
-import { TextField, Box } from '@mui/material';
+import { TextField, Box, FormLabel } from '@mui/material';
 import { Text } from 'components/molecules/Text';
 
 interface QuantityInputProps {
@@ -17,20 +17,27 @@ const QuantityInput = ({
   return (
     <Box
       sx={{
-        width: 300,
         display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: 'column',
       }}
     >
-      <TextField
-        label={label}
-        sx={{ mr: 3 }}
-        type="number"
-        value={value}
-        onChange={(event) => onChange(parseFloat(event.target.value))}
-      />
-      <Text>{unit}</Text>
+      <FormLabel id="demo-radio-buttons-group-label">{label}:</FormLabel>
+      <Box
+        sx={{
+          width: 300,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}
+      >
+        <TextField
+          sx={{ mr: 3 }}
+          type="number"
+          value={value}
+          onChange={(event) => onChange(parseFloat(event.target.value))}
+        />
+        <Text>{unit}</Text>
+      </Box>
     </Box>
   );
 };

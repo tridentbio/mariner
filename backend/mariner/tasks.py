@@ -244,6 +244,13 @@ class DatasetManager(AbstractManager):
         super().__init__()
 
 
+class DeploymentManager(AbstractManager):
+    """Singleton to handle the operations on the collections of deployment status tasks."""
+
+    def __init__(self):
+        super().__init__()
+
+
 # singleton instances of managers
 tasks_manager: Optional[Dict[str, AbstractManager]] = {}
 
@@ -251,10 +258,13 @@ tasks_manager: Optional[Dict[str, AbstractManager]] = {}
 manager_map: Dict[str, AbstractManager] = {
     "dataset": DatasetManager,
     "experiment": ExperimentManager,
+    "deployment": DeploymentManager,
 }
 
 
-def get_manager(option: Literal["dataset", "experiment"]) -> AbstractManager:
+def get_manager(
+    option: Literal["dataset", "experiment", "deployment"]
+) -> AbstractManager:
     """Returns a singleton instance of manager for the given option.
 
     Args:
