@@ -1,23 +1,19 @@
-import {
+import createDataset, {
   DatasetFormData,
-  createDatasetDirectly,
-  useIrisDataset,
+  setupIrisDatset,
+  setupZincDataset,
 } from './create';
 
-Cypress.Commands.add('createDatasetDirectly', createDatasetDirectly);
-Cypress.Commands.add('useIrisDataset', useIrisDataset);
+Cypress.Commands.add('createDataset', createDataset);
+Cypress.Commands.add('setupIrisDatset', setupIrisDatset);
+Cypress.Commands.add('setupZincDataset', setupZincDataset);
 
 declare global {
   namespace Cypress {
     interface Chainable {
-      createDatasetDirectly(
-        dataset: DatasetFormData,
-        numRows?: number // default=10
-      ): void;
-      useIrisDataset(): Cypress.Chainable<{
-        setup: () => void;
-        fixture: DatasetFormData;
-      }>;
+      createDataset(dataset: DatasetFormData): Cypress.Chainable<string>;
+      setupIrisDatset(): Cypress.Chainable<DatasetFormData>;
+      setupZincDataset(): Cypress.Chainable<DatasetFormData>;
     }
   }
 }

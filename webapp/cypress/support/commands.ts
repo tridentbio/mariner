@@ -2,12 +2,10 @@
 
 import 'cypress-plugin-tab';
 import 'cypress-file-upload';
-import './models';
 import './dataset';
+import './models';
 import { drag, move } from './dragdrop';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
-import createDataset from './dataset/create';
-import { zincDatasetFixture } from './dataset/examples';
 
 Cypress.Commands.add('notificationShouldContain', (text: string) => {
   return cy
@@ -59,9 +57,6 @@ export const addDescription = (
     .click()
     .type(description);
 };
-Cypress.Commands.add('createZINCDataset', () => {
-  createDataset(zincDatasetFixture);
-});
 
 Cypress.Commands.add('deleteZINCDataset', () => {
   deleteDatasetIfAlreadyExists('Some dataset');

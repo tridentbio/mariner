@@ -1,10 +1,8 @@
-import createDataset from '../../support/dataset/create';
 import { createRandomDatasetFormData } from '../../support/dataset/examples';
 
 describe('/datasets/new - Dataset creation page', () => {
   beforeEach(() => {
     cy.loginSuper();
-    // deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
     cy.visit('/datasets');
 
     cy.intercept({
@@ -19,6 +17,6 @@ describe('/datasets/new - Dataset creation page', () => {
 
   it('Creates datasets sucessfully', () => {
     const datasetForm = createRandomDatasetFormData();
-    createDataset(datasetForm);
+    cy.createDataset(datasetForm);
   });
 });

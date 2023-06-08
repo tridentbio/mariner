@@ -11,7 +11,7 @@ import {
   unwrapDollar,
 } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
-import { IRIS_DATASET_NAME, SOME_MODEL_NAME } from '../constants';
+import { SOME_MODEL_NAME } from '../constants';
 
 const randomName = () => randomLowerCase(8);
 
@@ -325,17 +325,14 @@ export const setupSomeModel = () =>
       return cy.wrap(SOME_MODEL_NAME);
     }
 
-    return cy
-      .useIrisDataset()
-      .then(({ setup }) => cy.wrap(setup()))
-      .then(() => {
-        buildYamlModel(
-          'data/yaml/binary_classification_model.yaml',
-          IRIS_DATASET_NAME,
-          true,
-          true,
-          SOME_MODEL_NAME
-        );
-        return cy.wrap(SOME_MODEL_NAME);
-      });
+    return cy.setupIrisDatset().then((irisDataset) => {
+      buildYamlModel(
+        'data/yaml/binary_classification_model.yaml',
+        irisDataset.name,
+        true,
+        true,
+        SOME_MODEL_NAME
+      );
+      return cy.wrap(SOME_MODEL_NAME);
+    });
   });

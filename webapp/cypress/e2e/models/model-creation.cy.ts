@@ -1,34 +1,28 @@
-import createDataset, {
-  DatasetFormData,
-  createDatasetDirectly,
-} from '../../support/dataset/create';
-import { deleteDatasetIfAlreadyExists } from '../../support/dataset/delete';
-import {
-  createIrisDatasetFormData,
-  createRandomDatasetFormData,
-} from '../../support/dataset/examples';
+import { DatasetFormData } from '../../support/dataset/create';
 
 describe('/models/new - Model creation page', () => {
-  const zincDatasetFixture = createRandomDatasetFormData();
+  let zincDatasetFixture: DatasetFormData | null = null;
   let irisDatasetFixture: DatasetFormData | null = null;
 
   before(() => {
     cy.loginSuper();
-    cy.createDatasetDirectly(zincDatasetFixture);
 
-    return cy.useIrisDataset().then(({ fixture, setup }) => {
-      irisDatasetFixture = fixture;
-      setup();
+    cy.setupIrisDatset().then((iris) => {
+      irisDatasetFixture = iris;
     });
-  });
 
-  after(() => {
-    deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
-    cy.then(() => deleteDatasetIfAlreadyExists(irisDatasetFixture!.name));
+    cy.setupZincDataset().then((zinc) => {
+      zincDatasetFixture = zinc;
+    });
   });
 
   beforeEach(() => {
     cy.loginSuper();
+    cy.once(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
+
     cy.visit('/models/new');
   });
 
@@ -68,7 +62,7 @@ describe('/models/new - Model creation page', () => {
   it('Builds Smiles-Numeric regressor', () => {
     cy.buildYamlModel(
       'models/schemas/small_regressor_schema.yaml',
-      zincDatasetFixture.name,
+      zincDatasetFixture!.name,
       false
     );
   });
