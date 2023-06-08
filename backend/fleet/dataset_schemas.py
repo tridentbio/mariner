@@ -88,158 +88,6 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
     transforms: List[Any] = []  # TODO: add type
 
 
-class FeaturizerWrapper(BaseModel):
-    """
-    Wraps a featurizer so it's union type can be validated.
-
-    Attributes:
-        featurizer: The featurizer.
-    """
-
-    featurizer: FeaturizersType
-
-
-class FeaturizerBuilder:
-    """
-    Builds a featurizer.
-
-    Attributes:
-        name: The name of the featurizer.
-        class_path: The class path of the featurizer.
-    """
-
-    def __init__(self, name: str, class_path: str):
-        self.name = name
-        self.class_path = class_path
-        self.constructor_args = {}
-        self.forward_args = {}
-
-    def with_constructor_args(self, **kwargs):
-        """
-        Sets the constructor arguments of the featurizer.
-
-        Args:
-            **kwargs: The constructor arguments.
-        """
-        self.constructor_args = kwargs
-        return self
-
-    def with_forward_args(self, **kwargs):
-        """
-        Sets the forward arguments of the featurizer.
-
-        Args:
-            **kwargs: The forward arguments.
-        """
-        self.forward_args = kwargs
-        return self
-
-    def build(self):
-        """
-        Builds and validates the featurizer.
-        """
-        wrapper = FeaturizerWrapper.parse_obj(
-            {
-                "featurizer": {
-                    "name": self.name,
-                    "class_path": self.class_path,
-                    "constructor_args": self.constructor_args,
-                    "forward_args": self.forward_args,
-                }
-            }
-        )
-        return wrapper.featurizer
-
-
-class DatasetConfigBuilder:
-    """
-    Builds a DatasetConfig.
-    """
-
-    def __init__(self, name: str):
-        self.name = name
-        self.target_columns = []
-        self.feature_columns = []
-        self.featurizers = []
-        self.transforms = []
-
-    def with_name(self, name: str) -> "DatasetConfigBuilder":
-        """
-        Sets the name of the dataset.
-
-        Args:
-            name: The name of the dataset.
-
-        Returns:
-            The builder.
-        """
-        self.name = name
-        return self
-
-    def with_targets(self, out_module: str = "", **kwargs):
-        """
-        Sets the target columns of the dataset.
-
-        Each keyword argument should be a column name and a data type.
-
-        Args:
-            **kwargs: The columns to add to the dataset.
-
-        Returns:
-            The builder.
-        """
-        self.target_columns = [
-            TargetConfig(name=name, out_module=out_module, data_type=data_type)
-            for name, data_type in kwargs.items()
-        ]
-        return self
-
-    def with_features(self, **kwargs):
-        """
-        Sets the feature columns of the dataset.
-
-        Each keyword argument should be a column name and a data type.
-
-        Args:
-            **kwargs: The columns to add to the dataset.
-
-        Returns:
-            The builder.
-        """
-        self.feature_columns = [
-            ColumnConfig(name=name, data_type=data_type)
-            for name, data_type in kwargs.items()
-        ]
-        return self
-
-    def add_featurizers(self, featurizer: FeaturizersType):
-        """
-        Adds a featurizer on the dataset.
-        """
-        self.featurizers.append(featurizer)
-
-    def add_transforms(self, transform: Any):
-        """
-        Adds a featurizer on the dataset.
-        """
-        self.transforms.append(transform)
-
-    def build_torch(self) -> DatasetConfig:
-        """
-        Builds the dataset configuration.
-
-        Returns:
-            The dataset configuration.
-        """
-        return TorchDatasetConfig(
-            name=self.name,
-            target_columns=self.target_columns,
-            feature_columns=self.feature_columns,
-            featurizers=self.featurizers,
-            transforms=self.transforms,
-        )
-
-
 AllowedLossesType = List[Dict[str, str]]
 
 
@@ -362,3 +210,182 @@ class TorchDatasetConfig(DatasetConfig):
             values["target_columns"][i] = target_column
 
         return values
+
+
+class FeaturizerWrapper(BaseModel):
+    """
+    Wraps a featurizer so it's union type can be validated.
+
+    Attributes:
+        featurizer: The featurizer.
+    """
+
+    featurizer: FeaturizersType
+
+
+class FeaturizerBuilder:
+    """
+    Builds a featurizer.
+
+    Attributes:
+        name: The name of the featurizer.
+        class_path: The class path of the featurizer.
+    """
+
+    def __init__(self, name: str, class_path: str):
+        self.name = name
+        self.class_path = class_path
+        self.constructor_args = {}
+        self.forward_args = {}
+
+    def with_constructor_args(self, **kwargs):
+        """
+        Sets the constructor arguments of the featurizer.
+
+        Args:
+            **kwargs: The constructor arguments.
+        """
+        self.constructor_args = kwargs
+        return self
+
+    def with_forward_args(self, **kwargs):
+        """
+        Sets the forward arguments of the featurizer.
+
+        Args:
+            **kwargs: The forward arguments.
+        """
+        self.forward_args = kwargs
+        return self
+
+    def build(self):
+        """
+        Builds and validates the featurizer.
+        """
+        wrapper = FeaturizerWrapper.parse_obj(
+            {
+                "featurizer": {
+                    "name": self.name,
+                    "class_path": self.class_path,
+                    "constructor_args": self.constructor_args,
+                    "forward_args": self.forward_args,
+                }
+            }
+        )
+        return wrapper.featurizer
+
+
+class DatasetConfigBuilder:
+    """
+    Builds a DatasetConfig.
+    """
+
+    def __init__(self, name: Union[None, str] = None):
+        self.name = name
+        self.target_columns = []
+        self.feature_columns = []
+        self.featurizers = []
+        self.transforms = []
+
+    def with_name(self, name: str) -> "DatasetConfigBuilder":
+        """
+        Sets the name of the dataset.
+
+        Args:
+            name: The name of the dataset.
+
+        Returns:
+            The builder.
+        """
+        self.name = name
+        return self
+
+    def with_targets(self, out_module: str = "", **kwargs):
+        """
+        Sets the target columns of the dataset.
+
+        Each keyword argument should be a column name and a data type.
+
+        Args:
+            **kwargs: The columns to add to the dataset.
+
+        Returns:
+            The builder.
+        """
+        self.target_columns = [
+            TargetConfig(name=name, out_module=out_module, data_type=data_type)
+            for name, data_type in kwargs.items()
+        ]
+        return self
+
+    def with_features(self, **kwargs):
+        """
+        Sets the feature columns of the dataset.
+
+        Each keyword argument should be a column name and a data type.
+
+        Args:
+            **kwargs: The columns to add to the dataset.
+
+        Returns:
+            The builder.
+        """
+        self.feature_columns = [
+            ColumnConfig(name=name, data_type=data_type)
+            for name, data_type in kwargs.items()
+        ]
+        return self
+
+    def add_featurizers(self, featurizer: FeaturizersType):
+        """
+        Adds a featurizer on the dataset.
+        """
+        self.featurizers.append(featurizer)
+        return self
+
+    def add_transforms(self, transform: Any):
+        """
+        Adds a featurizer on the dataset.
+        """
+        self.transforms.append(transform)
+        return self
+
+    def build_torch(self) -> TorchDatasetConfig:
+        """
+        Builds the dataset configuration to use with torch models.
+
+        Returns:
+            The dataset configuration.
+        """
+        self._validate()
+        return TorchDatasetConfig(
+            name=self.name,  # type:ignore
+            target_columns=[
+                TargetConfig(**target_col.dict()) for target_col in self.target_columns  # type: ignore
+            ],
+            feature_columns=self.feature_columns,
+            featurizers=self.featurizers,
+            transforms=self.transforms,
+        )
+
+    def _validate(self):
+        if not self.name:
+            raise ValueError("Missing name for dataset")
+
+    def build(self) -> DatasetConfig:
+        """
+        Builds the dataset configuration.
+
+        Returns:
+            The dataset configuration.
+        """
+        self._validate()
+        return DatasetConfig(
+            name=self.name,  # type: ignore
+            target_columns=[
+                ColumnConfig(**target_col.dict()) for target_col in self.target_columns  # type: ignore
+            ],
+            feature_columns=self.feature_columns,
+            featurizers=self.featurizers,
+            transforms=self.transforms,
+        )
