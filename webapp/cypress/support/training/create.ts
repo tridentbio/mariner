@@ -5,6 +5,22 @@ type TrainingConfig = {
   epochs?: string | number;
   learningRate?: string | number;
 };
+
+const checkTrainFinishes = (
+  experimentName: string,
+  timeout = 30000
+): Cypress.Chainable<boolean> =>
+  // Recursively check if the experiment row contains 'Trained' status
+  cy.contains('tr', experimentName).then(($row) => {
+    cy.log('row', $row.text());
+    if ($row.text().includes('Trained')) return cy.wrap(true);
+    else if (timeout <= 0) return cy.wrap(false);
+    else
+      return cy
+        .wait(1000)
+        .then(() => checkTrainFinishes(experimentName, timeout - 1000));
+  });
+
 export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
   cy.once('uncaught:exception', () => false);
   // Visits models listing page
@@ -62,6 +78,13 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
     .wait('@createExperiment', { timeout: 30000 })
     .then(({ response }) => {
       expect(response?.statusCode).to.eq(200);
+      return cy.wrap(experimentName);
+    })
+    .then((experimentName) => {
+      checkTrainFinishes(experimentName).then((trained) =>
+        assert.isTrue(trained)
+      );
+
       return cy.wrap(experimentName);
     });
 };

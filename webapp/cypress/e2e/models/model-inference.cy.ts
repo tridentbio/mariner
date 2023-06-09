@@ -12,15 +12,6 @@ describe('/models/:modelId/inference', () => {
   });
 
   it('Visits the page and inference ', () => {
-    cy.then(() =>
-      trainModel(modelName!, {
-        batchSize: 8,
-        learningRate: 0.001,
-      })
-    );
-
-    cy.wait(15000);
-
     cy.intercept({
       method: 'GET',
       url: 'http://localhost/api/v1/models/?page=0&perPage=10',
@@ -33,6 +24,14 @@ describe('/models/:modelId/inference', () => {
       method: 'GET',
       url: 'http://localhost/api/v1/experiments/*',
     }).as('getExperiments');
+
+    cy.then(() =>
+      trainModel(modelName!, {
+        batchSize: 8,
+        learningRate: 0.001,
+      })
+    );
+
     cy.visit('/models');
     cy.wait('@getModels');
     cy.contains('a', modelName!).click();
