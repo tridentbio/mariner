@@ -59,7 +59,6 @@ class Metrics:
         ]
         if model_type != "regression":
             assert self.num_classes is not None, "num_classes must be provided"
-            assert self.num_labels is not None, "num_labels must be provided"
             kwargs = {
                 "task": self.model_type,
                 "num_classes": self.num_classes,
