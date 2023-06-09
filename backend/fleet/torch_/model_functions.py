@@ -18,7 +18,7 @@ from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
 from fleet.torch_.models import CustomModel
 from fleet.torch_.schemas import TorchTrainingConfig
 from fleet.utils.data import DataModule
-from mariner.core.mlflowapi import log_models_and_create_version
+from mariner.core.mlflowapi import log_torch_models_and_create_version
 
 LOG = logging.getLogger(__name__)
 
@@ -161,7 +161,7 @@ class TorchFunctions(BaseModelFunctions):
         assert len(runs) >= 1
         run = runs[0]
         run_id = run.info.run_id
-        mlflow_model_version = log_models_and_create_version(
+        mlflow_model_version = log_torch_models_and_create_version(
             mlflow_model_name,
             best_model,
             last_model,

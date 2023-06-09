@@ -3,14 +3,14 @@ Trainable lightning model classes and is mapped from :py:class:`fleet.torch_.sch
 as well as auxiliary classes and functions.
 """
 import logging
-from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 import lightning.pytorch as pl
 import networkx as nx
 import torch
 import torch.nn
-import torchmetrics as metrics
 
+from fleet.metrics import Metrics
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
@@ -39,109 +39,6 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
 
 
 LOG = logging.getLogger(__name__)
-
-
-class Metrics:
-    """
-    Metrics operations that abstract the task type (regression/classification)
-    """
-
-    def __init__(
-        self,
-        model_type: Literal["regression", "multiclass", "multilabel"],
-        num_classes: Optional[int] = None,
-        num_labels: Optional[int] = None,
-    ):
-        if model_type == "regression":
-            self.metrics = torch.nn.ModuleDict(
-                {
-                    "train/mse": metrics.MeanSquaredError(),
-                    "train/mae": metrics.MeanAbsoluteError(),
-                    "train/ev": metrics.ExplainedVariance(),
-                    "train/mape": metrics.MeanAbsolutePercentageError(),
-                    "train/R2": metrics.R2Score(),
-                    "train/pearson": metrics.PearsonCorrCoef(),
-                    "val/mse": metrics.MeanSquaredError(),
-                    "val/mae": metrics.MeanAbsoluteError(),
-                    "val/ev": metrics.ExplainedVariance(),
-                    "val/mape": metrics.MeanAbsolutePercentageError(),
-                    "val/R2": metrics.R2Score(),
-                    "val/pearson": metrics.PearsonCorrCoef(),
-                }
-            )
-        else:
-            # https://torchmetrics.readthedocs.io/en/latest/
-            kwargs = {
-                "task": model_type,
-                "num_classes": num_classes,
-                "num_labels": num_labels,
-            }
-            self.metrics = torch.nn.ModuleDict(
-                {
-                    "train/accuracy": metrics.Accuracy(**kwargs, mdmc_reduce="global"),
-                    "train/precision": metrics.Precision(**kwargs),
-                    "train/recall": metrics.Recall(**kwargs),
-                    "train/f1": metrics.F1Score(**kwargs),
-                    "val/accuracy": metrics.Accuracy(**kwargs, mdmc_reduce="global"),
-                    "val/precision": metrics.Precision(**kwargs),
-                    "val/recall": metrics.Recall(**kwargs),
-                    "val/f1": metrics.F1Score(**kwargs),
-                }
-            )
-
-    def get_training_metrics(
-        self, prediction: torch.Tensor, batch: DataInstance, sufix=""
-    ):
-        """Gets a dict with the training metrics
-
-        For each of the training metrics available on the task type, return a dictionary
-        with the metrics value given the input ``batch`` and the model output ``prediction``
-
-        Args:
-            prediction: the model output
-            batch: object with target data (at batch['y'])
-        """
-        metrics_dict = {}
-        sufix = f"/{sufix}" if sufix else ""
-        for metric in self.metrics:
-            if not metric.startswith("train"):
-                continue
-            try:
-                if isinstance(self.metrics[metric], (metrics.Accuracy)):
-                    metrics_dict[metric + sufix] = self.metrics[metric](
-                        prediction.squeeze().long(), batch.squeeze().long()
-                    )
-                else:
-                    metrics_dict[metric + sufix] = self.metrics[metric](
-                        prediction.squeeze(), batch.squeeze()
-                    )
-            except ValueError as exp:
-                LOG.warning("Gor error with metric %s", metric)
-                LOG.warning(exp)
-
-        return metrics_dict
-
-    def get_validation_metrics(
-        self, prediction: torch.Tensor, batch: DataInstance, sufix=""
-    ):
-        """Gets a dict with the validation metrics
-
-        For each of the training metrics available on the task type, return a dictionary
-        with the metrics value given the input ``batch`` and the model output ``prediction``
-
-        Args:
-            prediction: the model output
-            batch: object with target data (at batch['y'])
-        """
-        metrics_dict = {}
-        sufix = f"/{sufix}" if sufix else ""
-        for metric in self.metrics:
-            if not metric.startswith("val"):
-                continue
-            metrics_dict[metric + sufix] = self.metrics[metric](
-                prediction.squeeze(), batch.squeeze()
-            )
-        return metrics_dict
 
 
 def _adapt_loss_args(
