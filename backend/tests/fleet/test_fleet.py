@@ -11,7 +11,7 @@ import pytest
 from mlflow.tracking import MlflowClient
 
 from fleet.base_schemas import FleetModelSpec, TorchModelSpec
-from fleet.dataset_schemas import TargetConfig, is_regression
+from fleet.dataset_schemas import TargetTorchColumnConfig, is_regression
 from fleet.model_builder import optimizers, splitters
 from fleet.model_functions import fit
 from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
@@ -28,7 +28,7 @@ class TestCase:
     datamodule_args = {"split_type": "random", "split_target": "60-20-20"}
 
 
-def targets_head(spec: TorchModelSpec) -> "TargetConfig":
+def targets_head(spec: TorchModelSpec) -> "TargetTorchColumnConfig":
     return spec.dataset.target_columns[0]
 
 

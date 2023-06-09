@@ -57,7 +57,7 @@ class ColumnConfig(BaseDatasetModel):
         underscore_attrs_are_private = True
 
 
-class TargetConfig(ColumnConfig):
+class TargetTorchColumnConfig(ColumnConfig):
     """
     Describes a target column based on its data type and index
     """
@@ -121,7 +121,7 @@ class AllowedLosses(BaseDatasetModel):
         return self.dict()[self.type_map[column_type]][0]["key"]
 
 
-def is_regression(target_column: "TargetConfig"):
+def is_regression(target_column: "TargetTorchColumnConfig"):
     """
     Returns ``True`` if ``target_column`` is numeric and therefore the model
     that predicts it is a regressor
@@ -131,7 +131,7 @@ def is_regression(target_column: "TargetConfig"):
     return target_column.column_type == "regression"
 
 
-def is_classifier(target_column: "TargetConfig"):
+def is_classifier(target_column: "TargetTorchColumnConfig"):
     """
     Returns ``True`` if the ``target_column`` is categorical and therefore the model
     that predicts it is a classifier
@@ -141,14 +141,14 @@ def is_classifier(target_column: "TargetConfig"):
     return target_column.column_type in ["binary", "multiclass"]
 
 
-def is_binary(target_column: "TargetConfig"):
+def is_binary(target_column: "TargetTorchColumnConfig"):
     """
     Returns ``True`` if the ``target_column`` is categorical and has only 2 classes
     """
     return is_classifier(target_column) and len(target_column.data_type.classes) == 2
 
 
-def infer_column_type(column: "TargetConfig"):
+def infer_column_type(column: "TargetTorchColumnConfig"):
     """
     Infer column type based on its data type
     """
@@ -164,7 +164,7 @@ class TorchDatasetConfig(DatasetConfig):
     Describes a dataset for the model in terms of it's used columns
     """
 
-    target_columns: List["TargetConfig"]
+    target_columns: List["TargetTorchColumnConfig"]
 
     @root_validator()
     def autofill_loss_fn(cls, values: dict) -> Any:
@@ -313,7 +313,9 @@ class DatasetConfigBuilder:
             The builder.
         """
         self.target_columns = [
-            TargetConfig(name=name, out_module=out_module, data_type=data_type)
+            TargetTorchColumnConfig(
+                name=name, out_module=out_module, data_type=data_type
+            )
             for name, data_type in kwargs.items()
         ]
         return self
@@ -361,7 +363,7 @@ class DatasetConfigBuilder:
         return TorchDatasetConfig(
             name=self.name,  # type:ignore
             target_columns=[
-                TargetConfig(**target_col.dict()) for target_col in self.target_columns  # type: ignore
+                TargetTorchColumnConfig(**target_col.dict()) for target_col in self.target_columns  # type: ignore
             ],
             feature_columns=self.feature_columns,
             featurizers=self.featurizers,
