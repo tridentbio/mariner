@@ -1,5 +1,4 @@
 import { randomLowerCase } from 'utils';
-import { DATASET_NAME } from '../../support/constants';
 import { DatasetFormData } from '../../support/dataset/create';
 import { deleteDatasetIfAlreadyExists } from '../../support/dataset/delete';
 
@@ -20,10 +19,10 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
     deleteDatasetIfAlreadyExists(updatedDataset.name);
   });
   beforeEach(() => {
+    cy.loginSuper();
     cy.intercept('GET', 'http://localhost:3000/api/v1/datasets/*').as(
       'getDatasets'
     );
-    cy.loginSuper();
     cy.visit('/datasets');
 
     cy.get('tbody', { timeout: 10000 })
@@ -34,6 +33,7 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
     cy.url().should('match', /.*\/datasets\/\d+/);
     cy.get('button').contains('Edit').click().wait(300);
   });
+
   it('should render for existing dataset', () => {
     cy.url().should('match', /.*\/datasets\/\d+\/edit/);
   });
