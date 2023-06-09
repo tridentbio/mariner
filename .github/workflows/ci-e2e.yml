@@ -2,6 +2,9 @@ name: End to End Tests CI
 on:
   push:
     branches: [ "develop", "releases/**" ]
+  pull_request:
+    # Only when PRs are targeting develop or releases/** branches
+    branches: [ develop, releases/** ]
   workflow_dispatch:
 env:
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
