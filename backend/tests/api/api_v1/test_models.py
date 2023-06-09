@@ -11,7 +11,11 @@ from starlette.testclient import TestClient
 from torch_geometric.loader import DataLoader
 
 from fleet.base_schemas import TorchModelSpec
-from fleet.dataset_schemas import ColumnConfig, TargetConfig, TorchDatasetConfig
+from fleet.dataset_schemas import (
+    ColumnConfig,
+    TargetTorchColumnConfig,
+    TorchDatasetConfig,
+)
 from fleet.model_builder import layers_schema as layers
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.torch_.models import CustomModel
@@ -49,7 +53,7 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
                 )
             ],
             target_columns=[
-                TargetConfig(
+                TargetTorchColumnConfig(
                     name="tpsa",
                     data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
                     out_module="1",
