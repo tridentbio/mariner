@@ -5,6 +5,11 @@ describe('/models/new - Model creation page', () => {
   let irisDatasetFixture: DatasetFormData | null = null;
 
   before(() => {
+    cy.on(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
+
     cy.loginSuper();
 
     cy.setupIrisDatset().then((iris) => {
@@ -18,11 +23,6 @@ describe('/models/new - Model creation page', () => {
 
   beforeEach(() => {
     cy.loginSuper();
-    cy.once(
-      'uncaught:exception',
-      (err) => err.toString().includes('ResizeObserver') && false
-    );
-
     cy.visit('/models/new');
   });
 

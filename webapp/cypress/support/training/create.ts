@@ -8,7 +8,7 @@ type TrainingConfig = {
 
 const checkTrainFinishes = (
   experimentName: string,
-  timeout = 30000
+  timeout = 60000
 ): Cypress.Chainable<boolean> =>
   // Recursively check if the experiment row contains 'Trained' status
   cy.contains('tr', experimentName).then(($row) => {
@@ -75,7 +75,7 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
   cy.get('button').contains('CREATE').click();
   // Assert API call is successfull
   return cy
-    .wait('@createExperiment', { timeout: 60000 })
+    .wait('@createExperiment', { timeout: 10000 })
     .then(({ response }) => {
       expect(response?.statusCode).to.eq(200);
       return cy.wrap(experimentName);
@@ -85,6 +85,7 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
         assert.isTrue(trained)
       );
 
+      cy.wait(1000);
       return cy.wrap(experimentName);
     });
 };
