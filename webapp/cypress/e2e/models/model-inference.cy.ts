@@ -1,6 +1,8 @@
 import { Model } from '@app/types/domain/models';
 import { trainModel } from '../../support/training/create';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 describe('/models/:modelId/inference', () => {
   let modelName: string | null = null;
 
@@ -14,15 +16,15 @@ describe('/models/:modelId/inference', () => {
   it('Visits the page and inference ', () => {
     cy.intercept({
       method: 'GET',
-      url: 'http://localhost/api/v1/models/?page=0&perPage=10',
+      url: `${API_BASE_URL}/api/v1/models/?page=0&perPage=10`,
     }).as('getModels');
     cy.intercept({
       method: 'GET',
-      url: 'http://localhost/api/v1/models/*',
+      url: `${API_BASE_URL}/api/v1/models/*`,
     }).as('getSpecificModel');
     cy.intercept({
       method: 'GET',
-      url: 'http://localhost/api/v1/experiments/*',
+      url: `${API_BASE_URL}/api/v1/experiments/*`,
     }).as('getExperiments');
 
     cy.then(() =>

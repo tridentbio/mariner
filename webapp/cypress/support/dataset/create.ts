@@ -1,6 +1,8 @@
 import { addDescription } from '../commands';
 import { irisDatasetFixture, zincDatasetFixture } from './examples';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 export interface DatasetFormData {
   name: string;
   description: string;
@@ -23,11 +25,11 @@ const createDataset = (dataset: DatasetFormData) => {
   cy.once('uncaught:exception', () => false);
   cy.intercept({
     method: 'POST',
-    url: 'http://localhost/api/v1/datasets/',
+    url: `${API_BASE_URL}/api/v1/datasets/`,
   }).as('createDataset');
   cy.intercept({
     method: 'GET',
-    url: 'http://localhost/api/v1/units/?q=',
+    url: `${API_BASE_URL}/api/v1/units/?q=`,
   }).as('getUnits');
   cy.get('#dataset-name-input').type(dataset.name);
   cy.get('#description-input textarea').type(dataset.description);
@@ -160,7 +162,7 @@ export const createDatasetDirectly = (
       return cy
         .request({
           method: 'POST',
-          url: 'http://localhost/api/v1/datasets/',
+          url: `${API_BASE_URL}/api/v1/datasets/`,
           body: formData.getBody(),
           headers: formData.getHeaders(authorization as string),
         })
@@ -179,7 +181,7 @@ export const datasetExists = (
       .request({
         method: 'GET',
         url:
-          'http://localhost/api/v1/datasets?page=0&perPage=100&search_by_name=' +
+          `${API_BASE_URL}/api/v1/datasets?page=0&perPage=100&search_by_name=` +
           dataset.name,
         headers: {
           authorization,
