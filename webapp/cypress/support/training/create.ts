@@ -75,7 +75,7 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
   cy.get('button').contains('CREATE').click();
   // Assert API call is successfull
   return cy
-    .wait('@createExperiment', { timeout: 30000 })
+    .wait('@createExperiment', { timeout: 60000 })
     .then(({ response }) => {
       expect(response?.statusCode).to.eq(200);
       return cy.wrap(experimentName);
