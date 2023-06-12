@@ -50,6 +50,7 @@ describe('ModelValidation', () => {
     });
 
     it("return correction to linear when out_features doesn't match next layer dimension restriction", () => {
+      // Test numeric output
       const spec: TorchModelSpec = {
         name: 'test',
         dataset: {
@@ -65,7 +66,7 @@ describe('ModelValidation', () => {
           ],
           targetColumns: [
             {
-              name: 'col1',
+              name: 'col2',
               dataType: {
                 unit: 'mole',
                 domainKind: 'numeric',
@@ -105,6 +106,68 @@ describe('ModelValidation', () => {
         expect((command.args.data as Linear).constructorArgs.out_features).toBe(
           1
         );
+      }
+
+      // Test categorical output with 3 classes
+      const spec2: TorchModelSpec = {
+        name: 'test',
+        dataset: {
+          name: 'test-ds',
+          featureColumns: [
+            {
+              name: 'col1',
+              dataType: {
+                unit: 'mole',
+                domainKind: 'numeric',
+              },
+            },
+          ],
+          targetColumns: [
+            {
+              name: 'col2',
+              dataType: {
+                domainKind: 'categorical',
+                classes: {
+                  a: 0,
+                  b: 1,
+                  c: 2,
+                },
+              },
+              outModule: 'L1',
+              lossFn: 'torch.nn.CrossEntropyLoss',
+            },
+          ],
+          featurizers: [],
+        },
+        spec: {
+          layers: [
+            {
+              type: 'torch.nn.Linear',
+              name: 'L1',
+              forwardArgs: {
+                input: '$col1',
+              },
+              constructorArgs: {
+                in_features: 1,
+                out_features: 24, // should be 3 since it's final layer
+              },
+            },
+          ],
+        },
+      };
+      const info2 = getTestValidator().validate(
+        extendSpecWithTargetForwardArgs(spec2)
+      );
+      expect(info2.getSuggestions()).toHaveLength(1);
+      const suggestion2 = info2.getSuggestions()[0];
+      expect(suggestion2.commands).toHaveLength(1);
+      const command2 = suggestion2.commands[0];
+      expect(command2).toBeInstanceOf(EditComponentsCommand);
+      if (command2 instanceof EditComponentsCommand) {
+        expect(command2.args.data.name).toBe('L1');
+        expect(
+          (command2.args.data as Linear).constructorArgs.out_features
+        ).toBe(3);
       }
     });
 
