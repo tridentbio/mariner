@@ -271,13 +271,13 @@ export const buildModel = (
 };
 
 export const buildYamlModel = (
-  yaml: string,
+  yamlPath: string,
   dataset: string | null = null,
   success = true,
   deleteModel = true,
   modelName = randomName()
 ) =>
-  cy.fixture(yaml).then((yamlStr) => {
+  cy.readFile(yamlPath).then((yamlStr) => {
     const jsonSchema: TorchModelSpec = parse(yamlStr);
 
     return buildModel(
