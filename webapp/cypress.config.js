@@ -10,7 +10,7 @@ module.exports = defineConfig({
     DATA_PATH: DATA_PATH,
   },
   e2e: {
-    baseUrl: `${API_BASE_URL}:3000/`,
+    baseUrl: 'http://localhost:3000/',
     setupNodeEvents(on) {
       on('file:preprocessor', vitePreprocessor());
     },
