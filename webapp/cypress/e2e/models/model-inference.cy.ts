@@ -50,6 +50,8 @@ describe('/models/:modelId/inference', () => {
         cy.wrap($el).type(Math.random().toPrecision(3));
       });
     cy.get('button').contains('Predict').click().wait(5000);
-    cy.get('[data-testid="inference-result"]').should('exist');
+    cy.get('[data-testid="inference-result"]', { timeout: 10000 }).should(
+      'exist'
+    );
   });
 });
