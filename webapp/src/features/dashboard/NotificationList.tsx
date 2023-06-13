@@ -33,9 +33,9 @@ const NotificationList = ({
   };
   return (
     <>
-      {notifications.map((notification) => (
-        <div key={notification.source}>
-          {notification.events.map((event) => {
+      {notifications.map((notification, i) => (
+        <div key={i}>
+          {notification.events.map((event, j) => {
             const item = renderEvent(event);
             const itemWithLink = event.url ? (
               <Link
@@ -55,7 +55,7 @@ const NotificationList = ({
             );
             return (
               <Box
-                key={event.url}
+                key={j}
                 sx={{
                   display: 'flex',
                   justifyContent: 'space-between',

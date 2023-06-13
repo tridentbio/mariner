@@ -19,11 +19,9 @@ const DashboardCard: FC<DashboardCardProps> = ({
   description,
   notifications,
 }) => {
-  const totalNotifications = useMemo(
-    () => notifications[0]?.total || 0,
-    [notifications]
-  );
+  const totalNotifications = notifications.length ? notifications[0].total : 0;
   const navigate = useNavigate();
+
   return (
     <Box
       sx={{ cursor: 'pointer' }}
