@@ -1,5 +1,7 @@
 import { DatasetFormData } from '../../support/dataset/create';
 
+const DATA_PATH = Cypress.env('DATA_PATH');
+
 describe('/models/new - Model creation page', () => {
   let zincDatasetFixture: DatasetFormData | null = null;
   let irisDatasetFixture: DatasetFormData | null = null;
@@ -37,7 +39,7 @@ describe('/models/new - Model creation page', () => {
 
   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
-      'data/yaml/binary_classification_model.yaml',
+      DATA_PATH + '/yaml/binary_classification_model.yaml',
       irisDatasetFixture!.name,
       true
     );
@@ -45,7 +47,7 @@ describe('/models/new - Model creation page', () => {
 
   it('Builds Multiclass Classification Model', () => {
     cy.buildYamlModel(
-      'data/yaml/multiclass_classification_model.yaml',
+      DATA_PATH + '/yaml/multiclass_classification_model.yaml',
       irisDatasetFixture!.name,
       true
     );
@@ -53,7 +55,7 @@ describe('/models/new - Model creation page', () => {
 
   it('Builds Multitarget Model', () => {
     cy.buildYamlModel(
-      'data/yaml/multitarget_classification_model.yaml',
+      DATA_PATH + '/yaml/multitarget_classification_model.yaml',
       irisDatasetFixture!.name,
       true
     );
@@ -61,7 +63,7 @@ describe('/models/new - Model creation page', () => {
 
   it('Builds Smiles-Numeric regressor', () => {
     cy.buildYamlModel(
-      'models/schemas/small_regressor_schema.yaml',
+      'cypress/fixtures/models/schemas/small_regressor_schema.yaml',
       zincDatasetFixture!.name,
       false
     );
