@@ -1,4 +1,7 @@
 import { addDescription } from '../commands';
+import { irisDatasetFixture, zincDatasetFixture } from './examples';
+
+const API_BASE_URL = Cypress.env('API_BASE_URL');
 
 export interface DatasetFormData {
   name: string;
@@ -22,11 +25,11 @@ const createDataset = (dataset: DatasetFormData) => {
   cy.once('uncaught:exception', () => false);
   cy.intercept({
     method: 'POST',
-    url: 'http://localhost/api/v1/datasets/',
+    url: `${API_BASE_URL}/api/v1/datasets/`,
   }).as('createDataset');
   cy.intercept({
     method: 'GET',
-    url: 'http://localhost/api/v1/units/?q=',
+    url: `${API_BASE_URL}/api/v1/units/?q=`,
   }).as('getUnits');
   cy.get('#dataset-name-input').type(dataset.name);
   cy.get('#description-input textarea').type(dataset.description);
@@ -60,7 +63,7 @@ const createDataset = (dataset: DatasetFormData) => {
     expect(response?.body.name).to.eq(dataset.name);
   });
 
-  cy.url({ timeout: 30000 }).should('include', `/datasets`, {
+  return cy.url({ timeout: 30000 }).should('include', `/datasets`, {
     timeout: 30000,
   });
 };
@@ -76,73 +79,139 @@ const everyLowerCase = <T extends Record<string, any>>(obj: T): T =>
     return acc;
   }, {} as T);
 
-export const createDatasetDirectly = (dataset: DatasetFormData) => {
-  // Creates a dataset directly with cypress promises
+const sliced = (content: string, numRows: number) => {
+  const lines = content.split('\n');
+  const header = lines[0];
+  const body = lines.slice(1, numRows + 1);
+  return [header, ...body].join('\n');
+};
+
+class FormData {
+  private form: string;
+  private boundary: string;
+  constructor() {
+    this.boundary = `----${Math.random().toString().slice(2, 16)}`;
+    this.form = '';
+  }
+
+  private parseArgs(filename?: string, contentType?: string): string {
+    let args = '';
+    if (filename) {
+      args += `; filename="${filename}"`;
+    }
+    if (contentType) {
+      args += `\r\nContent-Type: ${contentType}`;
+    }
+    args += '\r\n\r\n';
+    return args;
+  }
+
+  public setFormValue(
+    key: string,
+    value: string | any,
+    args: {
+      filename?: string;
+      contentType?: string;
+    } = {}
+  ): void {
+    this.form +=
+      `--${this.boundary}\r\n` +
+      `Content-Disposition: form-data; name="${key}"` +
+      this.parseArgs(args.filename, args.contentType) +
+      `${value}\r\n`;
+  }
+
+  public getBody(): string {
+    return this.form + `--${this.boundary}--\r\n`;
+  }
+
+  public getHeaders(authorization: string): Record<string, string> {
+    return {
+      authorization,
+      'Content-Type': `multipart/form-data; boundary=${this.boundary}`,
+    };
+  }
+}
+
+export const createDatasetDirectly = (
+  dataset: DatasetFormData,
+  numRows: number = 10
+) => {
   cy.once('uncaught:exception', () => false);
 
-  cy.wrap(
-    new Promise<string>((res, rej) =>
-      cy.window().then((win) => {
-        const value = JSON.parse(win.localStorage.getItem('app-token') || '{}');
-        if (!value.access_token) {
-          rej('No token found yet');
-        }
-        res(`Bearer ${value.access_token}`);
-      })
-    )
-  ).then((token) => {
+  cy.getCurrentAuthString().then((authorization) => {
     cy.wrap(
       new Promise<Blob>((res) => cy.fixture(dataset.file, 'binary').then(res))
     ).then((file) => {
-      const boundary = `----${Math.random().toString().slice(2, 16)}`;
-
-      // FormData is not supported by Cypress and needs to be created manually
-      const formData =
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="name"\r\n\r\n` +
-        `${dataset.name}\r\n` +
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="columnsMetadata"\r\n\r\n` +
-        `${JSON.stringify(dataset.descriptions.map(everyLowerCase))}\r\n` +
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="file"; filename="${dataset.file}"\r\n` +
-        `Content-Type: text/csv\r\n\r\n` +
-        `${file}\r\n` +
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="splitTarget"\r\n\r\n` +
-        `${dataset.split}\r\n` +
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="splitType"\r\n\r\n` +
-        `${dataset.splitType.toLowerCase()}\r\n` +
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="splitOn"\r\n\r\n` +
-        `${dataset.splitType === 'Random' ? '' : dataset.splitColumn}\r\n` +
-        `--${boundary}\r\n` +
-        `Content-Disposition: form-data; name="description"\r\n\r\n` +
-        `${dataset.description}\r\n` +
-        `--${boundary}--\r\n`;
-
-      cy.wrap(
-        new Promise<void>((res) =>
-          cy
-            .request({
-              method: 'POST',
-              url: 'http://localhost/api/v1/datasets/',
-              body: formData,
-              headers: {
-                'Content-Type': `multipart/form-data; boundary=${boundary}`,
-                authorization: token,
-              },
-            })
-            .then((response) => {
-              expect(response.status).to.eq(200);
-              res();
-            })
-        )
-      ).then(() => {
-        cy.wrap(new Promise<void>((res) => cy.wait(10000).then(res)));
+      const formData = new FormData();
+      formData.setFormValue('name', dataset.name);
+      formData.setFormValue(
+        'columnsMetadata',
+        JSON.stringify(dataset.descriptions.map(everyLowerCase))
+      );
+      formData.setFormValue('file', sliced(file as string, numRows), {
+        filename: dataset.file,
+        contentType: 'text/csv',
       });
+      formData.setFormValue('splitTarget', dataset.split);
+      formData.setFormValue('splitType', dataset.splitType.toLowerCase());
+      dataset.splitType !== 'Random' &&
+        formData.setFormValue('splitOn', dataset.splitColumn);
+      formData.setFormValue('description', dataset.description);
+
+      return cy
+        .request({
+          method: 'POST',
+          url: `${API_BASE_URL}/api/v1/datasets/`,
+          body: formData.getBody(),
+          headers: formData.getHeaders(authorization as string),
+        })
+        .then((response) => {
+          expect(response.status).to.eq(200);
+        });
     });
   });
 };
+
+export const datasetExists = (
+  dataset: DatasetFormData
+): Cypress.Chainable<boolean> =>
+  cy.getCurrentAuthString().then((authorization) =>
+    cy
+      .request({
+        method: 'GET',
+        url:
+          `${API_BASE_URL}/api/v1/datasets?page=0&perPage=100&search_by_name=` +
+          dataset.name,
+        headers: {
+          authorization,
+        },
+      })
+      .then((response) => {
+        expect(response?.status).to.eq(200);
+        const datasets: any[] = response?.body.data || [];
+        return cy.wrap(datasets.some((d) => d.name === dataset.name));
+      })
+  );
+
+export const setupIrisDatset = () =>
+  datasetExists(irisDatasetFixture).then((exists) => {
+    cy.on('uncaught:exception', () => false);
+
+    if (!exists) {
+      createDatasetDirectly(irisDatasetFixture);
+    }
+    return cy.wrap(irisDatasetFixture);
+  });
+
+export const setupZincDataset = () =>
+  datasetExists(zincDatasetFixture).then((exists) => {
+    cy.on('uncaught:exception', () => false);
+
+    if (!exists) {
+      createDatasetDirectly(zincDatasetFixture);
+    }
+    return cy.wrap(zincDatasetFixture);
+  });
+
 export default createDataset;

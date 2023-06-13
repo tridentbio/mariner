@@ -1,13 +1,10 @@
 import TestUtils from '../../support/TestUtils';
-import { createRandomDatasetFormData } from '../../support/dataset/examples';
-import { createDatasetDirectly } from '../../support/dataset/create';
+import { zincDatasetFixture } from '../../support/dataset/examples';
 
 describe('Model version form (/models/new)', () => {
-  const zincDatasetFixture = createRandomDatasetFormData();
-
   before(() => {
     cy.loginSuper();
-    cy.then(() => createDatasetDirectly(zincDatasetFixture));
+    cy.setupZincDataset();
   });
 
   const testModel = {
