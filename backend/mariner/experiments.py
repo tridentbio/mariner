@@ -19,6 +19,7 @@ from fleet.model_builder.optimizers import (
     SGDParamsSchema,
 )
 from fleet.model_functions import Result
+from fleet.ray_actors.training_actors import TrainingActor
 from mariner.core.aws import Bucket
 from mariner.core.config import settings
 from mariner.db.session import SessionLocal
@@ -29,7 +30,6 @@ from mariner.exceptions import (
     ModelNotFound,
     ModelVersionNotFound,
 )
-from mariner.ray_actors.training_actors import TrainingActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.experiment_schemas import (
     BaseTrainingRequest,

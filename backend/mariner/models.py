@@ -17,6 +17,7 @@ from fleet.data_types import SmileDataType
 from fleet.model_builder import options
 from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.schemas import ComponentOption
+from fleet.ray_actors.model_check_actor import ModelCheckActor
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -29,7 +30,6 @@ from mariner.exceptions.model_exceptions import (
     InvalidDataframe,
     ModelVersionNotTrained,
 )
-from mariner.ray_actors.model_check_actor import ModelCheckActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     Model,
