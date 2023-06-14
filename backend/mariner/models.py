@@ -18,6 +18,7 @@ from fleet.model_builder import options
 from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.schemas import ComponentOption
 from fleet.ray_actors.model_check_actor import ModelCheckActor
+from fleet.validation.functions import is_valid_smiles_series
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -44,7 +45,6 @@ from mariner.schemas.model_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
-from mariner.validation.functions import is_valid_smiles_series
 
 if TYPE_CHECKING:
     from fleet.dataset_schemas import TorchDatasetConfig

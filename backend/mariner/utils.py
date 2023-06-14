@@ -164,8 +164,5 @@ def compress_file(file: Union[io.BytesIO, BinaryIO]) -> io.BytesIO:
         file.seek(0)
         return file
 
-    except AttributeError:
-        raise TypeError("file must be instance of file")
-
-    except Exception as e:
-        raise e
+    except AttributeError as e:
+        raise TypeError("file must be instance of file") from e
