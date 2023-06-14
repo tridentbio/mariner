@@ -94,8 +94,6 @@ def apply(feat_or_transform, numpy_col):
         return feat_or_transform(numpy_col)
     elif isinstance(feat_or_transform, sklearn.base.TransformerMixin):
         return feat_or_transform.fit_transform(numpy_col)
-    elif isinstance(feat_or_transform, sklearn.base.TransformerMixin):
-        return feat_or_transform.transform(numpy_col)
     elif callable(feat_or_transform):
         arr = []
         for item in numpy_col:
