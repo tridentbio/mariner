@@ -10,10 +10,10 @@ from lightning.pytorch.loggers import MLFlowLogger
 from lightning.pytorch.loggers.logger import Logger
 
 from fleet.model_functions import fit
+from fleet.train.custom_logger import MarinerLogger
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.experiment_schemas import Experiment, TorchTrainingRequest
 from mariner.schemas.model_schemas import ModelVersion
-from mariner.train.custom_logger import MarinerLogger
 
 
 @ray.remote
