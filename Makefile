@@ -150,7 +150,3 @@ jupyter: ## Parse RELEASE.md file into mariner events that will show up as notif
 publish: ## Parse RELEASE.md file into mariner events that will show up as notifications
 	cd backend &&\
 		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
-
-.PHONY: generate-pydeps-flow
-pydeps-generate:
-	${DOCKER_COMPOSE} exec backend ./scripts/pydeps-generate.sh api fleet mariner

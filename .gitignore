@@ -16,4 +16,3 @@ cov/
 .coverage
 secrets
 secrets-local/
-backend/pydeps_data/
