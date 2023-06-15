@@ -168,8 +168,8 @@ def unwrap_dollar(value: str) -> tuple[str, bool]:
 
 
 def get_references_dict(
-    forward_args_dict: dict[str, Any]
-) -> dict[str, Union[str, list[str]]]:
+    forward_args: Union[dict[str, Any], list[str]],
+) -> Union[dict[str, Union[str, list[str]]], list[str]]:
     """Gets a dictionary with the same shape of forward_args_dict
     but with all string values representing reference mapped to the
     reference name.
@@ -198,20 +198,34 @@ def get_references_dict(
     result: dict[str, Union[str, list[str]]] = {}
 
     # Loop through the forward args dict
-    for key, value in forward_args_dict.items():
-        # Handle list instances
-        if isinstance(value, list):
-            result_key = []
-            for item in value:
-                ref, is_ref = unwrap_dollar(item)
+
+    if isinstance(forward_args, dict):
+        for key, value in forward_args.items():
+            # Handle list instances
+            if isinstance(value, list):
+                result_key = []
+                for item in value:
+                    ref, is_ref = unwrap_dollar(item)
+                    if is_ref:
+                        result_key.append(ref)
+                result[key] = result_key
+            elif isinstance(value, str):
+                ref, is_ref = unwrap_dollar(value)
                 if is_ref:
-                    result_key.append(ref)
-            result[key] = result_key
-        elif isinstance(value, str):
-            ref, is_ref = unwrap_dollar(value)
+                    result[key] = ref
+        return result
+    elif isinstance(forward_args, list):
+        list_result: list[str] = []
+        for item in forward_args:
+            ref, is_ref = unwrap_dollar(item)
             if is_ref:
-                result[key] = ref
-    return result
+                list_result.append(ref)
+        return list_result
+    else:
+        raise TypeError(
+            "Expected forward_args_dict to be a dict or a list"
+            f" but got {type(forward_args)}"
+        )
 
 
 def get_ref_from_data_instance(accessor_str: str, input_: DataInstance):
