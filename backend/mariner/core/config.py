@@ -25,6 +25,7 @@ def make_list_from_array_string(v: Union[str, list[str]]):
 class Settings(BaseSettings):
     """Models the environment variables used around the application."""
 
+    ENV: str = None
     API_V1_STR: str = "/api/v1"
     AUTHENTICATION_SECRET_KEY: str = secrets.token_urlsafe(32)
     DEPLOYMENT_URL_SIGNATURE_SECRET_KEY: str = secrets.token_urlsafe(32)
