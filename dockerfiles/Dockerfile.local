@@ -9,6 +9,10 @@ RUN curl -sSL https://install.python-poetry.org | \
     ln -s /opt/poetry/bin/poetry && \
     poetry config virtualenvs.create false
 
+# Install graphviz for pydeps (only used on development environment)
+RUN apt-get update && \
+    apt-get install -y graphviz
+
 # Copy dependency related files
 COPY ./pyproject.toml ./poetry.lock /app/
 # RUN --mount=type=cache,target=/root/.cache/pypoetry/cache \

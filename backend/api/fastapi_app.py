@@ -10,6 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 from api import startup_functions
 from api.api_v1.api import api_router
 from api.websocket import ws_router
+from api.deps_flow import deps_flow_router
 from mariner.core.config import settings
 
 app = FastAPI(
@@ -55,5 +56,8 @@ app.add_middleware(GZipMiddleware, minimum_size=100)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 app.include_router(ws_router)
+
+if settings.ENV == "development":
+    app.include_router(deps_flow_router)
 
 simplify_operation_ids(app)
