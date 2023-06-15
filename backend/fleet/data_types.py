@@ -155,6 +155,7 @@ class ProteinDataType(BaseDataType):
 
 DataType = Union[
     NumericDataType,
+    CategoricalDataType,
     QuantityDataType,
     SmileDataType,
     DNADataType,
