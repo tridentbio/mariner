@@ -1,25 +1,26 @@
-import createDataset, {
-  createDatasetDirectly,
-} from '../../support/dataset/create';
-import { deleteDatasetIfAlreadyExists } from '../../support/dataset/delete';
-import {
-  createIrisDatasetFormData,
-  createRandomDatasetFormData,
-} from '../../support/dataset/examples';
+import { DatasetFormData } from '../../support/dataset/create';
+
+const DATA_PATH = Cypress.env('DATA_PATH');
 
 describe('/models/new - Model creation page', () => {
-  const zincDatasetFixture = createRandomDatasetFormData();
-  const irisDatasetFixture = createIrisDatasetFormData();
+  let zincDatasetFixture: DatasetFormData | null = null;
+  let irisDatasetFixture: DatasetFormData | null = null;
 
   before(() => {
-    cy.loginSuper();
-    cy.then(() => createDatasetDirectly(zincDatasetFixture));
-    cy.then(() => createDatasetDirectly(irisDatasetFixture));
-  });
+    cy.on(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
 
-  after(() => {
-    deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
-    deleteDatasetIfAlreadyExists(irisDatasetFixture.name);
+    cy.loginSuper();
+
+    cy.setupIrisDatset().then((iris) => {
+      irisDatasetFixture = iris;
+    });
+
+    cy.setupZincDataset().then((zinc) => {
+      zincDatasetFixture = zinc;
+    });
   });
 
   beforeEach(() => {
@@ -38,32 +39,32 @@ describe('/models/new - Model creation page', () => {
 
   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
-      'data/yaml/binary_classification_model.yaml',
-      irisDatasetFixture.name,
+      DATA_PATH + '/yaml/binary_classification_model.yaml',
+      irisDatasetFixture!.name,
       true
     );
   });
 
   it('Builds Multiclass Classification Model', () => {
     cy.buildYamlModel(
-      'data/yaml/multiclass_classification_model.yaml',
-      irisDatasetFixture.name,
+      DATA_PATH + '/yaml/multiclass_classification_model.yaml',
+      irisDatasetFixture!.name,
       true
     );
   });
 
   it('Builds Multitarget Model', () => {
     cy.buildYamlModel(
-      'data/yaml/multitarget_classification_model.yaml',
-      irisDatasetFixture.name,
+      DATA_PATH + '/yaml/multitarget_classification_model.yaml',
+      irisDatasetFixture!.name,
       true
     );
   });
 
   it('Builds Smiles-Numeric regressor', () => {
     cy.buildYamlModel(
-      'models/schemas/small_regressor_schema.yaml',
-      zincDatasetFixture.name,
+      'cypress/fixtures/models/schemas/small_regressor_schema.yaml',
+      zincDatasetFixture!.name,
       false
     );
   });

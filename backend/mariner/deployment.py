@@ -8,6 +8,7 @@ from sqlalchemy.orm.session import Session
 from torch import Tensor
 
 from api.websocket import WebSocketMessage, get_websockets_manager
+from fleet.ray_actors.deployments_manager import get_deployments_manager
 from mariner.core.security import (
     decode_deployment_url_token,
     generate_deployment_signed_url,
@@ -20,7 +21,6 @@ from mariner.exceptions import (
     NotCreatorOwner,
     PredictionLimitReached,
 )
-from mariner.ray_actors.deployments_manager import get_deployments_manager
 from mariner.schemas.deployment_schemas import (
     Deployment,
     DeploymentBase,

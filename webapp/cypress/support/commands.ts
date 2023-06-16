@@ -2,11 +2,10 @@
 
 import 'cypress-plugin-tab';
 import 'cypress-file-upload';
+import './dataset';
 import './models';
 import { drag, move } from './dragdrop';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
-import createDataset from './dataset/create';
-import { zincDatasetFixture } from './dataset/examples';
 
 Cypress.Commands.add('notificationShouldContain', (text: string) => {
   return cy
@@ -14,9 +13,9 @@ Cypress.Commands.add('notificationShouldContain', (text: string) => {
     .should('contain.text', text);
 });
 
-Cypress.Commands.add('loginSuper', () => {
+Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
   cy.visit('/login');
-  cy.get('#username-input').type('admin@mariner.trident.bio');
+  cy.get('#username-input', { timeout }).type('admin@mariner.trident.bio');
   cy.get('#password-input').type('123456');
   cy.get('button[type="submit"]').click();
   cy.url().should('eq', Cypress.config('baseUrl'));
@@ -58,9 +57,6 @@ export const addDescription = (
     .click()
     .type(description);
 };
-Cypress.Commands.add('createZINCDataset', () => {
-  createDataset(zincDatasetFixture);
-});
 
 Cypress.Commands.add('deleteZINCDataset', () => {
   deleteDatasetIfAlreadyExists('Some dataset');
@@ -96,10 +92,20 @@ Cypress.Commands.add('getWithoutThrow', (selector: string) => {
   });
 });
 
+Cypress.Commands.add('getCurrentAuthString', () =>
+  cy.window().then((win) => {
+    const value = JSON.parse(win.localStorage.getItem('app-token') || '{}');
+    if (!value.access_token) {
+      throw new Error('No access token found');
+    }
+    return cy.wrap(`Bearer ${value.access_token}`);
+  })
+);
+
 declare global {
   namespace Cypress {
     interface Chainable {
-      loginSuper(): Chainable<void>;
+      loginSuper(timeout?: number): Chainable<void>;
       createZINCDataset(): Chainable<void>;
       deleteZINCDataset(): Chainable<void>;
       notificationShouldContain(text: string): Chainable<JQuery<HTMLElement>>;
@@ -114,6 +120,7 @@ declare global {
         y: number
       ): Chainable<JQuery<HTMLElement>>;
       getWithoutThrow(selector: string): Chainable<JQuery<HTMLElement>>;
+      getCurrentAuthString(): Chainable<string>;
     }
   }
 }

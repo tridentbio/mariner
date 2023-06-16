@@ -26,8 +26,8 @@ from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SciKitModelSpec, SciKitTrainingConfig
 from fleet.torch_.model_functions import TorchFunctions
 from fleet.torch_.schemas import TorchTrainingConfig
+from fleet.train.custom_logger import MarinerLogger
 from mariner.core.aws import download_file_as_dataframe
-from mariner.train.custom_logger import MarinerLogger
 
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)

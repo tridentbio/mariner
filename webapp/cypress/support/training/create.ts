@@ -5,10 +5,23 @@ type TrainingConfig = {
   epochs?: string | number;
   learningRate?: string | number;
 };
-export const checkModelTraining = (
-  modelName?: string,
-  config: TrainingConfig = {}
-) => {
+
+const checkTrainFinishes = (
+  experimentName: string,
+  timeout = 60000
+): Cypress.Chainable<boolean> =>
+  // Recursively check if the experiment row contains 'Trained' status
+  cy.contains('tr', experimentName).then(($row) => {
+    cy.log('row', $row.text());
+    if ($row.text().includes('Trained')) return cy.wrap(true);
+    else if (timeout <= 0) return cy.wrap(false);
+    else
+      return cy
+        .wait(1000)
+        .then(() => checkTrainFinishes(experimentName, timeout - 1000));
+  });
+
+export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
   cy.once('uncaught:exception', () => false);
   // Visits models listing page
   cy.intercept({
@@ -61,7 +74,18 @@ export const checkModelTraining = (
   // Selects CREATE EXPERIMENT
   cy.get('button').contains('CREATE').click();
   // Assert API call is successfull
-  cy.wait('@createExperiment', { timeout: 30000 }).then(({ response }) => {
-    expect(response?.statusCode).to.eq(200);
-  });
+  return cy
+    .wait('@createExperiment', { timeout: 10000 })
+    .then(({ response }) => {
+      expect(response?.statusCode).to.eq(200);
+      return cy.wrap(experimentName);
+    })
+    .then((experimentName) => {
+      checkTrainFinishes(experimentName).then((trained) =>
+        assert.isTrue(trained)
+      );
+
+      cy.wait(1000);
+      return cy.wrap(experimentName);
+    });
 };
