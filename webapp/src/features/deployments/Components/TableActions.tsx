@@ -4,6 +4,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import ClearIcon from '@mui/icons-material/Clear';
+import PublicIcon from '@mui/icons-material/Public';
 import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { useMemo } from 'react';
 import { EDeploymnetStatuses } from '../types';
@@ -12,8 +13,9 @@ import { useNotifications } from '@app/notifications';
 type DeploymentsTableActionsProps = {
   id: number;
   status?: deploymentsApi.DeploymentStatus;
-  onClickEdit: () => void;
-  onClickDelete: (id: number) => void;
+  shareUrl?: string;
+  onClickEdit?: () => void;
+  onClickDelete?: (id: number) => void;
 };
 type Colors = PropTypes.Color | 'success' | 'error' | 'info' | 'warning';
 
@@ -22,15 +24,23 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   onClickEdit,
   onClickDelete,
   status,
+  shareUrl,
 }) => {
   const [updateDeploy] = deploymentsApi.useUpdateDeploymentMutation();
   const { setMessage } = useNotifications();
 
-  const startDeploy = (id: number) => {
+  const handleShare = (shareUrl: string) => {
+    navigator.clipboard.writeText(shareUrl);
+    setMessage({
+      type: 'success',
+      message: 'Public URL copied to clipboard.',
+    });
+  };
+
+  const handleDeployStatus = (id: number, status: 'active' | 'stopped') => {
     updateDeploy({
       deploymentId: id,
-      // @ts-ignore
-      status: 'active',
+      deploymentUpdateInput: { status },
     })
       .unwrap()
       .catch(
@@ -40,9 +50,11 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
       );
   };
 
-  const handleStopDeploy = (id: number) => {};
+  const handleStopDeploy = (id: number) => {
+    handleDeployStatus(id, 'stopped');
+  };
   const handleStartDeploy = (id: number) => {
-    startDeploy(id);
+    handleDeployStatus(id, 'active');
   };
 
   const startStopMap = {
@@ -59,7 +71,7 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
       tooltip: 'Start',
     },
     [EDeploymnetStatuses.IDLE]: {
-      color: 'success',
+      color: 'warning',
       Icon: PlayArrowIcon,
       onClick: handleStartDeploy,
       tooltip: 'Start',
@@ -86,43 +98,55 @@ const DeploymentsTableActions: React.FC<DeploymentsTableActionsProps> = ({
   }, [status]);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Tooltip title={'Edit'} placement="top">
-        <Fab
-          size="small"
-          sx={{
-            background: '#384E77',
-            boxShadow: 'none',
-            '&:hover': { background: '#17294b' },
-          }}
-          aria-label="edit"
-          onClick={() => onClickEdit()}
-        >
-          <EditIcon fontSize="inherit" sx={{ color: '#fff' }} />
-        </Fab>
-      </Tooltip>
+    <>
+      {onClickEdit && (
+        <Tooltip title={'Edit'} placement="top">
+          <Fab
+            size="small"
+            sx={{
+              background: '#384E77',
+              boxShadow: 'none',
+              '&:hover': { background: '#17294b' },
+            }}
+            aria-label="edit"
+            onClick={() => onClickEdit()}
+          >
+            <EditIcon fontSize="inherit" sx={{ color: '#fff' }} />
+          </Fab>
+        </Tooltip>
+      )}
       {StartStopIcon}
-      <Tooltip title="Delete" placement="top">
-        <Fab
-          size="small"
-          sx={{
-            boxShadow: 'none',
-            '&:hover': { background: '#b3b3b3' },
-          }}
-          aria-label="delete"
-          onClick={() => onClickDelete(id)}
-        >
-          <ClearIcon fontSize="inherit" />
-        </Fab>
-      </Tooltip>
-    </Box>
+      {onClickDelete && (
+        <Tooltip title="Delete" placement="top">
+          <Fab
+            size="small"
+            sx={{
+              boxShadow: 'none',
+              '&:hover': { background: '#b3b3b3' },
+            }}
+            aria-label="delete"
+            onClick={() => onClickDelete(id)}
+          >
+            <ClearIcon fontSize="inherit" />
+          </Fab>
+        </Tooltip>
+      )}
+      {shareUrl && (
+        <Tooltip title="Share" placement="top">
+          <Fab
+            size="small"
+            sx={{
+              boxShadow: 'none',
+              '&:hover': { background: '#b3b3b3' },
+            }}
+            aria-label="share"
+            onClick={() => handleShare(shareUrl)}
+          >
+            <PublicIcon fontSize="inherit" />
+          </Fab>
+        </Tooltip>
+      )}
+    </>
   );
 };
 

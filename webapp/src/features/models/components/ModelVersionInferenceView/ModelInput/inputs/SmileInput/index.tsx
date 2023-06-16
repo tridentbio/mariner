@@ -26,7 +26,7 @@ const SmileInput = ({ value, onChange, label }: SmileInputProps) => {
   return (
     <Box>
       <FormControl sx={{ display: 'flex', flexDirection: 'column' }}>
-        <FormLabel id="demo-radio-buttons-group-label">{label}</FormLabel>
+        <FormLabel id="demo-radio-buttons-group-label">{label}:</FormLabel>
         <RadioGroup
           sx={{ display: 'flex', flexDirection: 'row' }}
           value={editor}
