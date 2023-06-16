@@ -126,7 +126,7 @@ const findDeploymentMatchingParamsId = (
 
 const navigationTree: RouteNode<any>[] = [
   {
-    path: '/login',
+    path: '/login/*',
     element: <AuthenticationPage />,
   },
   {
