@@ -79,15 +79,13 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
 
   const mutate = (value: DeploymentFormFields) => {
     if (currentDeployment) {
-      // @ts-ignore
       updateDeploy({
         deploymentId: currentDeployment.id,
-        ...value,
+        deploymentUpdateInput: value,
       });
       return;
     }
-    // @ts-ignore
-    createDeploy(value);
+    createDeploy({ deploymentBase: value });
   };
   const onSubmit = (value: DeploymentFormFields) => {
     if (value.shareStrategy === EShareStrategies.PUBLIC) {

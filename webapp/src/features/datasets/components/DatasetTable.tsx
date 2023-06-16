@@ -12,6 +12,10 @@ import { datasetsApi } from 'app/rtk/datasets';
 import { Dataset } from 'app/types/domain/datasets';
 import { StatusButton } from './StatusButton';
 import Justify from 'components/atoms/Justify';
+import {
+  TableActionsWrapper,
+  tableActionsSx,
+} from '@components/atoms/TableActions';
 
 interface DatasetTableProps {
   onOpenDetails?: (datasetId: number) => void;
@@ -52,7 +56,7 @@ const DatasetTable = (props: DatasetTableProps) => {
           <AppLink to={`/datasets/${row.id}`}>{val}</AppLink>
         </Justify>
       ),
-      title: 'NAME',
+      title: 'Name',
       filterSchema: {
         byValue: true,
       },
@@ -60,7 +64,7 @@ const DatasetTable = (props: DatasetTableProps) => {
     },
     {
       field: 'rows',
-      title: 'ROWS',
+      title: 'Rows',
       render: (_row, val) => <Justify position="end">{val}</Justify>,
       sortable: true,
       name: 'Rows',
@@ -70,7 +74,7 @@ const DatasetTable = (props: DatasetTableProps) => {
     },
     {
       field: 'columns',
-      title: 'COLUMNS',
+      title: 'Columns',
       render: (_row, val) => <Justify position="end">{val}</Justify>,
       sortable: true,
       name: 'Columns',
@@ -80,7 +84,7 @@ const DatasetTable = (props: DatasetTableProps) => {
     },
     {
       field: 'createdAt',
-      title: 'CREATED AT',
+      title: 'Created At',
       render: (row) => (
         <Justify position="start">
           {dateRender((thing: Dataset) => thing.createdAt)(row)}
@@ -91,7 +95,7 @@ const DatasetTable = (props: DatasetTableProps) => {
     },
     {
       field: 'createdBy',
-      title: 'CREATED BY',
+      title: 'Created By',
       render: (_, value) => (
         <Justify position="center">
           <Avatar src={value?.avatarUrl} />
@@ -104,7 +108,7 @@ const DatasetTable = (props: DatasetTableProps) => {
     },
     {
       field: 'readyStatus',
-      title: 'STATUS',
+      title: 'Status',
       render: (_, value) => (
         <Justify position="center">
           <StatusButton status={value || ''} />
@@ -117,16 +121,17 @@ const DatasetTable = (props: DatasetTableProps) => {
     },
     {
       field: null,
-      title: '',
+      title: 'Actions',
+      customSx: tableActionsSx,
       render: (row) => (
-        <Justify position="center">
+        <TableActionsWrapper>
           <TableActions
             onOpenDetails={() =>
               props.onOpenDetails && props.onOpenDetails(row.id)
             }
             onDownload={() => downloadDataset(row.id, row.dataUrl)}
           />
-        </Justify>
+        </TableActionsWrapper>
       ),
       name: 'Actions',
     },

@@ -10,6 +10,7 @@ import { Box } from '@mui/system';
 import Masonry from '@mui/lab/Masonry';
 import { fetchNotificaitions } from 'features/notifications/notificationsSlice';
 import ChangeLogCard from './ChangeLogCard';
+import DeploymentsCard from './DeploymentsCard';
 
 const bySource = (source: string) => (notification: MarinerNotification) =>
   notification.source === source;
@@ -49,7 +50,7 @@ const Dashboard = () => {
         <DatasetsCard notifications={[]} />
         <ModelsCard notifications={[]} />
         <TrainingCard notifications={trainingNotifications} />
-        {/* hide for demo */}
+        <DeploymentsCard notifications={[]} />
         {/* <CostsCard notifications={[]} /> */}
       </Masonry>
     </Content>

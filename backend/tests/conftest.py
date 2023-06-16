@@ -22,10 +22,15 @@ from mariner.entities import Experiment as ExperimentEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities import User
 from mariner.entities.event import EventReadEntity
-from mariner.schemas.experiment_schemas import BaseTrainingRequest, Experiment
+from mariner.schemas.deployment_schemas import Deployment
+from mariner.schemas.experiment_schemas import (
+    Experiment,
+    BaseTrainingRequest,
+)
+from fleet.torch_.schemas import MonitoringConfig, EarlyStoppingConfig
 from mariner.schemas.model_schemas import Model
 from mariner.schemas.token import TokenPayload
-from mariner.stores import user_sql
+from mariner.stores.user_sql import user_store
 from mariner.stores.experiment_sql import experiment_store
 from mariner.tasks import get_exp_manager
 from tests.fixtures.dataset import (
@@ -74,7 +79,7 @@ def normal_user_token_headers_payload(
 ) -> TokenPayload:
     """Get the payload from the token"""
     token = normal_user_token_headers["Authorization"].split(" ")[1]
-    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
+    payload = jwt.decode(token, settings.AUTHENTICATION_SECRET_KEY, algorithms=[security.ALGORITHM])
     return TokenPayload(**payload)
 
 
@@ -199,7 +204,7 @@ async def some_trained_model(
             ),
         ),
     )
-    user = user_sql.user_store.get(db, model.created_by_id)
+    user = user_store.get(db, model.created_by_id)
     assert user
     exp = await experiments_ctl.create_model_training(db, user, request)
     task = get_exp_manager().get_task(exp.id)
@@ -207,6 +212,30 @@ async def some_trained_model(
     await task
     yield model
     teardown_create_model(db, model)
+
+
+@pytest.fixture(scope="function")
+def some_deployment(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    some_trained_model: Model,
+) -> Deployment:
+    """Deployment fixture. Owner: default test_user"""
+    deployment_data = {
+        "name": random_lower_string(),
+        "readme": random_lower_string(),
+        "status": "stopped",
+        "model_version_id": some_trained_model.versions[-1].id,
+        "share_strategy": "private",
+        "prediction_rate_limit_value": 100,
+        "prediction_rate_limit_unit": "month",
+    }
+    response = client.post(
+        f"{settings.API_V1_STR}/deployments/",
+        json=deployment_data,
+        headers=normal_user_token_headers,
+    )
+    return Deployment(**response.json())
 
 
 @pytest.fixture
