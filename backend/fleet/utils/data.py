@@ -5,6 +5,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    List,
     Iterable,
     Literal,
     Protocol,
@@ -91,10 +92,11 @@ def apply(feat_or_transform, numpy_col):
     Applies a featurizer or transform to a numpy column.
     """
     if isinstance(feat_or_transform, torch.nn.Module):
-        return feat_or_transform(numpy_col)
+        return feat_or_transform(**numpy_col)
     elif isinstance(feat_or_transform, sklearn.base.TransformerMixin):
-        return feat_or_transform.fit_transform(numpy_col)
+        return feat_or_transform.fit_transform(*numpy_col)
     elif callable(feat_or_transform):
+        numpy_col = numpy_col[0] if len(numpy_col) == 1 else numpy_col
         arr = []
         for item in numpy_col:
             featurized_item = feat_or_transform(item)
@@ -174,7 +176,7 @@ def get_default_data_type_featurizer(
 
 
 class ForwardProtocol(Protocol):
-    forward_args: Union[Dict[str, str], BaseModel]
+    forward_args: Union[List[str], Dict[str, str], BaseModel]
 
 
 def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
@@ -186,15 +188,18 @@ def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
         data: The dataframe that holds the dataset data.
         feat: The featurizer or transform.
     """
+    if isinstance(feat.forward_args, BaseModel):
+        forward_args = feat.forward_args.dict()
+    else:
+        forward_args = feat.forward_args
 
-    forward_args = (
-        feat.forward_args.dict()
-        if not isinstance(feat.forward_args, dict)
-        else feat.forward_args
-    )
     references = get_references_dict(forward_args)
-    col_name = list(references.values())[0]
-    return data[col_name].to_numpy()
+    if isinstance(references, dict):
+        return np.array(
+            [data.loc[:, col_name].to_numpy() for col_name in references.values()]
+        )
+    else:
+        return np.array([data.loc[:, col_name].to_numpy() for col_name in references])
 
 
 def build_columns_numpy(

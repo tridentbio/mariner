@@ -57,16 +57,22 @@ def make_graph_from_forward_args(nodes: Iterable[dict]) -> nx.DiGraph:
         if forward_args is None:
             return []
         edges: List[Edge] = []
-        for key, value in forward_args.items():
-            if isinstance(value, str):
-                dst_and_attrs, _ = unwrap_dollar(value)
-                dst = dst_and_attrs.split(".", 1)[0]
-                edges.append((dst, key))
-            elif isinstance(value, list):
-                for item in value:
-                    dst_and_attrs, _ = unwrap_dollar(item)
+        if isinstance(forward_args, dict):
+            for key, value in forward_args.items():
+                if isinstance(value, str):
+                    dst_and_attrs, _ = unwrap_dollar(value)
                     dst = dst_and_attrs.split(".", 1)[0]
                     edges.append((dst, key))
+                elif isinstance(value, list):
+                    for item in value:
+                        dst_and_attrs, _ = unwrap_dollar(item)
+                        dst = dst_and_attrs.split(".", 1)[0]
+                        edges.append((dst, key))
+        elif isinstance(forward_args, list):
+            for item in forward_args:
+                dst_and_attrs, _ = unwrap_dollar(item)
+                dst = dst_and_attrs.split(".", 1)[0]
+                edges.append((dst, None))
         return edges
 
     return make_graph(nodes, lambda node: node["name"], get_edges_from_forward_args)
