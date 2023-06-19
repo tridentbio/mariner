@@ -1,7 +1,13 @@
-import { createDeployment } from '../../support/deployments/create';
-import { trainModel } from '../../support/training/create';
-// set following variables to skip model build and
-// use this models 1st versions as fixtures
+import {
+  goToPublicDeployment,
+  goToSpecificDeployment,
+} from '../../support/deployments/find-deployment';
+import {
+  createDeployment,
+  updateDeployment,
+} from '../../support/deployments/create-update';
+
+const TEST_USER = Cypress.env('TEST_USER');
 
 describe('Deployments Page', () => {
   let modelName: string | null = null;
@@ -14,7 +20,6 @@ describe('Deployments Page', () => {
       modelName = deployment.name;
       modelVersionName = deployment.config.name;
     });
-    trainModel(modelName!, { modelVersion: modelVersionName! });
   });
 
   it('Deploys model succesfully', () => {
@@ -23,10 +28,24 @@ describe('Deployments Page', () => {
     });
   });
 
-  it('Share model with test with test user', () => {
+  it('Share model with test user', () => {
+    cy.loginSuper();
+    updateDeployment(modelName!, deploymentName!, {
+      shareWithUser: [TEST_USER],
+    });
+
     cy.loginTest();
-    cy.visit('/deployments');
-    cy.contains('a', deploymentName!).click();
-    cy.get('button').contains('Share').click().wait(300);
+    goToSpecificDeployment(deploymentName!, 'Shared');
+  });
+
+  it('Access model publically', () => {
+    cy.loginSuper();
+    updateDeployment(modelName!, deploymentName!, {
+      shareStrategy: 'Public',
+    }).then((res) => {
+      const shareUrl = res?.body.shareUrl as string;
+      assert.exists(shareUrl);
+      goToPublicDeployment(shareUrl!);
+    });
   });
 });
