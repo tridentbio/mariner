@@ -6,6 +6,7 @@ import {
   createDeployment,
   updateDeployment,
 } from '../../support/deployments/create-update';
+import { deleteDeployment } from '../../support/deployments/delete';
 
 const TEST_USER = Cypress.env('TEST_USER');
 
@@ -16,10 +17,15 @@ describe('Deployments Page', () => {
 
   before(() => {
     cy.loginSuper();
-    cy.setupSomeModel().then((deployment) => {
-      modelName = deployment.name;
-      modelVersionName = deployment.config.name;
+    cy.setupSomeModel().then((model) => {
+      modelName = model.name;
+      modelVersionName = model.config.name;
     });
+  });
+
+  after(() => {
+    cy.loginSuper();
+    deleteDeployment(modelName!, deploymentName!);
   });
 
   it('Deploys model succesfully', () => {
