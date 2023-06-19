@@ -4,8 +4,6 @@ export const goToSpecificDeployment = (
   name: string,
   tab: 'All' | 'Public' | 'Shared' | 'My' = 'All'
 ) => {
-  let deploymentId: number | null = null;
-
   cy.intercept({
     method: 'GET',
     url: `${API_BASE_URL}/api/v1/deployments/?page=0*`,
@@ -41,8 +39,8 @@ export const goToDeploymentWithinModel = (modelName: string) => {
   cy.get('button').contains('Deployments').click().wait(300);
 };
 
-export const goToPublicDeployment = (url: string) => {
-  const token = url.split('public-model/')[1];
+export const goToPublicDeployment = (shareUrl: string) => {
+  const token = shareUrl.split('public-model/')[1];
 
   cy.intercept({
     method: 'GET',

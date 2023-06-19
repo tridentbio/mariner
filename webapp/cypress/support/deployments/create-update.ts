@@ -1,9 +1,8 @@
 import { randomLowerCase } from '@utils';
-import { goToDeploymentWithinModel } from './find-deployment';
 
 const API_BASE_URL = Cypress.env('API_BASE_URL');
 
-const getDeploymentForm = (
+export const getDeploymentForm = (
   modelVersionName: string,
   shareStrategy: 'Private' | 'Public' = 'Private'
 ) => ({
@@ -74,7 +73,7 @@ export const createDeployment = (
   modelName: string,
   modelVersionName: string
 ) => {
-  goToDeploymentWithinModel(modelName);
+  cy.goToDeploymentWithinModel(modelName);
 
   cy.get('button').contains('Deploy Model').click().wait(300);
   const deploymentsFormData = getDeploymentForm(modelVersionName);
@@ -100,8 +99,8 @@ export const updateDeployment = (
   deploymentName: string,
   deploymentFormData: Partial<ReturnType<typeof getDeploymentForm>>
 ) => {
-  goToDeploymentWithinModel(modelName);
-  runAction(deploymentName, 0);
+  cy.goToDeploymentWithinModel(modelName);
+  cy.runAction(deploymentName, 0);
 
   fillForm(deploymentFormData);
 
