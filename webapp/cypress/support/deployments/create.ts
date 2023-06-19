@@ -22,7 +22,7 @@ export const goToDeploymentWithinModel = (modelName: string) => {
     url: `${API_BASE_URL}/api/v1/models/*`,
   }).as('getSpecificModel');
   cy.visit('/models');
-  cy.wait('@getModels', { timeout: 10000 });
+  cy.wait('@getModels', { timeout: 10000 }).wait(500);
   cy.contains('a', modelName!).click();
   cy.wait('@getSpecificModel').wait(500);
   cy.get('button').contains('Deployments').click().wait(300);
@@ -74,8 +74,11 @@ export const createDeployment = (
 
   cy.contains('button', 'CREATE').click();
   cy.wait('@createDeployment').then((interception) => {
-    assert.equal(interception.response?.statusCode, 201);
+    assert.equal(interception.response?.statusCode, 200);
   });
+
+  cy.get('td').should('contain', deploymentsFormData.name);
+  cy.get('td').should('contain', deploymentsFormData.modelVersion);
 
   return cy.wrap(deploymentsFormData.name);
 };

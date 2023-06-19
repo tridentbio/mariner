@@ -84,6 +84,7 @@ def create_test_user():
             db.flush()
             db.refresh(user)
             db.commit()
-        except sqlalchemy.exc.IntegrityError as exp:
+        except sqlalchemy.exc.IntegrityError:
             print("test user already exists")
         return user
+    

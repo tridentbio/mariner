@@ -6,7 +6,7 @@ export const modelFormData = (datasetName: string) => ({
   modelDescription: 'cqlqrats',
   modelVersionDescription: 'fwscttrs',
   config: {
-    name: randomLowerCase(8),
+    name: 'test model version',
     dataset: {
       featureColumns: [
         {
