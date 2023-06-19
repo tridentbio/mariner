@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from mariner.core.security import get_password_hash
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User
+from mariner.core.config import settings
 
 
 def init_db(db: Session) -> None:
@@ -51,4 +52,38 @@ def create_admin_user() -> User:
             db.commit()
         except sqlalchemy.exc.IntegrityError as exp:
             print("admin user already exists")
+        return user
+
+
+def create_test_user():
+    """Creates a test user to be used for local development
+
+    This functions is not called from the app itself, but by developers
+    during developers.
+    An easy way to call this function from command line:
+
+        python -c 'from mariner.db.init_db impor create_test_user; create_test_user()'
+
+    User created has following credentials
+    Email: :attribute:`settings.EMAIL_TEST_USER`
+    Password: 123456
+
+    Returns:
+        the super user entity
+    """
+    with SessionLocal() as db:
+        hashed_password = get_password_hash("123456")
+        user = User(
+            email=settings.EMAIL_TEST_USER,
+            is_active=True,
+            is_superuser=False,
+            hashed_password=hashed_password,
+        )
+        try:
+            db.add(user)
+            db.flush()
+            db.refresh(user)
+            db.commit()
+        except sqlalchemy.exc.IntegrityError as exp:
+            print("test user already exists")
         return user

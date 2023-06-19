@@ -21,6 +21,14 @@ Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
   cy.url().should('eq', Cypress.config('baseUrl'));
 });
 
+Cypress.Commands.add('loginTest', (timeout: number = 15000) => {
+  cy.visit('/login');
+  cy.get('#username-input', { timeout }).type('test@example.com');
+  cy.get('#password-input').type('123456');
+  cy.get('button[type="submit"]').click();
+  cy.url().should('eq', Cypress.config('baseUrl'));
+});
+
 export const addDescription = (
   pattern: string,
   dataType: {
@@ -106,6 +114,7 @@ declare global {
   namespace Cypress {
     interface Chainable {
       loginSuper(timeout?: number): Chainable<void>;
+      loginTest(timeout?: number): Chainable<void>;
       createZINCDataset(): Chainable<void>;
       deleteZINCDataset(): Chainable<void>;
       notificationShouldContain(text: string): Chainable<JQuery<HTMLElement>>;
