@@ -49,3 +49,12 @@ export const goToPublicDeployment = (shareUrl: string) => {
   cy.visit('/public-model/' + token);
   cy.wait('@getDeployment').wait(500);
 };
+
+export const openDeploymentInCurrentTable = (name: string) => {
+  cy.intercept({
+    method: 'GET',
+    url: `${API_BASE_URL}/api/v1/deployments/*`,
+  }).as('getDeployment');
+  cy.contains('a', name).click();
+  cy.wait('@getDeployment').wait(500);
+};

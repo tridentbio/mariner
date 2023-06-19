@@ -1,6 +1,6 @@
 const TEST_USER = Cypress.env('TEST_USER');
 
-describe('Deployments Page', () => {
+describe('Deployments Form.', () => {
   let modelName: string | null = null;
   let modelVersionName: string | null = null;
   let deploymentName: string | null = null;

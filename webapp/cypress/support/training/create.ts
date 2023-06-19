@@ -19,7 +19,6 @@ const checkTrainFinishes = (
 ): Cypress.Chainable<boolean> =>
   // Recursively check if the experiment row contains 'Trained' status
   cy.contains('tr', experimentName).then(($row) => {
-    cy.log('row', $row.text());
     if ($row.text().includes('Trained')) return cy.wrap(true);
     else if (timeout <= 0) return cy.wrap(false);
     else
@@ -105,7 +104,7 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
         assert.isTrue(trained)
       );
 
-      cy.wait(1000);
+      cy.wait(10000);
       return cy.wrap(experimentName);
     });
 };
