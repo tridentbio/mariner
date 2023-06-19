@@ -4,6 +4,7 @@ import 'cypress-plugin-tab';
 import 'cypress-file-upload';
 import './dataset';
 import './models';
+import './deployments';
 import { drag, move } from './dragdrop';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
 

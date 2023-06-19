@@ -1,13 +1,3 @@
-import {
-  goToPublicDeployment,
-  goToSpecificDeployment,
-} from '../../support/deployments/find-deployment';
-import {
-  createDeployment,
-  updateDeployment,
-} from '../../support/deployments/create-update';
-import { deleteDeployment } from '../../support/deployments/delete';
-
 const TEST_USER = Cypress.env('TEST_USER');
 
 describe('Deployments Page', () => {
@@ -25,33 +15,33 @@ describe('Deployments Page', () => {
 
   after(() => {
     cy.loginSuper();
-    deleteDeployment(modelName!, deploymentName!);
+    cy.deleteDeployment(modelName!, deploymentName!);
   });
 
   it('Deploys model succesfully', () => {
-    createDeployment(modelName!, modelVersionName!).then((name) => {
+    cy.createDeployment(modelName!, modelVersionName!).then((name) => {
       deploymentName = name;
     });
   });
 
   it('Share model with test user', () => {
     cy.loginSuper();
-    updateDeployment(modelName!, deploymentName!, {
+    cy.updateDeployment(modelName!, deploymentName!, {
       shareWithUser: [TEST_USER],
     });
 
     cy.loginTest();
-    goToSpecificDeployment(deploymentName!, 'Shared');
+    cy.goToSpecificDeployment(deploymentName!, 'Shared');
   });
 
   it('Access model publically', () => {
     cy.loginSuper();
-    updateDeployment(modelName!, deploymentName!, {
+    cy.updateDeployment(modelName!, deploymentName!, {
       shareStrategy: 'Public',
     }).then((res) => {
       const shareUrl = res?.body.shareUrl as string;
       assert.exists(shareUrl);
-      goToPublicDeployment(shareUrl!);
+      cy.goToPublicDeployment(shareUrl!);
     });
   });
 });
