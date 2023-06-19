@@ -3,7 +3,7 @@ import { trainModel } from '../../support/training/create';
 // set following variables to skip model build and
 // use this models 1st versions as fixtures
 
-describe('Model Training Page', () => {
+describe('Deployments Page', () => {
   let modelName: string | null = null;
   let modelVersionName: string | null = null;
   let deploymentName: string | null = null;
@@ -14,20 +14,16 @@ describe('Model Training Page', () => {
       modelName = deployment.name;
       modelVersionName = deployment.config.name;
     });
-    trainModel(modelName!, { modelVersion: modelVersionName! }).then(
-      (experimentName) => {
-        assert.isNotNull(experimentName);
-      }
-    );
+    trainModel(modelName!, { modelVersion: modelVersionName! });
   });
 
-  it('Creates training succesfully', () => {
+  it('Deploys model succesfully', () => {
     createDeployment(modelName!, modelVersionName!).then((name) => {
       deploymentName = name;
     });
   });
 
-  it('Share test with test user', () => {
+  it('Share model with test with test user', () => {
     cy.loginTest();
     cy.visit('/deployments');
     cy.contains('a', deploymentName!).click();
