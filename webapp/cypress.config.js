@@ -8,6 +8,7 @@ module.exports = defineConfig({
   env: {
     API_BASE_URL: API_BASE_URL,
     DATA_PATH: DATA_PATH,
+    TEST_USER: 'test@example.com',
   },
   e2e: {
     baseUrl: 'http://localhost:3000/',
