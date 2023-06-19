@@ -8,8 +8,8 @@ describe('/models/:modelId/inference', () => {
 
   beforeEach(() => {
     cy.loginSuper();
-    cy.setupSomeModel().then((name) => {
-      modelName = name;
+    cy.setupSomeModel().then((deployment) => {
+      modelName = deployment.name;
     });
   });
 
