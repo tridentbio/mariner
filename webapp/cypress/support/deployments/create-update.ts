@@ -60,6 +60,16 @@ const fillForm = (
   }
 };
 
+export const runAction = (deploymentName: string, action: number) => {
+  cy.contains('td', deploymentName)
+    .closest('tr')
+    .find('td:last-child')
+    .find('button')
+    .eq(action)
+    .click()
+    .wait(300);
+};
+
 export const createDeployment = (
   modelName: string,
   modelVersionName: string
@@ -91,13 +101,7 @@ export const updateDeployment = (
   deploymentFormData: Partial<ReturnType<typeof getDeploymentForm>>
 ) => {
   goToDeploymentWithinModel(modelName);
-  cy.contains('td', deploymentName)
-    .closest('tr')
-    .find('td:last-child')
-    .find('button')
-    .eq(0)
-    .click()
-    .wait(300);
+  runAction(deploymentName, 0);
 
   fillForm(deploymentFormData);
 
