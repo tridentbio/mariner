@@ -1,11 +1,12 @@
+import { randomLowerCase } from '@utils';
 import { SOME_MODEL_NAME } from '../constants';
 
-const modelFormData = (datasetName: string) => ({
+export const modelFormData = (datasetName: string) => ({
   name: SOME_MODEL_NAME,
   modelDescription: 'cqlqrats',
   modelVersionDescription: 'fwscttrs',
   config: {
-    name: datasetName,
+    name: randomLowerCase(8),
     dataset: {
       featureColumns: [
         {
@@ -43,7 +44,7 @@ const modelFormData = (datasetName: string) => ({
           lossFn: 'torch.nn.BCEWithLogitsLoss',
         },
       ],
-      name: 'IRIS_DATASET_NAME',
+      name: datasetName,
     },
     spec: {
       layers: [
@@ -154,13 +155,14 @@ const createModelDirectly = (modelFormData: any) =>
 
 export const setupSomeModel = () =>
   modelExists(SOME_MODEL_NAME).then((exists) => {
-    cy.on('uncaught:exception', () => false);
-    if (exists) {
-      return cy.wrap(SOME_MODEL_NAME);
-    }
-
     return cy.setupIrisDatset().then((fixture) => {
-      createModelDirectly(modelFormData(fixture.name));
-      return cy.wrap(SOME_MODEL_NAME);
+      const formData = modelFormData(fixture.name);
+
+      if (exists) {
+        return cy.wrap(formData);
+      }
+
+      createModelDirectly(formData);
+      return cy.wrap(formData);
     });
   });
