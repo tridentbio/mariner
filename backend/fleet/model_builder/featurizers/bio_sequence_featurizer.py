@@ -2,6 +2,7 @@
 Featurizers for biological data types
 """
 import numpy as np
+import pandas as pd
 import torch
 
 from fleet.model_builder.featurizers.base_featurizers import (
@@ -34,8 +35,10 @@ class SequenceFeaturizer(ReversibleFeaturizer[str]):
     def featurize(self, input_: str) -> np.ndarray:
         """Featurize sequence to pytorch LongTensor"""
         assert isinstance(
-            input_, str
+            input_, (str, list, pd.Series, np.ndarray)
         ), f"Sequence featurizer must receive single strings but got {input_.__class__}"
+        if isinstance(input_, (list, pd.Series, np.ndarray)):
+            return [self.featurize(i) for i in input_]
         # Initialize an empty sequence
         sequence = []
 

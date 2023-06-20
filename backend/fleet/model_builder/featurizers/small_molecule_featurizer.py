@@ -102,7 +102,15 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
 
         self._get_slices()
 
-    def __call__(self, mol: Union[RDKitMol, str]) -> PyGData:
+    def featurize_list(self, mols_list: List[Union[RDKitMol, str]]) -> List[PyGData]:
+        featurized_mols = []
+        for mol in mols_list:
+            featurized_mols.append(self(mol))
+        return featurized_mols
+
+    def __call__(self, mol: Union[RDKitMol, str, list]) -> PyGData:
+        if isinstance(mol, (list, np.ndarray)):
+            return self.featurize_list(mol)
         return self._featurize(mol, self.sym_bond_list)
 
     def __repr__(self):

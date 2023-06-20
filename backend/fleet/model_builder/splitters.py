@@ -13,8 +13,8 @@ from .constants import TrainingStep
 
 def apply_split_indexes(
     df: pd.DataFrame,
-    split_type: Literal["random", "scaffold"],
-    split_target: str,
+    split_target: str = "60-20-20",
+    split_type: Literal["random", "scaffold"] = "random",
     split_column: Union[str, None] = None,
 ):
     """Separates dataframe row into training, testing and validation

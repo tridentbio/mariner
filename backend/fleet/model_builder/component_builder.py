@@ -8,9 +8,8 @@ import typing
 from abc import ABC, abstractmethod
 
 if typing.TYPE_CHECKING:
-    from fleet.dataset_schemas import DatasetConfig
+    from fleet.dataset_schemas import DatasetConfig, TorchDatasetConfig
     from fleet.model_builder.schemas import TorchModelSchema
-    from fleet.dataset_schemas import TorchDatasetConfig
 
 
 class AutoBuilder(ABC):
@@ -36,4 +35,3 @@ class AutoBuilder(ABC):
             config: ModelSchema instance
             deps: node names that are previous to this one
         """
-        pass
