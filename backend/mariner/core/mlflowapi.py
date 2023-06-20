@@ -1,7 +1,7 @@
 """
 Mlflow Service
 """
-from typing import Optional, Union, Any
+from typing import Any, Optional, Union
 
 import mlflow
 import mlflow.pyfunc
