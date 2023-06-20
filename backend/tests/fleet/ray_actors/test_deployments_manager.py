@@ -3,8 +3,8 @@ from typing import Dict
 import pytest
 import torch
 
-from mariner.entities.deployment import DeploymentStatus
 from fleet.ray_actors.deployments_manager import get_deployments_manager
+from mariner.entities.deployment import DeploymentStatus
 from mariner.schemas.deployment_schemas import Deployment
 
 

@@ -23,15 +23,11 @@ from mariner.entities import Model as ModelEntity
 from mariner.entities import User
 from mariner.entities.event import EventReadEntity
 from mariner.schemas.deployment_schemas import Deployment
-from mariner.schemas.experiment_schemas import (
-    Experiment,
-    BaseTrainingRequest,
-)
-from fleet.torch_.schemas import MonitoringConfig, EarlyStoppingConfig
+from mariner.schemas.experiment_schemas import BaseTrainingRequest, Experiment
 from mariner.schemas.model_schemas import Model
 from mariner.schemas.token import TokenPayload
-from mariner.stores.user_sql import user_store
 from mariner.stores.experiment_sql import experiment_store
+from mariner.stores.user_sql import user_store
 from mariner.tasks import get_exp_manager
 from tests.fixtures.dataset import (
     setup_create_dataset,
@@ -79,7 +75,9 @@ def normal_user_token_headers_payload(
 ) -> TokenPayload:
     """Get the payload from the token"""
     token = normal_user_token_headers["Authorization"].split(" ")[1]
-    payload = jwt.decode(token, settings.AUTHENTICATION_SECRET_KEY, algorithms=[security.ALGORITHM])
+    payload = jwt.decode(
+        token, settings.AUTHENTICATION_SECRET_KEY, algorithms=[security.ALGORITHM]
+    )
     return TokenPayload(**payload)
 
 
