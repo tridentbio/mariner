@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Sequence, Set, Union
 from fleet.model_builder.utils import unwrap_dollar
 
 if TYPE_CHECKING:
-    from fleet.dataset_schemas import ColumnConfig, TorchDatasetConfig, DatasetConfig
+    from fleet.dataset_schemas import ColumnConfig, DatasetConfig
     from fleet.model_builder.layers_schema import FeaturizersType, LayersType
 
 

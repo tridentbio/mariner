@@ -1,7 +1,6 @@
 """
 Tests fleet.utils.data submodule.
 """
-import math
 from pathlib import Path
 
 import pandas as pd
@@ -92,7 +91,17 @@ class TestMarinerTorchDataset:
         config = TorchModelSpec.from_yaml(config_path)
 
         df = pd.read_csv(dataset_path)
-        apply_split_indexes(df, split_target="60-20-20", split_type="random")
+        # if "step" not in df.columns:
+        #     apply_split_indexes(df, split_target="60-20-20", split_type="random")
+        assert "step" in df.columns, "failed to split dataset"
+        keys = {}
+        for c in df.columns:
+            if c not in keys:
+                keys[c] = 0
+            keys[c] += 1
+        for key, count in keys.items():
+            if count >= 2:
+                raise ValueError('Duplicate column name "{}"'.format(key))
 
         return MarinerTorchDataset(data=df, dataset_config=config.dataset)
 
@@ -106,8 +115,16 @@ class TestMarinerTorchDataset:
                 "multitarget_classification_model.yaml",
                 "dna_example.yml",
             ],
-            ["zinc_extra.csv", "iris.csv", "sarkisyan_full_seq_data.csv"],
-            [20, 20, 20],
+            [
+                "zinc_extra.csv",
+                "iris.csv",
+                "sarkisyan_full_seq_data.csv",
+            ],
+            [
+                20,
+                20,
+                20,
+            ],
         ):
             dataset = self.dataset_fixture(model=model, csv=csv)
             assert len(dataset) == expected_len
@@ -144,6 +161,7 @@ class TestMarinerTorchDataset:
         df = pd.DataFrame(
             {"a": list(map(float, range(100))), "b": list(map(float, range(100)))}
         )
+        apply_split_indexes(df, split_target="60-20-20")
         dataset_config = (
             DatasetConfigBuilder(name="Test")
             .with_features(a=data_types.NumericDataType())
@@ -153,7 +171,4 @@ class TestMarinerTorchDataset:
 
         dataset = MarinerTorchDataset(data=df, dataset_config=dataset_config)
         assert len(dataset) == 100
-
-        apply_split_indexes(df, split_target="60-20-20", split_type="random")
-
         assert len(dataset.get_subset_idx(TrainingStep.TRAIN.value)) == 60

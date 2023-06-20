@@ -81,7 +81,6 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
             if not isinstance(layer, dict):
                 layer = layer.dict()
             if layer["type"] not in layer_types:
-                print("Unknown type")
                 raise UnknownComponentType(
                     "A layer has unknown type",
                     component_name=layer["name"],

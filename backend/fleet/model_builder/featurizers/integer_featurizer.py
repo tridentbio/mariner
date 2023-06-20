@@ -1,6 +1,7 @@
 """
 Defines the integer featurizer
 """
+from collections.abc import Iterable
 from typing import Union
 
 import numpy as np
@@ -30,14 +31,17 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         return self.featurize(input_)
 
     def featurize(self, input_: Union[str, int, float]):
-        if isinstance(input_, float):
+        if not isinstance(input_, str) and isinstance(input_, Iterable):
+            return np.array([self.featurize(i) for i in input_], dtype=np.int64)
+        elif isinstance(input_, float):
             input_ = int(input_)
-        if str(input_) not in self.classes:
+        elif str(input_) not in self.classes:
             raise RuntimeError(
                 f"Element {input_} of type {input_.__class__} is not defined"
                 f" in the classes dictionary {self.classes}"
             )
-        return np.array([self.classes[str(input_)]], dtype=np.int64)
+        else:
+            return self.classes[str(input_)]
 
     def unfeaturize(self, input_: torch.Tensor):
         idx = int(input_.item())

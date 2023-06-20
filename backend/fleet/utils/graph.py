@@ -1,7 +1,7 @@
 """
 Utility functions to operate on graphs.
 """
-from typing import Any, Callable, Dict, Iterable, List, Protocol, Tuple, Union
+from typing import Any, Callable, Iterable, List, Tuple
 
 import networkx as nx
 
@@ -53,6 +53,8 @@ def make_graph_from_forward_args(nodes: Iterable[dict]) -> nx.DiGraph:
     """
 
     def get_edges_from_forward_args(node: dict) -> List[Edge]:
+        if "forwardArgs" not in node:
+            return []
         forward_args = node["forwardArgs"]
         if forward_args is None:
             return []
@@ -76,3 +78,15 @@ def make_graph_from_forward_args(nodes: Iterable[dict]) -> nx.DiGraph:
         return edges
 
     return make_graph(nodes, lambda node: node["name"], get_edges_from_forward_args)
+
+
+def get_leaf_nodes(graph: nx.DiGraph) -> List[str]:
+    """Gets the leaf nodes of a graph.
+
+    Args:
+        graph: The graph.
+
+    Returns:
+        A list with the leaf nodes.
+    """
+    return [node for node in graph.nodes if graph.out_degree(node) == 0]

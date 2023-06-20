@@ -87,6 +87,10 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
     featurizers: List[FeaturizersType] = []
     transforms: List[Any] = []  # TODO: add type
 
+    @property
+    def columns(self):
+        return self.target_columns + self.feature_columns
+
 
 AllowedLossesType = List[Dict[str, str]]
 

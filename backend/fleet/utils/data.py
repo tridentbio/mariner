@@ -5,8 +5,8 @@ from typing import (
     Any,
     Callable,
     Dict,
-    List,
     Iterable,
+    List,
     Literal,
     Protocol,
     Tuple,
@@ -21,9 +21,11 @@ import sklearn.base
 import torch
 import torch.nn
 from pydantic import BaseModel
+from sklearn.preprocessing import FunctionTransformer
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
 
+import fleet.exceptions
 from fleet import data_types
 from fleet.dataset_schemas import ColumnConfig, DatasetConfig
 from fleet.model_builder.constants import TrainingStep
@@ -40,7 +42,34 @@ from fleet.model_builder.featurizers.small_molecule_featurizer import (
 from fleet.model_builder.layers_schema import FeaturizersType
 from fleet.model_builder.splitters import apply_split_indexes
 from fleet.model_builder.utils import DataInstance, get_references_dict
-from fleet.utils.graph import make_graph_from_forward_args
+from fleet.utils.graph import get_leaf_nodes, make_graph_from_forward_args
+
+
+def make_graph_from_dataset_config(dataset_config: DatasetConfig) -> nx.DiGraph:
+    """Creates a graph from a dataset configuration.
+
+    Args:
+        dataset_config(DatasetConfig): The dataset configuration.
+
+    Returns:
+        The graph.
+    """
+    featurizers_dict = {
+        feat.name: feat.dict(by_alias=True) for feat in dataset_config.featurizers
+    }
+    transforms_dict = {
+        transform.name: transform.dict(by_alias=True)
+        for transform in dataset_config.transforms
+    }
+    preprocessing_steps = list(featurizers_dict.values()) + list(
+        transforms_dict.values()
+    )
+    graph = make_graph_from_forward_args(preprocessing_steps + [col.dict() for col in dataset_config.columns])  # type: ignore
+    for col in dataset_config.columns:
+        if graph.has_node(col.name):
+            graph.add_node(col.name)
+
+    return graph
 
 
 def dataset_topo_sort(
@@ -57,31 +86,20 @@ def dataset_topo_sort(
     Returns:
         (featurizers, transforms) tuple, the preprocessing step objects.
     """
-    featurizers_dict = {
-        feat.name: feat.dict(by_alias=True) for feat in dataset_config.featurizers
-    }
-    transforms_dict = {
-        transform.name: transform.dict(by_alias=True)
-        for transform in dataset_config.transforms
-    }
-
     featurizers_by_name = {feat.name: feat for feat in dataset_config.featurizers}
     transforms_by_name = {
         transform.name: transform for transform in dataset_config.transforms
     }
-
-    preprocessing_steps = list(featurizers_dict.values()) + list(
-        transforms_dict.values()
-    )
-    graph = make_graph_from_forward_args(preprocessing_steps)
-    topo_sort = nx.topological_sort(graph)
     featurizers, transforms = [], []
-
+    graph = make_graph_from_dataset_config(dataset_config)
+    topo_sort = nx.topological_sort(graph)
+    featurizers_names = [feat.name for feat in dataset_config.featurizers]
+    transformers_names = [transformer.name for transformer in dataset_config.transforms]
     # TODO: check that featurizers come before transforms
     for item in topo_sort:
-        if item in featurizers_dict:
+        if item in featurizers_names:
             featurizers.append(featurizers_by_name[item])
-        elif item in transforms_dict:
+        elif item in transformers_names:
             transforms.append(transforms_by_name[item])
 
     return featurizers, transforms
@@ -202,6 +220,212 @@ def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
         return np.array([data.loc[:, col_name].to_numpy() for col_name in references])
 
 
+class PreprocessingPipeline:
+    """
+    Preprocesses the dataset.
+
+    Args:
+        dataset_config: The object describing the columns and data_types of the dataset.
+        df: The :class:`pd.DataFrame` that holds the dataset data.
+    """
+
+    def __init__(
+        self, dataset_config: DatasetConfig, featurize_data_types: bool = True
+    ):
+        """
+        Creates the pipeline steps without executing them.
+
+        Args:
+            dataset_config: The object describing the pipeline.
+        """
+        self.featurize_data_types = featurize_data_types
+        self.dataset_config = dataset_config
+        self.featurizers = []
+        self.transforms = []
+        # Flags the output columns names in the final dataframe
+        # It's updated when applying the featurizers/transforms
+        graph = make_graph_from_dataset_config(dataset_config)
+        self.output_columns = get_leaf_nodes(graph)
+        self.featurizers_config = {
+            feat.name: feat for feat in dataset_config.featurizers
+        }
+        self.transforms_config = {
+            transform.name: transform for transform in dataset_config.transforms
+        }
+        self.featurizers = {
+            feat.name: self._prepare_transform(feat.create())
+            for feat in dataset_config.featurizers
+        }
+        self.transforms = {
+            transform.name: self._prepare_transform(transform.create())
+            for transform in dataset_config.transforms
+        }
+        self._fitted = False
+
+    _state_attrs = [
+        "featurizers",
+        "transforms",
+        "dataset_config",
+        "_fitted",
+        "output_columns",
+    ]
+
+    def get_state(self):
+        state = {}
+        for state_attr in self._state_attrs:
+            state[state_attr] = getattr(self, state_attr)
+        return state
+
+    @classmethod
+    def load_from_state(cls, state):
+        instance = cls(state["dataset_config"])
+        for state_attr in cls._state_attrs:
+            setattr(instance, state_attr, state[state_attr])
+        return instance
+
+    def _prepare_transform(self, func: Any):
+        if isinstance(func, sklearn.base.TransformerMixin):
+            return func
+        elif callable(func):
+            return FunctionTransformer(func)
+        else:
+            raise ValueError(
+                "func must be one of %r"
+                % (["sklearn.base.TransformerMixin", "Callable"])
+            )
+
+    def get_X_and_y(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        feature_columns = [col.name for col in self.dataset_config.feature_columns]
+        target_columns = [col.name for col in self.dataset_config.target_columns]
+        return df.loc[:, feature_columns], df.loc[:, target_columns]
+
+    def _prepare_X_and_y(
+        self,
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[None, pd.DataFrame, np.ndarray],
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        try:
+            if not isinstance(X, pd.DataFrame):
+                X = pd.DataFrame(
+                    X, columns=[col.name for col in self.dataset_config.feature_columns]
+                )
+
+            if not isinstance(y, pd.DataFrame):
+                y = pd.DataFrame(
+                    y, columns=[col.name for col in self.dataset_config.target_columns]
+                )
+            return X, y
+        except:
+            raise TypeError("X and y must be pandas.DataFrame or numpy.ndarray")
+
+    def _apply_default_featurizers(
+        self, data: pd.DataFrame, columns: list[ColumnConfig]
+    ):
+        for column in columns:
+            feat = get_default_data_type_featurizer(self.dataset_config, column)
+            if feat is not None:
+                feat = self._prepare_transform(feat)
+                data[column.name] = feat.transform(data[column.name])
+                # Don't need to update output_columns since data is overriden
+
+    def get_preprocess_steps(self):
+        feats, transforms = map(list, dataset_topo_sort(self.dataset_config))
+        result = []
+        for config in feats:
+            result.append((config, self.featurizers[config.name]))
+        for config in transforms:
+            result.append((config, self.transforms[config.name]))
+        return result
+
+    def fit(
+        self,
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[pd.DataFrame, np.ndarray, None] = None,
+    ):
+        """
+        Fits the featurizers and transforms to the data.
+        """
+        X, y = self._prepare_X_and_y(X, y)
+        if self.featurize_data_types:
+            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
+            self._apply_default_featurizers(y, self.dataset_config.target_columns)
+
+        data = pd.concat([X, y], axis=1)
+
+        for config, transformer in self.get_preprocess_steps():
+            args = get_args(data, config)
+            if config.type not in [
+                "molfeat.trans.fp.FPVecFilteredTransformer",
+                "fleet.model_builder.featurizers.MoleculeFeaturizer",
+            ]:
+                args = map(lambda x: x.reshape(-1, 1), args)
+            try:
+                transformer.fit(*args)
+            except Exception as exp:
+                raise fleet.exceptions.FitError("Failed to fit %r" % config) from exp
+
+        self._fitted = True
+
+    def fit_transform(
+        self,
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[pd.DataFrame, np.ndarray, None] = None,
+    ):
+        X, y = self._prepare_X_and_y(X, y)
+
+        if self.featurize_data_types:
+            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
+            self._apply_default_featurizers(y, self.dataset_config.target_columns)
+
+        data = pd.concat([X, y], axis=1)
+
+        for config, transformer in self.get_preprocess_steps():
+            args = get_args(data, config)
+            if config.type not in [
+                "molfeat.trans.fp.FPVecFilteredTransformer",
+                "fleet.model_builder.featurizers.MoleculeFeaturizer",
+            ]:
+                args = map(lambda x: x.reshape(-1, 1), args)
+            try:
+                data[config.name] = transformer.fit_transform(*args)
+            except Exception as exp:
+                raise fleet.exceptions.FitError("Failed to fit %r" % config) from exp
+
+        self._fitted = True
+
+        return data
+
+    def transform(
+        self,
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[pd.DataFrame, np.ndarray, None] = None,
+    ):
+        X, y = self._prepare_X_and_y(X, y)
+
+        if self.featurize_data_types:
+            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
+            self._apply_default_featurizers(y, self.dataset_config.target_columns)
+
+        data = pd.concat([X, y], axis=1)
+
+        for config, transformer in self.get_preprocess_steps():
+            args = get_args(data, config)
+            if config.type not in [
+                "molfeat.trans.fp.FPVecFilteredTransformer",
+                "fleet.model_builder.featurizers.MoleculeFeaturizer",
+            ]:
+                args = map(lambda x: x.reshape(-1, 1), args)
+            try:
+                transformed = transformer.transform(*args)
+                data[config.name] = transformed
+            except Exception as exp:
+                raise fleet.exceptions.FitError("Failed to fit %r" % config) from exp
+
+        self._fitted = True
+
+        return data
+
+
 def build_columns_numpy(
     dataset_config: DatasetConfig, df: pd.DataFrame, featurize_outputs=True
 ) -> pd.DataFrame:
@@ -269,11 +493,11 @@ def adapt_numpy_to_tensor(
 
     arr_type = _get_type(arr)
     if arr_type == "int":
-        tensor = torch.as_tensor(arr)
+        tensor = torch.as_tensor(arr).view((-1,))
         tensor = tensor.long()
         return tensor
     elif arr_type == "float":
-        tensor = torch.as_tensor(arr)
+        tensor = torch.as_tensor(arr).view((-1,))
         tensor = tensor.float()
         return tensor
 
@@ -302,8 +526,13 @@ class MarinerTorchDataset(Dataset):
             dataset_config: The object describing the columns and data_types of the dataset.
             model_config: The object describing the model architecture and hyperparameters.
         """
-        self.dataset_config = dataset_config
-        self.data = build_columns_numpy(self.dataset_config, data)
+        self.data = data
+        self.preprocessing_pipeline = PreprocessingPipeline(dataset_config)
+        step = self.data["step"]
+        self.data = self.preprocessing_pipeline.transform(
+            *self.preprocessing_pipeline.get_X_and_y(self.data)
+        )
+        self.data["step"] = step
 
     def get_subset_idx(self, step=None) -> list[int]:
         """
@@ -331,19 +560,14 @@ class MarinerTorchDataset(Dataset):
         Returns:
             The sample at the given index.
         """
-        item = DataInstance()
-        for col in self.dataset_config.feature_columns:
-            item[col.name] = adapt_numpy_to_tensor([self.data.loc[idx, col.name]])
-        for col in self.dataset_config.featurizers:
-            item[col.name] = adapt_numpy_to_tensor(self.data.loc[idx, col.name])
+        data = DataInstance()
 
-        for col in self.dataset_config.transforms:
-            item[col.name] = adapt_numpy_to_tensor(self.data.loc[idx, col.name])
+        output_columns = self.preprocessing_pipeline.output_columns
 
-        for target in self.dataset_config.target_columns:
-            item[target.name] = adapt_numpy_to_tensor([self.data.loc[idx, target.name]])
+        for column in self.data[output_columns]:
+            data[column] = adapt_numpy_to_tensor(self.data.loc[idx, column])
 
-        return item
+        return data
 
     def __len__(self):
         return len(self.data)

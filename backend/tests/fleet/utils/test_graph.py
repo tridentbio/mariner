@@ -2,7 +2,11 @@
 Tests fleet.utils.graph
 """
 
-from fleet.utils.graph import make_graph, make_graph_from_forward_args
+from fleet.utils.graph import (
+    get_leaf_nodes,
+    make_graph,
+    make_graph_from_forward_args,
+)
 
 
 def test_make_graph():
@@ -40,3 +44,16 @@ def test_make_graph_from_forward_args():
     assert graph["b"]["a"]["attr"] == "inputa"
     assert graph["c"]["b"]["attr"] == "inputb"
     assert graph["d"]["b"]["attr"] == "inputb"
+
+
+def test_get_leaf_nodes():
+    """Tests ``get_leaf_nodes``."""
+    nodes = [
+        {"name": "a", "forwardArgs": {"inputa": "$b.output"}},
+        {"name": "b", "forwardArgs": {"inputb": ["$c.a", "$d.b"]}},
+        {"name": "c", "forwardArgs": {"inputc": "$c"}},
+        {"name": "d", "forwardArgs": {"inputd": "$d"}},
+    ]
+    graph = make_graph_from_forward_args(nodes)
+    leaf_nodes = get_leaf_nodes(graph)
+    assert set(leaf_nodes) == {"a"}

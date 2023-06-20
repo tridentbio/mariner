@@ -10,6 +10,7 @@ import networkx as nx
 import torch
 import torch.nn
 
+import fleet.exceptions
 from fleet.metrics import Metrics
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.dataset import DataInstance
@@ -165,7 +166,35 @@ class CustomModel(pl.LightningModule):
                 continue  # is a target column output, evaluated separately
             layer = self.layer_configs[node_name]
             args = collect_args(input_, layer.forward_args.dict())
-            input_[layer.name] = CustomModel._call_model(self._model[node_name], args)
+            try:
+                input_[layer.name] = CustomModel._call_model(
+                    self._model[node_name], args
+                )
+            except Exception as exc:
+
+                def shape(k):
+                    if isinstance(k, list):
+                        return str([shape(v) for v in k])
+                    if hasattr(k, "shape"):
+                        return f"shape={k.shape}"
+                    elif hasattr(k, "__len__"):
+                        return f"len={len(k)}"
+                    else:
+                        return str(k)
+
+                if isinstance(args, dict):
+                    args_shapes = [(k, shape(v)) for k, v in args.items()]
+                else:
+                    args_shapes = [shape(v) for v in args]
+                raise fleet.exceptions.LayerForwardError(
+                    (
+                        "Failed to call a module on the batch:",
+                        f"node_name={node_name}",
+                        f"layer={layer}",
+                        # args shapes
+                        f"args-shapes={args_shapes}",
+                    )
+                ) from exc
 
         result = {}
         for target_column in self.dataset_config.target_columns:
@@ -185,7 +214,8 @@ class CustomModel(pl.LightningModule):
         assert self.optimizer.class_path.startswith(
             "torch.optim."
         ), "invalid start string for optimizer class_path"
-        return self.optimizer.create(self.parameters())
+        params = self.parameters()
+        return self.optimizer.create(params)
 
     def test_step(self, batch, _batch_idx):
         predictions = self(batch)
