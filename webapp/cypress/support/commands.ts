@@ -15,6 +15,7 @@ Cypress.Commands.add('notificationShouldContain', (text: string) => {
 });
 
 Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
+  cy.clearAllCookies();
   cy.visit('/login');
   cy.get('#username-input', { timeout }).type('admin@mariner.trident.bio');
   cy.get('#password-input').type('123456');
@@ -23,6 +24,7 @@ Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
 });
 
 Cypress.Commands.add('loginTest', (timeout: number = 15000) => {
+  cy.clearAllCookies();
   cy.visit('/login');
   cy.get('#username-input', { timeout }).type('test@example.com');
   cy.get('#password-input').type('123456');
