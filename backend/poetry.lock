@@ -1661,6 +1661,35 @@ six = ">=1.10.0"
 tabulate = ">=0.7.7"
 
 [[package]]
+name = "datamol"
+version = "0.11.0"
+description = "A python library to work with molecules. Built on top of RDKit."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "datamol-0.11.0-py3-none-any.whl", hash = "sha256:6753d8fb1d0450f3434b66a1388ad64976825fa8c3cc3ca60087e64457f7ba8f"},
+    {file = "datamol-0.11.0.tar.gz", hash = "sha256:f748d76ff0c8bc6963eb55a0c7ea280248b0ead6f5cad27cd742d83e32e8f2d2"},
+]
+
+[package.dependencies]
+fsspec = ">=2021.9"
+importlib-resources = "*"
+joblib = "*"
+loguru = "*"
+matplotlib = "*"
+numpy = "*"
+packaging = "*"
+pandas = "*"
+pillow = "*"
+platformdirs = "*"
+scikit-learn = "*"
+scipy = "*"
+selfies = "*"
+tqdm = "*"
+typing-extensions = "*"
+
+[[package]]
 name = "dateutils"
 version = "0.6.12"
 description = "Various utilities for working with date and datetime objects"
@@ -1707,7 +1736,7 @@ files = [
 name = "decorator"
 version = "5.1.1"
 description = "Decorators for Humans"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.5"
 files = [
@@ -2225,6 +2254,31 @@ ssh = ["paramiko"]
 tqdm = ["tqdm"]
 
 [[package]]
+name = "gcsfs"
+version = "2023.3.0"
+description = "Convenient Filesystem interface over GCS"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "gcsfs-2023.3.0-py2.py3-none-any.whl", hash = "sha256:f76e09c436ca7319d6f7647654c891d8618f341932a6a00c845eee8fa00c53e5"},
+    {file = "gcsfs-2023.3.0.tar.gz", hash = "sha256:28dc035b4de9f131ecc542ce402ad8f208093e5b733b8b8f58908a709eb54280"},
+]
+
+[package.dependencies]
+aiohttp = "<4.0.0a0 || >4.0.0a0,<4.0.0a1 || >4.0.0a1"
+decorator = ">4.1.2"
+fsspec = "2023.3.0"
+google-auth = ">=1.2"
+google-auth-oauthlib = "*"
+google-cloud-storage = "*"
+requests = "*"
+
+[package.extras]
+crc = ["crcmod"]
+gcsfuse = ["fusepy"]
+
+[[package]]
 name = "gevent"
 version = "22.10.2"
 description = "Coroutine-based network library"
@@ -2471,6 +2525,25 @@ enterprise-cert = ["cryptography (==36.0.2)", "pyopenssl (==22.0.0)"]
 pyopenssl = ["cryptography (>=38.0.3)", "pyopenssl (>=20.0.0)"]
 reauth = ["pyu2f (>=0.1.5)"]
 requests = ["requests (>=2.20.0,<3.0.0dev)"]
+
+[[package]]
+name = "google-auth-oauthlib"
+version = "1.0.0"
+description = "Google Authentication Library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "google-auth-oauthlib-1.0.0.tar.gz", hash = "sha256:e375064964820b47221a7e1b7ee1fd77051b6323c3f9e3e19785f78ab67ecfc5"},
+    {file = "google_auth_oauthlib-1.0.0-py2.py3-none-any.whl", hash = "sha256:95880ca704928c300f48194d1770cf5b1462835b6e49db61445a520f793fd5fb"},
+]
+
+[package.dependencies]
+google-auth = ">=2.15.0"
+requests-oauthlib = ">=0.7.0"
+
+[package.extras]
+tool = ["click (>=6.0.0)"]
 
 [[package]]
 name = "google-cloud-core"
@@ -2818,6 +2891,40 @@ files = [
     {file = "h11-0.14.0-py3-none-any.whl", hash = "sha256:e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761"},
     {file = "h11-0.14.0.tar.gz", hash = "sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d"},
 ]
+
+[[package]]
+name = "h5py"
+version = "3.9.0"
+description = "Read and write HDF5 files from Python"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "h5py-3.9.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:eb7bdd5e601dd1739698af383be03f3dad0465fe67184ebd5afca770f50df9d6"},
+    {file = "h5py-3.9.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:78e44686334cbbf2dd21d9df15823bc38663f27a3061f6a032c68a3e30c47bf7"},
+    {file = "h5py-3.9.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f68b41efd110ce9af1cbe6fa8af9f4dcbadace6db972d30828b911949e28fadd"},
+    {file = "h5py-3.9.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:12aa556d540f11a2cae53ea7cfb94017353bd271fb3962e1296b342f6550d1b8"},
+    {file = "h5py-3.9.0-cp310-cp310-win_amd64.whl", hash = "sha256:d97409e17915798029e297a84124705c8080da901307ea58f29234e09b073ddc"},
+    {file = "h5py-3.9.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:551e358db05a874a0f827b22e95b30092f2303edc4b91bb62ad2f10e0236e1a0"},
+    {file = "h5py-3.9.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:6822a814b9d8b8363ff102f76ea8d026f0ca25850bb579d85376029ee3e73b93"},
+    {file = "h5py-3.9.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:54f01202cdea754ab4227dd27014bdbd561a4bbe4b631424fd812f7c2ce9c6ac"},
+    {file = "h5py-3.9.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:64acceaf6aff92af091a4b83f6dee3cf8d3061f924a6bb3a33eb6c4658a8348b"},
+    {file = "h5py-3.9.0-cp311-cp311-win_amd64.whl", hash = "sha256:804c7fb42a34c8ab3a3001901c977a5c24d2e9c586a0f3e7c0a389130b4276fc"},
+    {file = "h5py-3.9.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:8d9492391ff5c3c80ec30ae2fe82a3f0efd1e750833739c25b0d090e3be1b095"},
+    {file = "h5py-3.9.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:9da9e7e63376c32704e37ad4cea2dceae6964cee0d8515185b3ab9cbd6b947bc"},
+    {file = "h5py-3.9.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a4e20897c88759cbcbd38fb45b507adc91af3e0f67722aa302d71f02dd44d286"},
+    {file = "h5py-3.9.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dbf5225543ca35ce9f61c950b73899a82be7ba60d58340e76d0bd42bf659235a"},
+    {file = "h5py-3.9.0-cp38-cp38-win_amd64.whl", hash = "sha256:36408f8c62f50007d14e000f9f3acf77e103b9e932c114cbe52a3089e50ebf94"},
+    {file = "h5py-3.9.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:23e74b878bbe1653ab34ca49b83cac85529cd0b36b9d625516c5830cc5ca2eac"},
+    {file = "h5py-3.9.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:3f457089c5d524b7998e3649bc63240679b8fb0a3859ea53bbb06841f3d755f1"},
+    {file = "h5py-3.9.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a6284061f3214335e1eec883a6ee497dbe7a79f19e6a57fed2dd1f03acd5a8cb"},
+    {file = "h5py-3.9.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:95f7a745efd0d56076999b52e8da5fad5d30823bac98b59c68ae75588d09991a"},
+    {file = "h5py-3.9.0-cp39-cp39-win_amd64.whl", hash = "sha256:79bbca34696c6f9eeeb36a91776070c49a060b2879828e2c8fa6c58b8ed10dd1"},
+    {file = "h5py-3.9.0.tar.gz", hash = "sha256:e604db6521c1e367c6bd7fad239c847f53cc46646f2d2651372d05ae5e95f817"},
+]
+
+[package.dependencies]
+numpy = ">=1.17.3"
 
 [[package]]
 name = "httptools"
@@ -3906,6 +4013,25 @@ files = [
 ]
 
 [[package]]
+name = "loguru"
+version = "0.7.0"
+description = "Python logging made (stupidly) simple"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "loguru-0.7.0-py3-none-any.whl", hash = "sha256:b93aa30099fa6860d4727f1b81f8718e965bb96253fa190fab2077aaad6d15d3"},
+    {file = "loguru-0.7.0.tar.gz", hash = "sha256:1612053ced6ae84d7959dd7d5e431a0532642237ec21f7fd83ac73fe539e03e1"},
+]
+
+[package.dependencies]
+colorama = {version = ">=0.3.4", markers = "sys_platform == \"win32\""}
+win32-setctime = {version = ">=1.0.0", markers = "sys_platform == \"win32\""}
+
+[package.extras]
+dev = ["Sphinx (==5.3.0)", "colorama (==0.4.5)", "colorama (==0.4.6)", "freezegun (==1.1.0)", "freezegun (==1.2.2)", "mypy (==v0.910)", "mypy (==v0.971)", "mypy (==v0.990)", "pre-commit (==3.2.1)", "pytest (==6.1.2)", "pytest (==7.2.1)", "pytest-cov (==2.12.1)", "pytest-cov (==4.0.0)", "pytest-mypy-plugins (==1.10.1)", "pytest-mypy-plugins (==1.9.3)", "sphinx-autobuild (==2021.3.14)", "sphinx-rtd-theme (==1.2.0)", "tox (==3.27.1)", "tox (==4.4.6)"]
+
+[[package]]
 name = "lxml"
 version = "4.9.2"
 description = "Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API."
@@ -4354,6 +4480,69 @@ files = [
     {file = "mockito-1.4.0-py3-none-any.whl", hash = "sha256:1719c6bec3523f9b465c86d247bb76027f53ab10f76b2a126dde409d0492fe3e"},
     {file = "mockito-1.4.0.tar.gz", hash = "sha256:409ab604c9ebe1bb7dc18ec6b0ed98a8ad5127b08273f5804b22f4d1b51e5222"},
 ]
+
+[[package]]
+name = "molfeat"
+version = "0.8.9"
+description = "molfeat - the hub for all your molecular featurizers"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "molfeat-0.8.9-py3-none-any.whl", hash = "sha256:fa1d64e1826d492bf5e695848043a29be6376a92343f33e7bb2c5c7655ee6a82"},
+    {file = "molfeat-0.8.9.tar.gz", hash = "sha256:4d8bc42a720abe8386532b266f90b2216e82aa0e2d4dae0ec16db326591ce7ba"},
+]
+
+[package.dependencies]
+datamol = ">=0.8.0"
+filelock = "*"
+fsspec = ">=2021.9"
+gcsfs = ">=2021.9"
+h5py = "*"
+joblib = "*"
+loguru = "*"
+matplotlib = "*"
+mordred = "*"
+numpy = "*"
+packaging = "*"
+pandas = "*"
+platformdirs = "*"
+pmapper = "*"
+pyarrow = "*"
+pydantic = "*"
+pyyaml = "*"
+s3fs = ">=2021.9"
+scikit-learn = "*"
+scipy = "*"
+torch = "*"
+tqdm = "*"
+
+[package.extras]
+all = ["dgl", "dgllife", "fcd-torch", "graphormer-pretrained", "ipywidgets", "nglview", "tokenizers (<0.13.2)", "transformers"]
+dgl = ["dgl", "dgllife"]
+fcd = ["fcd-torch"]
+graphormer = ["graphormer-pretrained"]
+transformer = ["sentencepiece", "tokenizers (<0.13.2)", "transformers"]
+viz = ["ipywidgets", "nglview"]
+
+[[package]]
+name = "mordred"
+version = "1.2.0"
+description = "molecular descriptor calculator"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mordred-1.2.0.tar.gz", hash = "sha256:1115f9f3a3dde290dd68d51a5070fce43a62aab96b980cffc9d72b74a59e1c5a"},
+]
+
+[package.dependencies]
+networkx = ">=2.0.0,<3.0.0"
+numpy = ">=1.0.0,<2.0.0"
+six = ">=1.0.0,<2.0.0"
+
+[package.extras]
+full = ["pandas", "tqdm"]
 
 [[package]]
 name = "mpmath"
@@ -5611,6 +5800,21 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
+
+[[package]]
+name = "pmapper"
+version = "1.0.3"
+description = "pmapper: 3D pharmacophore hashes and fingerprints"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pmapper-1.0.3-py3-none-any.whl", hash = "sha256:630e04af3d549aae4c0aa2a14a7d7c49c535d402971c06dc848c4eb8bc55c3a5"},
+    {file = "pmapper-1.0.3.tar.gz", hash = "sha256:ad1760af28b7734d7cd98241947311c18c040820b63b6793f6c471b3e214bbe7"},
+]
+
+[package.extras]
+rdkit = ["rdkit (>=2017.09)"]
 
 [[package]]
 name = "portalocker"
@@ -7167,6 +7371,18 @@ cryptography = ">=2.0"
 jeepney = ">=0.6"
 
 [[package]]
+name = "selfies"
+version = "2.1.1"
+description = "SELFIES (SELF-referencIng Embedded Strings) is a general-purpose, sequence-based, robust representation of semantically constrained graphs."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "selfies-2.1.1-py3-none-any.whl", hash = "sha256:5723d53cd75e8229ff4ecef5a7872ce5151ad2ef83a0898b529ee5666a91621b"},
+    {file = "selfies-2.1.1.tar.gz", hash = "sha256:d8066b47e746a6ca5111143e5365ffebbb56b0b244328a61dd4e344d0125f84b"},
+]
+
+[[package]]
 name = "send2trash"
 version = "1.8.0"
 description = "Send file to trash natively under Mac OS X, Windows and Linux."
@@ -8413,6 +8629,21 @@ files = [
 test = ["pytest (>=6.0.0)"]
 
 [[package]]
+name = "win32-setctime"
+version = "1.1.0"
+description = "A small Python utility to set file creation time on Windows"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "win32_setctime-1.1.0-py3-none-any.whl", hash = "sha256:231db239e959c2fe7eb1d7dc129f11172354f98361c4fa2d6d2d7e278baa8aad"},
+    {file = "win32_setctime-1.1.0.tar.gz", hash = "sha256:15cf5750465118d6929ae4de4eb46e8edae9a5634350c01ba582df868e932cb2"},
+]
+
+[package.extras]
+dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
+
+[[package]]
 name = "wonderwords"
 version = "2.2.0"
 description = "A python package for random words and sentences in the english language"
@@ -8782,4 +9013,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "8d87723da0ece506ea5e88804a56c9cb435c10e2a02495770b891865a6db9a0a"
+content-hash = "6d11d7405f4130af9ad1b5d6f3100d0241425e23f4af4ed07626b7d12aa86987"

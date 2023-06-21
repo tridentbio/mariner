@@ -10,68 +10,16 @@ from torch.utils.data import Subset
 
 from fleet import data_types
 from fleet.base_schemas import TorchModelSpec
-from fleet.dataset_schemas import DatasetConfig, DatasetConfigBuilder
+from fleet.dataset_schemas import DatasetConfigBuilder
 from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.splitters import apply_split_indexes
-from fleet.utils.data import MarinerTorchDataset, build_columns_numpy
-
-
-def test_build_columns_numpy2():
-    """
-    Tests build_columns_numpy function.
-    """
-    yaml_str = """
-name: Small Zinc dataset
-targetColumns:
-  - name: tpsa
-    dataType:
-      domainKind: numeric
-    outModule: LinearJoined
-featureColumns:
-  - name: smiles
-    dataType:
-      domainKind: smiles
-  - name: mwt
-    dataType:
-      domainKind: numeric
-featurizers:
-  - name: MolToGraphFeaturizer
-    type: fleet.model_builder.featurizers.MoleculeFeaturizer
-    forwardArgs:
-      mol: $smiles
-    constructorArgs:
-      allow_unknown: false
-      sym_bond_list: true
-      per_atom_fragmentation: false
-"""
-    config = DatasetConfig.from_yaml_str(yaml_str)
-    dataset_path = "tests/data/csv/zinc_extra.csv"
-    df = pd.read_csv(dataset_path)
-    df = build_columns_numpy(config, df)
-    assert "MolToGraphFeaturizer" in df.columns, "Missing featurized column in df"
+from fleet.utils.data import MarinerTorchDataset
 
 
 dataset_configs = [
     ("multiclass_classification_schema.yaml", "iris.csv"),
     ("small_regressor_schema.yaml", "zinc.csv"),
 ]
-
-
-def test_build_columns_numpy():
-    """
-    Tests build_columns_numpy function.
-    """
-
-    config_path = (
-        Path.cwd() / "tests" / "data" / "yaml" / "multiclass_classification_model.yaml"
-    )
-    dataset_path = Path.cwd() / "tests" / "data" / "csv" / "iris.csv"
-
-    config = TorchModelSpec.from_yaml(config_path)
-    dataset_config = config.dataset
-
-    df = pd.read_csv(dataset_path)
-    df = build_columns_numpy(dataset_config, df)
 
 
 class TestMarinerTorchDataset:

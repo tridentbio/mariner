@@ -1,6 +1,6 @@
 """
 The fleet.models module provides a high-level interface for working with various
-machine learning algorithms, including those from popular libraries like torch 
+machine learning algorithms from popular libraries like torch 
 and scikit-learn. These algorithms are designed to tackle a range regression and
 classification problems on chemical and life science dataset.
 """
@@ -124,24 +124,22 @@ def fit(
             params=train_config,
             datamodule_args=datamodule_args if datamodule_args else {},
         )
+        mlflow_model_version = functions.log_models(
+            mlflow_model_name=mlflow_model_name,
+            mlflow_experiment_id=mlflow_experiment_id,
+        )
     elif isinstance(spec, SklearnModelSpec):
         functions = SciKitFunctions(spec, dataset)
         with mlflow.start_run(nested=True, experiment_id=mlflow_experiment_id) as run:
             functions.train()
-            functions.log_model(
+            mlflow_model_version = functions.log_models(
                 model_name=mlflow_model_name,
                 run_id=run.info.run_id,
             )
             functions.val()
             functions.test()
-
-    if not functions:
+    else:
         raise ValueError("Can't find functions for spec")
-
-    mlflow_model_version = functions.log_models(
-        mlflow_model_name=mlflow_model_name,
-        mlflow_experiment_id=mlflow_experiment_id,
-    )
 
     return Result(
         mlflow_experiment_id=mlflow_experiment_id,

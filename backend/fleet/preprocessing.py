@@ -162,7 +162,7 @@ class StandardScalerConfig(CreateFromType, CamelCaseModel):
 
 TransformerType = NewType(
     "TransformerType",
-    Annotated[
+    Annotated[  # type: ignore
         Union[
             StandardScalerConfig,
             LabelEncoderConfig,
