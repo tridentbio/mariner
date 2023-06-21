@@ -404,24 +404,13 @@ class PreprocessingPipeline:
         y: Union[pd.DataFrame, np.ndarray, None] = None,
     ):
 
-        print("X:")
-        print(repr(X))
-        print("y:")
-        print(repr(y))
         X, y = self._prepare_X_and_y(X, y)
 
         if self.featurize_data_types:
             self._apply_default_featurizers(X, self.dataset_config.feature_columns)
             self._apply_default_featurizers(y, self.dataset_config.target_columns)
 
-        print("X:")
-        print(repr(X))
-        print("y:")
-        print(repr(y))
-
         data = pd.concat([X, y], axis=1)
-
-        print(repr(data))
 
         for config, transformer in self.get_preprocess_steps():
             args = get_args(data, config)
@@ -448,6 +437,8 @@ def build_columns_numpy(
 
     Uses ``forward_args`` of botch featurizers and transforms defined in ``dataset_config``
     to iterate topologically over the preprocessing steps.
+
+    :warning: This function has been deprecated.
 
     Args:
         dataset_config: The object describing the columns and data_types of the dataset.

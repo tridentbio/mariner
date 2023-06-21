@@ -3,7 +3,7 @@ Tests for fleet.
 """
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 import mlflow
 import pandas as pd
@@ -11,7 +11,11 @@ import pytest
 from mlflow.tracking import MlflowClient
 
 from fleet.base_schemas import FleetModelSpec, TorchModelSpec
-from fleet.dataset_schemas import TargetTorchColumnConfig, is_regression
+from fleet.dataset_schemas import (
+    TargetTorchColumnConfig,
+    is_regression,
+    is_regression_column,
+)
 from fleet.model_builder import optimizers
 from fleet.model_builder.splitters import apply_split_indexes
 from fleet.model_functions import fit
@@ -39,7 +43,9 @@ def assert_mlflow_metric(client: MlflowClient, run_id: str, key: str):
     assert len(val_metric) > 0, f"failed to save metric {key} failed"
 
 
-def assert_mlflow_data(spec: FleetModelSpec, mlflow_experiment_id: str):
+def assert_mlflow_data(
+    spec: FleetModelSpec, mlflow_experiment_id: str, framework="torch"
+):
     """
     Checks if metrics can be found in expected mlflow location
     and models are correctly upload to s3
@@ -52,26 +58,42 @@ def assert_mlflow_data(spec: FleetModelSpec, mlflow_experiment_id: str):
     run_artifact_prefix = f"{mlflow_experiment_id}/{run.info.run_id}"
     objs = list_s3_objects(Bucket.Datasets, run_artifact_prefix)
 
-    expected_artifacts = [
-        f"{run_artifact_prefix}/artifacts/last/data/model.pth",
-        f"{run_artifact_prefix}/artifacts/best/data/model.pth",
-    ]
+    if spec.framework == "torch":
 
-    object_keys = [obj for obj in objs["Contents"] if obj["Key"] in expected_artifacts]
-    assert len(object_keys) == 2, "failed to trained model artifacts from s3"
-    assert isinstance(
-        spec, TorchModelSpec
-    ), "this function is only for torch model specs"
+        expected_artifacts = [
+            f"{run_artifact_prefix}/artifacts/last/data/model.pth",
+            f"{run_artifact_prefix}/artifacts/best/data/model.pth",
+        ]
+
+        object_keys = [
+            obj for obj in objs["Contents"] if obj["Key"] in expected_artifacts
+        ]
+        assert len(object_keys) == len(
+            expected_artifacts
+        ), "failed to find trained model artifacts from s3"
+
+    elif spec.framework == "sklearn":
+        expected_artifacts = [f"{run_artifact_prefix}/artifacts/model/model.pkl"]
+        object_keys = [
+            obj for obj in objs["Contents"] if obj["Key"] in expected_artifacts
+        ]
+        assert len(object_keys) == len(
+            expected_artifacts
+        ), "failed to trained model from s3"
+
+    # TODO: check pipeline transform persistence
     for target_column in spec.dataset.target_columns:
-        loss_history = client.get_metric_history(
-            run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
-        )
-        assert len(loss_history) > 0
+        if spec.framework == "torch":
+            loss_history = client.get_metric_history(
+                run_id=run.info.run_id, key=f"train/loss/{target_column.name}"
+            )
+            assert len(loss_history) > 0
+
         assert_mlflow_metric(
             client=client,
             run_id=run.info.run_id,
             key=f"val/mse/{target_column.name}"
-            if is_regression(target_column)
+            if is_regression_column(spec.dataset, target_column.name)
             else f"val/precision/{target_column.name}",
         )
 
@@ -88,10 +110,7 @@ specs = [
     for model_file, dataset_file in [
         ("sklearn_random_forest_regressor_sampl.yaml", "SAMPL.csv"),
         ("sklearn_knn_regressor_sampl.yaml", "SAMPL.csv"),
-        (
-            "small_regressor_schema.yaml",
-            "zinc.csv",
-        ),
+        ("small_regressor_schema.yaml", "zinc.csv"),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),
         ("binary_classification_model.yaml", "iris.csv"),
@@ -145,7 +164,8 @@ def test_train(case: TestCase):
                 datamodule_args=case.datamodule_args,
             )
             assert_mlflow_data(
-                spec=case.model_spec, mlflow_experiment_id=result.mlflow_experiment_id
+                spec=case.model_spec,
+                mlflow_experiment_id=result.mlflow_experiment_id,
             )
         else:
             with pytest.raises(case.should_fail):
