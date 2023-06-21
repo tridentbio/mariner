@@ -64,7 +64,7 @@ const OrganizationStrategy: React.FC<OrganizationStrategyProps> = () => {
               }}
             >
               <TextField
-                id="share-with-organization-domain"
+                data-testid="share-with-organization-domain"
                 ref={inputTextRef}
                 sx={{ width: '100%' }}
                 label="Organization Email Domain"

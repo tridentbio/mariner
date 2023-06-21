@@ -53,7 +53,7 @@ const fillForm = (
 
   if (deploymentFormData.shareWithTeam?.length) {
     deploymentFormData.shareWithTeam.forEach((team) => {
-      cy.get('#share-with-organization-domain').type(team);
+      cy.get('[data-testid="share-with-organization-domain"]').type(team);
       cy.get('button').contains('Add').click();
     });
   }
