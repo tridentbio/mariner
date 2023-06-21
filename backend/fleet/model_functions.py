@@ -81,7 +81,6 @@ def fit(
     try:
         mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     except Exception as exp:
-        LOG.error("%r", exp)
         raise RuntimeError("Failed to create mlflow experiment") from exp
 
     if dataset is None and dataset_uri is None:
@@ -127,7 +126,7 @@ def fit(
         )
     elif isinstance(spec, SklearnModelSpec):
         functions = SciKitFunctions(spec, dataset)
-        with mlflow.start_run(nested=True) as run:
+        with mlflow.start_run(nested=True, experiment_id=mlflow_experiment_id) as run:
             functions.train()
             functions.log_model(
                 model_name=mlflow_model_name,
