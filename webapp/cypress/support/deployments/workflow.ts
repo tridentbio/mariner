@@ -12,22 +12,11 @@ const waitUntilDeploymentStatus = (
   deploymentName: string,
   waitingStatus: Status,
   timeout = 15000
-): Cypress.Chainable<boolean> =>
-  // Recursively check if the deployment status is equal to the given status
-  getDeploymentStatus(deploymentName).then((status) => {
-    if (status === waitingStatus) return cy.wrap(true);
-    else if (timeout <= 0) return cy.wrap(false);
-    else
-      return cy
-        .wait(1000)
-        .then(() =>
-          waitUntilDeploymentStatus(
-            deploymentName,
-            waitingStatus,
-            timeout - 1000
-          )
-        );
-  });
+) =>
+  cy
+    .contains('td', deploymentName)
+    .closest('tr')
+    .contains('td', waitingStatus, { timeout });
 
 export const startDeployment = (deploymentName: string) => {
   getDeploymentStatus(deploymentName).then((s) => {
@@ -36,9 +25,7 @@ export const startDeployment = (deploymentName: string) => {
 
   cy.runAction(deploymentName, 1);
 
-  waitUntilDeploymentStatus(deploymentName, 'active').then((isSuccess) => {
-    assert.isTrue(isSuccess, 'Deployment is not active');
-  });
+  waitUntilDeploymentStatus(deploymentName, 'active');
 };
 
 export const stopDeployment = (deploymentName: string) => {
@@ -48,9 +35,7 @@ export const stopDeployment = (deploymentName: string) => {
 
   cy.runAction(deploymentName, 1);
 
-  waitUntilDeploymentStatus(deploymentName, 'idle').then((isSuccess) => {
-    assert.isTrue(isSuccess, 'Deployment is not stopped');
-  });
+  waitUntilDeploymentStatus(deploymentName, 'idle');
 };
 
 export const handleStatus = (
@@ -62,14 +47,10 @@ export const handleStatus = (
 
     if (running && status === 'idle') {
       cy.runAction(deploymentName, 1);
-      waitUntilDeploymentStatus(deploymentName, 'idle').then((isSuccess) => {
-        assert.isTrue(isSuccess, 'Deployment is not stopped');
-      });
+      waitUntilDeploymentStatus(deploymentName, 'idle');
     } else if (!running && status === 'active') {
       cy.runAction(deploymentName, 1);
-      waitUntilDeploymentStatus(deploymentName, 'active').then((isSuccess) => {
-        assert.isTrue(isSuccess, 'Deployment is not active');
-      });
+      waitUntilDeploymentStatus(deploymentName, 'active');
     }
   });
 
