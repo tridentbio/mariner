@@ -4,8 +4,6 @@ import mlflow
 import numpy as np
 import pandas as pd
 import sklearn.base
-from mlflow.entities.model_registry.model_version import ModelVersion
-from pydantic import BaseModel
 
 import fleet.mlflow
 from fleet.base_schemas import BaseModelFunctions
@@ -43,33 +41,43 @@ class SciKitFunctions(BaseModelFunctions):
         self.dataset = dataset
         self.metrics = Metrics(model_type="regression", return_type="float")
         self.model = model
+        assert len(spec.dataset.target_columns) == 1, (
+            "sklearn models only support one target column, "
+            f"but got {len(spec.dataset.target_columns)}"
+        )
         self.preprocessing_pipeline = data.PreprocessingPipeline(
             dataset_config=spec.dataset
         )
-        step = dataset["step"]
-        self.dataset = self.preprocessing_pipeline.transform(dataset)
+        if not model:  # being trained for the first time
+            self._prepare_dataset(fit=True)
+        else:
+            self._prepare_dataset()
+
+    def _prepare_dataset(self, fit=False):
+        step = self.dataset["step"]
+        X, y = self.preprocessing_pipeline.get_X_and_y(self.dataset)
+        if fit:
+            self.dataset = self.preprocessing_pipeline.fit_transform(X, y)
+        else:
+            self.dataset = self.preprocessing_pipeline.transform(X, y)
         self.dataset = self.dataset[self.preprocessing_pipeline.output_columns]
         self.dataset["step"] = step
 
     def _prepare_X_and_y(
         self,
-        dataset: Union[None, pd.DataFrame] = None,
         filter_step: Union[None, int] = None,
         targets=True,
     ):
         model_config = self.spec.spec
-        dataset = dataset if dataset is not None else self.dataset
 
-        assert dataset is not None, "dataset must not be None"
+        assert self.dataset is not None, "dataset must not be None"
         if filter_step is not None:
-            dataset = dataset[dataset["step"] == filter_step]
+            dataset = self.dataset[self.dataset["step"] == filter_step]
 
         references = get_references_dict(model_config.model.fit_args)
-        args = {key: dataset[ref][:] for key, ref in references.items()}
-
+        args = {key: dataset.loc[:, ref] for key, ref in references.items()}
         assert "X" in args, "sklearn models take an X argument"
         X = np.stack(args["X"].to_numpy())
-
         if targets:
             assert "y" in args, "sklearn models take an Y argument"
             y = args["y"].to_numpy()
@@ -83,14 +91,15 @@ class SciKitFunctions(BaseModelFunctions):
         mlflow.
         """
         model_config = self.spec.spec
-        dataset_config = self.spec.dataset
         self.model = model_config.model.create()
         if hasattr(model_config.model, "constructor_args"):
             mlflow.log_params(model_config.model.constructor_args.dict())
         X, y = self._prepare_X_and_y(filter_step=1)
         self.model.fit(X, y)
         y_pred = self.model.predict(X)
-        metrics_dict = self.metrics.get_training_metrics(y_pred, y)
+        metrics_dict = self.metrics.get_training_metrics(
+            y_pred, y, sufix=self.spec.dataset.target_columns[0].name
+        )
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
 
@@ -101,8 +110,10 @@ class SciKitFunctions(BaseModelFunctions):
         X, y = self._prepare_X_and_y(filter_step=2)
         if self.model is None:
             raise ValueError("sklearn model not trained")
-        y_pred = self.model.predict(X)
-        metrics_dict = self.metrics.get_validation_metrics(y_pred, y)
+        y_pred = self.model.predict(X)  # type: ignore
+        metrics_dict = self.metrics.get_validation_metrics(
+            y_pred, y, sufix=self.spec.dataset.target_columns[0].name
+        )
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
 
@@ -113,8 +124,10 @@ class SciKitFunctions(BaseModelFunctions):
         X, y = self._prepare_X_and_y(filter_step=3)
         if self.model is None:
             raise ValueError("sklearn model not trained")
-        y_pred = self.model.predict(X)
-        metrics_dict = self.metrics.get_test_metrics(y_pred, y)
+        y_pred = self.model.predict(X)  # type: ignore
+        metrics_dict = self.metrics.get_test_metrics(
+            y_pred, y, sufix=self.spec.dataset.target_columns[0].name
+        )
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
 
