@@ -32,19 +32,19 @@ describe('Deployments Workflow.', () => {
     cy.loginSuper();
   });
 
-  it('Runs deployment succesfully', () => {
+  it('Runs deployment succesfully.', () => {
     cy.goToDeploymentWithinModel(modelName!);
     cy.handleStatus(deploymentName!, 'idle');
     cy.startDeployment(deploymentName!);
   });
 
-  it('Stops deployment succesfully', () => {
+  it('Stops deployment succesfully.', () => {
     cy.goToDeploymentWithinModel(modelName!);
     cy.handleStatus(deploymentName!, 'active');
     cy.stopDeployment(deploymentName!);
   });
 
-  it('Make prediction on stopped deployment with error', () => {
+  it('Make prediction on stopped deployment with error.', () => {
     cy.goToDeploymentWithinModel(modelName!);
     cy.handleStatus(deploymentName!, 'idle');
     cy.openDeploymentInCurrentTable(deploymentName!);
@@ -52,14 +52,14 @@ describe('Deployments Workflow.', () => {
     cy.notificationShouldContain('Deployment instance not running.');
   });
 
-  it('Make prediction on active deployment succesfully', () => {
+  it('Make prediction on active deployment succesfully.', () => {
     cy.goToDeploymentWithinModel(modelName!);
     cy.handleStatus(deploymentName!, 'active');
     cy.openDeploymentInCurrentTable(deploymentName!);
     cy.makePrediction(true);
   });
 
-  it('Make prediction until reach rate limit', () => {
+  it('Make prediction until reach rate limit.', () => {
     cy.goToDeploymentWithinModel(modelName!);
     cy.handleStatus(deploymentName!, 'active');
     cy.openDeploymentInCurrentTable(deploymentName!);

@@ -18,13 +18,13 @@ describe('Deployments Form.', () => {
     cy.deleteDeployment(modelName!, deploymentName!);
   });
 
-  it('Deploys model succesfully', () => {
+  it('Deploys model succesfully.', () => {
     cy.createDeployment(modelName!, modelVersionName!).then((name) => {
       deploymentName = name;
     });
   });
 
-  it('Share model with test user', () => {
+  it('Share model with test user.', () => {
     cy.loginSuper();
     cy.updateDeployment(modelName!, deploymentName!, {
       shareWithUser: [TEST_USER],
@@ -34,7 +34,7 @@ describe('Deployments Form.', () => {
     cy.goToSpecificDeployment(deploymentName!, 'Shared');
   });
 
-  it('Access model publically', () => {
+  it('Access model publically.', () => {
     cy.loginSuper();
     cy.updateDeployment(modelName!, deploymentName!, {
       shareStrategy: 'Public',
