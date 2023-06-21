@@ -85,10 +85,13 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
     target_columns: List[ColumnConfig]
     feature_columns: List[ColumnConfig]
     featurizers: List[FeaturizersType] = []
-    transforms: List[TransformerType] = []  # TODO: add type
+    transforms: List[TransformerType] = []
 
     @property
     def columns(self):
+        """
+        Returns a list of all columns in the dataset.
+        """
         return self.target_columns + self.feature_columns
 
     def get_column(self, col_name: str) -> ColumnConfig:
@@ -156,7 +159,7 @@ def is_binary(target_column: "TargetTorchColumnConfig"):
     """
     Returns ``True`` if the ``target_column`` is categorical and has only 2 classes
     """
-    return is_classifier(target_column) and len(target_column.data_type.classes) == 2
+    return is_classifier(target_column) and len(target_column.data_type.classes) == 2  # type: ignore
 
 
 def infer_column_type(column: "TargetTorchColumnConfig"):
@@ -166,7 +169,7 @@ def infer_column_type(column: "TargetTorchColumnConfig"):
     if is_regression(column):
         return "regression"
     if is_classifier(column):
-        return "multiclass" if len(column.data_type.classes) > 2 else "binary"
+        return "multiclass" if len(column.data_type.classes) > 2 else "binary"  # type: ignore
     raise ValueError(f"Unknown column type for {column.name}")
 
 
@@ -407,8 +410,24 @@ class DatasetConfigBuilder:
 def is_regression_column(
     dataset_config: Union[DatasetConfig, TorchDatasetConfig], column_name: str
 ) -> bool:
+    """Checks if a model trained on ``dataset_config`` predicting values
+    for ``column_name`` should be a regressor.
+
+    This function is used to determine if a column is a regression column,
+    and work on all supported dataset configs.
+
+    Args:
+        dataset_config: The dataset configuration to check if the column is a regression column.
+        column_name: The name of the column to check.
+
+    Returns:
+        bool: True if the column is a regression column, False otherwise.
+
+    Raises:
+        ValueError: If the dataset_config is not a supported type.
+    """
     if isinstance(dataset_config, TorchDatasetConfig):
-        return is_regression(dataset_config.get_column(column_name))
+        return is_regression(dataset_config.get_column(column_name))  # type: ignore
     elif isinstance(dataset_config, DatasetConfig):
         return dataset_config.get_column(column_name).data_type.domain_kind == "numeric"
     else:
@@ -420,8 +439,24 @@ def is_regression_column(
 def is_categorical_column(
     dataset_config: Union[DatasetConfig, TorchDatasetConfig], column_name: str
 ) -> bool:
+    """Checks if a model trained on ``dataset_config`` predicting values for
+    ``column_name`` should be a classifier.
+
+    This function is used to determine if a model trained on ``dataset_config``
+    should be a classifier, and work on all supported dataset configs.
+
+    Args:
+        dataset_config: The dataset configuration to check if the column is a categorical column.
+        column_name: The name of the column to check.
+
+    Returns:
+        bool: True if the column is a categorical column, False otherwise.
+
+    Raises:
+        ValueError: If the dataset_config is not a supported type.
+    """
     if isinstance(dataset_config, TorchDatasetConfig):
-        return is_classifier(dataset_config.get_column(column_name))
+        return is_classifier(dataset_config.get_column(column_name))  # type: ignore
     elif isinstance(dataset_config, DatasetConfig):
         return (
             dataset_config.get_column(column_name).data_type.domain_kind

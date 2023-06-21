@@ -17,19 +17,19 @@ def apply_split_indexes(
     split_type: Literal["random", "scaffold"] = "random",
     split_column: Union[str, None] = None,
 ):
-    """Separates dataframe row into training, testing and validation
+    """Separates dataframe row into training, testing and validation.
 
     Adds a 'step' column to the current dataframe, associating the row to
-    some data science model stage, i.e. training, testing or validation
+    some data science model stage, i.e. training, testing or validation.
 
     Args:
-        split_type: "random" or "scaffold", strategy used to to split examples
-        split_target: The wanted distribution of training/validation/testing
+        split_type: "random" or "scaffold", strategy used to to split examples.
+        split_target: The wanted distribution of training/validation/testing.
         split_column: Only required for scaffold, must be a columns of Smiles
-        data type
+        data type.
 
     Raises:
-        NotImplementedError: in case the split_type is not recognized
+        NotImplementedError: in case the split_type is not recognized.
     """
     train_size, val_size, test_size = map(
         lambda x: int(x) / 100, split_target.split("-")

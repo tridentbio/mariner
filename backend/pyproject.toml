@@ -45,6 +45,7 @@ s3fs = "^2023.3.0"
 boto3 = "1.24.59"
 ray = {version = "2.4.0", extras = ["default"]}
 scikit-learn = "^1.2.2"
+molfeat = "^0.8.9"
 
 [tool.poetry.group.dev.dependencies]
 click = "8.0.4"

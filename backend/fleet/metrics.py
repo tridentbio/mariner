@@ -52,10 +52,10 @@ class Metrics:
         metric_names = [
             ("mse", metrics.MeanSquaredError()),
             ("mae", metrics.MeanAbsoluteError()),
-            ("ev", metrics.ExplainedVariance()),
+            # ("ev", metrics.ExplainedVariance()),
             ("mape", metrics.MeanAbsolutePercentageError()),
-            ("R2", metrics.R2Score()),
-            ("pearson", metrics.PearsonCorrCoef()),
+            # ("R2", metrics.R2Score()),
+            # ("pearson", metrics.PearsonCorrCoef()),
         ]
         if model_type != "regression":
             assert self.num_classes is not None, "num_classes must be provided"

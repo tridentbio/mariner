@@ -430,50 +430,6 @@ class PreprocessingPipeline:
         return data
 
 
-def build_columns_numpy(
-    dataset_config: DatasetConfig, df: pd.DataFrame, featurize_outputs=True
-) -> pd.DataFrame:
-    """Updates the dataframe with the preprocessed columns.
-
-    Uses ``forward_args`` of botch featurizers and transforms defined in ``dataset_config``
-    to iterate topologically over the preprocessing steps.
-
-    :warning: This function has been deprecated.
-
-    Args:
-        dataset_config: The object describing the columns and data_types of the dataset.
-        df: The :class:`pd.DataFrame` that holds the dataset data.
-
-    Returns:
-        A tuple of the updated dataframe and a dictionary of the featurizers and transforms.
-    """
-    # Get featurizers and transformers in order
-    feats, transforms = map(list, dataset_topo_sort(dataset_config))
-
-    # Add default featurizers into dataframe.
-    for column in dataset_config.feature_columns:
-        feat = get_default_data_type_featurizer(dataset_config, column)
-        if feat is not None:
-            df[column.name] = apply(feat, df[column.name])
-
-    for target in dataset_config.target_columns:
-        feat = get_default_data_type_featurizer(dataset_config, target)
-        if feat is not None:
-            df[target.name] = apply(feat, df[target.name])
-
-    # Add featurized columns into dataframe.
-    for feat in feats:
-        value = get_args(df, feat)
-        df[feat.name] = apply(feat.create(), value)
-
-    # Add transforms into dataframe.
-    for transform in transforms:
-        value = get_args(df, transform)
-        df[transform.name] = apply(transform.create(), value)
-
-    return df
-
-
 def adapt_numpy_to_tensor(
     arr: Union[list[np.ndarray], np.ndarray]
 ) -> Union[list[np.ndarray], np.ndarray, torch.Tensor]:

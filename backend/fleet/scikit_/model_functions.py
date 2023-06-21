@@ -145,7 +145,7 @@ class SciKitFunctions(BaseModelFunctions):
         X = self._prepare_X_and_y(targets=False)
         return self.model.predict(X)
 
-    def log_model(
+    def log_models(
         self,
         model_name: Union[None, str] = None,
         version_description: Union[None, str] = None,
