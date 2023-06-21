@@ -23,7 +23,7 @@ from fleet.base_schemas import (
     TorchModelSpec,
 )
 from fleet.scikit_.model_functions import SciKitFunctions
-from fleet.scikit_.schemas import SciKitModelSpec, SciKitTrainingConfig
+from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.model_functions import TorchFunctions
 from fleet.torch_.schemas import TorchTrainingConfig
 from fleet.train.custom_logger import MarinerLogger
@@ -125,9 +125,16 @@ def fit(
             params=train_config,
             datamodule_args=datamodule_args if datamodule_args else {},
         )
-    elif isinstance(spec, SciKitModelSpec):
-        functions = SciKitFunctions()
-        assert isinstance(train_config, SciKitTrainingConfig)
+    elif isinstance(spec, SklearnModelSpec):
+        functions = SciKitFunctions(spec, dataset)
+        with mlflow.start_run(nested=True) as run:
+            functions.train()
+            functions.log_model(
+                model_name=mlflow_model_name,
+                run_id=run.info.run_id,
+            )
+            functions.val()
+            functions.test()
 
     if not functions:
         raise ValueError("Can't find functions for spec")

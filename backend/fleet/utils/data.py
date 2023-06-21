@@ -54,6 +54,7 @@ def make_graph_from_dataset_config(dataset_config: DatasetConfig) -> nx.DiGraph:
     Returns:
         The graph.
     """
+    print(dataset_config)
     featurizers_dict = {
         feat.name: feat.dict(by_alias=True) for feat in dataset_config.featurizers
     }
@@ -86,6 +87,7 @@ def dataset_topo_sort(
     Returns:
         (featurizers, transforms) tuple, the preprocessing step objects.
     """
+    print(dataset_config)
     featurizers_by_name = {feat.name: feat for feat in dataset_config.featurizers}
     transforms_by_name = {
         transform.name: transform for transform in dataset_config.transforms
@@ -325,8 +327,9 @@ class PreprocessingPipeline:
             feat = get_default_data_type_featurizer(self.dataset_config, column)
             if feat is not None:
                 feat = self._prepare_transform(feat)
-                data[column.name] = feat.transform(data[column.name])
-                # Don't need to update output_columns since data is overriden
+                value = data[column.name]
+                data.drop(labels=[column.name], axis="columns", inplace=True)
+                data[column.name] = feat.transform(value)
 
     def get_preprocess_steps(self):
         feats, transforms = map(list, dataset_topo_sort(self.dataset_config))
@@ -400,13 +403,25 @@ class PreprocessingPipeline:
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray, None] = None,
     ):
+
+        print("X:")
+        print(repr(X))
+        print("y:")
+        print(repr(y))
         X, y = self._prepare_X_and_y(X, y)
 
         if self.featurize_data_types:
             self._apply_default_featurizers(X, self.dataset_config.feature_columns)
             self._apply_default_featurizers(y, self.dataset_config.target_columns)
 
+        print("X:")
+        print(repr(X))
+        print("y:")
+        print(repr(y))
+
         data = pd.concat([X, y], axis=1)
+
+        print(repr(data))
 
         for config, transformer in self.get_preprocess_steps():
             args = get_args(data, config)

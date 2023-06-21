@@ -13,7 +13,9 @@ from mlflow.tracking import MlflowClient
 from fleet.base_schemas import FleetModelSpec, TorchModelSpec
 from fleet.dataset_schemas import TargetTorchColumnConfig, is_regression
 from fleet.model_builder import optimizers
+from fleet.model_builder.splitters import apply_split_indexes
 from fleet.model_functions import fit
+from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
 from mariner.core.aws import Bucket, list_s3_objects
 from tests.utils.utils import random_lower_string
@@ -77,8 +79,15 @@ def assert_mlflow_data(spec: FleetModelSpec, mlflow_experiment_id: str):
 models_root = Path("tests") / "data" / "yaml"
 datasets_root = Path("tests") / "data" / "csv"
 specs = [
-    (TorchModelSpec.from_yaml(models_root / model_file), datasets_root / dataset_file)
+    (
+        TorchModelSpec.from_yaml(models_root / model_file)
+        if not model_file.startswith("sklearn")
+        else SklearnModelSpec.from_yaml(models_root / model_file),
+        datasets_root / dataset_file,
+    )
     for model_file, dataset_file in [
+        ("sklearn_random_forest_regressor_sampl.yaml", "SAMPL.csv"),
+        ("sklearn_knn_regressor_sampl.yaml", "SAMPL.csv"),
         (
             "small_regressor_schema.yaml",
             "zinc.csv",
@@ -103,7 +112,9 @@ test_cases = [
                 else f"val/precision/{targets_head(spec).name}",
             ),
             optimizer=optimizers.AdamOptimizer(),
-        ),
+        )
+        if spec.framework == "torch"
+        else None,
         should_fail=False,
     )
     for spec, dataset_file in specs
@@ -121,6 +132,9 @@ def test_train(case: TestCase):
     mlflow.client.MlflowClient().create_registered_model(mlflow_model_name)
     with open(case.dataset_file, encoding="utf-8") as file:
         dataset: pd.DataFrame = pd.read_csv(file)
+        if "step" not in dataset.columns:
+            apply_split_indexes(dataset)
+        assert "step" in dataset
         if not case.should_fail:
             result = fit(
                 spec=case.model_spec,

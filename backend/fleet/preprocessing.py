@@ -46,7 +46,7 @@ See Also:
     :mod:`fleet.model_builder.featurizers`
 """
 
-from typing import Annotated, Dict, Literal, Union, get_args
+from typing import Annotated, Dict, Literal, NewType, Union, get_args
 
 from humps import camel
 from pydantic import BaseModel, Field
@@ -160,19 +160,25 @@ class StandardScalerConfig(CreateFromType, CamelCaseModel):
     forward_args: Union[Dict[str, str], list[str]]
 
 
-TransformerType = Annotated[
-    Union[
-        StandardScalerConfig,
-        LabelEncoderConfig,
+TransformerType = NewType(
+    "TransformerType",
+    Annotated[
+        Union[
+            StandardScalerConfig,
+            LabelEncoderConfig,
+        ],
+        Field(discriminator="type"),
     ],
-    Field(discriminator="type"),
-]
+)
 
 
-FeaturizersType = Annotated[
-    Union[get_args(get_args(FeaturizersType_)[0]) + (FPVecFilteredTransformerConfig,)],  # type: ignore
-    Field(discriminator="type"),
-]
+FeaturizersType = NewType(
+    "FeaturizersType",
+    Annotated[
+        Union[get_args(get_args(FeaturizersType_)[0]) + (FPVecFilteredTransformerConfig,)],  # type: ignore
+        Field(discriminator="type"),
+    ],
+)
 
 
 class TransformConfig(CamelCaseModel):

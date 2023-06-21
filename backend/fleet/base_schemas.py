@@ -9,16 +9,17 @@ FleetModelSpec, which unifies the descriptions of all framework schemas,
 and FleetTrainingConfig, that does the same for framework training parameters.
 """
 from abc import ABC
-from typing import Literal, Union
+from typing import Annotated, Literal, Union
 
 from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import Protocol
 
 from fleet.dataset_schemas import DatasetConfig, TorchDatasetConfig
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import CamelCaseModel
+from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.yaml_model import YAML_Model
 
 
@@ -56,20 +57,10 @@ class TorchModelSpec(CamelCaseModel, YAML_Model):
     dataset: "TorchDatasetConfig"
 
 
-class ScikitModelSpec(CamelCaseModel, YAML_Model):
-    """
-    Concrete implementation of sklearn model specs.
-    TODO: move to fleet.sklearn_.schemas
-    """
-
-    name: str
-    framework: Literal["sklearn"] = "sklearn"
-    spec: "TorchModelSchema"
-    dataset: "TorchDatasetConfig"
-
-
 # TODO: move to fleet.schemas
-FleetModelSpec = Union[TorchModelSpec, ScikitModelSpec]
+FleetModelSpec = Annotated[
+    Union[TorchModelSpec, SklearnModelSpec], Field(discriminator="framework")
+]
 
 
 class BaseModelFunctions(Protocol):
