@@ -91,6 +91,13 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
     def columns(self):
         return self.target_columns + self.feature_columns
 
+    def get_column(self, col_name: str) -> ColumnConfig:
+        """Get column by name"""
+        for col in self.columns:
+            if col.name == col_name:
+                return col
+        raise ValueError(f"Column {col_name} not found")
+
 
 AllowedLossesType = List[Dict[str, str]]
 
@@ -394,4 +401,33 @@ class DatasetConfigBuilder:
             feature_columns=self.feature_columns,
             featurizers=self.featurizers,
             transforms=self.transforms,
+        )
+
+
+def is_regression_column(
+    dataset_config: Union[DatasetConfig, TorchDatasetConfig], column_name: str
+) -> bool:
+    if isinstance(dataset_config, TorchDatasetConfig):
+        return is_regression(dataset_config.get_column(column_name))
+    elif isinstance(dataset_config, DatasetConfig):
+        return dataset_config.get_column(column_name).data_type.domain_kind == "numeric"
+    else:
+        raise ValueError(
+            f"dataset_config should be either DatasetConfig or TorchDatasetConfig, got {type(dataset_config)}"
+        )
+
+
+def is_categorical_column(
+    dataset_config: Union[DatasetConfig, TorchDatasetConfig], column_name: str
+) -> bool:
+    if isinstance(dataset_config, TorchDatasetConfig):
+        return is_classifier(dataset_config.get_column(column_name))
+    elif isinstance(dataset_config, DatasetConfig):
+        return (
+            dataset_config.get_column(column_name).data_type.domain_kind
+            == "categorical"
+        )
+    else:
+        raise ValueError(
+            f"dataset_config should be either DatasetConfig or TorchDatasetConfig, got {type(dataset_config)}"
         )
