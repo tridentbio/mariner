@@ -2,12 +2,11 @@
 Useful functions when developing on a fresh database
 """
 import sqlalchemy.exc
-from sqlalchemy.orm import Session
-
+from mariner.core.config import settings
 from mariner.core.security import get_password_hash
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User
-from mariner.core.config import settings
+from sqlalchemy.orm import Session
 
 
 def init_db(db: Session) -> None:
@@ -87,4 +86,3 @@ def create_test_user():
         except sqlalchemy.exc.IntegrityError:
             print("test user already exists")
         return user
-    

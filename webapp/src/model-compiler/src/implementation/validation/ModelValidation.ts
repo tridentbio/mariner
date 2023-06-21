@@ -80,7 +80,7 @@ class ModelValidation extends Acceptor implements ModelValidator {
       // the layer output is a structured object or a dictionary, then key1 is the
       // layer's name and key2 is the attributes joined by ".", e.g. if layer is
       // a GCNLayer named G1, key1 is "G1" and key2 could be
-      // "x", "edge_index" or "batch" 
+      // "x", "edge_index" or "batch"
       const key1 = unwrapDollar(sourceNodeName);
       const key2 = nodeOutputs.join('.');
       if (!info.edgesMap[key1]) {
