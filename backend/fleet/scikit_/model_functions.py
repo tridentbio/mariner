@@ -140,8 +140,8 @@ class SciKitFunctions(BaseModelFunctions):
         Args:
             X (pd.DataFrame): The dataset to predict on.
         """
-        model_config = self.spec.spec
-        dataset_config = self.spec.dataset
+        self.spec.spec
+        self.spec.dataset
         X = self._prepare_X_and_y(targets=False)
         return self.model.predict(X)
 
