@@ -9,7 +9,7 @@ from humps import camel
 from pydantic import BaseModel, Field, root_validator
 
 from fleet import data_types
-from fleet.model_builder.layers_schema import FeaturizersType
+from fleet.preprocessing import FeaturizersType, TransformerType
 from fleet.yaml_model import YAML_Model
 
 
@@ -85,7 +85,7 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
     target_columns: List[ColumnConfig]
     feature_columns: List[ColumnConfig]
     featurizers: List[FeaturizersType] = []
-    transforms: List[Any] = []  # TODO: add type
+    transforms: List[TransformerType] = []  # TODO: add type
 
     @property
     def columns(self):
