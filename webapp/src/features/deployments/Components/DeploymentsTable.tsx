@@ -192,24 +192,23 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
       field: 'Actions',
       title: 'Actions',
       customSx: tableActionsSx,
-      render: (row) =>
-        row.createdById === 1 && (
-          <TableActionsWrapper>
-            <DeploymentsTableActions
-              onClickDelete={handleClickDelete}
-              onClickEdit={
-                toggleModal &&
-                (() => {
-                  toggleModal();
-                  dispatch(setCurrentDeployment(row));
-                })
-              }
-              id={row.id}
-              status={row.status}
-              shareUrl={row.shareUrl}
-            />
-          </TableActionsWrapper>
-        ),
+      render: (row) => (
+        <TableActionsWrapper>
+          <DeploymentsTableActions
+            onClickDelete={handleClickDelete}
+            onClickEdit={
+              toggleModal &&
+              (() => {
+                toggleModal();
+                dispatch(setCurrentDeployment(row));
+              })
+            }
+            id={row.id}
+            status={row.status}
+            shareUrl={row.shareUrl}
+          />
+        </TableActionsWrapper>
+      ),
     });
 
   return (

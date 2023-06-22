@@ -21,6 +21,7 @@ ARGS =
 BACKEND_DEPENDENCY_FILES = backend/pyproject.toml backend/poetry.lock
 WEBAPP_DEPENDENCY_FILES = webapp/package.json webapp/package-lock.json
 
+
 ##@ Dependencies
 
 
@@ -64,6 +65,10 @@ build:                  ## Builds needed local images to run application.
 .PHONY: create-admin
 create-admin:           ## Creates default "admin@mariner.trident.bio" with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
+
+.PHONY: create-test-user
+create-test-user:       ## Creates default "test@mariner" with "123456" password
+	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_test_user; create_test_user()'" backend
 
 start-backend:         ## Builds and starts backend
 	$(DOCKER_COMPOSE) build backend
@@ -113,7 +118,7 @@ test-integration: start-backend ## Runs unit tests
 
 
 .PHONY: test-e2e
-test-e2e: build start create-admin ## Runs test target
+test-e2e: build start create-admin create-test-user## Runs test target
 	$(DOCKER_COMPOSE) up e2e
 
 
@@ -150,3 +155,15 @@ jupyter: ## Parse RELEASE.md file into mariner events that will show up as notif
 publish: ## Parse RELEASE.md file into mariner events that will show up as notifications
 	cd backend &&\
 		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
+
+.PHONY: build-docs 
+build-docs: ## Builds the documentation
+	docker compose -f docker-compose.yml run -e SPHINX_APIDOC_OPTIONS=members,show-inheritance --entrypoint sphinx-apidoc backend --module-first -o ../source ./mariner &&\
+	docker compose -f docker-compose.yml run -e SPHINX_APIDOC_OPTIONS=members,show-inheritance --entrypoint sphinx-apidoc backend --module-first -o ../source ./fleet &&\
+	docker compose -f docker-compose.yml run --entrypoint 'sphinx-build' backend ../source ../build -a $(O)
+
+
+.PHONY: live-docs 
+live-docs:  ## Runs the documentation server.
+	docker compose run --entrypoint sphinx-autobuild backend --port 8000 --open-browser --watch . ../source ../build
+

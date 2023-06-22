@@ -4,6 +4,13 @@ type TrainingConfig = {
   batchSize?: string | number;
   epochs?: string | number;
   learningRate?: string | number;
+  modelVersion?: string;
+};
+
+const defaultTrainingConfig: TrainingConfig = {
+  batchSize: 32,
+  epochs: 1,
+  learningRate: 0.05,
 };
 
 const checkTrainFinishes = (
@@ -12,7 +19,6 @@ const checkTrainFinishes = (
 ): Cypress.Chainable<boolean> =>
   // Recursively check if the experiment row contains 'Trained' status
   cy.contains('tr', experimentName).then(($row) => {
-    cy.log('row', $row.text());
     if ($row.text().includes('Trained')) return cy.wrap(true);
     else if (timeout <= 0) return cy.wrap(false);
     else
@@ -22,6 +28,7 @@ const checkTrainFinishes = (
   });
 
 export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
+  config = { ...defaultTrainingConfig, ...config };
   cy.once('uncaught:exception', () => false);
   // Visits models listing page
   cy.intercept({
@@ -37,36 +44,48 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
     expect(response?.statusCode).to.eq(200);
     cy.log(response?.body.data[0].versions[0].id);
   });
+
   if (modelName) {
     cy.get('table a').contains(modelName).click();
   } else {
     cy.get('table a').first().click();
   }
+
   cy.get('div[role="tablist"] button').contains('Training').click().wait(1000);
   cy.get('button').contains('Create Training').click();
   // Fills the experiment form
   const experimentName = randomLowerCase(8);
   cy.get('[aria-label="experiment name"] input').type(experimentName);
-  cy.get('#model-version-select')
-    .click()
-    .get('li[role="option"]')
-    .first()
-    .click();
+
+  if (config.modelVersion) {
+    cy.get('#model-version-select')
+      .click()
+      .get('li[role="option"]')
+      .contains(config.modelVersion)
+      .click();
+  } else {
+    cy.get('#model-version-select')
+      .click()
+      .get('li[role="option"]')
+      .first()
+      .click();
+  }
+
   cy.contains('div', 'Experiment Name').find('input').type(randomLowerCase(8));
   cy.contains('div', 'Model Version').find('input').click();
   cy.get('li[role="option"]').first().click();
   cy.contains('div', 'Learning Rate')
     .find('input')
     .clear()
-    .type(config.learningRate?.toString() || '0.05');
+    .type(config.learningRate?.toString()!);
   cy.contains('div', 'Batch Size')
     .find('input')
     .clear()
-    .type(config.batchSize?.toString() || '32');
+    .type(config.batchSize?.toString()!);
   cy.contains('div', 'Epochs')
     .find('input')
     .clear()
-    .type(config.epochs?.toString() || '10');
+    .type(config.epochs?.toString()!);
   cy.contains('div', 'Target Column').click();
   cy.get('li[role="option"]').first().click();
   cy.contains('div', 'Metric to monitor').click();
@@ -85,7 +104,7 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
         assert.isTrue(trained)
       );
 
-      cy.wait(1000);
+      cy.wait(10000);
       return cy.wrap(experimentName);
     });
 };

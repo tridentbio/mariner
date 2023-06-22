@@ -86,7 +86,7 @@ ingress:
     - mlflow.dev.trident.bio
 
 istio_url: mlflow.dev.trident.bio
-
+istio_enabled: true
 resources:
   limits:
     cpu: 500m
