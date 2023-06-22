@@ -238,6 +238,7 @@ class CustomModel(pl.LightningModule):
 
     @staticmethod
     def _call_model(model, args):
+        LOG.info("%r", args)
         if isinstance(args, dict):
             return model(**args)
         if isinstance(args, list):

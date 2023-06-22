@@ -1,4 +1,5 @@
 ---
+{{- if .Values.istio_enabled -}}
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
@@ -19,3 +20,4 @@ spec:
       protocol: HTTP
     hosts:
     - {{ .Values.istio_url }}
+{{- end }}

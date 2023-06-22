@@ -1,3 +1,4 @@
+{{- if .Values.istio_enabled -}}
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
@@ -11,3 +12,4 @@ spec:
   - name: v2
     labels:
       version: {{ .Release.Name }}-v2
+{{- end }}
