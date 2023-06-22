@@ -15,7 +15,6 @@ from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.splitters import apply_split_indexes
 from fleet.utils.data import MarinerTorchDataset
 
-
 dataset_configs = [
     ("multiclass_classification_schema.yaml", "iris.csv"),
     ("small_regressor_schema.yaml", "zinc.csv"),

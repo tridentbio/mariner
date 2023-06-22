@@ -26,7 +26,11 @@ class Metrics:
 
 
 
-    Attributes
+    Attributes:
+        model_type: The task type.
+        num_classes: The number of classes in case the task type is classification".
+        num_labels: The number of labels in case the classification is multilabel.
+        return_type: The type of the returned value. It can be "numpy", "tensor" or "float".
     """
 
     def __init__(
@@ -90,10 +94,20 @@ class Metrics:
             prediction: the model output.
             batch: object with target data (at batch['y']).
         """
+
+        def _make_column_if_vector(prediction):
+            if len(prediction.size()) <= 1:  # either scalar or flat vector
+                return prediction.reshape(-1, 1)  # make a column matrix
+            return prediction
+
         if isinstance(prediction, np.ndarray):
             prediction = torch.as_tensor(prediction)
+            _make_column_if_vector(prediction)
+
         if isinstance(batch, np.ndarray):
             batch = torch.as_tensor(batch)
+            _make_column_if_vector(prediction)
+
         metrics_dict = {}
         sufix = f"/{sufix}" if sufix else ""
         for metric in self.metrics:
@@ -111,9 +125,9 @@ class Metrics:
                     metrics_dict[key] = metrics_dict[key].numpy()
                 elif self.return_type == "float":
                     metrics_dict[key] = metrics_dict[key].item()
-            except ValueError as exp:
+            except Exception as exc:  # pylint: disable=W0718
                 LOG.warning("Gor error with metric %s", metric)
-                LOG.warning(exp)
+                LOG.warning(exc)
 
         return metrics_dict
 
