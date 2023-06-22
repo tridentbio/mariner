@@ -21,6 +21,7 @@ ARGS =
 BACKEND_DEPENDENCY_FILES = backend/pyproject.toml backend/poetry.lock
 WEBAPP_DEPENDENCY_FILES = webapp/package.json webapp/package-lock.json
 
+
 ##@ Dependencies
 
 
@@ -150,3 +151,15 @@ jupyter: ## Parse RELEASE.md file into mariner events that will show up as notif
 publish: ## Parse RELEASE.md file into mariner events that will show up as notifications
 	cd backend &&\
 		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
+
+.PHONY: build-docs 
+build-docs: ## Builds the documentation
+	docker compose -f docker-compose.yml run -e SPHINX_APIDOC_OPTIONS=members,show-inheritance --entrypoint sphinx-apidoc backend --module-first -o ../source ./mariner &&\
+	docker compose -f docker-compose.yml run -e SPHINX_APIDOC_OPTIONS=members,show-inheritance --entrypoint sphinx-apidoc backend --module-first -o ../source ./fleet &&\
+	docker compose -f docker-compose.yml run --entrypoint 'sphinx-build' backend ../source ../build -a $(O)
+
+
+.PHONY: live-docs 
+live-docs:  ## Runs the documentation server.
+	docker compose run --entrypoint sphinx-autobuild backend --port 8000 --open-browser --watch . ../source ../build
+

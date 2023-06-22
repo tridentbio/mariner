@@ -23,15 +23,15 @@ def init_db(db: Session) -> None:
 def create_admin_user() -> User:
     """Creates an admin user to be used for local development
 
-    This functions is not called from the app itself, but by developers
-    during developers.
+    This functions is not called from the app itself, but by developers.
     An easy way to call this function from command line:
 
-        python -c 'from mariner.db.init_db impor create_admin_user; create_admin_user()'
+        ``python -c 'from mariner.db.init_db impor create_admin_user; create_admin_user()'``
 
     User created has following credentials
-    Email: admin@mariner.trident.bio
-    Password: 123456
+
+    - Email: admin@mariner.trident.bio
+    - Password: 123456
 
     Returns:
         the super user entity
