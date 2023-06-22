@@ -1,17 +1,15 @@
-import { createIrisDatasetFormData } from '../../support/dataset/examples';
 import { trainModel } from '../../support/training/create';
 
 // set following variables to skip model build and
 // use this models 1st versions as fixtures
 
 describe('Model Training Page', () => {
-  const irisDatasetFixture = createIrisDatasetFormData();
   let modelName: string | null = null;
 
   beforeEach(() => {
     cy.loginSuper();
-    cy.setupSomeModel().then((name) => {
-      modelName = name;
+    cy.setupSomeModel().then((deployment) => {
+      modelName = deployment.name;
     });
   });
   it('Creates training succesfully', () => {

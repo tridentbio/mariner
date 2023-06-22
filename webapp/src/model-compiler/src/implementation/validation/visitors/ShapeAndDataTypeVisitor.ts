@@ -79,10 +79,13 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
     if (component.dataType.domainKind === 'numeric') {
       info.setRequiredShapeSimple(component.name, [1, 1]);
     } else if (component.dataType.domainKind === 'categorical') {
-      info.setRequiredShapeSimple(component.name, [
-        1,
-        Object.keys(component.dataType.classes).length,
-      ]);
+      if (component.columnType === 'binary')
+        info.setRequiredShapeSimple(component.name, [1, 1]);
+      else
+        info.setRequiredShapeSimple(component.name, [
+          1,
+          Object.keys(component.dataType.classes).length,
+        ]);
     }
   };
 

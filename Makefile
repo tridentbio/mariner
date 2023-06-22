@@ -66,6 +66,10 @@ build:                  ## Builds needed local images to run application.
 create-admin:           ## Creates default "admin@mariner.trident.bio" with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
 
+.PHONY: create-test-user
+create-test-user:       ## Creates default "test@mariner" with "123456" password
+	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_test_user; create_test_user()'" backend
+
 start-backend:         ## Builds and starts backend
 	$(DOCKER_COMPOSE) build backend
 	$(DOCKER_COMPOSE) up --wait backend
@@ -114,7 +118,7 @@ test-integration: start-backend ## Runs unit tests
 
 
 .PHONY: test-e2e
-test-e2e: build start create-admin ## Runs test target
+test-e2e: build start create-admin create-test-user## Runs test target
 	$(DOCKER_COMPOSE) up e2e
 
 
