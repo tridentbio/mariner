@@ -20,8 +20,6 @@ def make_list_from_array_string(v: Union[str, list[str]]):
     raise ValueError(v)
 
 
-# Make settings be the aggregation of several settings
-# Possibly using multi-inheritance
 class Settings(BaseSettings):
     """Models the environment variables used around the application."""
 
@@ -40,7 +38,7 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
     ALLOWED_GITHUB_AUTH_EMAILS: List[EmailStr] = []
 
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @validator("BACKEND_CORS_ORIGINS", pre=True, allow_reuse=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         """Parses the string of allowed cors origins into a list of strings.
 
@@ -49,7 +47,7 @@ class Settings(BaseSettings):
         """
         return make_list_from_array_string(v)
 
-    @validator("ALLOWED_GITHUB_AUTH_EMAILS", pre=True)
+    @validator("ALLOWED_GITHUB_AUTH_EMAILS", pre=True, allow_reuse=True)
     def assemble_allowed_github_auth_emails(
         cls, v: Union[str, List[str]]
     ) -> Union[List[str], str]:
@@ -67,7 +65,7 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
 
-    @validator("SQLALCHEMY_DATABASE_URI", pre=True)
+    @validator("SQLALCHEMY_DATABASE_URI", pre=True, allow_reuse=True)
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
         """Assembles the SQLALCHEMY_DATABASE_URI directly from var with same name in .env
         or from .env POSTGRES_* variables.

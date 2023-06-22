@@ -84,7 +84,7 @@ ingress:
     - dev.mariner.trident.bio
 
 istio_url: dev.mariner.trident.bio
-
+istio_enabled: true
 resources:
   limits:
     cpu: 500m

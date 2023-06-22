@@ -4,6 +4,7 @@ import 'cypress-plugin-tab';
 import 'cypress-file-upload';
 import './dataset';
 import './models';
+import './deployments';
 import { drag, move } from './dragdrop';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
 
@@ -14,8 +15,18 @@ Cypress.Commands.add('notificationShouldContain', (text: string) => {
 });
 
 Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
+  cy.clearAllCookies();
   cy.visit('/login');
   cy.get('#username-input', { timeout }).type('admin@mariner.trident.bio');
+  cy.get('#password-input').type('123456');
+  cy.get('button[type="submit"]').click();
+  cy.url().should('eq', Cypress.config('baseUrl'));
+});
+
+Cypress.Commands.add('loginTest', (timeout: number = 15000) => {
+  cy.clearAllCookies();
+  cy.visit('/login');
+  cy.get('#username-input', { timeout }).type('test@example.com');
   cy.get('#password-input').type('123456');
   cy.get('button[type="submit"]').click();
   cy.url().should('eq', Cypress.config('baseUrl'));
@@ -106,6 +117,7 @@ declare global {
   namespace Cypress {
     interface Chainable {
       loginSuper(timeout?: number): Chainable<void>;
+      loginTest(timeout?: number): Chainable<void>;
       createZINCDataset(): Chainable<void>;
       deleteZINCDataset(): Chainable<void>;
       notificationShouldContain(text: string): Chainable<JQuery<HTMLElement>>;
