@@ -8,8 +8,8 @@ describe('/models/:modelId/inference', () => {
 
   beforeEach(() => {
     cy.loginSuper();
-    cy.setupSomeModel().then((name) => {
-      modelName = name;
+    cy.setupSomeModel().then((deployment) => {
+      modelName = deployment.name;
     });
   });
 
@@ -27,12 +27,7 @@ describe('/models/:modelId/inference', () => {
       url: `${API_BASE_URL}/api/v1/experiments/*`,
     }).as('getExperiments');
 
-    cy.then(() =>
-      trainModel(modelName!, {
-        batchSize: 8,
-        learningRate: 0.001,
-      })
-    );
+    cy.then(() => trainModel(modelName!));
 
     cy.visit('/models');
     cy.wait('@getModels');
