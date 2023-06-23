@@ -1,4 +1,4 @@
-name: Extra Trees Regressor
+name: SAMPL Extra Trees Regressor
 framework: sklearn
 
 dataset:
