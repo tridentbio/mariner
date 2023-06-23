@@ -12,9 +12,7 @@ of the software behind Mariner.
 
    Getting Started <getting_started>
    Overview <overview>
-   Reference <modules>
-   Module Index <modindex>
-   Index <genindex>
+   Reference <mainmodules>
 
 .. toctree::
    :maxdepth: 2

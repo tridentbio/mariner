@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.entities import User
 from mariner.schemas.user_schemas import UserCreateBasic, UserUpdate
 from mariner.stores.user_sql import user_store
@@ -16,7 +16,7 @@ def user_authentication_headers(
 ) -> Dict[str, str]:
     data = {"username": email, "password": password}
 
-    r = client.post(f"{settings.API_V1_STR}/login/access-token", data=data)
+    r = client.post(f"{get_app_settings().API_V1_STR}/login/access-token", data=data)
     response = r.json()
     auth_token = response["access_token"]
     headers = {"Authorization": f"Bearer {auth_token}"}
