@@ -1,4 +1,4 @@
-name: K-Nearest Neighbor Regressor
+name: SAMPL K-Nearest Neighbor Regressor
 framework: sklearn
 
 dataset:

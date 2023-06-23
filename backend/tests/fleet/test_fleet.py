@@ -108,8 +108,8 @@ specs = [
         datasets_root / dataset_file,
     )
     for model_file, dataset_file in [
-        ("sklearn_random_forest_regressor_sampl.yaml", "SAMPL.csv"),
-        ("sklearn_knn_regressor_sampl.yaml", "SAMPL.csv"),
+        ("sklearn_sampl_random_forest_regressor.yaml", "SAMPL.csv"),
+        ("sklearn_sampl_knn_regressor.yaml", "SAMPL.csv"),
         ("small_regressor_schema.yaml", "zinc.csv"),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),
