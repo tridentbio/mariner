@@ -1,0 +1,106 @@
+replicaCount: 1
+replicaCountCanary: 1
+command: /app/entrypoints/ray-head.sh
+
+canary:
+  enabled: false
+
+normal_deploy:
+  enabled: true
+
+version: ray-head-v1
+
+port: 8265
+
+image:
+  repository: 515402585597.dkr.ecr.us-east-1.amazonaws.com/ray-head
+  pullPolicy: Always
+  tag: latest
+  containerPort: 8265
+  livenessProbe:
+    path: /
+    port: 8265
+    periodSeconds: 30
+    successThreshold: 1
+    failureThreshold: 3
+    timeoutSeconds: 1
+  readinessProbe:
+    path: /
+    port: 8265
+    periodSeconds: 30
+    successThreshold: 1
+    failureThreshold: 3
+    timeoutSeconds: 1
+
+strategy:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+imagePullSecrets:
+  - name: regcred
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  product: ray-head
+
+podSecurityContext: {}
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8265
+  port_redis: 10001
+  port_workers: 6379
+  annotations:
+    alb.ingress.kubernetes.io/target-type: ip
+
+ingress:
+  enabled: true
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: '/'
+    kubernetes.io/ingress.class: 'nginx'
+    meta.helm.sh/release-name: 'ray-head'
+    meta.helm.sh/release-namespace: 'mariner'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+  hosts:
+  - host: ray-test.dev.mariner.trident.bio
+  tls:
+  - hosts:
+    - ray-test.dev.mariner.trident.bio
+
+istio_url: ray-test.dev.mariner.trident.bio
+istio_enabled: false
+resources:
+  limits:
+    cpu: 200m
+    memory: 1024Mi
+  requests:
+    cpu: 100m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  # minReplicas: 1
+  # maxReplicas: 3
+  # targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
