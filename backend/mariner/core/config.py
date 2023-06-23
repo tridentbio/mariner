@@ -12,8 +12,8 @@ from pydantic import (
     BaseSettings,
     EmailStr,
     PostgresDsn,
-    validator,
     root_validator,
+    validator,
 )
 
 
@@ -125,6 +125,11 @@ class Settings(BaseSettings):
             if not values["AWS_SECRET_ACCESS_KEY"]:
                 raise ValueError(
                     "AWS_SECRET_ACCESS_KEY must be set if AWS_MODE is local"
+                )
+        elif values["AWS_MODE"] == "sts":
+            if "AWS_ACCESS_KEY_ID" in values or "AWS_SECRET_ACCESS_KEY" in values:
+                raise ValueError(
+                    "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must not be set if AWS_MODE is sts"
                 )
         return values
 
