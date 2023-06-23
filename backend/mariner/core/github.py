@@ -6,7 +6,7 @@ from logging import error
 import requests
 from pydantic import BaseModel
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.exceptions.auth_exceptions import InvalidGithubCode
 
 GITHUB_URL = "https://github.com/"
@@ -41,8 +41,8 @@ def github_get(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
         The request response.
     """
     headers, kwargs = _make_headers(**kwargs)
-    kwargs["client_id"] = settings.GITHUB_CLIENT_ID
-    kwargs["client_secret"] = settings.GITHUB_CLIENT_SECRET
+    kwargs["client_id"] = get_app_settings().GITHUB_CLIENT_ID
+    kwargs["client_secret"] = get_app_settings().GITHUB_CLIENT_SECRET
     url = _join(url, path)
     return requests.get(url=url, params=kwargs, headers=headers)
 
@@ -58,8 +58,8 @@ def github_post(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
         The request response.
     """
     headers, kwargs = _make_headers(**kwargs)
-    kwargs["client_id"] = settings.GITHUB_CLIENT_ID
-    kwargs["client_secret"] = settings.GITHUB_CLIENT_SECRET
+    kwargs["client_id"] = get_app_settings().GITHUB_CLIENT_ID
+    kwargs["client_secret"] = get_app_settings().GITHUB_CLIENT_SECRET
 
     result = requests.post(url=url + path, json=kwargs, headers=headers)
     return result

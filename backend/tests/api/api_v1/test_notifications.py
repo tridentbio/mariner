@@ -9,7 +9,7 @@ from fleet.torch_.schemas import (
     TorchTrainingConfig,
 )
 from mariner import experiments as experiments_ctl
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.db.session import SessionLocal
 from mariner.entities import EventEntity
 from mariner.schemas.experiment_schemas import Experiment, TorchTrainingRequest
@@ -70,7 +70,8 @@ async def test_get_notifications(
 ):
     result = await experiment_fixture
     res = client.get(
-        f"{settings.API_V1_STR}/events/report", headers=normal_user_token_headers
+        f"{get_app_settings().API_V1_STR}/events/report",
+        headers=normal_user_token_headers,
     )
     assert res.status_code == 200, "Request failed"
     body = res.json()
@@ -85,7 +86,9 @@ async def test_get_notifications(
     assert got_notification["message"] == expected_notification["message"]
     assert "events" in got_notification
     assert len(got_notification["events"]) == 1
-    expected_url = f"{settings.WEBAPP_URL}/models/{some_model_integration.id}#training"
+    expected_url = (
+        f"{get_app_settings().WEBAPP_URL}/models/{some_model_integration.id}#training"
+    )
     assert got_notification["events"][0]["url"] == expected_url
 
 

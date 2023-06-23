@@ -10,7 +10,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from mariner.core import github, security
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -134,7 +134,7 @@ def _authenticate_github(code: str, state: str) -> User:
 
         token = github.get_access_token(code)
         github_user = github.get_user(token.access_token)
-        if github_user.email not in settings.ALLOWED_GITHUB_AUTH_EMAILS:
+        if github_user.email not in get_app_settings().ALLOWED_GITHUB_AUTH_EMAILS:
             raise UserEmailNotAllowed(
                 "Email should be cleared in the ALLOWED_GITHUB_AUTH_EMAILS env var"
             )
@@ -153,7 +153,9 @@ def _authenticate_github(code: str, state: str) -> User:
 
 
 def _make_token(user: User) -> Token:
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(
+        minutes=get_app_settings().ACCESS_TOKEN_EXPIRE_MINUTES
+    )
     return Token(
         access_token=security.create_access_token(
             user.id, expires_delta=access_token_expires
