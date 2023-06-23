@@ -15,7 +15,7 @@ from fleet.torch_.schemas import (
 )
 from mariner import experiments as experiments_ctl
 from mariner.core import security
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.db.session import SessionLocal
 from mariner.entities import Dataset, EventEntity
 from mariner.entities import Experiment as ExperimentEntity
@@ -65,7 +65,7 @@ def client() -> Generator:
 @pytest.fixture(scope="module")
 def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]:
     return authentication_token_from_email(
-        client=client, email=settings.EMAIL_TEST_USER, db=db
+        client=client, email=get_app_settings().EMAIL_TEST_USER, db=db
     )
 
 
@@ -76,7 +76,9 @@ def normal_user_token_headers_payload(
     """Get the payload from the token"""
     token = normal_user_token_headers["Authorization"].split(" ")[1]
     payload = jwt.decode(
-        token, settings.AUTHENTICATION_SECRET_KEY, algorithms=[security.ALGORITHM]
+        token,
+        get_app_settings().AUTHENTICATION_SECRET_KEY,
+        algorithms=[security.ALGORITHM],
     )
     return TokenPayload(**payload)
 
@@ -229,7 +231,7 @@ def some_deployment(
         "prediction_rate_limit_unit": "month",
     }
     response = client.post(
-        f"{settings.API_V1_STR}/deployments/",
+        f"{get_app_settings().API_V1_STR}/deployments/",
         json=deployment_data,
         headers=normal_user_token_headers,
     )

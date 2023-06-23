@@ -5,7 +5,7 @@ import pytest
 import pytest_asyncio
 
 from fleet.ray_actors.dataset_transforms import DatasetTransforms
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.schemas.dataset_schemas import ColumnsMeta
 
 BIO_DATASET_PATH = "tests/data/csv/bio_rna_dna_protein.csv"
@@ -43,7 +43,9 @@ class TestDatasetTransforms:
     async def make_transformer_fixture(self, csvpath: str):
         dataset_ray_transformer = DatasetTransforms.remote()
         with open(csvpath, "rb") as f:
-            for chunk in iter(lambda: f.read(settings.APPLICATION_CHUNK_SIZE), b""):
+            for chunk in iter(
+                lambda: f.read(get_app_settings().APPLICATION_CHUNK_SIZE), b""
+            ):
                 await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
             await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
             return dataset_ray_transformer

@@ -21,7 +21,7 @@ from fleet.model_builder.optimizers import (
 from fleet.model_functions import Result
 from fleet.ray_actors.training_actors import TrainingActor
 from mariner.core.aws import Bucket
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
 from mariner.events import EventCreate  # BAD DEPENDENCY
@@ -291,7 +291,7 @@ def log_metrics(
                 "id": experiment_db.id,
                 "experiment_name": experiment_db.experiment_name,
             },
-            url=f"{settings.WEBAPP_URL}/models/{model.id}#training",
+            url=f"{get_app_settings().WEBAPP_URL}/models/{model.id}#training",
         ),
     )
 

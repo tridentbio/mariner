@@ -4,7 +4,7 @@
 
 .. title:: Overview: contents
 
-.. _overview
+.. _overview:
 
 ========
 Overview
