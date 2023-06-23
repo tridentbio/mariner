@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.entities.dataset import Dataset
 from mariner.entities.deployment import ShareStrategy
 from mariner.entities.model import Model
@@ -30,7 +30,7 @@ def deployment_fixture(
     """Deployment fixture. Owner: default test_user"""
     deployment_data = mock_deployment(some_model)
     response = client.post(
-        f"{settings.API_V1_STR}/deployments/",
+        f"{get_app_settings().API_V1_STR}/deployments/",
         json=deployment_data,
         headers=normal_user_token_headers,
     )
@@ -127,7 +127,7 @@ def test_get_deployments(
             query = {"publicMode": "only"}
 
         r = client.get(
-            f"{settings.API_V1_STR}/deployments",
+            f"{get_app_settings().API_V1_STR}/deployments",
             headers=normal_user_token_headers,
             params=query,
         )
@@ -156,7 +156,7 @@ def test_get_my_deployments(
         deployment_fixture
     """
     r = client.get(
-        f"{settings.API_V1_STR}/deployments",
+        f"{get_app_settings().API_V1_STR}/deployments",
         headers=normal_user_token_headers,
         params={"accessMode": "owned"},
     )
@@ -185,7 +185,7 @@ def test_create_deployment(
     """
     deployment_data = mock_deployment(some_model, share_strategy="public")
     response = client.post(
-        f"{settings.API_V1_STR}/deployments/",
+        f"{get_app_settings().API_V1_STR}/deployments/",
         json=deployment_data,
         headers=normal_user_token_headers,
     )
@@ -214,7 +214,7 @@ def test_update_deployment(
     """
     updated_deployment = {"name": "Updated Name", "share_strategy": "public"}
     r = client.put(
-        f"{settings.API_V1_STR}/deployments/{deployment_fixture.id}",
+        f"{get_app_settings().API_V1_STR}/deployments/{deployment_fixture.id}",
         json=updated_deployment,
         headers=normal_user_token_headers,
     )
@@ -246,7 +246,7 @@ def test_delete_deployment(
         db, "public", some_dataset, "test_user"
     ) as some_deployment:
         r = client.delete(
-            f"{settings.API_V1_STR}/deployments/{some_deployment.id}",
+            f"{get_app_settings().API_V1_STR}/deployments/{some_deployment.id}",
             headers=normal_user_token_headers,
         )
         assert r.status_code == 200
@@ -254,7 +254,7 @@ def test_delete_deployment(
         assert payload["id"] == some_deployment.id
 
         r = client.get(
-            f"{settings.API_V1_STR}/deployments",
+            f"{get_app_settings().API_V1_STR}/deployments",
             headers=normal_user_token_headers,
             params={"publicMode": "only", "name": some_deployment.name},
         )
@@ -286,7 +286,7 @@ def test_create_permission(
         deployment_id=deployment_fixture.id, user_id=test_user.id
     )
     r = client.post(
-        f"{settings.API_V1_STR}/deployments/create-permission",
+        f"{get_app_settings().API_V1_STR}/deployments/create-permission",
         json=permission_data.dict(exclude_none=True),
         headers=normal_user_token_headers,
     )
@@ -295,7 +295,7 @@ def test_create_permission(
     assert payload["id"] == deployment_fixture.id
 
     r = client.get(
-        f"{settings.API_V1_STR}/deployments",
+        f"{get_app_settings().API_V1_STR}/deployments",
         headers=normal_user_token_headers,
         params={"name": deployment_fixture.name, "created_by_id": test_user.id},
     )
@@ -327,7 +327,7 @@ def test_delete_permission(
         deployment_id=deployment_fixture.id, user_id=test_user.id
     )
     r = client.post(
-        f"{settings.API_V1_STR}/deployments/create-permission",
+        f"{get_app_settings().API_V1_STR}/deployments/create-permission",
         json=permission_data.dict(exclude_none=True),
         headers=normal_user_token_headers,
     )
@@ -336,7 +336,7 @@ def test_delete_permission(
     assert payload["id"] == deployment_fixture.id
 
     r = client.post(
-        f"{settings.API_V1_STR}/deployments/delete-permission",
+        f"{get_app_settings().API_V1_STR}/deployments/delete-permission",
         json=permission_data.dict(),
         headers=normal_user_token_headers,
     )
@@ -345,7 +345,7 @@ def test_delete_permission(
     assert payload["id"] == deployment_fixture.id
 
     r = client.get(
-        f"{settings.API_V1_STR}/deployments",
+        f"{get_app_settings().API_V1_STR}/deployments",
         headers=normal_user_token_headers,
         params={"name": deployment_fixture.name, "accessMode": "owned"},
     )
@@ -378,7 +378,7 @@ def test_get_public_deployment(
         # Update to public to get the share url.
         updated_deployment = {"share_strategy": "public"}
         r = client.put(
-            f"{settings.API_V1_STR}/deployments/{some_deployment.id}",
+            f"{get_app_settings().API_V1_STR}/deployments/{some_deployment.id}",
             json=updated_deployment,
             headers=normal_user_token_headers,
         )
@@ -386,10 +386,10 @@ def test_get_public_deployment(
         deployment = r.json()
         public_url = deployment["shareUrl"]
         assert bool(public_url), "Should have a public url after updating to public."
-        
-        token = '.'.join(public_url.split("/")[-3:])
-        r = client.get(f"{settings.API_V1_STR}/deployments/public/{token}")
-        
+
+        token = ".".join(public_url.split("/")[-3:])
+        r = client.get(f"{get_app_settings().API_V1_STR}/deployments/public/{token}")
+
         assert (
             r.status_code == 200
         ), "Should be accessible by anyone without authorization."
@@ -419,7 +419,7 @@ def test_post_make_prediction(
     predict_req_data: Dict[str, Any],
 ):
     r = client.post(
-        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        f"{get_app_settings().API_V1_STR}/deployments/{some_deployment.id}/predict",
         json=predict_req_data,
         headers=normal_user_token_headers,
     )
@@ -428,7 +428,7 @@ def test_post_make_prediction(
     ), "Should not find the deployment instance on ray since it's not running."
 
     r = client.put(
-        f"{settings.API_V1_STR}/deployments/{some_deployment.id}",
+        f"{get_app_settings().API_V1_STR}/deployments/{some_deployment.id}",
         json={
             "share_strategy": "public",
             "prediction_rate_limit_value": 1,
@@ -440,7 +440,7 @@ def test_post_make_prediction(
     assert r.status_code == 200, "Should update deployment instance status to active."
 
     r = client.post(
-        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        f"{get_app_settings().API_V1_STR}/deployments/{some_deployment.id}/predict",
         json=predict_req_data,
         headers=normal_user_token_headers,
     )
@@ -450,7 +450,7 @@ def test_post_make_prediction(
     assert isinstance(payload["tpsa"], list), "'tpsa' column should be a list"
 
     r = client.post(
-        f"{settings.API_V1_STR}/deployments/{some_deployment.id}/predict",
+        f"{get_app_settings().API_V1_STR}/deployments/{some_deployment.id}/predict",
         json=predict_req_data,
         headers=normal_user_token_headers,
     )

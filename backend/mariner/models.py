@@ -191,6 +191,10 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
 
 
 def get_model_options() -> List[ComponentOption]:
+    """
+    Gets all component (featurizers and layer) options supported by the system,
+    along with metadata about each.
+    """
     return options.get_model_options()
 
 

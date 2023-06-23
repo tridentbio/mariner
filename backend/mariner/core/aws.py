@@ -10,7 +10,7 @@ import pandas as pd
 from botocore.client import BaseClient
 from fastapi.datastructures import UploadFile
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.utils import (
     compress_file,
     get_size,
@@ -23,8 +23,8 @@ from mariner.utils import (
 class Bucket(enum.Enum):
     """S3 buckets available to the application"""
 
-    Datasets = settings.AWS_DATASETS
-    Models = settings.AWS_MODELS
+    Datasets = get_app_settings().AWS_DATASETS
+    Models = get_app_settings().AWS_MODELS
 
 
 def create_s3_client() -> BaseClient:
@@ -35,9 +35,9 @@ def create_s3_client() -> BaseClient:
     """
     s3 = boto3.client(
         "s3",
-        region_name=settings.AWS_REGION,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=get_app_settings().AWS_REGION,
+        aws_access_key_id=get_app_settings().AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=get_app_settings().AWS_SECRET_ACCESS_KEY,
     )
     return s3
 
