@@ -1,0 +1,13 @@
+.Popover .MuiPopover-paper{
+  color:white !important;
+  background-color: #384E77f7 !important;
+}
+.Popover .MuiPopover-paper a {
+  color:#b6ffd7 !important;
+  font-weight:bold;
+  letter-spacing:2px
+}
+
+
+/*  Using a CSS file here because it was the only way to add some custom style to MUI Popover component, i tried to aplly the style directly through props and also using Styled Components but for some reason it doesn't work */
+

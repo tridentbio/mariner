@@ -1,13 +1,21 @@
-version: "3.3"
+version: "3.4"
 services:
+  webapp:
+    depends_on:
+      backend:
+        condition: service_healthy
   backend:
-    volumes:
-      - ./:/app:z
+    # Basic services to run the backend. Placing it here so main docker-compose
+    # can be used along with multiple file applications
+    depends_on:
+      - db
+      - mlflow
+      - ray-worker
     environment:
       - JUPYTER=jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
   ray-head:
     volumes:
-      - ./:/app:z
+      - ./backend:/app:z
   ray-worker:
     volumes:
-      - ./:/app:z
+      - ./backend:/app:z

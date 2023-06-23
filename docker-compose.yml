@@ -1,5 +1,11 @@
 version: "3.4"
 services:
+  webapp:
+    build:
+      dockerfile: ../dockerfiles/Dockerfile.webapp
+      context: ./webapp
+    ports: 
+      - 3000:3000
   db:
     image: postgres:12
     volumes:
@@ -22,30 +28,31 @@ services:
       - ray_net
   backend:
     image: 'image:latest'
-    depends_on:
-      - db
-      - mlflow
-      - ray-worker
     ports:
       - 80:80
       - 8888:8888
+      - 8000:8000
     environment:
       - RESTART=true
     env_file:
-      - .env
-      - .env.secret
+      - backend/.env
+      - backend/.env.secret
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 5s
-      timeout: 10s
-      retries: 3
+      interval: 30s
+      timeout: 4m 
+      retries: 8
     restart: unless-stopped
     build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
     networks:
       - ray_net
     command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
+    volumes:
+      - ./backend:/app:z
+      - ./source:/source:z
+      - ./build:/build:z
 
   mlflowdb:
     image: postgres:12
@@ -73,10 +80,10 @@ services:
     depends_on:
       - mlflowdb
     build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
     env_file:
-      - .env.secret
+      - backend/.env.secret
     environment:
       - POSTGRES_SERVER=mlflowdb
       - POSTGRES_PORT=5432
@@ -98,33 +105,35 @@ services:
 
   ray-head:
     build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
+    shm_size: '4.91gb'
     env_file:
-      - .env
-      - .env.secret
+      - backend/.env
+      - backend/.env.secret
     ports:
       - "6379:6379"
       - "8265:8265"
       - "10001:10001"
-      - "8000:8000"
-    command: ray start --head --dashboard-port=8265 --port=6379 --dashboard-host=0.0.0.0 --block
-    shm_size: 3g
+    # Docs on ray cli: https://docs.ray.io/en/latest/cluster/cli.html
+    command: ray start --head --port=6379 --block --dashboard-host 0.0.0.0
     networks:
       - ray_net
+
   ray-worker:
     build:
-      context: .
-      dockerfile: ./dockerfiles/Dockerfile.local
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
+    shm_size: '4.91gb'
     env_file:
-      - .env
-      - .env.secret
+      - backend/.env
+      - backend/.env.secret
     depends_on: 
       - ray-head
-    command: ray start --address=ray-head:6379 --num-cpus=1 --block
-    shm_size: 3g
+    command: ray start --address=ray-head:6379 --num-cpus=8 --block
     networks:
       - ray_net
+
   grafana:
     image: grafana/grafana:9.3.1
     container_name: grafana
@@ -137,7 +146,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
       - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS}
     ports:
-      - 3000:3000
+      - 3001:3000
     networks:
       - ray_net
 
@@ -157,8 +166,20 @@ services:
       - '--web.enable-lifecycle'
     ports:
       - 9090:9090
-    networks:
-      - ray_net
+
+  e2e:
+    image: cypress/included:12.6.0
+    working_dir: /e2e
+    environment:
+      - CYPRESS_baseUrl=http://localhost:3000/
+    command: sh -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
+    entrypoint: []
+    network_mode: host
+    depends_on: [ backend, webapp ]
+    volumes:
+      - ./webapp:/e2e:z
+      - ./backend/tests/data:/e2e/cypress/fixtures/data:z
+
 volumes:
   app-db-data:
   app-mlflow-data:
@@ -171,3 +192,4 @@ networks:
       driver: default
       config:
         - subnet: 172.63.0.0/16
+

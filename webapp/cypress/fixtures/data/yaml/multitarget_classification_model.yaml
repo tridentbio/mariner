@@ -1,0 +1,98 @@
+name: binary_classification_model
+dataset:
+  name: Iris
+  targetColumns:
+    - name: large_petal_length
+      dataType:
+        domainKind: categorical
+        classes:
+          0: no
+          1: yes
+      outModule: BinaryOut
+    - name: species
+      dataType:
+        domainKind: categorical
+        classes:
+          0: 0
+          1: 1
+          2: 2
+      outModule: MultiClassOut
+    - name: petal_length
+      dataType:
+        domainKind: numeric
+        unit: cm
+      outModule: RegressionOut
+  featureColumns:
+    - name: sepal_length
+      dataType:
+        domainKind: numeric
+        unit: cm
+    - name: sepal_width
+      dataType:
+        domainKind: numeric
+        unit: cm
+
+spec: 
+  layers:
+    - name: Concat
+      type: fleet.model_builder.layers.Concat
+      constructorArgs:
+        dim: 1
+      forwardArgs:
+        xs:
+          - $sepal_length
+          - $sepal_width
+
+    - name: Linear0
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 2
+        out_features: 16
+      forwardArgs:
+        input: $Concat
+
+    - name: ReLU0
+      type: torch.nn.ReLU
+      constructorArgs:
+        inplace: false
+      forwardArgs:
+        input: $Linear0
+
+    - name: Linear1
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 16
+        out_features: 16
+      forwardArgs:
+        input: $ReLU0
+
+    - name: ReLU1
+      type: torch.nn.ReLU
+      constructorArgs:
+        inplace: false
+      forwardArgs:
+        input: $Linear1
+
+    - name: RegressionOut
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 16
+        out_features: 1
+      forwardArgs:
+        input: $ReLU1
+
+    - name: MultiClassOut
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 16
+        out_features: 3
+      forwardArgs:
+        input: $ReLU1
+
+    - name: BinaryOut
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 16
+        out_features: 1
+      forwardArgs:
+        input: $ReLU1

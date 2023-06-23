@@ -1,0 +1,140 @@
+[tool.poetry]
+name = "mariner"
+version = "0.1.0"
+description = "MLOps tools for biochem scientists"
+authors = ["Tyler Shimko <tyler@trident.bio>"]
+packages = [
+  { include = "api" },
+  { include = "fleet" },
+  { include = "mariner" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+uvicorn = "^0.16.0"
+fastapi = "0.86.0"
+python-multipart = "^0.0.5"
+email-validator = "^1.0.5"
+passlib = {extras = ["bcrypt"], version = "^1.7.2"}
+pydantic = {extras = ["dotenv"], version = "^1.9.1"}
+psycopg2-binary = "^2.8.5"
+alembic = "^1.4.2"
+sqlalchemy = "^1.3.16"
+python-jose = {extras = ["cryptography"], version = "^3.1.0"}
+uuid = "^1.30"
+pandas = "^1.4.2"
+humps = "^0.2.2"
+PyYAML = "^6.0"
+torchsummary = "^1.5.1"
+mlflow = {version = "2.2.2", extras = ["extras"]}
+networkx = "^2.8.4"
+rdkit = "^2022.3.3"
+Jinja2 = "3.1.2"
+emails = "^0.6"
+websockets = "^10.3"
+torch = {extras = ["cpu"], version = "==2.0.0"}
+Pint = "0.19.1"
+wonderwords = "^2.2.0"
+fastapi-utils = "^0.2.1"
+Sphinx = "^5.3.0"
+torchmetrics = "^0.11.4"
+biopython = "^1.80"
+numba = "^0.56.4"
+lightning = "^2.0.0"
+s3fs = "^2023.3.0"
+boto3 = "1.24.59"
+ray = {version = "2.4.0", extras = ["default"]}
+scikit-learn = "^1.2.2"
+
+[tool.poetry.group.dev.dependencies]
+click = "8.0.4"
+pre-commit = "^2.20.0"
+mypy = "^0.971"
+mockito = "^1.4.0"
+black = "^21.10b0"
+autoflake = "^1.3.1"
+flake8 = "^3.7.9"
+sqlalchemy-stubs = "^0.3"
+matplotlib = "^3.5.2"
+pytest = "^7.1.2"
+pytest-asyncio = "^0.19.0"
+pytest-timeout = "^2.1.0"
+jupyterlab = "^3.5.0"
+isort = "^5.10.1"
+pylint = "^2.15.5"
+pylint-pydantic = "^0.1.4"
+coverage = "^7.1.0"
+pytest-dotenv = "^0.5.2"
+docstr-coverage = "^2.2.0"
+sphinx-rtd-theme = "^1.2.1"
+sphinx-toolbox = "^3.4.0"
+sphinx-copybutton = "^0.5.2"
+sphinx-autobuild = "^2021.3.14"
+sphinx-autopackagesummary = "^1.3"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+line_length = 80
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry.scripts]
+install_deps_cpu = "deps:install_deps_cpu"
+install_deps_cu101 = "deps:install_deps_cu101"
+install_deps_cu102 = "deps:install_deps_cu102"
+install_deps_cu110 = "deps:install_deps_cu110"
+
+[flake8]
+max-line-length = 88
+extend-ignore = "E203"
+exclude = [
+    ".git",
+    "__pycache__",
+    "__init__.py",
+    ".mypy_cache",
+    ".pytest_cache",
+    "mariner/alembic",
+    "notebooks",
+    ".env",
+    ".venv",
+    "scripts/",
+    "tests",
+    "tests/**",
+    "tests/"
+]
+
+[tool.mypy]
+plugins = ["pydantic.mypy", "sqlmypy"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "mariner.alembic.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "scripts.*"
+ignore_errors = true
+
+[tool.coverage.report]
+include = [
+    "./mariner/*",
+    "./fleet/*",
+    "./api/*"
+]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "@(abc\\.)?abstractmethod"
+]
+
+[tool.coverage.html]
+directory = "cov/html"

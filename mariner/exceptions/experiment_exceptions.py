@@ -1,2 +1,0 @@
-class ExperimentNotFound(Exception):
-    pass
