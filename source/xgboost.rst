@@ -1,4 +1,0 @@
-.. _xgboost
-
-XGBoost Models
----------------

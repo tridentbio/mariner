@@ -11,7 +11,7 @@ and a web application written in React.
 
 Below is a picture of the complete architecture
 
-.. figure:: infra.png
+.. figure:: ../static/infra.png
    :alt: Infra
    :scale: 150%
 

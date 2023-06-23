@@ -52,18 +52,6 @@ Functions
     :no-members:
     :no-inherited-members:
 
-Classes
--------
-.. currentmodule:: mariner
-
-.. autosummary::
-   :nosignatures:
-   :toctree:
-   :template: class.rst
-
-   ray_actors.dataset_transforms.DatasetTransforms
-
-
 Functions
 ---------
 .. currentmodule:: mariner
@@ -99,8 +87,6 @@ Classes
    :toctree:
    :template: class.rst
 
-   ray_actors.model_check_actor.ModelCheckActor
-
 
 Functions
 ---------
@@ -135,8 +121,6 @@ Classes
    :toctree:
    :template: class.rst
 
-   ray_actors.training_actors.TrainingActor
-
 
 Functions
 ---------
@@ -166,4 +150,3 @@ Functions
     :no-members:
     :no-inherited-members:
 
-.. todo::
