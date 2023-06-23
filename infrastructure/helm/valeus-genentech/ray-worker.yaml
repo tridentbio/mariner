@@ -1,0 +1,104 @@
+replicaCount: 1
+replicaCountCanary: 1
+command: /app/entrypoints/ray-worker.sh
+
+canary:
+  enabled: false
+
+normal_deploy:
+  enabled: true
+
+version: ray-worker-v1
+
+port: 5000
+
+image:
+  repository: 515402585597.dkr.ecr.us-east-1.amazonaws.com/ray-worker
+  pullPolicy: Always
+  tag: latest
+  containerPort: 5000
+  livenessProbe:
+    path: /
+    port: 5000
+    periodSeconds: 30
+    successThreshold: 1
+    failureThreshold: 3
+    timeoutSeconds: 1
+  readinessProbe:
+    path: /
+    port: 5000
+    periodSeconds: 30
+    successThreshold: 1
+    failureThreshold: 3
+    timeoutSeconds: 1
+
+strategy:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+imagePullSecrets:
+  - name: regcred
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  product: ray-worker
+
+podSecurityContext: {}
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 5000
+  annotations:
+    alb.ingress.kubernetes.io/target-type: ip
+
+ingress:
+  enabled: false
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: '/health'
+    kubernetes.io/ingress.class: 'nginx'
+    meta.helm.sh/release-name: 'ray-worker'
+    meta.helm.sh/release-namespace: 'mariner'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+  hosts:
+  - host: ray-worker.dev.trident.bio
+  tls:
+  - hosts:
+    - ray-worker.dev.trident.bio
+
+istio_url: ray-worker.dev.trident.bio
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 1024Mi
+  requests:
+    cpu: 100m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  # minReplicas: 1
+  # maxReplicas: 3
+  # targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
