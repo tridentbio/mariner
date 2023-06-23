@@ -1,4 +1,4 @@
-.. _start
+.. _start:
 
 ===============
 Getting Started
@@ -7,7 +7,8 @@ Getting Started
 This page shows how to get started with Mariner.
 
 
-.. _install
+.. _install:
+
 Installation
 ============
 
@@ -52,7 +53,7 @@ This approach has only been tested on unix based systems.
 .. todo::
    Add instructions on how to run locally
 
-.. _envfiles
+.. _envfiles:
 
 
 Creating Default User
@@ -167,6 +168,11 @@ The ``.env.secret`` file contains all sensitive variables, and should be kept se
 .. confval:: GITHUB_CLIENT_SECRET
 
    Configures authentication secret by Github OAuth.
+
+.. confval:: AWS_MODE
+   :default: ``"local"``
+
+   Either ``local`` or ``sts``. If ``local``, search credentials from environment variables named ``AWS_ACCESS_KEY_ID`` and ``AWS_SECRET_ACCESS_KEY``. If ``sts`` uses `Security Token Service <https://docs.aws.amazon.com/STS/latest/APIReference/welcome.html>`_ to generate temporary credentials.
 
 .. confval:: AWS_ACCRESS_KEY_ID
 
