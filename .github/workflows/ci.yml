@@ -1,5 +1,12 @@
 # Continous integration checks that can be done out of docker
 name: Continuous integration
+env:
+  AWS_MODE: local
+  AWS_REGION: us-east-1
+  AWS_ACCESS_KEY_ID: --
+  AWS_SECRET_ACCESS_KEY: --
+  GITHUB_CLIENT_ID: --
+  GITHUB_CLIENT_SECRET: --
 on:
   # Runs on PRs for check and easier review
   pull_request:
