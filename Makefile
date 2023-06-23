@@ -156,14 +156,19 @@ publish: ## Parse RELEASE.md file into mariner events that will show up as notif
 	cd backend &&\
 		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
 
+SPHINX_OPTS = -a -W -c ../docs
 .PHONY: build-docs 
 build-docs: ## Builds the documentation
-	docker compose -f docker-compose.yml run -e SPHINX_APIDOC_OPTIONS=members,show-inheritance --entrypoint sphinx-apidoc backend --module-first -o ../source ./mariner &&\
-	docker compose -f docker-compose.yml run -e SPHINX_APIDOC_OPTIONS=members,show-inheritance --entrypoint sphinx-apidoc backend --module-first -o ../source ./fleet &&\
-	docker compose -f docker-compose.yml run --entrypoint 'sphinx-build' backend ../source ../build -a $(O)
+	docker compose -f docker-compose.yml run --entrypoint \
+		'sphinx-build' backend $(SPHINX_OPTS) --keep-going ../docs/source ../build
 
 
 .PHONY: live-docs 
 live-docs:  ## Runs the documentation server.
-	docker compose run --entrypoint sphinx-autobuild backend --port 8000 --open-browser --watch . ../source ../build
+	docker compose run --service-ports --entrypoint sphinx-autobuild backend --port 8000 --open-browser --watch . $(SPHINX_OPTS) ../docs/source ../build
 
+.PHONY: live-docs-local
+live-docs-local:  ## Runs the documentation server.
+	cd backend&&\
+		poetry run \
+		sphinx-autobuild --port 8000 --open-browser -a --watch . $(SPHINX_OPTS) ../docs/source ../build
