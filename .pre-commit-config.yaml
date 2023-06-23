@@ -1,30 +1,77 @@
 default_install_hook_types:
-  - pre-push
   - pre-commit
 repos:
-- repo: local
-  hooks:
-    - id: format-check
-      name: Checking staged code style (Possibly fixable with scripts/format.sh)
-      entry: poetry run sh scripts/check-format.sh
-      fail_fast: true
-      pass_filenames: true
-      language: system
-      types: [python]
-      files: '(mariner|model_builder|api|tests).*\.py'
-    - id: lint-single
-      name: Linting staged code with scripts/lint-single.sh
-      entry: poetry run sh scripts/lint-single.sh
-      language: system
-      types: [python]
-      pass_filenames: true
-      fail_fast: true
-      files: '(mariner|model_builder|api|tests).*\.py'
-    - id: test
-      name: Running short tests
-      entry: sh scripts/test.sh
-      language: system
-      pass_filenames: false
-      fail_fast: true
-      stages: 
-        - manual
+  - repo: local
+    hooks:
+      - id: check-staged-backend-style
+        name: Checking staged backend code style
+        entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh ${@#"backend/"}'
+        fail_fast: true
+        pass_filenames: true
+        language: system
+        types: [python]
+        files: 'backend.*(mariner|model_builder|api|tests).*\.py'
+        stages:
+          - commit
+      - id: check-staged-webapp-style
+        name: Checking staged webapp code style
+        entry: bash -c 'cd webapp && npm run prettier:check'
+        fail_fast: true
+        files: 'webapp.*\.(ts|tsc)'
+        pass_filenames: false
+        language: system
+        stages:
+          - commit
+      - id: format-staged-fix-backend
+        verbose: true
+        name: Format staged files in the backend
+        entry: bash -c 'cd backend && poetry run sh scripts/format-single.sh ${@#"backend/"}' --
+        pass_filenames: true
+        files: '^backend/'
+        types: [python]
+        language: system
+        stages:
+          - manual
+      - id: format-staged-fix-webapp
+        name: Formats staged files in the webapp
+        entry: bash -c  "cd webapp && npm run prettier:fix && npm run eslint:fix"
+        language: system
+        stages:
+          - manual
+      - id: lint-staged-backend
+        name: Linting staged code in backend
+        entry: bash -c 'cd backend && poetry run sh scripts/lint-single.sh ${@#"backend/"}' --
+        language: system
+        types: [python]
+        files: '^backend/'
+        pass_filenames: true
+        fail_fast: true
+        stages:
+          - commit
+      - id: lint-staged-webapp
+        name: Linting staged code in webapp
+        entry: bash -c "cd webapp && npm run eslint:check"
+        language: system
+        types: [ts, tsx]
+        files: ^webapp/
+        fail_fast: true
+        stages:
+          - commit
+      - id: test-backend-unit
+        name: Running backend unit tests
+        entry: cd backend && poetry run sh scripts/test.sh -m pytest -m \"not integration\"
+        language: system
+        files: '^backend/'
+        types: [ python ]
+        stages:
+          - commit
+      - id: test-webapp
+        name: Running front end  unit tests
+        entry: bash -c "cd webapp && npm run test:unit"
+        language: system
+        pass_filenames: false
+        fail_fast: true
+        files: '^webapp/'
+        types: [ ts, tsx ]
+        stages:
+          - commit

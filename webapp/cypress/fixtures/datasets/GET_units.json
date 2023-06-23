@@ -1,0 +1,1646 @@
+[
+  {
+    "name": "ampere",
+    "latex": "$\\mathrm{ampere}$"
+  },
+  {
+    "name": "conventional_ampere_90",
+    "latex": "$\\mathrm{conventional\\_ampere\\_90}$"
+  },
+  {
+    "name": "US_international_ampere",
+    "latex": "$\\mathrm{US\\_international\\_ampere}$"
+  },
+  {
+    "name": "mean_international_ampere",
+    "latex": "$\\mathrm{mean\\_international\\_ampere}$"
+  },
+  {
+    "name": "ampere_hour",
+    "latex": "$\\mathrm{ampere\\_hour}$"
+  },
+  {
+    "name": "ampere_turn",
+    "latex": "$\\mathrm{ampere\\_turn}$"
+  },
+  {
+    "name": "byte",
+    "latex": "$\\mathrm{byte}$"
+  },
+  {
+    "name": "board_foot",
+    "latex": "$\\mathrm{board\\_foot}$"
+  },
+  {
+    "name": "british_thermal_unit",
+    "latex": "$\\mathrm{british\\_thermal\\_unit}$"
+  },
+  {
+    "name": "barye",
+    "latex": "$\\mathrm{barye}$"
+  },
+  {
+    "name": "baud",
+    "latex": "$\\mathrm{baud}$"
+  },
+  {
+    "name": "biot",
+    "latex": "$\\mathrm{biot}$"
+  },
+  {
+    "name": "becquerel",
+    "latex": "$\\mathrm{becquerel}$"
+  },
+  {
+    "name": "international_british_thermal_unit",
+    "latex": "$\\mathrm{international\\_british\\_thermal\\_unit}$"
+  },
+  {
+    "name": "thermochemical_british_thermal_unit",
+    "latex": "$\\mathrm{thermochemical\\_british\\_thermal\\_unit}$"
+  },
+  {
+    "name": "coulomb",
+    "latex": "$\\mathrm{coulomb}$"
+  },
+  {
+    "name": "conventional_coulomb_90",
+    "latex": "$\\mathrm{conventional\\_coulomb\\_90}$"
+  },
+  {
+    "name": "curie",
+    "latex": "$\\mathrm{curie}$"
+  },
+  {
+    "name": "clausius",
+    "latex": "$\\mathrm{clausius}$"
+  },
+  {
+    "name": "debye",
+    "latex": "$\\mathrm{debye}$"
+  },
+  {
+    "name": "pixels_per_inch",
+    "latex": "$\\mathrm{pixels\\_per\\_inch}$"
+  },
+  {
+    "name": "dalton",
+    "latex": "$\\mathrm{dalton}$"
+  },
+  {
+    "name": "number_english",
+    "latex": "$\\mathrm{number\\_english}$"
+  },
+  {
+    "name": "therm",
+    "latex": "$\\mathrm{therm}$"
+  },
+  {
+    "name": "hartree",
+    "latex": "$\\mathrm{hartree}$"
+  },
+  {
+    "name": "farad",
+    "latex": "$\\mathrm{farad}$"
+  },
+  {
+    "name": "conventional_farad_90",
+    "latex": "$\\mathrm{conventional\\_farad\\_90}$"
+  },
+  {
+    "name": "franklin",
+    "latex": "$\\mathrm{franklin}$"
+  },
+  {
+    "name": "gauss",
+    "latex": "$\\mathrm{gauss}$"
+  },
+  {
+    "name": "conductance_quantum",
+    "latex": "$\\mathrm{conductance\\_quantum}$"
+  },
+  {
+    "name": "galileo",
+    "latex": "$\\mathrm{galileo}$"
+  },
+  {
+    "name": "gilbert",
+    "latex": "$\\mathrm{gilbert}$"
+  },
+  {
+    "name": "gray",
+    "latex": "$\\mathrm{gray}$"
+  },
+  {
+    "name": "henry",
+    "latex": "$\\mathrm{henry}$"
+  },
+  {
+    "name": "water",
+    "latex": "$\\mathrm{water}$"
+  },
+  {
+    "name": "conventional_henry_90",
+    "latex": "$\\mathrm{conventional\\_henry\\_90}$"
+  },
+  {
+    "name": "mercury",
+    "latex": "$\\mathrm{mercury}$"
+  },
+  {
+    "name": "mercury_60F",
+    "latex": "$\\mathrm{mercury\\_60F}$"
+  },
+  {
+    "name": "hertz",
+    "latex": "$\\mathrm{hertz}$"
+  },
+  {
+    "name": "joule",
+    "latex": "$\\mathrm{joule}$"
+  },
+  {
+    "name": "kelvin",
+    "latex": "$\\mathrm{kelvin}$"
+  },
+  {
+    "name": "kilometer_per_hour",
+    "latex": "$\\mathrm{kilometer\\_per\\_hour}$"
+  },
+  {
+    "name": "josephson_constant",
+    "latex": "$\\mathrm{josephson\\_constant}$"
+  },
+  {
+    "name": "conventional_josephson_constant",
+    "latex": "$\\mathrm{conventional\\_josephson\\_constant}$"
+  },
+  {
+    "name": "K_alpha_Cu_d_220",
+    "latex": "$\\mathrm{K\\_alpha\\_Cu\\_d\\_220}$"
+  },
+  {
+    "name": "K_alpha_Mo_d_220",
+    "latex": "$\\mathrm{K\\_alpha\\_Mo\\_d\\_220}$"
+  },
+  {
+    "name": "K_alpha_W_d_220",
+    "latex": "$\\mathrm{K\\_alpha\\_W\\_d\\_220}$"
+  },
+  {
+    "name": "liter",
+    "latex": "$\\mathrm{liter}$"
+  },
+  {
+    "name": "langley",
+    "latex": "$\\mathrm{langley}$"
+  },
+  {
+    "name": "molar",
+    "latex": "$\\mathrm{molar}$"
+  },
+  {
+    "name": "mile_per_hour",
+    "latex": "$\\mathrm{mile\\_per\\_hour}$"
+  },
+  {
+    "name": "maxwell",
+    "latex": "$\\mathrm{maxwell}$"
+  },
+  {
+    "name": "newton",
+    "latex": "$\\mathrm{newton}$"
+  },
+  {
+    "name": "avogadro_constant",
+    "latex": "$\\mathrm{avogadro\\_constant}$"
+  },
+  {
+    "name": "number_meter",
+    "latex": "$\\mathrm{number\\_meter}$"
+  },
+  {
+    "name": "neper",
+    "latex": "$\\mathrm{neper}$"
+  },
+  {
+    "name": "oersted",
+    "latex": "$\\mathrm{oersted}$"
+  },
+  {
+    "name": "poise",
+    "latex": "$\\mathrm{poise}$"
+  },
+  {
+    "name": "pixels_per_centimeter",
+    "latex": "$\\mathrm{pixels\\_per\\_centimeter}$"
+  },
+  {
+    "name": "peak_sun_hour",
+    "latex": "$\\mathrm{peak\\_sun\\_hour}$"
+  },
+  {
+    "name": "pascal",
+    "latex": "$\\mathrm{pascal}$"
+  },
+  {
+    "name": "magnetic_flux_quantum",
+    "latex": "$\\mathrm{magnetic\\_flux\\_quantum}$"
+  },
+  {
+    "name": "molar_gas_constant",
+    "latex": "$\\mathrm{molar\\_gas\\_constant}$"
+  },
+  {
+    "name": "RKM",
+    "latex": "$\\mathrm{RKM}$"
+  },
+  {
+    "name": "von_klitzing_constant",
+    "latex": "$\\mathrm{von\\_klitzing\\_constant}$"
+  },
+  {
+    "name": "conventional_von_klitzing_constant",
+    "latex": "$\\mathrm{conventional\\_von\\_klitzing\\_constant}$"
+  },
+  {
+    "name": "rydberg_constant",
+    "latex": "$\\mathrm{rydberg\\_constant}$"
+  },
+  {
+    "name": "rutherford",
+    "latex": "$\\mathrm{rutherford}$"
+  },
+  {
+    "name": "rydberg",
+    "latex": "$\\mathrm{rydberg}$"
+  },
+  {
+    "name": "siemens",
+    "latex": "$\\mathrm{siemens}$"
+  },
+  {
+    "name": "sound_pressure_level",
+    "latex": "$\\mathrm{sound\\_pressure\\_level}$"
+  },
+  {
+    "name": "stokes",
+    "latex": "$\\mathrm{stokes}$"
+  },
+  {
+    "name": "sievert",
+    "latex": "$\\mathrm{sievert}$"
+  },
+  {
+    "name": "tesla",
+    "latex": "$\\mathrm{tesla}$"
+  },
+  {
+    "name": "aberdeen",
+    "latex": "$\\mathrm{aberdeen}$"
+  },
+  {
+    "name": "denier",
+    "latex": "$\\mathrm{denier}$"
+  },
+  {
+    "name": "jute",
+    "latex": "$\\mathrm{jute}$"
+  },
+  {
+    "name": "tex",
+    "latex": "$\\mathrm{tex}$"
+  },
+  {
+    "name": "enzyme_unit",
+    "latex": "$\\mathrm{enzyme\\_unit}$"
+  },
+  {
+    "name": "imperial_barrel",
+    "latex": "$\\mathrm{imperial\\_barrel}$"
+  },
+  {
+    "name": "imperial_bushel",
+    "latex": "$\\mathrm{imperial\\_bushel}$"
+  },
+  {
+    "name": "imperial_cup",
+    "latex": "$\\mathrm{imperial\\_cup}$"
+  },
+  {
+    "name": "UK_hundredweight",
+    "latex": "$\\mathrm{UK\\_hundredweight}$"
+  },
+  {
+    "name": "imperial_fluid_ounce",
+    "latex": "$\\mathrm{imperial\\_fluid\\_ounce}$"
+  },
+  {
+    "name": "UK_force_ton",
+    "latex": "$\\mathrm{UK\\_force\\_ton}$"
+  },
+  {
+    "name": "imperial_gallon",
+    "latex": "$\\mathrm{imperial\\_gallon}$"
+  },
+  {
+    "name": "imperial_gill",
+    "latex": "$\\mathrm{imperial\\_gill}$"
+  },
+  {
+    "name": "horsepower",
+    "latex": "$\\mathrm{horsepower}$"
+  },
+  {
+    "name": "imperial_pint",
+    "latex": "$\\mathrm{imperial\\_pint}$"
+  },
+  {
+    "name": "imperial_peck",
+    "latex": "$\\mathrm{imperial\\_peck}$"
+  },
+  {
+    "name": "imperial_quart",
+    "latex": "$\\mathrm{imperial\\_quart}$"
+  },
+  {
+    "name": "UK_ton",
+    "latex": "$\\mathrm{UK\\_ton}$"
+  },
+  {
+    "name": "US_hundredweight",
+    "latex": "$\\mathrm{US\\_hundredweight}$"
+  },
+  {
+    "name": "dry_barrel",
+    "latex": "$\\mathrm{dry\\_barrel}$"
+  },
+  {
+    "name": "dry_gallon",
+    "latex": "$\\mathrm{dry\\_gallon}$"
+  },
+  {
+    "name": "dry_pint",
+    "latex": "$\\mathrm{dry\\_pint}$"
+  },
+  {
+    "name": "dry_quart",
+    "latex": "$\\mathrm{dry\\_quart}$"
+  },
+  {
+    "name": "fluid_dram",
+    "latex": "$\\mathrm{fluid\\_dram}$"
+  },
+  {
+    "name": "fluid_ounce",
+    "latex": "$\\mathrm{fluid\\_ounce}$"
+  },
+  {
+    "name": "US_force_ton",
+    "latex": "$\\mathrm{US\\_force\\_ton}$"
+  },
+  {
+    "name": "US_international_ohm",
+    "latex": "$\\mathrm{US\\_international\\_ohm}$"
+  },
+  {
+    "name": "US_international_volt",
+    "latex": "$\\mathrm{US\\_international\\_volt}$"
+  },
+  {
+    "name": "cup",
+    "latex": "$\\mathrm{cup}$"
+  },
+  {
+    "name": "fifth",
+    "latex": "$\\mathrm{fifth}$"
+  },
+  {
+    "name": "gallon",
+    "latex": "$\\mathrm{gallon}$"
+  },
+  {
+    "name": "gill",
+    "latex": "$\\mathrm{gill}$"
+  },
+  {
+    "name": "quart",
+    "latex": "$\\mathrm{quart}$"
+  },
+  {
+    "name": "pint",
+    "latex": "$\\mathrm{pint}$"
+  },
+  {
+    "name": "shot",
+    "latex": "$\\mathrm{shot}$"
+  },
+  {
+    "name": "US_therm",
+    "latex": "$\\mathrm{US\\_therm}$"
+  },
+  {
+    "name": "US_ton",
+    "latex": "$\\mathrm{US\\_ton}$"
+  },
+  {
+    "name": "volt",
+    "latex": "$\\mathrm{volt}$"
+  },
+  {
+    "name": "volt_ampere",
+    "latex": "$\\mathrm{volt\\_ampere}$"
+  },
+  {
+    "name": "conventional_volt_90",
+    "latex": "$\\mathrm{conventional\\_volt\\_90}$"
+  },
+  {
+    "name": "mean_international_volt",
+    "latex": "$\\mathrm{mean\\_international\\_volt}$"
+  },
+  {
+    "name": "watt",
+    "latex": "$\\mathrm{watt}$"
+  },
+  {
+    "name": "conventional_watt_90",
+    "latex": "$\\mathrm{conventional\\_watt\\_90}$"
+  },
+  {
+    "name": "weber",
+    "latex": "$\\mathrm{weber}$"
+  },
+  {
+    "name": "watt_hour",
+    "latex": "$\\mathrm{watt\\_hour}$"
+  },
+  {
+    "name": "x_unit_Cu",
+    "latex": "$\\mathrm{x\\_unit\\_Cu}$"
+  },
+  {
+    "name": "x_unit_Mo",
+    "latex": "$\\mathrm{x\\_unit\\_Mo}$"
+  },
+  {
+    "name": "impedance_of_free_space",
+    "latex": "$\\mathrm{impedance\\_of\\_free\\_space}$"
+  },
+  {
+    "name": "year",
+    "latex": "$\\mathrm{year}$"
+  },
+  {
+    "name": "bohr",
+    "latex": "$\\mathrm{bohr}$"
+  },
+  {
+    "name": "dirac_constant",
+    "latex": "$\\mathrm{dirac\\_constant}$"
+  },
+  {
+    "name": "atomic_unit_of_current",
+    "latex": "$\\mathrm{atomic\\_unit\\_of\\_current}$"
+  },
+  {
+    "name": "atomic_unit_of_electric_field",
+    "latex": "$\\mathrm{atomic\\_unit\\_of\\_electric\\_field}$"
+  },
+  {
+    "name": "atomic_unit_of_force",
+    "latex": "$\\mathrm{atomic\\_unit\\_of\\_force}$"
+  },
+  {
+    "name": "atomic_unit_of_intensity",
+    "latex": "$\\mathrm{atomic\\_unit\\_of\\_intensity}$"
+  },
+  {
+    "name": "electron_mass",
+    "latex": "$\\mathrm{electron\\_mass}$"
+  },
+  {
+    "name": "atomic_unit_of_temperature",
+    "latex": "$\\mathrm{atomic\\_unit\\_of\\_temperature}$"
+  },
+  {
+    "name": "atomic_unit_of_time",
+    "latex": "$\\mathrm{atomic\\_unit\\_of\\_time}$"
+  },
+  {
+    "name": "abampere",
+    "latex": "$\\mathrm{abampere}$"
+  },
+  {
+    "name": "abcoulomb",
+    "latex": "$\\mathrm{abcoulomb}$"
+  },
+  {
+    "name": "abfarad",
+    "latex": "$\\mathrm{abfarad}$"
+  },
+  {
+    "name": "abhenry",
+    "latex": "$\\mathrm{abhenry}$"
+  },
+  {
+    "name": "absiemens",
+    "latex": "$\\mathrm{absiemens}$"
+  },
+  {
+    "name": "abvolt",
+    "latex": "$\\mathrm{abvolt}$"
+  },
+  {
+    "name": "abohm",
+    "latex": "$\\mathrm{abohm}$"
+  },
+  {
+    "name": "acre",
+    "latex": "$\\mathrm{acre}$"
+  },
+  {
+    "name": "acre_foot",
+    "latex": "$\\mathrm{acre\\_foot}$"
+  },
+  {
+    "name": "fine_structure_constant",
+    "latex": "$\\mathrm{fine\\_structure\\_constant}$"
+  },
+  {
+    "name": "unified_atomic_mass_unit",
+    "latex": "$\\mathrm{unified\\_atomic\\_mass\\_unit}$"
+  },
+  {
+    "name": "angstrom",
+    "latex": "$\\mathrm{angstrom}$"
+  },
+  {
+    "name": "angstrom_star",
+    "latex": "$\\mathrm{angstrom\\_star}$"
+  },
+  {
+    "name": "degree",
+    "latex": "$\\mathrm{degree}$"
+  },
+  {
+    "name": "arcminute",
+    "latex": "$\\mathrm{arcminute}$"
+  },
+  {
+    "name": "arcsecond",
+    "latex": "$\\mathrm{arcsecond}$"
+  },
+  {
+    "name": "apothecary_dram",
+    "latex": "$\\mathrm{apothecary\\_dram}$"
+  },
+  {
+    "name": "apothecary_pound",
+    "latex": "$\\mathrm{apothecary\\_pound}$"
+  },
+  {
+    "name": "apothecary_ounce",
+    "latex": "$\\mathrm{apothecary\\_ounce}$"
+  },
+  {
+    "name": "are",
+    "latex": "$\\mathrm{are}$"
+  },
+  {
+    "name": "astronomical_unit",
+    "latex": "$\\mathrm{astronomical\\_unit}$"
+  },
+  {
+    "name": "technical_atmosphere",
+    "latex": "$\\mathrm{technical\\_atmosphere}$"
+  },
+  {
+    "name": "standard_atmosphere",
+    "latex": "$\\mathrm{standard\\_atmosphere}$"
+  },
+  {
+    "name": "atmosphere_liter",
+    "latex": "$\\mathrm{atmosphere\\_liter}$"
+  },
+  {
+    "name": "atomic_mass_constant",
+    "latex": "$\\mathrm{atomic\\_mass\\_constant}$"
+  },
+  {
+    "name": "dram",
+    "latex": "$\\mathrm{dram}$"
+  },
+  {
+    "name": "ounce",
+    "latex": "$\\mathrm{ounce}$"
+  },
+  {
+    "name": "pound",
+    "latex": "$\\mathrm{pound}$"
+  },
+  {
+    "name": "avogadro_number",
+    "latex": "$\\mathrm{avogadro\\_number}$"
+  },
+  {
+    "name": "barn",
+    "latex": "$\\mathrm{barn}$"
+  },
+  {
+    "name": "bag",
+    "latex": "$\\mathrm{bag}$"
+  },
+  {
+    "name": "bar",
+    "latex": "$\\mathrm{bar}$"
+  },
+  {
+    "name": "barrel",
+    "latex": "$\\mathrm{barrel}$"
+  },
+  {
+    "name": "beer_barrel",
+    "latex": "$\\mathrm{beer\\_barrel}$"
+  },
+  {
+    "name": "point",
+    "latex": "$\\mathrm{point}$"
+  },
+  {
+    "name": "biot_turn",
+    "latex": "$\\mathrm{biot\\_turn}$"
+  },
+  {
+    "name": "bit",
+    "latex": "$\\mathrm{bit}$"
+  },
+  {
+    "name": "bits_per_pixel",
+    "latex": "$\\mathrm{bits\\_per\\_pixel}$"
+  },
+  {
+    "name": "slinch",
+    "latex": "$\\mathrm{slinch}$"
+  },
+  {
+    "name": "bohr_magneton",
+    "latex": "$\\mathrm{bohr\\_magneton}$"
+  },
+  {
+    "name": "boiler_horsepower",
+    "latex": "$\\mathrm{boiler\\_horsepower}$"
+  },
+  {
+    "name": "boltzmann_constant",
+    "latex": "$\\mathrm{boltzmann\\_constant}$"
+  },
+  {
+    "name": "bushel",
+    "latex": "$\\mathrm{bushel}$"
+  },
+  {
+    "name": "buckingham",
+    "latex": "$\\mathrm{buckingham}$"
+  },
+  {
+    "name": "speed_of_light",
+    "latex": "$\\mathrm{speed\\_of\\_light}$"
+  },
+  {
+    "name": "first_radiation_constant",
+    "latex": "$\\mathrm{first\\_radiation\\_constant}$"
+  },
+  {
+    "name": "second_radiation_constant",
+    "latex": "$\\mathrm{second\\_radiation\\_constant}$"
+  },
+  {
+    "name": "cables_length",
+    "latex": "$\\mathrm{cables\\_length}$"
+  },
+  {
+    "name": "calorie",
+    "latex": "$\\mathrm{calorie}$"
+  },
+  {
+    "name": "fifteen_degree_calorie",
+    "latex": "$\\mathrm{fifteen\\_degree\\_calorie}$"
+  },
+  {
+    "name": "international_calorie",
+    "latex": "$\\mathrm{international\\_calorie}$"
+  },
+  {
+    "name": "candela",
+    "latex": "$\\mathrm{candela}$"
+  },
+  {
+    "name": "carat",
+    "latex": "$\\mathrm{carat}$"
+  },
+  {
+    "name": "cubic_centimeter",
+    "latex": "$\\mathrm{cubic\\_centimeter}$"
+  },
+  {
+    "name": "degree_Celsius",
+    "latex": "$\\mathrm{degree\\_Celsius}$"
+  },
+  {
+    "name": "centimeter",
+    "latex": "$\\mathrm{centimeter}$"
+  },
+  {
+    "name": "centimeter_H2O",
+    "latex": "$\\mathrm{centimeter\\_H2O}$"
+  },
+  {
+    "name": "centimeter_Hg",
+    "latex": "$\\mathrm{centimeter\\_Hg}$"
+  },
+  {
+    "name": "centipoise",
+    "latex": "$\\mathrm{centipoise}$"
+  },
+  {
+    "name": "century",
+    "latex": "$\\mathrm{century}$"
+  },
+  {
+    "name": "chain",
+    "latex": "$\\mathrm{chain}$"
+  },
+  {
+    "name": "cicero",
+    "latex": "$\\mathrm{cicero}$"
+  },
+  {
+    "name": "turn",
+    "latex": "$\\mathrm{turn}$"
+  },
+  {
+    "name": "circular_mil",
+    "latex": "$\\mathrm{circular\\_mil}$"
+  },
+  {
+    "name": "classical_electron_radius",
+    "latex": "$\\mathrm{classical\\_electron\\_radius}$"
+  },
+  {
+    "name": "reciprocal_centimeter",
+    "latex": "$\\mathrm{reciprocal\\_centimeter}$"
+  },
+  {
+    "name": "common_year",
+    "latex": "$\\mathrm{common\\_year}$"
+  },
+  {
+    "name": "conventional_ohm_90",
+    "latex": "$\\mathrm{conventional\\_ohm\\_90}$"
+  },
+  {
+    "name": "cooling_tower_ton",
+    "latex": "$\\mathrm{cooling\\_tower\\_ton}$"
+  },
+  {
+    "name": "coulomb_constant",
+    "latex": "$\\mathrm{coulomb\\_constant}$"
+  },
+  {
+    "name": "count",
+    "latex": "$\\mathrm{count}$"
+  },
+  {
+    "name": "counts_per_second",
+    "latex": "$\\mathrm{counts\\_per\\_second}$"
+  },
+  {
+    "name": "css_pixel",
+    "latex": "$\\mathrm{css\\_pixel}$"
+  },
+  {
+    "name": "cubic_foot",
+    "latex": "$\\mathrm{cubic\\_foot}$"
+  },
+  {
+    "name": "cubic_inch",
+    "latex": "$\\mathrm{cubic\\_inch}$"
+  },
+  {
+    "name": "cubic_yard",
+    "latex": "$\\mathrm{cubic\\_yard}$"
+  },
+  {
+    "name": "hundredweight",
+    "latex": "$\\mathrm{hundredweight}$"
+  },
+  {
+    "name": "day",
+    "latex": "$\\mathrm{day}$"
+  },
+  {
+    "name": "decibel",
+    "latex": "$\\mathrm{decibel}$"
+  },
+  {
+    "name": "decibelmilliwatt",
+    "latex": "$\\mathrm{decibelmilliwatt}$"
+  },
+  {
+    "name": "decibelmicrowatt",
+    "latex": "$\\mathrm{decibelmicrowatt}$"
+  },
+  {
+    "name": "lattice_spacing_of_Si",
+    "latex": "$\\mathrm{lattice\\_spacing\\_of\\_Si}$"
+  },
+  {
+    "name": "darcy",
+    "latex": "$\\mathrm{darcy}$"
+  },
+  {
+    "name": "decade",
+    "latex": "$\\mathrm{decade}$"
+  },
+  {
+    "name": "decimeter",
+    "latex": "$\\mathrm{decimeter}$"
+  },
+  {
+    "name": "decitex",
+    "latex": "$\\mathrm{decitex}$"
+  },
+  {
+    "name": "degree_Fahrenheit",
+    "latex": "$\\mathrm{degree\\_Fahrenheit}$"
+  },
+  {
+    "name": "degree_Rankine",
+    "latex": "$\\mathrm{degree\\_Rankine}$"
+  },
+  {
+    "name": "degree_Reaumur",
+    "latex": "$\\mathrm{degree\\_Reaumur}$"
+  },
+  {
+    "name": "delta_degree_Celsius",
+    "latex": "$\\mathrm{delta\\_degree\\_Celsius}$"
+  },
+  {
+    "name": "delta_degree_Fahrenheit",
+    "latex": "$\\mathrm{delta\\_degree\\_Fahrenheit}$"
+  },
+  {
+    "name": "delta_degree_Reaumur",
+    "latex": "$\\mathrm{delta\\_degree\\_Reaumur}$"
+  },
+  {
+    "name": "didot",
+    "latex": "$\\mathrm{didot}$"
+  },
+  {
+    "name": "pixel",
+    "latex": "$\\mathrm{pixel}$"
+  },
+  {
+    "name": "dtex",
+    "latex": "$\\mathrm{dtex}$"
+  },
+  {
+    "name": "pennyweight",
+    "latex": "$\\mathrm{pennyweight}$"
+  },
+  {
+    "name": "dyne",
+    "latex": "$\\mathrm{dyne}$"
+  },
+  {
+    "name": "elementary_charge",
+    "latex": "$\\mathrm{elementary\\_charge}$"
+  },
+  {
+    "name": "electron_volt",
+    "latex": "$\\mathrm{electron\\_volt}$"
+  },
+  {
+    "name": "vacuum_permittivity",
+    "latex": "$\\mathrm{vacuum\\_permittivity}$"
+  },
+  {
+    "name": "electrical_horsepower",
+    "latex": "$\\mathrm{electrical\\_horsepower}$"
+  },
+  {
+    "name": "electron_g_factor",
+    "latex": "$\\mathrm{electron\\_g\\_factor}$"
+  },
+  {
+    "name": "entropy_unit",
+    "latex": "$\\mathrm{entropy\\_unit}$"
+  },
+  {
+    "name": "eon",
+    "latex": "$\\mathrm{eon}$"
+  },
+  {
+    "name": "erg",
+    "latex": "$\\mathrm{erg}$"
+  },
+  {
+    "name": "eulers_number",
+    "latex": "$\\mathrm{eulers\\_number}$"
+  },
+  {
+    "name": "faraday",
+    "latex": "$\\mathrm{faraday}$"
+  },
+  {
+    "name": "faraday_constant",
+    "latex": "$\\mathrm{faraday\\_constant}$"
+  },
+  {
+    "name": "fathom",
+    "latex": "$\\mathrm{fathom}$"
+  },
+  {
+    "name": "foot",
+    "latex": "$\\mathrm{foot}$"
+  },
+  {
+    "name": "foot_H2O",
+    "latex": "$\\mathrm{foot\\_H2O}$"
+  },
+  {
+    "name": "femtometer",
+    "latex": "$\\mathrm{femtometer}$"
+  },
+  {
+    "name": "fermi",
+    "latex": "$\\mathrm{fermi}$"
+  },
+  {
+    "name": "foot_per_second",
+    "latex": "$\\mathrm{foot\\_per\\_second}$"
+  },
+  {
+    "name": "foot_pound",
+    "latex": "$\\mathrm{foot\\_pound}$"
+  },
+  {
+    "name": "force_gram",
+    "latex": "$\\mathrm{force\\_gram}$"
+  },
+  {
+    "name": "force_kilogram",
+    "latex": "$\\mathrm{force\\_kilogram}$"
+  },
+  {
+    "name": "force_long_ton",
+    "latex": "$\\mathrm{force\\_long\\_ton}$"
+  },
+  {
+    "name": "force_metric_ton",
+    "latex": "$\\mathrm{force\\_metric\\_ton}$"
+  },
+  {
+    "name": "force_ounce",
+    "latex": "$\\mathrm{force\\_ounce}$"
+  },
+  {
+    "name": "force_pound",
+    "latex": "$\\mathrm{force\\_pound}$"
+  },
+  {
+    "name": "force_ton",
+    "latex": "$\\mathrm{force\\_ton}$"
+  },
+  {
+    "name": "fortnight",
+    "latex": "$\\mathrm{fortnight}$"
+  },
+  {
+    "name": "furlong",
+    "latex": "$\\mathrm{furlong}$"
+  },
+  {
+    "name": "gram",
+    "latex": "$\\mathrm{gram}$"
+  },
+  {
+    "name": "standard_gravity",
+    "latex": "$\\mathrm{standard\\_gravity}$"
+  },
+  {
+    "name": "gamma",
+    "latex": "$\\mathrm{gamma}$"
+  },
+  {
+    "name": "gamma_mass",
+    "latex": "$\\mathrm{gamma\\_mass}$"
+  },
+  {
+    "name": "grade",
+    "latex": "$\\mathrm{grade}$"
+  },
+  {
+    "name": "grain",
+    "latex": "$\\mathrm{grain}$"
+  },
+  {
+    "name": "newtonian_constant_of_gravitation",
+    "latex": "$\\mathrm{newtonian\\_constant\\_of\\_gravitation}$"
+  },
+  {
+    "name": "gregorian_year",
+    "latex": "$\\mathrm{gregorian\\_year}$"
+  },
+  {
+    "name": "hour",
+    "latex": "$\\mathrm{hour}$"
+  },
+  {
+    "name": "hectare",
+    "latex": "$\\mathrm{hectare}$"
+  },
+  {
+    "name": "hand",
+    "latex": "$\\mathrm{hand}$"
+  },
+  {
+    "name": "hogshead",
+    "latex": "$\\mathrm{hogshead}$"
+  },
+  {
+    "name": "imperial_fluid_drachm",
+    "latex": "$\\mathrm{imperial\\_fluid\\_drachm}$"
+  },
+  {
+    "name": "imperial_fluid_scruple",
+    "latex": "$\\mathrm{imperial\\_fluid\\_scruple}$"
+  },
+  {
+    "name": "imperial_minim",
+    "latex": "$\\mathrm{imperial\\_minim}$"
+  },
+  {
+    "name": "inch",
+    "latex": "$\\mathrm{inch}$"
+  },
+  {
+    "name": "inch_Hg",
+    "latex": "$\\mathrm{inch\\_Hg}$"
+  },
+  {
+    "name": "inch_H2O_39F",
+    "latex": "$\\mathrm{inch\\_H2O\\_39F}$"
+  },
+  {
+    "name": "inch_H2O_60F",
+    "latex": "$\\mathrm{inch\\_H2O\\_60F}$"
+  },
+  {
+    "name": "inch_Hg_60F",
+    "latex": "$\\mathrm{inch\\_Hg\\_60F}$"
+  },
+  {
+    "name": "knot",
+    "latex": "$\\mathrm{knot}$"
+  },
+  {
+    "name": "mile",
+    "latex": "$\\mathrm{mile}$"
+  },
+  {
+    "name": "yard",
+    "latex": "$\\mathrm{yard}$"
+  },
+  {
+    "name": "katal",
+    "latex": "$\\mathrm{katal}$"
+  },
+  {
+    "name": "kilogram",
+    "latex": "$\\mathrm{kilogram}$"
+  },
+  {
+    "name": "kilometer",
+    "latex": "$\\mathrm{kilometer}$"
+  },
+  {
+    "name": "kilometer_per_second",
+    "latex": "$\\mathrm{kilometer\\_per\\_second}$"
+  },
+  {
+    "name": "kip",
+    "latex": "$\\mathrm{kip}$"
+  },
+  {
+    "name": "kip_per_square_inch",
+    "latex": "$\\mathrm{kip\\_per\\_square\\_inch}$"
+  },
+  {
+    "name": "lambda",
+    "latex": "$\\mathrm{lambda}$"
+  },
+  {
+    "name": "lambert",
+    "latex": "$\\mathrm{lambert}$"
+  },
+  {
+    "name": "troy_pound",
+    "latex": "$\\mathrm{troy\\_pound}$"
+  },
+  {
+    "name": "league",
+    "latex": "$\\mathrm{league}$"
+  },
+  {
+    "name": "leap_year",
+    "latex": "$\\mathrm{leap\\_year}$"
+  },
+  {
+    "name": "link",
+    "latex": "$\\mathrm{link}$"
+  },
+  {
+    "name": "light_year",
+    "latex": "$\\mathrm{light\\_year}$"
+  },
+  {
+    "name": "lumen",
+    "latex": "$\\mathrm{lumen}$"
+  },
+  {
+    "name": "ln10",
+    "latex": "$\\mathrm{ln10}$"
+  },
+  {
+    "name": "long_hundredweight",
+    "latex": "$\\mathrm{long\\_hundredweight}$"
+  },
+  {
+    "name": "long_ton",
+    "latex": "$\\mathrm{long\\_ton}$"
+  },
+  {
+    "name": "synodic_month",
+    "latex": "$\\mathrm{synodic\\_month}$"
+  },
+  {
+    "name": "lux",
+    "latex": "$\\mathrm{lux}$"
+  },
+  {
+    "name": "meter",
+    "latex": "$\\mathrm{meter}$"
+  },
+  {
+    "name": "neutron_mass",
+    "latex": "$\\mathrm{neutron\\_mass}$"
+  },
+  {
+    "name": "proton_mass",
+    "latex": "$\\mathrm{proton\\_mass}$"
+  },
+  {
+    "name": "vacuum_permeability",
+    "latex": "$\\mathrm{vacuum\\_permeability}$"
+  },
+  {
+    "name": "milliarcsecond",
+    "latex": "$\\mathrm{milliarcsecond}$"
+  },
+  {
+    "name": "mean_international_ohm",
+    "latex": "$\\mathrm{mean\\_international\\_ohm}$"
+  },
+  {
+    "name": "meter_per_second",
+    "latex": "$\\mathrm{meter\\_per\\_second}$"
+  },
+  {
+    "name": "metric_horsepower",
+    "latex": "$\\mathrm{metric\\_horsepower}$"
+  },
+  {
+    "name": "metric_ton",
+    "latex": "$\\mathrm{metric\\_ton}$"
+  },
+  {
+    "name": "microgram",
+    "latex": "$\\mathrm{microgram}$"
+  },
+  {
+    "name": "microliter",
+    "latex": "$\\mathrm{microliter}$"
+  },
+  {
+    "name": "micrometer",
+    "latex": "$\\mathrm{micrometer}$"
+  },
+  {
+    "name": "micromole",
+    "latex": "$\\mathrm{micromole}$"
+  },
+  {
+    "name": "micron",
+    "latex": "$\\mathrm{micron}$"
+  },
+  {
+    "name": "mil",
+    "latex": "$\\mathrm{mil}$"
+  },
+  {
+    "name": "thou",
+    "latex": "$\\mathrm{thou}$"
+  },
+  {
+    "name": "millennium",
+    "latex": "$\\mathrm{millennium}$"
+  },
+  {
+    "name": "milligram",
+    "latex": "$\\mathrm{milligram}$"
+  },
+  {
+    "name": "millimeter",
+    "latex": "$\\mathrm{millimeter}$"
+  },
+  {
+    "name": "millimeter_Hg",
+    "latex": "$\\mathrm{millimeter\\_Hg}$"
+  },
+  {
+    "name": "minute",
+    "latex": "$\\mathrm{minute}$"
+  },
+  {
+    "name": "minim",
+    "latex": "$\\mathrm{minim}$"
+  },
+  {
+    "name": "mole",
+    "latex": "$\\mathrm{mole}$"
+  },
+  {
+    "name": "particle",
+    "latex": "$\\mathrm{particle}$"
+  },
+  {
+    "name": "month",
+    "latex": "$\\mathrm{month}$"
+  },
+  {
+    "name": "nuclear_magneton",
+    "latex": "$\\mathrm{nuclear\\_magneton}$"
+  },
+  {
+    "name": "nautical_mile",
+    "latex": "$\\mathrm{nautical\\_mile}$"
+  },
+  {
+    "name": "nit",
+    "latex": "$\\mathrm{nit}$"
+  },
+  {
+    "name": "octave",
+    "latex": "$\\mathrm{octave}$"
+  },
+  {
+    "name": "ohm",
+    "latex": "$\\mathrm{ohm}$"
+  },
+  {
+    "name": "oil_barrel",
+    "latex": "$\\mathrm{oil\\_barrel}$"
+  },
+  {
+    "name": "troy_ounce",
+    "latex": "$\\mathrm{troy\\_ounce}$"
+  },
+  {
+    "name": "parsec",
+    "latex": "$\\mathrm{parsec}$"
+  },
+  {
+    "name": "poundal",
+    "latex": "$\\mathrm{poundal}$"
+  },
+  {
+    "name": "peck",
+    "latex": "$\\mathrm{peck}$"
+  },
+  {
+    "name": "rod",
+    "latex": "$\\mathrm{rod}$"
+  },
+  {
+    "name": "pi",
+    "latex": "$\\mathrm{pi}$"
+  },
+  {
+    "name": "pica",
+    "latex": "$\\mathrm{pica}$"
+  },
+  {
+    "name": "planck_constant",
+    "latex": "$\\mathrm{planck\\_constant}$"
+  },
+  {
+    "name": "planck_current",
+    "latex": "$\\mathrm{planck\\_current}$"
+  },
+  {
+    "name": "planck_length",
+    "latex": "$\\mathrm{planck\\_length}$"
+  },
+  {
+    "name": "planck_mass",
+    "latex": "$\\mathrm{planck\\_mass}$"
+  },
+  {
+    "name": "planck_temperature",
+    "latex": "$\\mathrm{planck\\_temperature}$"
+  },
+  {
+    "name": "planck_time",
+    "latex": "$\\mathrm{planck\\_time}$"
+  },
+  {
+    "name": "pound_force_per_square_inch",
+    "latex": "$\\mathrm{pound\\_force\\_per\\_square\\_inch}$"
+  },
+  {
+    "name": "quadrillion_Btu",
+    "latex": "$\\mathrm{quadrillion\\_Btu}$"
+  },
+  {
+    "name": "quarter",
+    "latex": "$\\mathrm{quarter}$"
+  },
+  {
+    "name": "radian",
+    "latex": "$\\mathrm{radian}$"
+  },
+  {
+    "name": "rads",
+    "latex": "$\\mathrm{rads}$"
+  },
+  {
+    "name": "refrigeration_ton",
+    "latex": "$\\mathrm{refrigeration\\_ton}$"
+  },
+  {
+    "name": "rem",
+    "latex": "$\\mathrm{rem}$"
+  },
+  {
+    "name": "revolutions_per_minute",
+    "latex": "$\\mathrm{revolutions\\_per\\_minute}$"
+  },
+  {
+    "name": "revolutions_per_second",
+    "latex": "$\\mathrm{revolutions\\_per\\_second}$"
+  },
+  {
+    "name": "reyn",
+    "latex": "$\\mathrm{reyn}$"
+  },
+  {
+    "name": "rhe",
+    "latex": "$\\mathrm{rhe}$"
+  },
+  {
+    "name": "roentgen",
+    "latex": "$\\mathrm{roentgen}$"
+  },
+  {
+    "name": "second",
+    "latex": "$\\mathrm{second}$"
+  },
+  {
+    "name": "scaled_point",
+    "latex": "$\\mathrm{scaled\\_point}$"
+  },
+  {
+    "name": "scruple",
+    "latex": "$\\mathrm{scruple}$"
+  },
+  {
+    "name": "square_survey_mile",
+    "latex": "$\\mathrm{square\\_survey\\_mile}$"
+  },
+  {
+    "name": "survey_foot",
+    "latex": "$\\mathrm{survey\\_foot}$"
+  },
+  {
+    "name": "shake",
+    "latex": "$\\mathrm{shake}$"
+  },
+  {
+    "name": "ton",
+    "latex": "$\\mathrm{ton}$"
+  },
+  {
+    "name": "sidereal_day",
+    "latex": "$\\mathrm{sidereal\\_day}$"
+  },
+  {
+    "name": "sidereal_month",
+    "latex": "$\\mathrm{sidereal\\_month}$"
+  },
+  {
+    "name": "sidereal_year",
+    "latex": "$\\mathrm{sidereal\\_year}$"
+  },
+  {
+    "name": "stefan_boltzmann_constant",
+    "latex": "$\\mathrm{stefan\\_boltzmann\\_constant}$"
+  },
+  {
+    "name": "thomson_cross_section",
+    "latex": "$\\mathrm{thomson\\_cross\\_section}$"
+  },
+  {
+    "name": "standard_liter_per_minute",
+    "latex": "$\\mathrm{standard\\_liter\\_per\\_minute}$"
+  },
+  {
+    "name": "slug",
+    "latex": "$\\mathrm{slug}$"
+  },
+  {
+    "name": "survey_mile",
+    "latex": "$\\mathrm{survey\\_mile}$"
+  },
+  {
+    "name": "square_degree",
+    "latex": "$\\mathrm{square\\_degree}$"
+  },
+  {
+    "name": "square_foot",
+    "latex": "$\\mathrm{square\\_foot}$"
+  },
+  {
+    "name": "square_inch",
+    "latex": "$\\mathrm{square\\_inch}$"
+  },
+  {
+    "name": "square_mile",
+    "latex": "$\\mathrm{square\\_mile}$"
+  },
+  {
+    "name": "square_rod",
+    "latex": "$\\mathrm{square\\_rod}$"
+  },
+  {
+    "name": "square_yard",
+    "latex": "$\\mathrm{square\\_yard}$"
+  },
+  {
+    "name": "square_league",
+    "latex": "$\\mathrm{square\\_league}$"
+  },
+  {
+    "name": "steradian",
+    "latex": "$\\mathrm{steradian}$"
+  },
+  {
+    "name": "statampere",
+    "latex": "$\\mathrm{statampere}$"
+  },
+  {
+    "name": "statfarad",
+    "latex": "$\\mathrm{statfarad}$"
+  },
+  {
+    "name": "stathenry",
+    "latex": "$\\mathrm{stathenry}$"
+  },
+  {
+    "name": "stattesla",
+    "latex": "$\\mathrm{stattesla}$"
+  },
+  {
+    "name": "statvolt",
+    "latex": "$\\mathrm{statvolt}$"
+  },
+  {
+    "name": "statweber",
+    "latex": "$\\mathrm{statweber}$"
+  },
+  {
+    "name": "statmho",
+    "latex": "$\\mathrm{statmho}$"
+  },
+  {
+    "name": "statohm",
+    "latex": "$\\mathrm{statohm}$"
+  },
+  {
+    "name": "stere",
+    "latex": "$\\mathrm{stere}$"
+  },
+  {
+    "name": "stilb",
+    "latex": "$\\mathrm{stilb}$"
+  },
+  {
+    "name": "stone",
+    "latex": "$\\mathrm{stone}$"
+  },
+  {
+    "name": "sverdrup",
+    "latex": "$\\mathrm{sverdrup}$"
+  },
+  {
+    "name": "svedberg",
+    "latex": "$\\mathrm{svedberg}$"
+  },
+  {
+    "name": "ton_TNT",
+    "latex": "$\\mathrm{ton\\_TNT}$"
+  },
+  {
+    "name": "tablespoon",
+    "latex": "$\\mathrm{tablespoon}$"
+  },
+  {
+    "name": "tansec",
+    "latex": "$\\mathrm{tansec}$"
+  },
+  {
+    "name": "teaspoon",
+    "latex": "$\\mathrm{teaspoon}$"
+  },
+  {
+    "name": "tex_cicero",
+    "latex": "$\\mathrm{tex\\_cicero}$"
+  },
+  {
+    "name": "tex_didot",
+    "latex": "$\\mathrm{tex\\_didot}$"
+  },
+  {
+    "name": "tex_pica",
+    "latex": "$\\mathrm{tex\\_pica}$"
+  },
+  {
+    "name": "tex_point",
+    "latex": "$\\mathrm{tex\\_point}$"
+  },
+  {
+    "name": "tonne_of_oil_equivalent",
+    "latex": "$\\mathrm{tonne\\_of\\_oil\\_equivalent}$"
+  },
+  {
+    "name": "torr",
+    "latex": "$\\mathrm{torr}$"
+  },
+  {
+    "name": "tropical_month",
+    "latex": "$\\mathrm{tropical\\_month}$"
+  },
+  {
+    "name": "tropical_year",
+    "latex": "$\\mathrm{tropical\\_year}$"
+  },
+  {
+    "name": "unit_pole",
+    "latex": "$\\mathrm{unit\\_pole}$"
+  },
+  {
+    "name": "water_39F",
+    "latex": "$\\mathrm{water\\_39F}$"
+  },
+  {
+    "name": "water_60F",
+    "latex": "$\\mathrm{water\\_60F}$"
+  },
+  {
+    "name": "week",
+    "latex": "$\\mathrm{week}$"
+  },
+  {
+    "name": "wien_frequency_displacement_law_constant",
+    "latex": "$\\mathrm{wien\\_frequency\\_displacement\\_law\\_constant}$"
+  },
+  {
+    "name": "wien_u",
+    "latex": "$\\mathrm{wien\\_u}$"
+  },
+  {
+    "name": "wien_wavelength_displacement_law_constant",
+    "latex": "$\\mathrm{wien\\_wavelength\\_displacement\\_law\\_constant}$"
+  },
+  {
+    "name": "wien_x",
+    "latex": "$\\mathrm{wien\\_x}$"
+  },
+  {
+    "name": "zeta",
+    "latex": "$\\mathrm{zeta}$"
+  }
+]

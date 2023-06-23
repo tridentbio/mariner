@@ -1,0 +1,49 @@
+name: Frontend code quality and unit test checks
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
+      - releases/**
+    types: [opened, synchronize]
+    paths:
+      - webapp/**
+defaults:
+  run:
+    working-directory: webapp
+jobs:
+  frontend-checks:
+    name: Run checks
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Restore cache
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install NPM packages
+        run: |
+          npm ci
+      - name: Checks typescript
+        run: |
+          npm run tsc
+      - name: Lint files with eslint
+        run: |
+          npm run eslint:check
+      - name: Run unit tests
+        run: |
+          npm run test:unit
+      - name: Checks production build
+        run: |
+          npm run build
