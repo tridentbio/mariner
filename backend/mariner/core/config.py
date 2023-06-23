@@ -5,9 +5,16 @@ Shared between API and mariner, on ray and backend instances
 Sometimes cause the application to fail when missing an ENV VAR
 """
 import secrets
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, EmailStr, PostgresDsn, validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseSettings,
+    EmailStr,
+    PostgresDsn,
+    root_validator,
+    validator,
+)
 
 
 def make_list_from_array_string(v: Union[str, list[str]]):
@@ -90,20 +97,41 @@ class Settings(BaseSettings):
     EMAILS_ENABLED: bool = False
     EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
 
-    AWS_ACCESS_KEY_ID: str
-    AWS_SECRET_ACCESS_KEY: str
+    AWS_MODE: Literal["sts", "local"] = "local"
+    AWS_ACCESS_KEY_ID: Union[None, str]
+    AWS_SECRET_ACCESS_KEY: Union[None, str]
     AWS_REGION: str = "us-east-1"
     AWS_DATASETS: str = "dev-matiner-datasets"
     AWS_MODELS: str = "dev-matiner-datasets"
 
     RAY_ADDRESS: str = "ray://ray-head:10001"
-    APPLICATION_SECRET: str
+    APPLICATION_SECRET: str = "replaceme"
     APPLICATION_CHUNK_SIZE: int = 1024
 
-    GITHUB_CLIENT_ID: str
-    GITHUB_CLIENT_SECRET: str
+    GITHUB_CLIENT_ID: Union[None, str] = None
+    GITHUB_CLIENT_SECRET: Union[None, str] = None
 
     LIGHTNING_LOGS_DIR: str
+
+    @root_validator(allow_reuse=True)
+    @classmethod
+    def validate_aws_creds(cls, values: Dict[str, Any]) -> Any:
+        """
+        Validate that AWS credentials are set if AWS_MODE is set to local.
+        """
+        if values["AWS_MODE"] == "local":
+            if not values["AWS_ACCESS_KEY_ID"]:
+                raise ValueError("AWS_ACCESS_KEY_ID must be set if AWS_MODE is local")
+            if not values["AWS_SECRET_ACCESS_KEY"]:
+                raise ValueError(
+                    "AWS_SECRET_ACCESS_KEY must be set if AWS_MODE is local"
+                )
+        elif values["AWS_MODE"] == "sts":
+            if "AWS_ACCESS_KEY_ID" in values or "AWS_SECRET_ACCESS_KEY" in values:
+                raise ValueError(
+                    "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must not be set if AWS_MODE is sts"
+                )
+        return values
 
     class Config:
         """Configure the environment variable model to be case sensitive."""
@@ -111,4 +139,12 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
-settings = Settings()
+def get_app_settings() -> Settings:
+    """
+    Get the application settings.
+
+    Returns:
+        Settings: the application settings.
+    """
+    settings = Settings()
+    return settings

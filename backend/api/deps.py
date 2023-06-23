@@ -15,7 +15,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from mariner.core import security
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.db.session import SessionLocal
 from mariner.entities.deployment import Deployment
 from mariner.entities.user import User
@@ -24,7 +24,7 @@ from mariner.stores.deployment_sql import deployment_store
 from mariner.stores.user_sql import user_store
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/login/access-token"
+    tokenUrl=f"{get_app_settings().API_V1_STR}/login/access-token"
 )
 
 
@@ -52,7 +52,9 @@ def get_current_user(
     """
     try:
         payload = jwt.decode(
-            token, settings.AUTHENTICATION_SECRET_KEY, algorithms=[security.ALGORITHM]
+            token,
+            get_app_settings().AUTHENTICATION_SECRET_KEY,
+            algorithms=[security.ALGORITHM],
         )
         token_data = TokenPayload(**payload)
     except (JWTError, ValidationError):
@@ -134,7 +136,7 @@ def assert_trusted_service(authorization: Union[str, None] = Header("Authorizati
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     else:
         token = authorization.split(" ")
-        if len(token) < 2 or token[1] != settings.APPLICATION_SECRET:
+        if len(token) < 2 or token[1] != get_app_settings().APPLICATION_SECRET:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 

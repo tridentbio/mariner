@@ -9,7 +9,7 @@ import requests
 from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.utilities.rank_zero import rank_zero_only
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 
 LOG = logging.getLogger(__name__)
 
@@ -93,14 +93,16 @@ class MarinerLogger(Logger):
         data["data"] = msg
         try:
             res = requests.post(
-                f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics",
+                f"{get_app_settings().SERVER_HOST}/api/v1/experiments/epoch_metrics",
                 json=data,
-                headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
+                headers={
+                    "Authorization": f"Bearer {get_app_settings().APPLICATION_SECRET}"
+                },
             )
             if res.status_code != 200:
                 LOG.warning(
                     "POST %s failed with status %s\n%r",
-                    f"{settings.SERVER_HOST}/api/v1/experiments/epoch_metrics",
+                    f"{get_app_settings().SERVER_HOST}/api/v1/experiments/epoch_metrics",
                     res.status_code,
                     res.json(),
                 )
@@ -109,7 +111,7 @@ class MarinerLogger(Logger):
 
         except (requests.ConnectionError, requests.ConnectTimeout):
             LOG.error(
-                f"Failed metrics to {settings.SERVER_HOST}/api/v1/experiments"
+                f"Failed metrics to {get_app_settings().SERVER_HOST}/api/v1/experiments"
                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
                 "the ray services, and that it points to the mariner backend"
             )

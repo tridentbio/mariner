@@ -1,4 +1,0 @@
-.. _torch:
-
-Torch Models
--------------
