@@ -26,11 +26,14 @@ def convert_to_spec(old_model_schema: dict) -> dict:
     new_spec["dataset"]["featurizers"] = old_model_schema["featurizers"]
     new_spec["spec"] = {"layers": old_model_schema["layers"]}
 
-    for layer in new_spec["spec"]["layers"]:
-        if layer["type"].startswith("model_builder"):
-            layer["type"] = f"fleet.{layer['type']}"
+    layers = new_spec["spec"].get("layers")
+    featurizers = new_spec["dataset"].get("featurizers")
+    if layers:
+        for layer in layers:
+            if layer["type"].startswith("model_builder"):
+                layer["type"] = f"fleet.{layer['type']}"
 
-    for feat in new_spec["dataset"]["featurizers"]:
+    for feat in featurizers:
         if feat["type"].startswith("model_builder"):
             feat["type"] = f"fleet.{feat['type']}"
 
