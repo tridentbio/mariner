@@ -5,21 +5,12 @@ repos:
     hooks:
       - id: check-staged-backend-style
         name: Checking staged backend code style
-        entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh ${@#"backend/"}'
+        entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh ${@#"backend/"}' --
         fail_fast: true
         pass_filenames: true
         language: system
         types: [python]
-        files: 'backend.*(fleet|mariner|api|tests).*\.py'
-        stages:
-          - commit
-      - id: check-staged-webapp-style
-        name: Checking staged webapp code style
-        entry: bash -c 'cd webapp && npm run prettier:check'
-        fail_fast: true
-        files: 'webapp.*\.(ts|tsc)'
-        pass_filenames: false
-        language: system
+        files: '^backend/'
         stages:
           - commit
       - id: lint-staged-backend
@@ -30,6 +21,15 @@ repos:
         files: '^backend/'
         pass_filenames: true
         fail_fast: true
+        stages:
+          - commit
+      - id: check-staged-webapp-style
+        name: Checking staged webapp code style
+        entry: bash -c 'cd webapp && npm run prettier:check'
+        fail_fast: true
+        files: 'webapp.*\.(ts|tsc)'
+        pass_filenames: false
+        language: system
         stages:
           - commit
       - id: lint-staged-webapp
@@ -63,7 +63,7 @@ repos:
       - id: format-staged-fix-backend
         verbose: true
         name: Format staged files in the backend
-        entry: bash -c 'cd backend && poetry run sh scripts/format-single.sh ${@#"backend/"}' --
+        entry: bash -c 'cd backend && poetry run sh scripts/format-single.sh ${@#"backend/"}
         pass_filenames: true
         files: '^backend/'
         types: [python]
