@@ -1,3 +1,6 @@
+"""
+Functions to train and use sklearn models.
+"""
 from typing import Union
 
 import mlflow
@@ -8,6 +11,7 @@ import sklearn.base
 import fleet.mlflow
 from fleet.base_schemas import BaseModelFunctions
 from fleet.metrics import Metrics
+from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.utils import get_references_dict
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.utils import data
@@ -36,6 +40,7 @@ class SciKitFunctions(BaseModelFunctions):
         spec: SklearnModelSpec,
         dataset: pd.DataFrame,
         model: Union[None, sklearn.base.ClassifierMixin] = None,
+        preprocessing_pipeline: Union[None, data.PreprocessingPipeline] = None,
     ):
         self.spec = spec
         self.dataset = dataset
@@ -45,13 +50,12 @@ class SciKitFunctions(BaseModelFunctions):
             "sklearn models only support one target column, "
             f"but got {len(spec.dataset.target_columns)}"
         )
-        self.preprocessing_pipeline = data.PreprocessingPipeline(
-            dataset_config=spec.dataset
-        )
-        if not model:  # being trained for the first time
-            self._prepare_dataset(fit=True)
+        if preprocessing_pipeline:
+            self.preprocessing_pipeline = preprocessing_pipeline
         else:
-            self._prepare_dataset()
+            self.preprocessing_pipeline = data.PreprocessingPipeline(
+                dataset_config=spec.dataset
+            )
 
     def _prepare_dataset(self, fit=False):
         step = self.dataset["step"]
@@ -73,7 +77,8 @@ class SciKitFunctions(BaseModelFunctions):
         assert self.dataset is not None, "dataset must not be None"
         if filter_step is not None:
             dataset = self.dataset[self.dataset["step"] == filter_step]
-
+        else:
+            dataset = self.dataset
         references = get_references_dict(model_config.model.fit_args)
         args = {key: dataset.loc[:, ref] for key, ref in references.items()}
         assert "X" in args, "sklearn models take an X argument"
@@ -90,11 +95,12 @@ class SciKitFunctions(BaseModelFunctions):
         Trains the sklearn model and logs the metrics on the training set to
         mlflow.
         """
+        self._prepare_dataset(fit=True)
         model_config = self.spec.spec
         self.model = model_config.model.create()
         if hasattr(model_config.model, "constructor_args"):
             mlflow.log_params(model_config.model.constructor_args.dict())
-        X, y = self._prepare_X_and_y(filter_step=1)
+        X, y = self._prepare_X_and_y(filter_step=TrainingStep.TRAIN.value)
         self.model.fit(X, y)
         y_pred = self.model.predict(X)
         metrics_dict = self.metrics.get_training_metrics(
@@ -107,7 +113,7 @@ class SciKitFunctions(BaseModelFunctions):
         """
         Get and log the metrics of the model from the validation set.
         """
-        X, y = self._prepare_X_and_y(filter_step=2)
+        X, y = self._prepare_X_and_y(filter_step=TrainingStep.VAL.value)
         if self.model is None:
             raise ValueError("sklearn model not trained")
         y_pred = self.model.predict(X)  # type: ignore
@@ -121,7 +127,7 @@ class SciKitFunctions(BaseModelFunctions):
         """
         Get and log the metrics of the model from the test set.
         """
-        X, y = self._prepare_X_and_y(filter_step=3)
+        X, y = self._prepare_X_and_y(filter_step=TrainingStep.TEST.value)
         if self.model is None:
             raise ValueError("sklearn model not trained")
         y_pred = self.model.predict(X)  # type: ignore
@@ -140,14 +146,12 @@ class SciKitFunctions(BaseModelFunctions):
         Args:
             X (pd.DataFrame): The dataset to predict on.
         """
-        self.spec.spec
-        self.spec.dataset
         X = self._prepare_X_and_y(targets=False)
         return self.model.predict(X)
 
     def log_models(
         self,
-        model_name: Union[None, str] = None,
+        mlflow_model_name: Union[None, str] = None,
         version_description: Union[None, str] = None,
         run_id: Union[None, str] = None,
     ):
@@ -156,7 +160,7 @@ class SciKitFunctions(BaseModelFunctions):
         """
         return fleet.mlflow.log_sklearn_model_and_create_version(
             self.model,
-            model_name=model_name,
+            model_name=mlflow_model_name,
             version_description=version_description,
             run_id=run_id,
         )
