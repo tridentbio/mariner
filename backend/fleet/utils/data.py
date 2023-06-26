@@ -20,6 +20,7 @@ import pandas as pd
 import sklearn.base
 import torch
 import torch.nn
+from lightning.pytorch.trainer.trainer import TrainerFn
 from pydantic import BaseModel
 from sklearn.preprocessing import FunctionTransformer
 from torch.utils.data import DataLoader, Dataset
@@ -45,7 +46,9 @@ from fleet.model_builder.utils import DataInstance, get_references_dict
 from fleet.utils.graph import get_leaf_nodes, make_graph_from_forward_args
 
 
-def make_graph_from_dataset_config(dataset_config: DatasetConfig) -> nx.DiGraph:
+def make_graph_from_dataset_config(
+    dataset_config: DatasetConfig,
+) -> nx.DiGraph:
     """Creates a graph from a dataset configuration.
 
     Args:
@@ -55,7 +58,8 @@ def make_graph_from_dataset_config(dataset_config: DatasetConfig) -> nx.DiGraph:
         The graph.
     """
     featurizers_dict = {
-        feat.name: feat.dict(by_alias=True) for feat in dataset_config.featurizers
+        feat.name: feat.dict(by_alias=True)
+        for feat in dataset_config.featurizers
     }
     transforms_dict = {
         transform.name: transform.dict(by_alias=True)
@@ -86,7 +90,9 @@ def dataset_topo_sort(
     Returns:
         (featurizers, transforms) tuple, the preprocessing step objects.
     """
-    featurizers_by_name = {feat.name: feat for feat in dataset_config.featurizers}
+    featurizers_by_name = {
+        feat.name: feat for feat in dataset_config.featurizers
+    }
     transforms_by_name = {
         transform.name: transform for transform in dataset_config.transforms
     }
@@ -94,7 +100,9 @@ def dataset_topo_sort(
     graph = make_graph_from_dataset_config(dataset_config)
     topo_sort = nx.topological_sort(graph)
     featurizers_names = [feat.name for feat in dataset_config.featurizers]
-    transformers_names = [transformer.name for transformer in dataset_config.transforms]
+    transformers_names = [
+        transformer.name for transformer in dataset_config.transforms
+    ]
     # TODO: check that featurizers come before transforms
     for item in topo_sort:
         if item in featurizers_names:
@@ -214,10 +222,15 @@ def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
     references = get_references_dict(forward_args)
     if isinstance(references, dict):
         return np.array(
-            [data.loc[:, col_name].to_numpy() for col_name in references.values()]
+            [
+                data.loc[:, col_name].to_numpy()
+                for col_name in references.values()
+            ]
         )
     else:
-        return np.array([data.loc[:, col_name].to_numpy() for col_name in references])
+        return np.array(
+            [data.loc[:, col_name].to_numpy() for col_name in references]
+        )
 
 
 class PreprocessingPipeline:
@@ -250,7 +263,8 @@ class PreprocessingPipeline:
             feat.name: feat for feat in dataset_config.featurizers
         }
         self.transforms_config = {
-            transform.name: transform for transform in dataset_config.transforms
+            transform.name: transform
+            for transform in dataset_config.transforms
         }
         self.featurizers = {
             feat.name: self._prepare_transform(feat.create())
@@ -294,9 +308,15 @@ class PreprocessingPipeline:
                 % (["sklearn.base.TransformerMixin", "Callable"])
             )
 
-    def get_X_and_y(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        feature_columns = [col.name for col in self.dataset_config.feature_columns]
-        target_columns = [col.name for col in self.dataset_config.target_columns]
+    def get_X_and_y(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        feature_columns = [
+            col.name for col in self.dataset_config.feature_columns
+        ]
+        target_columns = [
+            col.name for col in self.dataset_config.target_columns
+        ]
         return df.loc[:, feature_columns], df.loc[:, target_columns]
 
     def _prepare_X_and_y(
@@ -307,22 +327,32 @@ class PreprocessingPipeline:
         try:
             if not isinstance(X, pd.DataFrame):
                 X = pd.DataFrame(
-                    X, columns=[col.name for col in self.dataset_config.feature_columns]
+                    X,
+                    columns=[
+                        col.name for col in self.dataset_config.feature_columns
+                    ],
                 )
 
             if not isinstance(y, pd.DataFrame):
                 y = pd.DataFrame(
-                    y, columns=[col.name for col in self.dataset_config.target_columns]
+                    y,
+                    columns=[
+                        col.name for col in self.dataset_config.target_columns
+                    ],
                 )
             return X, y
         except:
-            raise TypeError("X and y must be pandas.DataFrame or numpy.ndarray")
+            raise TypeError(
+                "X and y must be pandas.DataFrame or numpy.ndarray"
+            )
 
     def _apply_default_featurizers(
         self, data: pd.DataFrame, columns: list[ColumnConfig]
     ):
         for column in columns:
-            feat = get_default_data_type_featurizer(self.dataset_config, column)
+            feat = get_default_data_type_featurizer(
+                self.dataset_config, column
+            )
             if feat is not None:
                 feat = self._prepare_transform(feat)
                 value = data[column.name]
@@ -348,8 +378,12 @@ class PreprocessingPipeline:
         """
         X, y = self._prepare_X_and_y(X, y)
         if self.featurize_data_types:
-            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
-            self._apply_default_featurizers(y, self.dataset_config.target_columns)
+            self._apply_default_featurizers(
+                X, self.dataset_config.feature_columns
+            )
+            self._apply_default_featurizers(
+                y, self.dataset_config.target_columns
+            )
 
         data = pd.concat([X, y], axis=1)
 
@@ -363,7 +397,9 @@ class PreprocessingPipeline:
             try:
                 transformer.fit(*args)
             except Exception as exp:
-                raise fleet.exceptions.FitError("Failed to fit %r" % config) from exp
+                raise fleet.exceptions.FitError(
+                    "Failed to fit %r" % config
+                ) from exp
 
         self._fitted = True
 
@@ -375,8 +411,12 @@ class PreprocessingPipeline:
         X, y = self._prepare_X_and_y(X, y)
 
         if self.featurize_data_types:
-            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
-            self._apply_default_featurizers(y, self.dataset_config.target_columns)
+            self._apply_default_featurizers(
+                X, self.dataset_config.feature_columns
+            )
+            self._apply_default_featurizers(
+                y, self.dataset_config.target_columns
+            )
 
         data = pd.concat([X, y], axis=1)
 
@@ -390,7 +430,9 @@ class PreprocessingPipeline:
             try:
                 data[config.name] = transformer.fit_transform(*args)
             except Exception as exp:
-                raise fleet.exceptions.FitError("Failed to fit %r" % config) from exp
+                raise fleet.exceptions.FitError(
+                    "Failed to fit %r" % config
+                ) from exp
 
         self._fitted = True
 
@@ -404,8 +446,12 @@ class PreprocessingPipeline:
         X, y = self._prepare_X_and_y(X, y)
 
         if self.featurize_data_types:
-            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
-            self._apply_default_featurizers(y, self.dataset_config.target_columns)
+            self._apply_default_featurizers(
+                X, self.dataset_config.feature_columns
+            )
+            self._apply_default_featurizers(
+                y, self.dataset_config.target_columns
+            )
 
         data = pd.concat([X, y], axis=1)
 
@@ -420,7 +466,9 @@ class PreprocessingPipeline:
                 transformed = transformer.transform(*args)
                 data[config.name] = transformed
             except Exception as exp:
-                raise fleet.exceptions.FitError("Failed to fit %r" % config) from exp
+                raise fleet.exceptions.FitError(
+                    "Failed to fit %r" % config
+                ) from exp
 
         self._fitted = True
 
@@ -477,6 +525,7 @@ class MarinerTorchDataset(Dataset):
         self,
         data: pd.DataFrame,
         dataset_config: DatasetConfig,
+        preprocessing_pipeline: Union[None, PreprocessingPipeline] = None,
     ):
         """MarinerTorchDataset constructor.
 
@@ -486,7 +535,10 @@ class MarinerTorchDataset(Dataset):
             model_config: The object describing the model architecture and hyperparameters.
         """
         self.data = data
-        self.preprocessing_pipeline = PreprocessingPipeline(dataset_config)
+        if preprocessing_pipeline is None:
+            self.preprocessing_pipeline = PreprocessingPipeline(dataset_config)
+        else:
+            self.preprocessing_pipeline = preprocessing_pipeline
         step = self.data["step"]
         self.data = self.preprocessing_pipeline.transform(
             *self.preprocessing_pipeline.get_X_and_y(self.data)
@@ -558,9 +610,9 @@ class DataModule(pl.LightningDataModule):
             of samples by the dataloader to build a batch.
     """
 
-    train_dataset: Subset[Any]
-    val_dataset: Subset[Any]
-    test_dataset: Subset[Any]
+    train_dataset: Subset[Any] = None
+    val_dataset: Subset[Any] = None
+    test_dataset: Subset[Any] = None
 
     def __init__(
         self,
@@ -571,25 +623,29 @@ class DataModule(pl.LightningDataModule):
         split_target: Union[None, str] = None,
         split_column: Union[None, str] = None,
         collate_fn: Union[Callable, None] = None,
+        preprocessing_pipeline: Union[None, PreprocessingPipeline] = None,
     ):
         super().__init__()
         self.dataset_config = config
         self.featurizers_config = config.featurizers
-
         self.data = data
-
         self.batch_size = batch_size
-
         self.split_type = split_type
         self.split_target = split_target
         self.split_column = split_column
+        if preprocessing_pipeline is None:
+            self.preprocessing_pipeline = PreprocessingPipeline(
+                self.dataset_config
+            )
+        else:
+            self.preprocessing_pipeline = preprocessing_pipeline
 
         if collate_fn is None:
             self.collate_fn = Collater()
         else:
             self.collate_fn = collate_fn
 
-    def setup(self, stage=None):
+    def setup(self, stage: Union[None, TrainerFn] = None):
         """Method used for pytorch lightning to setup the data
         module instance and prepare the data loaders to be used in
         the trainer.
@@ -608,21 +664,30 @@ class DataModule(pl.LightningDataModule):
                 split_target=self.split_target or "60-20-20",
                 split_column=self.split_column,
             )
+
+        self.preprocessing_pipeline.fit(
+            self.data["step"] == TrainingStep.TRAIN.value
+        )
         self.dataset = MarinerTorchDataset(
-            data=self.data, dataset_config=self.dataset_config
+            data=self.data,
+            dataset_config=self.dataset_config,
         )
-        self.train_dataset = Subset(
-            dataset=self.dataset,
-            indices=self.dataset.get_subset_idx(TrainingStep.TRAIN.value),
-        )
-        self.val_dataset = Subset(
-            dataset=self.dataset,
-            indices=self.dataset.get_subset_idx(TrainingStep.VAL.value),
-        )
-        self.test_dataset = Subset(
-            dataset=self.dataset,
-            indices=self.dataset.get_subset_idx(TrainingStep.TEST.value),
-        )
+        if stage == TrainerFn.FITTING or stage is None:
+
+            self.train_dataset = Subset(
+                dataset=self.dataset,
+                indices=self.dataset.get_subset_idx(TrainingStep.TRAIN.value),
+            )
+        if stage in [TrainerFn.FITTING, TrainerFn.VALIDATING, None]:
+            self.val_dataset = Subset(
+                dataset=self.dataset,
+                indices=self.dataset.get_subset_idx(TrainingStep.VAL.value),
+            )
+        if stage in [TrainerFn.FITTING, TrainerFn.TESTING, None]:
+            self.test_dataset = Subset(
+                dataset=self.dataset,
+                indices=self.dataset.get_subset_idx(TrainingStep.TEST.value),
+            )
 
     def train_dataloader(self) -> DataLoader:
         """Return the DataLoader instance used to train the custom
@@ -631,6 +696,7 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in train steps.
         """
+        assert self.train_dataset, 'setup(stage="fit") must be called'
         return DataLoader(
             self.train_dataset,
             self.batch_size,
@@ -645,6 +711,8 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in test steps.
         """
+
+        assert self.test_dataset, 'setup(stage="test") must be called'
         return DataLoader(
             self.test_dataset,
             self.batch_size,
@@ -657,6 +725,7 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in validation steps.
         """
+        assert self.val_dataset, 'setup(stage="validate") must be called'
         return DataLoader(
             self.val_dataset,
             self.batch_size,
