@@ -120,12 +120,53 @@ class RandomForestRegressorConfig(CamelCaseModel, CreateFromType):
     fit_args: Dict[str, str]
 
 
+class ExtraTreesRegressorConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the :py:class`sklearn.ensemble.ExtraTreesRegressor` class.
+    
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html
+    """
+    
+    n_estimators: int = 100
+    criterion: Literal["squared_error", "absolute_error", "friedman_mse", "poisson"] = "squared_error"
+    max_depth: Union[None, int] = None
+    min_samples_split: Union[float, int] = 2
+    min_samples_leaf: Union[float, int] = 1
+    min_weight_fraction_leaf: float = 0.0
+    max_features: Union[None, float, Literal["sqrt", "log2"]] = 1.0
+    max_leaf_nodes: Union[None, int] = None
+    min_impurity_decrease: float = 0.0
+    bootstrap: bool = False
+    oob_score: bool = False
+    n_jobs: Union[int, None] = None
+    random_state: Union[int, None] = None
+    verbose: int = 0
+    warm_start: bool = False
+    ccp_alpha: float = 0.0
+    max_samples: Union[None, int, float] = None
+
+
+class ExtraTreesRegressorConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the :py:class`sklearn.ensemble.ExtraTreesRegressor` class.
+    """
+    
+    type: Literal[
+        "sklearn.ensemble.ExtraTreesRegressor"
+    ] = "sklearn.ensemble.ExtraTreesRegressor"
+    task_type: List[TaskType] = ["regressor"]
+    constructor_args: ExtraTreesRegressorConstructorArgs = (
+        ExtraTreesRegressorConstructorArgs()
+    )
+    fit_args: Dict[str, str]
+
+
 class SklearnModelSchema(CamelCaseModel, YAML_Model):
     """
     Specifies a sklearn model.
     """
 
-    model: Union[KNeighborsRegressorConfig, RandomForestRegressorConfig]
+    model: Union[KNeighborsRegressorConfig, RandomForestRegressorConfig, ExtraTreesRegressorConfig]
 
 
 class SklearnModelSpec(CamelCaseModel, YAML_Model):
