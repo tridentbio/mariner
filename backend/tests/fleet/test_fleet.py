@@ -59,7 +59,6 @@ def assert_mlflow_data(
     objs = list_s3_objects(Bucket.Datasets, run_artifact_prefix)
 
     if spec.framework == "torch":
-
         expected_artifacts = [
             f"{run_artifact_prefix}/artifacts/last/data/model.pth",
             f"{run_artifact_prefix}/artifacts/best/data/model.pth",
@@ -110,6 +109,13 @@ specs = [
     for model_file, dataset_file in [
         ("sklearn_sampl_random_forest_regressor.yaml", "SAMPL.csv"),
         ("sklearn_sampl_knn_regressor.yaml", "SAMPL.csv"),
+        ("sklearn_sampl_extra_trees_regressor.yaml", "SAMPL.csv"),
+        ("sklearn_sampl_knearest_neighbor_regressor.yaml", "SAMPL.csv"),
+        ("sklearn_sampl_extra_trees_regressor.yaml", "SAMPL.csv"),
+        # TODO: implement OneHotEncoder and concatenation of feature columns
+        # ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv"),
+        # ("sklearn_hiv_knearest_neighbor_classifier.yaml", "HIV.csv"),
+        # ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv"),
         ("small_regressor_schema.yaml", "zinc.csv"),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),
