@@ -1,5 +1,5 @@
 """Migrate model_version config property to new TorchModelSpec
-
+ 
 Revision ID: 40fadbde09b7
 Revises: 809377f238f8
 Create Date: 2023-05-01 16:48:44.960040
@@ -23,8 +23,8 @@ def convert_to_spec(old_model_schema: dict) -> dict:
     new_spec["framework"] = "torch"
     new_spec["name"] = old_model_schema["name"]
     new_spec["dataset"] = old_model_schema["dataset"]
-    new_spec["dataset"]["featurizers"] = old_model_schema["featurizers"]
-    new_spec["spec"] = {"layers": old_model_schema["layers"]}
+    new_spec["dataset"]["featurizers"] = old_model_schema.get("featurizers", [])
+    new_spec["spec"] = {"layers": old_model_schema.get("layers", [])}
 
     layers = new_spec["spec"].get("layers")
     featurizers = new_spec["dataset"].get("featurizers")
