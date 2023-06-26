@@ -76,7 +76,17 @@ export default class ShapeAndDataTypeVisitor extends ComponentVisitor {
   };
 
   visitOutput: ComponentVisitor['visitOutput'] = ({ component, info }) => {
-    info.setRequiredShapeSimple(component.name, [1]);
+    if (component.dataType.domainKind === 'numeric') {
+      info.setRequiredShapeSimple(component.name, [1, 1]);
+    } else if (component.dataType.domainKind === 'categorical') {
+      if (component.columnType === 'binary')
+        info.setRequiredShapeSimple(component.name, [1, 1]);
+      else
+        info.setRequiredShapeSimple(component.name, [
+          1,
+          Object.keys(component.dataType.classes).length,
+        ]);
+    }
   };
 
   private visitActivation = ({

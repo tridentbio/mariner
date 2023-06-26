@@ -17,6 +17,8 @@ from fleet.data_types import SmileDataType
 from fleet.model_builder import options
 from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.schemas import ComponentOption
+from fleet.ray_actors.model_check_actor import ModelCheckActor
+from fleet.validation.functions import is_valid_smiles_series
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -29,7 +31,6 @@ from mariner.exceptions.model_exceptions import (
     InvalidDataframe,
     ModelVersionNotTrained,
 )
-from mariner.ray_actors.model_check_actor import ModelCheckActor
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     Model,
@@ -44,7 +45,6 @@ from mariner.schemas.model_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
-from mariner.validation.functions import is_valid_smiles_series
 
 if TYPE_CHECKING:
     from fleet.dataset_schemas import TorchDatasetConfig
@@ -229,6 +229,9 @@ def get_model_prediction(
     db: Session, request: PredictRequest
 ) -> Dict[str, torch.Tensor]:
     """(Slowly) Loads a model version and apply it to a sample input
+
+    .. warning::
+        Avoid using this function until it is adapted to run from ray worker.
 
     Args:
         db: Session with the database

@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 import pytest_asyncio
 
+from fleet.ray_actors.dataset_transforms import DatasetTransforms
 from mariner.core.config import settings
-from mariner.ray_actors.dataset_transforms import DatasetTransforms
 from mariner.schemas.dataset_schemas import ColumnsMeta
 
 BIO_DATASET_PATH = "tests/data/csv/bio_rna_dna_protein.csv"

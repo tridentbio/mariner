@@ -31,6 +31,7 @@ services:
     ports:
       - 80:80
       - 8888:8888
+      - 8000:8000
     environment:
       - RESTART=true
     env_file:
@@ -48,6 +49,10 @@ services:
     networks:
       - ray_net
     command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
+    volumes:
+      - ./backend:/app:z
+      - ./source:/source:z
+      - ./build:/build:z
 
   mlflowdb:
     image: postgres:12
@@ -110,7 +115,6 @@ services:
       - "6379:6379"
       - "8265:8265"
       - "10001:10001"
-      - "8000:8000"
     # Docs on ray cli: https://docs.ray.io/en/latest/cluster/cli.html
     command: ray start --head --port=6379 --block --dashboard-host 0.0.0.0
     networks:
