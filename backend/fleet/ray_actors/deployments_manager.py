@@ -10,7 +10,7 @@ from torch_geometric.loader import DataLoader
 from fleet.model_builder.dataset import CustomDataset
 from fleet.torch_.models import CustomModel
 from mariner.core import mlflowapi
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.entities.deployment import DeploymentStatus
 from mariner.exceptions import (
     DeploymentNotRunning,
@@ -78,7 +78,8 @@ class SingleModelDeploymentControl:
             True if the deployment is idle for a long time, False otherwise.
         """
         return (
-            self.idle_time and (time() - self.idle_time) > settings.DEPLOYMENT_IDLE_TIME
+            self.idle_time
+            and (time() - self.idle_time) > get_app_settings().DEPLOYMENT_IDLE_TIME
         )
 
     def start(self) -> Deployment:
@@ -172,9 +173,11 @@ class SingleModelDeploymentControl:
             deployment_id=self.deployment.id, status=status
         )
         res = requests.post(
-            f"{settings.SERVER_HOST}/api/v1/deployments/deployment-manager",
+            f"{get_app_settings().SERVER_HOST}/api/v1/deployments/deployment-manager",
             json=data.dict(),
-            headers={"Authorization": f"Bearer {settings.APPLICATION_SECRET}"},
+            headers={
+                "Authorization": f"Bearer {get_app_settings().APPLICATION_SECRET}"
+            },
         )
         assert (
             res.status_code == 200,

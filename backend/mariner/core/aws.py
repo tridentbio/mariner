@@ -3,6 +3,7 @@ AWS service
 """
 import enum
 import io
+from datetime import datetime
 from typing import BinaryIO, Tuple, Union
 
 import boto3
@@ -10,7 +11,7 @@ import pandas as pd
 from botocore.client import BaseClient
 from fastapi.datastructures import UploadFile
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.utils import (
     compress_file,
     get_size,
@@ -23,8 +24,70 @@ from mariner.utils import (
 class Bucket(enum.Enum):
     """S3 buckets available to the application"""
 
-    Datasets = settings.AWS_DATASETS
-    Models = settings.AWS_MODELS
+    Datasets = get_app_settings().AWS_DATASETS
+    Models = get_app_settings().AWS_MODELS
+
+
+class AWS_Credentials:
+    def __init__(
+        self,
+        expiration: Union[None, datetime],
+        access_key_id,
+        secret_access_key,
+        session_token,
+    ):
+        self.expiration = expiration
+        self.access_key_id = access_key_id
+        self.secret_access_key = secret_access_key
+        self.session_token = session_token
+
+    def is_expired(self):
+        return self.expiration is None or self.expiration < datetime.now()
+
+    def credentials_dict(self):
+        return {
+            "aws_access_key_id": self.access_key_id,
+            "aws_secret_access_key": self.secret_access_key,
+            "aws_session_token": self.session_token,
+        }
+
+
+_credentials: Union[AWS_Credentials, None] = None
+
+
+def _get_new_credentials():
+    settings = get_app_settings()
+    if settings.AWS_MODE == "sts":
+        sts_client = boto3.client("sts")
+        response = sts_client.get_caller_identity()
+        role = response["Arn"].split("/")[1]
+        assumed_role_object = sts_client.assume_role(
+            RoleArn=role,
+            RoleSessionName="AssumeRoleSession1",
+        )
+        credentials = assumed_role_object["Credentials"]
+        return AWS_Credentials(
+            expiration=credentials["Expiration"],
+            access_key_id=credentials["AccessKeyId"],
+            secret_access_key=credentials["SecretAccessKey"],
+            session_token=credentials["SessionToken"],
+        )
+    elif settings.AWS_MODE == "local":
+        return AWS_Credentials(
+            expiration=None,
+            access_key_id=settings.AWS_ACCESS_KEY_ID,
+            secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            session_token=None,
+        )
+    else:
+        raise ValueError(f"Invalid AWS_MODE: {settings.AWS_MODE}")
+
+
+def _get_credentials():
+    global _credentials  # pylint: disable=W0603
+    if _credentials is None or _credentials.is_expired():
+        _credentials = _get_new_credentials()
+    return _credentials
 
 
 def create_s3_client() -> BaseClient:
@@ -33,11 +96,11 @@ def create_s3_client() -> BaseClient:
     Returns:
         BaseClient: boto3 s3 client
     """
+    creds = _get_credentials()
     s3 = boto3.client(
         "s3",
-        region_name=settings.AWS_REGION,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=get_app_settings().AWS_REGION,
+        **creds.credentials_dict(),
     )
     return s3
 

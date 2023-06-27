@@ -10,10 +10,11 @@ from starlette.middleware.cors import CORSMiddleware
 from api import startup_functions
 from api.api_v1.api import api_router
 from api.websocket import ws_router
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 
 app = FastAPI(
-    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title=get_app_settings().PROJECT_NAME,
+    openapi_url=f"{get_app_settings().API_V1_STR}/openapi.json",
 )
 
 
@@ -42,10 +43,12 @@ def openapijson():
 
 
 # Set all CORS enabled origins
-if settings.BACKEND_CORS_ORIGINS:
+if get_app_settings().BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_origins=[
+            str(origin) for origin in get_app_settings().BACKEND_CORS_ORIGINS
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -53,7 +56,7 @@ if settings.BACKEND_CORS_ORIGINS:
 
 app.add_middleware(GZipMiddleware, minimum_size=100)
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=get_app_settings().API_V1_STR)
 app.include_router(ws_router)
 
 simplify_operation_ids(app)
