@@ -4,7 +4,7 @@ WORKDIR /app/
 
 COPY ./mariner/__init__.py /app/mariner/__init__.py
 COPY ./api/__init__.py /app/api/__init__.py
-COPY ./model_builder/__init__.py /app/model_builder/__init__.py
+# COPY ./model_builder/__init__.py /app/model_builder/__init__.py
 
 COPY ./pyproject.toml ./poetry.lock ./deps.py /app/
 
