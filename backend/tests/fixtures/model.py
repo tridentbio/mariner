@@ -24,7 +24,7 @@ from tests.utils.utils import random_lower_string
 ModelType = Literal["regressor", "regressor-with-categorical", "classifier"]
 
 
-def data_model_config(
+def model_config(
     model_type: ModelType = "regressor",
     framework: Literal["sklearn", "torch"] = "torch",
     dataset_name: Optional[str] = None,

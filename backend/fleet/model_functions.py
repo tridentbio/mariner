@@ -96,7 +96,9 @@ def fit(
 
     if isinstance(spec, TorchModelSpec):
         functions = TorchFunctions()
-        loggers: List[Logger] = [MLFlowLogger(experiment_name=mlflow_experiment_name)]
+        loggers: List[Logger] = [
+            MLFlowLogger(experiment_name=mlflow_experiment_name)
+        ]
         if (
             experiment_id is not None
             and experiment_name is not None
@@ -130,10 +132,12 @@ def fit(
         )
     elif isinstance(spec, SklearnModelSpec):
         functions = SciKitFunctions(spec, dataset)
-        with mlflow.start_run(nested=True, experiment_id=mlflow_experiment_id) as run:
+        with mlflow.start_run(
+            nested=True, experiment_id=mlflow_experiment_id
+        ) as run:
             functions.train()
             mlflow_model_version = functions.log_models(
-                model_name=mlflow_model_name,
+                mlflow_model_name=mlflow_model_name,
                 run_id=run.info.run_id,
             )
             functions.val()
