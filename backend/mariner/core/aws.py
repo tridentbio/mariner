@@ -60,7 +60,7 @@ def _get_new_credentials():
     if settings.AWS_MODE == "sts":
         sts_client = boto3.client("sts")
         response = sts_client.get_caller_identity()
-        role = response["Arn"].split("/")[1]
+        role = response["Arn"]
         assumed_role_object = sts_client.assume_role(
             RoleArn=role,
             RoleSessionName="AssumeRoleSession1",
