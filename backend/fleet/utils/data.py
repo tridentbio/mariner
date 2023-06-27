@@ -416,7 +416,7 @@ class PreprocessingPipeline:
                 transformer.fit(*args)
             except Exception as exp:
                 raise fleet.exceptions.FitError(
-                    f"Failed to fit {config}"
+                    f"Failed to fit {config}\n{exp}"
                 ) from exp
 
         self._fitted = True
@@ -455,12 +455,16 @@ class PreprocessingPipeline:
             ]:
                 args = map(lambda x: x.reshape(-1, 1), args)
             try:
-                data[config.name] = transformer.fit_transform(*args)
+                result = transformer.fit_transform(*args)
+
+                if not isinstance(result, list):
+                    result = result.toarray().tolist()
+
+                data[config.name] = result
             except Exception as exp:
                 raise fleet.exceptions.FitError(
-                    f"Failed to fit {config}"
+                    f"Failed to fit {config}\n{exp}"
                 ) from exp
-
         self._fitted = True
 
         return data
@@ -708,7 +712,6 @@ class DataModule(pl.LightningDataModule):
             dataset_config=self.dataset_config,
         )
         if stage == TrainerFn.FITTING:
-
             self.train_dataset = Subset(
                 dataset=dataset,
                 indices=dataset.get_subset_idx(TrainingStep.TRAIN.value),
