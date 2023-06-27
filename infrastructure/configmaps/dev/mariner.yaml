@@ -11,7 +11,7 @@ data:
   EMAILS_FROM_EMAIL: info@mariner.trident.bio
   FIRST_SUPERUSER: admin@mariner.trident.bio
   PROJECT_NAME: mariner
-  RAY_ADDRESS: ray://ray-cluster.ray.svc.cluster.local:10001
+  RAY_ADDRESS: ray://ray-head.ray.svc.cluster.local:10001
   SENTRY_DSN: ""
   SERVER_HOST: https://backend.dev.mariner.trident.bio
   SERVER_NAME: backend.dev.mariner.trident.bio
