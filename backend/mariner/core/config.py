@@ -98,8 +98,8 @@ class Settings(BaseSettings):
     EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
 
     AWS_MODE: Literal["sts", "local"] = "local"
-    AWS_ACCESS_KEY_ID: Union[None, str]
-    AWS_SECRET_ACCESS_KEY: Union[None, str]
+    AWS_ACCESS_KEY_ID: Union[None, str] = None
+    AWS_SECRET_ACCESS_KEY: Union[None, str] = None
     AWS_REGION: str = "us-east-1"
     AWS_DATASETS: str = "dev-matiner-datasets"
     AWS_MODELS: str = "dev-matiner-datasets"
@@ -127,7 +127,9 @@ class Settings(BaseSettings):
                     "AWS_SECRET_ACCESS_KEY must be set if AWS_MODE is local"
                 )
         elif values["AWS_MODE"] == "sts":
-            if "AWS_ACCESS_KEY_ID" in values or "AWS_SECRET_ACCESS_KEY" in values:
+            if bool(values["AWS_ACCESS_KEY_ID"]) or bool(
+                values["AWS_SECRET_ACCESS_KEY"]
+            ):
                 raise ValueError(
                     "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must not be set if AWS_MODE is sts"
                 )
