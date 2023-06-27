@@ -125,6 +125,10 @@ ignore_errors = true
 module = "scripts.*"
 ignore_errors = true
 
+[tool.black]
+line-length = 79
+target-version = ['py39']
+
 [tool.coverage.report]
 include = [
     "./mariner/*",
