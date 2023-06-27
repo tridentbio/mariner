@@ -7,7 +7,7 @@ from typing import Any, Optional, Union
 from jose import jwt
 from passlib.context import CryptContext
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.schemas.token import TokenPayload
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -34,11 +34,11 @@ def create_access_token(
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            minutes=get_app_settings().ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(
-        to_encode, settings.AUTHENTICATION_SECRET_KEY, algorithm=ALGORITHM
+        to_encode, get_app_settings().AUTHENTICATION_SECRET_KEY, algorithm=ALGORITHM
     )
     return encoded_jwt
 
@@ -73,13 +73,13 @@ def generate_deployment_signed_url(sub: Union[str, Any]) -> str:
     """
     encoded_jwt = jwt.encode(
         {"sub": str(sub)},
-        settings.DEPLOYMENT_URL_SIGNATURE_SECRET_KEY,
+        get_app_settings().DEPLOYMENT_URL_SIGNATURE_SECRET_KEY,
         algorithm=ALGORITHM,
     )
     token = encoded_jwt.replace(
         ".", "/"
     )  # replace . with / to avoid problems with browser
-    return f"{settings.WEBAPP_URL}/public-model/{token}"
+    return f"{get_app_settings().WEBAPP_URL}/public-model/{token}"
 
 
 def decode_deployment_url_token(token: str):
@@ -96,7 +96,9 @@ def decode_deployment_url_token(token: str):
         ValidationError: If token payload is invalid.
     """
     payload = jwt.decode(
-        token, settings.DEPLOYMENT_URL_SIGNATURE_SECRET_KEY, algorithms=[ALGORITHM]
+        token,
+        get_app_settings().DEPLOYMENT_URL_SIGNATURE_SECRET_KEY,
+        algorithms=[ALGORITHM],
     )
     token_data = TokenPayload(**payload)
     return token_data

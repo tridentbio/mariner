@@ -1,8 +1,33 @@
 import os
+import logging
 import sys
 
-sys.path.insert(0, os.path.abspath("mariner"))
-sys.path.insert(0, os.path.abspath("fleet"))
+mariner_path = os.path.abspath("../mariner")
+fleet_path = os.path.abspath("../fleet")
+api_path = os.path.abspath("../api")
+
+logging.basicConfig(level=logging.INFO)
+
+logging.info("Adding packages to sys.path")
+logging.info(f"Mariner path: {mariner_path}")
+logging.info(f"Fleet path: {fleet_path}")
+logging.info(f"Api path: {api_path}")
+
+
+sys.path.insert(0, mariner_path)
+sys.path.insert(0, fleet_path)
+sys.path.insert(0, api_path)
+
+# Checks if importing added paths works:
+try:
+    import mariner
+    import fleet
+    import api
+except ImportError:
+    logging.error("Failed to import packages")
+    sys.exit(1)
+
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -32,7 +57,7 @@ extensions = [
 
 copybutton_exclude = ".linenos, .gp, .go"
 
-templates_path = ["_templates"]
+templates_path = ["templates"]
 exclude_patterns = []
 
 

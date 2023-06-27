@@ -6,7 +6,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.entities.dataset import Dataset
 from mariner.schemas.dataset_schemas import DatasetCreateRepo
 from mariner.stores import dataset_sql
@@ -66,7 +66,7 @@ def setup_create_dataset(
     db.commit()
     with open(file, "rb") as f:
         res = client.post(
-            f"{settings.API_V1_STR}/datasets/",
+            f"{get_app_settings().API_V1_STR}/datasets/",
             data=data,
             files={"file": ("zinc_extra.csv", f.read())},
             headers=normal_user_token_headers,

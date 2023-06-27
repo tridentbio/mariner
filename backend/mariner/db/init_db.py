@@ -4,7 +4,7 @@ Useful functions when developing on a fresh database
 import sqlalchemy.exc
 from sqlalchemy.orm import Session
 
-from mariner.core.config import settings
+from mariner.core.config import get_app_settings
 from mariner.core.security import get_password_hash
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User
@@ -77,4 +77,4 @@ def create_test_user():
     Returns:
         the super user entity
     """
-    return create_user(email=settings.EMAIL_TEST_USER, password="123456")
+    return create_user(email=get_app_settings().EMAIL_TEST_USER, password="123456")

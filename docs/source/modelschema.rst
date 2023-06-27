@@ -11,8 +11,6 @@ YAML Schemas
 
 .. include:: torch.rst
 
-.. literalinclude:: ../app/tests/data/yaml/small_regressor_schema.yaml
 
 .. include:: sklearn.rst
 
-.. include:: xgboost.rst
