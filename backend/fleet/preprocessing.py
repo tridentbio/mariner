@@ -72,7 +72,7 @@ class CamelCaseModel(BaseModel):
         underscore_attrs_are_private = True
 
 
-class CreateFromType:
+class CreateFromType(BaseModel):
     """
     Adds a method to instantiate a class from it's class path (type) and constructor_args.
 
@@ -155,7 +155,9 @@ class StandardScalerConfig(CreateFromType, CamelCaseModel):
     type: Literal[
         "sklearn.preprocessing.StandardScaler"
     ] = "sklearn.preprocessing.StandardScaler"
-    constructor_args: StandardScalerConstructorArgs = StandardScalerConstructorArgs()
+    constructor_args: StandardScalerConstructorArgs = (
+        StandardScalerConstructorArgs()
+    )
     name: str
     forward_args: Union[Dict[str, str], list[str]]
 
