@@ -1,46 +1,44 @@
-build:
+build-frontend:
   stage: deploy
-  image: ubuntu:focal-20230605
+  image: node:16.20.1
   script:
-    - apt update
-    - apt install curl unzip sudo -y
     - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     - unzip awscliv2.zip
-    - sudo ./aws/install
+    - ./aws/install
+    # - export REACT_APP_API_BASE_URL='http://backend.dev.mariner.trident.bio/api'
+    # - cd webapp
+    # - npm install
+    # - npm run build
     - aws sts get-caller-identity
-    - aws s3 ls s3://mariner-s3-dev
-    - touch index.html
-    - aws s3 cp index.html s3://mariner-s3-dev/
+    - aws s3 sync ./webapp/build-webapp/ s3://mariner-s3-dev --delete --quiet
   tags:
     - mariner
   rules:
     - if: $CI_COMMIT_BRANCH == 'pipeline'
       when: always
 
+build-backend:
+  stage: deploy
+  image: docker:stable
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    - docker build -t $CI_REGISTRY_IMAGE .
+    - docker push $CI_REGISTRY_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'pipeline'
+      when: always
 
 
-# build:
-#   stage: deploy
-#   image: docker:stable
-#   script:
-#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
-#     - docker build -t $CI_REGISTRY_IMAGE .
-#     - docker push $CI_REGISTRY_IMAGE
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == 'pipeline'
-#       when: always
-
-
-# deploy:
-#   stage: deploy
-#   image: alpine/k8s:1.24.15
-#   script:
-#     - kubectl config get-contexts
-#     - kubectl config use-context ares/mariner:mariner-k8s-agent
-#     - helm upgrade --install mariner-backend helm/helm-mariner/.  -n mariner 
-#     - helm upgrade --install mlflow helm/helm-mlflow/.  -n mariner 
-#     - helm upgrade --install ray-head helm/helm-ray-head/.  -n mariner 
-#     - helm upgrade --install ray--worker helm/helm-ray-worker/.  -n mariner 
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == 'pipeline'
-#       when: always
+deploy-backend:
+  stage: deploy
+  image: alpine/k8s:1.24.15
+  script:
+    - kubectl config get-contexts
+    - kubectl config use-context ares/mariner:mariner-k8s-agent
+    - helm upgrade --install mariner-backend helm/helm-mariner/.  -n mariner 
+    - helm upgrade --install mlflow helm/helm-mlflow/.  -n mariner 
+    - helm upgrade --install ray-head helm/helm-ray-head/.  -n mariner 
+    - helm upgrade --install ray--worker helm/helm-ray-worker/.  -n mariner 
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'pipeline'
+      when: always

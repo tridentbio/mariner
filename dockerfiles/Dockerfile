@@ -8,7 +8,7 @@ COPY ./api/__init__.py /app/api/__init__.py
 
 COPY ./pyproject.toml ./poetry.lock ./deps.py /app/
 
-RUN /usr/local/bin/python3 -m pip install --upgrade pip
+# RUN /usr/local/bin/python3 -m pip install --upgrade pip
 
 ENV POETRY_VERSION=1.2.0a2
 ENV POETRY_HOME=/opt/poetry
