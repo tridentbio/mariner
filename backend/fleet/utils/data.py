@@ -205,7 +205,7 @@ class ForwardProtocol(Protocol):
     Interface for forward_args attribute of featurizers, transforms and layers.
     """
 
-    forward_args: Union[List[str], Dict[str, str], BaseModel]
+    forward_args: Union[List[str], Dict[str, Union[List[str], str]], BaseModel]
 
 
 def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
@@ -223,13 +223,20 @@ def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
         forward_args = feat.forward_args
 
     references = get_references_dict(forward_args)
+
     if isinstance(references, dict):
-        return np.array(
-            [
-                data.loc[:, col_name].to_numpy()
-                for col_name in references.values()
+        for value in references.values():
+            if not isinstance(value, list):
+                value = [value]
+
+            result = [
+                np.array(
+                    [data.loc[:, col_name].to_numpy() for col_name in value]
+                )
             ]
-        )
+
+            return result[0] if len(result) == 1 else result
+
     else:
         return np.array(
             [data.loc[:, col_name].to_numpy() for col_name in references]
@@ -457,7 +464,7 @@ class PreprocessingPipeline:
             try:
                 result = transformer.fit_transform(*args)
 
-                if not isinstance(result, list):
+                if config.type == "sklearn.preprocessing.OneHotEncoder":
                     result = result.toarray().tolist()
 
                 data[config.name] = result
