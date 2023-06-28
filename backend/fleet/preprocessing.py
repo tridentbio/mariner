@@ -46,12 +46,14 @@ See Also:
     :mod:`fleet.model_builder.featurizers`
 """
 
-from typing import Annotated, Dict, Literal, NewType, Union, get_args, List
+from typing import Annotated, Dict, List, Literal, NewType, Union, get_args
 
 from humps import camel
 from pydantic import BaseModel, Field
 
-from fleet.model_builder.layers_schema import FeaturizersType as FeaturizersType_
+from fleet.model_builder.layers_schema import (
+    FeaturizersType as FeaturizersType_,
+)
 from fleet.model_builder.utils import get_class_from_path_string
 
 
@@ -169,7 +171,9 @@ class StandardScalerConfig(CreateFromType, CamelCaseModel):
     type: Literal[
         "sklearn.preprocessing.StandardScaler"
     ] = "sklearn.preprocessing.StandardScaler"
-    constructor_args: StandardScalerConstructorArgs = StandardScalerConstructorArgs()
+    constructor_args: StandardScalerConstructorArgs = (
+        StandardScalerConstructorArgs()
+    )
     name: str
     forward_args: Union[Dict[str, str], list[str]]
 
