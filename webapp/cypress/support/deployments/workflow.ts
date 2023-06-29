@@ -64,7 +64,7 @@ export const makePrediction = (expectSuccess: boolean) => {
 
   cy.intercept({
     method: 'POST',
-    url: 'http://localhost/api/v1/deployments/*/predict',
+    url: 'http://localhost/api/v1/deployments/*/predict*',
   }).as('makePrediction');
   cy.get('button').contains('Predict').click();
   cy.wait('@makePrediction').then(({ response }) => {
