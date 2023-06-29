@@ -120,12 +120,219 @@ class RandomForestRegressorConfig(CamelCaseModel, CreateFromType):
     fit_args: Dict[str, str]
 
 
+class ExtraTreesRegressorConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the :py:class`sklearn.ensemble.ExtraTreesRegressor` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html
+    """
+
+    n_estimators: int = 100
+    criterion: Literal[
+        "squared_error", "absolute_error", "friedman_mse", "poisson"
+    ] = "squared_error"
+    max_depth: Union[None, int] = None
+    min_samples_split: Union[float, int] = 2
+    min_samples_leaf: Union[float, int] = 1
+    min_weight_fraction_leaf: float = 0.0
+    max_features: Union[None, float, Literal["sqrt", "log2"]] = 1.0
+    max_leaf_nodes: Union[None, int] = None
+    min_impurity_decrease: float = 0.0
+    bootstrap: bool = False
+    oob_score: bool = False
+    n_jobs: Union[int, None] = None
+    random_state: Union[int, None] = None
+    verbose: int = 0
+    warm_start: bool = False
+    ccp_alpha: float = 0.0
+    max_samples: Union[None, int, float] = None
+
+
+class ExtraTreesRegressorConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the :py:class`sklearn.ensemble.ExtraTreesRegressor` class.
+    """
+
+    type: Literal[
+        "sklearn.ensemble.ExtraTreesRegressor"
+    ] = "sklearn.ensemble.ExtraTreesRegressor"
+    task_type: List[TaskType] = ["regressor"]
+    constructor_args: ExtraTreesRegressorConstructorArgs = (
+        ExtraTreesRegressorConstructorArgs()
+    )
+    fit_args: Dict[str, str]
+
+
+class KnearestNeighborsRegressorConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the `sklearn.neighbors.KNeighborsRegressor` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
+    """
+
+    n_neighbors: int = 5
+    weights: Union[Literal["uniform", "distance"], None] = "uniform"
+    algorithm: Literal["auto", "ball_tree", "kd_tree", "brute"] = "auto"
+    leaf_size: int = 30
+    p: int = 2
+    metric: str = "minkowski"
+    metric_params: Union[None, Dict[str, Union[str, float, int]]] = None
+    n_jobs: Union[None, int] = None
+
+
+class KnearestNeighborsRegressorConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the `sklearn.neighbors.KNeighborsRegressor` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
+    """
+
+    type: Literal[
+        "sklearn.neighbors.KNeighborsRegressor"
+    ] = "sklearn.neighbors.KNeighborsRegressor"
+    constructor_args: KnearestNeighborsRegressorConstructorArgs = (
+        KnearestNeighborsRegressorConstructorArgs()
+    )
+    fit_args: Dict[str, str]
+    task_type: List[TaskType] = ["regressor"]
+
+
+class ExtraTreesClassifierConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the `sklearn.ensemble.ExtraTreesClassifier` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html
+    """
+
+    n_estimators: int = 100
+    criterion: Literal["gini", "entropy", "log_loss"] = "gini"
+    max_depth: Union[None, int] = None
+    min_samples_split: Union[int, float] = 2
+    min_samples_leaf: Union[int, float] = 1
+    min_weight_fraction_leaf: float = 0.0
+    max_features: Union[None, int, float, Literal["sqrt", "log2"]] = "sqrt"
+    max_leaf_nodes: Union[None, int] = None
+    min_impurity_decrease: float = 0.0
+    bootstrap: bool = False
+    oob_score: bool = False
+    n_jobs: Union[int, None] = None
+    random_state: Union[int, None] = None
+    verbose: int = 0
+    warm_start: bool = False
+    class_weight: Union[
+        None, Literal["balanced", "balanced_subsample"], Dict, List[Dict]
+    ] = None
+    ccp_alpha: float = 0.0
+    max_samples: Union[None, int, float] = None
+
+
+class ExtraTreesClassifierConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the `sklearn.ensemble.ExtraTreesClassifier` class.
+    """
+
+    type: Literal[
+        "sklearn.ensemble.ExtraTreesClassifier"
+    ] = "sklearn.ensemble.ExtraTreesClassifier"
+    task_type: List[TaskType] = ["multiclass"]
+    constructor_args: ExtraTreesClassifierConstructorArgs = (
+        ExtraTreesClassifierConstructorArgs()
+    )
+    fit_args: Dict[str, str]
+
+
+class KnearestNeighborsClassifierConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the `sklearn.neighbors.KNeighborsClassifier` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
+    """
+
+    n_neighbors: int = 5
+    weights: Union[Literal["uniform", "distance"], None] = "uniform"
+    algorithm: Literal["auto", "ball_tree", "kd_tree", "brute"] = "auto"
+    leaf_size: int = 30
+    p: int = 2
+    metric: str = "minkowski"
+    metric_params: Union[None, Dict[str, Union[str, float, int]]] = None
+    n_jobs: Union[None, int] = None
+
+
+class KnearestNeighborsClassifierConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the `sklearn.neighbors.KNeighborsClassifier` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
+    """
+
+    type: Literal[
+        "sklearn.neighbors.KNeighborsClassifier"
+    ] = "sklearn.neighbors.KNeighborsClassifier"
+    constructor_args: KnearestNeighborsClassifierConstructorArgs = (
+        KnearestNeighborsClassifierConstructorArgs()
+    )
+    fit_args: Dict[str, str]
+    task_type: List[TaskType] = ["multiclass", "multilabel"]
+
+
+class RandomForestClassifierConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the `sklearn.ensemble.RandomForestClassifier` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+    """
+
+    n_estimators: int = 100
+    criterion: Literal["gini", "entropy", "log_loss"] = "gini"
+    max_depth: Union[None, int] = None
+    min_samples_split: Union[int, float] = 2
+    min_samples_leaf: Union[int, float] = 1
+    min_weight_fraction_leaf: float = 0.0
+    max_features: Union[None, int, float, Literal["sqrt", "log2"]] = "sqrt"
+    max_leaf_nodes: Union[None, int] = None
+    min_impurity_decrease: float = 0.0
+    bootstrap: bool = True
+    oob_score: bool = False
+    n_jobs: Union[int, None] = None
+    random_state: Union[int, None] = None
+    verbose: int = 0
+    warm_start: bool = False
+    class_weight: Union[
+        None, Literal["balanced", "balanced_subsample"], Dict, List[Dict]
+    ] = None
+    ccp_alpha: float = 0.0
+    max_samples: Union[None, int, float] = None
+
+
+class RandomForestClassifierConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the `sklearn.ensemble.RandomForestClassifier` class.
+    """
+
+    type: Literal[
+        "sklearn.ensemble.RandomForestClassifier"
+    ] = "sklearn.ensemble.RandomForestClassifier"
+    task_type: List[TaskType] = ["multiclass"]
+    constructor_args: RandomForestClassifierConstructorArgs = (
+        RandomForestClassifierConstructorArgs()
+    )
+    fit_args: Dict[str, str]
+
+
 class SklearnModelSchema(CamelCaseModel, YAML_Model):
     """
     Specifies a sklearn model.
     """
 
-    model: Union[KNeighborsRegressorConfig, RandomForestRegressorConfig]
+    model: Union[
+        KNeighborsRegressorConfig,
+        RandomForestRegressorConfig,
+        ExtraTreesRegressorConfig,
+        KnearestNeighborsRegressorConfig,
+        ExtraTreesClassifierConfig,
+        KnearestNeighborsClassifierConfig,
+        RandomForestClassifierConfig,
+    ]
 
 
 class SklearnModelSpec(CamelCaseModel, YAML_Model):

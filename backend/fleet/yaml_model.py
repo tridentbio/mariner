@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Union
 
 import yaml
+from pydantic import ValidationError
 
 
 class YAML_Model:  # pylint: disable=invalid-name
@@ -31,4 +32,7 @@ class YAML_Model:  # pylint: disable=invalid-name
         """
         with open(yamlpath, "rU", encoding="utf-8") as file:
             yaml_str = file.read()
-            return cls.from_yaml_str(yaml_str)
+            try:
+                return cls.from_yaml_str(yaml_str)
+            except ValidationError as e:
+                raise AttributeError(f"Error parsing {yamlpath}") from e

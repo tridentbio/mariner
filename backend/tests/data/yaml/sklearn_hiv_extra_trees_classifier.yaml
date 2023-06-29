@@ -1,0 +1,40 @@
+name: HIV Extra Trees Classifier
+framework: sklearn
+
+dataset:
+  name: HIV
+  featureColumns:
+    - name: smiles
+      dataType:
+        domainKind: smiles
+    - name: activity
+      dataType:
+        domainKing: categorical
+        classes:
+          CI: 0
+          CM: 1
+          CA: 2
+
+  targetColumns:
+    - name: HIV_activate
+      dataType:
+        domainKind: numeric
+
+  featurizers:
+    - name: MolFPFeaturizer
+      type: molfeat.trans.fp.FPVecFilteredTransformer
+      forward_args:
+        X: $smiles
+    - name: OneHotEncoder
+      type: sklearn.preprocessing.OneHotEncoder
+      forward_args:
+        X: $activity
+
+spec:
+  model:
+    type: sklearn.ensemble.ExtraTreesClassifier
+    fitArgs:
+      X: 
+        - $MolFPFeaturizer
+        - $OneHotEncoder
+      y: $HIV_activate
