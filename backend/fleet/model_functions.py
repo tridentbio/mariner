@@ -43,6 +43,23 @@ class Result:
     mlflow_model_version: Union[None, ModelVersion]
 
 
+def _get_dataframe(
+    dataset: Union[None, DataFrame], dataset_uri: Union[None, str]
+) -> DataFrame:
+    if dataset is None and dataset_uri is None:
+        raise ValueError("dataset_uri or dataset must be passed to fit()")
+    elif dataset is None and dataset_uri is not None:
+        assert dataset_uri.startswith(
+            "s3://"
+        ), "dataset_uri is invalid: should start with s3://"
+        # Splits s3 uri into bucket and object key
+        bucket, key = dataset_uri[5:].split("/", 1)
+        return download_file_as_dataframe(bucket, key)
+    else:
+        assert dataset is not None, "dataset_uri or dataset are required"
+        return dataset
+
+
 def fit(
     spec: FleetModelSpec,
     train_config: BaseModel,  # todo: make this type narrower
@@ -80,18 +97,9 @@ def fit(
     functions: Union[BaseModelFunctions, None] = None
     try:
         mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
-    except Exception as exp:
-        raise RuntimeError("Failed to create mlflow experiment") from exp
-
-    if dataset is None and dataset_uri is None:
-        raise ValueError("dataset_uri or dataset must be passed to fit()")
-    elif dataset is None and dataset_uri is not None:
-        assert dataset_uri.startswith(
-            "s3://"
-        ), "dataset_uri is invalid: should start with s3://"
-        # Splits s3 uri into bucket and object key
-        bucket, key = dataset_uri[5:].split("/", 1)
-        dataset = download_file_as_dataframe(bucket, key)
+    except Exception as exc:
+        raise RuntimeError("Failed to create mlflow experiment") from exc
+    dataset = _get_dataframe(dataset, dataset_uri)
     assert isinstance(dataset, DataFrame), "Dataset must be DataFrame"
 
     if isinstance(spec, TorchModelSpec):
@@ -149,3 +157,21 @@ def fit(
         mlflow_experiment_id=mlflow_experiment_id,
         mlflow_model_version=mlflow_model_version,
     )
+
+
+def run_test(
+    spec: FleetModelSpec,
+    mlflow_model_name: str,
+    mlflow_model_version: str,
+    dataset_uri: Union[None, str] = None,
+    dataset: Union[None, DataFrame] = None,
+):
+    dataset = _get_dataframe(dataset, dataset_uri)
+    if isinstance(spec, SklearnModelSpec):
+        model = mlflow.sklearn.load_model(
+            model_uri=f"models:/{mlflow_model_name}/{mlflow_model_version}"
+        )
+        # TODO load preprocessing pipeline
+        functions = SciKitFunctions(spec, dataset, model=model)
+        with mlflow.start_run(nested=True):
+            functions.test()
