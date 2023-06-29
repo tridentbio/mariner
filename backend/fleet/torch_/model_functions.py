@@ -127,7 +127,7 @@ class TorchFunctions(BaseModelFunctions):
 
     @override
     def log_models(
-        self, mlflow_model_name, version_description, run_id
+        self, mlflow_model_name, run_id, version_description=None
     ) -> Union[ModelVersion, None]:
         """[Logs best and last models to mlflow tracker.
 
