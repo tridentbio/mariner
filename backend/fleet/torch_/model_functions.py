@@ -44,11 +44,13 @@ class TorchFunctions(BaseModelFunctions):
 
     _loggers: List[Logger] = []
 
-    def __init__(self):
+    def __init__(self, dataset: DataFrame, spec: TorchModelSpec):
         """
         Instantiates the class. Takes no arguments.
         """
         super().__init__()
+        self.dataset = dataset
+        self.spec = spec
 
     @property
     def loggers(self):
@@ -62,8 +64,6 @@ class TorchFunctions(BaseModelFunctions):
     @override
     def train(
         self,
-        dataset: DataFrame,
-        spec: TorchModelSpec,
         params: TorchTrainingConfig,
         datamodule_args: Union[None, dict] = None,
     ):
@@ -79,14 +79,14 @@ class TorchFunctions(BaseModelFunctions):
         Raises:
             ValueError: When the `params.checkpoint_config` property is not set.
         """
-        self.spec = spec
+        spec = self.spec
         model = CustomModel(config=spec.spec, dataset_config=spec.dataset)
         model.set_optimizer(params.optimizer)
         batch_size = params.batch_size or 32
         if not datamodule_args:
             datamodule_args = {}
         datamodule = DataModule(
-            data=dataset,
+            data=self.dataset,
             config=spec.dataset,
             batch_size=batch_size,
             **datamodule_args,
@@ -127,7 +127,7 @@ class TorchFunctions(BaseModelFunctions):
 
     @override
     def log_models(
-        self, mlflow_experiment_id: str, mlflow_model_name: str
+        self, mlflow_model_name, version_description, run_id
     ) -> Union[ModelVersion, None]:
         """[Logs best and last models to mlflow tracker.
 
@@ -165,16 +165,13 @@ class TorchFunctions(BaseModelFunctions):
         assert isinstance(
             last_model, CustomModel
         ), "last_model failed to be logged"
-        runs = client.search_runs(experiment_ids=[mlflow_experiment_id])
-        assert len(runs) >= 1
-        run = runs[0]
-        run_id = run.info.run_id
         mlflow_model_version = (
             fleet.mlflow.log_torch_models_and_create_version(
                 mlflow_model_name,
                 best_model,
                 last_model,
                 run_id,
+                version_description=version_description,
                 client=client,
             )
         )

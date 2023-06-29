@@ -68,14 +68,7 @@ class BaseModelFunctions(Protocol):
     Interface for training, testing and using a model for a specific framework.
     """
 
-    def train(
-        self,
-        *,
-        dataset: DataFrame,
-        spec: BaseFleetModelSpec,
-        params: BaseModel,
-        **kwargs,
-    ) -> None:
+    def train(self, **kwargs) -> None:
         """Trains a model.
 
         Trains the model described by `spec` with the `dataset` and training
@@ -96,7 +89,7 @@ class BaseModelFunctions(Protocol):
         """
 
     def log_models(
-        self, mlflow_experiment_id: str, mlflow_model_name: str
+        self, mlflow_model_name: str, version_description: str, run_id: str
     ) -> ModelVersion:
         """Publishes the model to mlflow.
 

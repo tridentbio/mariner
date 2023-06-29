@@ -115,9 +115,9 @@ specs = [
         ("sklearn_sampl_knn_regressor.yaml", "SAMPL.csv"),
         ("sklearn_sampl_extra_trees_regressor.yaml", "SAMPL.csv"),
         ("sklearn_sampl_knearest_neighbor_regressor.yaml", "SAMPL.csv"),
-        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv"),
-        ("sklearn_hiv_knearest_neighbor_classifier.yaml", "HIV.csv"),
-        ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv"),
+        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv"),  # F
+        ("sklearn_hiv_knearest_neighbor_classifier.yaml", "HIV.csv"),  # F
+        ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv"),  # F
         ("small_regressor_schema.yaml", "zinc.csv"),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),
@@ -166,11 +166,12 @@ def test_train(case: TestCase):
             result = fit(
                 spec=case.model_spec,
                 train_config=case.train_spec,
-                dataset=dataset,
+                dataset=dataset.copy(),
                 mlflow_model_name=mlflow_model_name,
                 mlflow_experiment_name=mlflow_experiment_name,
                 datamodule_args=case.datamodule_args,
             )
+
             assert_mlflow_data(
                 spec=case.model_spec,
                 mlflow_experiment_id=result.mlflow_experiment_id,
@@ -179,7 +180,7 @@ def test_train(case: TestCase):
             run_test(
                 spec=case.model_spec,
                 mlflow_model_name=mlflow_model_name,
-                mlflow_model_version=result.mlflow_model_version,
+                mlflow_model_version=result.mlflow_model_version.version,
                 dataset=dataset,
             )
         else:

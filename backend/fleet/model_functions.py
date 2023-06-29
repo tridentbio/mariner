@@ -22,6 +22,7 @@ from fleet.base_schemas import (
     FleetModelSpec,
     TorchModelSpec,
 )
+from fleet.mlflow import load_pipeline
 from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.model_functions import TorchFunctions
@@ -103,41 +104,43 @@ def fit(
     assert isinstance(dataset, DataFrame), "Dataset must be DataFrame"
 
     if isinstance(spec, TorchModelSpec):
-        functions = TorchFunctions()
-        loggers: List[Logger] = [
-            MLFlowLogger(experiment_name=mlflow_experiment_name)
-        ]
-        if (
-            experiment_id is not None
-            and experiment_name is not None
-            and user_id is not None
-        ):
-            loggers.append(
-                MarinerLogger(
+        with mlflow.start_run(
+            nested=True, experiment_id=mlflow_experiment_id
+        ) as run:
+            functions = TorchFunctions(
+                spec=spec,
+                dataset=dataset,
+            )
+            loggers: List[Logger] = [
+                MLFlowLogger(experiment_name=mlflow_experiment_name)
+            ]
+            if (
+                experiment_id is not None
+                and experiment_name is not None
+                and user_id is not None
+            ):
+                logger = MarinerLogger(
                     experiment_id=experiment_id,
                     experiment_name=experiment_name,
                     user_id=user_id,
                 )
-            )
-        else:
-            LOG.warning(
-                "Not creating MarinerLogger because experiment_id or experiment_name or user_id are missing"
-            )
+                loggers.append(logger)
+            else:
+                LOG.warning(
+                    "Not creating MarinerLogger because experiment_id or experiment_name or user_id are missing"
+                )
 
-        functions.loggers = loggers
-        assert isinstance(
-            train_config, TorchTrainingConfig
-        ), f"train_config should be TorchTrainingConfig but is {train_config.__class__}"
-        functions.train(
-            spec=spec,
-            dataset=dataset,
-            params=train_config,
-            datamodule_args=datamodule_args if datamodule_args else {},
-        )
-        mlflow_model_version = functions.log_models(
-            mlflow_model_name=mlflow_model_name,
-            mlflow_experiment_id=mlflow_experiment_id,
-        )
+            functions.loggers = loggers
+            assert isinstance(
+                train_config, TorchTrainingConfig
+            ), f"train_config should be TorchTrainingConfig but is {train_config.__class__}"
+            functions.train(
+                params=train_config,
+                datamodule_args=datamodule_args if datamodule_args else {},
+            )
+            mlflow_model_version = functions.log_models(
+                mlflow_model_name=mlflow_model_name, run_id=run.info.run_id
+            )
     elif isinstance(spec, SklearnModelSpec):
         functions = SciKitFunctions(spec, dataset)
         with mlflow.start_run(
@@ -149,7 +152,6 @@ def fit(
                 run_id=run.info.run_id,
             )
             functions.val()
-            functions.test()
     else:
         raise ValueError("Can't find functions for spec")
 
@@ -166,12 +168,36 @@ def run_test(
     dataset_uri: Union[None, str] = None,
     dataset: Union[None, DataFrame] = None,
 ):
+    """Tests a model from any of the supported frameworks.
+
+    Metrics are logged in the same mlflow run as the training.
+
+    Args:
+        spec: The model and dataset specifications.
+        mlflow_model_name: The name of the registered model in mlflow.
+        mlflow_model_version: The version of the model.
+        dataset_uri(optional): The S3 dataset uri.
+        dataset(optional): The dataframe with the dataset. Should have a step
+            column.
+    """
     dataset = _get_dataframe(dataset, dataset_uri)
+    client = mlflow.MlflowClient()
+    model_uri = f"models:/{mlflow_model_name}/{mlflow_model_version}"
+    modelversion = client.get_model_version(
+        mlflow_model_name, mlflow_model_version
+    )
+    assert modelversion.run_id, (
+        f"missing run_id model with version {mlflow_model_version} at model",
+        f"{mlflow_model_name} at Mlflow",
+    )
     if isinstance(spec, SklearnModelSpec):
-        model = mlflow.sklearn.load_model(
-            model_uri=f"models:/{mlflow_model_name}/{mlflow_model_version}"
+        model = mlflow.sklearn.load_model(model_uri)
+        pipeline = load_pipeline(modelversion.run_id)
+        functions = SciKitFunctions(
+            spec, dataset, model=model, preprocessing_pipeline=pipeline
         )
-        # TODO load preprocessing pipeline
-        functions = SciKitFunctions(spec, dataset, model=model)
-        with mlflow.start_run(nested=True):
+        with mlflow.start_run(nested=True, run_id=modelversion.run_id):
             functions.test()
+    elif isinstance(spec, TorchModelSpec):
+        # TODO:
+        pass
