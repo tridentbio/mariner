@@ -25,7 +25,9 @@ LOG = logging.getLogger(__name__)
 
 
 @router.get("/oauth")
-def get_oauth_provider_redirect(provider: str, db: Session = Depends(deps.get_db)):
+def get_oauth_provider_redirect(
+    provider: str, db: Session = Depends(deps.get_db)
+):
     """Endpoint to redirect user to provider authentication site.
 
     Args:

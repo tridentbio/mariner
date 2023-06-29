@@ -63,7 +63,9 @@ def client() -> Generator:
 
 
 @pytest.fixture(scope="module")
-def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]:
+def normal_user_token_headers(
+    client: TestClient, db: Session
+) -> Dict[str, str]:
     return authentication_token_from_email(
         client=client, email=get_app_settings().EMAIL_TEST_USER, db=db
     )
@@ -112,7 +114,10 @@ def some_bio_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):
     ds = setup_create_dataset(
-        db, client, normal_user_token_headers, file="tests/data/csv/chimpanzee.csv"
+        db,
+        client,
+        normal_user_token_headers,
+        file="tests/data/csv/chimpanzee.csv",
     )
     assert ds is not None
     yield ds

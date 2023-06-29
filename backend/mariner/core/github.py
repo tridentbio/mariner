@@ -130,12 +130,16 @@ def get_user(
     Raises:
         GithubFailure: When there's an error from github response.
     """
-    result = github_get(url=GITHUB_API_URL, path="user", access_token=access_token)
+    result = github_get(
+        url=GITHUB_API_URL, path="user", access_token=access_token
+    )
     if 200 <= result.status_code < 400:
         github_user = GithubUser.construct(**result.json())
         if not github_user.email:
             email_response = github_get(
-                url=GITHUB_API_URL, path="user/emails", access_token=access_token
+                url=GITHUB_API_URL,
+                path="user/emails",
+                access_token=access_token,
             )
             assert (
                 200 <= email_response.status_code < 400
@@ -145,7 +149,9 @@ def get_user(
             for email in email_json:
                 if email["verified"] and email["primary"]:
                     primary_email = email["email"]
-            assert primary_email is not None, "User has no valid github visible email"
+            assert (
+                primary_email is not None
+            ), "User has no valid github visible email"
             github_user.email = primary_email
         return github_user
     else:

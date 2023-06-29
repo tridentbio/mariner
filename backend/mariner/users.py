@@ -134,7 +134,10 @@ def _authenticate_github(code: str, state: str) -> User:
 
         token = github.get_access_token(code)
         github_user = github.get_user(token.access_token)
-        if github_user.email not in get_app_settings().ALLOWED_GITHUB_AUTH_EMAILS:
+        if (
+            github_user.email
+            not in get_app_settings().ALLOWED_GITHUB_AUTH_EMAILS
+        ):
             raise UserEmailNotAllowed(
                 "Email should be cleared in the ALLOWED_GITHUB_AUTH_EMAILS env var"
             )
@@ -144,7 +147,8 @@ def _authenticate_github(code: str, state: str) -> User:
             user = user_store.create(
                 db,
                 obj_in=UserCreateOAuth(
-                    email=EmailStr(github_user.email), image_url=github_user.avatar_url
+                    email=EmailStr(github_user.email),
+                    image_url=github_user.avatar_url,
                 ),
             )
         if not user.is_active:
@@ -165,7 +169,8 @@ def _make_token(user: User) -> Token:
 
 
 def authenticate(
-    basic: Optional[BasicAuth] = None, github_oauth: Optional[GithubAuth] = None
+    basic: Optional[BasicAuth] = None,
+    github_oauth: Optional[GithubAuth] = None,
 ) -> Token:
     """Authenticates one of the input authentication payloads (basic, or github_oauth)
 
@@ -180,9 +185,13 @@ def authenticate(
         ValueError: When all authentication input options are None.
     """
     if github_oauth:
-        user = _authenticate_github(code=github_oauth.code, state=github_oauth.state)
+        user = _authenticate_github(
+            code=github_oauth.code, state=github_oauth.state
+        )
     elif basic:
-        user = _authenticate_basic(email=basic.username, password=basic.password)
+        user = _authenticate_basic(
+            email=basic.username, password=basic.password
+        )
     else:
         raise ValueError("authenticate must be called with some strategy")
     return _make_token(user)

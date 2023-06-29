@@ -85,8 +85,12 @@ class TestMarinerTorchDataset:
                 dataset, dataset.get_subset_idx(TrainingStep.VAL.value)
             )
 
-            assert len(train_dataset) == pytest.approx(0.6 * len(dataset), rel=1)
-            assert len(test_dataset) == pytest.approx(0.2 * len(dataset), rel=1)
+            assert len(train_dataset) == pytest.approx(
+                0.6 * len(dataset), rel=1
+            )
+            assert len(test_dataset) == pytest.approx(
+                0.2 * len(dataset), rel=1
+            )
             assert len(val_dataset) == pytest.approx(0.2 * len(dataset), rel=1)
 
     def test_lookup(self):
@@ -106,7 +110,10 @@ class TestMarinerTorchDataset:
         Tests get_subset_idx method.
         """
         df = pd.DataFrame(
-            {"a": list(map(float, range(100))), "b": list(map(float, range(100)))}
+            {
+                "a": list(map(float, range(100))),
+                "b": list(map(float, range(100))),
+            }
         )
         apply_split_indexes(df, split_target="60-20-20")
         dataset_config = (

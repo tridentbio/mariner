@@ -33,15 +33,22 @@ PYLINT_HOME = os.getenv("PYLINT_HOME") or os.path.expanduser("~/.cache/pylint")
     is_flag=True,
     help="Saves improved results as TARGET_BRANCH",
 )
-def main(src_branch: str, target_branch: str, save_src=False, save_new_target=False):
+def main(
+    src_branch: str, target_branch: str, save_src=False, save_new_target=False
+):
     result = Run(modules, do_exit=False)
 
     previous_results = load_results(target_branch, PYLINT_HOME)
-    previous_global_note = previous_results.global_note if previous_results else None
+    previous_global_note = (
+        previous_results.global_note if previous_results else None
+    )
     global_note = result.linter.stats.global_note
 
     def update_cache():
-        should_save_at = [(save_src, src_branch), (save_new_target, target_branch)]
+        should_save_at = [
+            (save_src, src_branch),
+            (save_new_target, target_branch),
+        ]
         for should_save, at in should_save_at:
             if not should_save:
                 continue

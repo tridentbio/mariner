@@ -718,7 +718,9 @@ class TorchtransformerencoderlayerConstructorArgsSummary(BaseModel):
     nhead = "<class 'int'>"
     dim_feedforward = "<class 'int'>?"
     dropout = "<class 'float'>?"
-    activation = "typing.Union[str, typing.Callable[[torch.Tensor], torch.Tensor]]?"
+    activation = (
+        "typing.Union[str, typing.Callable[[torch.Tensor], torch.Tensor]]?"
+    )
     layer_norm_eps = "<class 'float'>?"
     batch_first = "<class 'bool'>?"
     norm_first = "<class 'bool'>?"
@@ -753,7 +755,9 @@ class TorchtransformerencoderlayerSummary(CamelCaseModel):
     type: Literal[
         "torch.nn.TransformerEncoderLayer"
     ] = "torch.nn.TransformerEncoderLayer"
-    constructor_args_summary = TorchtransformerencoderlayerConstructorArgsSummary()
+    constructor_args_summary = (
+        TorchtransformerencoderlayerConstructorArgsSummary()
+    )
 
     forward_args_summary = TorchtransformerencoderlayerForwardArgsSummary()
 
@@ -769,7 +773,9 @@ class TorchtransformerencoderlayerConstructorArgs(BaseModel):
     nhead: int
     dim_feedforward: Optional[int] = 2048
     dropout: Optional[float] = 0.1
-    activation: Optional[Union[str, Callable[[torch.Tensor], torch.Tensor]]] = None
+    activation: Optional[
+        Union[str, Callable[[torch.Tensor], torch.Tensor]]
+    ] = None
     layer_norm_eps: Optional[float] = 1e-05
     batch_first: Optional[bool] = False
     norm_first: Optional[bool] = False
@@ -977,7 +983,9 @@ class FleetdnasequencefeaturizerSummary(CamelCaseModel):
     type: Literal[
         "fleet.model_builder.featurizers.DNASequenceFeaturizer"
     ] = "fleet.model_builder.featurizers.DNASequenceFeaturizer"
-    constructor_args_summary = FleetdnasequencefeaturizerConstructorArgsSummary()
+    constructor_args_summary = (
+        FleetdnasequencefeaturizerConstructorArgsSummary()
+    )
 
     forward_args_summary = FleetdnasequencefeaturizerForwardArgsSummary()
 
@@ -1036,7 +1044,9 @@ class FleetrnasequencefeaturizerSummary(CamelCaseModel):
     type: Literal[
         "fleet.model_builder.featurizers.RNASequenceFeaturizer"
     ] = "fleet.model_builder.featurizers.RNASequenceFeaturizer"
-    constructor_args_summary = FleetrnasequencefeaturizerConstructorArgsSummary()
+    constructor_args_summary = (
+        FleetrnasequencefeaturizerConstructorArgsSummary()
+    )
 
     forward_args_summary = FleetrnasequencefeaturizerForwardArgsSummary()
 
@@ -1095,7 +1105,9 @@ class FleetproteinsequencefeaturizerSummary(CamelCaseModel):
     type: Literal[
         "fleet.model_builder.featurizers.ProteinSequenceFeaturizer"
     ] = "fleet.model_builder.featurizers.ProteinSequenceFeaturizer"
-    constructor_args_summary = FleetproteinsequencefeaturizerConstructorArgsSummary()
+    constructor_args_summary = (
+        FleetproteinsequencefeaturizerConstructorArgsSummary()
+    )
 
     forward_args_summary = FleetproteinsequencefeaturizerForwardArgsSummary()
 

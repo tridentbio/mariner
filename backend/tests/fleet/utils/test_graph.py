@@ -16,7 +16,9 @@ def test_make_graph():
         {"name": "b", "edges": [("c", 3)]},
         {"name": "c", "edges": []},
     ]
-    graph = make_graph(nodes, lambda node: node["name"], lambda node: node["edges"])
+    graph = make_graph(
+        nodes, lambda node: node["name"], lambda node: node["edges"]
+    )
     assert set(graph.nodes) == {"a", "b", "c"}
     assert set(graph.edges) == {("b", "a"), ("c", "a"), ("c", "b")}
     assert graph["b"]["a"]["attr"] == 1

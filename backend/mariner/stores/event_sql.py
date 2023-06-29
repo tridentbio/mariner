@@ -32,7 +32,9 @@ class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, None]):
 
     def _with_reads_join(self, q: Query):
         return q.join(
-            EventReadEntity, EventReadEntity.event_id == EventEntity.id, isouter=True
+            EventReadEntity,
+            EventReadEntity.event_id == EventEntity.id,
+            isouter=True,
         )
 
     def _filter_unread(self, q: Query):
@@ -63,7 +65,9 @@ class EventCRUD(CRUDBase[EventEntity, EventCreateRepo, None]):
         query = self._is_event_to_user(query, user_id)
         return query.all()
 
-    def update_read(self, db: Session, dbobjs: List[EventEntity], user_id: int) -> int:
+    def update_read(
+        self, db: Session, dbobjs: List[EventEntity], user_id: int
+    ) -> int:
         """Updates a list of events setting it's read state to true.
 
         Args:

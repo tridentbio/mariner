@@ -46,7 +46,9 @@ class Settings(BaseSettings):
     ALLOWED_GITHUB_AUTH_EMAILS: List[EmailStr] = []
 
     @validator("BACKEND_CORS_ORIGINS", pre=True, allow_reuse=True)
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+    def assemble_cors_origins(
+        cls, v: Union[str, List[str]]
+    ) -> Union[List[str], str]:
         """Parses the string of allowed cors origins into a list of strings.
 
         Returns:
@@ -73,7 +75,9 @@ class Settings(BaseSettings):
     SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
 
     @validator("SQLALCHEMY_DATABASE_URI", pre=True, allow_reuse=True)
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    def assemble_db_connection(
+        cls, v: Optional[str], values: Dict[str, Any]
+    ) -> Any:
         """Assembles the SQLALCHEMY_DATABASE_URI directly from var with same name in .env
         or from .env POSTGRES_* variables.
 
@@ -121,13 +125,18 @@ class Settings(BaseSettings):
         """
         if values["AWS_MODE"] == "local":
             if not values["AWS_ACCESS_KEY_ID"]:
-                raise ValueError("AWS_ACCESS_KEY_ID must be set if AWS_MODE is local")
+                raise ValueError(
+                    "AWS_ACCESS_KEY_ID must be set if AWS_MODE is local"
+                )
             if not values["AWS_SECRET_ACCESS_KEY"]:
                 raise ValueError(
                     "AWS_SECRET_ACCESS_KEY must be set if AWS_MODE is local"
                 )
         elif values["AWS_MODE"] == "sts":
-            if "AWS_ACCESS_KEY_ID" in values or "AWS_SECRET_ACCESS_KEY" in values:
+            if (
+                "AWS_ACCESS_KEY_ID" in values
+                or "AWS_SECRET_ACCESS_KEY" in values
+            ):
                 raise ValueError(
                     "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must not be set if AWS_MODE is sts"
                 )

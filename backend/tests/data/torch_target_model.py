@@ -36,7 +36,9 @@ class ExampleModel(nn.Module):
             in_channels = hidden_channels
 
         self.layers = nn.ModuleList(layers)
-        self.out = nn.Linear(in_features=hidden_channels, out_features=out_features)
+        self.out = nn.Linear(
+            in_features=hidden_channels, out_features=out_features
+        )
 
     def forward(self, batch):
         x, edge_index, batch = batch.x, batch.edge_index, batch.batch

@@ -28,7 +28,9 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_user_email"), "user", ["email"], unique=True)
-    op.create_index(op.f("ix_user_full_name"), "user", ["full_name"], unique=False)
+    op.create_index(
+        op.f("ix_user_full_name"), "user", ["full_name"], unique=False
+    )
     op.create_index(op.f("ix_user_id"), "user", ["id"], unique=False)
     op.create_table(
         "dataset",
@@ -71,7 +73,9 @@ def upgrade():
         sa.Column("description", sa.String(), nullable=True),
         sa.Column("pattern", sa.String(), nullable=False),
         sa.Column("dataset_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(["dataset_id"], ["dataset.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["dataset_id"], ["dataset.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("pattern", "dataset_id"),
     )
     op.create_table(
@@ -93,8 +97,12 @@ def upgrade():
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(["created_by_id"], ["user.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["dataset_id"], ["dataset.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["created_by_id"], ["user.id"], ondelete="SET NULL"
+        ),
+        sa.ForeignKeyConstraint(
+            ["dataset_id"], ["dataset.id"], ondelete="SET NULL"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_model_id"), "model", ["id"], unique=True)
@@ -103,7 +111,9 @@ def upgrade():
         sa.Column("model_id", sa.Integer(), nullable=False),
         sa.Column("column_name", sa.String(), nullable=False),
         sa.Column("column_type", sa.String(), nullable=True),
-        sa.ForeignKeyConstraint(["model_id"], ["model.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["model_id"], ["model.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("model_id", "column_name"),
     )
     op.create_table(
@@ -126,16 +136,22 @@ def upgrade():
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(["model_id"], ["model.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["model_id"], ["model.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_modelversion_id"), "modelversion", ["id"], unique=True)
+    op.create_index(
+        op.f("ix_modelversion_id"), "modelversion", ["id"], unique=True
+    )
     op.create_table(
         "deployment",
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("model_version_id", sa.Integer(), nullable=True),
         sa.Column("created_by_id", sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(["created_by_id"], ["user.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["created_by_id"], ["user.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(
             ["model_version_id"], ["modelversion.id"], ondelete="CASCADE"
         ),
@@ -160,20 +176,26 @@ def upgrade():
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=True,
         ),
-        sa.Column("stage", sa.String(), server_default="RUNNING", nullable=True),
+        sa.Column(
+            "stage", sa.String(), server_default="RUNNING", nullable=True
+        ),
         sa.Column("epochs", sa.Integer(), nullable=False),
         sa.Column("history", sa.JSON(), nullable=True),
         sa.Column("train_metrics", sa.JSON(), nullable=True),
         sa.Column("val_metrics", sa.JSON(), nullable=True),
         sa.Column("test_metrics", sa.JSON(), nullable=True),
         sa.Column("hyperparams", sa.JSON(), nullable=True),
-        sa.ForeignKeyConstraint(["created_by_id"], ["user.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["created_by_id"], ["user.id"], ondelete="SET NULL"
+        ),
         sa.ForeignKeyConstraint(
             ["model_version_id"], ["modelversion.id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_experiment_id"), "experiment", ["id"], unique=True)
+    op.create_index(
+        op.f("ix_experiment_id"), "experiment", ["id"], unique=True
+    )
     # ### end Alembic commands ###
 
 

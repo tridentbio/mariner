@@ -97,7 +97,9 @@ def get_component_forward_signature(class_def: Any) -> Optional[Signature]:
     return None
 
 
-def get_component_signature(class_def: Any, method_name: str) -> Optional[Signature]:
+def get_component_signature(
+    class_def: Any, method_name: str
+) -> Optional[Signature]:
     """Gets the signature of a method of a class
 
     Args:
@@ -271,7 +273,8 @@ def create_jinja_env() -> Environment:
         Environment: jinja environment
     """
     env = Environment(
-        loader=PackageLoader("fleet.model_builder"), autoescape=select_autoescape()
+        loader=PackageLoader("fleet.model_builder"),
+        autoescape=select_autoescape(),
     )
 
     def type_name(value):
@@ -309,7 +312,8 @@ def generate_bundlev2() -> str:
         get_component_template_args_v2(layer.name) for layer in layers
     ]
     featurizer_template_args = [
-        get_component_template_args_v2(featurizer.name) for featurizer in featurizers
+        get_component_template_args_v2(featurizer.name)
+        for featurizer in featurizers
     ]
     return schemas_template.render(
         layer_components=layer_template_args,
@@ -350,9 +354,9 @@ todo_include_todos = True"""
 </div>"""
 
     srcdir, outdir = tempfile.mkdtemp(), tempfile.mkdtemp()
-    src_base_name, out_base_name = os.path.join(srcdir, "docstring"), os.path.join(
-        outdir, "docstring"
-    )
+    src_base_name, out_base_name = os.path.join(
+        srcdir, "docstring"
+    ), os.path.join(outdir, "docstring")
     rst_name, out_name = src_base_name + ".rst", out_base_name + ".html"
     docstring = get_class_from_path_string(classpath).__doc__
     if not docstring:
@@ -370,7 +374,9 @@ todo_include_todos = True"""
     # Setup sphixn templates dir
     templatesdir = os.path.join(confdir, "templates")
     os.makedirs(templatesdir)
-    with open(os.path.join(templatesdir, "layout.html"), "w", encoding="utf-8") as file:
+    with open(
+        os.path.join(templatesdir, "layout.html"), "w", encoding="utf-8"
+    ) as file:
 
         file.write(html_template)
     doctreedir = os.path.join(srcdir, "doctrees")

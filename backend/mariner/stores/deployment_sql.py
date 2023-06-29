@@ -32,13 +32,17 @@ from mariner.stores.dataset_sql import dataset_store
 from .model_sql import model_store
 
 
-class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdateRepo]):
+class CRUDDeployment(
+    CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdateRepo]
+):
     """CRUD for :any:`Deployment model<mariner.entities.deployment.Deployment>`
 
     Responsible to handle all communication with the deployment for the Deployment model.
     """
 
-    def get_many_paginated(self, db: Session, query: DeploymentsQuery, user: User):
+    def get_many_paginated(
+        self, db: Session, query: DeploymentsQuery, user: User
+    ):
         """Get many deployment based on the query parameters
 
         Args:
@@ -76,7 +80,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             sql_query = sql_query.filter(or_(*filters))
 
         if query.name:
-            sql_query = sql_query.filter(Deployment.name.ilike(f"%{query.name}%"))
+            sql_query = sql_query.filter(
+                Deployment.name.ilike(f"%{query.name}%")
+            )
         if query.status:
             sql_query = sql_query.filter(Deployment.status == query.status)
         if query.share_strategy:
@@ -84,14 +90,18 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
                 Deployment.share_strategy == query.share_strategy
             )
         if query.created_after:
-            sql_query = sql_query.filter(Deployment.created_at >= query.created_after)
+            sql_query = sql_query.filter(
+                Deployment.created_at >= query.created_after
+            )
         if query.model_version_id:
             sql_query = sql_query.filter(
                 Deployment.model_version_id == query.model_version_id
             )
 
         total = sql_query.count()
-        sql_query = sql_query.limit(query.per_page).offset(query.page * query.per_page)
+        sql_query = sql_query.limit(query.per_page).offset(
+            query.page * query.per_page
+        )
 
         result = sql_query.all()
 
@@ -114,7 +124,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         obj_in_dict = obj_in.dict()
         relations_key = ["users_id_allowed", "organizations_allowed"]
         ds_data = {
-            k: obj_in_dict[k] for k in obj_in_dict.keys() if k not in relations_key
+            k: obj_in_dict[k]
+            for k in obj_in_dict.keys()
+            if k not in relations_key
         }
         db_obj = Deployment(
             **ds_data,
@@ -153,7 +165,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
             db.query(SharePermission).filter(
                 SharePermission.deployment_id == db_obj.id,
             ).delete()
-            db_obj = db.query(Deployment).filter(Deployment.id == db_obj.id).first()
+            db_obj = (
+                db.query(Deployment).filter(Deployment.id == db_obj.id).first()
+            )
             db_obj.share_permissions = share_permissions
             db.add(db_obj)
             db.commit()
@@ -162,7 +176,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         del obj_in.users_id_allowed
 
         return DeploymentSchema.from_orm(
-            super().update(db, db_obj=db_obj, obj_in=obj_in.dict(exclude_none=True))
+            super().update(
+                db, db_obj=db_obj, obj_in=obj_in.dict(exclude_none=True)
+            )
         )
 
     def create_permission(self, db: Session, obj_in: PermissionCreateRepo):
@@ -202,14 +218,19 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
 
         db_obj = (
             db.query(SharePermission)
-            .filter(SharePermission.deployment_id == obj_in.deployment_id, sub_query)
+            .filter(
+                SharePermission.deployment_id == obj_in.deployment_id,
+                sub_query,
+            )
             .first()
         )
         db.delete(db_obj)
         db.commit()
         return db_obj
 
-    def get_model_version(self, db: Session, model_version_id: int, user_id: int):
+    def get_model_version(
+        self, db: Session, model_version_id: int, user_id: int
+    ):
         """Safely gets the model version if it is owned by the requester,
         or raises a 404 error.
 
@@ -231,7 +252,9 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         if not model:
             raise ModelVersionNotFound("Model not found")
         if model.created_by_id != user_id:
-            raise NotCreatorOwner("You are not the owner of this model version")
+            raise NotCreatorOwner(
+                "You are not the owner of this model version"
+            )
 
         return model_version
 
@@ -292,7 +315,8 @@ class CRUDDeployment(CRUDBase[Deployment, DeploymentCreateRepo, DeploymentUpdate
         }[deployment.prediction_rate_limit_unit]()
 
         sql_query = db.query(Predictions).filter(
-            Predictions.created_at >= created_at_rule.strftime("%Y-%m-%d %H:%M:%S"),
+            Predictions.created_at
+            >= created_at_rule.strftime("%Y-%m-%d %H:%M:%S"),
             Predictions.deployment_id == deployment.id,
         )
         if user:

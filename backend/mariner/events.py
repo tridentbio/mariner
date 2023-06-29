@@ -50,7 +50,9 @@ def build_message(source: EventSource, events: List[EventEntity]) -> str:
         if len(events) == 2:
             and_others = f' and "{events[0].payload["experiment_name"]}"'
         else:
-            and_others = f" and {len(events)-1} others" if len(events) > 1 else ""
+            and_others = (
+                f" and {len(events)-1} others" if len(events) > 1 else ""
+            )
         return f'Training "{experiment_name}"{and_others} completed'
     elif source == "changelog":
         return "Checkout what's new!"
@@ -74,11 +76,15 @@ def get_events_from_user(db: Session, user: UserEntity):
     return payload
 
 
-def set_events_read(db: Session, user: UserEntity, event_ids: List[int]) -> int:
+def set_events_read(
+    db: Session, user: UserEntity, event_ids: List[int]
+) -> int:
     """Sets the read flag on the notifications.
     Returns a list of successfully updated events"""
     events = [
-        event for event in event_store.get_to_user(db, user.id) if event.id in event_ids
+        event
+        for event in event_store.get_to_user(db, user.id)
+        if event.id in event_ids
     ]
     updated_count = event_store.update_read(db, events, user.id)
     return updated_count

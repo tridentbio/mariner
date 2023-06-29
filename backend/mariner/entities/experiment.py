@@ -39,7 +39,9 @@ class Experiment(Base):
     experiment_name = Column(String, nullable=False)
     mlflow_id = Column(String, nullable=True)
     model_version_id = Column(
-        Integer, ForeignKey("modelversion.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("modelversion.id", ondelete="CASCADE"),
+        nullable=False,
     )
     created_at = Column(DateTime, server_default=current_timestamp())
     created_by_id = Column(

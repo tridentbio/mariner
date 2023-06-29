@@ -17,7 +17,9 @@ def websocket_fixture():
     async def awaitable(*_):
         return {"type": "websocket.connect"}
 
-    return WebSocket(scope={"type": "websocket"}, receive=awaitable, send=awaitable)
+    return WebSocket(
+        scope={"type": "websocket"}, receive=awaitable, send=awaitable
+    )
 
 
 async def test_base_connection(websocket_fixture: WebSocket):
@@ -51,7 +53,9 @@ async def test_connection_manager_private(websocket_fixture: WebSocket):
 
     session_id = await manager.connect(1, websocket_fixture)
     assert 1 in manager.active_connections
-    assert manager.active_connections[1].sessions == {session_id: websocket_fixture}
+    assert manager.active_connections[1].sessions == {
+        session_id: websocket_fixture
+    }
 
     manager.disconnect_session(1, session_id)
     assert manager.active_connections == {}

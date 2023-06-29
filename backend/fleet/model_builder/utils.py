@@ -65,7 +65,9 @@ class DataInstance(BaseStorage):
 
     def __repr__(self) -> str:
         cls = self.__class__.__name__
-        info_parts = [size_repr(k, v, indent=2) for k, v in self._store.items()]
+        info_parts = [
+            size_repr(k, v, indent=2) for k, v in self._store.items()
+        ]
         info = ",\n".join(info_parts)
         return f"{cls}(\n{info}\n)"
 
@@ -151,7 +153,9 @@ def get_class_from_path_string(pathstring: str) -> type:
         Any: The class.
     """
     components = pathstring.split(".")
-    submodule = __import__(".".join(components[:-1]), fromlist=[components[-1]])
+    submodule = __import__(
+        ".".join(components[:-1]), fromlist=[components[-1]]
+    )
     return getattr(submodule, components[-1])
 
 
@@ -271,7 +275,9 @@ def get_ref_from_input(
         input(Union[DataInstance, List[DataInstance]):
     """
     if isinstance(input_, list):
-        values = [get_ref_from_data_instance(accessor_str, item) for item in input_]
+        values = [
+            get_ref_from_data_instance(accessor_str, item) for item in input_
+        ]
         assert len(values) > 0, "failed to get values from input"
         if isinstance(values[0], torch.Tensor):
             return torch.cat(values)  # type: ignore
