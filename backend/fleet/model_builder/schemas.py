@@ -51,7 +51,9 @@ class MissingComponentArgs(ValueError):
     component_name: str
     missing: List[Union[str, int]]
 
-    def __init__(self, *args, missing: List[Union[str, int]], component_name: str):
+    def __init__(
+        self, *args, missing: List[Union[str, int]], component_name: str
+    ):
         super().__init__(*args)
         self.component_name = component_name
         self.missing = missing
@@ -113,7 +115,10 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
             except ValueError as exp:
                 errors += [
                     MissingComponentArgs(
-                        missing=[missing_arg_name for missing_arg_name in error["loc"]],
+                        missing=[
+                            missing_arg_name
+                            for missing_arg_name in error["loc"]
+                        ],
                         component_name=layer["name"],
                     )
                     for error in exp.errors()

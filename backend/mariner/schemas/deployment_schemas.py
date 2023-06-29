@@ -123,7 +123,9 @@ class Deployment(DeploymentBase):
         deployment = super().from_orm(obj)
         if isinstance(obj, DeploymentEntity):
             if obj.model_version:
-                deployment.model_version = ModelVersion.from_orm(obj.model_version)
+                deployment.model_version = ModelVersion.from_orm(
+                    obj.model_version
+                )
 
             if obj.share_permissions:
                 deployment.users_allowed = [

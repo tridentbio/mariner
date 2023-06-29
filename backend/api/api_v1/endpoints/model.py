@@ -133,7 +133,9 @@ def get_model_name_suggestion():
     return GetNameSuggestionResponse(name=random_pretty_name())
 
 
-@router.post("/{model_version_id}/predict", response_model=Dict[str, List[Any]])
+@router.post(
+    "/{model_version_id}/predict", response_model=Dict[str, List[Any]]
+)
 def post_model_predict(
     model_version_id: int,
     model_input: Dict[str, List[Any]],  # Any json

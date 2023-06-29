@@ -32,7 +32,9 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
 
     def featurize(self, input_: Union[str, int, float]):
         if not isinstance(input_, str) and isinstance(input_, Iterable):
-            return np.array([self.featurize(i) for i in input_], dtype=np.int64)
+            return np.array(
+                [self.featurize(i) for i in input_], dtype=np.int64
+            )
         elif isinstance(input_, float):
             input_ = int(input_)
         elif str(input_) not in self.classes:
@@ -53,7 +55,9 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         return self.reversed_classes[idx]
 
     @override
-    def set_from_model_schema(self, config=None, dataset_config=None, deps=None):
+    def set_from_model_schema(
+        self, config=None, dataset_config=None, deps=None
+    ):
         if not deps or len(deps) == 0:
             raise ValueError("deps cannot be None")
         if not dataset_config:
@@ -63,10 +67,14 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         column_info = get_column_config(dataset_config, input_)
         # Handle missing column information
         if not column_info:
-            raise RuntimeError(f"Column {input_} was not found in the config columns")
+            raise RuntimeError(
+                f"Column {input_} was not found in the config columns"
+            )
 
         # Handle column info not being from categorical
-        if not isinstance(column_info.data_type, data_types.CategoricalDataType):
+        if not isinstance(
+            column_info.data_type, data_types.CategoricalDataType
+        ):
             raise DataTypeMismatchException(
                 "expecteing CategoricalDataType, but found"
                 f"{column_info.data_type.__class__}",
@@ -74,4 +82,6 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
                 got_item=column_info.data_type,
             )
         self.classes = column_info.data_type.classes
-        self.reversed_classes = {value: key for key, value in self.classes.items()}
+        self.reversed_classes = {
+            value: key for key, value in self.classes.items()
+        }

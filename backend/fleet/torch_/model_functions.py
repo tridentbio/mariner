@@ -152,21 +152,31 @@ class TorchFunctions(BaseModelFunctions):
         client = MlflowClient()
         best_model_path = self.checkpoint_callback.best_model_path
         model_kwargs = {"dataset_config": self.spec.dataset}
-        best_model = CustomModel.load_from_checkpoint(best_model_path, **model_kwargs)
-        assert isinstance(best_model, CustomModel), "best_model failed to be logged"
+        best_model = CustomModel.load_from_checkpoint(
+            best_model_path, **model_kwargs
+        )
+        assert isinstance(
+            best_model, CustomModel
+        ), "best_model failed to be logged"
         last_model_path = self.checkpoint_callback.last_model_path
-        last_model = CustomModel.load_from_checkpoint(last_model_path, **model_kwargs)
-        assert isinstance(last_model, CustomModel), "last_model failed to be logged"
+        last_model = CustomModel.load_from_checkpoint(
+            last_model_path, **model_kwargs
+        )
+        assert isinstance(
+            last_model, CustomModel
+        ), "last_model failed to be logged"
         runs = client.search_runs(experiment_ids=[mlflow_experiment_id])
         assert len(runs) >= 1
         run = runs[0]
         run_id = run.info.run_id
-        mlflow_model_version = fleet.mlflow.log_torch_models_and_create_version(
-            mlflow_model_name,
-            best_model,
-            last_model,
-            run_id,
-            client=client,
+        mlflow_model_version = (
+            fleet.mlflow.log_torch_models_and_create_version(
+                mlflow_model_name,
+                best_model,
+                last_model,
+                run_id,
+                client=client,
+            )
         )
         return mlflow_model_version
 

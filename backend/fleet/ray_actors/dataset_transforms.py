@@ -90,7 +90,9 @@ class DatasetTransforms:
             value (bool): True if the dataset is fully loaded
         """
         if self._is_dataset_fully_loaded:
-            LOG.warning("Can't update a dataset already loaded into dataframe'")
+            LOG.warning(
+                "Can't update a dataset already loaded into dataframe'"
+            )
             return
         self._is_dataset_fully_loaded = value
         if value:
@@ -137,7 +139,9 @@ class DatasetTransforms:
             pd.DataFrame: the underlying dataframe
         """
         if not self._is_dataset_fully_loaded:
-            raise RuntimeError("Must set dataset as loaded before using dataframe")
+            raise RuntimeError(
+                "Must set dataset as loaded before using dataframe"
+            )
         assert self._df is not None, "loading dataset as dataframe failed"
         return self._df
 

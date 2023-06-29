@@ -63,7 +63,9 @@ def random_pretty_name() -> str:
     return RandomWord().word(word_min_length=4)
 
 
-def is_compressed(file: Union[FAUploadFile, bytes, io.BytesIO, BinaryIO]) -> bool:
+def is_compressed(
+    file: Union[FAUploadFile, bytes, io.BytesIO, BinaryIO]
+) -> bool:
     """Check if file is compressed by checking the first two bytes
 
     Gzip compressed files start with b'\x1f\x8b'

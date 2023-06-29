@@ -77,7 +77,9 @@ def make_graph_from_forward_args(nodes: Iterable[dict]) -> nx.DiGraph:
                 edges.append((dst, None))
         return edges
 
-    return make_graph(nodes, lambda node: node["name"], get_edges_from_forward_args)
+    return make_graph(
+        nodes, lambda node: node["name"], get_edges_from_forward_args
+    )
 
 
 def get_leaf_nodes(graph: nx.DiGraph) -> List[str]:

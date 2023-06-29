@@ -35,7 +35,9 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
 def test_delete_model(db: Session, model: Model):
     user = get_test_user(db)
     model_ctl.delete_model(db, user, model.id)
-    model_db = db.query(ModelEntity).filter(ModelEntity.name == model.name).first()
+    model_db = (
+        db.query(ModelEntity).filter(ModelEntity.name == model.name).first()
+    )
     assert not model_db
 
 
@@ -44,7 +46,9 @@ def test_delete_model(db: Session, model: Model):
 async def test_check_forward_exception_good_regressor(
     db: Session, some_dataset: DatasetEntity
 ):
-    regressor = model_config(model_type="regressor", dataset_name=some_dataset.name)
+    regressor = model_config(
+        model_type="regressor", dataset_name=some_dataset.name
+    )
     check = await model_ctl.check_model_step_exception(
         db, TrainingCheckRequest(model_spec=regressor)
     )

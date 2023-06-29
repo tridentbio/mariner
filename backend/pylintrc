@@ -190,7 +190,9 @@ good-names=i,
            X,
            Y,
            y,
-           s3
+           s3,
+           aws,
+           v
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted
@@ -418,7 +420,7 @@ confidence=HIGH,
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=R,typecheck,C0301
+disable=R,C0301,C0103,W0511
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

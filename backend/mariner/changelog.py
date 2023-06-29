@@ -20,15 +20,26 @@ from mariner.db.session import SessionLocal
 from mariner.stores.event_sql import event_store
 
 version_pattern = re.compile(r"^## \[[\d\.]+] - \d\d\d\d-\d\d-\d\d$")
-type_pattern = re.compile(r"^### (Added|Changed|Deprecated|Removed|Fixed|Security)$")
+type_pattern = re.compile(
+    r"^### (Added|Changed|Deprecated|Removed|Fixed|Security)$"
+)
 message_pattern = re.compile(r"^- .*$")
-ALLOWED_TYPES = ["Added", "Changed", "Security", "Removed", "Fixed", "Deprecated"]
+ALLOWED_TYPES = [
+    "Added",
+    "Changed",
+    "Security",
+    "Removed",
+    "Fixed",
+    "Deprecated",
+]
 
 
 class ReleaseChange(BaseModel):
     """Models change of a release."""
 
-    type: Literal["Added", "Changed", "Removed", "Deprecated", "Fixed", "Security"]
+    type: Literal[
+        "Added", "Changed", "Removed", "Deprecated", "Fixed", "Security"
+    ]
     message: str
 
 
@@ -58,7 +69,9 @@ def parseline(
     tm = type_pattern.match(line)
     mm = message_pattern.match(line)
     if vm:
-        new_version = line[line.find("[") : line.find("]")].strip("[]").strip("\n ")
+        new_version = (
+            line[line.find("[") : line.find("]")].strip("[]").strip("\n ")
+        )
         new_date = line[line.find("-") + 1 :].strip("\n ")
     elif tm:
         new_type = line[line.find(" ") + 1 :].strip("\n ")
@@ -231,7 +244,8 @@ def publish(from_version: str, force_resend: bool):
     with SessionLocal() as db:
         changelog_events = event_store.get(db, from_source="changelog")
         versions_published = [
-            changelog_event.payload["version"] for changelog_event in changelog_events
+            changelog_event.payload["version"]
+            for changelog_event in changelog_events
         ]
         if not force_resend:
 
@@ -247,7 +261,9 @@ def publish(from_version: str, force_resend: bool):
                 return version_greater_or_equal(x, from_version)
 
         releases = [
-            release for release in parse_text(sys.stdin) if filter_fn(release.version)
+            release
+            for release in parse_text(sys.stdin)
+            if filter_fn(release.version)
         ]
         logger.info("Logging events starting from %s", from_version)
         logger.info("Releases: %s", [release.version for release in releases])

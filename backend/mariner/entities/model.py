@@ -42,8 +42,12 @@ class ModelVersion(Base):
     mlflow_model_name = Column(String, nullable=False)
     # experiments = relationship("Experiment", back_populates="model_version")
     config = Column(JSON, nullable=False)
-    created_at = Column(DateTime, server_default=current_timestamp(), nullable=False)
-    updated_at = Column(DateTime, server_default=current_timestamp(), nullable=False)
+    created_at = Column(
+        DateTime, server_default=current_timestamp(), nullable=False
+    )
+    updated_at = Column(
+        DateTime, server_default=current_timestamp(), nullable=False
+    )
 
 
 class ModelFeaturesAndTarget(Base):
@@ -90,6 +94,12 @@ class Model(Base):
     dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="SET NULL"))
     dataset = relationship(Dataset)
     versions = relationship(ModelVersion, cascade="all,delete")
-    columns = relationship(ModelFeaturesAndTarget, cascade="all,delete", uselist=True)
-    created_at = Column(DateTime, server_default=current_timestamp(), nullable=False)
-    updated_at = Column(DateTime, server_default=current_timestamp(), nullable=False)
+    columns = relationship(
+        ModelFeaturesAndTarget, cascade="all,delete", uselist=True
+    )
+    created_at = Column(
+        DateTime, server_default=current_timestamp(), nullable=False
+    )
+    updated_at = Column(
+        DateTime, server_default=current_timestamp(), nullable=False
+    )

@@ -38,7 +38,9 @@ async def post_experiments(
     Returns:
         Created experiment.
     """
-    result = await experiments_ctl.create_model_training(db, current_user, request)
+    result = await experiments_ctl.create_model_training(
+        db, current_user, request
+    )
     return result
 
 
@@ -58,7 +60,9 @@ def get_experiments(
     Returns:
         A paginated view of the experiments queried.
     """
-    data, total = experiments_ctl.get_experiments(db, current_user, experiments_query)
+    data, total = experiments_ctl.get_experiments(
+        db, current_user, experiments_query
+    )
     return Paginated(data=data, total=total)
 
 
@@ -124,7 +128,10 @@ async def post_update_metrics(
         history = data["history"]
         metrics = data["metrics"]
         experiments_ctl.log_metrics(
-            db=db, experiment_id=experiment_id, metrics=metrics, history=history
+            db=db,
+            experiment_id=experiment_id,
+            metrics=metrics,
+            history=history,
         )
         await experiments_ctl.send_ws_epoch_update(
             experiment_id=experiment_id,

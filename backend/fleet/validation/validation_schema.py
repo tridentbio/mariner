@@ -17,7 +17,10 @@ from .functions import (
 )
 
 VALIDATION_SCHEMA: SchemaType = {
-    "categorical": (is_not_float, "columns $ is categorical and can not be a float"),
+    "categorical": (
+        is_not_float,
+        "columns $ is categorical and can not be a float",
+    ),
     "numeric": (
         lambda x: not x or search(r"^[-\d\.][\.,\d]*$", str(x)) is not None,
         "column $ should be numeric",

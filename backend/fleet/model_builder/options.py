@@ -90,7 +90,8 @@ def get_model_options() -> List[ComponentOption]:
     def get_default_values(summary_name: str) -> Union[Dict[str, Any], None]:
         try:
             class_args = getattr(
-                layers_schema, summary_name.replace("Summary", "ConstructorArgs")
+                layers_schema,
+                summary_name.replace("Summary", "ConstructorArgs"),
             )
             args = {
                 arg.name: arg.default
@@ -103,7 +104,11 @@ def get_model_options() -> List[ComponentOption]:
 
     def get_args_options(classpath: str) -> Union[Dict[str, List[str]], None]:
         overrides = _get_option_overrides()
-        return overrides[classpath].args_options if classpath in overrides else None
+        return (
+            overrides[classpath].args_options
+            if classpath in overrides
+            else None
+        )
 
     def get_summary_and_constructor_args(
         cls_path: str,

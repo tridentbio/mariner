@@ -9,7 +9,9 @@ from tests.utils.utils import random_lower_string
 
 
 def get_test_user(db: Session) -> User:
-    user = user_store.get_by_email(db, email=get_app_settings().EMAIL_TEST_USER)
+    user = user_store.get_by_email(
+        db, email=get_app_settings().EMAIL_TEST_USER
+    )
     if not user:
         user = user_store.create(
             db,

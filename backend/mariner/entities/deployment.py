@@ -40,7 +40,9 @@ class Predictions(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     deployment_id = Column(
-        Integer, ForeignKey("deployment.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("deployment.id", ondelete="CASCADE"),
+        nullable=False,
     )
     deployment = relationship("Deployment", back_populates="predictions")
 
@@ -55,7 +57,9 @@ class SharePermission(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     deployment_id = Column(
-        Integer, ForeignKey("deployment.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("deployment.id", ondelete="CASCADE"),
+        nullable=False,
     )
     deployment = relationship("Deployment", back_populates="share_permissions")
 
@@ -67,7 +71,9 @@ class SharePermission(Base):
     organization = Column(String, nullable=True)
 
     @classmethod
-    def build(cls, users_id: List[int] = [], organizations: List[str] = []) -> list:
+    def build(
+        cls, users_id: List[int] = [], organizations: List[str] = []
+    ) -> list:
         """Build a list of SharePermission from users_id and organizations.
 
         Args:
@@ -110,7 +116,9 @@ class Deployment(Base):
     )
 
     model_version_id = Column(
-        Integer, ForeignKey("modelversion.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("modelversion.id", ondelete="CASCADE"),
+        nullable=False,
     )
     model_version = relationship(ModelVersion)
 

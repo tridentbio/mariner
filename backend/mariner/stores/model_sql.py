@@ -21,7 +21,9 @@ from mariner.stores.base_sql import CRUDBase
 class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
     """Data layer operators on the models collection"""
 
-    def get_by_name_from_user(self, db: Session, name: str, user_id: int) -> Model:
+    def get_by_name_from_user(
+        self, db: Session, name: str, user_id: int
+    ) -> Model:
         """Gets a model by name and created_by_id.
 
         Args:
@@ -99,7 +101,9 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
         """
         relations = ["columns"]
         obj_in_dict = obj_in.dict()
-        model_data = {k: obj_in_dict[k] for k in obj_in_dict if k not in relations}
+        model_data = {
+            k: obj_in_dict[k] for k in obj_in_dict if k not in relations
+        }
         db_obj = Model(**model_data)
 
         if obj_in.columns:
@@ -126,7 +130,9 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
         db.query(Model).filter(Model.id == model_id).delete()
         db.commit()
 
-    def get_model_version(self, db: Session, id: int) -> Optional[ModelVersion]:
+    def get_model_version(
+        self, db: Session, id: int
+    ) -> Optional[ModelVersion]:
         """Get's a single model version by id.
 
         Args:
@@ -148,7 +154,11 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
             version_id: id of the version to be updated.
             obj_in: version database entity instance.
         """
-        version = db.query(ModelVersion).filter(ModelVersion.id == version_id).first()
+        version = (
+            db.query(ModelVersion)
+            .filter(ModelVersion.id == version_id)
+            .first()
+        )
         for key, value in obj_in.dict().items():
             setattr(version, key, value)
         db.add(version)

@@ -56,7 +56,9 @@ class CompatibilityChecker:
         )
         self.row_error_limit = 10
         self.has_error = False
-        self.error_column = pd.Series(data=[""] * len(self.df.index), dtype=str)
+        self.error_column = pd.Series(
+            data=[""] * len(self.df.index), dtype=str
+        )
 
     def add_error(
         self,
@@ -133,7 +135,8 @@ class CompatibilityChecker:
 
                             # Concatenate the error message to the error_column
                             self.error_column.loc[~valid_row_serie] += (
-                                self.column_message(self.df.columns[i], msg) + " | "
+                                self.column_message(self.df.columns[i], msg)
+                                + " | "
                             )
 
                             # Add the errors to the errors dict
@@ -141,7 +144,9 @@ class CompatibilityChecker:
                                 invalid_rows[: self.row_error_limit]
                             ):
                                 self.add_error(
-                                    self.row_message(index, val, self.df.columns[i]),
+                                    self.row_message(
+                                        index, val, self.df.columns[i]
+                                    ),
                                     type="rows",
                                     new_log=False,
                                 )
@@ -203,7 +208,9 @@ class CompatibilityChecker:
         Returns:
             str: row message
         """
-        return f"Value {row} in row '{index}' of column" f" '{column}' is invalid"
+        return (
+            f"Value {row} in row '{index}' of column" f" '{column}' is invalid"
+        )
 
 
 __all__ = ["CompatibilityChecker", "ErrorsType"]

@@ -23,7 +23,10 @@ class WebSocketMessage(ApiBaseModel):
     """
 
     type: Literal[
-        "pong", "update-running-metrics", "dataset-process-finish", "update-deployment"
+        "pong",
+        "update-running-metrics",
+        "dataset-process-finish",
+        "update-deployment",
     ]
     data: Any
 
@@ -108,15 +111,21 @@ class ConnectionManager:
 
         if public:
             if connection_id not in self.active_connections_public:
-                self.active_connections_public[connection_id] = AnonymousConnection()
+                self.active_connections_public[
+                    connection_id
+                ] = AnonymousConnection()
 
-            return self.active_connections_public[connection_id].add_session(websocket)
+            return self.active_connections_public[connection_id].add_session(
+                websocket
+            )
 
         else:
             if connection_id not in self.active_connections:
                 self.active_connections[connection_id] = UserConnection()
 
-            return self.active_connections[connection_id].add_session(websocket)
+            return self.active_connections[connection_id].add_session(
+                websocket
+            )
 
     def disconnect_session(
         self, connection_id: int, session_id: str, public: bool = False
@@ -130,19 +139,25 @@ class ConnectionManager:
         """
         if public:
             if connection_id in self.active_connections_public:
-                self.active_connections_public[connection_id].remove_session(session_id)
+                self.active_connections_public[connection_id].remove_session(
+                    session_id
+                )
 
                 if not self.active_connections_public[connection_id].is_active:
                     self.active_connections_public.pop(connection_id)
 
         else:
             if connection_id in self.active_connections:
-                self.active_connections[connection_id].remove_session(session_id)
+                self.active_connections[connection_id].remove_session(
+                    session_id
+                )
 
                 if not self.active_connections[connection_id].is_active:
                     self.active_connections.pop(connection_id)
 
-    async def send_message_to_user(self, user_id: int, message: WebSocketMessage):
+    async def send_message_to_user(
+        self, user_id: int, message: WebSocketMessage
+    ):
         """Sends a message to a specific user
 
         If the user is not connected, the message is not sent without raising an error

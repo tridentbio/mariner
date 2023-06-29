@@ -47,11 +47,15 @@ class ExperimentUpdateRepo(pydantic.BaseModel):
     stack_trace: Optional[str] = None
 
 
-class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdateRepo]):
+class CRUDExperiment(
+    CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdateRepo]
+):
     """Data layer access on the experiments collection."""
 
     def _filter_by_model_id(self, query: Query, id: int) -> Query:
-        return query.join(Experiment.model_version).filter(ModelVersion.model_id == id)
+        return query.join(Experiment.model_version).filter(
+            ModelVersion.model_id == id
+        )
 
     def _filter_by_stages(self, query: Query, stages: List[str]) -> Query:
         return query.filter(Experiment.stage.in_(stages))
@@ -141,7 +145,9 @@ class CRUDExperiment(CRUDBase[Experiment, ExperimentCreateRepo, ExperimentUpdate
             A list of experiments.
         """
         sql_query = db.query(Experiment)
-        sql_query = sql_query.filter(Experiment.model_version_id == model_version_id)
+        sql_query = sql_query.filter(
+            Experiment.model_version_id == model_version_id
+        )
         sql_query = self._by_creator(sql_query, user)
         return sql_query.all()
 

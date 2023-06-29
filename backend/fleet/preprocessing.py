@@ -73,7 +73,7 @@ class CamelCaseModel(BaseModel):
         underscore_attrs_are_private = True
 
 
-class CreateFromType:
+class CreateFromType(BaseModel):
     """
     Adds a method to instantiate a class from it's class path (type) and constructor_args.
 
