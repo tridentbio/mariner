@@ -18,7 +18,7 @@ from fleet.dataset_schemas import (
 )
 from fleet.model_builder import optimizers
 from fleet.model_builder.splitters import apply_split_indexes
-from fleet.model_functions import fit
+from fleet.model_functions import fit, run_test
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
 from mariner.core.aws import Bucket, list_s3_objects
@@ -177,9 +177,16 @@ def test_train(case: TestCase):
                 spec=case.model_spec,
                 mlflow_experiment_id=result.mlflow_experiment_id,
             )
+
+            run_test(
+                spec=case.model_spec,
+                mlflow_model_name=mlflow_model_name,
+                mlflow_model_version=result.mlflow_model_version,
+                dataset=dataset,
+            )
         else:
             with pytest.raises(case.should_fail):
-                fit(
+                result = fit(
                     spec=case.model_spec,
                     train_config=case.train_spec,
                     dataset=dataset,
