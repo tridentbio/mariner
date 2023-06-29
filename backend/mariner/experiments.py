@@ -85,7 +85,9 @@ def handle_training_complete(task: Task, experiment_id: int):
             stack_trace = str(exception)
             experiment_store.update(
                 db,
-                obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
+                obj_in=ExperimentUpdateRepo(
+                    stage="ERROR", stack_trace=stack_trace
+                ),
                 db_obj=experiment,
             )
             asyncio.ensure_future(
@@ -164,7 +166,9 @@ async def create_model_training(
         raise ModelVersionNotFound()
 
     model_version_parsed = ModelVersion.from_orm(model_version)
-    dataset = dataset_store.get_by_name(db, model_version_parsed.config.dataset.name)
+    dataset = dataset_store.get_by_name(
+        db, model_version_parsed.config.dataset.name
+    )
 
     mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
 
@@ -175,7 +179,9 @@ async def create_model_training(
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,
             epochs=training_request.config.epochs,
-            hyperparams={"learning_rate": training_request.config.optimizer.params.lr},
+            hyperparams={
+                "learning_rate": training_request.config.optimizer.params.lr
+            },
             stage="RUNNING",
         ),
     )
@@ -206,7 +212,9 @@ async def create_model_training(
         ExperimentView(
             experiment_id=experiment.id,
             user_id=user.id,
-            task=asyncio.create_task(make_coroutine_from_ray_objectref(training_ref)),
+            task=asyncio.create_task(
+                make_coroutine_from_ray_objectref(training_ref)
+            ),
         ),
         handle_training_complete,
     )
@@ -296,7 +304,9 @@ def log_metrics(
     )
 
 
-def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]):
+def log_hyperparams(
+    db: Session, experiment_id: int, hyperparams: dict[str, Any]
+):
     """Saves the hyperparameters logged by ``CustomLogger``
 
     Args:
@@ -421,10 +431,16 @@ def get_metrics_for_monitoring() -> List[MonitorableMetric]:
         MonitorableMetric(key="mae", label="MAE", type="regressor"),
         MonitorableMetric(key="ev", label="EV", type="regressor"),
         MonitorableMetric(key="mape", label="MAPE", type="regressor"),
-        MonitorableMetric(key="R2", label="R2", tex_label="R^2", type="regressor"),
+        MonitorableMetric(
+            key="R2", label="R2", tex_label="R^2", type="regressor"
+        ),
         MonitorableMetric(key="pearson", label="Pearson", type="regressor"),
-        MonitorableMetric(key="accuracy", label="Accuracy", type="classification"),
-        MonitorableMetric(key="precision", label="Precision", type="classification"),
+        MonitorableMetric(
+            key="accuracy", label="Accuracy", type="classification"
+        ),
+        MonitorableMetric(
+            key="precision", label="Precision", type="classification"
+        ),
         MonitorableMetric(key="recall", label="Recall", type="classification"),
         MonitorableMetric(key="f1", label="F1", type="classification"),
         # removed on UI fixes - 2/6/2023:

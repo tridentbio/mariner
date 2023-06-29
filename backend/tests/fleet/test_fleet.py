@@ -54,7 +54,9 @@ def assert_mlflow_data(
     run = client.search_runs(experiment_ids=[mlflow_experiment_id])[0]
     exp = client.get_experiment(mlflow_experiment_id)
     location = exp.artifact_location
-    assert location.startswith(f"s3://{Bucket.Datasets.value}/{mlflow_experiment_id}")
+    assert location.startswith(
+        f"s3://{Bucket.Datasets.value}/{mlflow_experiment_id}"
+    )
     run_artifact_prefix = f"{mlflow_experiment_id}/{run.info.run_id}"
     objs = list_s3_objects(Bucket.Datasets, run_artifact_prefix)
 
@@ -72,7 +74,9 @@ def assert_mlflow_data(
         ), "failed to find trained model artifacts from s3"
 
     elif spec.framework == "sklearn":
-        expected_artifacts = [f"{run_artifact_prefix}/artifacts/model/model.pkl"]
+        expected_artifacts = [
+            f"{run_artifact_prefix}/artifacts/model/model.pkl"
+        ]
         object_keys = [
             obj for obj in objs["Contents"] if obj["Key"] in expected_artifacts
         ]

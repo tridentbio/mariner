@@ -28,9 +28,13 @@ class TestDatasetTransforms:
         try:
             with open(csvpath, "rb") as f:
                 for chunk in iter(lambda: f.read(chunk_size), b""):
-                    await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
+                    await dataset_ray_transformer.write_dataset_buffer.remote(
+                        chunk
+                    )
                 # dataset_ray_transformer.is_dataset_fully_loaded = True
-                await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
+                await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(
+                    True
+                )
                 is_loaded = (
                     await dataset_ray_transformer.get_is_dataset_fully_loaded.remote()
                 )
@@ -46,8 +50,12 @@ class TestDatasetTransforms:
             for chunk in iter(
                 lambda: f.read(get_app_settings().APPLICATION_CHUNK_SIZE), b""
             ):
-                await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
-            await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
+                await dataset_ray_transformer.write_dataset_buffer.remote(
+                    chunk
+                )
+            await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(
+                True
+            )
             return dataset_ray_transformer
 
     @pytest_asyncio.fixture
@@ -67,7 +75,9 @@ class TestDatasetTransforms:
 
     @pytest.mark.asyncio
     async def test_get_columns_metadata(self, hiv_transformer_fixture):
-        cols_metadata = await hiv_transformer_fixture.get_columns_metadata.remote()
+        cols_metadata = (
+            await hiv_transformer_fixture.get_columns_metadata.remote()
+        )
         assert (
             len(cols_metadata) > 0
         ), "dataset transformer failed to get columns metadata"
@@ -136,7 +146,9 @@ class TestDatasetTransforms:
         initial_df = initial_df.drop(columns=["step"])
         expected_len = len(initial_df.columns) + 1
         await hiv_transformer_fixture.apply_split_indexes.remote(
-            split_type="scaffold", split_target="60-20-20", split_column="smiles"
+            split_type="scaffold",
+            split_target="60-20-20",
+            split_column="smiles",
         )
         got_df = await hiv_transformer_fixture.get_dataframe.remote()
         got_len = len(got_df.columns)

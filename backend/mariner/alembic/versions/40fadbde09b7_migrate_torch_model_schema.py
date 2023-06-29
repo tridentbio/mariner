@@ -23,7 +23,9 @@ def convert_to_spec(old_model_schema: dict) -> dict:
     new_spec["framework"] = "torch"
     new_spec["name"] = old_model_schema["name"]
     new_spec["dataset"] = old_model_schema["dataset"]
-    new_spec["dataset"]["featurizers"] = old_model_schema.get("featurizers", [])
+    new_spec["dataset"]["featurizers"] = old_model_schema.get(
+        "featurizers", []
+    )
     new_spec["spec"] = {"layers": old_model_schema.get("layers", [])}
 
     layers = new_spec["spec"].get("layers")
@@ -55,7 +57,9 @@ def undo_convert_to_spec(spec: dict) -> dict:
 
     for feat in new_spec["featurizers"]:
         if feat["type"].startswith("fleet.model_builder"):
-            feat["type"] = feat["type"].replace("fleet.model_builder", "model_builder")
+            feat["type"] = feat["type"].replace(
+                "fleet.model_builder", "model_builder"
+            )
 
     return new_spec
 

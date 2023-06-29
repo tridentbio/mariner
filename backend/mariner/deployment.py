@@ -49,7 +49,9 @@ def get_deployments(
     Returns:
         Tuple[List[Deployment], int]: A tuple containing a list of deployments and the total number of deployments.
     """
-    db_data, total = deployment_store.get_many_paginated(db, query, current_user)
+    db_data, total = deployment_store.get_many_paginated(
+        db, query, current_user
+    )
     return db_data, total
 
 
@@ -78,7 +80,9 @@ def get_deployment(
     deployment = DeploymentWithTrainingData.from_orm(deployment)
 
     if deployment.show_training_data:
-        deployment.dataset_summary = deployment_store.get_training_data(db, deployment)
+        deployment.dataset_summary = deployment_store.get_training_data(
+            db, deployment
+        )
 
     return deployment
 
@@ -140,7 +144,9 @@ async def update_deployment(
         ModelVersionNotFound: If the model version does not exist.
         NotCreatorOwner: If the user is not the creator of the deployment.
     """
-    deployment_entity: DeploymentEntity = deployment_store.get(db, deployment_id)
+    deployment_entity: DeploymentEntity = deployment_store.get(
+        db, deployment_id
+    )
     if not deployment_entity:
         raise DeploymentNotFound()
     if deployment_entity.created_by_id != current_user.id:
@@ -153,21 +159,30 @@ async def update_deployment(
         share_url = generate_deployment_signed_url(deployment_entity.id)
         deployment_input.share_url = share_url
 
-    if deployment_input.status and deployment_input.status != deployment_entity.status:
+    if (
+        deployment_input.status
+        and deployment_input.status != deployment_entity.status
+    ):
         manager = get_deployments_manager()
 
         if deployment_input.status == "active":
-            await manager.add_deployment.remote(Deployment.from_orm(deployment_entity))
+            await manager.add_deployment.remote(
+                Deployment.from_orm(deployment_entity)
+            )
             manager.start_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
-            del deployment_input.status  # status will by handled asynchronously
+            del (
+                deployment_input.status
+            )  # status will by handled asynchronously
 
         elif deployment_input.status == "stopped":
             manager.stop_deployment.remote(
                 deployment_entity.id, deployment_entity.created_by_id
             )
-            del deployment_input.status  # status will by handled asynchronously
+            del (
+                deployment_input.status
+            )  # status will by handled asynchronously
 
     return deployment_store.update(
         db, db_obj=deployment_entity, obj_in=deployment_input
@@ -196,10 +211,14 @@ async def delete_deployment(
 
     manager = get_deployments_manager()
     if deployment.id in await manager.get_deployments.remote():
-        await manager.stop_deployment.remote(deployment.id, deployment.created_by_id)
+        await manager.stop_deployment.remote(
+            deployment.id, deployment.created_by_id
+        )
         await manager.remove_deployment.remote(deployment.id)
 
-    return deployment_store.update(db, deployment, DeploymentUpdateRepo.delete())
+    return deployment_store.update(
+        db, deployment, DeploymentUpdateRepo.delete()
+    )
 
 
 def create_permission(
@@ -228,7 +247,9 @@ def create_permission(
 
     deployment_store.create_permission(db, permission_input)
 
-    return Deployment.from_orm(deployment_store.get(db, permission_input.deployment_id))
+    return Deployment.from_orm(
+        deployment_store.get(db, permission_input.deployment_id)
+    )
 
 
 def delete_permission(
@@ -257,7 +278,9 @@ def delete_permission(
 
     deployment_store.delete_permission(db, permission_input)
 
-    return Deployment.from_orm(deployment_store.get(db, permission_input.deployment_id))
+    return Deployment.from_orm(
+        deployment_store.get(db, permission_input.deployment_id)
+    )
 
 
 def get_public_deployment(db: Session, token: str):
@@ -289,7 +312,9 @@ def get_public_deployment(db: Session, token: str):
     deployment = DeploymentWithTrainingData.from_orm(deployment)
 
     if deployment.show_training_data:
-        deployment.dataset_summary = deployment_store.get_training_data(db, deployment)
+        deployment.dataset_summary = deployment_store.get_training_data(
+            db, deployment
+        )
 
     return deployment
 
@@ -317,7 +342,9 @@ async def make_prediction(
     if not await manager.is_deployment_running.remote(deployment_id):
         raise DeploymentNotFound()
 
-    deployment = deployment_store.get_if_has_permission(db, deployment_id, current_user)
+    deployment = deployment_store.get_if_has_permission(
+        db, deployment_id, current_user
+    )
     if not deployment:
         raise PermissionError()
 
@@ -351,7 +378,9 @@ async def make_prediction(
     return prediction
 
 
-async def make_prediction_public(db: Session, deployment_id: int, data: Dict[str, Any]):
+async def make_prediction_public(
+    db: Session, deployment_id: int, data: Dict[str, Any]
+):
     """Make a prediction for a public deployment.
 
     Args:

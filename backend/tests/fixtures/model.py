@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Tuple
+from typing import Literal, Optional
 
 import mlflow.tracking
 from fastapi import status

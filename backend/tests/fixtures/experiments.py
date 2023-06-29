@@ -43,7 +43,9 @@ def mock_experiment(
     return create_obj
 
 
-def setup_experiments(db: Session, model: Model, num_experiments=4) -> List[Experiment]:
+def setup_experiments(
+    db: Session, model: Model, num_experiments=4
+) -> List[Experiment]:
     version = model.versions[-1]
     # creates 1 started experiment and 2 successful
     exps = [

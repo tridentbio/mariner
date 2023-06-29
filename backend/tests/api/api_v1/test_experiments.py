@@ -68,7 +68,9 @@ def user_model_fixture(
 @pytest.mark.long
 @pytest.mark.integration
 def test_post_experiments(
-    client: TestClient, mocked_experiment_payload: dict, user_headers_fixture: dict
+    client: TestClient,
+    mocked_experiment_payload: dict,
+    user_headers_fixture: dict,
 ):
     res = client.post(
         f"{get_app_settings().API_V1_STR}/experiments/",
@@ -104,7 +106,9 @@ def test_get_experiments(
     assert res.status_code == HTTP_200_OK
     body = res.json()
     exps, total = body["data"], body["total"]
-    assert total == len(exps) == len(user_experiments_fixture), "gets all experiments"
+    assert (
+        total == len(exps) == len(user_experiments_fixture)
+    ), "gets all experiments"
 
 
 @pytest.mark.integration  # fixtures use other services
@@ -130,7 +134,9 @@ def test_get_experiments_ordered_by_createdAt_desc_url_encoded(
     ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
-        assert datetime.fromisoformat(next["createdAt"]) < datetime.fromisoformat(
+        assert datetime.fromisoformat(
+            next["createdAt"]
+        ) < datetime.fromisoformat(
             current["createdAt"]
         ), "createdAt descending order is not respected"
 
@@ -157,7 +163,9 @@ def test_get_experiments_ordered_by_createdAt_desc(
     ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
-        assert datetime.fromisoformat(next["createdAt"]) < datetime.fromisoformat(
+        assert datetime.fromisoformat(
+            next["createdAt"]
+        ) < datetime.fromisoformat(
             current["createdAt"]
         ), "createdAt descending order is not respected"
 
@@ -184,7 +192,9 @@ def test_get_experiments_ordered_by_createdAt_asc_url_encoded(
     ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
-        assert datetime.fromisoformat(next["createdAt"]) > datetime.fromisoformat(
+        assert datetime.fromisoformat(
+            next["createdAt"]
+        ) > datetime.fromisoformat(
             current["createdAt"]
         ), "createdAt ascending order is not respected"
 
@@ -208,7 +218,9 @@ def test_get_experiments_by_stage(
         headers=user_headers_fixture,
     )
     body = res.json()
-    assert res.status_code == HTTP_200_OK, "Request failed with body: %r" % body
+    assert res.status_code == HTTP_200_OK, (
+        "Request failed with body: %r" % body
+    )
     exps, total = body["data"], body["total"]
     for exp in exps:
         assert exp["stage"] == "SUCCESS", "experiment out of stage filter"
@@ -254,7 +266,9 @@ def test_post_update_metrics_sucess(
     res = client.post(
         f"{get_app_settings().API_V1_STR}/experiments/epoch_metrics",
         json=metrics_update,
-        headers={"Authorization": f"Bearer {get_app_settings().APPLICATION_SECRET}"},
+        headers={
+            "Authorization": f"Bearer {get_app_settings().APPLICATION_SECRET}"
+        },
     )
     assert res.status_code == status.HTTP_200_OK
 
@@ -273,7 +287,9 @@ def test_get_experiments_metrics_for_model_version(
         headers=user_headers_fixture,
     )
 
-    assert res.status_code == HTTP_200_OK, "Request failed with body: %r" % res.json()
+    assert res.status_code == HTTP_200_OK, (
+        "Request failed with body: %r" % res.json()
+    )
 
     experiments_metrics: List[dict] = res.json()
     assert len(experiments_metrics) == len(

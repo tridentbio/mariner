@@ -25,7 +25,13 @@ def upgrade():
         sa.Column("share_url", sa.String(), nullable=True),
         sa.Column(
             "status",
-            sa.Enum("STOPPED", "ACTIVE", "IDLE", "STARTING", name="deploymentstatus"),
+            sa.Enum(
+                "STOPPED",
+                "ACTIVE",
+                "IDLE",
+                "STARTING",
+                name="deploymentstatus",
+            ),
             nullable=True,
         ),
         sa.Column(
@@ -59,8 +65,12 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_deployment_id"), "deployment", ["id"], unique=False)
-    op.create_index(op.f("ix_deployment_name"), "deployment", ["name"], unique=True)
+    op.create_index(
+        op.f("ix_deployment_id"), "deployment", ["id"], unique=False
+    )
+    op.create_index(
+        op.f("ix_deployment_name"), "deployment", ["name"], unique=True
+    )
     op.create_index(
         op.f("ix_deployment_status"), "deployment", ["status"], unique=False
     )

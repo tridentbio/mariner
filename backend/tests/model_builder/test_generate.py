@@ -21,7 +21,9 @@ def test_sphinxfy():
     assert len(html_str) > 0, "sphinxfy did not produce output"
     root = ET.fromstring(html_str)
     elements = root.findall(r".//span[@class='math notranslate nohighlight']")
-    assert len(elements) > 0, "failed to produce renderable math in html output"
+    assert (
+        len(elements) > 0
+    ), "failed to produce renderable math in html output"
 
 
 @pytest.mark.benchmark

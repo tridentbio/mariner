@@ -79,7 +79,8 @@ class SingleModelDeploymentControl:
         """
         return (
             self.idle_time
-            and (time() - self.idle_time) > get_app_settings().DEPLOYMENT_IDLE_TIME
+            and (time() - self.idle_time)
+            > get_app_settings().DEPLOYMENT_IDLE_TIME
         )
 
     def start(self) -> Deployment:
@@ -146,7 +147,9 @@ class SingleModelDeploymentControl:
         if len(broken_checks) > 0:
             raise InvalidDataframe(
                 f"dataframe failed {len(broken_checks)} checks",
-                reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
+                reasons=[
+                    f"{col_name}: {rule}" for col_name, rule in broken_checks
+                ],
             )
         dataset = CustomDataset(
             data=df,
@@ -289,7 +292,9 @@ class DeploymentsManager:
             raise DeploymentNotRunning(
                 "Deployment must be either running or idle to be removed"
             )
-        self.deployments_map[deployment_id].update_status(DeploymentStatus.STOPPED)
+        self.deployments_map[deployment_id].update_status(
+            DeploymentStatus.STOPPED
+        )
         del self.deployments_map[deployment_id]
 
     def start_deployment(self, deployment_id: int, user_id: int) -> Deployment:
@@ -319,8 +324,13 @@ class DeploymentsManager:
         if self.deployments_map[deployment_id].is_running:
             return self.deployments_map[deployment_id].deployment
 
-        if self.deployments_map[deployment_id].deployment.created_by_id != user_id:
-            raise NotCreatorOwner("Only the creator of the deployment can start it")
+        if (
+            self.deployments_map[deployment_id].deployment.created_by_id
+            != user_id
+        ):
+            raise NotCreatorOwner(
+                "Only the creator of the deployment can start it"
+            )
 
         return self.deployments_map[deployment_id].start()
 
@@ -348,8 +358,13 @@ class DeploymentsManager:
                 "Deployment must be either running or idle to be stopped"
             )
 
-        if self.deployments_map[deployment_id].deployment.created_by_id != user_id:
-            raise NotCreatorOwner("Only the creator of the deployment can stop it")
+        if (
+            self.deployments_map[deployment_id].deployment.created_by_id
+            != user_id
+        ):
+            raise NotCreatorOwner(
+                "Only the creator of the deployment can stop it"
+            )
 
         return self.deployments_map[deployment_id].stop()
 
@@ -371,7 +386,9 @@ class DeploymentsManager:
                 If the deployment is not mapped to a :class:`SingleModelDeploymentControl`.
         """
         if not self.is_deployment_running(deployment_id):
-            raise DeploymentNotRunning("Deployment must be running to make predictions")
+            raise DeploymentNotRunning(
+                "Deployment must be running to make predictions"
+            )
 
         return self.deployments_map[deployment_id].predict(x)
 

@@ -87,7 +87,9 @@ def validate_column_pattern(column: str, pattern: str) -> bool:
     def compare_regex(x, y):
         return search(y, x) is not None
 
-    return compare_insensitive(column, pattern) or compare_regex(column, pattern)
+    return compare_insensitive(column, pattern) or compare_regex(
+        column, pattern
+    )
 
 
 def find_column_by_name(df: pd.DataFrame, column_name: str) -> int:
@@ -181,7 +183,9 @@ def determine_seq_type(seq: str) -> Tuple[bool, str, bool, int]:
             # dna is priority so domain_kind can be changed to rna or protein
             if char in ONLY_RNA and domain_kind == "dna":
                 # need to check if it has any only_dna value in checked values
-                domain_kind = "rna" if ONLY_DNA not in set(seq[:i]) else "protein"
+                domain_kind = (
+                    "rna" if ONLY_DNA not in set(seq[:i]) else "protein"
+                )
 
             # if domain_kind already changed to rna it's not a valid dna
             if char in ONLY_DNA and domain_kind == "rna":
@@ -228,7 +232,12 @@ def check_biological_sequence(seq: str) -> Dict[str, Union[str, bool]]:
     if len(seq) < 5:  # at least 5 chars to be a valid sequence
         return {"valid": False}
 
-    valid, domain_kind, possible_ambiguous, count_unambiguous = determine_seq_type(seq)
+    (
+        valid,
+        domain_kind,
+        possible_ambiguous,
+        count_unambiguous,
+    ) = determine_seq_type(seq)
 
     if not valid:
         return {"valid": False}
@@ -240,7 +249,9 @@ def check_biological_sequence(seq: str) -> Dict[str, Union[str, bool]]:
         if count_unambiguous / len(seq) >= 0.5:
             result.update({"type": domain_kind, "is_ambiguous": True})
         else:
-            result.update({"type": "protein", "kwargs": {"domain_kind": "protein"}})
+            result.update(
+                {"type": "protein", "kwargs": {"domain_kind": "protein"}}
+            )
 
     else:
         result.update({"type": domain_kind, "is_ambiguous": False})
@@ -284,7 +295,9 @@ def check_biological_sequence_series(
             types_found.add(seq_result["type"])
             # store all different ambiguity found in the series
             ambiguity.add(
-                "ambiguous" if seq_result.get("is_ambiguous") else "unanbiguous"
+                "ambiguous"
+                if seq_result.get("is_ambiguous")
+                else "unanbiguous"
             )
 
         # if more than one type found or at least one protein, return protein
@@ -303,7 +316,10 @@ def check_biological_sequence_series(
         return {
             "valid": True,
             "type": domain_kind,
-            "kwargs": {"domain_kind": domain_kind, "is_ambiguous": is_ambiguous},
+            "kwargs": {
+                "domain_kind": domain_kind,
+                "is_ambiguous": is_ambiguous,
+            },
         }
     except (AttributeError, ValueError):
         return {"valid": False}

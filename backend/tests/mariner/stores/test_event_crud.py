@@ -20,11 +20,15 @@ class TestEventCrud:
         yield events
         teardown_events(db, events)
 
-    def test_get_from_user(self, db: Session, events_fixture: List[EventEntity]):
+    def test_get_from_user(
+        self, db: Session, events_fixture: List[EventEntity]
+    ):
         user = get_test_user(db)
         assert len(event_store.get_to_user(db, user.id)) == len(events_fixture)
 
-    def test_set_events_read(self, db: Session, events_fixture: List[EventEntity]):
+    def test_set_events_read(
+        self, db: Session, events_fixture: List[EventEntity]
+    ):
         events_slice = events_fixture[:2]
         user = get_test_user(db)
         assert event_store.update_read(db, events_slice, user.id) == 2

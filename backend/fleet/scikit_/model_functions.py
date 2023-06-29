@@ -33,7 +33,9 @@ class SciKitFunctions(BaseModelFunctions):
         model (Union[None, sklearn.base.RegressorMixin, sklearn.base.ClassifierMixin]):
     """
 
-    model: Union[None, sklearn.base.RegressorMixin, sklearn.base.ClassifierMixin] = None
+    model: Union[
+        None, sklearn.base.RegressorMixin, sklearn.base.ClassifierMixin
+    ] = None
 
     def __init__(
         self,

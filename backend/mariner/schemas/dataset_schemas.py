@@ -40,7 +40,10 @@ SchemaType = NewType(
     "SchemaType",
     Dict[
         str,
-        Union[Tuple[Callable[..., bool], str], List[Tuple[Callable[..., bool], str]]],
+        Union[
+            Tuple[Callable[..., bool], str],
+            List[Tuple[Callable[..., bool], str]],
+        ],
     ],
 )
 
@@ -241,7 +244,9 @@ class DatasetBase(ApiBaseModel):
     updated_at: utc_datetime
     created_by_id: int
     columns_metadata: List[ColumnsDescription] = []
-    ready_status: Optional[Literal["failed", "processing", "ready"]] = "processing"
+    ready_status: Optional[
+        Literal["failed", "processing", "ready"]
+    ] = "processing"
     errors: Optional[Dict[str, Union[List[str], str]]] = None
 
 

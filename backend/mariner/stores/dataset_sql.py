@@ -57,10 +57,14 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
                 Dataset.name.ilike(f"%{query.search_by_name}%")
             )
         if query.created_by_id:
-            sql_query = sql_query.filter(Dataset.created_by_id == query.created_by_id)
+            sql_query = sql_query.filter(
+                Dataset.created_by_id == query.created_by_id
+            )
 
         total = sql_query.count()
-        sql_query = sql_query.limit(query.per_page).offset(query.page * query.per_page)
+        sql_query = sql_query.limit(query.per_page).offset(
+            query.page * query.per_page
+        )
         result = sql_query.all()
         return result, total
 
@@ -77,13 +81,16 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
         obj_in_dict = obj_in.dict()
         relations_key = ["columns_metadata"]
         ds_data = {
-            k: obj_in_dict[k] for k in obj_in_dict.keys() if k not in relations_key
+            k: obj_in_dict[k]
+            for k in obj_in_dict.keys()
+            if k not in relations_key
         }
         db_obj = Dataset(**ds_data)
 
         if obj_in.columns_metadata:
             db_obj.columns_metadata = [
-                ColumnsMetadata(**cd_me) for cd_me in obj_in_dict["columns_metadata"]
+                ColumnsMetadata(**cd_me)
+                for cd_me in obj_in_dict["columns_metadata"]
             ]
 
         db.add(db_obj)
@@ -115,7 +122,8 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
             db_obj = db.query(Dataset).filter(Dataset.id == db_obj.id).first()
 
             db_obj.columns_metadata = [
-                ColumnsMetadata(**cd_me.dict()) for cd_me in obj_in.columns_metadata
+                ColumnsMetadata(**cd_me.dict())
+                for cd_me in obj_in.columns_metadata
             ]
             db.add(db_obj)
             del obj_in.columns_metadata

@@ -38,7 +38,9 @@ def create_access_token(
         )
     to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(
-        to_encode, get_app_settings().AUTHENTICATION_SECRET_KEY, algorithm=ALGORITHM
+        to_encode,
+        get_app_settings().AUTHENTICATION_SECRET_KEY,
+        algorithm=ALGORITHM,
     )
     return encoded_jwt
 

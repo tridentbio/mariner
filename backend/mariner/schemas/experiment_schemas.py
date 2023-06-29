@@ -32,7 +32,9 @@ class TorchTrainingRequest(BaseTrainingRequest):
     config: TorchTrainingConfig
 
     @classmethod
-    def create(cls, name: str, model_version_id: int, config: TorchTrainingConfig):
+    def create(
+        cls, name: str, model_version_id: int, config: TorchTrainingConfig
+    ):
         return cls(
             framework="torch",
             name=name,

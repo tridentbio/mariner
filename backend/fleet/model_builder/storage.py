@@ -55,7 +55,9 @@ class BaseStorage(MutableMapping):
     Dictionary like class
     """
 
-    def __init__(self, _mapping: Optional[Dict[str, Any]] = None, **kwargs) -> None:
+    def __init__(
+        self, _mapping: Optional[Dict[str, Any]] = None, **kwargs
+    ) -> None:
         super().__init__()
         self._mapping = {}
 

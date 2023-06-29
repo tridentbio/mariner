@@ -76,7 +76,9 @@ class AbstractManager:
         if id in self.all_tasks:
             raise ArgumentError("id already has a task")
         self.all_tasks[id] = new_task
-        task.add_done_callback(lambda task: self.handle_finish(task, id, done_callback))
+        task.add_done_callback(
+            lambda task: self.handle_finish(task, id, done_callback)
+        )
 
     def get_running_history(self, id: int) -> Dict[str, Any]:
         """Returns the running history of a task.
@@ -99,7 +101,9 @@ class AbstractManager:
         Returns:
             List[TaskView]: List of TaskView objects.
         """
-        tasks = [task for task in self.all_tasks.values() if task.user_id == user_id]
+        tasks = [
+            task for task in self.all_tasks.values() if task.user_id == user_id
+        ]
         return tasks
 
     def get_task(self, id: int) -> Optional[Task]:
@@ -184,7 +188,9 @@ class ExperimentManager:
             raise ArgumentError("experiment_id already has a task")
         self.experiments[experiment_id] = experiment
         task.add_done_callback(
-            lambda task: self._handle_finish(task, experiment_id, done_callback)
+            lambda task: self._handle_finish(
+                task, experiment_id, done_callback
+            )
         )
 
     def get_running_history(self, experiment_id: int):
