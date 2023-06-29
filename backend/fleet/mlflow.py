@@ -3,6 +3,9 @@ This package contains the MLflow integration for the project.
 
 This module will replace :mod:`mariner.core.mlflow` in the future.
 """
+import os
+import pickle
+from tempfile import mkdtemp
 from typing import Any, Union
 
 import mlflow
@@ -10,6 +13,8 @@ import torch.nn
 from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 from mlflow.tracking.client import MlflowClient
+
+from .utils.data import PreprocessingPipeline
 
 
 def log_torch_models_and_create_version(
@@ -87,3 +92,35 @@ def log_sklearn_model_and_create_version(
             description=version_description,
         )
         return version
+
+
+def save_pipeline(pipeline: PreprocessingPipeline) -> None:
+    """Save the pipeline as an artifact.
+
+    Args:
+        pipeline: pipeline object.
+        run_id: run_id string of the training experiment.
+    """
+    tmp_dir = mkdtemp()
+    artifact_path = os.path.join(tmp_dir, "pipeline.pkl")
+    open(artifact_path, "wb").write(pickle.dumps(pipeline.get_state()))
+    mlflow.log_artifact(artifact_path)
+
+
+def load_pipeline(run_id) -> PreprocessingPipeline:
+    """Load the pipeline from an artifact.
+
+    Args:
+        run_id: run_id string of the training experiment.
+
+    Returns:
+        PreprocessingPipeline: pipeline object.
+    """
+    tmp_dir = mkdtemp()
+    artifact_path = os.path.join(tmp_dir, "pipeline.pkl")
+    mlflow.artifacts.download_artifacts(
+        run_id=run_id, artifact_path="pipeline.pkl", dst_path=tmp_dir
+    )
+
+    pipeline_state = pickle.load(open(artifact_path, "rb"))
+    return PreprocessingPipeline.load_from_state(pipeline_state)
