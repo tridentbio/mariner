@@ -13,10 +13,9 @@ dataset:
         classes:
           CI: 0
           CM: 1
-          CA: 2
 
   targetColumns:
-    - name: HIV_activate
+    - name: HIV_active
       dataType:
         domainKind: numeric
 
@@ -25,16 +24,22 @@ dataset:
       type: molfeat.trans.fp.FPVecFilteredTransformer
       forward_args:
         X: $smiles
+
+  transforms:
     - name: OneHotEncoder
       type: sklearn.preprocessing.OneHotEncoder
       forward_args:
         X: $activity
 
+    - name: Concat
+      type: fleet.model_builder.transforms.np_concatenate.NpConcatenate
+      forward_args:
+        X:
+          - $MolFPFeaturizer
+          - $OneHotEncoder
 spec:
   model:
     type: sklearn.ensemble.RandomForestClassifier
     fitArgs:
-      X: 
-        - $MolFPFeaturizer
-        - $OneHotEncoder
-      y: $HIV_activate
+      X: $Concat
+      y: $HIV_active
