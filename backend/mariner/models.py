@@ -218,7 +218,9 @@ def _check_dataframe_conforms_dataset(
         df: dataframe to be checked
         dataset_config: model builder dataset configuration used in model building
     """
-    column_configs = dataset_config.feature_columns + dataset_config.target_columns
+    column_configs = (
+        dataset_config.feature_columns + dataset_config.target_columns
+    )
     result: List[Tuple[str, InvalidReason]] = []
     for column_config in column_configs:
         data_type = column_config.data_type
@@ -257,11 +259,15 @@ def get_model_prediction(
     if not modelversion.mlflow_version:
         raise ModelVersionNotTrained()
     df = pd.DataFrame.from_dict(request.model_input, dtype=float)
-    broken_checks = _check_dataframe_conforms_dataset(df, modelversion.config.dataset)
+    broken_checks = _check_dataframe_conforms_dataset(
+        df, modelversion.config.dataset
+    )
     if len(broken_checks) > 0:
         raise InvalidDataframe(
             f"dataframe failed {len(broken_checks)} checks",
-            reasons=[f"{col_name}: {rule}" for col_name, rule in broken_checks],
+            reasons=[
+                f"{col_name}: {rule}" for col_name, rule in broken_checks
+            ],
         )
     dataset = CustomDataset(
         data=df,

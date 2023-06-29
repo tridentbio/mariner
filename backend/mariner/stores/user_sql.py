@@ -58,7 +58,11 @@ class _CRUDUser(CRUDBase[User, UserCreateBasic, UserUpdate]):
         return db_obj
 
     def update(
-        self, db: Session, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]
+        self,
+        db: Session,
+        *,
+        db_obj: User,
+        obj_in: Union[UserUpdate, Dict[str, Any]],
     ) -> User:
         """Updates user
 
@@ -80,7 +84,9 @@ class _CRUDUser(CRUDBase[User, UserCreateBasic, UserUpdate]):
             update_data["hashed_password"] = hashed_password
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
-    def authenticate(self, db: Session, *, email: str, password: str) -> Optional[User]:
+    def authenticate(
+        self, db: Session, *, email: str, password: str
+    ) -> Optional[User]:
         """Gets the user linked to email if the password is correct.
 
         Args:

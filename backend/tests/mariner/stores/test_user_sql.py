@@ -22,7 +22,9 @@ def test_authenticate_user(db: Session) -> None:
     password = random_lower_string()
     user_in = UserCreateBasic(email=EmailStr(email), password=password)
     user = user_store.create(db, obj_in=user_in)
-    authenticated_user = user_store.authenticate(db, email=email, password=password)
+    authenticated_user = user_store.authenticate(
+        db, email=email, password=password
+    )
     assert authenticated_user
     assert user.email == authenticated_user.email
 

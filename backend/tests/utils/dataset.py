@@ -6,7 +6,9 @@ from mariner.schemas.dataset_schemas import ColumnsMeta
 from .utils import random_lower_string
 
 
-def get_post_dataset_data(metadata: List[ColumnsMeta] = None) -> Dict[str, str]:
+def get_post_dataset_data(
+    metadata: List[ColumnsMeta] = None,
+) -> Dict[str, str]:
     metadatas_example: List[ColumnsMeta] = metadata or [
         {
             "pattern": "exp",

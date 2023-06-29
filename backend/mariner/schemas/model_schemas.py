@@ -146,7 +146,9 @@ class ModelVersionUpdateRepo(BaseModel):
 
 
 LossType = Literal[
-    "torch.nn.MSELoss", "torch.nn.CrossEntropyLoss", "torch.nn.BCEWithLogitsLoss"
+    "torch.nn.MSELoss",
+    "torch.nn.CrossEntropyLoss",
+    "torch.nn.BCEWithLogitsLoss",
 ]
 
 

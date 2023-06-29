@@ -130,7 +130,9 @@ class TestColumnDescription:
                 col_description.data_type, expected
             ), "Columns Description parsed with an invalid data type"
         except ValidationError:
-            assert False, "ColumnDescription raised an exception parsing a valid json"
+            assert (
+                False
+            ), "ColumnDescription raised an exception parsing a valid json"
 
     invalid_jsons_fixture = [
         """

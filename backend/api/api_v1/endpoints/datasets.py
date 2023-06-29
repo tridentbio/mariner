@@ -46,7 +46,9 @@ def get_my_datasets(
     Retrieve datasets owned by requester
     """
     datasets, total = controller.get_my_datasets(db, current_user, query)
-    return Paginated(data=[Dataset.from_orm(ds) for ds in datasets], total=total)
+    return Paginated(
+        data=[Dataset.from_orm(ds) for ds in datasets], total=total
+    )
 
 
 @router.get("/{dataset_id}/summary", response_model=DatasetSummary)
@@ -85,7 +87,9 @@ async def create_dataset(
     split_target: Split = Form(..., alias="splitTarget"),
     split_type: SplitType = Form(..., alias="splitType"),
     split_column: Optional[str] = Form(None, alias="splitOn"),
-    columns_metadatas: ColumnMetadataFromJSONStr = Form(None, alias="columnsMetadata"),
+    columns_metadatas: ColumnMetadataFromJSONStr = Form(
+        None, alias="columnsMetadata"
+    ),
     file: UploadFile = File(None),
     db: Session = Depends(deps.get_db),
 ) -> Any:
@@ -115,7 +119,8 @@ async def create_dataset(
 
     except DatasetAlreadyExists:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Dataset name already in use"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Dataset name already in use",
         )
 
 
@@ -191,7 +196,9 @@ def get_csv_file(
 ) -> StreamingResponse:
     """Get csv file for a given dataset id"""
     try:
-        file = controller.get_csv_file(db, dataset_id, current_user, "original")
+        file = controller.get_csv_file(
+            db, dataset_id, current_user, "original"
+        )
         return StreamingResponse(file, media_type="text/csv")
 
     except DatasetNotFound:

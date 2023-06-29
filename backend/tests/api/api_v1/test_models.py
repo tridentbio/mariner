@@ -49,13 +49,17 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
             feature_columns=[
                 ColumnConfig(
                     name="mwt",
-                    data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
+                    data_type=QuantityDataType(
+                        domain_kind="numeric", unit="mole"
+                    ),
                 )
             ],
             target_columns=[
                 TargetTorchColumnConfig(
                     name="tpsa",
-                    data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
+                    data_type=QuantityDataType(
+                        domain_kind="numeric", unit="mole"
+                    ),
                     out_module="1",
                 )
             ],
@@ -67,7 +71,9 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
                     constructor_args=layers.TorchlinearConstructorArgs(
                         in_features=27, out_features=1
                     ),
-                    forward_args=layers.TorchlinearForwardArgsReferences(input="$some"),
+                    forward_args=layers.TorchlinearForwardArgsReferences(
+                        input="$some"
+                    ),
                     name="1",
                 )
             ]
@@ -169,7 +175,8 @@ def test_get_models_success(
     some_model: Model,
 ):
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/models/", headers=normal_user_token_headers
+        f"{get_app_settings().API_V1_STR}/models/",
+        headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK
     user = get_test_user(db)
@@ -308,7 +315,9 @@ def test_post_predict_validates_smiles(
 
 
 def test_get_model_version(
-    client: TestClient, some_model: Model, normal_user_token_headers: dict[str, str]
+    client: TestClient,
+    some_model: Model,
+    normal_user_token_headers: dict[str, str],
 ):
     res = client.get(
         f"{get_app_settings().API_V1_STR}/models/{some_model.id}/",
@@ -346,7 +355,8 @@ def test_post_check_config_good_model2(
 ):
     payload = TrainingCheckRequest(
         model_spec=model_config(
-            dataset_name=some_dataset.name, model_type="regressor-with-categorical"
+            dataset_name=some_dataset.name,
+            model_type="regressor-with-categorical",
         )
     )
     res = client.post(
@@ -407,7 +417,9 @@ def test_post_check_config_good_model3(
         }
     }
     res = client.post(
-        "api/v1/models/check-config", json=payload, headers=normal_user_token_headers
+        "api/v1/models/check-config",
+        json=payload,
+        headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK, res.json()
     assert not res.json()["stackTrace"], res.json()["stackTrace"]
@@ -423,7 +435,9 @@ def test_post_check_config_bad_model(
 ):
     model_path = "tests/data/yaml/model_fails_on_training.yml"
     regressor: TorchModelSpec = TorchModelSpec.from_yaml(model_path)
-    model = CustomModel(config=regressor.spec, dataset_config=regressor.dataset)
+    model = CustomModel(
+        config=regressor.spec, dataset_config=regressor.dataset
+    )
     regressor.dataset.name = some_dataset.name
     dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
     torch_dataset = MarinerTorchDataset(

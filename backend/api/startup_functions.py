@@ -18,7 +18,9 @@ async def deployments_manager_startup():
 
     # Map all deployments that were running in the server before it was stopped.
     deployments = DeploymentSchema.from_orm_array(
-        db.query(Deployment).filter(Deployment.status == DeploymentStatus.ACTIVE).all()
+        db.query(Deployment)
+        .filter(Deployment.status == DeploymentStatus.ACTIVE)
+        .all()
     )
 
     # Load all deployments that were running in the new deployments manager instance.

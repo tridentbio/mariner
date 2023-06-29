@@ -52,7 +52,9 @@ class OneHot(nn.Module, AutoBuilder):
         column_config = get_column_config(dataset_config, input_)
         if not column_config:
             raise RuntimeError(f"Column config not found for input {input_}")
-        if not isinstance(column_config.data_type, data_types.CategoricalDataType):
+        if not isinstance(
+            column_config.data_type, data_types.CategoricalDataType
+        ):
             raise DataTypeMismatchException(
                 f"Expected data type categorical but got {column_config.__class__}",
                 expected=data_types.CategoricalDataType,

@@ -66,7 +66,9 @@ def test_change_log(releases_path_fixture: str):
                 changelog.ReleaseChange(type="Removed", message="Change 7"),
                 changelog.ReleaseChange(type="Removed", message="Change 8"),
                 changelog.ReleaseChange(type="Deprecated", message="Change 9"),
-                changelog.ReleaseChange(type="Deprecated", message="Change 10"),
+                changelog.ReleaseChange(
+                    type="Deprecated", message="Change 10"
+                ),
                 changelog.ReleaseChange(type="Security", message="Change 11"),
                 changelog.ReleaseChange(type="Security", message="Change 12"),
             ],

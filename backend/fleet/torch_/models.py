@@ -107,7 +107,9 @@ class CustomModel(pl.LightningModule):
 
         for target_column in dataset_config.target_columns:
             if not target_column.loss_fn:
-                raise ValueError(f"{target_column.name}.loss_fn cannot be None")
+                raise ValueError(
+                    f"{target_column.name}.loss_fn cannot be None"
+                )
 
             # This is safe as long ModelSchema was validated
             loss_fn_class = eval(target_column.loss_fn)
@@ -159,7 +161,9 @@ class CustomModel(pl.LightningModule):
         Returns:
             dictionary with the output layers outputs
         """
-        out_layers = map(lambda x: x.out_module, self.dataset_config.target_columns)
+        out_layers = map(
+            lambda x: x.out_module, self.dataset_config.target_columns
+        )
         for node_name in self.topo_sorting:
             if node_name not in self.layer_configs:
                 continue  # is a featurizer, already evaluated by dataset
@@ -232,7 +236,9 @@ class CustomModel(pl.LightningModule):
             args = _adapt_loss_args(loss_fn, args)
 
             losses[target_column.name] = loss_fn(*args)
-            self.log(f"test/loss/{target_column.name}", losses[target_column.name])
+            self.log(
+                f"test/loss/{target_column.name}", losses[target_column.name]
+            )
 
         loss = sum(losses.values())
         return loss
@@ -251,7 +257,9 @@ class CustomModel(pl.LightningModule):
 
             args = _adapt_loss_args(loss_fn, args)
             losses[target_column.name] = loss_fn(*args)
-            metrics_dict = self.metrics_dict[target_column.name].get_validation_metrics(
+            metrics_dict = self.metrics_dict[
+                target_column.name
+            ].get_validation_metrics(
                 prediction[target_column.name],
                 batch[target_column.name],
                 target_column.name,
@@ -262,7 +270,9 @@ class CustomModel(pl.LightningModule):
                 on_epoch=True,
                 on_step=False,
             )
-            self.log(f"val/loss/{target_column.name}", losses[target_column.name])
+            self.log(
+                f"val/loss/{target_column.name}", losses[target_column.name]
+            )
 
         loss = sum(losses.values())
         return loss
@@ -281,7 +291,9 @@ class CustomModel(pl.LightningModule):
             args = _adapt_loss_args(loss_fn, args)
 
             losses[target_column.name] = loss_fn(*args)
-            metrics_dict = self.metrics_dict[target_column.name].get_training_metrics(
+            metrics_dict = self.metrics_dict[
+                target_column.name
+            ].get_training_metrics(
                 prediction[target_column.name],
                 batch[target_column.name],
                 target_column.name,
@@ -289,7 +301,9 @@ class CustomModel(pl.LightningModule):
             self.log_dict(
                 {
                     **metrics_dict,
-                    f"train/loss/{target_column.name}": losses[target_column.name],
+                    f"train/loss/{target_column.name}": losses[
+                        target_column.name
+                    ],
                 },
                 batch_size=len(batch[target_column.name]),
                 on_epoch=True,

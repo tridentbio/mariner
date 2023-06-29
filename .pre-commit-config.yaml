@@ -23,6 +23,14 @@ repos:
         fail_fast: true
         stages:
           - commit
+      - id: test-backend-unit
+        name: Running backend unit tests
+        entry: bash -c 'cd backend && poetry run sh scripts/test.sh -m pytest -m \"not integration\"'
+        language: system
+        files: '^backend/'
+        types: [ python ]
+        stages:
+          - commit
       - id: check-staged-webapp-style
         name: Checking staged webapp code style
         entry: bash -c 'cd webapp && npm run prettier:check'
@@ -39,14 +47,6 @@ repos:
         types: [ts, tsx]
         files: ^webapp/
         fail_fast: true
-        stages:
-          - commit
-      - id: test-backend-unit
-        name: Running backend unit tests
-        entry: cd backend && poetry run sh scripts/test.sh -m pytest -m \"not integration\"
-        language: system
-        files: '^backend/'
-        types: [ python ]
         stages:
           - commit
       - id: test-webapp

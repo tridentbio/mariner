@@ -9,7 +9,13 @@ from humps import camel
 from pydantic import BaseModel, Field, root_validator
 
 from fleet import data_types
-from fleet.preprocessing import FeaturizersType, TransformerType
+from fleet.preprocessing import (
+    CreateFromType,
+    FeaturizerConfig,
+    FeaturizersType,
+    TransformConfig,
+    TransformerType,
+)
 from fleet.yaml_model import YAML_Model
 
 
@@ -67,6 +73,17 @@ class TargetTorchColumnConfig(ColumnConfig):
     column_type: Optional[Literal["regression", "multiclass", "binary"]] = None
 
 
+class ColumnConfigWithPreprocessing(BaseDatasetModel):
+    """
+    Describes a column and it's preprocessing steps.
+    """
+
+    name: str
+    data_type: data_types.DataType
+    transforms: Union[None, List[CreateFromType]] = None
+    featurizers: Union[None, List[CreateFromType]] = None
+
+
 class DatasetConfig(BaseDatasetModel, YAML_Model):
     """
     Describes a dataset for the model.
@@ -117,10 +134,16 @@ class AllowedLosses(BaseDatasetModel):
     mc_class: AllowedLossesType = [
         {"key": "torch.nn.CrossEntropyLoss", "value": "CrossEntropyLoss"}
     ]
-    type_map = {"regression": "regr", "binary": "bin_class", "multiclass": "mc_class"}
+    type_map = {
+        "regression": "regr",
+        "binary": "bin_class",
+        "multiclass": "mc_class",
+    }
 
     def check(
-        self, loss: str, column_type: Literal["regression", "multiclass", "binary"]
+        self,
+        loss: str,
+        column_type: Literal["regression", "multiclass", "binary"],
     ):
         """Check if loss is allowed for column_type"""
         allowed_losses_list = map(
@@ -224,6 +247,52 @@ class TorchDatasetConfig(DatasetConfig):
             values["target_columns"][i] = target_column
 
         return values
+
+
+class DatasetConfigWithPreprocessing(BaseDatasetModel, YAML_Model):
+    """
+    Describes a dataset configuration with preprocessing steps.
+    """
+
+    name: str
+    target_columns: List[ColumnConfigWithPreprocessing]
+    feature_columns: List[ColumnConfigWithPreprocessing]
+
+    def to_dataset_config(self) -> DatasetConfig:
+        featurizers = []
+        transforms = []
+        for col in self.feature_columns + self.target_columns:
+
+            def f(array, col, attr, parser):
+                if hasattr(col, attr) and isinstance(getattr(col, attr), list):
+                    previous_key = col.name
+                    for idx, col_featurizer in enumerate(getattr(col, attr)):
+                        key = f"{col.name}-feat-{idx}"
+                        featurizer_args = col_featurizer.dict() | {
+                            "name": key,
+                            "forward_args": [f"${previous_key}"],
+                        }
+                        if featurizer_args["constructor_args"] is None:
+                            featurizer_args.pop("constructor_args")
+                        array.append(parser.parse_obj(featurizer_args))
+                        previous_key = key
+
+            f(featurizers, col, "featurizers", FeaturizerConfig)
+            f(transforms, col, "transforms", TransformConfig)
+
+        return DatasetConfig(
+            name=self.name,
+            target_columns=[
+                ColumnConfig(name=col.name, data_type=col.data_type)
+                for col in self.target_columns
+            ],
+            feature_columns=[
+                ColumnConfig(name=col.name, data_type=col.data_type)
+                for col in self.feature_columns
+            ],
+            featurizers=[feat.__root__ for feat in featurizers],
+            transforms=[transf.__root__ for transf in transforms],
+        )
 
 
 class FeaturizerWrapper(BaseModel):
@@ -396,6 +465,12 @@ class DatasetConfigBuilder:
             The dataset configuration.
         """
         self._validate()
+        print(
+            self.name,
+            self.target_columns + self.feature_columns,
+            self.featurizers,
+            self.transforms,
+        )
         return DatasetConfig(
             name=self.name,  # type: ignore
             target_columns=[
@@ -429,7 +504,10 @@ def is_regression_column(
     if isinstance(dataset_config, TorchDatasetConfig):
         return is_regression(dataset_config.get_column(column_name))  # type: ignore
     elif isinstance(dataset_config, DatasetConfig):
-        return dataset_config.get_column(column_name).data_type.domain_kind == "numeric"
+        return (
+            dataset_config.get_column(column_name).data_type.domain_kind
+            == "numeric"
+        )
     else:
         raise ValueError(
             f"dataset_config should be either DatasetConfig or TorchDatasetConfig, got {type(dataset_config)}"

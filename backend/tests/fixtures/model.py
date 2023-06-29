@@ -25,9 +25,23 @@ ModelType = Literal["regressor", "regressor-with-categorical", "classifier"]
 
 
 def model_config(
-    model_type: ModelType = "regressor", dataset_name: Optional[str] = None
+    model_type: ModelType = "regressor",
+    framework: Literal["sklearn", "torch"] = "torch",
+    dataset_name: Optional[str] = None,
 ) -> TorchModelSpec:
-    path = get_config_path_for_model_type(model_type)
+    """[TODO:summary]
+
+    Mocks a model spec parsing it from data/yaml folder.
+
+    Args:
+        model_type: the model type wanted.
+        framework: Either "torch" or "sklearn"
+        dataset_name: The name of the dataset used by this model.
+
+    Returns:
+        [TODO:description]
+    """
+    path = get_config_path_for_model_type(model_type, framework)
     if path.endswith("yaml") or path.endswith("yml"):
         model = TorchModelSpec.from_yaml(path)
     else:
@@ -39,16 +53,31 @@ def model_config(
     return model
 
 
-def get_config_path_for_model_type(model_type: ModelType) -> str:
-    if model_type == "regressor":
-        model_path = "tests/data/yaml/small_regressor_schema.yaml"
-    elif model_type == "classifier":
-        model_path = "tests/data/yaml/small_classifier_schema.yaml"
-    elif model_type == "regressor-with-categorical":
-        model_path = "tests/data/json/small_regressor_schema2.json"
-    else:
-        raise NotImplementedError(f"No model config yaml for model type {model_type}")
-    return model_path
+def get_config_path_for_model_type(
+    model_type: ModelType, framework: Literal["sklearn", "torch"] = "torch"
+) -> str:
+    torch_models = {
+        "regressor": "tests/data/yaml/small_regressor_schema.yaml",
+        "classifier": "tests/data/yaml/small_classifier_schema.yaml",
+        "regressor-with-categorical": "tests/data/json/small_regressor_schema2.json",
+    }
+    sklearn_models = {
+        "regressor": "tests/data/yaml/sklearn_random_forest_sampl.yaml",
+    }
+
+    try:
+        if framework == "sklearn":
+            return sklearn_models[model_type]
+        elif framework == "torch":
+            return torch_models[model_type]
+        else:
+            raise NotImplementedError(
+                f"No test yamls for framework {framework}"
+            )
+    except KeyError as exc:
+        raise NotImplementedError(
+            f"No test yamls of type {model_type} found for framework {framework}"
+        ) from exc
 
 
 def mock_model(
@@ -91,7 +120,9 @@ def setup_create_model_db(
     **mock_model_kwargs,
 ):
     model = mock_model(**mock_model_kwargs, dataset_name=dataset.name)
-    user = get_test_user(db) if owner == "test_user" else get_random_test_user(db)
+    user = (
+        get_test_user(db) if owner == "test_user" else get_random_test_user(db)
+    )
     model_create = ModelCreateRepo(
         dataset_id=dataset.id,
         name=model.name,
@@ -128,7 +159,11 @@ def setup_create_model_db(
 
 
 def teardown_create_model(db: Session, model: Model, skip_mlflow=False):
-    obj = db.query(ModelVersion).filter(ModelVersion.model_id == model.id).first()
+    obj = (
+        db.query(ModelVersion)
+        .filter(ModelVersion.model_id == model.id)
+        .first()
+    )
     db.delete(obj)
     obj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
     if obj:

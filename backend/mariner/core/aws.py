@@ -120,7 +120,9 @@ def list_s3_objects(bucket: Bucket, prefix: str):
     return response
 
 
-def upload_s3_file(file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket, key):
+def upload_s3_file(
+    file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket, key
+):
     """Upload a file to S3
 
     Args:
@@ -135,7 +137,9 @@ def upload_s3_file(file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket
         s3.upload_fileobj(file.file, bucket.value, key)
 
 
-def download_file_as_dataframe(bucket: Union[Bucket, str], key: str) -> pd.DataFrame:
+def download_file_as_dataframe(
+    bucket: Union[Bucket, str], key: str
+) -> pd.DataFrame:
     """Downloads s3 file and attempts to parse it as pd.Dataframe
 
     Will raise exceptions if object is not in csv format.
@@ -153,7 +157,11 @@ def download_file_as_dataframe(bucket: Union[Bucket, str], key: str) -> pd.DataF
     )
     s3body = s3_res["Body"].read()
     data = io.BytesIO(s3body)
-    df = pd.read_csv(data) if not is_compressed(data) else read_compressed_csv(s3body)
+    df = (
+        pd.read_csv(data)
+        if not is_compressed(data)
+        else read_compressed_csv(s3body)
+    )
     return df
 
 
@@ -187,7 +195,8 @@ def download_s3(key: str, bucket: str) -> io.BytesIO:
 
 
 def upload_s3_compressed(
-    file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket = Bucket.Datasets
+    file: Union[UploadFile, io.BytesIO, BinaryIO],
+    bucket: Bucket = Bucket.Datasets,
 ) -> Tuple[str, int]:
     """Upload a file to S3 and compress it if it's not already compressed
 
@@ -198,7 +207,9 @@ def upload_s3_compressed(
     Returns:
         Tuple[str, int]: s3 key and file size in bytes
     """
-    file_instance = file if isinstance(file, (io.BytesIO, BinaryIO)) else file.file
+    file_instance = (
+        file if isinstance(file, (io.BytesIO, BinaryIO)) else file.file
+    )
 
     file_size = get_size(file_instance)
 

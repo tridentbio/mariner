@@ -69,7 +69,10 @@ class Collater:
         # Handle Tensor data
         elif isinstance(elem, torch.Tensor):
             if elem.dtype == torch.long and not all(
-                [batch[0].shape == batch[i].shape for i in range(1, len(batch))]
+                [
+                    batch[0].shape == batch[i].shape
+                    for i in range(1, len(batch))
+                ]
             ):
                 return pad_sequence(batch, batch_first=True)
             return default_collate(batch)
@@ -183,7 +186,9 @@ class CustomDataset(Dataset):
 
         return feat
 
-    def get_output_featurizers(self) -> Union[List[Union[BaseFeaturizer, None]], None]:
+    def get_output_featurizers(
+        self,
+    ) -> Union[List[Union[BaseFeaturizer, None]], None]:
         """Gets the output featurizer"""
         if self.target:
             targets = self.dataset_config.target_columns
@@ -215,9 +220,13 @@ class CustomDataset(Dataset):
         # featurizer before including in the data instance
         for featurizer in self.get_featurizer_configs():
             references = get_references_dict(featurizer.forward_args.dict())
-            assert len(references) == 1, "only 1 forward arg for featurizers for now"
+            assert (
+                len(references) == 1
+            ), "only 1 forward arg for featurizers for now"
             col_name = list(references.values())[0]
-            data[featurizer.name] = self._featurizers[featurizer.name](sample[col_name])
+            data[featurizer.name] = self._featurizers[featurizer.name](
+                sample[col_name]
+            )
 
             # Remove featurized columns from columns_to_include
             # since its featurized value was already included
@@ -251,7 +260,9 @@ class CustomDataset(Dataset):
             targets = self.dataset_config.target_columns
             for i, target in enumerate(targets):
                 if self.output_featurizers[i]:
-                    data[target.name] = self.output_featurizers[i](sample[target.name])
+                    data[target.name] = self.output_featurizers[i](
+                        sample[target.name]
+                    )
                 else:
                     data[target.name] = sample[target.name]
 

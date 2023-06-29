@@ -15,7 +15,8 @@ def test_get_model_options():
     assert tfe_option and emb_option, "Options are missing from list"
     assert emb_option.default_args
     assert (
-        "max_norm" in emb_option.default_args and "norm_type" in emb_option.default_args
+        "max_norm" in emb_option.default_args
+        and "norm_type" in emb_option.default_args
     ), "Default args are missing"
     # checks if emb_option has defaults max_norm = 1 and norm_type = 2
     assert (

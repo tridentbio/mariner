@@ -123,7 +123,9 @@ async def get_cookie_or_token(
     return token
 
 
-def assert_trusted_service(authorization: Union[str, None] = Header("Authorization")):
+def assert_trusted_service(
+    authorization: Union[str, None] = Header("Authorization")
+):
     """Checks a basic inter service authentication using the Authorization HTTP header.
 
     Args:

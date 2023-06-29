@@ -16,5 +16,6 @@ def test_schema_autofills_lossfn():
     )
     for target_column in target_columns:
         assert (
-            target_column.loss_fn == DEFAULT_LOSS_MAP[target_column.column_type]
+            target_column.loss_fn
+            == DEFAULT_LOSS_MAP[target_column.column_type]
         ), f"loss_fn for {target_column.name} was not set to the {target_column.column_type} default"

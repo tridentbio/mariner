@@ -81,6 +81,9 @@ def log_sklearn_model_and_create_version(
         client = MlflowClient()
     if model_name:
         version = client.create_model_version(
-            model_name, model_src, run.info.run_id, description=version_description
+            model_name,
+            model_src,
+            run.info.run_id,
+            description=version_description,
         )
         return version

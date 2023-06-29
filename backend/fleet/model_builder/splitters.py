@@ -108,12 +108,18 @@ class ScaffoldSplitter:
     def __init__(self) -> None:
         pass
 
-    def _generate_scaffold(self, smiles: str, include_chirality: bool = False) -> str:
+    def _generate_scaffold(
+        self, smiles: str, include_chirality: bool = False
+    ) -> str:
         mol = Chem.MolFromSmiles(smiles)
-        scaffold = MurckoScaffoldSmiles(mol=mol, includeChirality=include_chirality)
+        scaffold = MurckoScaffoldSmiles(
+            mol=mol, includeChirality=include_chirality
+        )
         return scaffold
 
-    def generate_scaffolds(self, dataset: pd.DataFrame, smiles_column: str = "smiles"):
+    def generate_scaffolds(
+        self, dataset: pd.DataFrame, smiles_column: str = "smiles"
+    ):
         """Create scaffolds based on ``smiles_column`` column of ``dataset``
 
         Args:
@@ -134,7 +140,9 @@ class ScaffoldSplitter:
         scaffolds_sets = [
             scaffold_set
             for (_scaffold, scaffold_set) in sorted(
-                scaffolds.items(), key=lambda x: (len(x[1]), x[1][0]), reverse=True
+                scaffolds.items(),
+                key=lambda x: (len(x[1]), x[1][0]),
+                reverse=True,
             )
         ]
 

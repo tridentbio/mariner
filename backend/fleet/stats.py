@@ -35,7 +35,9 @@ def get_chemical_props(smiles: str) -> tuple:
     mol_weight = Descriptors.ExactMolWt(mol)
     mol_tpsa = Descriptors.TPSA(mol)
     ring_count = mol.GetRingInfo().NumRings()
-    has_chiral_centers = True if len(Chem.FindMolChiralCenters(mol)) > 0 else False
+    has_chiral_centers = (
+        True if len(Chem.FindMolChiralCenters(mol)) > 0 else False
+    )
 
     return mol_weight, mol_tpsa, atom_count, ring_count, has_chiral_centers
 
@@ -98,7 +100,10 @@ def create_categorical_histogram(
     histogram_data = []
 
     for index, count in enumerate(histogram):
-        data_point = {"label": str(histogram.index[index]), "count": int(count)}
+        data_point = {
+            "label": str(histogram.index[index]),
+            "count": int(count),
+        }
 
         histogram_data.append(data_point)
 
@@ -165,7 +170,10 @@ def create_int_histogram(data: pd.Series, bins: int) -> Dict[str, Any]:
 
     if data_range <= bins:
         histogram = np.histogram(
-            data, bins=np.linspace(data.min() - 0.5, data.max() + 0.5, data_range + 2)
+            data,
+            bins=np.linspace(
+                data.min() - 0.5, data.max() + 0.5, data_range + 2
+            ),
         )
     else:
         histogram = np.histogram(data, bins=bins)
@@ -211,11 +219,17 @@ def get_dataset_summary(
     statistics = {}
     for column, dtype in dataset.dtypes.items():
         if np.issubdtype(dtype, float):
-            statistics[column] = {"hist": create_float_histogram(dataset[column], 15)}
+            statistics[column] = {
+                "hist": create_float_histogram(dataset[column], 15)
+            }
         elif column in categorical_columns:
-            statistics[column] = {"hist": create_categorical_histogram(dataset[column])}
+            statistics[column] = {
+                "hist": create_categorical_histogram(dataset[column])
+            }
         elif np.issubdtype(dtype, int):
-            statistics[column] = {"hist": create_int_histogram(dataset[column], 15)}
+            statistics[column] = {
+                "hist": create_int_histogram(dataset[column], 15)
+            }
         else:
             statistics[column] = {}  # The key is used to recover all columns
 
@@ -236,7 +250,9 @@ def get_dataset_summary(
         )
 
         # Convert boolean column to 0 and 1
-        chem_dataset["has_chiral_centers"] = chem_dataset["has_chiral_centers"].apply(
+        chem_dataset["has_chiral_centers"] = chem_dataset[
+            "has_chiral_centers"
+        ].apply(
             lambda x: 1 if x else 0,
         )
 
