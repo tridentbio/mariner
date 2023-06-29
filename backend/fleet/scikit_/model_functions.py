@@ -64,6 +64,7 @@ class SciKitFunctions(BaseModelFunctions):
         X, y = self.preprocessing_pipeline.get_X_and_y(self.dataset)
         if fit:
             self.dataset = self.preprocessing_pipeline.fit_transform(X, y)
+            fleet.mlflow.save_pipeline(self.preprocessing_pipeline)
         else:
             self.dataset = self.preprocessing_pipeline.transform(X, y)
         self.dataset = self.dataset[self.preprocessing_pipeline.output_columns]

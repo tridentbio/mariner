@@ -46,13 +46,14 @@ See Also:
     :mod:`fleet.model_builder.featurizers`
 """
 
-from typing import Annotated, Dict, Literal, NewType, Union, get_args
+from typing import Annotated, Dict, List, Literal, NewType, Union, get_args
 
 from humps import camel
 from pydantic import BaseModel, Field
 
-from fleet.model_builder.layers_schema import \
-    FeaturizersType as FeaturizersType_
+from fleet.model_builder.layers_schema import (
+    FeaturizersType as FeaturizersType_,
+)
 from fleet.model_builder.utils import get_class_from_path_string
 
 
@@ -135,6 +136,21 @@ class LabelEncoderConfig(CreateFromType, CamelCaseModel):
     forward_args: Union[Dict[str, str], list[str]]
 
 
+class OneHotEncoderConfig(CreateFromType, CamelCaseModel):
+    """
+    Models the constructor arguments of a sklearn.preprocessing.OneHotEncoder
+
+    See also:
+        :mod:`sklearn.preprocessing.OneHotEncoder`
+    """
+
+    type: Literal[
+        "sklearn.preprocessing.OneHotEncoder"
+    ] = "sklearn.preprocessing.OneHotEncoder"
+    name: str
+    forward_args: Union[Dict[str, str], List[str]]
+
+
 class StandardScalerConstructorArgs(BaseModel):
     """
     Models the constructor arguments of a sklearn.preprocessing.StandardScaler
@@ -162,12 +178,29 @@ class StandardScalerConfig(CreateFromType, CamelCaseModel):
     forward_args: Union[Dict[str, str], list[str]]
 
 
+# Custom Transformers
+
+
+class NpConcatenateConfig(CreateFromType, CamelCaseModel):
+    """
+    Models the usage of numpy concatenate.
+    """
+
+    type: Literal[
+        "fleet.model_builder.transforms.np_concatenate.NpConcatenate"
+    ] = "fleet.model_builder.transforms.np_concatenate.NpConcatenate"
+    name: str
+    forward_args: Union[Dict[str, List[str]], List[str]]
+
+
 TransformerType = NewType(
     "TransformerType",
     Annotated[  # type: ignore
         Union[
             StandardScalerConfig,
             LabelEncoderConfig,
+            OneHotEncoderConfig,
+            NpConcatenateConfig,
         ],
         Field(discriminator="type"),
     ],
