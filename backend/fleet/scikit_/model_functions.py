@@ -130,6 +130,7 @@ class SciKitFunctions(BaseModelFunctions):
         """
         Get and log the metrics of the model from the test set.
         """
+        self._prepare_dataset(fit=False)
         X, y = self._prepare_X_and_y(filter_step=TrainingStep.TEST.value)
         if self.model is None:
             raise ValueError("sklearn model not trained")
