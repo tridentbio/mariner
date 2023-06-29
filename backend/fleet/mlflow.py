@@ -10,6 +10,7 @@ from typing import Any, Union
 
 import mlflow
 import torch.nn
+from mlflow.entities import Run
 from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 from mlflow.tracking.client import MlflowClient
@@ -21,7 +22,6 @@ def log_torch_models_and_create_version(
     model_name: str,
     best_model: torch.nn.Module,
     last_model: torch.nn.Module,
-    run_id: str,
     version_description: Union[None, str] = None,
     client: Union[None, mlflow.tracking.MlflowClient] = None,
 ) -> ModelVersion:
@@ -38,18 +38,20 @@ def log_torch_models_and_create_version(
     Returns:
         ModelVersion: The mlflow ModelVersion created.
     """
+
+    run = mlflow.active_run()
+    assert run is not None, "no active run"
     best_model_relative_path = "best"
     last_model_relative_path = "last"
 
-    with mlflow.start_run(run_id=run_id, nested=True) as run:
-        mlflow.pytorch.log_model(
-            best_model,
-            artifact_path=best_model_relative_path,
-        )
-        mlflow.pytorch.log_model(
-            last_model,
-            artifact_path=last_model_relative_path,
-        )
+    mlflow.pytorch.log_model(
+        best_model,
+        artifact_path=best_model_relative_path,
+    )
+    mlflow.pytorch.log_model(
+        last_model,
+        artifact_path=last_model_relative_path,
+    )
     # log model version as best model
     runs_uri = f"runs:/{run.info.run_id}/{best_model_relative_path}"
     # gets underlying s3 path of the run artifact

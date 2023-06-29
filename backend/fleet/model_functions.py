@@ -112,7 +112,10 @@ def fit(
                 dataset=dataset,
             )
             loggers: List[Logger] = [
-                MLFlowLogger(experiment_name=mlflow_experiment_name)
+                MLFlowLogger(
+                    run_id=run.info.run_id,
+                    experiment_name=mlflow_experiment_name,
+                )
             ]
             if (
                 experiment_id is not None
