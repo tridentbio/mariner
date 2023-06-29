@@ -163,40 +163,6 @@ class ExtraTreesRegressorConfig(CamelCaseModel, CreateFromType):
     fit_args: Dict[str, str]
 
 
-class KnearestNeighborsRegressorConstructorArgs(BaseModel):
-    """
-    The constructor arguments for the `sklearn.neighbors.KNeighborsRegressor` class.
-
-    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
-    """
-
-    n_neighbors: int = 5
-    weights: Union[Literal["uniform", "distance"], None] = "uniform"
-    algorithm: Literal["auto", "ball_tree", "kd_tree", "brute"] = "auto"
-    leaf_size: int = 30
-    p: int = 2
-    metric: str = "minkowski"
-    metric_params: Union[None, Dict[str, Union[str, float, int]]] = None
-    n_jobs: Union[None, int] = None
-
-
-class KnearestNeighborsRegressorConfig(CamelCaseModel, CreateFromType):
-    """
-    Describes the usage of the `sklearn.neighbors.KNeighborsRegressor` class.
-
-    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
-    """
-
-    type: Literal[
-        "sklearn.neighbors.KNeighborsRegressor"
-    ] = "sklearn.neighbors.KNeighborsRegressor"
-    constructor_args: KnearestNeighborsRegressorConstructorArgs = (
-        KnearestNeighborsRegressorConstructorArgs()
-    )
-    fit_args: Dict[str, str]
-    task_type: List[TaskType] = ["regressor"]
-
-
 class ExtraTreesClassifierConstructorArgs(BaseModel):
     """
     The constructor arguments for the `sklearn.ensemble.ExtraTreesClassifier` class.
@@ -328,7 +294,6 @@ class SklearnModelSchema(CamelCaseModel, YAML_Model):
         KNeighborsRegressorConfig,
         RandomForestRegressorConfig,
         ExtraTreesRegressorConfig,
-        KnearestNeighborsRegressorConfig,
         ExtraTreesClassifierConfig,
         KnearestNeighborsClassifierConfig,
         RandomForestClassifierConfig,
