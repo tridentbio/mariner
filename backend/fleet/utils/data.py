@@ -20,6 +20,7 @@ import torch
 import torch.nn
 from lightning.pytorch.trainer.trainer import TrainerFn
 from pydantic import BaseModel
+from sklearn.base import TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
@@ -208,7 +209,20 @@ class ForwardProtocol(Protocol):
     forward_args: Union[List[str], Dict[str, Union[List[str], str]], BaseModel]
 
 
-def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
+def cast_np_array(
+    data: Union[pd.DataFrame, pd.Series, np.ndarray, Any]
+) -> np.ndarray:
+    if isinstance(data, (pd.DataFrame, pd.Series)):
+        return data.to_numpy()
+    elif isinstance(data, np.ndarray):
+        return data
+    else:
+        return np.array(data)
+
+
+def get_args(
+    data: pd.DataFrame, feat: ForwardProtocol
+) -> Union[List[np.ndarray], np.ndarray]:
     """
     Get the parameters necessary to pass to feat by processing it's
     forward_args and looking previously computed values in ``data``.
@@ -225,22 +239,38 @@ def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
     references = get_references_dict(forward_args)
 
     if isinstance(references, dict):
+        result = [None]
         for value in references.values():
             if not isinstance(value, list):
                 value = [value]
 
-            result = [
-                np.array(
-                    [data.loc[:, col_name].to_numpy() for col_name in value]
-                )
-            ]
+            result = [cast_np_array(data[col_name]) for col_name in value]
 
-            return result[0] if len(result) == 1 else result
+            if isinstance(result[0], pd.Series):
+                result = map(lambda x: x, result)
+
+        return result
 
     else:
-        return np.array(
-            [data.loc[:, col_name].to_numpy() for col_name in references]
-        )
+        return np.array([data[col_name] for col_name in references])
+
+
+def dataframe_to_dict(
+    df,
+) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
+    dictionary = {}
+    for column in df.columns:
+        dictionary[column] = df[column]
+    return dictionary
+
+
+TransformFunction = Dict[
+    str,
+    Tuple[
+        Union[TransformerMixin, FunctionTransformer],
+        Callable[[Callable, list], Union[np.ndarray, List[np.ndarray]]],
+    ],
+]
 
 
 class PreprocessingPipeline:
@@ -250,6 +280,9 @@ class PreprocessingPipeline:
         dataset_config: The object describing the columns and data_types of the
             dataset.
     """
+
+    featurizers: TransformFunction
+    transforms: TransformFunction
 
     def __init__(
         self, dataset_config: DatasetConfig, featurize_data_types: bool = True
@@ -275,11 +308,14 @@ class PreprocessingPipeline:
             for transform in dataset_config.transforms
         }
         self.featurizers = {
-            feat.name: self._prepare_transform(feat.create())
+            feat.name: (self._prepare_transform(feat.create()), feat.perform)
             for feat in dataset_config.featurizers
         }
         self.transforms = {
-            transform.name: self._prepare_transform(transform.create())
+            transform.name: (
+                self._prepare_transform(transform.create()),
+                transform.perform,
+            )
             for transform in dataset_config.transforms
         }
         self._fitted = False
@@ -386,12 +422,10 @@ class PreprocessingPipeline:
         Returns the featurizers and transforms in the order they are applied.
         """
         feats, transforms = map(list, dataset_topo_sort(self.dataset_config))
-        result = []
         for config in feats:
-            result.append((config, self.featurizers[config.name]))
+            yield (config, self.featurizers[config.name])
         for config in transforms:
-            result.append((config, self.transforms[config.name]))
-        return result
+            yield (config, self.transforms[config.name])
 
     def fit(
         self,
@@ -412,15 +446,10 @@ class PreprocessingPipeline:
 
         data = pd.concat([X, y], axis=1)
 
-        for config, transformer in self.get_preprocess_steps():
+        for config, (transformer, perform) in self.get_preprocess_steps():
             args = get_args(data, config)
-            if config.type not in [
-                "molfeat.trans.fp.FPVecFilteredTransformer",
-                "fleet.model_builder.featurizers.MoleculeFeaturizer",
-            ]:
-                args = map(lambda x: x.reshape(-1, 1), args)
             try:
-                transformer.fit(*args)
+                perform(transformer.fit, args)
             except Exception as exp:
                 raise fleet.exceptions.FitError(
                     f"Failed to fit {config}"
@@ -452,21 +481,12 @@ class PreprocessingPipeline:
                 y, self.dataset_config.target_columns
             )
 
-        data = pd.concat([X, y], axis=1)
+        data = dataframe_to_dict(pd.concat([X, y], axis=1))
 
-        for config, transformer in self.get_preprocess_steps():
+        for config, (transformer, perform) in self.get_preprocess_steps():
             args = get_args(data, config)
-            if config.type not in [
-                "molfeat.trans.fp.FPVecFilteredTransformer",
-                "fleet.model_builder.featurizers.MoleculeFeaturizer",
-            ]:
-                args = map(lambda x: x.reshape(-1, 1), args)
             try:
-                result = transformer.fit_transform(*args)
-
-                if config.type == "sklearn.preprocessing.OneHotEncoder":
-                    result = result.toarray().tolist()
-
+                result = perform(transformer.fit_transform, args)
                 data[config.name] = result
             except Exception as exp:
                 raise fleet.exceptions.FitError(
@@ -501,19 +521,12 @@ class PreprocessingPipeline:
                 y, self.dataset_config.target_columns
             )
 
-        data = pd.concat([X, y], axis=1)
+        data = dataframe_to_dict(pd.concat([X, y], axis=1))
 
-        for config, transformer in self.get_preprocess_steps():
+        for config, (transformer, perform) in self.get_preprocess_steps():
             args = get_args(data, config)
-            if config.type not in [
-                "molfeat.trans.fp.FPVecFilteredTransformer",
-                "fleet.model_builder.featurizers.MoleculeFeaturizer",
-            ]:
-                args = map(lambda x: x.reshape(-1, 1), args)
             try:
-                transformed = transformer.transform(*args)
-                if config.type == "sklearn.preprocessing.OneHotEncoder":
-                    transformed = transformed.toarray().tolist()
+                transformed = perform(transformer.transform, args)
                 data[config.name] = transformed
             except Exception as exp:
                 raise fleet.exceptions.TransformError(
