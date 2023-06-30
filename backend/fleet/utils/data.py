@@ -57,8 +57,7 @@ def make_graph_from_dataset_config(
         The graph.
     """
     featurizers_dict = {
-        feat.name: feat.dict(by_alias=True)
-        for feat in dataset_config.featurizers
+        feat.name: feat.dict(by_alias=True) for feat in dataset_config.featurizers
     }
     transforms_dict = {
         transform.name: transform.dict(by_alias=True)
@@ -92,9 +91,7 @@ def dataset_topo_sort(
     Returns:
         (featurizers, transforms) tuple, the preprocessing step objects.
     """
-    featurizers_by_name = {
-        feat.name: feat for feat in dataset_config.featurizers
-    }
+    featurizers_by_name = {feat.name: feat for feat in dataset_config.featurizers}
     transforms_by_name = {
         transform.name: transform for transform in dataset_config.transforms
     }
@@ -102,9 +99,7 @@ def dataset_topo_sort(
     graph = make_graph_from_dataset_config(dataset_config)
     topo_sort = nx.topological_sort(graph)
     featurizers_names = [feat.name for feat in dataset_config.featurizers]
-    transformers_names = [
-        transformer.name for transformer in dataset_config.transforms
-    ]
+    transformers_names = [transformer.name for transformer in dataset_config.transforms]
     # TODO: check that featurizers come before transforms
     for item in topo_sort:
         if item in featurizers_names:
@@ -209,9 +204,7 @@ class ForwardProtocol(Protocol):
     forward_args: Union[List[str], Dict[str, Union[List[str], str]], BaseModel]
 
 
-def cast_np_array(
-    data: Union[pd.DataFrame, pd.Series, np.ndarray, Any]
-) -> np.ndarray:
+def cast_np_array(data: Union[pd.DataFrame, pd.Series, np.ndarray, Any]) -> np.ndarray:
     if isinstance(data, (pd.DataFrame, pd.Series)):
         return data.to_numpy()
     elif isinstance(data, np.ndarray):
@@ -304,8 +297,7 @@ class PreprocessingPipeline:
             feat.name: feat for feat in dataset_config.featurizers
         }
         self.transforms_config = {
-            transform.name: transform
-            for transform in dataset_config.transforms
+            transform.name: transform for transform in dataset_config.transforms
         }
         self.featurizers = {
             feat.name: (self._prepare_transform(feat.create()), feat.perform)
@@ -358,9 +350,7 @@ class PreprocessingPipeline:
                 % (["sklearn.base.TransformerMixin", "Callable"])
             )
 
-    def get_X_and_y(
-        self, df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def get_X_and_y(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Splits a dataframe into X and y using the dataset_config.
 
         Args:
@@ -369,12 +359,8 @@ class PreprocessingPipeline:
         Returns:
             X and y dataframes.
         """
-        feature_columns = [
-            col.name for col in self.dataset_config.feature_columns
-        ]
-        target_columns = [
-            col.name for col in self.dataset_config.target_columns
-        ]
+        feature_columns = [col.name for col in self.dataset_config.feature_columns]
+        target_columns = [col.name for col in self.dataset_config.target_columns]
         return df.loc[:, feature_columns], df.loc[:, target_columns]
 
     def _prepare_X_and_y(
@@ -386,17 +372,13 @@ class PreprocessingPipeline:
             if not isinstance(X, pd.DataFrame):
                 X = pd.DataFrame(
                     X,
-                    columns=[
-                        col.name for col in self.dataset_config.feature_columns
-                    ],
+                    columns=[col.name for col in self.dataset_config.feature_columns],
                 )
 
             if not isinstance(y, pd.DataFrame):
                 y = pd.DataFrame(
                     y,
-                    columns=[
-                        col.name for col in self.dataset_config.target_columns
-                    ],
+                    columns=[col.name for col in self.dataset_config.target_columns],
                 )
             return X, y
         except Exception as exc:
@@ -408,9 +390,7 @@ class PreprocessingPipeline:
         self, data: pd.DataFrame, columns: list[ColumnConfig]
     ):
         for column in columns:
-            feat = get_default_data_type_featurizer(
-                self.dataset_config, column
-            )
+            feat = get_default_data_type_featurizer(self.dataset_config, column)
             if feat is not None:
                 feat = self._prepare_transform(feat)
                 value = data[column.name]
@@ -437,23 +417,17 @@ class PreprocessingPipeline:
         """
         X, y = self._prepare_X_and_y(X, y)
         if self.featurize_data_types:
-            self._apply_default_featurizers(
-                X, self.dataset_config.feature_columns
-            )
-            self._apply_default_featurizers(
-                y, self.dataset_config.target_columns
-            )
+            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
+            self._apply_default_featurizers(y, self.dataset_config.target_columns)
 
-        data = pd.concat([X, y], axis=1)
+        data = dataframe_to_dict(pd.concat([X, y], axis=1))
 
         for config, (transformer, perform) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
                 perform(transformer.fit, args)
             except Exception as exp:
-                raise fleet.exceptions.FitError(
-                    f"Failed to fit {config}"
-                ) from exp
+                raise fleet.exceptions.FitError(f"Failed to fit {config}") from exp
 
         self._fitted = True
 
@@ -474,12 +448,8 @@ class PreprocessingPipeline:
         X, y = self._prepare_X_and_y(X, y)
 
         if self.featurize_data_types:
-            self._apply_default_featurizers(
-                X, self.dataset_config.feature_columns
-            )
-            self._apply_default_featurizers(
-                y, self.dataset_config.target_columns
-            )
+            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
+            self._apply_default_featurizers(y, self.dataset_config.target_columns)
 
         data = dataframe_to_dict(pd.concat([X, y], axis=1))
 
@@ -489,9 +459,7 @@ class PreprocessingPipeline:
                 result = perform(transformer.fit_transform, args)
                 data[config.name] = result
             except Exception as exp:
-                raise fleet.exceptions.FitError(
-                    f"Failed to fit {config}"
-                ) from exp
+                raise fleet.exceptions.FitError(f"Failed to fit {config}") from exp
         self._fitted = True
 
         return data
@@ -514,12 +482,8 @@ class PreprocessingPipeline:
         X, y = self._prepare_X_and_y(X, y)
 
         if self.featurize_data_types:
-            self._apply_default_featurizers(
-                X, self.dataset_config.feature_columns
-            )
-            self._apply_default_featurizers(
-                y, self.dataset_config.target_columns
-            )
+            self._apply_default_featurizers(X, self.dataset_config.feature_columns)
+            self._apply_default_featurizers(y, self.dataset_config.target_columns)
 
         data = dataframe_to_dict(pd.concat([X, y], axis=1))
 
@@ -700,9 +664,7 @@ class DataModule(pl.LightningDataModule):
         self.split_target = split_target
         self.split_column = split_column
         if preprocessing_pipeline is None:
-            self.preprocessing_pipeline = PreprocessingPipeline(
-                self.dataset_config
-            )
+            self.preprocessing_pipeline = PreprocessingPipeline(self.dataset_config)
         else:
             self.preprocessing_pipeline = preprocessing_pipeline
 
@@ -726,9 +688,7 @@ class DataModule(pl.LightningDataModule):
                 split_column=self.split_column,
             )
 
-        self.preprocessing_pipeline.fit(
-            self.data["step"] == TrainingStep.TRAIN.value
-        )
+        self.preprocessing_pipeline.fit(self.data["step"] == TrainingStep.TRAIN.value)
         dataset = MarinerTorchDataset(
             data=self.data,
             dataset_config=self.dataset_config,
