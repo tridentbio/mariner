@@ -882,9 +882,6 @@ class FleetmoleculefeaturizerLayerConfig(CamelCaseModel):
 
     forward_args: FleetmoleculefeaturizerForwardArgsReferences
 
-    def perform(self, method, args):
-        return method(*args)
-
 
 class FleetintegerfeaturizerConstructorArgsSummary(BaseModel):
     """
