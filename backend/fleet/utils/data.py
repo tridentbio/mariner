@@ -542,7 +542,7 @@ class PreprocessingPipeline:
         ) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
-                result = perform(transformer.fit_transform, args)
+                result = adapt_args_and_apply(transformer.fit_transform, args)
                 data[config.name] = result
             except Exception as exp:
                 raise fleet.exceptions.FitError(

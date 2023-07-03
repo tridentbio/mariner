@@ -46,13 +46,11 @@ See Also:
     :mod:`fleet.model_builder.featurizers`
 """
 
-from typing import Annotated, Dict, List, Literal, NewType, Union, get_args
+from typing import Annotated, Dict, List, Literal, NewType, Union
 
 from humps import camel
 from pydantic import BaseModel, Field
 
-from fleet.model_builder.layers_schema import \
-    FeaturizersType as FeaturizersType_
 from fleet.model_builder.layers_schema import \
     FleetmoleculefeaturizerLayerConfig as FleetmoleculefeaturizerLayerConfig_
 from fleet.model_builder.utils import get_class_from_path_string
@@ -249,7 +247,7 @@ TransformerType = NewType(
 FeaturizersType = NewType(
     "FeaturizersType",
     Annotated[
-        Union[get_args(get_args(FeaturizersType_)[0]) + (FPVecFilteredTransformerConfig, FleetmoleculefeaturizerLayerConfig)],  # type: ignore
+        Union[FPVecFilteredTransformerConfig, FleetmoleculefeaturizerLayerConfig],  # type: ignore
         Field(discriminator="type"),
     ],
 )
