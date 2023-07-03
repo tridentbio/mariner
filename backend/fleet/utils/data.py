@@ -239,7 +239,7 @@ def get_args(
     references = get_references_dict(forward_args)
 
     if isinstance(references, dict):
-        result = [None]
+        result = []
         for value in references.values():
             if not isinstance(value, list):
                 value = [value]
@@ -250,15 +250,6 @@ def get_args(
 
     else:
         return np.array([data[col_name] for col_name in references])
-
-
-def dataframe_to_dict(
-    df,
-) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
-    dictionary = {}
-    for column in df.columns:
-        dictionary[column] = df[column]
-    return dictionary
 
 
 TransformFunction = Dict[
@@ -307,7 +298,9 @@ def prepare_data(
                 y, self.dataset_config.target_columns
             )
 
-        data = dataframe_to_dict(pd.concat([X, y], axis=1))
+        data = self._dataframe_to_dict(  # pylint: disable=W0212
+            pd.concat([X, y], axis=1)
+        )
         data = func(self, data)
         return data
 
@@ -471,6 +464,14 @@ class PreprocessingPipeline:
         for config in transforms:
             yield (config, self.transforms[config.name])
 
+    def _dataframe_to_dict(
+        self, df
+    ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
+        dictionary = {}
+        for column in df.columns:
+            dictionary[column] = df[column]
+        return dictionary
+
     @prepare_data
     def fit(
         self, data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]
@@ -541,7 +542,7 @@ class PreprocessingPipeline:
         ) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
-                result = adapt_args_and_apply(transformer.fit_transform, args)
+                result = perform(transformer.fit_transform, args)
                 data[config.name] = result
             except Exception as exp:
                 raise fleet.exceptions.FitError(
