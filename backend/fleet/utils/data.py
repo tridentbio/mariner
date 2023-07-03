@@ -246,9 +246,6 @@ def get_args(
 
             result = [cast_np_array(data[col_name]) for col_name in value]
 
-            if isinstance(result[0], pd.Series):
-                result = map(lambda x: x, result)
-
         return result
 
     else:
