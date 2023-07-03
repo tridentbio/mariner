@@ -349,13 +349,16 @@ class PreprocessingPipeline:
             for transform in dataset_config.transforms
         }
         self.featurizers = {
-            feat.name: (self._prepare_transform(feat.create()), feat.perform)
+            feat.name: (
+                self._prepare_transform(feat.create()),
+                feat.adapt_args_and_apply,
+            )
             for feat in dataset_config.featurizers
         }
         self.transforms = {
             transform.name: (
                 self._prepare_transform(transform.create()),
-                transform.perform,
+                transform.adapt_args_and_apply,
             )
             for transform in dataset_config.transforms
         }
@@ -475,10 +478,13 @@ class PreprocessingPipeline:
         """
         Fits the featurizers and transforms to the data.
         """
-        for config, (transformer, perform) in self.get_preprocess_steps():
+        for config, (
+            transformer,
+            adapt_args_and_apply,
+        ) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
-                perform(transformer.fit, args)
+                adapt_args_and_apply(transformer.fit, args)
             except Exception as exp:
                 raise fleet.exceptions.FitError(
                     f"Failed to fit {config}"
@@ -500,10 +506,13 @@ class PreprocessingPipeline:
             fleet.exceptions.Transform: When the preprocessing steps have not
                 been fitted.
         """
-        for config, (transformer, perform) in self.get_preprocess_steps():
+        for config, (
+            transformer,
+            adapt_args_and_apply,
+        ) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
-                transformed = perform(transformer.transform, args)
+                transformed = adapt_args_and_apply(transformer.transform, args)
                 data[config.name] = transformed
             except Exception as exp:
                 raise fleet.exceptions.TransformError(
@@ -526,10 +535,13 @@ class PreprocessingPipeline:
         Raises:
             fleet.exceptions.FitError: When it fails to fit
         """
-        for config, (transformer, perform) in self.get_preprocess_steps():
+        for config, (
+            transformer,
+            adapt_args_and_apply,
+        ) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
-                result = perform(transformer.fit_transform, args)
+                result = adapt_args_and_apply(transformer.fit_transform, args)
                 data[config.name] = result
             except Exception as exp:
                 raise fleet.exceptions.FitError(
