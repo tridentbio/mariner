@@ -106,7 +106,7 @@ class Metrics:
 
         if isinstance(batch, np.ndarray):
             batch = torch.as_tensor(batch)
-            _make_column_if_vector(prediction)
+            _make_column_if_vector(batch)
 
         metrics_dict = {}
         sufix = f"/{sufix}" if sufix else ""
