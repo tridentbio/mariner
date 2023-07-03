@@ -42,6 +42,7 @@ class FleetonehotForwardArgsSummary(BaseModel):
 
 
 class FleetonehotForwardArgsReferences(BaseModel):
+
     x1: str
 
 
@@ -104,6 +105,7 @@ class FleetglobalpoolingForwardArgsSummary(BaseModel):
 
 
 class FleetglobalpoolingForwardArgsReferences(BaseModel):
+
     x: str
 
     batch: Optional[str] = None
@@ -184,6 +186,7 @@ class FleetconcatForwardArgsSummary(BaseModel):
 
 
 class FleetconcatForwardArgsReferences(BaseModel):
+
     xs: List[str]
 
 
@@ -261,6 +264,7 @@ class FleetaddpoolingForwardArgsSummary(BaseModel):
 
 
 class FleetaddpoolingForwardArgsReferences(BaseModel):
+
     x: str
 
 
@@ -340,6 +344,7 @@ class TorchlinearForwardArgsSummary(BaseModel):
 
 
 class TorchlinearForwardArgsReferences(BaseModel):
+
     input: str
 
 
@@ -413,6 +418,7 @@ class TorchsigmoidForwardArgsSummary(BaseModel):
 
 
 class TorchsigmoidForwardArgsReferences(BaseModel):
+
     input: str
 
 
@@ -469,6 +475,7 @@ class TorchreluForwardArgsSummary(BaseModel):
 
 
 class TorchreluForwardArgsReferences(BaseModel):
+
     input: str
 
 
@@ -550,6 +557,7 @@ class TorchgeometricgcnconvForwardArgsSummary(BaseModel):
 
 
 class TorchgeometricgcnconvForwardArgsReferences(BaseModel):
+
     x: str
 
     edge_index: str
@@ -641,6 +649,7 @@ class TorchembeddingForwardArgsSummary(BaseModel):
 
 
 class TorchembeddingForwardArgsReferences(BaseModel):
+
     input: str
 
 
@@ -734,6 +743,7 @@ class TorchtransformerencoderlayerForwardArgsSummary(BaseModel):
 
 
 class TorchtransformerencoderlayerForwardArgsReferences(BaseModel):
+
     src: str
 
     src_mask: Optional[str] = None
@@ -828,6 +838,7 @@ class FleetmoleculefeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetmoleculefeaturizerForwardArgsReferences(BaseModel):
+
     mol: str
 
 
@@ -905,6 +916,7 @@ class FleetintegerfeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetintegerfeaturizerForwardArgsReferences(BaseModel):
+
     input_: str
 
 
@@ -963,6 +975,7 @@ class FleetdnasequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetdnasequencefeaturizerForwardArgsReferences(BaseModel):
+
     input_: str
 
 
@@ -1023,6 +1036,7 @@ class FleetrnasequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetrnasequencefeaturizerForwardArgsReferences(BaseModel):
+
     input_: str
 
 
@@ -1083,6 +1097,7 @@ class FleetproteinsequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetproteinsequencefeaturizerForwardArgsReferences(BaseModel):
+
     input_: str
 
 
