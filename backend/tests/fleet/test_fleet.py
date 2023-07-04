@@ -44,7 +44,9 @@ def assert_mlflow_metric(client: MlflowClient, run_id: str, key: str):
 
 
 def assert_mlflow_data(
-    spec: FleetModelSpec, mlflow_experiment_id: str, framework="torch"
+    spec: FleetModelSpec,
+    mlflow_experiment_id: str,
+    framework="torch",
 ):
     """
     Checks if metrics can be found in expected mlflow location
@@ -171,7 +173,6 @@ def test_train(case: TestCase):
                 mlflow_experiment_name=mlflow_experiment_name,
                 datamodule_args=case.datamodule_args,
             )
-
             assert_mlflow_data(
                 spec=case.model_spec,
                 mlflow_experiment_id=result.mlflow_experiment_id,
