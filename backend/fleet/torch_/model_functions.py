@@ -170,7 +170,6 @@ class TorchFunctions(BaseModelFunctions):
                 mlflow_model_name,
                 best_model,
                 last_model,
-                run_id,
                 version_description=version_description,
                 client=client,
             )
