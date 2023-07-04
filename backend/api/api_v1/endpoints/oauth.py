@@ -67,30 +67,30 @@ def receive_github_code(
                 github_oauth=GithubAuth.construct(code=code, state=state)
             )
             return RedirectResponse(
-                url=f"{get_app_settings().WEBAPP_URL}/login?tk={token.access_token}&tk_type={token.token_type}"  # noqa: E501
+                url=f"{get_app_settings('webapp').url}/login?tk={token.access_token}&tk_type={token.token_type}"  # noqa: E501
             )
         except UserEmailNotAllowed:
             return RedirectResponse(
-                url=f"{get_app_settings().WEBAPP_URL}/login?error=Email not cleared for github oauth"  # noqa: E501
+                url=f"{get_app_settings('webapp').url}/login?error=Email not cleared for github oauth"  # noqa: E501
             )
         except UserNotActive:
             return RedirectResponse(
-                url=f"{get_app_settings().WEBAPP_URL}/login?error=Inactive user"
+                url=f"{get_app_settings('webapp').url}/login?error=Inactive user"
             )
         except (InvalidGithubCode, InvalidOAuthState):
             return RedirectResponse(
-                url=f"{get_app_settings().WEBAPP_URL}/login?error=Invalid auth attempt"
+                url=f"{get_app_settings('webapp').url}/login?error=Invalid auth attempt"
             )
         except Exception:
             lines = traceback.format_exc()
             LOG.error("Unexpected auth error: %s", lines)
             return RedirectResponse(
-                url=f"{get_app_settings().WEBAPP_URL}/login?error=Internal Error"
+                url=f"{get_app_settings('webapp').url}/login?error=Internal Error"
             )
     elif error or error_description:
         LOG.error("Github auth error: %s: %s", error, error_description)
         return RedirectResponse(
-            url=f"{get_app_settings().WEBAPP_URL}/login?error=Internal Error"
+            url=f"{get_app_settings('webapp').url}/login?error=Internal Error"
         )
 
     else:

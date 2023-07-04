@@ -41,10 +41,10 @@ def github_get(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
         The request response.
     """
     headers, kwargs = _make_headers(**kwargs)
-    kwargs["client_id"] = get_app_settings().GITHUB_CLIENT_ID
-    kwargs["client_secret"] = get_app_settings().GITHUB_CLIENT_SECRET
+    kwargs["client_id"] = get_app_settings("auth")["github"].client_id
+    kwargs["client_secret"] = get_app_settings("auth")["github"].client_secret
     url = _join(url, path)
-    return requests.get(url=url, params=kwargs, headers=headers)
+    return requests.get(url=url, params=kwargs, headers=headers, timeout=10)
 
 
 def github_post(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
@@ -57,9 +57,10 @@ def github_post(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
     Returns:
         The request response.
     """
+    github_secrets = get_app_settings("auth")["github"]
     headers, kwargs = _make_headers(**kwargs)
-    kwargs["client_id"] = get_app_settings().GITHUB_CLIENT_ID
-    kwargs["client_secret"] = get_app_settings().GITHUB_CLIENT_SECRET
+    kwargs["client_id"] = github_secrets.client_id
+    kwargs["client_secret"] = github_secrets.client_secret
 
     result = requests.post(url=url + path, json=kwargs, headers=headers)
     return result

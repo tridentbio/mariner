@@ -76,7 +76,7 @@ def setup_create_model(
     model = mock_model(**mock_model_kwargs)
     data = model.dict(by_alias=True)
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/models/",
+        f"{get_app_settings('server').api_v1_str}/models/",
         json=data,
         headers=headers,
     )
