@@ -209,7 +209,7 @@ class ForwardProtocol(Protocol):
     forward_args: Union[List[str], Dict[str, Union[List[str], str]], BaseModel]
 
 
-def cast_np_array(
+def _cast_np_array(
     data: Union[pd.DataFrame, pd.Series, np.ndarray, Any]
 ) -> np.ndarray:
     if isinstance(data, (pd.DataFrame, pd.Series)):
@@ -244,7 +244,7 @@ def get_args(
             if not isinstance(value, list):
                 value = [value]
 
-            result = [cast_np_array(data[col_name]) for col_name in value]
+            result = [_cast_np_array(data[col_name]) for col_name in value]
 
         return result
 
