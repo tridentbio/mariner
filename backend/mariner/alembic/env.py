@@ -1,12 +1,4 @@
 from __future__ import with_statement
-from dotenv import load_dotenv
-
-print("loading environment")
-load_dotenv(".env")
-import os
-
-print(os.environ["POSTGRES_URI"])
-
 
 import os
 from logging.config import fileConfig

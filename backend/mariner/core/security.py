@@ -75,7 +75,7 @@ def generate_deployment_signed_url(sub: Union[str, Any]) -> str:
     """
     encoded_jwt = jwt.encode(
         {"sub": str(sub)},
-        get_app_settings("server").deployment_idle_time,
+        get_app_settings("secrets").deployment_url_signature_secret_key,
         algorithm=ALGORITHM,
     )
     token = encoded_jwt.replace(

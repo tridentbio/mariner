@@ -56,8 +56,8 @@ _credentials: Union[AWS_Credentials, None] = None
 
 
 def _get_new_credentials():
-    settings = get_app_settings()
-    if settings.AWS_MODE == "sts":
+    secrets = get_app_settings("secrets")
+    if secrets.aws_mode == "sts":
         sts_client = boto3.client("sts")
         response = sts_client.get_caller_identity()
         role = response["Arn"]
@@ -72,15 +72,15 @@ def _get_new_credentials():
             secret_access_key=credentials["SecretAccessKey"],
             session_token=credentials["SessionToken"],
         )
-    elif settings.AWS_MODE == "local":
+    elif secrets.aws_mode == "local":
         return AWS_Credentials(
             expiration=None,
-            access_key_id=settings.AWS_ACCESS_KEY_ID,
-            secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            access_key_id=secrets.aws_access_key_id,
+            secret_access_key=secrets.aws_secret_access_key,
             session_token=None,
         )
     else:
-        raise ValueError(f"Invalid AWS_MODE: {settings.AWS_MODE}")
+        raise ValueError(f"Invalid aws_mode: {secrets.aws_mode}")
 
 
 def _get_credentials():

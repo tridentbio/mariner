@@ -34,6 +34,8 @@ services:
       - 8000:8000
     environment:
       - RESTART=true
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - POSTGRES_URI=postgresql://postgres:123456@db:5432/app
     env_file:
       - backend/.env
       - backend/.env.secret
@@ -111,6 +113,8 @@ services:
     env_file:
       - backend/.env
       - backend/.env.secret
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     ports:
       - "6379:6379"
       - "8265:8265"
@@ -125,6 +129,8 @@ services:
       context: ./backend
       dockerfile: ../dockerfiles/Dockerfile.local
     shm_size: '4.91gb'
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     env_file:
       - backend/.env
       - backend/.env.secret
