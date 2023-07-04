@@ -1,15 +1,12 @@
 from __future__ import with_statement
-
-import dotenv
-
-dotenv.load_dotenv(".env")
-dotenv.load_dotenv(".env.secret")
-
-
 from dotenv import load_dotenv
 
+print("loading environment")
 load_dotenv(".env")
-load_dotenv(".env.secret")
+import os
+
+print(os.environ["POSTGRES_URI"])
+
 
 import os
 from logging.config import fileConfig
@@ -45,11 +42,7 @@ target_metadata = Base.metadata
 
 
 def get_url():
-    user = os.getenv("POSTGRES_USER", "postgres")
-    password = os.getenv("POSTGRES_PASSWORD", "")
-    server = os.getenv("POSTGRES_SERVER", "db")
-    db = os.getenv("POSTGRES_DB", "app")
-    return f"postgresql://{user}:{password}@{server}/{db}"
+    return os.getenv("POSTGRES_URI")
 
 
 def run_migrations_offline():

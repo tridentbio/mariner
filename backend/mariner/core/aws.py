@@ -24,8 +24,8 @@ from mariner.utils import (
 class Bucket(enum.Enum):
     """S3 buckets available to the application"""
 
-    Datasets = get_app_settings().AWS_DATASETS
-    Models = get_app_settings().AWS_MODELS
+    Datasets = get_app_settings("secrets").aws_datasets
+    Models = get_app_settings("secrets").aws_models
 
 
 class AWS_Credentials:
@@ -99,7 +99,7 @@ def create_s3_client() -> BaseClient:
     creds = _get_credentials()
     s3 = boto3.client(
         "s3",
-        region_name=get_app_settings().AWS_REGION,
+        region_name=get_app_settings().secrets.aws_region,
         **creds.credentials_dict(),
     )
     return s3

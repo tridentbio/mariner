@@ -21,7 +21,8 @@ def test_get_my_datasets(
     client: TestClient, normal_user_token_headers: Dict[str, str]
 ) -> None:
     r = client.get(
-        f"{get_app_settings().API_V1_STR}/datasets", headers=normal_user_token_headers
+        f"{get_app_settings('server').api_v1_str}/datasets",
+        headers=normal_user_token_headers,
     )
     assert r.status_code == 200
     payload = r.json()
@@ -41,7 +42,7 @@ def test_post_datasets(
 ) -> None:
     with open("tests/data/csv/Lipophilicity.csv", "rb") as f:
         res = client.post(
-            f"{get_app_settings().API_V1_STR}/datasets/",
+            f"{get_app_settings('server').api_v1_str}/datasets/",
             data=get_post_dataset_data(),
             files={"file": ("dataset.csv", f.read())},
             headers=normal_user_token_headers,
@@ -77,7 +78,7 @@ def test_post_datasets_invalid(
 ) -> None:
     with open("tests/data/csv/bad_dataset.csv", "rb") as f:
         res = client.post(
-            f"{get_app_settings().API_V1_STR}/datasets/",
+            f"{get_app_settings('server').api_v1_str}/datasets/",
             data=get_post_dataset_data(),
             files={"file": ("dataset.csv", f.read())},
             headers=normal_user_token_headers,
@@ -113,7 +114,7 @@ def test_post_datasets_name_conflict(
     ds = mock_dataset(name=some_dataset.name)
     with open("tests/data/csv/zinc.csv", "rb") as f:
         res = client.post(
-            f"{get_app_settings().API_V1_STR}/datasets/",
+            f"{get_app_settings('server').api_v1_str}/datasets/",
             data=ds,
             files={"file": ("zinc.csv", f.read())},
             headers=normal_user_token_headers,
@@ -131,7 +132,7 @@ def test_put_datasets(
 ) -> None:
     new_name = random_lower_string()
     r = client.put(
-        f"{get_app_settings().API_V1_STR}/datasets/{some_dataset.id}",
+        f"{get_app_settings('server').api_v1_str}/datasets/{some_dataset.id}",
         json={
             "name": new_name,
             "description": new_name,
@@ -185,7 +186,7 @@ def test_delete_datasets(
         ),
     )
     r = client.delete(
-        f"{get_app_settings().API_V1_STR}/datasets/{dataset.id}",
+        f"{get_app_settings('server').api_v1_str}/datasets/{dataset.id}",
         headers=normal_user_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
@@ -200,7 +201,7 @@ def test_get_csv_metadata(
 ) -> None:
     with open("tests/data/csv/Lipophilicity.csv", "rb") as f:
         res = client.post(
-            f"{get_app_settings().API_V1_STR}/datasets/csv-metadata",
+            f"{get_app_settings('server').api_v1_str}/datasets/csv-metadata",
             files={"file": ("dataset.csv", f.read())},
             headers=normal_user_token_headers,
         )
@@ -229,7 +230,7 @@ def test_download_dataset(
     route: str,
 ):
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/datasets/{some_dataset_without_process.id}/{route}",
+        f"{get_app_settings('server').api_v1_str}/datasets/{some_dataset_without_process.id}/{route}",
         headers=normal_user_token_headers,
     )
     assert res.status_code == 200, f"route datasets/{route} failed"

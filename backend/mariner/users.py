@@ -134,7 +134,8 @@ def _authenticate_github(code: str, state: str) -> User:
 
         token = github.get_access_token(code)
         github_user = github.get_user(token.access_token)
-        if github_user.email not in get_app_settings().ALLOWED_GITHUB_AUTH_EMAILS:
+        github_oauth_settings = get_app_settings("auth")["github"]
+        if github_user.email not in github_oauth_settings.allowed_emails:
             raise UserEmailNotAllowed(
                 "Email should be cleared in the ALLOWED_GITHUB_AUTH_EMAILS env var"
             )
@@ -154,7 +155,7 @@ def _authenticate_github(code: str, state: str) -> User:
 
 def _make_token(user: User) -> Token:
     access_token_expires = timedelta(
-        minutes=get_app_settings().ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=get_app_settings("server").access_token_expire_minutes
     )
     return Token(
         access_token=security.create_access_token(

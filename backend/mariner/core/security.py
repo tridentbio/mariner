@@ -34,11 +34,13 @@ def create_access_token(
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(
-            minutes=get_app_settings().ACCESS_TOKEN_EXPIRE_MINUTES
+            minutes=get_app_settings("server").access_token_expire_minutes
         )
     to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(
-        to_encode, get_app_settings().AUTHENTICATION_SECRET_KEY, algorithm=ALGORITHM
+        to_encode,
+        get_app_settings("secrets").authentication_secret_key,
+        algorithm=ALGORITHM,
     )
     return encoded_jwt
 
@@ -73,13 +75,13 @@ def generate_deployment_signed_url(sub: Union[str, Any]) -> str:
     """
     encoded_jwt = jwt.encode(
         {"sub": str(sub)},
-        get_app_settings().DEPLOYMENT_URL_SIGNATURE_SECRET_KEY,
+        get_app_settings("server").deployment_idle_time,
         algorithm=ALGORITHM,
     )
     token = encoded_jwt.replace(
         ".", "/"
     )  # replace . with / to avoid problems with browser
-    return f"{get_app_settings().WEBAPP_URL}/public-model/{token}"
+    return f"{get_app_settings('webapp').url}/public-model/{token}"
 
 
 def decode_deployment_url_token(token: str):
@@ -97,7 +99,7 @@ def decode_deployment_url_token(token: str):
     """
     payload = jwt.decode(
         token,
-        get_app_settings().DEPLOYMENT_URL_SIGNATURE_SECRET_KEY,
+        get_app_settings("secrets").deployment_url_signature_secret_key,
         algorithms=[ALGORITHM],
     )
     token_data = TokenPayload(**payload)

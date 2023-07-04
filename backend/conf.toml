@@ -1,0 +1,35 @@
+[server]
+name = "backend"
+host = "http://backend:80"
+domain = "backend"
+cors = ["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:8080", "https://localhost", "https://localhost:4200", "https://localhost:3000", "https://localhost:8080", "http://127.0.0.1:3000", "http://localhost:6006"]
+
+[webapp]
+url = "http://localhost:3000"
+
+[auth]
+
+[auth.genentech]
+authorization_url = "https://wamqa.roche.com/as/authorization.oauth2"
+methods = ["code-grant"]
+client_id = "--"
+client_secret = "--"
+
+[auth.github]
+allowed_github_emails = [
+  "tshimko@trident.bio",
+  "vitor.albuquerque@shawandpartners.com",
+  "tarcisio.melo@shawandpartners.com",
+  "anderson.lima@shawandpartners.com"
+]
+authorization_url = "https://github.com/login/oauth/authorize?"
+methods = ["code-grant"]
+client_id = "--"
+client_secret = "--"
+
+
+[tenant]
+name = "Client Dev"
+
+[test]
+email_test_user = "test@domain.com"
