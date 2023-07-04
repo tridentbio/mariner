@@ -620,9 +620,12 @@ class MarinerTorchDataset(Dataset):
         else:
             self.preprocessing_pipeline = preprocessing_pipeline
         step = self.data["step"]
-        self.data = self.preprocessing_pipeline.transform(
+        transformed = self.preprocessing_pipeline.transform(
             *self.preprocessing_pipeline.get_X_and_y(self.data)
         )
+        for field, result in transformed.items():
+            self.data[field] = result
+
         self.data["step"] = step
 
     def get_subset_idx(self, step=None) -> list[int]:
@@ -640,7 +643,6 @@ class MarinerTorchDataset(Dataset):
         """
         if step is None:
             return list(range(len(self.data)))
-        assert len(self.data["step"] == step) == len(self.data), "will break."
         return (self.data[self.data["step"] == step]).index.tolist()
 
     def __getitem__(self, idx: int):
