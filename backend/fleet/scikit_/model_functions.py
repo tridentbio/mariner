@@ -33,9 +33,7 @@ class SciKitFunctions(BaseModelFunctions):
         model (Union[None, sklearn.base.RegressorMixin, sklearn.base.ClassifierMixin]):
     """
 
-    model: Union[
-        None, sklearn.base.RegressorMixin, sklearn.base.ClassifierMixin
-    ] = None
+    model: Union[None, sklearn.base.RegressorMixin, sklearn.base.ClassifierMixin] = None
     data: Dict[str, Union[pd.Series, np.ndarray, List[np.ndarray]]] = None
 
     def __init__(
@@ -43,9 +41,7 @@ class SciKitFunctions(BaseModelFunctions):
         spec: SklearnModelSpec,
         dataset: pd.DataFrame,
         model: Union[None, sklearn.base.ClassifierMixin] = None,
-        preprocessing_pipeline: Union[
-            None, "data.PreprocessingPipeline"
-        ] = None,
+        preprocessing_pipeline: Union[None, "data.PreprocessingPipeline"] = None,
     ):
         self.spec = spec
         self.dataset = dataset
@@ -74,12 +70,14 @@ class SciKitFunctions(BaseModelFunctions):
     def _filter_data(
         self,
         filtering: pd.Series,
-        data: Union[pd.Series, np.ndarray, List[np.ndarray]],
+        data_: Union[pd.Series, np.ndarray, List[np.ndarray]],
     ):
-        if isinstance(data, (pd.DataFrame, pd.Series, np.ndarray)):
-            return data[filtering]
-        elif isinstance(data, list):
-            return [data[i] for i, f in enumerate(filtering) if f]
+        if isinstance(data_, (pd.DataFrame, pd.Series, np.ndarray)):
+            return data_[filtering]
+        elif isinstance(data_, list):
+            return [
+                data_[i] for i, filter_value in enumerate(filtering) if filter_value
+            ]
 
     def _prepare_X_and_y(
         self,
@@ -87,9 +85,7 @@ class SciKitFunctions(BaseModelFunctions):
         targets=True,
     ):
         model_config = self.spec.spec
-        assert (
-            self.data
-        ), "_prepare_data must be called before calling _prepare_X_and_y"
+        assert self.data, "_prepare_data must be called before calling _prepare_X_and_y"
         assert self.dataset is not None, "dataset must not be None"
 
         filtering = None
@@ -123,17 +119,11 @@ class SciKitFunctions(BaseModelFunctions):
             prediction = prediction.astype(np.float32)
 
         if step == "train":
-            return self.metrics.get_training_metrics(
-                prediction, batch, sufix=sufix
-            )
+            return self.metrics.get_training_metrics(prediction, batch, sufix=sufix)
         elif step == "val":
-            return self.metrics.get_validation_metrics(
-                prediction, batch, sufix=sufix
-            )
+            return self.metrics.get_validation_metrics(prediction, batch, sufix=sufix)
         elif step == "test":
-            return self.metrics.get_test_metrics(
-                prediction, batch, sufix=sufix
-            )
+            return self.metrics.get_test_metrics(prediction, batch, sufix=sufix)
 
     def train(self):
         """
