@@ -125,41 +125,36 @@ specs = [
         datasets_root / dataset_file,
         predict_samples.get(predict_sample_key),
     )
-    for model_file, dataset_file, predict_sample_key in map(
-        lambda x: (
-            x + ("",) if len(x) < 3 else x
-        ),  # make sure tuple is of length 3
-        [
-            (
-                "sklearn_sampl_random_forest_regressor.yaml",
-                "SAMPL.csv",
-                "sampl",
-            ),
-            ("sklearn_sampl_knn_regressor.yaml", "SAMPL.csv", "sampl"),
-            (
-                "sklearn_sampl_extra_trees_regressor.yaml",
-                "SAMPL.csv",
-                "sampl2",
-            ),
-            (
-                "sklearn_sampl_knearest_neighbor_regressor.yaml",
-                "SAMPL.csv",
-                "sampl2",
-            ),
-            ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv", "hiv"),
-            (
-                "sklearn_hiv_knearest_neighbor_classifier.yaml",
-                "HIV.csv",
-                "hiv",
-            ),
-            ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv", "hiv2"),
-            ("small_regressor_schema.yaml", "zinc.csv"),
-            ("multiclass_classification_model.yaml", "iris.csv"),
-            ("multitarget_classification_model.yaml", "iris.csv"),
-            ("binary_classification_model.yaml", "iris.csv"),
-            ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
-        ],
-    )
+    for model_file, dataset_file, predict_sample_key in [
+        (
+            "sklearn_sampl_random_forest_regressor.yaml",
+            "SAMPL.csv",
+            "sampl",
+        ),
+        ("sklearn_sampl_knn_regressor.yaml", "SAMPL.csv", "sampl"),
+        (
+            "sklearn_sampl_extra_trees_regressor.yaml",
+            "SAMPL.csv",
+            "sampl2",
+        ),
+        (
+            "sklearn_sampl_knearest_neighbor_regressor.yaml",
+            "SAMPL.csv",
+            "sampl2",
+        ),
+        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv", "hiv"),
+        (
+            "sklearn_hiv_knearest_neighbor_classifier.yaml",
+            "HIV.csv",
+            "hiv",
+        ),
+        ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv", "hiv2"),
+        ("small_regressor_schema.yaml", "zinc.csv", ""),
+        ("multiclass_classification_model.yaml", "iris.csv", ""),
+        ("multitarget_classification_model.yaml", "iris.csv", ""),
+        ("binary_classification_model.yaml", "iris.csv", ""),
+        ("dna_example.yml", "sarkisyan_full_seq_data.csv", ""),
+    ]
 ]
 test_cases = [
     TestCase(
