@@ -5,7 +5,6 @@ Shared between API and mariner, on ray and backend instances
 Sometimes cause the application to fail when missing an ENV VAR
 """
 import functools
-from collections.abc import MutableMapping
 from typing import Any, Dict, Literal, Optional, Union, overload
 
 import toml
@@ -56,6 +55,7 @@ class AuthSettings(BaseModel):
     client_id: str
     client_secret: str
     authorization_url: str
+    scope: Union[str, None] = None
 
 
 class AuthSettingsDict(BaseModel):
@@ -196,11 +196,8 @@ def get_app_settings(name: Literal["webapp"]) -> WebappSettings:
 
 
 @overload
-def get_app_settings(name: Literal["auth"]) -> AuthSettingsDict:
+def get_app_settings(name: Literal["auth"]) -> Dict[str, AuthSettings]:
     ...
-
-
-a: AuthSettingsDict = AuthSettingsDict.parse_obj({})
 
 
 @overload

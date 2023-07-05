@@ -24,6 +24,12 @@ router = APIRouter()
 LOG = logging.getLogger(__name__)
 
 
+@router.get("/oauth-providers")
+def get_oauth_providers():
+    """Endpoint to get list of oauth providers."""
+    return oauth.oauth_manager
+
+
 @router.get("/oauth")
 def get_oauth_provider_redirect(provider: str, db: Session = Depends(deps.get_db)):
     """Endpoint to redirect user to provider authentication site.
@@ -32,13 +38,13 @@ def get_oauth_provider_redirect(provider: str, db: Session = Depends(deps.get_db
         provider: string of the oauth provider.
         db: database connection.
     """
-    if provider not in oauth.provider_url_makers:
+    if provider not in oauth.oauth_manager:
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"No oauth provider named {provider}",
         )
-    make_oauth_url = oauth.provider_url_makers[provider]
-    return RedirectResponse(url=make_oauth_url(db))
+    url = oauth.oauth_manager.get_redirect_uri(provider)
+    return RedirectResponse(url=url)
 
 
 @router.get("/oauth-callback")
@@ -61,6 +67,7 @@ def receive_github_code(
     Raises:
         HTTPException: When the github cod is invalid.
     """
+    # TODO, adapt this function to multiple oauth providers. Currently it is only implemented for github.
     if code and state:
         try:
             token = authenticate(

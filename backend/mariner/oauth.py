@@ -1,47 +1,57 @@
 """
-Auxiliary functions related to OAuth 2.0 authentication
+Auxiliary functions related to OAuth 2.0 authentication.
 """
-from typing import MutableMapping
+from collections.abc import Mapping
+from typing import Dict, Union
 
 from sqlalchemy.orm import Session
 
-from mariner.core.config import get_app_settings
+from mariner.core.config import AuthSettings, get_app_settings
+from mariner.db.session import SessionLocal
 from mariner.stores.oauth_state_sql import oauth_state_store
 
 
-def get_github_oauth_url(db: Session):
-    """Gets github OAuth url
-
-    Needs database connection to write a secret state giving clearence to
-    next github request.
-
-    Args:
-        db: Connection with database
+class OAuthManager(Mapping):
     """
-    state = oauth_state_store.create_state(db, provider="github").state
-    github_secrets = get_app_settings("auth")
-    redirect_uri = f"{get_app_settings('server').host}/api/v1/oauth-callback"
-    return f"https://github.com/login/oauth/authorize?client_id={github_secrets.client_id}&redirect_uri={redirect_uri}&scope=read:user,user:email&state={state}"  # noqa E501
+    Stores all OAuth providers, their urls and secrets.
+    """
 
+    auth_providers: Dict[str, AuthSettings]
 
-class OAuthProviders(MutableMapping):
-    def __init__(self):
-        self.provider_url_makers = {"github": get_github_oauth_url}
+    def __init__(self, auth_providers: Union[None, Dict[str, AuthSettings]] = None):
+        if not auth_providers:
+            self.auth_providers = get_app_settings("auth")
+        else:
+            self.auth_providers = auth_providers
 
     def __getitem__(self, key):
-        return self.provider_url_makers[key]
-
-    def __setitem__(self, key, value):
-        self.provider_url_makers[key] = value
+        return self.auth_providers[key]
 
     def __len__(self):
-        return len(self.provider_url_makers)
+        return len(self.auth_providers)
 
-    def __delitem__(self, key):
-        del self.provider_url_makers[key]
+    def __contains__(self, key):
+        return key in self.auth_providers
 
     def __iter__(self):
-        return iter(self.provider_url_makers)
+        return iter(self.auth_providers)
+
+    def get_redirect_uri(self, key: str):
+        """
+        Builds a oauth url with attributes from oauth_settings and a state.
+
+        Args:
+            oauth_settings: A dictionary with the attributes to build the url.
+        """
+        with SessionLocal() as db:
+
+            state = oauth_state_store.create_state(db, provider=key).state
+            redirect_uri = f"{get_app_settings('server').host}/api/v1/oauth-callback"
+            oauth_settings = self[key]
+            return (
+                f"{oauth_settings.authorization_url}?client_id={oauth_settings.client_id}"
+                f"&redirect_uri={redirect_uri}&scope={oauth_settings.scope}&state={state}"
+            )
 
 
-provider_url_makers = OAuthProviders()
+oauth_manager = OAuthManager()

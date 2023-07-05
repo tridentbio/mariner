@@ -16,16 +16,17 @@ client_id = "--"
 client_secret = "--"
 
 [auth.github]
+client_id = "--"
+client_secret = "--"
+authorization_url = "https://github.com/login/oauth/authorize"
 allowed_github_emails = [
   "tshimko@trident.bio",
   "vitor.albuquerque@shawandpartners.com",
   "tarcisio.melo@shawandpartners.com",
   "anderson.lima@shawandpartners.com"
 ]
-authorization_url = "https://github.com/login/oauth/authorize?"
+scope = "read:user,user:email"
 methods = ["code-grant"]
-client_id = "--"
-client_secret = "--"
 
 
 [tenant]
