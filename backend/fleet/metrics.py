@@ -102,11 +102,11 @@ class Metrics:
 
         if isinstance(prediction, np.ndarray):
             prediction = torch.as_tensor(prediction)
-            _make_column_if_vector(prediction)
+            prediction = _make_column_if_vector(prediction)
 
         if isinstance(batch, np.ndarray):
             batch = torch.as_tensor(batch)
-            _make_column_if_vector(batch)
+            batch = _make_column_if_vector(prediction)
 
         metrics_dict = {}
         sufix = f"/{sufix}" if sufix else ""

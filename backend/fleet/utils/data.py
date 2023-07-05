@@ -286,7 +286,7 @@ def prepare_data(
         self: "PreprocessingPipeline",
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray, None] = None,
-    ):
+    ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
         X, y = self._prepare_X_and_y(X, y)  # pylint: disable=W0212
 
         if self.featurize_data_types:
