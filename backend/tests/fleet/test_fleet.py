@@ -18,7 +18,7 @@ from fleet.dataset_schemas import (
 )
 from fleet.model_builder import optimizers
 from fleet.model_builder.splitters import apply_split_indexes
-from fleet.model_functions import fit, run_test
+from fleet.model_functions import fit, predict, run_test
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
 from mariner.core.aws import Bucket, list_s3_objects
@@ -149,6 +149,14 @@ test_cases = [
 ]
 
 
+predict_samples = {
+    "HIV": {"smiles": ["CCCC"], "activity": ["CA"]},
+    "SAMPL": {
+        "smiles": ["CCCC"],
+    },
+}
+
+
 @pytest.mark.parametrize("case", test_cases)
 @pytest.mark.integration
 def test_train(case: TestCase):
@@ -183,6 +191,21 @@ def test_train(case: TestCase):
                 mlflow_model_version=result.mlflow_model_version.version,
                 dataset=dataset,
             )
+
+            dataset_file_name = str(case.dataset_file).split(".")[0]
+            if dataset_file_name in predict_samples:
+                predict_sample = predict_samples[dataset_file_name]
+                result = predict(
+                    spec=case.model_spec,
+                    mlflow_model_name=mlflow_model_name,
+                    mlflow_model_version=result.mlflow_model_version.version,
+                    input_=predict_sample,
+                )
+                assert (
+                    len(result) == len(predict_sample.values()[0]),
+                    "prediction result needs to have the same length as the input",
+                )
+
         else:
             with pytest.raises(case.should_fail):
                 result = fit(
