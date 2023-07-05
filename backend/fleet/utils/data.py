@@ -20,6 +20,7 @@ import torch
 import torch.nn
 from lightning.pytorch.trainer.trainer import TrainerFn
 from pydantic import BaseModel
+from sklearn.base import TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import Subset
@@ -208,7 +209,20 @@ class ForwardProtocol(Protocol):
     forward_args: Union[List[str], Dict[str, Union[List[str], str]], BaseModel]
 
 
-def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
+def _cast_np_array(
+    data: Union[pd.DataFrame, pd.Series, np.ndarray, Any]
+) -> np.ndarray:
+    if isinstance(data, (pd.DataFrame, pd.Series)):
+        return data.to_numpy()
+    elif isinstance(data, np.ndarray):
+        return data
+    else:
+        return np.array(data)
+
+
+def get_args(
+    data: pd.DataFrame, feat: ForwardProtocol
+) -> Union[List[np.ndarray], np.ndarray]:
     """
     Get the parameters necessary to pass to feat by processing it's
     forward_args and looking previously computed values in ``data``.
@@ -225,22 +239,72 @@ def get_args(data: pd.DataFrame, feat: ForwardProtocol) -> np.ndarray:
     references = get_references_dict(forward_args)
 
     if isinstance(references, dict):
+        result = []
         for value in references.values():
             if not isinstance(value, list):
                 value = [value]
 
-            result = [
-                np.array(
-                    [data.loc[:, col_name].to_numpy() for col_name in value]
-                )
-            ]
+            result = [_cast_np_array(data[col_name]) for col_name in value]
 
-            return result[0] if len(result) == 1 else result
+        return result
 
     else:
-        return np.array(
-            [data.loc[:, col_name].to_numpy() for col_name in references]
+        return np.array([data[col_name] for col_name in references])
+
+
+TransformFunction = Dict[
+    str,
+    Tuple[
+        Union[TransformerMixin, FunctionTransformer],
+        Callable[[Callable, list], Union[np.ndarray, List[np.ndarray]]],
+    ],
+]
+
+
+def prepare_data(
+    func: Callable[
+        [Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]],
+        Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]],
+    ]
+):
+    """Decorator for preprocessing the params data.
+
+    Wraps the fit, transform and fit_tranform functions.
+    Prepare X and Y to be passed to the modules.
+    Apply default featurizers to X and Y if featurize_data_types is True.
+    Prepare the dictionary with data to be passed to the func.
+    Serialize the result after func is called.
+
+    Args:
+        func: fit, fit_transform or transform method from :class:`PreprocessingPipeline`.
+
+    Returns:
+        The wrapped function.
+    """
+
+    def wrapper(
+        self: "PreprocessingPipeline",
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[pd.DataFrame, np.ndarray, None] = None,
+    ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
+        X, y = self._prepare_X_and_y(X, y)  # pylint: disable=W0212
+
+        if self.featurize_data_types:
+            self._apply_default_featurizers(  # pylint: disable=W0212
+                X, self.dataset_config.feature_columns
+            )
+
+            self._apply_default_featurizers(  # pylint: disable=W0212
+                y, self.dataset_config.target_columns
+            )
+
+        data = self._dataframe_to_dict(  # pylint: disable=W0212
+            pd.concat([X, y], axis=1)
         )
+        data = func(self, data)
+        return data
+
+    return wrapper
 
 
 class PreprocessingPipeline:
@@ -250,6 +314,9 @@ class PreprocessingPipeline:
         dataset_config: The object describing the columns and data_types of the
             dataset.
     """
+
+    featurizers: TransformFunction
+    transforms: TransformFunction
 
     def __init__(
         self, dataset_config: DatasetConfig, featurize_data_types: bool = True
@@ -275,11 +342,17 @@ class PreprocessingPipeline:
             for transform in dataset_config.transforms
         }
         self.featurizers = {
-            feat.name: self._prepare_transform(feat.create())
+            feat.name: (
+                self._prepare_transform(feat.create()),
+                feat.adapt_args_and_apply,
+            )
             for feat in dataset_config.featurizers
         }
         self.transforms = {
-            transform.name: self._prepare_transform(transform.create())
+            transform.name: (
+                self._prepare_transform(transform.create()),
+                transform.adapt_args_and_apply,
+            )
             for transform in dataset_config.transforms
         }
         self._fitted = False
@@ -386,41 +459,33 @@ class PreprocessingPipeline:
         Returns the featurizers and transforms in the order they are applied.
         """
         feats, transforms = map(list, dataset_topo_sort(self.dataset_config))
-        result = []
         for config in feats:
-            result.append((config, self.featurizers[config.name]))
+            yield (config, self.featurizers[config.name])
         for config in transforms:
-            result.append((config, self.transforms[config.name]))
-        return result
+            yield (config, self.transforms[config.name])
 
+    def _dataframe_to_dict(
+        self, df
+    ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
+        dictionary = {}
+        for column in df.columns:
+            dictionary[column] = df[column]
+        return dictionary
+
+    @prepare_data
     def fit(
-        self,
-        X: Union[pd.DataFrame, np.ndarray],
-        y: Union[pd.DataFrame, np.ndarray, None] = None,
+        self, data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]
     ):
         """
         Fits the featurizers and transforms to the data.
         """
-        X, y = self._prepare_X_and_y(X, y)
-        if self.featurize_data_types:
-            self._apply_default_featurizers(
-                X, self.dataset_config.feature_columns
-            )
-            self._apply_default_featurizers(
-                y, self.dataset_config.target_columns
-            )
-
-        data = pd.concat([X, y], axis=1)
-
-        for config, transformer in self.get_preprocess_steps():
+        for config, (
+            transformer,
+            adapt_args_and_apply,
+        ) in self.get_preprocess_steps():
             args = get_args(data, config)
-            if config.type not in [
-                "molfeat.trans.fp.FPVecFilteredTransformer",
-                "fleet.model_builder.featurizers.MoleculeFeaturizer",
-            ]:
-                args = map(lambda x: x.reshape(-1, 1), args)
             try:
-                transformer.fit(*args)
+                adapt_args_and_apply(transformer.fit, args)
             except Exception as exp:
                 raise fleet.exceptions.FitError(
                     f"Failed to fit {config}"
@@ -428,58 +493,9 @@ class PreprocessingPipeline:
 
         self._fitted = True
 
-    def fit_transform(
-        self,
-        X: Union[pd.DataFrame, np.ndarray],
-        y: Union[pd.DataFrame, np.ndarray, None] = None,
-    ):
-        """Fits and transforms X and y according to preprocessor config.
-
-        Args:
-            X: Data matrix.
-            y: Target column matrix.
-
-        Raises:
-            fleet.exceptions.FitError: When it fails to fit
-        """
-        X, y = self._prepare_X_and_y(X, y)
-
-        if self.featurize_data_types:
-            self._apply_default_featurizers(
-                X, self.dataset_config.feature_columns
-            )
-            self._apply_default_featurizers(
-                y, self.dataset_config.target_columns
-            )
-
-        data = pd.concat([X, y], axis=1)
-
-        for config, transformer in self.get_preprocess_steps():
-            args = get_args(data, config)
-            if config.type not in [
-                "molfeat.trans.fp.FPVecFilteredTransformer",
-                "fleet.model_builder.featurizers.MoleculeFeaturizer",
-            ]:
-                args = map(lambda x: x.reshape(-1, 1), args)
-            try:
-                result = transformer.fit_transform(*args)
-
-                if config.type == "sklearn.preprocessing.OneHotEncoder":
-                    result = result.toarray().tolist()
-
-                data[config.name] = result
-            except Exception as exp:
-                raise fleet.exceptions.FitError(
-                    f"Failed to fit {config}"
-                ) from exp
-        self._fitted = True
-
-        return data
-
+    @prepare_data
     def transform(
-        self,
-        X: Union[pd.DataFrame, np.ndarray],
-        y: Union[pd.DataFrame, np.ndarray, None] = None,
+        self, data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]
     ):
         """Transforms X and y according to preprocessor config.
 
@@ -491,35 +507,47 @@ class PreprocessingPipeline:
             fleet.exceptions.Transform: When the preprocessing steps have not
                 been fitted.
         """
-        X, y = self._prepare_X_and_y(X, y)
-
-        if self.featurize_data_types:
-            self._apply_default_featurizers(
-                X, self.dataset_config.feature_columns
-            )
-            self._apply_default_featurizers(
-                y, self.dataset_config.target_columns
-            )
-
-        data = pd.concat([X, y], axis=1)
-
-        for config, transformer in self.get_preprocess_steps():
+        for config, (
+            transformer,
+            adapt_args_and_apply,
+        ) in self.get_preprocess_steps():
             args = get_args(data, config)
-            if config.type not in [
-                "molfeat.trans.fp.FPVecFilteredTransformer",
-                "fleet.model_builder.featurizers.MoleculeFeaturizer",
-            ]:
-                args = map(lambda x: x.reshape(-1, 1), args)
             try:
-                transformed = transformer.transform(*args)
-                if config.type == "sklearn.preprocessing.OneHotEncoder":
-                    transformed = transformed.toarray().tolist()
+                transformed = adapt_args_and_apply(transformer.transform, args)
                 data[config.name] = transformed
             except Exception as exp:
                 raise fleet.exceptions.TransformError(
                     f"Failed to transform {config}"
                 ) from exp
 
+        self._fitted = True
+        return data
+
+    @prepare_data
+    def fit_transform(
+        self, data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]
+    ):
+        """Fits and transforms X and y according to preprocessor config.
+
+        Args:
+            X: Data matrix.
+            y: Target column matrix.
+
+        Raises:
+            fleet.exceptions.FitError: When it fails to fit
+        """
+        for config, (
+            transformer,
+            adapt_args_and_apply,
+        ) in self.get_preprocess_steps():
+            args = get_args(data, config)
+            try:
+                result = adapt_args_and_apply(transformer.fit_transform, args)
+                data[config.name] = result
+            except Exception as exp:
+                raise fleet.exceptions.FitError(
+                    f"Failed to fit {config}"
+                ) from exp
         self._fitted = True
 
         return data
@@ -592,9 +620,12 @@ class MarinerTorchDataset(Dataset):
         else:
             self.preprocessing_pipeline = preprocessing_pipeline
         step = self.data["step"]
-        self.data = self.preprocessing_pipeline.transform(
+        transformed = self.preprocessing_pipeline.transform(
             *self.preprocessing_pipeline.get_X_and_y(self.data)
         )
+        for field, result in transformed.items():
+            self.data[field] = result
+
         self.data["step"] = step
 
     def get_subset_idx(self, step=None) -> list[int]:
@@ -612,7 +643,6 @@ class MarinerTorchDataset(Dataset):
         """
         if step is None:
             return list(range(len(self.data)))
-        assert len(self.data["step"] == step) == len(self.data), "will break."
         return (self.data[self.data["step"] == step]).index.tolist()
 
     def __getitem__(self, idx: int):

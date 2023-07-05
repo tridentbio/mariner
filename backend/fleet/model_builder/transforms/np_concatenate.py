@@ -1,7 +1,8 @@
 import numpy as np
+from sklearn.base import TransformerMixin
 
 
-class NpConcatenate:
+class NpConcatenate(TransformerMixin):
     def fit(self, *_):
         """
         Necessary because this method is called in all transformers.
@@ -12,7 +13,6 @@ class NpConcatenate:
         """
         Performs the numpy concatenation in all inputs.
         """
-        return np.concatenate(*args, axis=-1)
+        return np.concatenate(args, axis=-1)
 
     fit_transform = transform  # Necessary because this method is called in all transformers.
-    __call__ = transform  # Necessary because a transform needs to be callable.

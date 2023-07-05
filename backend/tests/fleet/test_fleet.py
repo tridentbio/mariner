@@ -67,7 +67,6 @@ def assert_mlflow_data(
             f"{run_artifact_prefix}/artifacts/last/data/model.pth",
             f"{run_artifact_prefix}/artifacts/best/data/model.pth",
         ]
-
         object_keys = [
             obj for obj in objs["Contents"] if obj["Key"] in expected_artifacts
         ]
@@ -117,9 +116,9 @@ specs = [
         ("sklearn_sampl_knn_regressor.yaml", "SAMPL.csv"),
         ("sklearn_sampl_extra_trees_regressor.yaml", "SAMPL.csv"),
         ("sklearn_sampl_knearest_neighbor_regressor.yaml", "SAMPL.csv"),
-        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv"),  # F
-        ("sklearn_hiv_knearest_neighbor_classifier.yaml", "HIV.csv"),  # F
-        ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv"),  # F
+        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv"),
+        ("sklearn_hiv_knearest_neighbor_classifier.yaml", "HIV.csv"),
+        ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv"),
         ("small_regressor_schema.yaml", "zinc.csv"),
         ("multiclass_classification_model.yaml", "iris.csv"),
         ("multitarget_classification_model.yaml", "iris.csv"),

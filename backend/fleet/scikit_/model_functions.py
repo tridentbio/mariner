@@ -1,7 +1,7 @@
 """
 Functions to train and use sklearn models.
 """
-from typing import Union
+from typing import Dict, List, Literal, Union
 
 import mlflow
 import numpy as np
@@ -36,16 +36,20 @@ class SciKitFunctions(BaseModelFunctions):
     model: Union[
         None, sklearn.base.RegressorMixin, sklearn.base.ClassifierMixin
     ] = None
+    data: Dict[str, Union[pd.Series, np.ndarray, List[np.ndarray]]] = None
 
     def __init__(
         self,
         spec: SklearnModelSpec,
         dataset: pd.DataFrame,
         model: Union[None, sklearn.base.ClassifierMixin] = None,
-        preprocessing_pipeline: Union[None, data.PreprocessingPipeline] = None,
+        preprocessing_pipeline: Union[
+            None, "data.PreprocessingPipeline"
+        ] = None,
     ):
         self.spec = spec
         self.dataset = dataset
+        self.data = {}
         self.metrics = Metrics(model_type="regression", return_type="float")
         self.model = model
         assert len(spec.dataset.target_columns) == 1, (
@@ -59,16 +63,27 @@ class SciKitFunctions(BaseModelFunctions):
                 dataset_config=spec.dataset
             )
 
-    def _prepare_dataset(self, fit=False):
-        step = self.dataset["step"]
+    def _prepare_data(self, fit=False):
         X, y = self.preprocessing_pipeline.get_X_and_y(self.dataset)
         if fit:
-            self.dataset = self.preprocessing_pipeline.fit_transform(X, y)
+            self.data = self.preprocessing_pipeline.fit_transform(X, y)
             fleet.mlflow.save_pipeline(self.preprocessing_pipeline)
         else:
-            self.dataset = self.preprocessing_pipeline.transform(X, y)
-        self.dataset = self.dataset[self.preprocessing_pipeline.output_columns]
-        self.dataset["step"] = step
+            self.data = self.preprocessing_pipeline.transform(X, y)
+
+    def _filter_data(
+        self,
+        filtering: pd.Series,
+        data_: Union[pd.Series, np.ndarray, List[np.ndarray]],
+    ):
+        if isinstance(data_, (pd.DataFrame, pd.Series, np.ndarray)):
+            return data_[filtering]
+        elif isinstance(data_, list):
+            return [
+                data_[i]
+                for i, filter_value in enumerate(filtering)
+                if filter_value
+            ]
 
     def _prepare_X_and_y(
         self,
@@ -76,29 +91,60 @@ class SciKitFunctions(BaseModelFunctions):
         targets=True,
     ):
         model_config = self.spec.spec
-
+        assert (
+            self.data
+        ), "_prepare_data must be called before calling _prepare_X_and_y"
         assert self.dataset is not None, "dataset must not be None"
-        if filter_step is not None:
-            dataset = self.dataset[self.dataset["step"] == filter_step]
-        else:
-            dataset = self.dataset
+
+        filtering = None
+        if filter_step:
+            filtering = self.dataset["step"] == filter_step
+
         references = get_references_dict(model_config.model.fit_args)
-        args = {key: dataset.loc[:, ref] for key, ref in references.items()}
-        assert "X" in args, "sklearn models take an X argument"
-        X = np.stack(args["X"].to_numpy())
+        args = self.data[references["X"]], self.data[references["y"]]
         if targets:
-            assert "y" in args, "sklearn models take an Y argument"
-            y = args["y"].to_numpy()
-            return X, y
-        else:
-            return X
+            assert "y" in references, "y must be in references"
+
+        if isinstance(filtering, pd.Series):
+            args = map(lambda x: self._filter_data(filtering, x), args)
+
+        return args
+
+    def get_metrics(
+        self,
+        prediction: np.ndarray,
+        batch: Union[np.ndarray, pd.Series],
+        sufix="",
+        step: Literal["train", "val", "test"] = "train",
+    ) -> dict:
+        if isinstance(batch, pd.Series):
+            # converts to numpy and cast to float if it's long
+            batch = batch.to_numpy()
+
+        if batch.dtype == np.int64:
+            batch = batch.astype(np.float32)
+        if prediction.dtype == np.int64:
+            prediction = prediction.astype(np.float32)
+
+        if step == "train":
+            return self.metrics.get_training_metrics(
+                prediction, batch, sufix=sufix
+            )
+        elif step == "val":
+            return self.metrics.get_validation_metrics(
+                prediction, batch, sufix=sufix
+            )
+        elif step == "test":
+            return self.metrics.get_test_metrics(
+                prediction, batch, sufix=sufix
+            )
 
     def train(self):
         """
         Trains the sklearn model and logs the metrics on the training set to
         mlflow.
         """
-        self._prepare_dataset(fit=True)
+        self._prepare_data(fit=True)
         model_config = self.spec.spec
         self.model = model_config.model.create()
         if hasattr(model_config.model, "constructor_args"):
@@ -106,8 +152,11 @@ class SciKitFunctions(BaseModelFunctions):
         X, y = self._prepare_X_and_y(filter_step=TrainingStep.TRAIN.value)
         self.model.fit(X, y)
         y_pred = self.model.predict(X)
-        metrics_dict = self.metrics.get_training_metrics(
-            y_pred, y, sufix=self.spec.dataset.target_columns[0].name
+        metrics_dict = self.get_metrics(
+            y_pred,
+            y,
+            sufix=self.spec.dataset.target_columns[0].name,
+            step="train",
         )
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
@@ -116,12 +165,16 @@ class SciKitFunctions(BaseModelFunctions):
         """
         Get and log the metrics of the model from the validation set.
         """
+        self._prepare_data(fit=False)
         X, y = self._prepare_X_and_y(filter_step=TrainingStep.VAL.value)
         if self.model is None:
             raise ValueError("sklearn model not trained")
         y_pred = self.model.predict(X)  # type: ignore
-        metrics_dict = self.metrics.get_validation_metrics(
-            y_pred, y, sufix=self.spec.dataset.target_columns[0].name
+        metrics_dict = self.get_metrics(
+            y_pred,
+            y,
+            sufix=self.spec.dataset.target_columns[0].name,
+            step="val",
         )
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
@@ -130,13 +183,16 @@ class SciKitFunctions(BaseModelFunctions):
         """
         Get and log the metrics of the model from the test set.
         """
-        self._prepare_dataset(fit=False)
+        self._prepare_data(fit=False)
         X, y = self._prepare_X_and_y(filter_step=TrainingStep.TEST.value)
         if self.model is None:
             raise ValueError("sklearn model not trained")
         y_pred = self.model.predict(X)  # type: ignore
-        metrics_dict = self.metrics.get_test_metrics(
-            y_pred, y, sufix=self.spec.dataset.target_columns[0].name
+        metrics_dict = self.get_metrics(
+            y_pred,
+            y,
+            sufix=self.spec.dataset.target_columns[0].name,
+            step="test",
         )
         mlflow.log_metrics(metrics_dict)
         return metrics_dict

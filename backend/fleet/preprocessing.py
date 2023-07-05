@@ -51,9 +51,10 @@ from typing import Annotated, Dict, List, Literal, NewType, Union, get_args
 from humps import camel
 from pydantic import BaseModel, Field
 
-from fleet.model_builder.layers_schema import (
-    FeaturizersType as FeaturizersType_,
-)
+from fleet.model_builder.layers_schema import \
+    FeaturizersType as FeaturizersType_
+from fleet.model_builder.layers_schema import \
+    FleetmoleculefeaturizerLayerConfig as FleetmoleculefeaturizerLayerConfig_
 from fleet.model_builder.utils import get_class_from_path_string
 
 
@@ -93,6 +94,27 @@ class CreateFromType(BaseModel):
         return class_()
 
 
+class TransformConfigBase:
+    """
+    Base class for transforms.
+    """
+
+    def adapt_args_and_apply(self, method, args):
+        """
+        Method to perform fit, transform, fit_transform, inverse_transform, etc.
+        Can be customized to normalize data after and before the method runs.
+        """
+        return method(*args)
+
+
+class FleetmoleculefeaturizerLayerConfig(
+    FleetmoleculefeaturizerLayerConfig_, TransformConfigBase
+):
+    """
+    Includes the adapt_args_and_apply method to run the featurizer.
+    """
+
+
 # molfeat featurizers:
 class FPVecFilteredTransformerConstructorArgs(BaseModel):
     """
@@ -103,7 +125,9 @@ class FPVecFilteredTransformerConstructorArgs(BaseModel):
     length: Union[None, int] = None
 
 
-class FPVecFilteredTransformerConfig(CamelCaseModel, CreateFromType):
+class FPVecFilteredTransformerConfig(
+    CamelCaseModel, CreateFromType, TransformConfigBase
+):
     """
     Models the usage of FPVecFilteredTransformer.
     """
@@ -121,7 +145,7 @@ class FPVecFilteredTransformerConfig(CamelCaseModel, CreateFromType):
 # sklearn transforms
 
 
-class LabelEncoderConfig(CreateFromType, CamelCaseModel):
+class LabelEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
     """
     Models the constructor arguments of a sklearn.preprocessing.LabelEncoder
 
@@ -135,8 +159,12 @@ class LabelEncoderConfig(CreateFromType, CamelCaseModel):
     name: str
     forward_args: Union[Dict[str, str], list[str]]
 
+    def adapt_args_and_apply(self, method, args):
+        args = map(lambda x: x.reshape(-1, 1), args)
+        return super().adapt_args_and_apply(method, args)
 
-class OneHotEncoderConfig(CreateFromType, CamelCaseModel):
+
+class OneHotEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
     """
     Models the constructor arguments of a sklearn.preprocessing.OneHotEncoder
 
@@ -149,6 +177,11 @@ class OneHotEncoderConfig(CreateFromType, CamelCaseModel):
     ] = "sklearn.preprocessing.OneHotEncoder"
     name: str
     forward_args: Union[Dict[str, str], List[str]]
+
+    def adapt_args_and_apply(self, method, args):
+        args = map(lambda x: x.reshape(-1, 1), args)
+        result = super().adapt_args_and_apply(method, args)
+        return result.toarray()
 
 
 class StandardScalerConstructorArgs(BaseModel):
@@ -163,7 +196,9 @@ class StandardScalerConstructorArgs(BaseModel):
     with_std: bool = True
 
 
-class StandardScalerConfig(CreateFromType, CamelCaseModel):
+class StandardScalerConfig(
+    CreateFromType, CamelCaseModel, TransformConfigBase
+):
     """
     Models the usage of a StandardScaler.
     """
@@ -177,11 +212,15 @@ class StandardScalerConfig(CreateFromType, CamelCaseModel):
     name: str
     forward_args: Union[Dict[str, str], list[str]]
 
+    def adapt_args_and_apply(self, method, args):
+        args = map(lambda x: x.reshape(-1, 1), args)
+        return super().adapt_args_and_apply(method, args)
+
 
 # Custom Transformers
 
 
-class NpConcatenateConfig(CreateFromType, CamelCaseModel):
+class NpConcatenateConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
     """
     Models the usage of numpy concatenate.
     """
@@ -210,7 +249,7 @@ TransformerType = NewType(
 FeaturizersType = NewType(
     "FeaturizersType",
     Annotated[
-        Union[get_args(get_args(FeaturizersType_)[0]) + (FPVecFilteredTransformerConfig,)],  # type: ignore
+        Union[(FPVecFilteredTransformerConfig, FleetmoleculefeaturizerLayerConfig) + get_args(get_args(FeaturizersType_)[0])],  # type: ignore
         Field(discriminator="type"),
     ],
 )
