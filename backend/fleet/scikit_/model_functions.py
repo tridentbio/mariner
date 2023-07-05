@@ -87,7 +87,9 @@ class SciKitFunctions(BaseModelFunctions):
         targets=True,
     ):
         model_config = self.spec.spec
-        assert self.data, "data must exists"
+        assert (
+            self.data
+        ), "_prepare_data must be called before calling _prepare_X_and_y"
         assert self.dataset is not None, "dataset must not be None"
 
         filtering = None
@@ -120,11 +122,18 @@ class SciKitFunctions(BaseModelFunctions):
         if prediction.dtype == np.int64:
             prediction = prediction.astype(np.float32)
 
-        return {
-            "train": self.metrics.get_training_metrics,
-            "val": self.metrics.get_validation_metrics,
-            "test": self.metrics.get_test_metrics,
-        }[step](prediction, batch, sufix=sufix)
+        if step == "train":
+            return self.metrics.get_training_metrics(
+                prediction, batch, sufix=sufix
+            )
+        elif step == "val":
+            return self.metrics.get_validation_metrics(
+                prediction, batch, sufix=sufix
+            )
+        elif step == "test":
+            return self.metrics.get_test_metrics(
+                prediction, batch, sufix=sufix
+            )
 
     def train(self):
         """
