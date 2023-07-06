@@ -17,19 +17,27 @@ from lightning.pytorch.loggers.mlflow import MLFlowLogger
 from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
 from pydantic import BaseModel
+from torch_geometric.loader import DataLoader
 
 from fleet.base_schemas import (
     BaseModelFunctions,
     FleetModelSpec,
     TorchModelSpec,
 )
+from fleet.dataset_schemas import TorchDatasetConfig
 from fleet.mlflow import load_pipeline
+from fleet.model_builder.dataset import CustomDataset
 from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.model_functions import TorchFunctions
 from fleet.torch_.schemas import TorchTrainingConfig
 from fleet.train.custom_logger import MarinerLogger
-from mariner.core.aws import download_file_as_dataframe
+from fleet.utils.dataset import (
+    check_dataframe_conforms_dataset,
+    converts_file_to_dataframe,
+)
+from mariner.core.aws import download_s3
+from mariner.exceptions import InvalidDataframe
 
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
@@ -56,7 +64,8 @@ def _get_dataframe(
         ), "dataset_uri is invalid: should start with s3://"
         # Splits s3 uri into bucket and object key
         bucket, key = dataset_uri[5:].split("/", 1)
-        return download_file_as_dataframe(bucket, key)
+        file = download_s3(key, bucket)
+        return converts_file_to_dataframe(file)
     else:
         assert dataset is not None, "dataset_uri or dataset are required"
         return dataset
@@ -207,11 +216,22 @@ def run_test(
         pass
 
 
+def check_input(input_: pd.DataFrame, config: TorchDatasetConfig):
+    broken_checks = check_dataframe_conforms_dataset(input_, config)
+    if len(broken_checks) > 0:
+        raise InvalidDataframe(
+            f"dataframe failed {len(broken_checks)} checks",
+            reasons=[
+                f"{col_name}: {rule}" for col_name, rule in broken_checks
+            ],
+        )
+
+
 def predict(
     spec: FleetModelSpec,
     mlflow_model_name: str,
     mlflow_model_version: str,
-    input_: pd.DataFrame,
+    input_: Union[pd.DataFrame, dict],
 ):
     """Predicts with a model from any of the supported frameworks.
 
@@ -237,5 +257,20 @@ def predict(
             spec, None, model=model, preprocessing_pipeline=pipeline
         )
         return functions.predict(input_)
+
     elif isinstance(spec, TorchModelSpec):
-        ...
+        if not isinstance(input_, pd.DataFrame):
+            input_ = pd.DataFrame.from_dict(input_, dtype=float)
+
+        check_input(input_, spec.dataset)
+        dataset = CustomDataset(
+            data=input_,
+            model_config=spec,
+            dataset_config=spec.dataset,
+            target=False,
+        )
+        dataloader = DataLoader(dataset, batch_size=len(input_))
+        modelinput = next(iter(dataloader))
+
+        model = mlflow.pytorch.load_model(model_uri)
+        return model.predict_step(modelinput)

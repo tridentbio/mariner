@@ -3,22 +3,18 @@ Models service
 """
 import logging
 import traceback
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Tuple
+from typing import Any, Dict, List
 from uuid import uuid4
 
 import mlflow
 import mlflow.exceptions
-import pandas as pd
 import torch
 from sqlalchemy.orm.session import Session
-from torch_geometric.loader import DataLoader
 
-from fleet.data_types import SmileDataType
 from fleet.model_builder import options
-from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.schemas import ComponentOption
+from fleet.model_functions import predict
 from fleet.ray_actors.model_check_actor import ModelCheckActor
-from fleet.validation.functions import is_valid_smiles_series
 from mariner.core import mlflowapi
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
@@ -27,10 +23,7 @@ from mariner.exceptions import (
     ModelNotFound,
     ModelVersionNotFound,
 )
-from mariner.exceptions.model_exceptions import (
-    InvalidDataframe,
-    ModelVersionNotTrained,
-)
+from mariner.exceptions.model_exceptions import ModelVersionNotTrained
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     Model,
@@ -45,10 +38,6 @@ from mariner.schemas.model_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
-
-if TYPE_CHECKING:
-    from fleet.dataset_schemas import TorchDatasetConfig
-
 
 LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)
@@ -206,31 +195,6 @@ class PredictRequest(ApiBaseModel):
     model_input: Any
 
 
-InvalidReason = Literal["invalid-smiles-series"]
-
-
-def _check_dataframe_conforms_dataset(
-    df: pd.DataFrame, dataset_config: "TorchDatasetConfig"
-) -> List[Tuple[str, InvalidReason]]:
-    """Checks if dataframe conforms to data types specified in dataset_config
-
-    Args:
-        df: dataframe to be checked
-        dataset_config: model builder dataset configuration used in model building
-    """
-    column_configs = (
-        dataset_config.feature_columns + dataset_config.target_columns
-    )
-    result: List[Tuple[str, InvalidReason]] = []
-    for column_config in column_configs:
-        data_type = column_config.data_type
-        if isinstance(data_type, SmileDataType):
-            series = df[column_config.name]
-            if not is_valid_smiles_series(series):
-                result.append((column_config.name, "invalid-smiles-series"))
-    return result
-
-
 def get_model_prediction(
     db: Session, request: PredictRequest
 ) -> Dict[str, torch.Tensor]:
@@ -258,27 +222,13 @@ def get_model_prediction(
         raise ModelVersionNotFound()
     if not modelversion.mlflow_version:
         raise ModelVersionNotTrained()
-    df = pd.DataFrame.from_dict(request.model_input, dtype=float)
-    broken_checks = _check_dataframe_conforms_dataset(
-        df, modelversion.config.dataset
+
+    return predict(
+        mlflow_model_name=modelversion.mlflow_model_name,
+        mlflow_model_version=modelversion.mlflow_version,
+        spec=modelversion.config.spec,
+        input_=request.model_input,
     )
-    if len(broken_checks) > 0:
-        raise InvalidDataframe(
-            f"dataframe failed {len(broken_checks)} checks",
-            reasons=[
-                f"{col_name}: {rule}" for col_name, rule in broken_checks
-            ],
-        )
-    dataset = CustomDataset(
-        data=df,
-        model_config=modelversion.config.spec,
-        dataset_config=modelversion.config.dataset,
-        target=False,
-    )
-    dataloader = DataLoader(dataset, batch_size=len(df))
-    modelinput = next(iter(dataloader))
-    pyfuncmodel = mlflowapi.get_model_by_uri(modelversion.get_mlflow_uri())
-    return pyfuncmodel.predict_step(modelinput)
 
 
 def get_model(db: Session, user: UserEntity, model_id: int) -> Model:

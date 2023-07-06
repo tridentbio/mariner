@@ -8,18 +8,17 @@ import requests
 from torch_geometric.loader import DataLoader
 
 from fleet.model_builder.dataset import CustomDataset
+from fleet.model_functions import check_input
 from fleet.torch_.models import CustomModel
 from mariner.core import mlflowapi
 from mariner.core.config import get_app_settings
 from mariner.entities.deployment import DeploymentStatus
 from mariner.exceptions import (
     DeploymentNotRunning,
-    InvalidDataframe,
     ModelVersionNotFound,
     ModelVersionNotTrained,
     NotCreatorOwner,
 )
-from mariner.models import _check_dataframe_conforms_dataset
 from mariner.schemas.deployment_schemas import (
     Deployment,
     DeploymentManagerComunication,
@@ -140,17 +139,7 @@ class SingleModelDeploymentControl:
                 If the input data does not conform to the model's dataset.
         """
         df = pd.DataFrame.from_dict(x, dtype=float)
-        broken_checks = _check_dataframe_conforms_dataset(
-            df, self.deployment.model_version.config.dataset
-        )
-
-        if len(broken_checks) > 0:
-            raise InvalidDataframe(
-                f"dataframe failed {len(broken_checks)} checks",
-                reasons=[
-                    f"{col_name}: {rule}" for col_name, rule in broken_checks
-                ],
-            )
+        check_input(df, self.deployment.model_version.config.dataset)
         dataset = CustomDataset(
             data=df,
             model_config=self.deployment.model_version.config.spec,

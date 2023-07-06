@@ -188,7 +188,14 @@ def is_compressed(file: bytes) -> bool:
     """
     Gzip compressed files start with b'\x1f\x8b'
     """
-    return file[0:2] == b"\x1f\x8b"
+    gzip_mark = b"\x1f\x8b"
+
+    if "read" in dir(file):
+        file_prefix = file.read(2)
+        file.seek(0)
+        return file_prefix == gzip_mark
+
+    return file[0:2] == gzip_mark
 
 
 def upload_s3_compressed(
