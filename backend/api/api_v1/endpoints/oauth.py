@@ -72,7 +72,7 @@ def get_oauth_callback(request: Request):
     if state and not errors:
         try:
             token = authenticate(
-                provider_oauth={state: state, **rest},
+                provider_oauth={"state": state, **rest},
             )
             return RedirectResponse(
                 url=f"{get_app_settings('webapp').url}/login?tk={token.access_token}&tk_type={token.token_type}"  # noqa: E501
