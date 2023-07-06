@@ -62,6 +62,7 @@ class SciKitFunctions(BaseModelFunctions):
             self.preprocessing_pipeline = data.PreprocessingPipeline(
                 dataset_config=spec.dataset
             )
+        self.references = get_references_dict(spec.spec.model.fit_args)
 
     def _prepare_data(self, fit=False):
         X, y = self.preprocessing_pipeline.get_X_and_y(self.dataset)
@@ -90,7 +91,6 @@ class SciKitFunctions(BaseModelFunctions):
         filter_step: Union[None, int] = None,
         targets=True,
     ):
-        model_config = self.spec.spec
         assert (
             self.data
         ), "_prepare_data must be called before calling _prepare_X_and_y"
@@ -100,15 +100,29 @@ class SciKitFunctions(BaseModelFunctions):
         if filter_step:
             filtering = self.dataset["step"] == filter_step
 
-        references = get_references_dict(model_config.model.fit_args)
-        args = self.data[references["X"]], self.data[references["y"]]
-        if targets:
-            assert "y" in references, "y must be in references"
+        args = self.data[self.references["X"]], self.data[
+            self.references["y"]
+        ] if targets else (self.data[self.references["X"]],)
 
         if isinstance(filtering, pd.Series):
             args = map(lambda x: self._filter_data(filtering, x), args)
 
         return args
+
+    def _prepare_X(
+        self, input_: pd.DataFrame
+    ) -> Union[np.ndarray, List[np.ndarray], pd.Series]:
+        """
+        Prepares the input data to be used by the model.
+
+        Args:
+            input_ (pd.DataFrame): The input data.
+
+        Returns:
+            X: The input data prepared to be used by the model.
+        """
+        data_ = self.preprocessing_pipeline.transform(input_)
+        return data_[self.references["X"]]
 
     def get_metrics(
         self,
@@ -117,6 +131,9 @@ class SciKitFunctions(BaseModelFunctions):
         sufix="",
         step: Literal["train", "val", "test"] = "train",
     ) -> dict:
+        """
+        Returns the metrics for the given prediction and batch.
+        """
         if isinstance(batch, pd.Series):
             # converts to numpy and cast to float if it's long
             batch = batch.to_numpy()
@@ -197,16 +214,14 @@ class SciKitFunctions(BaseModelFunctions):
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
 
-    def predict(self, X: pd.DataFrame):
+    def predict(self, input_: pd.DataFrame):
         """
         Predicts the output of the model on the given dataset.
 
-        :todo: Fix this method, check backend/notebooks/ScikitModels.ipynb for more info.
-
         Args:
-            X (pd.DataFrame): The dataset to predict on.
+            input_ (pd.DataFrame): The dataset to predict on.
         """
-        X = self._prepare_X_and_y(targets=False)
+        X = self._prepare_X(input_)
         return self.model.predict(X)
 
     def log_models(

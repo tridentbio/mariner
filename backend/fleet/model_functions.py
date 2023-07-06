@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import List, Union
 
 import mlflow
+import pandas as pd
 from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.loggers.mlflow import MLFlowLogger
 from mlflow.entities.model_registry.model_version import ModelVersion
@@ -204,3 +205,37 @@ def run_test(
     elif isinstance(spec, TorchModelSpec):
         # TODO:
         pass
+
+
+def predict(
+    spec: FleetModelSpec,
+    mlflow_model_name: str,
+    mlflow_model_version: str,
+    input_: pd.DataFrame,
+):
+    """Predicts with a model from any of the supported frameworks.
+
+    Args:
+        spec: The model and dataset specifications.
+        mlflow_model_name: The name of the registered model in mlflow.
+        mlflow_model_version: The version of the model.
+        input_: The dataframe with the input data.
+    """
+    client = mlflow.MlflowClient()
+    model_uri = f"models:/{mlflow_model_name}/{mlflow_model_version}"
+    modelversion = client.get_model_version(
+        mlflow_model_name, mlflow_model_version
+    )
+    assert modelversion.run_id, (
+        f"missing run_id model with version {mlflow_model_version} at model",
+        f"{mlflow_model_name} at Mlflow",
+    )
+    if isinstance(spec, SklearnModelSpec):
+        model = mlflow.sklearn.load_model(model_uri)
+        pipeline = load_pipeline(modelversion.run_id)
+        functions = SciKitFunctions(
+            spec, None, model=model, preprocessing_pipeline=pipeline
+        )
+        return functions.predict(input_)
+    elif isinstance(spec, TorchModelSpec):
+        ...
