@@ -1,9 +1,11 @@
-"""
+"""            
 Configuration for running environment variables.
+
 
 Shared between API and mariner, on ray and backend instances
 Sometimes cause the application to fail when missing an ENV VAR
 """
+
 import functools
 from typing import Any, Dict, Literal, Optional, Union, overload
 
@@ -50,12 +52,24 @@ class WebappSettings(BaseModel):
 class AuthSettings(BaseModel):
     """
     Configures authentication parameters.
+
+    If allowed_emails is present, it is used to restrict access to the application.
+
+    Attributes:
+        client_id: The client id of the OAuth application.
+        client_secret: The client secret of the OAuth application.
+        authorization_url: The url to redirect the user to for authentication.
+        allowed_emails: A list of emails that are allowed to authenticate.
+        scope: The scope of the OAuth application.
+        logo_url: The url to get the provider's logo.
     """
 
     client_id: str
     client_secret: str
     authorization_url: str
+    allowed_emails: Union[None, list[str]] = None
     scope: Union[str, None] = None
+    logo_url: Union[str, None] = None
 
 
 class AuthSettingsDict(BaseModel):
@@ -140,7 +154,11 @@ class Package(BaseModel):
     authors: list[str]
 
 
-class QA_Test_Settings(BaseModel):
+class QA_Test_Settings(BaseModel):  # pylint: disable=C0103
+    """
+    Configures the QA test parameters.
+    """
+
     email_test_user: str = "test@domain.com"
 
 
@@ -196,7 +214,7 @@ def get_app_settings(name: Literal["webapp"]) -> WebappSettings:
 
 
 @overload
-def get_app_settings(name: Literal["auth"]) -> Dict[str, AuthSettings]:
+def get_app_settings(name: Literal["auth"]) -> AuthSettingsDict:
     ...
 
 

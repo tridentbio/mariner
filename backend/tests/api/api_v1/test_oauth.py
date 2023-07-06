@@ -2,28 +2,17 @@
 
 
 from fastapi.testclient import TestClient
-from mockito import when
-
-import mariner.oauth
 
 
 def test_get_oauth_providers(client: TestClient):
     """Tests the method to get configured oauth providers"""
     response = client.get("/api/v1/oauth-providers")
-
-    mocked_oauth_manager = mariner.oauth.OAuthManager(
-        auth_providers={
-            "github": {
-                "authorization_url": "",
-                "client_id": "",
-                "client_secret": "",
-                "scope": "",
-            }
-        }
-    )
-
-    with when(mariner.oauth.oauth_manager).mocked_oauth_manager.thenReturn(
-        mocked_oauth_manager
-    ):
-        assert response.status_code == 200
-        assert response.json() == mocked_oauth_manager.auth_providers
+    assert response.status_code == 200
+    for settings in response.json():
+        assert "client_id" not in settings
+        assert "client_secret" not in settings
+        assert "authorization_url" not in settings
+        assert "allowed_github_emails" not in settings
+        assert "scope" not in settings
+        assert "methods" not in settings
+        assert "id" in settings

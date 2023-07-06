@@ -1,14 +1,29 @@
 """
 Auxiliary functions related to OAuth 2.0 authentication.
 """
+import urllib.parse
 from collections.abc import Mapping
-from typing import Dict, Union
+from typing import Dict, List, Union
 
-from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
-from mariner.core.config import AuthSettings, get_app_settings
+from mariner.core.config import AuthSettings, AuthSettingsDict, get_app_settings
 from mariner.db.session import SessionLocal
 from mariner.stores.oauth_state_sql import oauth_state_store
+
+
+class Provider(BaseModel):
+    """
+    Provider's information needed by the frontend.
+
+    Attributes:
+        id: The provider's id. Should match one of the keys in the
+            auth_providers dict.
+        logo_url: The url to get the provider's logo.
+    """
+
+    id: str
+    logo_url: Union[None, str]
 
 
 class OAuthManager(Mapping):
@@ -20,9 +35,9 @@ class OAuthManager(Mapping):
 
     def __init__(self, auth_providers: Union[None, Dict[str, AuthSettings]] = None):
         if not auth_providers:
-            self.auth_providers = get_app_settings("auth")
+            self.auth_providers = get_app_settings("auth").__root__
         else:
-            self.auth_providers = auth_providers
+            self.auth_providers = AuthSettingsDict.parse_obj(auth_providers).__root__
 
     def __getitem__(self, key):
         return self.auth_providers[key]
@@ -48,10 +63,25 @@ class OAuthManager(Mapping):
             state = oauth_state_store.create_state(db, provider=key).state
             redirect_uri = f"{get_app_settings('server').host}/api/v1/oauth-callback"
             oauth_settings = self[key]
-            return (
-                f"{oauth_settings.authorization_url}?client_id={oauth_settings.client_id}"
-                f"&redirect_uri={redirect_uri}&scope={oauth_settings.scope}&state={state}"
+            querysting = urllib.parse.urlencode(
+                {
+                    "client_id": oauth_settings.client_id,
+                    "redirect_uri": redirect_uri,
+                    "scope": oauth_settings.scope,
+                    "state": state,
+                }
             )
+
+            return f"{oauth_settings.authorization_url}?{querysting}"
+
+    def get_providers(self) -> List[Provider]:
+        """
+        Returns a list of providers with their id and logo url.
+        """
+        providers = [
+            Provider(id=key, logo_url=self[key].logo_url) for key in self.auth_providers
+        ]
+        return providers
 
 
 oauth_manager = OAuthManager()

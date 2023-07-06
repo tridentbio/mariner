@@ -3,35 +3,29 @@ Handlers for api/v1/oauth* endpoints
 """
 import logging
 import traceback
-from typing import Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
-from api import deps
 from mariner import oauth
 from mariner.core.config import get_app_settings
-from mariner.exceptions import (
-    InvalidGithubCode,
-    InvalidOAuthState,
-    UserNotActive,
-)
+from mariner.exceptions import UserNotActive
 from mariner.exceptions.user_exceptions import UserEmailNotAllowed
-from mariner.users import GithubAuth, authenticate
+from mariner.users import authenticate
 
 router = APIRouter()
 LOG = logging.getLogger(__name__)
 
 
-@router.get("/oauth-providers")
+@router.get("/oauth-providers", response_model=List[oauth.Provider])
 def get_oauth_providers():
     """Endpoint to get list of oauth providers."""
-    return oauth.oauth_manager
+    return oauth.oauth_manager.get_providers()
 
 
 @router.get("/oauth")
-def get_oauth_provider_redirect(provider: str, db: Session = Depends(deps.get_db)):
+def get_oauth_provider_redirect(provider: str):
     """Endpoint to redirect user to provider authentication site.
 
     Args:
@@ -48,57 +42,61 @@ def get_oauth_provider_redirect(provider: str, db: Session = Depends(deps.get_db
 
 
 @router.get("/oauth-callback")
-def receive_github_code(
-    code: Optional[str] = None,
-    state: Optional[str] = None,
-    error: Optional[str] = None,
-    error_uri: Optional[str] = None,
-    error_description: Optional[str] = None,
-):
-    """Function to handle callback from github with
+def get_oauth_callback(request: Request):
+    """Function to handle callback from oauth provider.
 
-    Args:
-        code: github oauth code
-        state: state produced by application previously
-        error: error from oauth setup
-        error_uri: link to more detailed description of the error.
-        error_description: message describing the error
+    The function will authenticate the user and redirect to the webapp with
+    the token as a query parameter. Handles the request as an error if there
+    is some query parameter that starts with "error".
 
     Raises:
-        HTTPException: When the github cod is invalid.
+        HTTPException: When the provider code is invalid.
     """
-    # TODO, adapt this function to multiple oauth providers. Currently it is only implemented for github.
-    if code and state:
+    if not request.query_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No query parameters",
+        )
+    state = request.query_params.get("state")
+    errors = {
+        query_key: query_value
+        for query_key, query_value in request.query_params.items()
+        if query_key.startswith("error")
+    }
+    rest = {
+        query_key: query_value
+        for query_key, query_value in request.query_params.items()
+        if query_key != "state"
+    }
+
+    if state and not errors:
         try:
             token = authenticate(
-                github_oauth=GithubAuth.construct(code=code, state=state)
+                provider_oauth={state: state, **rest},
             )
             return RedirectResponse(
                 url=f"{get_app_settings('webapp').url}/login?tk={token.access_token}&tk_type={token.token_type}"  # noqa: E501
             )
         except UserEmailNotAllowed:
             return RedirectResponse(
-                url=f"{get_app_settings('webapp').url}/login?error=Email not cleared for github oauth"  # noqa: E501
+                url=f"{get_app_settings('webapp').url}/login?error=Email not cleared for provider oauth"  # noqa: E501
             )
         except UserNotActive:
             return RedirectResponse(
                 url=f"{get_app_settings('webapp').url}/login?error=Inactive user"
             )
-        except (InvalidGithubCode, InvalidOAuthState):
-            return RedirectResponse(
-                url=f"{get_app_settings('webapp').url}/login?error=Invalid auth attempt"
-            )
-        except Exception:
+        except Exception:  # pylint: disable=W0718
             lines = traceback.format_exc()
             LOG.error("Unexpected auth error: %s", lines)
             return RedirectResponse(
                 url=f"{get_app_settings('webapp').url}/login?error=Internal Error"
             )
-    elif error or error_description:
-        LOG.error("Github auth error: %s: %s", error, error_description)
+    elif errors:
+        LOG.error("OAuth provider error: %r", errors)
         return RedirectResponse(
             url=f"{get_app_settings('webapp').url}/login?error=Internal Error"
         )
-
     else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid auth attempt"
+        )
