@@ -18,7 +18,7 @@ from fleet.dataset_schemas import (
 )
 from fleet.model_builder import optimizers
 from fleet.model_builder.splitters import apply_split_indexes
-from fleet.model_functions import fit, run_test
+from fleet.model_functions import fit, predict, run_test
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
 from mariner.core.aws import Bucket, list_s3_objects
@@ -30,6 +30,7 @@ class TestCase:
     model_spec: FleetModelSpec
     train_spec: Any
     dataset_file: Union[Path, str]
+    predict_sample: dict = None
     should_fail: Union[None, Any] = None
     datamodule_args = {"split_type": "random", "split_target": "60-20-20"}
 
@@ -102,6 +103,18 @@ def assert_mlflow_data(
         )
 
 
+predict_samples = {
+    "hiv": {"smiles": ["CCCC"], "activity": ["CI"]},
+    "hiv2": {"smiles": ["CCCC", "CCCCCC"], "activity": ["CM", "CI"]},
+    "sampl": {
+        "smiles": ["CCCC"],
+    },
+    "sampl2": {
+        "smiles": ["CCCC", "CCCCCC"],
+    },
+}
+
+
 models_root = Path("tests") / "data" / "yaml"
 datasets_root = Path("tests") / "data" / "csv"
 specs = [
@@ -110,26 +123,44 @@ specs = [
         if not model_file.startswith("sklearn")
         else SklearnModelSpec.from_yaml(models_root / model_file),
         datasets_root / dataset_file,
+        predict_samples.get(predict_sample_key),
     )
-    for model_file, dataset_file in [
-        ("sklearn_sampl_random_forest_regressor.yaml", "SAMPL.csv"),
-        ("sklearn_sampl_knn_regressor.yaml", "SAMPL.csv"),
-        ("sklearn_sampl_extra_trees_regressor.yaml", "SAMPL.csv"),
-        ("sklearn_sampl_knearest_neighbor_regressor.yaml", "SAMPL.csv"),
-        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv"),
-        ("sklearn_hiv_knearest_neighbor_classifier.yaml", "HIV.csv"),
-        ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv"),
-        ("small_regressor_schema.yaml", "zinc.csv"),
-        ("multiclass_classification_model.yaml", "iris.csv"),
-        ("multitarget_classification_model.yaml", "iris.csv"),
-        ("binary_classification_model.yaml", "iris.csv"),
-        ("dna_example.yml", "sarkisyan_full_seq_data.csv"),
+    for model_file, dataset_file, predict_sample_key in [
+        (
+            "sklearn_sampl_random_forest_regressor.yaml",
+            "SAMPL.csv",
+            "sampl",
+        ),
+        ("sklearn_sampl_knn_regressor.yaml", "SAMPL.csv", "sampl"),
+        (
+            "sklearn_sampl_extra_trees_regressor.yaml",
+            "SAMPL.csv",
+            "sampl2",
+        ),
+        (
+            "sklearn_sampl_knearest_neighbor_regressor.yaml",
+            "SAMPL.csv",
+            "sampl2",
+        ),
+        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv", "hiv"),
+        (
+            "sklearn_hiv_knearest_neighbor_classifier.yaml",
+            "HIV.csv",
+            "hiv",
+        ),
+        ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv", "hiv2"),
+        ("small_regressor_schema.yaml", "zinc.csv", ""),
+        ("multiclass_classification_model.yaml", "iris.csv", ""),
+        ("multitarget_classification_model.yaml", "iris.csv", ""),
+        ("binary_classification_model.yaml", "iris.csv", ""),
+        ("dna_example.yml", "sarkisyan_full_seq_data.csv", ""),
     ]
 ]
 test_cases = [
     TestCase(
         model_spec=spec,
         dataset_file=dataset_file,
+        predict_sample=predict_sample,
         train_spec=TorchTrainingConfig(
             epochs=4,
             batch_size=32,
@@ -145,7 +176,7 @@ test_cases = [
         else None,
         should_fail=False,
     )
-    for spec, dataset_file in specs
+    for spec, dataset_file, predict_sample in specs
 ]
 
 
@@ -183,6 +214,20 @@ def test_train(case: TestCase):
                 mlflow_model_version=result.mlflow_model_version.version,
                 dataset=dataset,
             )
+
+            if case.predict_sample:
+                result = predict(
+                    spec=case.model_spec,
+                    mlflow_model_name=mlflow_model_name,
+                    mlflow_model_version=result.mlflow_model_version.version,
+                    input_=case.predict_sample,
+                )
+                assert (
+                    len(result)
+                    == len(next(iter(case.predict_sample.values()))),
+                    "prediction result needs to have the same length as the input",
+                )
+
         else:
             with pytest.raises(case.should_fail):
                 result = fit(
