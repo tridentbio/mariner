@@ -7,18 +7,11 @@ from datetime import datetime
 from typing import BinaryIO, Tuple, Union
 
 import boto3
-import pandas as pd
 from botocore.client import BaseClient
 from fastapi.datastructures import UploadFile
 
 from mariner.core.config import get_app_settings
-from mariner.utils import (
-    compress_file,
-    get_size,
-    hash_md5,
-    is_compressed,
-    read_compressed_csv,
-)
+from mariner.utils import compress_file, get_size, hash_md5
 
 
 class Bucket(enum.Enum):
@@ -137,9 +130,11 @@ def upload_s3_file(
         s3.upload_fileobj(file.file, bucket.value, key)
 
 
-def download_file_as_dataframe(
-    bucket: Union[Bucket, str], key: str
-) -> pd.DataFrame:
+from fleet.utils.dataset import converts_file_to_dataframe
+
+
+# TODO: used in mariner/entities/dataset.py and mariner/schemas/dataset_schemas.py
+def download_file_as_dataframe(bucket: Union[Bucket, str], key: str):
     """Downloads s3 file and attempts to parse it as pd.Dataframe
 
     Will raise exceptions if object is not in csv format.
@@ -156,12 +151,7 @@ def download_file_as_dataframe(
         Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
     )
     s3body = s3_res["Body"].read()
-    data = io.BytesIO(s3body)
-    df = (
-        pd.read_csv(data)
-        if not is_compressed(data)
-        else read_compressed_csv(s3body)
-    )
+    df = converts_file_to_dataframe(io.BytesIO(s3body))
     return df
 
 
@@ -192,6 +182,13 @@ def download_s3(key: str, bucket: str) -> io.BytesIO:
     s3_res = s3.get_object(Bucket=bucket, Key=key)
     s3body = s3_res["Body"].read()
     return io.BytesIO(s3body)
+
+
+def is_compressed(file: bytes) -> bool:
+    """
+    Gzip compressed files start with b'\x1f\x8b'
+    """
+    return file[0:2] == b"\x1f\x8b"
 
 
 def upload_s3_compressed(
