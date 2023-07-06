@@ -42,6 +42,23 @@ def openapijson():
     return get_openapi(title=app.title, version=app.version, routes=app.routes)
 
 
+@app.get("/metadata", include_in_schema=False)
+def metadata():
+    """
+    Returns the API metadata: version, tenant, etc.
+    """
+    package_settings = get_app_settings("package")
+    tenant_settings = get_app_settings("tenant")
+    return {
+        "name": package_settings.name,
+        "version": package_settings.version,
+        "description": package_settings.description,
+        "tenant": {
+            "name": tenant_settings.name,
+        },
+    }
+
+
 # Set all CORS enabled origins
 if get_app_settings("server").cors:
     app.add_middleware(

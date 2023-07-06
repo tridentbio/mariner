@@ -24,6 +24,7 @@ class Provider(BaseModel):
 
     id: str
     logo_url: Union[None, str]
+    name: str
 
 
 class OAuthManager(Mapping):
@@ -76,11 +77,14 @@ class OAuthManager(Mapping):
 
     def get_providers(self) -> List[Provider]:
         """
-        Returns a list of providers with their id and logo url.
+        Returns a list of provider's non-sensitive information.
         """
-        providers = [
-            Provider(id=key, logo_url=self[key].logo_url) for key in self.auth_providers
-        ]
+        providers = []
+        for provider_id, provider in self.auth_providers.items():
+            provider = self[provider_id]
+            providers.append(
+                Provider(id=provider_id, logo_url=provider.logo_url, name=provider.name)
+            )
         return providers
 
 

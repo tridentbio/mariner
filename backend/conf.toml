@@ -10,10 +10,11 @@ url = "http://localhost:3000"
 [auth]
 
 [auth.genentech]
+client_id = "Mariner"
+client_secret = "eszWca6gKe0skhVBROronEKDLPC4bhrYkwofxS5PBgtJTnt8SG3ieFUyjfRPZgEv"
 authorization_url = "https://wamqa.roche.com/as/authorization.oauth2"
 methods = ["code-grant"]
-client_id = "--"
-client_secret = "--"
+name = "Genentech"
 
 [auth.github]
 client_id = "--"
@@ -28,7 +29,7 @@ allowed_github_emails = [
 scope = "read:user,user:email"
 methods = ["code-grant"]
 logo_url = "..." # A url with logo for the login page
-
+name = "GitHub"
 
 [tenant]
 name = "Client Dev"

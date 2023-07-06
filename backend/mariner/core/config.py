@@ -70,6 +70,7 @@ class AuthSettings(BaseModel):
     allowed_emails: Union[None, list[str]] = None
     scope: Union[str, None] = None
     logo_url: Union[str, None] = None
+    name: str
 
 
 class AuthSettingsDict(BaseModel):
@@ -235,6 +236,11 @@ def get_app_settings(name: Literal["package"]) -> Package:
 
 @overload
 def get_app_settings(name: Literal["test"]) -> QA_Test_Settings:
+    ...
+
+
+@overload
+def get_app_settings(name: Literal["tenant"]) -> TenantSettings:
     ...
 
 
