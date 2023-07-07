@@ -20,6 +20,7 @@ from fleet.model_builder import layers_schema as layers
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.torch_.models import CustomModel
 from fleet.utils.data import MarinerTorchDataset
+from fleet.utils.dataset import converts_file_to_dataframe
 from mariner.core.config import get_app_settings
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
@@ -441,7 +442,7 @@ def test_post_check_config_bad_model(
     regressor.dataset.name = some_dataset.name
     dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
     torch_dataset = MarinerTorchDataset(
-        dataset.get_dataframe(),
+        converts_file_to_dataframe(dataset.get_dataset_file()),
         dataset_config=regressor.dataset,
     )
     dataloader = DataLoader(torch_dataset, batch_size=1)

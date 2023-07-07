@@ -9,6 +9,7 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 import pandas as pd
 import ray
 
+from fleet.dataset_schemas import StatsType
 from fleet.model_builder.splitters import apply_split_indexes
 from fleet.stats import get_metadata, get_stats
 from fleet.utils.dataset import converts_file_to_dataframe
@@ -29,7 +30,6 @@ from mariner.schemas.dataset_schemas import (
     ProteinDataType,
     RNADataType,
     SmileDataType,
-    StatsType,
     StringDataType,
 )
 

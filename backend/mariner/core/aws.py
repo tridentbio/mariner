@@ -130,31 +130,6 @@ def upload_s3_file(
         s3.upload_fileobj(file.file, bucket.value, key)
 
 
-from fleet.utils.dataset import converts_file_to_dataframe
-
-
-# TODO: used in mariner/entities/dataset.py and mariner/schemas/dataset_schemas.py
-def download_file_as_dataframe(bucket: Union[Bucket, str], key: str):
-    """Downloads s3 file and attempts to parse it as pd.Dataframe
-
-    Will raise exceptions if object is not in csv format.
-
-    Args:
-        bucket: Bucket enum value where the object is located.
-        key: The key identifying the object.
-
-    Returns:
-        The pandas Dataframe stored in s3.
-    """
-    s3 = create_s3_client()
-    s3_res = s3.get_object(
-        Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
-    )
-    s3body = s3_res["Body"].read()
-    df = converts_file_to_dataframe(io.BytesIO(s3body))
-    return df
-
-
 def delete_s3_file(key: str, bucket: Bucket):
     """Attempts to delete a file from s3.
 
