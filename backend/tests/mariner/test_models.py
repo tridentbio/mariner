@@ -1,5 +1,4 @@
 import pytest
-import torch
 from sqlalchemy.orm.session import Session
 
 from fleet.utils.dataset import converts_file_to_dataframe
@@ -29,7 +28,7 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
         ),
     )
     for prediction in result.values():
-        assert isinstance(prediction, torch.Tensor)
+        assert isinstance(prediction, list)
 
 
 @pytest.mark.integration

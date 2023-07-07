@@ -259,6 +259,7 @@ def predict(
         return functions.predict(input_)
 
     elif isinstance(spec, TorchModelSpec):
+        # TODO: Pass this code to TorchFunctions
         if not isinstance(input_, pd.DataFrame):
             input_ = pd.DataFrame.from_dict(input_, dtype=float)
 
@@ -273,4 +274,9 @@ def predict(
         modelinput = next(iter(dataloader))
 
         model = mlflow.pytorch.load_model(model_uri)
-        return model.predict_step(modelinput)
+        result: dict = model.predict_step(modelinput)
+        result = {
+            key: value.detach().numpy().tolist()
+            for key, value in result.items()
+        }
+        return result

@@ -8,7 +8,6 @@ from uuid import uuid4
 
 import mlflow
 import mlflow.exceptions
-import torch
 from sqlalchemy.orm.session import Session
 
 from fleet.model_builder import options
@@ -197,7 +196,7 @@ class PredictRequest(ApiBaseModel):
 
 def get_model_prediction(
     db: Session, request: PredictRequest
-) -> Dict[str, torch.Tensor]:
+) -> Dict[str, List[Any]]:
     """(Slowly) Loads a model version and apply it to a sample input
 
     .. warning::
@@ -208,7 +207,7 @@ def get_model_prediction(
         request: prediction request data
 
     Returns:
-        torch.Tensor: model output
+        model output
 
     Raises:
         ModelVersionNotFound: If the version from request.model_version_id
