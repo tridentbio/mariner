@@ -122,7 +122,12 @@ class SingleModelDeploymentControl:
         if not self.is_running:
             raise DeploymentNotRunning("Deployment is not running")
         input_ = self.load_input(x)
-        return self.model.predict_step(input_)
+        result = self.model.predict_step(input_)
+        result = {
+            key: value.detach().numpy().tolist()
+            for key, value in result.items()
+        }
+        return result
 
     def load_input(self, x):
         """Loads input data into a format compatible with the model

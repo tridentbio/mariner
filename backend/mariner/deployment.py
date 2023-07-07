@@ -5,7 +5,6 @@ import asyncio
 from typing import Any, Dict, List, Tuple
 
 from sqlalchemy.orm.session import Session
-from torch import Tensor
 
 from api.websocket import WebSocketMessage, get_websockets_manager
 from fleet.ray_actors.deployments_manager import get_deployments_manager
@@ -354,7 +353,7 @@ async def make_prediction(
     if prediction_count >= deployment.prediction_rate_limit_value:
         raise PredictionLimitReached()
 
-    prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
+    prediction: Dict[str, list] = await manager.make_prediction.remote(
         deployment_id, data
     )
 
@@ -367,7 +366,7 @@ async def make_prediction(
     )
 
     for column, result in prediction.items():
-        assert isinstance(result, Tensor), "Result must be a Tensor"
+        assert isinstance(result, list), "Result must be a list"
         serialized_result = result.tolist()
         prediction[column] = (
             serialized_result
@@ -403,7 +402,7 @@ async def make_prediction_public(
     if prediction_count >= deployment.prediction_rate_limit_value:
         raise PredictionLimitReached()
 
-    prediction: Dict[str, Tensor] = await manager.make_prediction.remote(
+    prediction: Dict[str, list] = await manager.make_prediction.remote(
         deployment_id, data
     )
 
@@ -413,7 +412,7 @@ async def make_prediction_public(
     )
 
     for column, result in prediction.items():
-        assert isinstance(result, Tensor), "Result must be a Tensor"
+        assert isinstance(result, list), "Result must be a list"
         serialized_result = result.tolist()
         prediction[column] = (
             serialized_result
