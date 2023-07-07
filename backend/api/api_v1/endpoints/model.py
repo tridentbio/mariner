@@ -183,14 +183,7 @@ def post_model_predict(
         )
 
     for column, result in prediction.items():
-        if not isinstance(result, torch.Tensor):
-            raise TypeError("Unexpected model output")
-        serialized_result = result.tolist()
-        prediction[column] = (
-            serialized_result
-            if isinstance(serialized_result, list)
-            else [serialized_result]
-        )
+        prediction[column] = result if isinstance(result, list) else [result]
 
     return prediction
 

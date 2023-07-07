@@ -366,13 +366,7 @@ async def make_prediction(
     )
 
     for column, result in prediction.items():
-        assert isinstance(result, list), "Result must be a list"
-        serialized_result = result.tolist()
-        prediction[column] = (
-            serialized_result
-            if isinstance(serialized_result, list)
-            else [serialized_result]
-        )
+        prediction[column] = result if isinstance(result, list) else [result]
 
     return prediction
 
