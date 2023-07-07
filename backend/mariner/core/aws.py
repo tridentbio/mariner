@@ -143,7 +143,7 @@ def delete_s3_file(key: str, bucket: Bucket):
     s3.delete_object(Bucket=bucket.value, Key=key)
 
 
-def download_s3(key: str, bucket: str) -> io.BytesIO:
+def download_s3(key: str, bucket: Union[str, Bucket]) -> io.BytesIO:
     """Download a file from S3
 
     Args:
@@ -154,7 +154,9 @@ def download_s3(key: str, bucket: str) -> io.BytesIO:
         io.BytesIO: downloaded file
     """
     s3 = create_s3_client()
-    s3_res = s3.get_object(Bucket=bucket, Key=key)
+    s3_res = s3.get_object(
+        Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
+    )
     s3body = s3_res["Body"].read()
     return io.BytesIO(s3body)
 

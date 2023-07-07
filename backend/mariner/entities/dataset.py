@@ -59,4 +59,4 @@ class Dataset(Base):
         Gets dataset_file stored in this dataset data_url attribute at
         datasets bucket.
         """
-        return download_s3(Bucket.Datasets, self.data_url)
+        return download_s3(self.data_url, Bucket.Datasets)

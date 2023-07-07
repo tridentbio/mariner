@@ -290,7 +290,7 @@ class Dataset(DatasetBase):
         datasets bucket.
         """
         assert self.data_url
-        return download_s3(Bucket.Datasets, self.data_url)
+        return download_s3(self.data_url, Bucket.Datasets)
 
 
 class DatasetUpdate(ApiBaseModel):
