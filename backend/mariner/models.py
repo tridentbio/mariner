@@ -226,7 +226,7 @@ def get_model_prediction(
     return predict(
         mlflow_model_name=modelversion.mlflow_model_name,
         mlflow_model_version=modelversion.mlflow_version,
-        spec=modelversion.config.spec,
+        spec=modelversion.config,
         input_=request.model_input,
     )
 
