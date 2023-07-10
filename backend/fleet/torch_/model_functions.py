@@ -208,11 +208,15 @@ class TorchFunctions(BaseModelFunctions):
         modelinput = next(iter(dataloader))
         return modelinput
 
-    def predict(self, input_: DataFrame) -> Dict[str, List[Any]]:
+    def predict(self, input_: Union[DataFrame, dict]) -> Dict[str, List[Any]]:
         """
         Makes predictions on the current loaded model.
         """
         assert self.model is not None, "Model is not loaded."
+
+        if not isinstance(input_, DataFrame):
+            input_ = DataFrame.from_dict(input_, dtype=float)
+
         X = self.prepare_X(input_)
         result: dict = self.model.predict_step(X)
         result = {

@@ -1,15 +1,13 @@
 from threading import Thread
 from time import sleep, time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-import pandas as pd
 import ray
 import requests
-from torch_geometric.loader import DataLoader
 
-from fleet.model_builder.dataset import CustomDataset
-from fleet.model_functions import check_input
-from fleet.torch_.models import CustomModel
+from fleet.mlflow import load_pipeline
+from fleet.scikit_.model_functions import SciKitFunctions
+from fleet.torch_.model_functions import TorchFunctions
 from mariner.core import mlflowapi
 from mariner.core.config import get_app_settings
 from mariner.entities.deployment import DeploymentStatus
@@ -48,7 +46,8 @@ class SingleModelDeploymentControl:
 
     deployment: Deployment
     is_running: bool
-    model: Optional[CustomModel]
+    functions: Union[SciKitFunctions, TorchFunctions, None] = None
+    mlflow_modelversion = None
     idle_time: Optional[int] = None
 
     def __init__(self, deployment: Deployment, quiet: bool = False):
@@ -66,8 +65,13 @@ class SingleModelDeploymentControl:
         if not quiet:
             self.update_status(DeploymentStatus.IDLE)
 
+        self.mlflow_modelversion = mlflowapi.get_model_version(
+            model_name=deployment.model_version.mlflow_model_name,
+            version=deployment.model_version.mlflow_version,
+        )
+
         self.is_running = False
-        self.model = None
+        self.functions = None
 
     @property
     def idle_long(self) -> bool:
@@ -82,6 +86,29 @@ class SingleModelDeploymentControl:
             > get_app_settings().DEPLOYMENT_IDLE_TIME
         )
 
+    def load_functions(self):
+        """Loads the functions of the model based on its framework."""
+        if self.deployment.model_version.config.framework == "torch":
+            model = mlflowapi.get_model_by_uri(
+                self.deployment.model_version.get_mlflow_uri()
+            )
+            self.functions = TorchFunctions(
+                spec=self.deployment.model_version.config, model=model
+            )
+
+        elif self.deployment.model_version.config.framework == "scikit":
+            model = mlflowapi.get_model_by_uri(
+                self.deployment.model_version.get_mlflow_uri()
+            )
+            pipeline = load_pipeline(self.mlflow_modelversion.run_id)
+            self.functions = SciKitFunctions(
+                spec=self.deployment.model_version.config,
+                model=model,
+                preprocessing_pipeline=pipeline,
+            )
+
+        self.is_running = True
+
     def start(self) -> Deployment:
         """Starts the SingleModelDeploymentControl, which includes loading the
         model and updating its status to ACTIVE.
@@ -90,10 +117,7 @@ class SingleModelDeploymentControl:
             The updated deployment after starting the instance.
         """
         self.update_status(DeploymentStatus.STARTING)
-        self.model = mlflowapi.get_model_by_uri(
-            self.deployment.model_version.get_mlflow_uri()
-        )
-        self.is_running = True
+        self.load_functions()
         self.update_status(DeploymentStatus.ACTIVE)
         return self.deployment
 
@@ -105,7 +129,7 @@ class SingleModelDeploymentControl:
         Returns:
             The updated deployment after stopping the instance.
         """
-        self.model = None
+        self.functions = None
         self.is_running = False
         self.update_status(DeploymentStatus.IDLE)
         return self.deployment
@@ -121,38 +145,8 @@ class SingleModelDeploymentControl:
         """
         if not self.is_running:
             raise DeploymentNotRunning("Deployment is not running")
-        input_ = self.load_input(x)
-        result = self.model.predict_step(input_)
-        result = {
-            key: value.detach().numpy().tolist()
-            for key, value in result.items()
-        }
-        return result
 
-    def load_input(self, x):
-        """Loads input data into a format compatible with the model
-        for prediction.
-
-        Args:
-            x (Any): Input data to be converted.
-
-        Returns:
-            A DataLoader object containing input data in the required format.
-
-        Raises:
-            InvalidDataframe:
-                If the input data does not conform to the model's dataset.
-        """
-        df = pd.DataFrame.from_dict(x, dtype=float)
-        check_input(df, self.deployment.model_version.config.dataset)
-        dataset = CustomDataset(
-            data=df,
-            model_config=self.deployment.model_version.config.spec,
-            dataset_config=self.deployment.model_version.config.dataset,
-            target=False,
-        )
-        dataloader = DataLoader(dataset, batch_size=len(df))
-        return next(iter(dataloader))
+        return self.functions.predict(x)
 
     def update_status(self, status: DeploymentStatus):
         """Updates the deployment status and stores the updated
@@ -196,10 +190,7 @@ class SingleModelDeploymentControl:
             deployment (Deployment): The deployment to be managed.
         """
         instance = cls(deployment, quiet=True)
-        instance.model = mlflowapi.get_model_by_uri(
-            instance.deployment.model_version.get_mlflow_uri()
-        )
-        instance.is_running = True
+        instance.load_functions()
         return instance
 
 
