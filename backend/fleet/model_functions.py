@@ -17,7 +17,6 @@ from lightning.pytorch.loggers.mlflow import MLFlowLogger
 from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
 from pydantic import BaseModel
-from torch_geometric.loader import DataLoader
 
 from fleet.base_schemas import (
     BaseModelFunctions,
@@ -26,7 +25,6 @@ from fleet.base_schemas import (
 )
 from fleet.dataset_schemas import TorchDatasetConfig
 from fleet.mlflow import load_pipeline
-from fleet.model_builder.dataset import CustomDataset
 from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.model_functions import TorchFunctions
@@ -259,24 +257,10 @@ def predict(
         return functions.predict(input_)
 
     elif isinstance(spec, TorchModelSpec):
-        # TODO: Pass this code to TorchFunctions
         if not isinstance(input_, pd.DataFrame):
             input_ = pd.DataFrame.from_dict(input_, dtype=float)
-
         check_input(input_, spec.dataset)
-        dataset = CustomDataset(
-            data=input_,
-            model_config=spec,
-            dataset_config=spec.dataset,
-            target=False,
-        )
-        dataloader = DataLoader(dataset, batch_size=len(input_))
-        modelinput = next(iter(dataloader))
 
         model = mlflow.pytorch.load_model(model_uri)
-        result: dict = model.predict_step(modelinput)
-        result = {
-            key: value.detach().numpy().tolist()
-            for key, value in result.items()
-        }
-        return result
+        functions = TorchFunctions(spec=spec, model=model)
+        return functions.predict(input_)

@@ -4,7 +4,7 @@ torch based models.
 """
 import logging
 from os import getenv
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
 from lightning.pytorch import Callback, Trainer
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
@@ -12,10 +12,12 @@ from lightning.pytorch.loggers import Logger
 from mlflow import MlflowClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
+from torch_geometric.loader import DataLoader
 from typing_extensions import override
 
 import fleet.mlflow
 from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
+from fleet.model_builder.dataset import CustomDataset
 from fleet.torch_.models import CustomModel
 from fleet.torch_.schemas import TorchTrainingConfig
 from fleet.utils.data import DataModule
@@ -44,13 +46,24 @@ class TorchFunctions(BaseModelFunctions):
 
     _loggers: List[Logger] = []
 
-    def __init__(self, dataset: DataFrame, spec: TorchModelSpec):
+    def __init__(
+        self,
+        spec: TorchModelSpec,
+        dataset: DataFrame = None,
+        model: CustomModel = None,
+    ):
         """
         Instantiates the class. Takes no arguments.
         """
         super().__init__()
         self.dataset = dataset
         self.spec = spec
+        if model:
+            self.model = model
+        else:
+            self.model = CustomModel(
+                config=spec.spec, dataset_config=spec.dataset
+            )
 
     @property
     def loggers(self):
@@ -80,8 +93,7 @@ class TorchFunctions(BaseModelFunctions):
             ValueError: When the `params.checkpoint_config` property is not set.
         """
         spec = self.spec
-        model = CustomModel(config=spec.spec, dataset_config=spec.dataset)
-        model.set_optimizer(params.optimizer)
+        self.model.set_optimizer(params.optimizer)
         batch_size = params.batch_size or 32
         if not datamodule_args:
             datamodule_args = {}
@@ -123,7 +135,7 @@ class TorchFunctions(BaseModelFunctions):
             logger=self.loggers,
         )
 
-        trainer.fit(model, datamodule)
+        trainer.fit(self.model, datamodule)
 
     @override
     def log_models(
@@ -181,3 +193,30 @@ class TorchFunctions(BaseModelFunctions):
 
     def load(self) -> None:
         return super().load()
+
+    def prepare_X(self, input_: DataFrame) -> Any:
+        """
+        Prepares a input dataframe to be fed into the model.
+        """
+        dataset = CustomDataset(
+            data=input_,
+            model_config=self.spec,
+            dataset_config=self.spec.dataset,
+            target=False,
+        )
+        dataloader = DataLoader(dataset, batch_size=len(input_))
+        modelinput = next(iter(dataloader))
+        return modelinput
+
+    def predict(self, input_: DataFrame) -> Dict[str, List[Any]]:
+        """
+        Makes predictions on the current loaded model.
+        """
+        assert self.model is not None, "Model is not loaded."
+        X = self.prepare_X(input_)
+        result: dict = self.model.predict_step(X)
+        result = {
+            key: value.detach().numpy().tolist()
+            for key, value in result.items()
+        }
+        return result
