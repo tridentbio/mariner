@@ -12,7 +12,6 @@ from abc import ABC
 from typing import Annotated, Literal, Union
 
 from mlflow.entities.model_registry.model_version import ModelVersion
-from pandas import DataFrame
 from pydantic import BaseModel, Field
 from typing_extensions import Protocol
 
@@ -105,3 +104,6 @@ class BaseModelFunctions(Protocol):
 
     def load(self) -> None:
         """Loads a model to be tested."""
+
+    def predict(self) -> None:
+        """Predicts using a loaded model."""
