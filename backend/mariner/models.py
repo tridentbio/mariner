@@ -13,8 +13,8 @@ import torch
 from sqlalchemy.orm.session import Session
 from torch_geometric.loader import DataLoader
 
+from fleet import options
 from fleet.data_types import SmileDataType
-from fleet.model_builder import options
 from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.schemas import ComponentOption
 from fleet.ray_actors.model_check_actor import ModelCheckActor
@@ -190,12 +190,12 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
     return parsed_models, total
 
 
-def get_model_options() -> List[ComponentOption]:
+def get_model_options() -> List[options.ComponentOption]:
     """
     Gets all component (featurizers and layer) options supported by the system,
     along with metadata about each.
     """
-    return options.get_model_options()
+    return options.options_manager.options
 
 
 class PredictRequest(ApiBaseModel):
