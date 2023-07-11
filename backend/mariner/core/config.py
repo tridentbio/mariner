@@ -102,8 +102,8 @@ class Settings(BaseSettings):
     EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
 
     AWS_MODE: Literal["sts", "local"] = "local"
-    AWS_ACCESS_KEY_ID: Union[None, str]
-    AWS_SECRET_ACCESS_KEY: Union[None, str]
+    AWS_ACCESS_KEY_ID: Union[None, str] = None
+    AWS_SECRET_ACCESS_KEY: Union[None, str] = None
     AWS_REGION: str = "us-east-1"
     AWS_DATASETS: str = "dev-matiner-datasets"
     AWS_MODELS: str = "dev-matiner-datasets"

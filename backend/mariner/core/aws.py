@@ -57,22 +57,7 @@ _credentials: Union[AWS_Credentials, None] = None
 
 def _get_new_credentials():
     settings = get_app_settings()
-    if settings.AWS_MODE == "sts":
-        sts_client = boto3.client("sts")
-        response = sts_client.get_caller_identity()
-        role = response["Arn"].split("/")[1]
-        assumed_role_object = sts_client.assume_role(
-            RoleArn=role,
-            RoleSessionName="AssumeRoleSession1",
-        )
-        credentials = assumed_role_object["Credentials"]
-        return AWS_Credentials(
-            expiration=credentials["Expiration"],
-            access_key_id=credentials["AccessKeyId"],
-            secret_access_key=credentials["SecretAccessKey"],
-            session_token=credentials["SessionToken"],
-        )
-    elif settings.AWS_MODE == "local":
+    if settings.AWS_MODE == "local":
         return AWS_Credentials(
             expiration=None,
             access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -96,12 +81,18 @@ def create_s3_client() -> BaseClient:
     Returns:
         BaseClient: boto3 s3 client
     """
-    creds = _get_credentials()
-    s3 = boto3.client(
-        "s3",
-        region_name=get_app_settings().AWS_REGION,
-        **creds.credentials_dict(),
-    )
+    if get_app_settings().AWS_MODE == "local":
+        creds = _get_credentials()
+        s3 = boto3.client(
+            "s3",
+            region_name=get_app_settings().AWS_REGION,
+            **creds.credentials_dict(),
+        )
+    else:
+        s3 = boto3.client(
+            "s3",
+            region_name=get_app_settings().AWS_REGION,
+        )
     return s3
 
 

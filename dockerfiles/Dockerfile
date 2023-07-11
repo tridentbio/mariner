@@ -8,7 +8,7 @@ COPY ./api/__init__.py /app/api/__init__.py
 
 COPY ./pyproject.toml ./poetry.lock ./deps.py /app/
 
-RUN /usr/local/bin/python3 -m pip install --upgrade pip
+# RUN /usr/local/bin/python3 -m pip install --upgrade pip
 
 ENV POETRY_VERSION=1.2.0a2
 ENV POETRY_HOME=/opt/poetry
@@ -31,10 +31,10 @@ COPY ./alembic.ini /app/alembic.ini
 ENV PYTHONPATH=/app
 
 RUN apt-get update
-RUN apt-get install libpq-dev -y
+RUN apt-get install libpq-dev less curl unzip -y
 RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
 
-COPY --from=quay.io/oauth2-proxy/oauth2-proxy:v7.3.0-amd64 /bin/oauth2-proxy /usr/local/bin/oauth2-proxy
+# COPY --from=quay.io/oauth2-proxy/oauth2-proxy:v7.3.0-amd64 /bin/oauth2-proxy /usr/local/bin/oauth2-proxy
 
 COPY ./entrypoints/ /app/entrypoints
 RUN chmod +x /app/entrypoints/*
