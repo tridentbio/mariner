@@ -1,0 +1,1 @@
+import{f as s,H as a,j as e,bJ as r,L as t,aZ as o,B as l,bK as n}from"./index.5bdb0a85.js";const d=()=>s(a,{children:[e(r,{children:e(t,{mr:"auto",children:"Deployments"})}),e(o,{sx:{mb:"1rem"}}),e(l,{sx:{ml:"auto",mr:"auto"},children:e(n,{})})]});export{d as default};

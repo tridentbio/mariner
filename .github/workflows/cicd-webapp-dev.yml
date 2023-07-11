@@ -1,4 +1,4 @@
-name: Deploy to Development
+name: Deploy Webapp to Development
 on:
   push:
     branches:
@@ -51,7 +51,7 @@ jobs:
         npm run build
     - name: Deploy - Sync with S3
       run: |
-        aws s3 sync ./build/ s3://mariner-webapp-dev --delete --quiet
+        aws s3 sync ./webapp/build/ s3://mariner-webapp-dev --delete --quiet
     - name: Deploy - Invalidate Distribution
       run: |
         echo Invalidation usually takes about 10-15 minutes, depending on the size of the request.
