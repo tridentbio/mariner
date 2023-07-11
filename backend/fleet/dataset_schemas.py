@@ -465,12 +465,6 @@ class DatasetConfigBuilder:
             The dataset configuration.
         """
         self._validate()
-        print(
-            self.name,
-            self.target_columns + self.feature_columns,
-            self.featurizers,
-            self.transforms,
-        )
         return DatasetConfig(
             name=self.name,  # type: ignore
             target_columns=[

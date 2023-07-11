@@ -14,7 +14,7 @@ import mariner.models as controller
 from api import deps
 from api.api_v1.endpoints.datasets import Paginated
 from fleet.dataset_schemas import AllowedLosses
-from fleet.model_builder.schemas import ComponentOption
+from fleet.options import ComponentOption
 from mariner.entities.user import User
 from mariner.exceptions import DatasetNotFound, ModelNameAlreadyUsed
 from mariner.exceptions.model_exceptions import (
