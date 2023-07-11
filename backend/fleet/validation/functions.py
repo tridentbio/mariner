@@ -206,7 +206,9 @@ def determine_seq_type(seq: str) -> Tuple[bool, str, bool, int]:
     return True, domain_kind, possible_ambiguous, count_unambiguous
 
 
-def check_biological_sequence(seq: str) -> Dict[str, Union[str, bool]]:
+def check_biological_sequence(
+    seq: Union[str, Any]
+) -> Dict[str, Union[str, bool]]:
     """Check if a sequence is valid as DNA, RNA or Protein
     Rules (ordered by priority):
         DNA:
@@ -229,7 +231,8 @@ def check_biological_sequence(seq: str) -> Dict[str, Union[str, bool]]:
             - is_ambiguous?: True if sequence contains ambiguous nucleotides
     """
 
-    if len(seq) < 5:  # at least 5 chars to be a valid sequence
+    # at least 5 chars to be a valid sequence
+    if not isinstance(seq, str) or len(seq) < 5:
         return {"valid": False}
 
     (
