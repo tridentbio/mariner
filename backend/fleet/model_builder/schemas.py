@@ -140,26 +140,19 @@ class TorchModelSchema(CamelCaseModel, YAML_Model):
         )
 
 
-class ComponentAnnotation(CamelCaseModel):
-    """
-    Gives extra information about the layer/featurizer
-    """
-
-    docs_link: Optional[str]
-    docs: Optional[str]
-    output_type: Optional[str]
-    class_path: str
-    type: Literal["featurizer", "layer"]
-
-
-class ComponentOption(ComponentAnnotation):
+class ComponentOption(CamelCaseModel):
     """
     Describes an option to be used in the ModelSchema.layers or ModelSchema.featurizers
     """
 
     component: Union[LayersArgsType, FeaturizersArgsType]
-    default_args: Optional[Dict[str, Any]] = None
     args_options: Optional[Dict[str, List[str]]] = None
+    default_args: Optional[Dict[str, Any]] = None
+    docs_link: Optional[str]
+    docs: Optional[str]
+    output_type: Optional[str]
+    class_path: str
+    type: Literal["transformer", "featurizer", "layer"]
 
 
 if __name__ == "__main__":
