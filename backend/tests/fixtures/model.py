@@ -5,7 +5,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from fleet.base_schemas import TorchModelSpec
+from fleet.base_schemas import SklearnModelSpec, TorchModelSpec
 from mariner.core.config import get_app_settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
@@ -62,7 +62,8 @@ def get_config_path_for_model_type(
         "regressor-with-categorical": "tests/data/json/small_regressor_schema2.json",
     }
     sklearn_models = {
-        "regressor": "tests/data/yaml/sklearn_random_forest_sampl.yaml",
+        "regressor": "tests/data/yaml/sklearn_sampl_random_forest_regressor.yaml",
+        "classifier": "tests/data/yaml/sklearn_hiv_random_forest_classifier.yaml",
     }
 
     try:
@@ -85,9 +86,17 @@ def mock_model(
     name: Optional[str] = None,
     dataset_name: Optional[str] = None,
     model_type: ModelType = "regressor",
+    framework: Literal["sklearn", "torch"] = "torch",
 ) -> ModelCreate:
-    model_path = get_config_path_for_model_type(model_type)
-    config = TorchModelSpec.from_yaml(model_path)
+    model_path = get_config_path_for_model_type(
+        model_type, framework=framework
+    )
+
+    if framework == "torch":
+        config = TorchModelSpec.from_yaml(model_path)
+    elif framework == "sklearn":
+        config = SklearnModelSpec.from_yaml(model_path)
+
     if dataset_name:
         config.dataset.name = dataset_name
     model = ModelCreate(

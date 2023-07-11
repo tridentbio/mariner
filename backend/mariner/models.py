@@ -146,9 +146,11 @@ def create_model(
         ),
     )
 
-    assert model_create.config.dataset.target_columns[
-        0
-    ].out_module, "missing out_module in target_column"
+    if model_create.config.framework == "torch":
+        assert model_create.config.dataset.target_columns[
+            0
+        ].out_module, "missing out_module in target_column"
+
     model_store.create_model_version(
         db,
         ModelVersionCreateRepo(

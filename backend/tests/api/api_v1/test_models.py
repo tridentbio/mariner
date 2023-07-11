@@ -89,15 +89,18 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
     return model
 
 
+@pytest.mark.parametrize("framework", ("torch", "sklearn"))
 @pytest.mark.integration
 def test_post_models_success(
     db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_dataset: DatasetEntity,
+    some_dataset: DatasetEntity,  # noqa
+    sampl_dataset: DatasetEntity,  # noqa
+    framework: str,
 ):
     user = get_test_user(db)
-    model = mock_model()
+    model = mock_model(framework=framework)
     res = client.post(
         f"{get_app_settings().API_V1_STR}/models/",
         json=model.dict(),
@@ -105,7 +108,7 @@ def test_post_models_success(
     )
     body = res.json()
 
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTP_200_OK, body["detail"]
     assert body["name"] == model.name
     assert "columns" in body
     assert body["createdById"] == user.id

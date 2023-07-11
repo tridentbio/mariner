@@ -8,6 +8,7 @@ from typing import BinaryIO, Tuple, Union
 
 import boto3
 from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 from fastapi.datastructures import UploadFile
 
 from mariner.core.config import get_app_settings
@@ -218,5 +219,5 @@ def is_in_s3(key: str, bucket: Bucket) -> bool:
     try:
         s3.head_object(Bucket=bucket.value, Key=key)
         return True
-    except s3.exceptions.NoSuchKey:
+    except (s3.exceptions.NoSuchKey, ClientError):
         return False
