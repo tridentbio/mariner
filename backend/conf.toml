@@ -1,6 +1,6 @@
 [server]
 name = "backend"
-host = "http://backend:80"
+host = "http://backend"
 domain = "backend"
 cors = ["http://localhost", "http://localhost:4200", "http://localhost:3000", "http://localhost:8080", "https://localhost", "https://localhost:4200", "https://localhost:3000", "https://localhost:8080", "http://127.0.0.1:3000", "http://localhost:6006"]
 
@@ -15,6 +15,7 @@ client_secret = "eszWca6gKe0skhVBROronEKDLPC4bhrYkwofxS5PBgtJTnt8SG3ieFUyjfRPZgE
 authorization_url = "https://wamqa.roche.com/as/authorization.oauth2"
 methods = ["code-grant"]
 name = "Genentech"
+scope = "edit"
 
 [auth.github]
 client_id = "--"

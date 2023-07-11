@@ -64,14 +64,14 @@ class OAuthManager(Mapping):
             state = oauth_state_store.create_state(db, provider=key).state
             redirect_uri = f"{get_app_settings('server').host}/api/v1/oauth-callback"
             oauth_settings = self[key]
-            querysting = urllib.parse.urlencode(
-                {
-                    "client_id": oauth_settings.client_id,
-                    "redirect_uri": redirect_uri,
-                    "scope": oauth_settings.scope,
-                    "state": state,
-                }
-            )
+            params = {
+                "client_id": oauth_settings.client_id,
+                "redirect_uri": redirect_uri,
+                "state": state,
+                "response_type": "code",
+            }
+            params["scope"] = oauth_settings.scope
+            querysting = urllib.parse.urlencode(params)
 
             return f"{oauth_settings.authorization_url}?{querysting}"
 
