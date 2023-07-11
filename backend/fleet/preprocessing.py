@@ -11,35 +11,10 @@ Featurizers
 Featurizers are used to transform not numeric data into numeric matrices that
 can be understood by machine learning models.
 
-+---------------------------+----------------------------------------------------+-----------------------------+------------------------------------------+------------+
-| Name                      | Description                                        | Parameters                  | DataType                                 | Framework  |
-+===========================+====================================================+=============================+============+==========================================+
-| `FPVecFilteredTransformer`| A featurizer that transforms a SMILES string into  | `del_invariant`: bool       | :class:`fleet.data_types.SmilesDataType` | `molfeat`  |
-|                           | a fingerprint vector.                              | `length`: int               |                                          |            |
-+---------------------------+----------------------------------------------------+-----------------------------+------------------------------------------+------------------------+
-| `DNASequenceFeaturizer`   | A featurizre that transformes a DNA string into a | `forward_args`: dict        | :class:`fleet.data_types.DNADataType`    | `fleet.model_builder.`  |
-|                           | one hot encoded representation.                    |                             |                                          |            |
-+---------------------------+----------------------------------------------------+-----------------------------+------------------------------------------+------------+
-| `ProteinSequenceFeaturizer`| A featurizer that transformes a protein string    | `forward_args`: dict        | :class:`fleet.data_types.ProteinDataType`| `molfeat`  |
-|                           | into a one hot encoded representation.             |                             |                                          |            |
-+---------------------------+----------------------------------------------------+-----------------------------+------------------------------------------+------------+
-
-
 Transforms
 ----------
 
 Transforms are used to modify numeric data in a way that is useful for machine learning models.
-
-+---------------------------+----------------------------------------------------+-----------------------------+------------------------------------------+------------+
-| Name                      | Description                                        | Parameters                  | DataType                                 | Framework  |
-+===========================+====================================================+=============================+============+==========================================+
-| `LabelEncoder`            | A transform that encodes labels with value between | `forward_args`: dict        | :class:`fleet.data_types.LabelDataType`  | `sklearn`  |
-|                           | 0 and n_classes-1.                                 |                             |                                          |            |
-+---------------------------+----------------------------------------------------+-----------------------------+------------------------------------------+------------+
-| `StandardScaler`          | A transform that standardizes features by removing | `with_mean`: bool           | :class:`fleet.data_types.NumericDataType`| `sklearn`  |
-|                           | the mean and scaling to unit variance.             | `with_std`: bool            |                                          |            |
-+---------------------------+----------------------------------------------------+-----------------------------+------------------------------------------+------------+
-
 
 See Also:
     :mod:`fleet.utils.data`
@@ -56,6 +31,7 @@ from fleet.model_builder.layers_schema import \
 from fleet.model_builder.layers_schema import \
     FleetmoleculefeaturizerLayerConfig as FleetmoleculefeaturizerLayerConfig_
 from fleet.model_builder.utils import get_class_from_path_string
+from fleet.options import options_manager
 
 
 class CamelCaseModel(BaseModel):
@@ -115,7 +91,6 @@ class FleetmoleculefeaturizerLayerConfig(
     """
 
 
-# molfeat featurizers:
 class FPVecFilteredTransformerConstructorArgs(BaseModel):
     """
     Models the constructor arguments of a FPVecFilteredTransformer.
@@ -125,6 +100,7 @@ class FPVecFilteredTransformerConstructorArgs(BaseModel):
     length: Union[None, int] = None
 
 
+@options_manager.config_featurizer()
 class FPVecFilteredTransformerConfig(
     CamelCaseModel, CreateFromType, TransformConfigBase
 ):
@@ -145,6 +121,7 @@ class FPVecFilteredTransformerConfig(
 # sklearn transforms
 
 
+@options_manager.config_featurizer()
 class LabelEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
     """
     Models the constructor arguments of a sklearn.preprocessing.LabelEncoder
@@ -164,6 +141,7 @@ class LabelEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
         return super().adapt_args_and_apply(method, args)
 
 
+@options_manager.config_featurizer()
 class OneHotEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
     """
     Models the constructor arguments of a sklearn.preprocessing.OneHotEncoder
@@ -196,6 +174,7 @@ class StandardScalerConstructorArgs(BaseModel):
     with_std: bool = True
 
 
+@options_manager.config_transformer()
 class StandardScalerConfig(
     CreateFromType, CamelCaseModel, TransformConfigBase
 ):
@@ -269,3 +248,15 @@ class FeaturizerConfig(CamelCaseModel):
     """
 
     __root__: FeaturizersType
+
+
+__all__ = [
+    "TransformConfig",
+    "FeaturizerConfig",
+    "FPVecFilteredTransformerConfig",
+    "FleetmoleculefeaturizerLayerConfig",
+    "LabelEncoderConfig",
+    "OneHotEncoderConfig",
+    "StandardScalerConfig",
+    "NpConcatenateConfig",
+]

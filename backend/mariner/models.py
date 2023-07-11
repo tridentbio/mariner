@@ -10,8 +10,7 @@ import mlflow
 import mlflow.exceptions
 from sqlalchemy.orm.session import Session
 
-from fleet.model_builder import options
-from fleet.model_builder.schemas import ComponentOption
+from fleet import options
 from fleet.model_functions import predict
 from fleet.ray_actors.model_check_actor import ModelCheckActor
 from mariner.core import mlflowapi
@@ -180,12 +179,12 @@ def get_models(db: Session, query: ModelsQuery, current_user: UserEntity):
     return parsed_models, total
 
 
-def get_model_options() -> List[ComponentOption]:
+def get_model_options() -> List[options.ComponentOption]:
     """
     Gets all component (featurizers and layer) options supported by the system,
     along with metadata about each.
     """
-    return options.get_model_options()
+    return options.options_manager.options
 
 
 class PredictRequest(ApiBaseModel):
@@ -196,9 +195,7 @@ class PredictRequest(ApiBaseModel):
     model_input: Any
 
 
-def get_model_prediction(
-    db: Session, request: PredictRequest
-) -> Dict[str, List[Any]]:
+def get_model_prediction(db: Session, request: PredictRequest) -> Dict[str, List[Any]]:
     """(Slowly) Loads a model version and apply it to a sample input
 
     .. warning::

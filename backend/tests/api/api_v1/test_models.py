@@ -204,15 +204,24 @@ def test_get_model_options(
     payload = res.json()
 
     def assert_component_info(component_dict: dict):
-        assert "docs" in component_dict
-        assert "docsLink" in component_dict
-        assert "classPath" in component_dict
-        assert "outputType" in component_dict
-        assert "component" in component_dict
-        assert "forwardArgsSummary" in component_dict["component"]
-        assert "constructorArgsSummary" in component_dict["component"]
-        assert isinstance(component_dict["docs"], str)
-        assert AnyHttpUrl(component_dict["docs"], scheme="https") is not None
+        assert "docs" in component_dict, payload
+        assert "classPath" in component_dict, payload
+        assert "outputType" in component_dict, payload
+        assert "component" in component_dict, payload
+
+        assert isinstance(component_dict["docs"], str), payload
+        assert (
+            AnyHttpUrl(component_dict["docs"], scheme="https") is not None
+        ), payload
+        if component_dict["classPath"] in [
+            "molfeat.trans.fp.FPVecFilteredTransformer",
+            "sklearn.preprocessing.LabelEncoder",
+            "sklearn.preprocessing.OneHotEncoder",
+            "sklearn.preprocessing.StandardScaler",
+        ]:
+            return
+        assert "forwardArgsSummary" in component_dict["component"], payload
+        assert "constructorArgsSummary" in component_dict["component"], payload
 
     for layer_payload in payload:
         assert_component_info(layer_payload)

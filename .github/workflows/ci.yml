@@ -1,10 +1,11 @@
 # Continous integration checks that can be done out of docker
 name: Continuous integration
 env:
-  AWS_MODE: local
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-east-1
-  AWS_ACCESS_KEY_ID: --
-  AWS_SECRET_ACCESS_KEY: --
+  AWS_MODELS_BUCKET: s3://dev-mariner-datasets
+  AWS_DATASETS: dev-mariner-datasets
   GITHUB_CLIENT_ID: --
   GITHUB_CLIENT_SECRET: --
 on:
@@ -22,14 +23,6 @@ on:
       save_src:
         type: boolean
         description: Saves the branch scoring results in the repo cache
-env:
-    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    AWS_REGION: us-east-1
-    AWS_MODELS_BUCKET: s3://dev-mariner-datasets
-    AWS_DATASETS: dev-mariner-datasets
-    GITHUB_CLIENT_ID: --
-    GITHUB_CLIENT_SECRET: --
 jobs:
   # Checks: pylint score, unit test cov regression
   install-and-checks:

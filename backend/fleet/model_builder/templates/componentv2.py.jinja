@@ -76,6 +76,16 @@ class {{ component["prefix"] }}ConstructorArgs(BaseModel):
 {% endif %}
 
 
+{% if component["type"] == "layer" %}
+
+@options_manager.config_layer(summary_cls={{component["prefix"]}}Summary)
+
+{% else %}
+
+@options_manager.config_featurizer(summary_cls={{component["prefix"]}}Summary)
+
+{% endif %}
+
 class {{ component["prefix"] }}LayerConfig(CamelCaseModel):
     """
     Layer configuration.

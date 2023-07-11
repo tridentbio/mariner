@@ -7,6 +7,7 @@ from typing import Optional, Literal, Union, List, Any, Callable
 from typing_extensions import Annotated
 import torch
 from pydantic import BaseModel, Field
+from fleet.options import options_manager
 from fleet.model_builder.utils import get_class_from_path_string, CamelCaseModel
 
 {% block imports %}
