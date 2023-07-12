@@ -15,6 +15,7 @@ def preprocessing_pipeline_fixture():
     return DatasetConfig.parse_obj(dataset_spec)
 
 
+@pytest.mark.integration
 def test_save_load_pipeline(preprocessing_pipeline_fixture: DatasetConfig):
     run_id = None
     with mlflow.start_run() as run:
