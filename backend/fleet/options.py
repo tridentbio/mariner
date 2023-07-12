@@ -5,9 +5,8 @@ learning models.
 
 
 import enum
-from functools import wraps
 from inspect import signature
-from typing import Any, Dict, List, Literal, Union, get_args, get_type_hints
+from typing import Any, Callable, Dict, List, Union, get_type_hints
 
 import yaml
 from humps import camel
@@ -146,9 +145,9 @@ class ComponentOption(BaseModel):
     def build(
         cls,
         class_path: str,
-        type: ComponentType,
+        type_: ComponentType,
         config_cls: type,
-        args_options: Union[Dict[str, List[str]], None] = None,
+        overrides: Union[Overrides, None] = None,
         component: Union[Any, None] = None,
     ):
         """
@@ -165,24 +164,28 @@ class ComponentOption(BaseModel):
         described_cls = get_class_from_path_string(class_path)
         output_type = _get_return_type(described_cls, ["forward", "__call__"])
         try:
-            default_args = _get_default_constructor_args(
-                config_cls, "constructorArgs"
+            default_args = (
+                _get_default_constructor_args(config_cls, "constructorArgs")
+                or {}
             )
+            if overrides and overrides.defaults:
+                for arg, default in overrides.defaults.items():
+                    default_args[arg] = default
         except KeyError:
             default_args = None
 
         return ComponentOption(
             class_path=class_path,
-            type=type,
+            type=type_,
             docs_link=docs_link,
             docs=docs,
             output_type=str(output_type) if output_type else None,
             default_args=default_args,
             component=component,
-            args_options=args_options,
+            args_options=overrides.args_options if overrides else None,
         )
 
-    class Config:
+    class Config:  # pylint: disable=C0115
         alias_generator = camel.case
         allow_population_by_field_name = True
         allow_population_by_alias = True
@@ -202,7 +205,7 @@ class ComponentOptionsManager:
         self,
         component_type: ComponentType,
         class_path_attribute="type",
-        summary_cls: Union[None, type] = None,
+        summary_cls: Union[None, Callable] = None,
     ):
         """
         Decorator to register a class path as a component option.
@@ -217,11 +220,7 @@ class ComponentOptionsManager:
                     class_path,
                     component_type,
                     cls,
-                    args_options=(
-                        self.overrides[class_path].args_options
-                        if class_path in self.overrides
-                        else None
-                    ),
+                    overrides=self.overrides.get(class_path),
                     component=summary_cls() if summary_cls else None,
                 )
             )
@@ -269,8 +268,8 @@ class ComponentOptionsManager:
         Load all the scripts that are needed for populating options_manager.
         """
         # import scripts that are needed for populating options_manager.
-        import fleet.model_builder.layers_schema  # noqa: F401
-        import fleet.preprocessing  # noqa: F401
+        import fleet.model_builder.layers_schema  # pylint: disable=C0415,W0611
+        import fleet.preprocessing  # pylint: disable=C0415,W0611
 
 
 options_manager = ComponentOptionsManager()
