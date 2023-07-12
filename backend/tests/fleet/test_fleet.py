@@ -112,6 +112,7 @@ predict_samples = {
     "sampl2": {
         "smiles": ["CCCC", "CCCCCC"],
     },
+    "iris_binary": {"sepal_length": [1.6], "sepal_width": [0.9]},
 }
 
 
@@ -152,7 +153,7 @@ specs = [
         ("small_regressor_schema.yaml", "zinc.csv", ""),
         ("multiclass_classification_model.yaml", "iris.csv", ""),
         ("multitarget_classification_model.yaml", "iris.csv", ""),
-        ("binary_classification_model.yaml", "iris.csv", ""),
+        ("binary_classification_model.yaml", "iris.csv", "iris_binary"),
         ("dna_example.yml", "sarkisyan_full_seq_data.csv", ""),
     ]
 ]

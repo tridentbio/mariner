@@ -171,26 +171,19 @@ def post_model_predict(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Payload failed following checks:{','.join(exp.reasons)}",
-        )
-    except ModelNotFound:
+        ) from exp
+    except ModelNotFound as exp:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Model Not Found"
-        )
-    except ModelVersionNotTrained:
+        ) from exp
+    except ModelVersionNotTrained as exp:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Model version was not trained yet",
-        )
+        ) from exp
 
     for column, result in prediction.items():
-        if not isinstance(result, torch.Tensor):
-            raise TypeError("Unexpected model output")
-        serialized_result = result.tolist()
-        prediction[column] = (
-            serialized_result
-            if isinstance(serialized_result, list)
-            else [serialized_result]
-        )
+        prediction[column] = result if isinstance(result, list) else [result]
 
     return prediction
 

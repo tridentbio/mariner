@@ -1,7 +1,7 @@
 import pytest
-import torch
 from sqlalchemy.orm.session import Session
 
+from fleet.utils.dataset import converts_file_to_dataframe
 from mariner import models as model_ctl
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
@@ -18,7 +18,7 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
     test_user = get_test_user(db)
     ds = dataset_store.get(db, some_trained_model.dataset_id)
     assert ds
-    df = ds.get_dataframe()
+    df = converts_file_to_dataframe(ds.get_dataset_file())
     df = df.to_dict()
     assert df
     result = model_ctl.get_model_prediction(
@@ -28,7 +28,7 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
         ),
     )
     for prediction in result.values():
-        assert isinstance(prediction, torch.Tensor)
+        assert isinstance(prediction, list)
 
 
 @pytest.mark.integration

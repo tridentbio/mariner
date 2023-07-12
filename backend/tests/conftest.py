@@ -110,6 +110,30 @@ def some_dataset(
 
 
 @pytest.fixture(scope="module")
+def sampl_dataset(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    ds = setup_create_dataset_db(
+        db, file="tests/data/csv/SAMPL.csv", dataset="sampl", name="SAMPL"
+    )
+    assert ds is not None
+    yield ds
+    teardown_create_dataset(db, ds)
+
+
+@pytest.fixture(scope="module")
+def hiv_dataset(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    ds = setup_create_dataset_db(
+        db, file="tests/data/csv/HIV.csv", dataset="hiv", name="HIV"
+    )
+    assert ds is not None
+    yield ds
+    teardown_create_dataset(db, ds)
+
+
+@pytest.fixture(scope="module")
 def some_bio_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):

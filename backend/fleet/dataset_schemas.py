@@ -3,8 +3,9 @@ Classes used to describe datasets. They can be extended, but
 it is not encouraged since it will required adapting the implementation
 of some methods.
 """
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, NewType, Optional, Union
 
+import pandas as pd
 from humps import camel
 from pydantic import BaseModel, Field, root_validator
 
@@ -17,6 +18,14 @@ from fleet.preprocessing import (
     TransformerType,
 )
 from fleet.yaml_model import YAML_Model
+
+StatsType = NewType(
+    "StatsType",
+    Dict[
+        Literal["full", "train", "test", "val"],
+        Dict[str, Union[pd.Series, Dict[str, pd.Series]]],
+    ],
+)
 
 
 class BaseDatasetModel(BaseModel):

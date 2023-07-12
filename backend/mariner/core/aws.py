@@ -7,18 +7,12 @@ from datetime import datetime
 from typing import BinaryIO, Tuple, Union
 
 import boto3
-import pandas as pd
 from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 from fastapi.datastructures import UploadFile
 
 from mariner.core.config import get_app_settings
-from mariner.utils import (
-    compress_file,
-    get_size,
-    hash_md5,
-    is_compressed,
-    read_compressed_csv,
-)
+from mariner.utils import compress_file, get_size, hash_md5
 
 
 class Bucket(enum.Enum):
@@ -128,34 +122,6 @@ def upload_s3_file(
         s3.upload_fileobj(file.file, bucket.value, key)
 
 
-def download_file_as_dataframe(
-    bucket: Union[Bucket, str], key: str
-) -> pd.DataFrame:
-    """Downloads s3 file and attempts to parse it as pd.Dataframe
-
-    Will raise exceptions if object is not in csv format.
-
-    Args:
-        bucket: Bucket enum value where the object is located.
-        key: The key identifying the object.
-
-    Returns:
-        The pandas Dataframe stored in s3.
-    """
-    s3 = create_s3_client()
-    s3_res = s3.get_object(
-        Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
-    )
-    s3body = s3_res["Body"].read()
-    data = io.BytesIO(s3body)
-    df = (
-        pd.read_csv(data)
-        if not is_compressed(data)
-        else read_compressed_csv(s3body)
-    )
-    return df
-
-
 def delete_s3_file(key: str, bucket: Bucket):
     """Attempts to delete a file from s3.
 
@@ -169,7 +135,7 @@ def delete_s3_file(key: str, bucket: Bucket):
     s3.delete_object(Bucket=bucket.value, Key=key)
 
 
-def download_s3(key: str, bucket: str) -> io.BytesIO:
+def download_s3(key: str, bucket: Union[str, Bucket]) -> io.BytesIO:
     """Download a file from S3
 
     Args:
@@ -180,9 +146,25 @@ def download_s3(key: str, bucket: str) -> io.BytesIO:
         io.BytesIO: downloaded file
     """
     s3 = create_s3_client()
-    s3_res = s3.get_object(Bucket=bucket, Key=key)
+    s3_res = s3.get_object(
+        Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
+    )
     s3body = s3_res["Body"].read()
     return io.BytesIO(s3body)
+
+
+def is_compressed(file: bytes) -> bool:
+    """
+    Gzip compressed files start with b'\x1f\x8b'
+    """
+    gzip_mark = b"\x1f\x8b"
+
+    if "read" in dir(file):
+        file_prefix = file.read(2)
+        file.seek(0)
+        return file_prefix == gzip_mark
+
+    return file[0:2] == gzip_mark
 
 
 def upload_s3_compressed(
@@ -228,5 +210,5 @@ def is_in_s3(key: str, bucket: Bucket) -> bool:
     try:
         s3.head_object(Bucket=bucket.value, Key=key)
         return True
-    except s3.exceptions.NoSuchKey:
+    except (s3.exceptions.NoSuchKey, ClientError):
         return False

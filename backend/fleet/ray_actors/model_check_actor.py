@@ -10,6 +10,7 @@ from torch_geometric.loader import DataLoader
 from fleet.base_schemas import TorchModelSpec
 from fleet.torch_.models import CustomModel
 from fleet.utils.data import MarinerTorchDataset
+from fleet.utils.dataset import converts_file_to_dataframe
 from mariner.schemas.dataset_schemas import Dataset
 
 
@@ -30,9 +31,10 @@ class ModelCheckActor:
         Returns:
             The model output
         """
+        df = converts_file_to_dataframe(dataset.get_dataset_file())
         if config.framework == "torch" or isinstance(config, TorchModelSpec):
             torch_dataset = MarinerTorchDataset(
-                data=dataset.get_dataframe(),
+                data=df,
                 dataset_config=config.dataset,
             )
             dataloader = DataLoader(torch_dataset, batch_size=2)

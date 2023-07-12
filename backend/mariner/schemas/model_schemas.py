@@ -22,7 +22,7 @@ class ModelVersion(ApiBaseModel):
     description: Union[str, None] = None
     mlflow_version: Union[str, None] = None
     mlflow_model_name: str
-    config: TorchModelSpec
+    config: FleetModelSpec
     created_at: utc_datetime
     updated_at: datetime
 
@@ -121,7 +121,7 @@ class ModelCreate(ApiBaseModel):
     name: str
     model_description: Optional[str] = None
     model_version_description: Optional[str] = None
-    config: TorchModelSpec
+    config: FleetModelSpec
 
 
 class ModelVersionCreateRepo(BaseModel):
