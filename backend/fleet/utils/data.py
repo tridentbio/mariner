@@ -294,9 +294,10 @@ def prepare_data(
                 X, self.dataset_config.feature_columns
             )
 
-            self._apply_default_featurizers(  # pylint: disable=W0212
-                y, self.dataset_config.target_columns
-            )
+            if y is not None and not y.empty:
+                self._apply_default_featurizers(  # pylint: disable=W0212
+                    y, self.dataset_config.target_columns
+                )
 
         data = self._dataframe_to_dict(  # pylint: disable=W0212
             pd.concat([X, y], axis=1)
@@ -410,7 +411,9 @@ class PreprocessingPipeline:
             col.name for col in self.dataset_config.feature_columns
         ]
         target_columns = [
-            col.name for col in self.dataset_config.target_columns
+            col.name
+            for col in self.dataset_config.target_columns
+            if col.name in df.columns
         ]
         return df.loc[:, feature_columns], df.loc[:, target_columns]
 
@@ -428,7 +431,7 @@ class PreprocessingPipeline:
                     ],
                 )
 
-            if not isinstance(y, pd.DataFrame):
+            if y is not None and not isinstance(y, pd.DataFrame):
                 y = pd.DataFrame(
                     y,
                     columns=[
@@ -619,14 +622,15 @@ class MarinerTorchDataset(Dataset):
             self.preprocessing_pipeline = PreprocessingPipeline(dataset_config)
         else:
             self.preprocessing_pipeline = preprocessing_pipeline
-        step = self.data["step"]
         transformed = self.preprocessing_pipeline.transform(
             *self.preprocessing_pipeline.get_X_and_y(self.data)
         )
         for field, result in transformed.items():
             self.data[field] = result
 
-        self.data["step"] = step
+        step = self.data.get("step")
+        if step is not None:
+            self.data["step"] = step
 
     def get_subset_idx(self, step=None) -> list[int]:
         """Gets the indices of where step equals the step column in the
@@ -656,7 +660,10 @@ class MarinerTorchDataset(Dataset):
         """
         data = DataInstance()
 
-        output_columns = self.preprocessing_pipeline.output_columns
+        output_columns = filter(
+            lambda col: col in self.data.columns,
+            self.preprocessing_pipeline.output_columns,
+        )
 
         for column in self.data[output_columns]:
             data[column] = adapt_numpy_to_tensor(self.data.loc[idx, column])
