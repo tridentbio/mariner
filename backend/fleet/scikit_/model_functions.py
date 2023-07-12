@@ -68,7 +68,6 @@ class SciKitFunctions(BaseModelFunctions):
         X, y = self.preprocessing_pipeline.get_X_and_y(self.dataset)
         if fit:
             self.data = self.preprocessing_pipeline.fit_transform(X, y)
-            fleet.mlflow.save_pipeline(self.preprocessing_pipeline)
         else:
             self.data = self.preprocessing_pipeline.transform(X, y)
 
@@ -108,21 +107,6 @@ class SciKitFunctions(BaseModelFunctions):
             args = map(lambda x: self._filter_data(filtering, x), args)
 
         return args
-
-    def _prepare_X(
-        self, input_: pd.DataFrame
-    ) -> Union[np.ndarray, List[np.ndarray], pd.Series]:
-        """
-        Prepares the input data to be used by the model.
-
-        Args:
-            input_ (pd.DataFrame): The input data.
-
-        Returns:
-            X: The input data prepared to be used by the model.
-        """
-        data_ = self.preprocessing_pipeline.transform(input_)
-        return data_[self.references["X"]]
 
     def get_metrics(
         self,
@@ -221,7 +205,8 @@ class SciKitFunctions(BaseModelFunctions):
         Args:
             input_ (pd.DataFrame): The dataset to predict on.
         """
-        X = self._prepare_X(input_)
+        transformed_data = self.preprocessing_pipeline.transform(input_)
+        X = transformed_data[self.references["X"]]
         return self.model.predict(X)
 
     def log_models(

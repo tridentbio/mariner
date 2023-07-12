@@ -17,10 +17,13 @@ from typing_extensions import override
 
 import fleet.mlflow
 from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
-from fleet.model_builder.dataset import CustomDataset
 from fleet.torch_.models import CustomModel
 from fleet.torch_.schemas import TorchTrainingConfig
-from fleet.utils.data import DataModule
+from fleet.utils.data import (
+    DataModule,
+    MarinerTorchDataset,
+    PreprocessingPipeline,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -51,6 +54,7 @@ class TorchFunctions(BaseModelFunctions):
         spec: TorchModelSpec,
         dataset: DataFrame = None,
         model: CustomModel = None,
+        preprocessing_pipeline: Union[None, "PreprocessingPipeline"] = None,
     ):
         """
         Instantiates the class. Takes no arguments.
@@ -63,6 +67,13 @@ class TorchFunctions(BaseModelFunctions):
         else:
             self.model = CustomModel(
                 config=spec.spec, dataset_config=spec.dataset
+            )
+
+        if preprocessing_pipeline:
+            self.preprocessing_pipeline = preprocessing_pipeline
+        else:
+            self.preprocessing_pipeline = PreprocessingPipeline(
+                dataset_config=spec.dataset
             )
 
     @property
@@ -194,20 +205,6 @@ class TorchFunctions(BaseModelFunctions):
     def load(self) -> None:
         return super().load()
 
-    def prepare_X(self, input_: DataFrame) -> Any:
-        """
-        Prepares a input dataframe to be fed into the model.
-        """
-        dataset = CustomDataset(
-            data=input_,
-            model_config=self.spec,
-            dataset_config=self.spec.dataset,
-            target=False,
-        )
-        dataloader = DataLoader(dataset, batch_size=len(input_))
-        modelinput = next(iter(dataloader))
-        return modelinput
-
     def predict(self, input_: Union[DataFrame, dict]) -> Dict[str, List[Any]]:
         """
         Makes predictions on the current loaded model.
@@ -217,7 +214,14 @@ class TorchFunctions(BaseModelFunctions):
         if not isinstance(input_, DataFrame):
             input_ = DataFrame.from_dict(input_, dtype=float)
 
-        X = self.prepare_X(input_)
+        dataset = MarinerTorchDataset(
+            data=input_,
+            dataset_config=self.spec.dataset,
+            preprocessing_pipeline=self.preprocessing_pipeline,
+        )
+        dataloader = DataLoader(dataset, batch_size=len(input_))
+        X = next(iter(dataloader))
+
         result: dict = self.model.predict_step(X)
         result = {
             key: value.detach().numpy().tolist()

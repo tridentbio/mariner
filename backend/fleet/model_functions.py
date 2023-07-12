@@ -24,7 +24,7 @@ from fleet.base_schemas import (
     TorchModelSpec,
 )
 from fleet.dataset_schemas import TorchDatasetConfig
-from fleet.mlflow import load_pipeline
+from fleet.mlflow import load_pipeline, save_pipeline
 from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.model_functions import TorchFunctions
@@ -111,10 +111,10 @@ def fit(
     dataset = _get_dataframe(dataset, dataset_uri)
     assert isinstance(dataset, DataFrame), "Dataset must be DataFrame"
 
-    if isinstance(spec, TorchModelSpec):
-        with mlflow.start_run(
-            nested=True, experiment_id=mlflow_experiment_id
-        ) as run:
+    with mlflow.start_run(
+        nested=True, experiment_id=mlflow_experiment_id
+    ) as run:
+        if isinstance(spec, TorchModelSpec):
             functions = TorchFunctions(
                 spec=spec,
                 dataset=dataset,
@@ -152,19 +152,19 @@ def fit(
             mlflow_model_version = functions.log_models(
                 mlflow_model_name=mlflow_model_name, run_id=run.info.run_id
             )
-    elif isinstance(spec, SklearnModelSpec):
-        functions = SciKitFunctions(spec, dataset)
-        with mlflow.start_run(
-            nested=True, experiment_id=mlflow_experiment_id
-        ) as run:
+
+        elif isinstance(spec, SklearnModelSpec):
+            functions = SciKitFunctions(spec, dataset)
             functions.train()
             mlflow_model_version = functions.log_models(
                 mlflow_model_name=mlflow_model_name,
                 run_id=run.info.run_id,
             )
             functions.val()
-    else:
-        raise ValueError("Can't find functions for spec")
+        else:
+            raise ValueError("Can't find functions for spec")
+
+        save_pipeline(functions.preprocessing_pipeline)
 
     return Result(
         mlflow_experiment_id=mlflow_experiment_id,
@@ -248,9 +248,10 @@ def predict(
         f"missing run_id model with version {mlflow_model_version} at model",
         f"{mlflow_model_name} at Mlflow",
     )
+    pipeline = load_pipeline(modelversion.run_id)
+    model = mlflow.sklearn.load_model(model_uri)
+
     if isinstance(spec, SklearnModelSpec):
-        model = mlflow.sklearn.load_model(model_uri)
-        pipeline = load_pipeline(modelversion.run_id)
         functions = SciKitFunctions(
             spec, None, model=model, preprocessing_pipeline=pipeline
         )
@@ -259,8 +260,10 @@ def predict(
     elif isinstance(spec, TorchModelSpec):
         if not isinstance(input_, pd.DataFrame):
             input_ = pd.DataFrame.from_dict(input_, dtype=float)
+
         check_input(input_, spec.dataset)
 
-        model = mlflow.pytorch.load_model(model_uri)
-        functions = TorchFunctions(spec=spec, model=model)
+        functions = TorchFunctions(
+            spec=spec, model=model, preprocessing_pipeline=pipeline
+        )
         return functions.predict(input_)
