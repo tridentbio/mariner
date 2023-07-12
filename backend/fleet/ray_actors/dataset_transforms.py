@@ -9,8 +9,10 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 import pandas as pd
 import ray
 
+from fleet.dataset_schemas import StatsType
 from fleet.model_builder.splitters import apply_split_indexes
 from fleet.stats import get_metadata, get_stats
+from fleet.utils.dataset import converts_file_to_dataframe
 from fleet.validation.checker import CompatibilityChecker, ErrorsType
 from fleet.validation.functions import (
     check_biological_sequence_series,
@@ -28,10 +30,8 @@ from mariner.schemas.dataset_schemas import (
     ProteinDataType,
     RNADataType,
     SmileDataType,
-    StatsType,
     StringDataType,
 )
-from mariner.utils import decompress_file
 
 LOG = logging.getLogger(__name__)
 
@@ -49,13 +49,11 @@ class DatasetTransforms:
 
     def __init__(
         self,
-        is_compressed: bool = False,
         df: Union[pd.DataFrame, None] = None,
     ):
         self._file_input = io.BytesIO()
         self._is_dataset_fully_loaded = False
         self._df = df
-        self.is_compressed = is_compressed
 
     def write_dataset_buffer(self, chunk: bytes):
         """Writes to the underlying csv file
@@ -96,12 +94,7 @@ class DatasetTransforms:
             return
         self._is_dataset_fully_loaded = value
         if value:
-            self._file_input.seek(0)
-            self.df = self._df = pd.read_csv(
-                decompress_file(self._file_input)
-                if self.is_compressed
-                else self._file_input
-            )
+            self.df = converts_file_to_dataframe(self._file_input)
 
     def get_dataframe(self) -> pd.DataFrame:
         """Returns the underlying dataframe

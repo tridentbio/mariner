@@ -20,6 +20,7 @@ from fleet.model_builder import layers_schema as layers
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.torch_.models import CustomModel
 from fleet.utils.data import MarinerTorchDataset
+from fleet.utils.dataset import converts_file_to_dataframe
 from mariner.core.config import get_app_settings
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
@@ -88,15 +89,18 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
     return model
 
 
+@pytest.mark.parametrize("framework", ("torch", "sklearn"))
 @pytest.mark.integration
 def test_post_models_success(
     db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_dataset: DatasetEntity,
+    some_dataset: DatasetEntity,  # noqa
+    sampl_dataset: DatasetEntity,  # noqa
+    framework: str,
 ):
     user = get_test_user(db)
-    model = mock_model()
+    model = mock_model(framework=framework)
     res = client.post(
         f"{get_app_settings().API_V1_STR}/models/",
         json=model.dict(),
@@ -104,7 +108,7 @@ def test_post_models_success(
     )
     body = res.json()
 
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTP_200_OK, body["detail"]
     assert body["name"] == model.name
     assert "columns" in body
     assert body["createdById"] == user.id
@@ -450,7 +454,7 @@ def test_post_check_config_bad_model(
     regressor.dataset.name = some_dataset.name
     dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
     torch_dataset = MarinerTorchDataset(
-        dataset.get_dataframe(),
+        converts_file_to_dataframe(dataset.get_dataset_file()),
         dataset_config=regressor.dataset,
     )
     dataloader = DataLoader(torch_dataset, batch_size=1)

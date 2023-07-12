@@ -36,7 +36,6 @@ from mariner.schemas.dataset_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.tasks import TaskView, get_manager
-from mariner.utils import is_compressed
 
 DATASET_BUCKET = get_app_settings().AWS_DATASETS
 LOG = logging.getLogger(__name__)
@@ -112,7 +111,7 @@ async def process_dataset(
 
         # Send the file to the ray actor by chunks
         chunk_size = get_app_settings().APPLICATION_CHUNK_SIZE
-        dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))
+        dataset_ray_transformer = DatasetTransforms.remote()
         for chunk in iter(lambda: file.read(chunk_size), b""):
             await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
         await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)

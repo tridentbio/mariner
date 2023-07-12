@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -14,40 +14,108 @@ from mariner.stores import dataset_sql
 from tests.fixtures.user import get_test_user
 
 
-def mock_columns_metadatas():
-    return [
-        {
-            "pattern": "smiles",
-            "data_type": {
-                "domain_kind": "smiles",
+def mock_columns_metadatas(dataset: Literal["zinc", "sampl", "hiv"] = "zinc"):
+    if dataset == "zinc":
+        return [
+            {
+                "pattern": "smiles",
+                "data_type": {
+                    "domain_kind": "smiles",
+                },
+                "description": "smiles column",
             },
-            "description": "smiles column",
-        },
-        {
-            "pattern": "mwt",
-            "data_type": {"domain_kind": "numeric", "unit": "mole"},
-            "description": "Molecular Weigth",
-        },
-        {
-            "pattern": "tpsa",
-            "data_type": {"domain_kind": "numeric", "unit": "mole"},
-            "description": "T Polar surface",
-        },
-        {
-            "pattern": "mwt_group",
-            "data_type": {
-                "domain_kind": "categorical",
-                "classes": {"yes": 0, "no": 1},
+            {
+                "pattern": "mwt",
+                "data_type": {"domain_kind": "numeric", "unit": "mole"},
+                "description": "Molecular Weigth",
             },
-            "description": "yes if mwt is larger than 300 otherwise no",
-        },
-    ]
+            {
+                "pattern": "tpsa",
+                "data_type": {"domain_kind": "numeric", "unit": "mole"},
+                "description": "T Polar surface",
+            },
+            {
+                "pattern": "mwt_group",
+                "data_type": {
+                    "domain_kind": "categorical",
+                    "classes": {"yes": 0, "no": 1},
+                },
+                "description": "yes if mwt is larger than 300 otherwise no",
+            },
+        ]
+    elif dataset == "sampl":
+        return [
+            {
+                "dataType": {"domainKind": "string"},
+                "description": "column 1",
+                "pattern": "iupac",
+            },
+            {
+                "dataType": {"domainKind": "smiles"},
+                "description": "column 2",
+                "pattern": "smiles",
+            },
+            {
+                "dataType": {"domainKind": "numeric", "unit": "mole"},
+                "description": "column 3",
+                "pattern": "expt",
+            },
+            {
+                "dataType": {"domainKind": "numeric", "unit": "mole"},
+                "description": "column 4",
+                "pattern": "calc",
+            },
+            {
+                "dataType": {
+                    "domainKind": "categorical",
+                    "classes": {"1": 0, "2": 1, "3": 2},
+                },
+                "description": "column ",
+                "pattern": "step",
+            },
+        ]
+    elif dataset == "hiv":
+        return [
+            {
+                "dataType": {"domainKind": "smiles"},
+                "description": "",
+                "pattern": "smiles",
+            },
+            {
+                "dataType": {
+                    "domainKind": "categorical",
+                    "classes": {"CI": 0, "CM": 1},
+                },
+                "description": "",
+                "pattern": "activity",
+            },
+            {
+                "dataType": {
+                    "domainKind": "categorical",
+                    "classes": {"0": 0, "1": 1},
+                },
+                "description": "",
+                "pattern": "HIV_active",
+            },
+            {
+                "dataType": {
+                    "domainKind": "categorical",
+                    "classes": {"1": 0, "2": 1, "3": 2},
+                },
+                "description": "",
+                "pattern": "step",
+            },
+        ]
 
 
-def mock_dataset(name: Optional[str] = None):
-    key = "datasets/zinc_extra.csv"
+def mock_dataset(
+    name: Optional[str] = None,
+    file: str = "tests/data/csv/zinc_extra.csv",
+    dataset: Literal["zinc", "sampl", "hiv"] = "zinc",
+):
+    key: str = f"datasets/{dataset}.csv"
     if not aws.is_in_s3(key=key, bucket=aws.Bucket.Datasets):
-        with open("tests/data/csv/zinc_extra.csv", "rb") as f:
+        with open(file, "rb") as f:
             aws.upload_s3_file(f, key=key, bucket=aws.Bucket.Datasets)
 
     return {
@@ -56,7 +124,7 @@ def mock_dataset(name: Optional[str] = None):
         "splitType": "random",
         "splitTarget": "60-20-20",
         "dataUrl": key,
-        "columnsMetadata": json.dumps(mock_columns_metadatas()),
+        "columnsMetadata": json.dumps(mock_columns_metadatas(dataset)),
     }
 
 

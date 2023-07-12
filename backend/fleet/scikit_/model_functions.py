@@ -41,7 +41,7 @@ class SciKitFunctions(BaseModelFunctions):
     def __init__(
         self,
         spec: SklearnModelSpec,
-        dataset: pd.DataFrame,
+        dataset: pd.DataFrame = None,
         model: Union[None, sklearn.base.ClassifierMixin] = None,
         preprocessing_pipeline: Union[
             None, "data.PreprocessingPipeline"

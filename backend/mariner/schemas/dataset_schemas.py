@@ -17,24 +17,15 @@ from typing import (
     no_type_check,
 )
 
-import pandas as pd
 from fastapi.datastructures import UploadFile
 from pydantic import Field, validator
 from pydantic.main import BaseModel
 
 from fleet import data_types
-from mariner.core.aws import Bucket, download_file_as_dataframe
+from mariner.core.aws import Bucket, download_s3
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 
 SplitType = Literal["scaffold", "random"]
-
-StatsType = NewType(
-    "StatsType",
-    Dict[
-        Literal["full", "train", "test", "val"],
-        Dict[str, Union[pd.Series, Dict[str, pd.Series]]],
-    ],
-)
 
 SchemaType = NewType(
     "SchemaType",
@@ -292,15 +283,14 @@ class Dataset(DatasetBase):
 
     id: int
 
-    def get_dataframe(self):
-        """Loads the dataframe linked to this dataset from s3.
+    def get_dataset_file(self):
+        """Gets dataset file from s3.
 
-        Gets dataframe stored in this dataset data_url attribute at
+        Gets dataset file stored in this dataset data_url attribute at
         datasets bucket.
         """
         assert self.data_url
-        df = download_file_as_dataframe(Bucket.Datasets, self.data_url)
-        return df
+        return download_s3(self.data_url, Bucket.Datasets)
 
 
 class DatasetUpdate(ApiBaseModel):
