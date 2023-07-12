@@ -249,15 +249,16 @@ def predict(
         f"{mlflow_model_name} at Mlflow",
     )
     pipeline = load_pipeline(modelversion.run_id)
-    model = mlflow.sklearn.load_model(model_uri)
 
     if isinstance(spec, SklearnModelSpec):
+        model = mlflow.sklearn.load_model(model_uri)
         functions = SciKitFunctions(
             spec, None, model=model, preprocessing_pipeline=pipeline
         )
         return functions.predict(input_)
 
     elif isinstance(spec, TorchModelSpec):
+        model = mlflow.pytorch.load_model(model_uri)
         if not isinstance(input_, pd.DataFrame):
             input_ = pd.DataFrame.from_dict(input_, dtype=float)
 
