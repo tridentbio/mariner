@@ -9,11 +9,14 @@ import { Section } from '@components/molecules/Section';
 import { Control, useWatch } from 'react-hook-form';
 import {
   ColumnConfig,
+  DatasetConfig,
   ModelCreate,
-  TargetConfig,
+  TorchDatasetConfig,
 } from '@app/rtk/generated/models';
 import { Text } from '@components/molecules/Text';
 import { DataTypeGuard } from '@app/types/domain/datasets';
+import { unwrapDollar } from '@model-compiler/src/utils';
+import { useMemo } from 'react';
 
 interface DatasetConfigurationProps {
   control: Control<ModelCreate>;
@@ -51,11 +54,26 @@ const ColumnConfigurationAcordion = ({
   );
 };
 
+type Transforms = DatasetConfig['transforms'];
+
+type Featurizers = DatasetConfig['featurizers'];
+
+type FormColumns = Record<
+  'feature' | 'target',
+  {
+    col: ColumnConfig;
+    transforms: Transforms;
+    featurizers: Featurizers;
+  }[]
+>;
+
 interface ColumnConfigurationProps {
-  column: ColumnConfig | TargetConfig;
+  formColumn: FormColumns['feature'][0];
 }
 
-const ColumnConfiguration = ({ column }: ColumnConfigurationProps) => {
+const ColumnConfiguration = ({ formColumn }: ColumnConfigurationProps) => {
+  const { col, transforms, featurizers } = formColumn;
+
   return (
     <>
       <Box
@@ -66,7 +84,7 @@ const ColumnConfiguration = ({ column }: ColumnConfigurationProps) => {
           gap: '1rem',
         }}
       >
-        {!DataTypeGuard.isNumericalOrQuantity(column.dataType) && (
+        {!DataTypeGuard.isNumericalOrQuantity(col.dataType) && (
           <Button variant="outlined" color="primary" sx={{ width: '30%' }}>
             Add Featurizer
           </Button>
@@ -79,36 +97,118 @@ const ColumnConfiguration = ({ column }: ColumnConfigurationProps) => {
   );
 };
 
+const isTransform = (_: any) => {
+  return true;
+};
+
+const stages = ['col', 'transforms', 'featurizers'] as const;
+
+const groupColumnsTransformsFeaturizers = ({
+  datasetConfig,
+}: {
+  datasetConfig: TorchDatasetConfig | DatasetConfig;
+}) => {
+  const formColumns = {
+    feature: datasetConfig.featureColumns.map((col) => ({
+      col,
+      transforms: [],
+      featurizers: [],
+    })),
+    target: datasetConfig.targetColumns.map((col) => ({
+      col,
+      transforms: [],
+      featurizers: [],
+    })),
+  } as FormColumns;
+
+  const transformers = [
+    ...(datasetConfig.transforms || []),
+    ...(datasetConfig.featurizers || []),
+  ];
+
+  const findTransformerColumn = (
+    transformer: (typeof transformers)[0],
+    formColumns: FormColumns,
+    stage: 'col' | 'transforms' | 'featurizers',
+    colType: 'feature' | 'target' = 'feature'
+  ): ['feature' | 'target' | null, number] => {
+    const name = unwrapDollar(transformer.name as string);
+
+    const colIndex = formColumns[colType].findIndex((col) => {
+      const component = col[stage]!;
+      if (Array.isArray(component)) {
+        return component.some((c) => c.name === name);
+      }
+
+      return component.name === name;
+    });
+
+    if (colIndex !== -1) return [colType, colIndex];
+    else if (colType === 'feature')
+      return findTransformerColumn(transformer, formColumns, stage, 'target');
+    else return [null, -1];
+  };
+
+  transformers.forEach((transformer) => {
+    if (!transformer.name) return;
+
+    let [colType, colIndex]: ['feature' | 'target' | null, number] = [null, -1];
+
+    for (const stage of stages) {
+      [colType, colIndex] = findTransformerColumn(
+        transformer,
+        formColumns,
+        stage
+      );
+
+      if (colIndex !== -1) break;
+    }
+
+    const transformerType = isTransform(transformer)
+      ? 'transforms'
+      : 'featurizers';
+
+    formColumns[colType!][colIndex][transformerType]!.push(transformer);
+  });
+
+  return formColumns;
+};
+
 export const DatasetConfigurationForm = ({
   control,
 }: DatasetConfigurationProps) => {
-  const featureColumns = useWatch({
+  const datasetConfig = useWatch({
     control,
-    name: 'config.dataset.featureColumns',
-  });
-  const targetColumns = useWatch({
-    control,
-    name: 'config.dataset.targetColumns',
+    name: 'config.dataset',
   });
 
-  console.log({ values: control._formValues });
+  const formColumns = useMemo(
+    () =>
+      groupColumnsTransformsFeaturizers({
+        datasetConfig,
+      }),
+    [datasetConfig]
+  );
 
   return (
     <>
       <Section title="Data Configuration">
-        {featureColumns.map((col) => (
-          <ColumnConfigurationAcordion name={col.name} dataType={col.dataType}>
-            <ColumnConfiguration column={col} />
+        {formColumns.feature.map((formColumn) => (
+          <ColumnConfigurationAcordion
+            name={formColumn.col.name}
+            dataType={formColumn.col.dataType}
+          >
+            <ColumnConfiguration formColumn={formColumn} />
           </ColumnConfigurationAcordion>
         ))}
 
-        {targetColumns.map((col) => (
+        {formColumns.target.map((formColumn) => (
           <ColumnConfigurationAcordion
-            name={col.name}
-            dataType={col.dataType}
+            name={formColumn.col.name}
+            dataType={formColumn.col.dataType}
             textProps={{ fontWeight: 'bold' }}
           >
-            <ColumnConfiguration column={col} />
+            <ColumnConfiguration formColumn={formColumn} />
           </ColumnConfigurationAcordion>
         ))}
       </Section>

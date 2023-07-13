@@ -874,5 +874,5 @@ export const {
   usePostMakePredictionDeploymentMutation,
   usePostMakePredictionDeploymentPublicMutation,
   useHandleDeploymentManagerMutation,
-  endpoints
+  endpoints,
 } = injectedRtkApi;

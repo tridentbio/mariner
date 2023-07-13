@@ -35,6 +35,7 @@ const ModelCreateV2 = () => {
         dataset: {
           featureColumns: [],
           featurizers: [],
+          transforms: [],
           targetColumns: [],
         },
         spec: { layers: [] },
@@ -50,19 +51,22 @@ const ModelCreateV2 = () => {
     event.preventDefault();
     methods.handleSubmit(
       async (modelCreate) => {
-        const result = await checkModel({
-          trainingCheckRequest: {
-            modelSpec: { framework: 'torch', ...modelCreate.config },
-          },
-        });
-        if (!('error' in result) && !result.data.stackTrace)
-          return createModel({
-            modelCreate,
-          }).then((result) => {
-            if ('data' in result) {
-              navigate(`/models/${result.data.id}`);
-            }
+        if (modelCreate.config.framework === 'torch') {
+          const result = await checkModel({
+            trainingCheckRequest: {
+              modelSpec: modelCreate.config,
+            },
           });
+          if ('error' in result || result.data.stackTrace)
+            return notifyError('Error creating dataset');
+        }
+        return createModel({
+          modelCreate,
+        }).then((result) => {
+          if ('data' in result) {
+            navigate(`/models/${result.data.id}`);
+          }
+        });
       },
       () => {
         notifyError('Error creating dataset');
@@ -134,7 +138,7 @@ const ModelCreateV2 = () => {
       };
       const makeTargetColumnConfigFromDescription = (
         description: modelsApi.ColumnsDescription
-      ): modelsApi.TargetConfig => {
+      ): modelsApi.TargetTorchColumnConfig => {
         return {
           name: description.pattern,
           dataType: description.dataType,
