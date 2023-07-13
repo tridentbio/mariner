@@ -43,6 +43,11 @@ export const enum DataTypeDomainKind {
 export type DataType = datasetsApi.ColumnsDescription['dataType'];
 
 export const DataTypeGuard = {
+  isNumericalOrQuantity(
+    dt: any
+  ): dt is datasetsApi.NumericalDataType | datasetsApi.QuantityDataType {
+    return dt.domainKind === DataTypeDomainKind.Numerical;
+  },
   isNumerical(dt: any): dt is datasetsApi.NumericalDataType {
     return dt.domainKind === DataTypeDomainKind.Numerical && !('unit' in dt);
   },
