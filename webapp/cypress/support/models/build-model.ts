@@ -230,7 +230,7 @@ export const buildModel = (
     iterateTopologically(config, (node, type) => {
       if (['input', 'output'].includes(type)) return;
       const args = 'constructorArgs' in node ? node.constructorArgs : {};
-      if (objIsEmpty(args)) return;
+      if (args && objIsEmpty(args)) return;
 
       Object.entries(args).forEach(([key, value]) => {
         autoFixSuggestions().then(() => {

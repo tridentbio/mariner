@@ -1,14 +1,14 @@
 import {
   TorchModelSpec,
   ColumnConfig as APIColumnConfig,
-  TargetConfig as APITargetConfig,
+  TargetTorchColumnConfig as APITargetConfig,
   ColumnsDescription,
   TorchlinearLayerConfig,
   TorchreluLayerConfig,
   TorchsigmoidLayerConfig,
   TorchgeometricgcnconvLayerConfig,
   GetModelOptionsApiResponse,
-  NumericalDataType,
+  NumericDataType,
   TorchembeddingLayerConfig,
   TorchtransformerencoderlayerLayerConfig,
   FleetconcatLayerConfig,
@@ -42,8 +42,12 @@ export type LayersType = ArrayElement<TorchModelSpec['spec']['layers']>;
 export type FeaturizersType = ArrayElement<
   TorchModelSpec['dataset']['featurizers']
 >;
+
+export type TransformsType = ArrayElement<
+  TorchModelSpec['dataset']['transforms']
+>;
 export type ComponentType = 'layer' | 'featurizer' | 'input' | 'output';
-export type LayerFeaturizerType = LayersType | FeaturizersType;
+export type LayerFeaturizerType = LayersType | FeaturizersType | TransformsType;
 export type ComponentConfigs = {
   [K in LayerFeaturizerType as K['type']]: K;
 };
@@ -81,7 +85,7 @@ export type Output = {
 
 export type NodeType = LayersType | FeaturizersType | Input | Output;
 
-export type DataType = ColumnsDescription['dataType'] | NumericalDataType;
+export type DataType = ColumnsDescription['dataType'] | NumericDataType;
 
 export type Linear = TorchlinearLayerConfig & { type: 'torch.nn.Linear' };
 export type Relu = TorchreluLayerConfig & { type: 'torch.nn.ReLU' };
@@ -137,6 +141,7 @@ interface DatasetWithForwards {
   targetColumns: TargetConfigWithForward[];
   featureColumns: ColumnConfigWithForward[];
   featurizers: FeaturizersType[];
+  transforms: TransformsType[];
 }
 export interface ModelSchema extends TorchModelSpec {
   dataset: DatasetWithForwards;

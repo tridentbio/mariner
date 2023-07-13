@@ -21,7 +21,7 @@ See Also:
     :mod:`fleet.model_builder.featurizers`
 """
 
-from typing import Annotated, Dict, List, Literal, NewType, Union, get_args
+from typing import Annotated, Dict, List, Literal, Union, get_args
 
 from humps import camel
 from pydantic import BaseModel, Field
