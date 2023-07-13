@@ -1,19 +1,19 @@
-import { FormEventHandler, MouseEvent, useEffect, useState } from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
 import { ModelEditorContextProvider } from 'hooks/useModelEditor';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import * as modelsApi from 'app/rtk/generated/models';
 import ModelEditor from 'components/templates/ModelEditorV2';
 import ModelConfigForm from './ModelConfigForm';
-import DatasetConfigForm from './DatasetConfigForm';
+import { DatasetConfigurationForm } from './DatasetConfigurationForm';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import Content from 'components/templates/AppLayout/Content';
 import { useNotifications } from 'app/notifications';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import StackTrace from 'components/organisms/StackTrace';
-import { ModelSchema } from 'model-compiler/src/interfaces/model-editor';
 import { Box } from '@mui/system';
 import { Stepper, Step, Container, Button, StepLabel } from '@mui/material';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
+import { ModelSetup } from './ModelSetup';
 
 const ModelCreateV2 = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
@@ -31,6 +31,7 @@ const ModelCreateV2 = () => {
       modelVersionDescription: '',
       config: {
         name: '',
+        framework: 'torch',
         dataset: {
           featureColumns: [],
           featurizers: [],
@@ -170,8 +171,12 @@ const ModelCreateV2 = () => {
       content: <ModelConfigForm control={control} />,
     },
     {
-      title: 'Features and Target',
-      content: <DatasetConfigForm control={control} />,
+      title: 'Model Setup',
+      content: <ModelSetup control={control} />,
+    },
+    {
+      title: 'Dataset Configuration',
+      content: <DatasetConfigurationForm control={control} />,
     },
     {
       title: 'Model Architecture',

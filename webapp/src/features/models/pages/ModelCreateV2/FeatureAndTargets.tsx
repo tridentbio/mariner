@@ -11,8 +11,9 @@ import { Control, Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
 import { DataTypeGuard } from 'app/types/domain/datasets';
 import { useAppSelector } from 'app/hooks';
+import { MenuItem, Select } from '@mui/material';
 
-export interface DatasetConfigForm {
+export interface FeatureAndTargets {
   control: Control<ModelCreate>;
 }
 
@@ -25,7 +26,7 @@ const sortColumnsMetadata = (columnsMetadata: Dataset['columnsMetadata']) => {
   );
   return arr;
 };
-const DatasetConfigForm = ({ control }: DatasetConfigForm) => {
+const FeatureAndTargets = ({ control }: FeatureAndTargets) => {
   const { setValue } = useFormContext();
   const [fetchDatasetById] = useLazyGetMyDatasetQuery();
   const [fetchDatasets] = useLazyGetMyDatasetsQuery();
@@ -176,4 +177,4 @@ const DatasetConfigForm = ({ control }: DatasetConfigForm) => {
   );
 };
 
-export default DatasetConfigForm;
+export default FeatureAndTargets;
