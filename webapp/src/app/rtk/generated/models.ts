@@ -464,12 +464,6 @@ export type FleetmoleculefeaturizerLayerConfig = {
   constructorArgs: FleetmoleculefeaturizerConstructorArgs;
   forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
 };
-export type FleetmoleculefeaturizerLayerConfig2 = {
-  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
-  name: string;
-  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
-  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
-};
 export type FleetintegerfeaturizerForwardArgsReferences = {
   input_: string;
 };
@@ -501,6 +495,12 @@ export type FleetproteinsequencefeaturizerLayerConfig = {
   type?: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
   name: string;
   forwardArgs: FleetproteinsequencefeaturizerForwardArgsReferences;
+};
+export type FleetmoleculefeaturizerLayerConfig2 = {
+  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+  name: string;
+  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
+  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
 };
 export type StandardScalerConstructorArgs = {
   with_mean?: boolean;
@@ -552,19 +552,41 @@ export type TorchDatasetConfig = {
   targetColumns: TargetTorchColumnConfig[];
   featureColumns: ColumnConfig[];
   featurizers?: (
-    | FpVecFilteredTransformerConfig
-    | FleetmoleculefeaturizerLayerConfig
-    | FleetmoleculefeaturizerLayerConfig2
-    | FleetintegerfeaturizerLayerConfig
-    | FleetdnasequencefeaturizerLayerConfig
-    | FleetrnasequencefeaturizerLayerConfig
-    | FleetproteinsequencefeaturizerLayerConfig
+    | ({
+        type: 'molfeat.trans.fp.FPVecFilteredTransformer';
+      } & FpVecFilteredTransformerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+      } & FleetmoleculefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.IntegerFeaturizer';
+      } & FleetintegerfeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
+      } & FleetdnasequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
+      } & FleetrnasequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
+      } & FleetproteinsequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet__preprocessing__FleetmoleculefeaturizerLayerConfig';
+      } & FleetmoleculefeaturizerLayerConfig2)
   )[];
   transforms?: (
-    | StandardScalerConfig
-    | LabelEncoderConfig
-    | OneHotEncoderConfig
-    | NpConcatenateConfig
+    | ({
+        type: 'sklearn.preprocessing.StandardScaler';
+      } & StandardScalerConfig)
+    | ({
+        type: 'sklearn.preprocessing.LabelEncoder';
+      } & LabelEncoderConfig)
+    | ({
+        type: 'sklearn.preprocessing.OneHotEncoder';
+      } & OneHotEncoderConfig)
+    | ({
+        type: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
+      } & NpConcatenateConfig)
   )[];
 };
 export type TorchModelSpec = {
@@ -578,19 +600,41 @@ export type DatasetConfig = {
   targetColumns: ColumnConfig[];
   featureColumns: ColumnConfig[];
   featurizers?: (
-    | FpVecFilteredTransformerConfig
-    | FleetmoleculefeaturizerLayerConfig
-    | FleetmoleculefeaturizerLayerConfig2
-    | FleetintegerfeaturizerLayerConfig
-    | FleetdnasequencefeaturizerLayerConfig
-    | FleetrnasequencefeaturizerLayerConfig
-    | FleetproteinsequencefeaturizerLayerConfig
+    | ({
+        type: 'molfeat.trans.fp.FPVecFilteredTransformer';
+      } & FpVecFilteredTransformerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+      } & FleetmoleculefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.IntegerFeaturizer';
+      } & FleetintegerfeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
+      } & FleetdnasequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
+      } & FleetrnasequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
+      } & FleetproteinsequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet__preprocessing__FleetmoleculefeaturizerLayerConfig';
+      } & FleetmoleculefeaturizerLayerConfig2)
   )[];
   transforms?: (
-    | StandardScalerConfig
-    | LabelEncoderConfig
-    | OneHotEncoderConfig
-    | NpConcatenateConfig
+    | ({
+        type: 'sklearn.preprocessing.StandardScaler';
+      } & StandardScalerConfig)
+    | ({
+        type: 'sklearn.preprocessing.LabelEncoder';
+      } & LabelEncoderConfig)
+    | ({
+        type: 'sklearn.preprocessing.OneHotEncoder';
+      } & OneHotEncoderConfig)
+    | ({
+        type: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
+      } & NpConcatenateConfig)
   )[];
 };
 export type KNeighborsRegressorConstructorArgs = {
