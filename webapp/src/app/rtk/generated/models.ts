@@ -389,7 +389,7 @@ export type QuantityDataType2 = {
   domainKind?: 'numeric';
   unit: string;
 };
-export type NumericalDataType = {
+export type NumericDataType = {
   domainKind?: 'numeric';
 };
 export type StringDataType2 = {
@@ -413,11 +413,11 @@ export type RnaDataType2 = {
 export type ProteinDataType2 = {
   domainKind?: 'protein';
 };
-export type TargetConfig = {
+export type TargetTorchColumnConfig = {
   name: string;
   dataType:
     | QuantityDataType2
-    | NumericalDataType
+    | NumericDataType
     | StringDataType2
     | SmileDataType2
     | CategoricalDataType2
@@ -432,13 +432,23 @@ export type ColumnConfig = {
   name: string;
   dataType:
     | QuantityDataType2
-    | NumericalDataType
+    | NumericDataType
     | StringDataType2
     | SmileDataType2
     | CategoricalDataType2
     | DnaDataType2
     | RnaDataType2
     | ProteinDataType2;
+};
+export type FpVecFilteredTransformerConstructorArgs = {
+  del_invariant?: boolean;
+  length?: number;
+};
+export type FpVecFilteredTransformerConfig = {
+  type?: 'molfeat.trans.fp.FPVecFilteredTransformer';
+  constructorArgs?: FpVecFilteredTransformerConstructorArgs;
+  name: string;
+  forwardArgs: object;
 };
 export type FleetmoleculefeaturizerConstructorArgs = {
   allow_unknown: boolean;
@@ -449,6 +459,12 @@ export type FleetmoleculefeaturizerForwardArgsReferences = {
   mol: string;
 };
 export type FleetmoleculefeaturizerLayerConfig = {
+  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+  name: string;
+  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
+  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
+};
+export type FleetmoleculefeaturizerLayerConfig2 = {
   type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
   name: string;
   constructorArgs: FleetmoleculefeaturizerConstructorArgs;
@@ -486,26 +502,69 @@ export type FleetproteinsequencefeaturizerLayerConfig = {
   name: string;
   forwardArgs: FleetproteinsequencefeaturizerForwardArgsReferences;
 };
+export type StandardScalerConstructorArgs = {
+  with_mean?: boolean;
+  with_std?: boolean;
+};
+export type StandardScalerConfig = {
+  type?: 'sklearn.preprocessing.StandardScaler';
+  constructorArgs?: StandardScalerConstructorArgs;
+  name: string;
+  forwardArgs:
+    | {
+        [key: string]: string;
+      }
+    | string[];
+};
+export type BaseModel = {};
+export type LabelEncoderConfig = {
+  type?: 'sklearn.preprocessing.LabelEncoder';
+  constructorArgs?: BaseModel;
+  name: string;
+  forwardArgs:
+    | {
+        [key: string]: string;
+      }
+    | string[];
+};
+export type OneHotEncoderConfig = {
+  type?: 'sklearn.preprocessing.OneHotEncoder';
+  constructorArgs?: BaseModel;
+  name: string;
+  forwardArgs:
+    | {
+        [key: string]: string;
+      }
+    | string[];
+};
+export type NpConcatenateConfig = {
+  type?: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
+  constructorArgs?: BaseModel;
+  name: string;
+  forwardArgs:
+    | {
+        [key: string]: string[];
+      }
+    | string[];
+};
 export type TorchDatasetConfig = {
   name: string;
-  targetColumns: TargetConfig[];
+  targetColumns: TargetTorchColumnConfig[];
   featureColumns: ColumnConfig[];
   featurizers?: (
-    | ({
-        type: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
-      } & FleetmoleculefeaturizerLayerConfig)
-    | ({
-        type: 'fleet.model_builder.featurizers.IntegerFeaturizer';
-      } & FleetintegerfeaturizerLayerConfig)
-    | ({
-        type: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
-      } & FleetdnasequencefeaturizerLayerConfig)
-    | ({
-        type: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
-      } & FleetrnasequencefeaturizerLayerConfig)
-    | ({
-        type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
-      } & FleetproteinsequencefeaturizerLayerConfig)
+    | FpVecFilteredTransformerConfig
+    | FleetmoleculefeaturizerLayerConfig
+    | FleetmoleculefeaturizerLayerConfig2
+    | FleetintegerfeaturizerLayerConfig
+    | FleetdnasequencefeaturizerLayerConfig
+    | FleetrnasequencefeaturizerLayerConfig
+    | FleetproteinsequencefeaturizerLayerConfig
+  )[];
+  transforms?: (
+    | StandardScalerConfig
+    | LabelEncoderConfig
+    | OneHotEncoderConfig
+    | NpConcatenateConfig
   )[];
 };
 export type TorchModelSpec = {
@@ -514,6 +573,179 @@ export type TorchModelSpec = {
   spec: TorchModelSchema;
   dataset: TorchDatasetConfig;
 };
+export type DatasetConfig = {
+  name: string;
+  targetColumns: ColumnConfig[];
+  featureColumns: ColumnConfig[];
+  featurizers?: (
+    | FpVecFilteredTransformerConfig
+    | FleetmoleculefeaturizerLayerConfig
+    | FleetmoleculefeaturizerLayerConfig2
+    | FleetintegerfeaturizerLayerConfig
+    | FleetdnasequencefeaturizerLayerConfig
+    | FleetrnasequencefeaturizerLayerConfig
+    | FleetproteinsequencefeaturizerLayerConfig
+  )[];
+  transforms?: (
+    | StandardScalerConfig
+    | LabelEncoderConfig
+    | OneHotEncoderConfig
+    | NpConcatenateConfig
+  )[];
+};
+export type KNeighborsRegressorConstructorArgs = {
+  n_neighbors?: number;
+  algorithm?: 'kd_tree';
+};
+export type KNeighborsRegressorConfig = {
+  type?: 'sklearn.neighbors.KNeighborsRegressor';
+  constructorArgs?: KNeighborsRegressorConstructorArgs;
+  fitArgs: {
+    [key: string]: string;
+  };
+  taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
+};
+export type RandomForestRegressorConstructorArgs = {
+  n_estimators?: number;
+  max_depth?: number;
+  min_samples_split?: number | number;
+  min_samples_leaf?: number | number;
+  min_weight_fraction_leaf?: number;
+  max_features?: number | ('sqrt' | 'log2');
+  max_leaf_nodes?: number;
+  min_impurity_decrease?: number;
+  bootstrap?: boolean;
+  oob_score?: boolean;
+  n_jobs?: number;
+  ccp_alpha?: number;
+  max_samples?: number | number;
+};
+export type RandomForestRegressorConfig = {
+  type?: 'sklearn.ensemble.RandomForestRegressor';
+  taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
+  constructorArgs?: RandomForestRegressorConstructorArgs;
+  fitArgs: {
+    [key: string]: string;
+  };
+};
+export type ExtraTreesRegressorConstructorArgs = {
+  n_estimators?: number;
+  criterion?: 'squared_error' | 'absolute_error' | 'friedman_mse' | 'poisson';
+  max_depth?: number;
+  min_samples_split?: number | number;
+  min_samples_leaf?: number | number;
+  min_weight_fraction_leaf?: number;
+  max_features?: number | ('sqrt' | 'log2');
+  max_leaf_nodes?: number;
+  min_impurity_decrease?: number;
+  bootstrap?: boolean;
+  oob_score?: boolean;
+  n_jobs?: number;
+  random_state?: number;
+  verbose?: number;
+  warm_start?: boolean;
+  ccp_alpha?: number;
+  max_samples?: number | number;
+};
+export type ExtraTreesRegressorConfig = {
+  type?: 'sklearn.ensemble.ExtraTreesRegressor';
+  taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
+  constructorArgs?: ExtraTreesRegressorConstructorArgs;
+  fitArgs: {
+    [key: string]: string;
+  };
+};
+export type ExtraTreesClassifierConstructorArgs = {
+  n_estimators?: number;
+  criterion?: 'gini' | 'entropy' | 'log_loss';
+  max_depth?: number;
+  min_samples_split?: number | number;
+  min_samples_leaf?: number | number;
+  min_weight_fraction_leaf?: number;
+  max_features?: number | number | ('sqrt' | 'log2');
+  max_leaf_nodes?: number;
+  min_impurity_decrease?: number;
+  bootstrap?: boolean;
+  oob_score?: boolean;
+  n_jobs?: number;
+  random_state?: number;
+  verbose?: number;
+  warm_start?: boolean;
+  class_weight?: ('balanced' | 'balanced_subsample') | object | object[];
+  ccp_alpha?: number;
+  max_samples?: number | number;
+};
+export type ExtraTreesClassifierConfig = {
+  type?: 'sklearn.ensemble.ExtraTreesClassifier';
+  taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
+  constructorArgs?: ExtraTreesClassifierConstructorArgs;
+  fitArgs: {
+    [key: string]: string;
+  };
+};
+export type KnearestNeighborsClassifierConstructorArgs = {
+  n_neighbors?: number;
+  weights?: 'uniform' | 'distance';
+  algorithm?: 'auto' | 'ball_tree' | 'kd_tree' | 'brute';
+  leaf_size?: number;
+  p?: number;
+  metric?: string;
+  metric_params?: {
+    [key: string]: string | number | number;
+  };
+  n_jobs?: number;
+};
+export type KnearestNeighborsClassifierConfig = {
+  type?: 'sklearn.neighbors.KNeighborsClassifier';
+  constructorArgs?: KnearestNeighborsClassifierConstructorArgs;
+  fitArgs: {
+    [key: string]: string;
+  };
+  taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
+};
+export type RandomForestClassifierConstructorArgs = {
+  n_estimators?: number;
+  criterion?: 'gini' | 'entropy' | 'log_loss';
+  max_depth?: number;
+  min_samples_split?: number | number;
+  min_samples_leaf?: number | number;
+  min_weight_fraction_leaf?: number;
+  max_features?: number | number | ('sqrt' | 'log2');
+  max_leaf_nodes?: number;
+  min_impurity_decrease?: number;
+  bootstrap?: boolean;
+  oob_score?: boolean;
+  n_jobs?: number;
+  random_state?: number;
+  verbose?: number;
+  warm_start?: boolean;
+  class_weight?: ('balanced' | 'balanced_subsample') | object | object[];
+  ccp_alpha?: number;
+  max_samples?: number | number;
+};
+export type RandomForestClassifierConfig = {
+  type?: 'sklearn.ensemble.RandomForestClassifier';
+  taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
+  constructorArgs?: RandomForestClassifierConstructorArgs;
+  fitArgs: {
+    [key: string]: string;
+  };
+};
+export type SklearnModelSchema = {
+  model:
+    | KNeighborsRegressorConfig
+    | RandomForestRegressorConfig
+    | ExtraTreesRegressorConfig
+    | ExtraTreesClassifierConfig
+    | KnearestNeighborsClassifierConfig
+    | RandomForestClassifierConfig;
+};
+export type SklearnModelSpec = {
+  framework?: 'sklearn';
+  name: string;
+  dataset: DatasetConfig;
+  spec: SklearnModelSchema;
+};
 export type ModelVersion = {
   id: number;
   modelId: number;
@@ -521,7 +753,13 @@ export type ModelVersion = {
   description?: string;
   mlflowVersion?: string;
   mlflowModelName: string;
-  config: TorchModelSpec;
+  config:
+    | ({
+        framework: 'torch';
+      } & TorchModelSpec)
+    | ({
+        framework: 'sklearn';
+      } & SklearnModelSpec);
   createdAt: string;
   updatedAt: string;
 };
@@ -560,221 +798,31 @@ export type ModelCreate = {
   name: string;
   modelDescription?: string;
   modelVersionDescription?: string;
-  config: TorchModelSpec;
+  config:
+    | ({
+        framework: 'torch';
+      } & TorchModelSpec)
+    | ({
+        framework: 'sklearn';
+      } & SklearnModelSpec);
 };
-export type FleetonehotConstructorArgsSummary = {};
-export type FleetonehotForwardArgsSummary = {
-  x1?: string;
-};
-export type FleetonehotSummary = {
-  type?: 'fleet.model_builder.layers.OneHot';
-  constructorArgsSummary?: FleetonehotConstructorArgsSummary;
-  forwardArgsSummary?: FleetonehotForwardArgsSummary;
-};
-export type FleetglobalpoolingConstructorArgsSummary = {
-  aggr?: string;
-};
-export type FleetglobalpoolingForwardArgsSummary = {
-  x?: string;
-  batch?: string;
-  size?: string;
-};
-export type FleetglobalpoolingSummary = {
-  type?: 'fleet.model_builder.layers.GlobalPooling';
-  constructorArgsSummary?: FleetglobalpoolingConstructorArgsSummary;
-  forwardArgsSummary?: FleetglobalpoolingForwardArgsSummary;
-};
-export type FleetconcatConstructorArgsSummary = {
-  dim?: string;
-};
-export type FleetconcatForwardArgsSummary = {
-  xs?: string;
-};
-export type FleetconcatSummary = {
-  type?: 'fleet.model_builder.layers.Concat';
-  constructorArgsSummary?: FleetconcatConstructorArgsSummary;
-  forwardArgsSummary?: FleetconcatForwardArgsSummary;
-};
-export type FleetaddpoolingConstructorArgsSummary = {
-  dim?: string;
-};
-export type FleetaddpoolingForwardArgsSummary = {
-  x?: string;
-};
-export type FleetaddpoolingSummary = {
-  type?: 'fleet.model_builder.layers.AddPooling';
-  constructorArgsSummary?: FleetaddpoolingConstructorArgsSummary;
-  forwardArgsSummary?: FleetaddpoolingForwardArgsSummary;
-};
-export type TorchlinearConstructorArgsSummary = {
-  in_features?: string;
-  out_features?: string;
-  bias?: string;
-};
-export type TorchlinearForwardArgsSummary = {
-  input?: string;
-};
-export type TorchlinearSummary = {
-  type?: 'torch.nn.Linear';
-  constructorArgsSummary?: TorchlinearConstructorArgsSummary;
-  forwardArgsSummary?: TorchlinearForwardArgsSummary;
-};
-export type TorchsigmoidConstructorArgsSummary = {};
-export type TorchsigmoidForwardArgsSummary = {
-  input?: string;
-};
-export type TorchsigmoidSummary = {
-  type?: 'torch.nn.Sigmoid';
-  constructorArgsSummary?: TorchsigmoidConstructorArgsSummary;
-  forwardArgsSummary?: TorchsigmoidForwardArgsSummary;
-};
-export type TorchreluConstructorArgsSummary = {
-  inplace?: string;
-};
-export type TorchreluForwardArgsSummary = {
-  input?: string;
-};
-export type TorchreluSummary = {
-  type?: 'torch.nn.ReLU';
-  constructorArgsSummary?: TorchreluConstructorArgsSummary;
-  forwardArgsSummary?: TorchreluForwardArgsSummary;
-};
-export type TorchgeometricgcnconvConstructorArgsSummary = {
-  in_channels?: string;
-  out_channels?: string;
-  improved?: string;
-  cached?: string;
-  add_self_loops?: string;
-  normalize?: string;
-  bias?: string;
-};
-export type TorchgeometricgcnconvForwardArgsSummary = {
-  x?: string;
-  edge_index?: string;
-  edge_weight?: string;
-};
-export type TorchgeometricgcnconvSummary = {
-  type?: 'torch_geometric.nn.GCNConv';
-  constructorArgsSummary?: TorchgeometricgcnconvConstructorArgsSummary;
-  forwardArgsSummary?: TorchgeometricgcnconvForwardArgsSummary;
-};
-export type TorchembeddingConstructorArgsSummary = {
-  num_embeddings?: string;
-  embedding_dim?: string;
-  padding_idx?: string;
-  max_norm?: string;
-  norm_type?: string;
-  scale_grad_by_freq?: string;
-  sparse?: string;
-};
-export type TorchembeddingForwardArgsSummary = {
-  input?: string;
-};
-export type TorchembeddingSummary = {
-  type?: 'torch.nn.Embedding';
-  constructorArgsSummary?: TorchembeddingConstructorArgsSummary;
-  forwardArgsSummary?: TorchembeddingForwardArgsSummary;
-};
-export type TorchtransformerencoderlayerConstructorArgsSummary = {
-  d_model?: string;
-  nhead?: string;
-  dim_feedforward?: string;
-  dropout?: string;
-  activation?: string;
-  layer_norm_eps?: string;
-  batch_first?: string;
-  norm_first?: string;
-};
-export type TorchtransformerencoderlayerForwardArgsSummary = {
-  src?: string;
-  src_mask?: string;
-  src_key_padding_mask?: string;
-  is_causal?: string;
-};
-export type TorchtransformerencoderlayerSummary = {
-  type?: 'torch.nn.TransformerEncoderLayer';
-  constructorArgsSummary?: TorchtransformerencoderlayerConstructorArgsSummary;
-  forwardArgsSummary?: TorchtransformerencoderlayerForwardArgsSummary;
-};
-export type FleetmoleculefeaturizerConstructorArgsSummary = {
-  allow_unknown?: string;
-  sym_bond_list?: string;
-  per_atom_fragmentation?: string;
-};
-export type FleetmoleculefeaturizerForwardArgsSummary = {
-  mol?: string;
-};
-export type FleetmoleculefeaturizerSummary = {
-  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
-  constructorArgsSummary?: FleetmoleculefeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: FleetmoleculefeaturizerForwardArgsSummary;
-};
-export type FleetintegerfeaturizerConstructorArgsSummary = {};
-export type FleetintegerfeaturizerForwardArgsSummary = {
-  input_?: string;
-};
-export type FleetintegerfeaturizerSummary = {
-  type?: 'fleet.model_builder.featurizers.IntegerFeaturizer';
-  constructorArgsSummary?: FleetintegerfeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: FleetintegerfeaturizerForwardArgsSummary;
-};
-export type FleetdnasequencefeaturizerConstructorArgsSummary = {};
-export type FleetdnasequencefeaturizerForwardArgsSummary = {
-  input_?: string;
-};
-export type FleetdnasequencefeaturizerSummary = {
-  type?: 'fleet.model_builder.featurizers.DNASequenceFeaturizer';
-  constructorArgsSummary?: FleetdnasequencefeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: FleetdnasequencefeaturizerForwardArgsSummary;
-};
-export type FleetrnasequencefeaturizerConstructorArgsSummary = {};
-export type FleetrnasequencefeaturizerForwardArgsSummary = {
-  input_?: string;
-};
-export type FleetrnasequencefeaturizerSummary = {
-  type?: 'fleet.model_builder.featurizers.RNASequenceFeaturizer';
-  constructorArgsSummary?: FleetrnasequencefeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: FleetrnasequencefeaturizerForwardArgsSummary;
-};
-export type FleetproteinsequencefeaturizerConstructorArgsSummary = {};
-export type FleetproteinsequencefeaturizerForwardArgsSummary = {
-  input_?: string;
-};
-export type FleetproteinsequencefeaturizerSummary = {
-  type?: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
-  constructorArgsSummary?: FleetproteinsequencefeaturizerConstructorArgsSummary;
-  forwardArgsSummary?: FleetproteinsequencefeaturizerForwardArgsSummary;
-};
+export type ComponentType =
+  | 'transformer'
+  | 'featurizer'
+  | 'layer'
+  | 'scikit_reg'
+  | 'scikit_class';
 export type ComponentOption = {
-  docsLink?: string;
-  docs?: string;
-  outputType?: string;
   classPath: string;
-  type: 'featurizer' | 'layer';
-  component:
-    | (
-        | FleetonehotSummary
-        | FleetglobalpoolingSummary
-        | FleetconcatSummary
-        | FleetaddpoolingSummary
-        | TorchlinearSummary
-        | TorchsigmoidSummary
-        | TorchreluSummary
-        | TorchgeometricgcnconvSummary
-        | TorchembeddingSummary
-        | TorchtransformerencoderlayerSummary
-      )
-    | (
-        | FleetmoleculefeaturizerSummary
-        | FleetintegerfeaturizerSummary
-        | FleetdnasequencefeaturizerSummary
-        | FleetrnasequencefeaturizerSummary
-        | FleetproteinsequencefeaturizerSummary
-      );
-  defaultArgs?: object;
+  component?: any;
+  type: ComponentType;
   argsOptions?: {
     [key: string]: string[];
   };
+  docsLink?: string;
+  docs?: string;
+  outputType?: string;
+  defaultArgs?: object;
 };
 export type GetNameSuggestionResponse = {
   name: string;
