@@ -179,7 +179,10 @@ const ModelCreateV2 = () => {
     {
       title: 'Dataset Configuration',
       content: (
-        <DatasetConfigurationForm control={control} setValue={setValue} />
+        <DatasetConfigurationForm
+          control={control}
+          setValue={setValue as (name: string, value: any) => void}
+        />
       ),
     },
     {

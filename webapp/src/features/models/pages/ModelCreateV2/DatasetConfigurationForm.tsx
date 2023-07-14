@@ -4,6 +4,7 @@ import {
   AccordionSummary,
   Box,
   Button,
+  Typography,
 } from '@mui/material';
 import { Section } from '@components/molecules/Section';
 import { Control, useWatch, useForm } from 'react-hook-form';
@@ -21,6 +22,7 @@ import { ArrayElement } from '@utils';
 import { AddTransformerModal } from '@features/models/components/AddTransformerModal';
 import { Session } from 'inspector';
 import { TransformerConstructorForm } from '@features/models/components/TransformerConstructorForm';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 interface DatasetConfigurationProps {
   control: Control<ModelCreate>;
@@ -41,21 +43,37 @@ const reprDataType = (dataType: ColumnConfig['dataType']) => {
   return `(${dataType.domainKind})`;
 };
 
-const ColumnConfigurationAcordion = ({
+const CustomAccordion = ({
+  children,
+  title,
+  textProps,
+}: {
+  children: React.ReactNode;
+  title: string;
+  textProps?: Record<string, any>;
+}) => {
+  return (
+    <Accordion>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography sx={textProps}>{title}</Typography>
+      </AccordionSummary>
+      <AccordionDetails>{children}</AccordionDetails>
+    </Accordion>
+  );
+};
+
+const ColumnConfigurationAccordion = ({
   name,
   dataType,
   textProps = {},
   children,
 }: ColumnConfigurationAccordionProps) => {
   return (
-    <Accordion>
-      <AccordionSummary>
-        <Text {...textProps}>
-          {name} {reprDataType(dataType)}
-        </Text>
-      </AccordionSummary>
-      <AccordionDetails>{children}</AccordionDetails>
-    </Accordion>
+    <CustomAccordion
+      title={`${name} ${reprDataType(dataType)}`}
+      textProps={textProps}
+      children={children}
+    />
   );
 };
 
@@ -100,7 +118,7 @@ const ColumnConfiguration = ({
 
   return (
     <>
-      <Section title="Featurizers">
+      <CustomAccordion title="Featurizers">
         {featurizers.map((transform) => (
           <TransformerConstructorForm
             key={transform.name}
@@ -108,8 +126,8 @@ const ColumnConfiguration = ({
             control={control}
           />
         ))}
-      </Section>
-      <Section title="Transforms">
+      </CustomAccordion>
+      <CustomAccordion title="Transforms">
         {transforms.map((transform) => (
           <TransformerConstructorForm
             key={transform.name}
@@ -117,7 +135,7 @@ const ColumnConfiguration = ({
             control={control}
           />
         ))}
-      </Section>
+      </CustomAccordion>
       <Box
         sx={{
           display: 'flex',
@@ -303,7 +321,7 @@ export const DatasetConfigurationForm = ({
     <>
       <Section title="Data Configuration">
         {formColumns.feature.map((formColumn) => (
-          <ColumnConfigurationAcordion
+          <ColumnConfigurationAccordion
             name={formColumn.col.name}
             dataType={formColumn.col.dataType}
           >
@@ -312,11 +330,11 @@ export const DatasetConfigurationForm = ({
               formColumn={formColumn}
               addTransformer={addTransformerFunction(formColumn)}
             />
-          </ColumnConfigurationAcordion>
+          </ColumnConfigurationAccordion>
         ))}
 
         {formColumns.target.map((formColumn) => (
-          <ColumnConfigurationAcordion
+          <ColumnConfigurationAccordion
             name={formColumn.col.name}
             dataType={formColumn.col.dataType}
             textProps={{ fontWeight: 'bold' }}
@@ -326,7 +344,7 @@ export const DatasetConfigurationForm = ({
               formColumn={formColumn}
               addTransformer={addTransformerFunction(formColumn)}
             />
-          </ColumnConfigurationAcordion>
+          </ColumnConfigurationAccordion>
         ))}
       </Section>
     </>
