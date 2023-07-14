@@ -10,10 +10,10 @@ import { Control, useWatch } from 'react-hook-form';
 import {
   ColumnConfig,
   ModelCreate,
-  TargetConfig,
 } from '@app/rtk/generated/models';
 import { Text } from '@components/molecules/Text';
 import { DataTypeGuard } from '@app/types/domain/datasets';
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
 
 interface DatasetConfigurationProps {
   control: Control<ModelCreate>;
@@ -52,7 +52,7 @@ const ColumnConfigurationAcordion = ({
 };
 
 interface ColumnConfigurationProps {
-  column: ColumnConfig | TargetConfig;
+  column: ColumnConfig | APITargetConfig;
 }
 
 const ColumnConfiguration = ({ column }: ColumnConfigurationProps) => {

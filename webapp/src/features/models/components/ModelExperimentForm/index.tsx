@@ -10,7 +10,7 @@ import CheckpointingForm from 'features/trainings/components/CheckpointingForm';
 import AdvancedOptionsForm from 'features/trainings/components/AdvancedOptionsForm';
 import { DeepPartial } from 'react-hook-form';
 import OptimizerForm from './OptimizerForm';
-import { TargetConfig } from 'app/rtk/generated/models';
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
 import { BaseTrainingRequest } from '@app/rtk/generated/experiments';
 
 export interface ModelExperimentFormProps {
@@ -29,8 +29,8 @@ const ModelExperimentForm = ({
   loading,
 }: ModelExperimentFormProps) => {
   const [isUsingEarlyStopping, setIsUsingEarlyStopping] = useState(false);
-  const [targetColumns, setTargetColumns] = useState<TargetConfig[]>(
-    [] as TargetConfig[]
+  const [targetColumns, setTargetColumns] = useState<APITargetConfig[] >(
+    [] as APITargetConfig[]
   );
 
   const methods = useForm<BaseTrainingRequest>({
@@ -106,7 +106,7 @@ const ModelExperimentForm = ({
                   onChange={(modelVersion) => {
                     if (modelVersion)
                       setTargetColumns(
-                        modelVersion.config.dataset.targetColumns
+                        modelVersion.config.dataset.targetColumns as APITargetConfig[]
                       );
                     field.onChange({ target: { value: modelVersion?.id } });
                   }}
@@ -170,7 +170,7 @@ const ModelExperimentForm = ({
             />
           </Box>
           <Typography sx={{ mb: 1 }}>Checkpointing Options</Typography>
-          <CheckpointingForm targetColumns={targetColumns} />
+          <CheckpointingForm targetColumns={targetColumns as APITargetConfig[]} />
           <AdvancedOptionsForm
             open={isUsingEarlyStopping}
             onToggle={(value) => setIsUsingEarlyStopping(value)}

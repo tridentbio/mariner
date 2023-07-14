@@ -52,7 +52,7 @@ const ModelCreateV2 = () => {
       async (modelCreate) => {
         const result = await checkModel({
           trainingCheckRequest: {
-            modelSpec: { framework: 'torch', ...modelCreate.config },
+            modelSpec: { ...modelCreate.config, framework: 'torch', },
           },
         });
         if (!('error' in result) && !result.data.stackTrace)
@@ -134,7 +134,7 @@ const ModelCreateV2 = () => {
       };
       const makeTargetColumnConfigFromDescription = (
         description: modelsApi.ColumnsDescription
-      ): modelsApi.TargetConfig => {
+      ): modelsApi.TargetTorchColumnConfig => {
         return {
           name: description.pattern,
           dataType: description.dataType,

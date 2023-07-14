@@ -6,6 +6,7 @@ import {
 } from './implementation/modelSchemaQuery';
 import {
   ComponentType,
+  FleetModelSpec,
   ModelSchema,
   NodeType,
 } from './interfaces/model-editor';
@@ -29,11 +30,12 @@ export const unwrapDollar = (str: any): string => {
   return str;
 };
 
-export const wrapForwardArgs = <T extends ForwardArgs>(forwardArgs: T): T => {
+export const wrapForwardArgs = <T extends {}>(forwardArgs: T): T => {
   let newForwardArgs = {} as {
     [K in keyof T]: T[K];
   };
-  Object.keys(forwardArgs).forEach((key: keyof T) => {
+  Object.keys(forwardArgs).forEach((key: string) => {
+    // @ts-ignore
     const value = forwardArgs[key];
     if (isArray(value)) {
       // @ts-ignore
@@ -137,6 +139,7 @@ export const extendSpecWithTargetForwardArgs = (
     dataset: {
       ...spec.dataset,
       featurizers: spec.dataset.featurizers || [],
+      transforms: spec.dataset.transforms || [],
       targetColumns: spec.dataset.targetColumns.map((tc) => ({
         ...tc,
         forwardArgs: { '': '' },

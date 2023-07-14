@@ -51,6 +51,7 @@ export const Default = () => {
         },
       ],
       featurizers: [],
+      transforms: [],
     },
     spec: {
       layers: [],
@@ -75,6 +76,7 @@ export const InvalidSchema = () => {
           dataType: { domainKind: 'numeric', unit: 'mole' },
         },
       ],
+      transforms: [],
       featurizers: [
         {
           name: 'MolFeaturizer1',

@@ -110,7 +110,7 @@ export const makeComponentEdit = <T extends NodeType>(params: {
     return newComponent;
   if ('constructorArgs' in newComponent && constructorArgs) {
     newComponent.constructorArgs = {
-      ...newComponent.constructorArgs,
+      ...(newComponent.constructorArgs || {}),
       ...constructorArgs,
     };
   }

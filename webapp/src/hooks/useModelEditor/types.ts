@@ -50,7 +50,7 @@ export interface IModelEditorContext
       schema: ModelSchema;
       name: string;
       type: LayerFeaturizerType['type'];
-      componentType: 'layer' | 'featurizer';
+      componentType: 'layer' | 'featurizer' | 'transformer';
     },
     position: { x: number; y: number }
   ): ModelSchema;

@@ -44,7 +44,7 @@ const injectedRtkApi = api
     }),
     overrideExisting: false,
   });
-export { injectedRtkApi as enhancedApi };
+export { injectedRtkApi as generatedUsersApi };
 export type ReadUsersApiResponse = /** status 200 Successful Response */ User[];
 export type ReadUsersApiArg = {
   skip?: number;

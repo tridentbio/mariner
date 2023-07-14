@@ -7,10 +7,11 @@ const config: ConfigFile = {
   outputFiles: {
     './src/app/rtk/generated/users.ts': {
       filterEndpoints: [/user/i],
+      exportName: 'generatedUsersApi',
     },
     './src/app/rtk/generated/datasets.ts': {
       filterEndpoints: [/dataset/i, 'getS3Data'],
-      endpointOverrides: false
+      exportName: 'generatedDatasetsApi',
     },
     './src/app/rtk/generated/models.ts': {
       filterEndpoints: [/model/i],
@@ -29,6 +30,7 @@ const config: ConfigFile = {
     },
     './src/app/rtk/generated/deployments.ts': {
       filterEndpoints: [/deployment/i],
+      exportName: 'generatedDeploymentsApi',
     },
   },
   hooks: { queries: true, mutations: true, lazyQueries: true },

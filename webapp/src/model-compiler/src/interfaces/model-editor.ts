@@ -1,7 +1,7 @@
 import {
   TorchModelSpec,
-  ColumnConfig as APIColumnConfig,
-  TargetTorchColumnConfig as APITargetConfig,
+  TargetTorchColumnConfig,
+  ColumnConfig,
   ColumnsDescription,
   TorchlinearLayerConfig,
   TorchreluLayerConfig,
@@ -20,7 +20,13 @@ import {
   FleetrnasequencefeaturizerLayerConfig,
   FleetproteinsequencefeaturizerLayerConfig,
   FleetintegerfeaturizerLayerConfig,
+  SklearnModelSpec,
 } from 'app/rtk/generated/models';
+
+export type APITargetConfig = TargetTorchColumnConfig
+export type APIColumnConfig = ColumnConfig
+
+export type FleetModelSpec = TorchModelSpec | SklearnModelSpec
 
 export enum EPythonClasses {
   INT_REQUIRED = "<class 'int'>",
@@ -46,7 +52,7 @@ export type FeaturizersType = ArrayElement<
 export type TransformsType = ArrayElement<
   TorchModelSpec['dataset']['transforms']
 >;
-export type ComponentType = 'layer' | 'featurizer' | 'input' | 'output';
+export type ComponentType = 'layer' | 'featurizer' | 'transformer' | 'input' | 'output';
 export type LayerFeaturizerType = LayersType | FeaturizersType | TransformsType;
 export type ComponentConfigs = {
   [K in LayerFeaturizerType as K['type']]: K;
@@ -79,8 +85,8 @@ export type Output = {
   dataType: DataType;
   forwardArgs?: { '': string };
   outModule: string;
-  columnType?: TargetConfig['columnType'];
-  lossFn?: TargetConfig['lossFn'];
+  columnType?: APITargetConfig['columnType'];
+  lossFn?: APITargetConfig['lossFn'];
 };
 
 export type NodeType = LayersType | FeaturizersType | Input | Output;
@@ -128,12 +134,10 @@ export type IntegerFeaturizer = FleetintegerfeaturizerLayerConfig & {
   type: 'fleet.model_builder.featurizers.IntegerFeaturizer';
 };
 
-type ColumnConfig = APIColumnConfig;
-interface ColumnConfigWithForward extends ColumnConfig {
+interface ColumnConfigWithForward extends APIColumnConfig {
   forwardArgs?: { '': string };
 }
-type TargetConfig = APITargetConfig;
-interface TargetConfigWithForward extends TargetConfig {
+interface TargetConfigWithForward extends APITargetConfig {
   forwardArgs?: { '': string };
 }
 interface DatasetWithForwards {

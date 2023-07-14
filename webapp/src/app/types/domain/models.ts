@@ -19,7 +19,7 @@ export type Component = Required<
   | ArrayElement<modelsApi.TorchModelSpec['spec']['layers']>
   | ArrayElement<modelsApi.TorchModelSpec['dataset']['featurizers']>
 >;
-export type ModelConfig = modelsApi.TorchModelSpec;
+export type ModelConfig = modelsApi.ModelCreate['config'];
 export type ModelVersion = modelsApi.ModelVersion;
 export type ModelVersionType = 'classification' | 'regressor';
 export type ModelColumn = modelsApi.ModelFeaturesAndTarget;

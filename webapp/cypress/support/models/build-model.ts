@@ -230,7 +230,7 @@ export const buildModel = (
     iterateTopologically(config, (node, type) => {
       if (['input', 'output'].includes(type)) return;
       const args = 'constructorArgs' in node ? node.constructorArgs : {};
-      if (args && objIsEmpty(args)) return;
+      if (!args || objIsEmpty(args)) return;
 
       Object.entries(args).forEach(([key, value]) => {
         autoFixSuggestions().then(() => {
@@ -248,7 +248,7 @@ export const buildModel = (
             curElement.clear().type(value);
           } else {
             element.get(`[id="${key}"]`).then((curElement) => {
-              if (Boolean(curElement.prop('checked')) !== value)
+              if (curElement.prop('checked') !== value)
                 curElement.trigger('click');
             });
           }

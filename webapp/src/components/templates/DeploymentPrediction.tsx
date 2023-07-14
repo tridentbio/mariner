@@ -7,6 +7,7 @@ import api from '@app/api';
 import { useNotifications } from '@app/notifications';
 import { Text } from '@components/molecules/Text';
 import { InferenceOutput } from '@components/organisms/InferenceOutput';
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
 
 const getPredictionPrivate = async (
   deployment: Deployment,
@@ -127,7 +128,7 @@ export const DeploymentPrediction = ({
       {outputValues && (
         <InferenceOutput
           outputValues={outputValues}
-          targetColumns={targetColumns}
+          targetColumns={targetColumns as APITargetConfig[]}
         />
       )}
     </Box>

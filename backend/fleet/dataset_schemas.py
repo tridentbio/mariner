@@ -110,8 +110,8 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
     name: str
     target_columns: List[ColumnConfig]
     feature_columns: List[ColumnConfig]
-    featurizers: List[FeaturizersType] = []
-    transforms: List[TransformerType] = []
+    featurizers: Union[None, List[FeaturizersType]] = []
+    transforms: Union[None, List[TransformerType]] = []
 
     @property
     def columns(self):
@@ -268,6 +268,9 @@ class DatasetConfigWithPreprocessing(BaseDatasetModel, YAML_Model):
     feature_columns: List[ColumnConfigWithPreprocessing]
 
     def to_dataset_config(self) -> DatasetConfig:
+        """
+        Convert to a DatasetConfig,
+        """
         featurizers = []
         transforms = []
         for col in self.feature_columns + self.target_columns:

@@ -110,9 +110,9 @@ const injectedRtkApi = api
         invalidatesTags: ['deployments'],
       }),
     }),
-    overrideExisting: true,
+    overrideExisting: false,
   });
-export { injectedRtkApi as enhancedApi };
+export { injectedRtkApi as generatedDeploymentsApi };
 export type GetDeploymentsApiResponse =
   /** status 200 Successful Response */ PaginatedDeployment;
 export type GetDeploymentsApiArg = {
@@ -874,5 +874,4 @@ export const {
   usePostMakePredictionDeploymentMutation,
   usePostMakePredictionDeploymentPublicMutation,
   useHandleDeploymentManagerMutation,
-  endpoints
 } = injectedRtkApi;

@@ -1,5 +1,5 @@
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
 import { BaseTrainingRequest } from 'app/rtk/generated/experiments';
-import { TargetConfig } from 'app/rtk/generated/models';
 import { MetricMode } from 'app/types/domain/experiments';
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -7,7 +7,7 @@ import { required } from 'utils/reactFormRules';
 import MetricSelect from './MetricSelect';
 import ModeRadioInput from './ModeRadioInput';
 
-const CheckpointingForm: React.FC<{ targetColumns: TargetConfig[] }> = ({
+const CheckpointingForm: React.FC<{ targetColumns: APITargetConfig[] }> = ({
   targetColumns,
 }) => {
   const { control, setValue } = useFormContext<BaseTrainingRequest>();

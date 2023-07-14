@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { makeS3DataLink } from 'utils';
 import api, { Status } from '../../app/api';
-import { datasetsApi as rtkDatasetApi } from '../../app/rtk/datasets';
-import { enhancedApi } from 'app/rtk/generated/datasets';
+import { datasetsApi, datasetsApi as rtkDatasetApi } from '../../app/rtk/datasets';
 import { DatasetsListingFilters, Dataset } from 'app/types/domain/datasets';
 import { gzipDecompress } from 'utils/gzipCompress';
 
@@ -73,7 +72,7 @@ export const datasetSlice = createSlice({
     );
 
     builder.addMatcher(
-      enhancedApi.endpoints.getMyDatasets.matchFulfilled,
+      datasetsApi.endpoints.getMyDatasets.matchFulfilled,
       (state, action) => {
         // @ts-ignore
         state.datasets = action.payload.data;
@@ -82,7 +81,7 @@ export const datasetSlice = createSlice({
     );
 
     builder.addMatcher(
-      enhancedApi.endpoints.getMyDataset.matchFulfilled,
+      datasetsApi.endpoints.getMyDataset.matchFulfilled,
       (state, action) => {
         if (
           state.datasets

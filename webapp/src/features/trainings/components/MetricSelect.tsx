@@ -13,7 +13,6 @@ import { Box } from '@mui/system';
 import {
   BaseTrainingRequest,
   GetExperimentsMetricsApiResponse,
-  TorchTrainingConfig,
   useGetExperimentsMetricsQuery,
 } from 'app/rtk/generated/experiments';
 // TODO: fix MathJax in TexMath
@@ -21,7 +20,7 @@ import {
 import { defaultModeIsMax } from 'utils';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ModelVersionType } from 'app/types/domain/models';
-import { TargetConfig } from 'app/rtk/generated/models';
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
 
 type MetricSelectProps = {
   field: ControllerRenderProps<BaseTrainingRequest, any>;
@@ -29,12 +28,12 @@ type MetricSelectProps = {
   setValue: (value: 'min' | 'max') => void;
   reset?: () => void;
   cleanable?: boolean;
-  targetColumns: TargetConfig[];
+  targetColumns: APITargetConfig[];
 };
 
 const sortFilterMetrics = (
   _metrics: GetExperimentsMetricsApiResponse | undefined,
-  column: TargetConfig | null
+  column: APITargetConfig | null
 ) => {
   const modelVersionType = {
     binary: 'classification',
@@ -57,7 +56,7 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
   const { data: metrics } = useGetExperimentsMetricsQuery();
   const [stage, setStage] = useState<'train' | 'val'>('val');
   const [selected, setSelected] = useState<string | null>('');
-  const [column, setColumn] = useState<TargetConfig | null>(null);
+  const [column, setColumn] = useState<APITargetConfig | null>(null);
 
   useEffect(() => {
     // simulation of event property
