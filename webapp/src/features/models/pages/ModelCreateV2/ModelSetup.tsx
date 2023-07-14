@@ -25,7 +25,13 @@ export const ModelSetup = ({ control }: ModelSetupProps) => {
             },
           }}
           render={({ field, fieldState }) => (
-            <Select sx={{ width: '100%' }} {...field}>
+            <Select
+              sx={{ width: '100%' }}
+              {...(() => {
+                console.log({ field });
+                return field;
+              })()}
+            >
               <MenuItem value="torch">Torch</MenuItem>
               <MenuItem value="sklearn">Sklearn</MenuItem>
             </Select>

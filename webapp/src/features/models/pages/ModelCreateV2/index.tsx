@@ -21,9 +21,7 @@ const ModelCreateV2 = () => {
     modelsApi.usePostModelCheckConfigMutation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { notifyError } = useNotifications();
-  const methods = useForm<
-    modelsApi.ModelCreate & { config: modelsApi.TorchModelSpec }
-  >({
+  const methods = useForm<modelsApi.ModelCreate>({
     mode: 'all',
     defaultValues: {
       name: '',
@@ -180,7 +178,9 @@ const ModelCreateV2 = () => {
     },
     {
       title: 'Dataset Configuration',
-      content: <DatasetConfigurationForm control={control} />,
+      content: (
+        <DatasetConfigurationForm control={control} setValue={setValue} />
+      ),
     },
     {
       title: 'Model Architecture',
