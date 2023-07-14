@@ -207,6 +207,16 @@ class SettingsV2:
         self.tenant = TenantSettings.parse_obj(configuration["tenant"])
         self.test = QA_Test_Settings.parse_obj(configuration["test"])
 
+        # Filter oauth provider settings not in ApiEnv allowed_oauth_providers
+        allowed_oauth_providers = os.getenv("ALLOWED_OAUTH_PROVIDERS")
+        if allowed_oauth_providers:
+            allowed_oauth_providers = set(allowed_oauth_providers.split(","))
+            filtered_auth_providers = list(
+                set(self.auth.__root__.keys()) - allowed_oauth_providers
+            )
+            for filtered_provider in filtered_auth_providers:
+                self.auth.__root__.pop(filtered_provider)
+
         package_toml = toml.load(pyproject_path)
         self.package = Package.parse_obj(package_toml["tool"]["poetry"])
 

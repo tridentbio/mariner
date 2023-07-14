@@ -8,7 +8,6 @@ cors = ["http://localhost", "http://localhost:4200", "http://localhost:3000", "h
 url = "http://localhost:3000"
 
 [auth]
-
 [auth.genentech]
 client_id = "Mariner"
 client_secret_var = "GENENTECH_CLIENT_SECRET"
