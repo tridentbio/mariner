@@ -22,10 +22,8 @@ export const TransformerConstructorForm = ({
         background: 'white',
         padding: '1rem',
         borderRadius: '1rem',
-        boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
+        border: '1px solid #E0E0E0',
         marginBottom: '1rem',
-        minHeight: '12rem',
-        maxWidth: '60%',
       }}
     >
       <Box
@@ -34,9 +32,21 @@ export const TransformerConstructorForm = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '1rem',
+          padding: '1rem',
         }}
       >
         <Typography>{redableTransformerName(transformer)}</Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-evenly',
+            alignItems: 'center',
+          }}
+        >
+          <DeleteIcon />
+          <ArrowUpwardIcon />
+          <ArrowDownwardIcon />
+        </Box>
       </Box>
       <Box
         sx={{
@@ -59,17 +69,6 @@ export const TransformerConstructorForm = ({
             </Box>
           )
         )}
-      </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-evenly',
-          alignItems: 'center',
-        }}
-      >
-        <DeleteIcon />
-        <ArrowUpwardIcon />
-        <ArrowDownwardIcon />
       </Box>
     </Box>
   );

@@ -9,6 +9,7 @@ import {
 import { unwrapDollar } from '@model-compiler/src/utils';
 import { useMemo } from 'react';
 import ColumnConfigurationView from '@features/models/components/ColumnConfigurationView';
+import { Box } from '@mui/material';
 
 export type Transformer = {
   name: string;
@@ -139,7 +140,7 @@ export const DatasetConfigurationForm = ({
   );
 
   return (
-    <>
+    <Box>
       <Section title="Data Configuration">
         <ColumnConfigurationView
           datasetConfig={datasetConfig}
@@ -147,6 +148,6 @@ export const DatasetConfigurationForm = ({
           setValue={setValue}
         />
       </Section>
-    </>
+    </Box>
   );
 };

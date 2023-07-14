@@ -74,8 +74,21 @@ const ColumnConfiguration = ({
   const { col, transforms, featurizers } = formColumn;
 
   return (
-    <>
-      <CustomAccordion title="Featurizers">
+    <Box
+      sx={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        alignItems: 'center',
+      }}
+    >
+      <CustomAccordion
+        title="Featurizers"
+        sx={{
+          minWidth: '70%',
+        }}
+      >
         {featurizers.map((transform) => (
           <TransformerConstructorForm
             key={transform.name}
@@ -83,7 +96,12 @@ const ColumnConfiguration = ({
           />
         ))}
       </CustomAccordion>
-      <CustomAccordion title="Transforms">
+      <CustomAccordion
+        title="Transforms"
+        sx={{
+          minWidth: '70%',
+        }}
+      >
         {transforms.map((transform) => (
           <TransformerConstructorForm
             key={transform.name}
@@ -94,16 +112,17 @@ const ColumnConfiguration = ({
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           margin: 'auto',
           gap: '1rem',
+          minWidth: '70%',
         }}
       >
         {!DataTypeGuard.isNumericalOrQuantity(col.dataType) && (
           <Button
             variant="outlined"
             color="primary"
-            sx={{ width: '30%' }}
+            sx={{ width: '20%', padding: '1rem', fontSize: '20px' }}
             onClick={() => setOpenFeaturizerModal(true)}
           >
             Add Featurizer
@@ -112,7 +131,7 @@ const ColumnConfiguration = ({
         <Button
           variant="outlined"
           color="primary"
-          sx={{ width: '30%' }}
+          sx={{ width: '20%', padding: '1rem', fontSize: '20px' }}
           onClick={() => setOpenTransformModal(true)}
         >
           Add Transform
@@ -135,7 +154,7 @@ const ColumnConfiguration = ({
           transfomerType="featurizer"
         />
       </Box>
-    </>
+    </Box>
   );
 };
 
