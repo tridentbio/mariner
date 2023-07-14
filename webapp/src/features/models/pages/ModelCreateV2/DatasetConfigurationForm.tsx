@@ -1,81 +1,14 @@
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Button,
-  Typography,
-} from '@mui/material';
 import { Section } from '@components/molecules/Section';
-import { Control, useWatch, useForm } from 'react-hook-form';
+import { Control, useWatch } from 'react-hook-form';
 import {
   ColumnConfig,
   DatasetConfig,
   ModelCreate,
   TorchDatasetConfig,
 } from '@app/rtk/generated/models';
-import { Text } from '@components/molecules/Text';
-import { DataTypeGuard } from '@app/types/domain/datasets';
 import { unwrapDollar } from '@model-compiler/src/utils';
-import { useMemo, useState } from 'react';
-import { ArrayElement } from '@utils';
-import { AddTransformerModal } from '@features/models/components/AddTransformerModal';
-import { Session } from 'inspector';
-import { TransformerConstructorForm } from '@features/models/components/TransformerConstructorForm';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-interface DatasetConfigurationProps {
-  control: Control<ModelCreate>;
-  setValue: (name: string, value: any) => void;
-}
-
-interface ColumnConfigurationAccordionProps {
-  name: string;
-  dataType: ColumnConfig['dataType'];
-  textProps?: Record<string, any>;
-  children: React.ReactNode;
-}
-
-const reprDataType = (dataType: ColumnConfig['dataType']) => {
-  if (DataTypeGuard.isQuantity(dataType))
-    return `(${dataType.domainKind}, ${dataType.unit})`;
-  else if (DataTypeGuard.isSmiles(dataType)) return `(SMILES)`;
-  return `(${dataType.domainKind})`;
-};
-
-const CustomAccordion = ({
-  children,
-  title,
-  textProps,
-}: {
-  children: React.ReactNode;
-  title: string;
-  textProps?: Record<string, any>;
-}) => {
-  return (
-    <Accordion>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography sx={textProps}>{title}</Typography>
-      </AccordionSummary>
-      <AccordionDetails>{children}</AccordionDetails>
-    </Accordion>
-  );
-};
-
-const ColumnConfigurationAccordion = ({
-  name,
-  dataType,
-  textProps = {},
-  children,
-}: ColumnConfigurationAccordionProps) => {
-  return (
-    <CustomAccordion
-      title={`${name} ${reprDataType(dataType)}`}
-      textProps={textProps}
-      children={children}
-    />
-  );
-};
+import { useMemo } from 'react';
+import ColumnConfigurationView from '@features/models/components/ColumnConfigurationView';
 
 export type Transformer = {
   name: string;
@@ -96,93 +29,6 @@ type FormColumns = Record<
     featurizers: Featurizers;
   }[]
 >;
-
-interface ColumnConfigurationProps {
-  formColumn: FormColumns['feature'][0];
-  addTransformer: (
-    transform: Transformer,
-    transformerGroup?: 'transforms' | 'featurizers'
-  ) => void;
-  control: Control<ModelCreate>;
-}
-
-const ColumnConfiguration = ({
-  formColumn,
-  control,
-  addTransformer,
-}: ColumnConfigurationProps) => {
-  const [openTransformModal, setOpenTransformModal] = useState(false);
-  const [openFeaturizerModal, setOpenFeaturizerModal] = useState(false);
-
-  const { col, transforms, featurizers } = formColumn;
-
-  return (
-    <>
-      <CustomAccordion title="Featurizers">
-        {featurizers.map((transform) => (
-          <TransformerConstructorForm
-            key={transform.name}
-            transformer={transform}
-            control={control}
-          />
-        ))}
-      </CustomAccordion>
-      <CustomAccordion title="Transforms">
-        {transforms.map((transform) => (
-          <TransformerConstructorForm
-            key={transform.name}
-            transformer={transform}
-            control={control}
-          />
-        ))}
-      </CustomAccordion>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          margin: 'auto',
-          gap: '1rem',
-        }}
-      >
-        {!DataTypeGuard.isNumericalOrQuantity(col.dataType) && (
-          <Button
-            variant="outlined"
-            color="primary"
-            sx={{ width: '30%' }}
-            onClick={() => setOpenFeaturizerModal(true)}
-          >
-            Add Featurizer
-          </Button>
-        )}
-        <Button
-          variant="outlined"
-          color="primary"
-          sx={{ width: '30%' }}
-          onClick={() => setOpenTransformModal(true)}
-        >
-          Add Transform
-        </Button>
-        <AddTransformerModal
-          open={openTransformModal}
-          cancel={() => setOpenTransformModal(false)}
-          confirm={(transform) => {
-            addTransformer(transform);
-            setOpenTransformModal(false);
-          }}
-        />
-        <AddTransformerModal
-          open={openFeaturizerModal}
-          cancel={() => setOpenFeaturizerModal(false)}
-          confirm={(transform) => {
-            addTransformer(transform, 'featurizers');
-            setOpenFeaturizerModal(false);
-          }}
-          transfomerType="featurizer"
-        />
-      </Box>
-    </>
-  );
-};
 
 const isTransform = (transform: Transformer) => {
   const transformerType = transform.name.split('-').at(0) as
@@ -271,6 +117,10 @@ const groupColumnsTransformsFeaturizers = ({
   return formColumns;
 };
 
+interface DatasetConfigurationProps {
+  control: Control<ModelCreate>;
+  setValue: (name: string, value: any) => void;
+}
 export const DatasetConfigurationForm = ({
   control,
   setValue,
@@ -279,35 +129,6 @@ export const DatasetConfigurationForm = ({
     control,
     name: 'config.dataset',
   });
-
-  const addTransformerFunction =
-    (col: ArrayElement<FormColumns['feature']>) =>
-    (
-      component: Transformer,
-      transformerGroup: 'transforms' | 'featurizers' = 'transforms'
-    ) => {
-      const transformers = [col.col, ...col.featurizers, ...col.transforms];
-      const lastTransform = transformers.at(-1)!;
-
-      const fowardArgs = Object.fromEntries(
-        Object.entries(component.fowardArgs).map(([key, _]) => [
-          key,
-          `$${lastTransform.name}`,
-        ])
-      );
-      const newTransformer = {
-        ...component,
-        name: `${transformerGroup.replace(/s$/g, '')}-${component.name}-${
-          transformers.length
-        }`,
-        fowardArgs,
-      };
-
-      setValue(`config.dataset.${transformerGroup}`, [
-        ...(datasetConfig[transformerGroup] || []),
-        newTransformer,
-      ]);
-    };
 
   const formColumns = useMemo(
     () =>
@@ -320,32 +141,11 @@ export const DatasetConfigurationForm = ({
   return (
     <>
       <Section title="Data Configuration">
-        {formColumns.feature.map((formColumn) => (
-          <ColumnConfigurationAccordion
-            name={formColumn.col.name}
-            dataType={formColumn.col.dataType}
-          >
-            <ColumnConfiguration
-              control={control}
-              formColumn={formColumn}
-              addTransformer={addTransformerFunction(formColumn)}
-            />
-          </ColumnConfigurationAccordion>
-        ))}
-
-        {formColumns.target.map((formColumn) => (
-          <ColumnConfigurationAccordion
-            name={formColumn.col.name}
-            dataType={formColumn.col.dataType}
-            textProps={{ fontWeight: 'bold' }}
-          >
-            <ColumnConfiguration
-              control={control}
-              formColumn={formColumn}
-              addTransformer={addTransformerFunction(formColumn)}
-            />
-          </ColumnConfigurationAccordion>
-        ))}
+        <ColumnConfigurationView
+          datasetConfig={datasetConfig}
+          formColumns={formColumns}
+          setValue={setValue}
+        />
       </Section>
     </>
   );

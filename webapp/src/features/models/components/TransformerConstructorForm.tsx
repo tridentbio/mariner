@@ -7,7 +7,6 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 type TransformerConstructorFormProps = {
-  control: Control<ModelCreate>;
   transformer: Transformer;
 };
 
@@ -15,7 +14,6 @@ const redableTransformerName = (transformer: Transformer) =>
   transformer.name.split('-')[1];
 
 export const TransformerConstructorForm = ({
-  control,
   transformer,
 }: TransformerConstructorFormProps) => {
   return (
