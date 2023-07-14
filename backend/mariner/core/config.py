@@ -217,6 +217,12 @@ class SettingsV2:
             for filtered_provider in filtered_auth_providers:
                 self.auth.__root__.pop(filtered_provider)
 
+        # Load SERVER_CORS into server.cors
+        cors = os.getenv("SERVER_CORS")
+        if cors:
+            cors = cors.split(",")
+            self.server.cors += [AnyHttpUrl(url, scheme="https") for url in cors]
+
         package_toml = toml.load(pyproject_path)
         self.package = Package.parse_obj(package_toml["tool"]["poetry"])
 
