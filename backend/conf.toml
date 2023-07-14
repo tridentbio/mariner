@@ -11,7 +11,7 @@ url = "http://localhost:3000"
 
 [auth.genentech]
 client_id = "Mariner"
-client_secret = "eszWca6gKe0skhVBROronEKDLPC4bhrYkwofxS5PBgtJTnt8SG3ieFUyjfRPZgEv"
+client_secret_var = "GENENTECH_CLIENT_SECRET"
 authorization_url = "https://wamqa.roche.com/as/authorization.oauth2"
 jwks_url = "https://wamqa.roche.com/pf/JWKS"
 token_url = "https://wamqa.roche.com/as/token.oauth2"
@@ -20,8 +20,8 @@ name = "Genentech"
 scope = "email profile"
 
 [auth.github]
-client_id = "--"
-client_secret = "--"
+client_id = "e44a8040dd452d2fb9ef"
+client_secret_var = "GITHUB_CLIENT_SECRET"
 authorization_url = "https://github.com/login/oauth/authorize"
 allowed_github_emails = [
   "tshimko@trident.bio",

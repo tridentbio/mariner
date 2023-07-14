@@ -7,6 +7,7 @@ Sometimes cause the application to fail when missing an ENV VAR
 """
 
 import functools
+import os
 from typing import Any, Dict, Literal, Optional, Union, overload
 
 import toml
@@ -65,12 +66,29 @@ class AuthSettings(BaseModel):
     """
 
     client_id: str
+    client_secret_var: str
     client_secret: str
     authorization_url: str
     allowed_emails: Union[None, list[str]] = None
     scope: Union[str, None] = None
     logo_url: Union[str, None] = None
     name: str
+
+    @root_validator(allow_reuse=True, pre=True)
+    def validate_client_secret(cls, values: Dict[str, Any]) -> Any:
+        """
+        Validate that the client secret of the auth is set in the environment.
+        """
+        if values.get("client_secret_var"):
+            env = os.getenv(values["client_secret_var"])
+            if not env:
+                raise ValueError(
+                    f"Missing environment variable {values['client_secret_var']}"
+                )
+            values["client_secret"] = env
+        else:
+            raise ValueError("client_secret_var must be set")
+        return values
 
 
 class AuthSettingsDict(BaseModel):
