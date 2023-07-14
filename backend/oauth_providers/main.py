@@ -32,11 +32,11 @@ def get_user_data(provider: str, **kwargs) -> UserData:
     elif provider == "genentech":
         client = genentech.GenentechClient(
             genentech.ClientOptions(
-                client_id=kwargs["client_id"],
-                client_secret=kwargs["client_secret"],
-                redirect_uri=kwargs["redirect_uri"],
-                jwks_url=kwargs["jwks_url"],
-                token_url=kwargs["token_url"],
+                client_id=kwargs["credentials"]["client_id"],
+                client_secret=kwargs["credentials"]["client_secret"],
+                redirect_uri=kwargs["credentials"]["redirect_uri"],
+                jwks_url=kwargs["credentials"]["jwks_url"],
+                token_url=kwargs["credentials"]["token_url"],
             )
         )
         genentech_user = client.exchange_code(kwargs["code"])

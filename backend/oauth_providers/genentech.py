@@ -7,7 +7,7 @@ import requests
 import requests.auth
 from jose import jwt
 from jose.exceptions import JWKError
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 
 # Constants
@@ -87,7 +87,10 @@ class GenentechClient:
             },
             timeout=30,
         )
-        return GenentechAccessCode.parse_obj(response.json())
+        try:
+            return GenentechAccessCode.parse_obj(response.json())
+        except ValidationError as exc:
+            raise ValueError(response.text) from exc
 
     def _validate_token(self, token: str) -> None:
         """
@@ -114,6 +117,3 @@ class GenentechClient:
         token = self.get_access_token(code, "authorization_code")
         # _validate_token(token)
         return self.get_user(token.access_token)
-
-
-# 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleSIsInBpLmF0bSI6Im5zMXAifQ.eyJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJjbGllbnRfaWQiOiJNYXJpbmVyIiwidXNlcklkIjoic2hpbWtvdCIsImVtYWlsIjoidHlsZXIuc2hpbWtvQGJ1c2luZXNzcGFydG5lci5yb2NoZS5jb20iLCJleHAiOjE2ODkzNjgwMjF9.p772w1-1NXdp6PHGRzAoRXOM6BAlKp6IGSmMXJcbBX9jm76ly1quLh1X2jbf2x_5fUu1DPSBxWPjfAHgAra9MEti2Bn4PCJO3-LJmbTvqqzLR7ieSRCiihQUAVOWfIo6tEj_3rE0resPUi3dMWWQi6Q93wLFwyVGMpQBWzt2sAEvSvZIjjIaSF_JmQBkyiv4jmZ8WXKaxb1EpnJUXVhHyD2maKYDUA5wP7X76OPimtrc-xindN8xwC2KrtmSLRk8T-Mvy3nn1QN4J0UpMY7WBxRwD-kD3t_kJ600eWTCAkUYY68ht1tQXrNrY7RDDrgZtEm3RjyaS1uh6GeqhGjibA'

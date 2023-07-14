@@ -73,6 +73,8 @@ class AuthSettings(BaseModel):
     scope: Union[str, None] = None
     logo_url: Union[str, None] = None
     name: str
+    jwks_url: Union[str, None] = None
+    token_url: Union[str, None] = None
 
     @root_validator(allow_reuse=True, pre=True)
     def validate_client_secret(cls, values: Dict[str, Any]) -> Any:
@@ -207,6 +209,10 @@ class SettingsV2:
         self.tenant = TenantSettings.parse_obj(configuration["tenant"])
         self.test = QA_Test_Settings.parse_obj(configuration["test"])
 
+        # The following code overwrites some of the conf.toml settings
+        # with environment variables
+        # Checks ALLOWED_OAUTH_PROVIDERS, SERVER_CORS, SERVER_HOST
+
         # Filter oauth provider settings not in ApiEnv allowed_oauth_providers
         allowed_oauth_providers = os.getenv("ALLOWED_OAUTH_PROVIDERS")
         if allowed_oauth_providers:
@@ -222,6 +228,11 @@ class SettingsV2:
         if cors:
             cors = cors.split(",")
             self.server.cors = [AnyHttpUrl(url, scheme="https") for url in cors]
+
+        # load SERVER_HOST into server.host
+        host = os.getenv("SERVER_HOST")
+        if host:
+            self.server.host = AnyHttpUrl(host, scheme="https")
 
         package_toml = toml.load(pyproject_path)
         self.package = Package.parse_obj(package_toml["tool"]["poetry"])
