@@ -221,7 +221,7 @@ class SettingsV2:
         cors = os.getenv("SERVER_CORS")
         if cors:
             cors = cors.split(",")
-            self.server.cors += [AnyHttpUrl(url, scheme="https") for url in cors]
+            self.server.cors = [AnyHttpUrl(url, scheme="https") for url in cors]
 
         package_toml = toml.load(pyproject_path)
         self.package = Package.parse_obj(package_toml["tool"]["poetry"])
