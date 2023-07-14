@@ -21,6 +21,7 @@ from mariner.exceptions import (
     UserNotSuperUser,
 )
 from mariner.exceptions.user_exceptions import UserEmailNotAllowed
+from mariner.oauth import oauth_manager
 from mariner.schemas.token import Token
 from mariner.schemas.user_schemas import (
     User,
@@ -128,10 +129,9 @@ def _authenticate_oauth(state: str, **kwargs) -> User:
         provider_settings = get_app_settings("auth").__root__[state_obj.provider]
         user_data = oauth_providers.get_user_data(
             provider=state_obj.provider,
-            credentials={
-                "client_id": provider_settings.client_id,
-                "client_secret": provider_settings.client_secret,
-            },
+            credentials=(
+                provider_settings.dict() | {"redirect_uri": oauth_manager.redirect_uri}
+            ),
             **kwargs,
         )
         if (

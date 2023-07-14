@@ -13,9 +13,11 @@ url = "http://localhost:3000"
 client_id = "Mariner"
 client_secret = "eszWca6gKe0skhVBROronEKDLPC4bhrYkwofxS5PBgtJTnt8SG3ieFUyjfRPZgEv"
 authorization_url = "https://wamqa.roche.com/as/authorization.oauth2"
+jwks_url = "https://wamqa.roche.com/pf/JWKS"
+token_url = "https://wamqa.roche.com/as/token.oauth2"
 methods = ["code-grant"]
 name = "Genentech"
-scope = "edit"
+scope = "email profile"
 
 [auth.github]
 client_id = "--"

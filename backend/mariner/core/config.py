@@ -112,7 +112,6 @@ class SecretEnv(BaseSettings):
         """
         Validate that AWS credentials are set if aws_mode is set to local.
         """
-        print(values)
         if values.get("aws_mode") == "local":
             if not values.get("aws_access_key_id"):
                 raise ValueError("aws_access_key_id must be set if aws_mode is local")

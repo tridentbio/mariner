@@ -35,6 +35,8 @@ class OAuthManager(Mapping):
     auth_providers: Dict[str, AuthSettings]
 
     def __init__(self, auth_providers: Union[None, Dict[str, AuthSettings]] = None):
+
+        self.redirect_uri = f"{get_app_settings('server').host}/api/v1/oauth-callback"
         if not auth_providers:
             self.auth_providers = get_app_settings("auth").__root__
         else:
@@ -62,15 +64,14 @@ class OAuthManager(Mapping):
         with SessionLocal() as db:
 
             state = oauth_state_store.create_state(db, provider=key).state
-            redirect_uri = f"{get_app_settings('server').host}/api/v1/oauth-callback"
             oauth_settings = self[key]
             params = {
                 "client_id": oauth_settings.client_id,
-                "redirect_uri": redirect_uri,
+                "redirect_uri": self.redirect_uri,
                 "state": state,
                 "response_type": "code",
+                "scope": oauth_settings.scope,
             }
-            params["scope"] = oauth_settings.scope
             querysting = urllib.parse.urlencode(params)
 
             return f"{oauth_settings.authorization_url}?{querysting}"
