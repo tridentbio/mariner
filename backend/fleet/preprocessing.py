@@ -96,8 +96,8 @@ class FPVecFilteredTransformerConstructorArgs(BaseModel):
     Models the constructor arguments of a FPVecFilteredTransformer.
     """
 
-    del_invariant: Union[None, bool] = None
-    length: Union[None, int] = None
+    del_invariant: bool = False
+    length: int = 2000
 
 
 @options_manager.config_featurizer()
