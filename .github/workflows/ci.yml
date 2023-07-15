@@ -8,7 +8,7 @@ env:
   POSTGRES_URI: postgresql://postgres:123456@localhost:5432/app
   APPLICATION_SECRET: --
   AUTHENTICATION_SECRET_KEY: --
-  DEPLOYMENT_URL_SECRET_KEY: --
+  DEPLOYMENT_URL_SIGNATURE_SECRET_KEY: --
   # (optional) The path of the target coverage json relative to the coverages dir path
   BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref }}.json
 
