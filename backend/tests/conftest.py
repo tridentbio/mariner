@@ -231,7 +231,7 @@ def some_deployment(
         "prediction_rate_limit_unit": "month",
     }
     response = client.post(
-        f"{get_app_settings('server').api_v1_str}/deployments/",
+        f"{get_app_settings('server').host}/api/v1/deployments/",
         json=deployment_data,
         headers=normal_user_token_headers,
     )

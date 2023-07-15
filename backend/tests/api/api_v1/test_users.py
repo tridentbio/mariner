@@ -9,7 +9,7 @@ def test_get_users_normal_user_me(
     client: TestClient, normal_user_token_headers: Dict[str, str]
 ) -> None:
     r = client.get(
-        f"{get_app_settings('server').api_v1_str}/users/me",
+        f"{get_app_settings('server').host}/api/v1/users/me",
         headers=normal_user_token_headers,
     )
     current_user = r.json()

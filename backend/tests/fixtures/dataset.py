@@ -66,7 +66,7 @@ def setup_create_dataset(
     db.commit()
     with open(file, "rb") as f:
         res = client.post(
-            f"{get_app_settings('server').api_v1_str}/datasets/",
+            f"{get_app_settings('server').host}/api/v1/datasets/",
             data=data,
             files={"file": ("zinc_extra.csv", f.read())},
             headers=normal_user_token_headers,

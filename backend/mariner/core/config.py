@@ -32,13 +32,10 @@ class ServerSettings(BaseModel):
     Configures server parameters.
     """
 
-    name: str
     host: AnyHttpUrl
-    domain: str
-    cors: list[AnyHttpUrl]
+    cors: list[AnyHttpUrl] = []
     access_token_expire_minutes: int = 60 * 24 * 8
     deployment_idle_time: int = 60 * 10  # 10 minutes
-    api_v1_str: str = "/api/v1"
     application_chunk_size: int = 1024
 
 
@@ -66,31 +63,14 @@ class AuthSettings(BaseModel):
     """
 
     client_id: str
-    client_secret_var: str
     client_secret: str
+    name: str
     authorization_url: str
     allowed_emails: Union[None, list[str]] = None
     scope: Union[str, None] = None
     logo_url: Union[str, None] = None
-    name: str
     jwks_url: Union[str, None] = None
     token_url: Union[str, None] = None
-
-    @root_validator(allow_reuse=True, pre=True)
-    def validate_client_secret(cls, values: Dict[str, Any]) -> Any:
-        """
-        Validate that the client secret of the auth is set in the environment.
-        """
-        if values.get("client_secret_var"):
-            env = os.getenv(values["client_secret_var"])
-            if not env:
-                raise ValueError(
-                    f"Missing environment variable {values['client_secret_var']}"
-                )
-            values["client_secret"] = env
-        else:
-            raise ValueError("client_secret_var must be set")
-        return values
 
 
 class AuthSettingsDict(BaseModel):
@@ -196,43 +176,58 @@ class SettingsV2:
     package: Package
     test: QA_Test_Settings
 
-    def __init__(self, pyproject_path="pyproject.toml", configuration_path="conf.toml"):
+    def __init__(self, pyproject_path="pyproject.toml"):
         # load attributes from env
         self.secrets = SecretEnv()  # type: ignore
         self.services = ServicesEnv()  # type: ignore
 
         # load other attributes from conf.toml
-        configuration = toml.load(configuration_path)
-        self.server = ServerSettings.parse_obj(configuration["server"])
-        self.webapp = WebappSettings.parse_obj(configuration["webapp"])
-        self.auth = AuthSettingsDict.parse_obj(configuration["auth"])
-        self.tenant = TenantSettings.parse_obj(configuration["tenant"])
-        self.test = QA_Test_Settings.parse_obj(configuration["test"])
+        self.server = ServerSettings(
+            host=AnyHttpUrl(
+                os.getenv("SERVER_HOST", "http://localhost:8000"), scheme="https"
+            ),
+            cors=[
+                AnyHttpUrl(url, scheme="https")
+                for url in os.getenv("SERVER_CORS", "").split(",")
+            ],
+        )
+        self.webapp = WebappSettings(
+            url=os.getenv("WEBAPP_URL", "http://localhost:3000")
+        )
+        self.test = QA_Test_Settings()
 
-        # The following code overwrites some of the conf.toml settings
-        # with environment variables
-        # Checks ALLOWED_OAUTH_PROVIDERS, SERVER_CORS, SERVER_HOST
+        # Get environment variables starting with AUTH
+        auth_env = {k[6:]: v for k, v in os.environ.items() if k.startswith("OAUTH")}
 
-        # Filter oauth provider settings not in ApiEnv allowed_oauth_providers
-        allowed_oauth_providers = os.getenv("ALLOWED_OAUTH_PROVIDERS")
-        if allowed_oauth_providers:
-            allowed_oauth_providers = set(allowed_oauth_providers.split(","))
-            filtered_auth_providers = list(
-                set(self.auth.__root__.keys()) - allowed_oauth_providers
-            )
-            for filtered_provider in filtered_auth_providers:
-                self.auth.__root__.pop(filtered_provider)
+        # Get array of providers
+        providers = list(set([k.split("_")[0] for k in auth_env.keys()]))
 
-        # Load SERVER_CORS into server.cors
-        cors = os.getenv("SERVER_CORS")
-        if cors:
-            cors = cors.split(",")
-            self.server.cors = [AnyHttpUrl(url, scheme="https") for url in cors]
+        print(providers)
 
-        # load SERVER_HOST into server.host
-        host = os.getenv("SERVER_HOST")
-        if host:
-            self.server.host = AnyHttpUrl(host, scheme="https")
+        def split_if_string(string: Union[None, str]):
+            if isinstance(string, str):
+                return string.split(",")
+            return string
+
+        # Create auth settings for each provider
+        self.auth = AuthSettingsDict(
+            __root__={
+                provider: AuthSettings(
+                    client_id=auth_env[f"{provider}_CLIENT_ID"],
+                    client_secret=auth_env[f"{provider}_CLIENT_SECRET"],
+                    name=auth_env[f"{provider}_NAME"],
+                    authorization_url=auth_env[f"{provider}_AUTHORIZATION_URL"],
+                    allowed_emails=split_if_string(
+                        auth_env.get(f"{provider}_ALLOWED_EMAILS", None)
+                    ),
+                    scope=auth_env.get(f"{provider}_SCOPE", None),
+                    logo_url=auth_env.get(f"{provider}_LOGO_URL", None),
+                    jwks_url=auth_env.get(f"{provider}_JWKS_URL", None),
+                    token_url=auth_env.get(f"{provider}_TOKEN_URL", None),
+                )
+                for provider in providers
+            }
+        )
 
         package_toml = toml.load(pyproject_path)
         self.package = Package.parse_obj(package_toml["tool"]["poetry"])

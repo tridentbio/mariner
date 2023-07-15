@@ -115,6 +115,7 @@ services:
       - backend/.env.secret
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SERVER_HOST=http://backend
     ports:
       - "6379:6379"
       - "8265:8265"
@@ -131,6 +132,7 @@ services:
     shm_size: '4.91gb'
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SERVER_HOST=http://backend
     env_file:
       - backend/.env
       - backend/.env.secret

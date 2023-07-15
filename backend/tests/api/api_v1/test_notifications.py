@@ -70,7 +70,7 @@ async def test_get_notifications(
 ):
     result = await experiment_fixture
     res = client.get(
-        f"{get_app_settings('server').api_v1_str}/events/report",
+        f"{get_app_settings('server').host}/api/v1/events/report",
         headers=normal_user_token_headers,
     )
     assert res.status_code == 200, "Request failed"

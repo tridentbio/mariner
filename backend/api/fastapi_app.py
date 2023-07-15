@@ -12,9 +12,10 @@ from api.api_v1.api import api_router
 from api.websocket import ws_router
 from mariner.core.config import get_app_settings
 
+
 app = FastAPI(
     title=get_app_settings("package").name,
-    openapi_url=f"{get_app_settings('server').api_v1_str}/openapi.json",
+    openapi_url="/api/v1/openapi.json",
 )
 
 
@@ -71,7 +72,7 @@ if get_app_settings("server").cors:
 
 app.add_middleware(GZipMiddleware, minimum_size=100)
 
-app.include_router(api_router, prefix=get_app_settings("server").api_v1_str)
+app.include_router(api_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 simplify_operation_ids(app)
