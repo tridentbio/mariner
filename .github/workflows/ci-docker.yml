@@ -11,8 +11,6 @@ env:
     AWS_REGION: us-east-1
     AWS_MODELS_BUCKET: s3://dev-mariner-datasets
     AWS_DATASETS: dev-mariner-datasets
-    GITHUB_CLIENT_ID: --
-    GITHUB_CLIENT_SECRET: --
     COMPOSE_HTTP_TIMEOUT: 600
     COMPOSE_USER: 1000:1000
     DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose-cicd.yml"

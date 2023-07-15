@@ -202,8 +202,6 @@ class SettingsV2:
         # Get array of providers
         providers = list(set([k.split("_")[0] for k in auth_env.keys()]))
 
-        print(providers)
-
         def split_if_string(string: Union[None, str]):
             if isinstance(string, str):
                 return string.split(",")
