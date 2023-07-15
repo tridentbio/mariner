@@ -11,6 +11,9 @@ env:
     AWS_REGION: us-east-1
     AWS_MODELS_BUCKET: s3://dev-mariner-datasets
     AWS_DATASETS: dev-mariner-datasets
+    APPLICATION_SECRET: --
+    AUTHENTICATION_SECRET_KEY: --
+    DEPLOYMENT_URL_SECRET_KEY: --
     COMPOSE_HTTP_TIMEOUT: 600
     COMPOSE_USER: 1000:1000
     DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
