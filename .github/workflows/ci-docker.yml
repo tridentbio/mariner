@@ -11,8 +11,8 @@ env:
     AWS_REGION: us-east-1
     AWS_MODELS_BUCKET: s3://dev-mariner-datasets
     AWS_DATASETS: dev-mariner-datasets
-    POSTGRES_URI: postgresql://postgres:123456@localhost:5432/app
-    RAY_ADDRESS: ray://localhost:10001
+    POSTGRES_URI: postgresql://postgres:123456@db:5432/app
+    RAY_ADDRESS: ray://ray:10001
     MLFLOW_TRACKING_URI: http://localhost:5000
     APPLICATION_SECRET: --
     AUTHENTICATION_SECRET_KEY: --

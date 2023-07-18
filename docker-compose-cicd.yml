@@ -10,28 +10,28 @@ services:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - POSTGRES_URI=postgresql://postgres:123456@db:5432/app
       - SERVER_HOST=http://backend
+      - SERVER_CORS=http://localhost:3000,http://localhost:4200,http://ray:10001,http://ray-worker:10001
+      - WEBAPP_URL=http://localhost:3000
+      - RAY_ADDRESS=ray://ray-head:10001
+      - AUTHENTICATION_SECRET_KEY=secret
+      - DEPLOYMENT_URL_SIGNATURE_SECRET_KEY=secret
+      - APPLICATION_SECRET=secret
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
       - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
       - AWS_REGION=${AWS_REGION-Variable not set}
       - AWS_DATASETS=${AWS_DATASETS-Variable not set}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID-Variable not set}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET-Variable not set}
     volumes:
       - ./cov:/app/cov
   mlflow:
     environment:
-      - POSTGRES_SERVER=mlflowdb
-      - POSTGRES_PORT=5432
+      - POSTGRES_URI=postgresql://postgres:123456@mlflowdb:5432/app
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - MLFLOW_ARTIFACT_URI=s3://dev-mariner-datasets
-      - AWS_MODELS_BUCKET=s3://dev-mariner-datasets
-      - SERVER_HOST=http://backend
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-Variable not set}
       - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
       - AWS_REGION=${AWS_REGION-Variable not set}
-      - AWS_DATASETS=${AWS_DATASETS-Variable not set}
 
   ray-head:
     environment:
@@ -41,6 +41,7 @@ services:
       - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
       - AWS_REGION=${AWS_REGION-Variable not set}
       - AWS_DATASETS=${AWS_DATASETS-Variable not set}
+      - APPLICATION_SECRET=secret
   ray-worker:
     environment:
       - SERVER_HOST=http://backend
@@ -49,6 +50,7 @@ services:
       - AWS_MODELS_BUCKEY=${AWS_MODELS_BUCKET-Variable not set}
       - AWS_REGION=${AWS_REGION-Variable not set}
       - AWS_DATASETS=${AWS_DATASETS-Variable not set}
+      - APPLICATION_SECRET=secret
   db:
     volumes: []
   mlflowdb:
