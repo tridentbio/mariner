@@ -32,14 +32,14 @@ services:
       - 80:80
       - 8888:8888
       - 8000:8000
+    env_file:
+      - backend/.env
+      - backend/.env.secret
     environment:
       - RESTART=true
       - SERVER_HOST=http://backend
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - POSTGRES_URI=postgresql://postgres:123456@db:5432/app
-    env_file:
-      - backend/.env
-      - backend/.env.secret
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
