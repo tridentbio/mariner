@@ -97,11 +97,17 @@ def create_s3_client() -> BaseClient:
         BaseClient: boto3 s3 client
     """
     creds = _get_credentials()
-    s3 = boto3.client(
-        "s3",
-        region_name=get_app_settings().secrets.aws_region,
-        **creds.credentials_dict(),
-    )
+    if get_app_settings().aws_mode == 'local':
+        s3 = boto3.client(
+            "s3",
+            region_name=get_app_settings().secrets.aws_region,
+            **creds.credentials_dict(),
+        )
+    else:
+        s3 = boto3.client(
+            "s3",
+            region_name=get_app_settings().secrets.aws_region,
+        )
     return s3
 
 
