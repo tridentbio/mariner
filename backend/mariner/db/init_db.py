@@ -78,5 +78,5 @@ def create_test_user():
         the super user entity
     """
     return create_user(
-        email=get_app_settings().EMAIL_TEST_USER, password="123456"
+        email=get_app_settings("test").email_test_user, password="123456"
     )

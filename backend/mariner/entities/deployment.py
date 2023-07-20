@@ -71,9 +71,7 @@ class SharePermission(Base):
     organization = Column(String, nullable=True)
 
     @classmethod
-    def build(
-        cls, users_id: List[int] = [], organizations: List[str] = []
-    ) -> list:
+    def build(cls, users_id: List[int] = [], organizations: List[str] = []) -> list:
         """Build a list of SharePermission from users_id and organizations.
 
         Args:

@@ -4,10 +4,17 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-east-1
-  AWS_MODELS_BUCKET: s3://dev-mariner-datasets
-  AWS_DATASETS: dev-mariner-datasets
-  GITHUB_CLIENT_ID: --
-  GITHUB_CLIENT_SECRET: --
+  AWS_ACCESS_KEY_ID: --
+  AWS_SECRET_ACCESS_KEY: --
+  POSTGRES_URI: postgresql://postgres:123456@localhost:5432/app
+  RAY_ADDRESS: ray://localhost:10001
+  MLFLOW_TRACKING_URI: http://localhost:5000
+  APPLICATION_SECRET: --
+  AUTHENTICATION_SECRET_KEY: --
+  DEPLOYMENT_URL_SIGNATURE_SECRET_KEY: --
+  # (optional) The path of the target coverage json relative to the coverages dir path
+  BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref }}.json
+
 on:
   # Runs on PRs for check and easier review
   pull_request:
@@ -38,7 +45,7 @@ jobs:
           - 5432:5432
         # Provide the password for postgres
         env:
-          POSTGRES_SERVER: db
+          POSTGRES_SERVER: localhost
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: 123456
           POSTGRES_DB: app
@@ -131,13 +138,6 @@ jobs:
 
     - name: Run unit tests and get coverage
       working-directory: backend
-      env:
-        POSTGRES_SERVER: localhost
-        POSTGRES_PASSWORD: 123456
-        POSTGRES_USER: postgres
-        # (optional) The path of the target coverage json relative to the coverages dir path
-
-        BASE_REF_COVERAGE_JSON: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref }}.json
       run: |
         . .venv/bin/activate
         [ $BASE_REF_COVERAGE_JSON == 'false.json' ] && BASE_REF_COVERAGE_JSON=$(echo -n "${GITHUB_REF#refs/heads/}.json")

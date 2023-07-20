@@ -299,7 +299,7 @@ def log_metrics(
                 "id": experiment_db.id,
                 "experiment_name": experiment_db.experiment_name,
             },
-            url=f"{get_app_settings().WEBAPP_URL}/models/{model.id}#training",
+            url=f"{get_app_settings('webapp').url}/models/{model.id}#training",
         ),
     )
 

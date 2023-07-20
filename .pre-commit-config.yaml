@@ -13,24 +13,6 @@ repos:
         files: '^backend/'
         stages:
           - commit
-      - id: lint-staged-backend
-        name: Linting staged code in backend
-        entry: bash -c 'cd backend && poetry run sh scripts/lint-single.sh ${@#"backend/"}' --
-        language: system
-        types: [python]
-        files: '^backend/'
-        pass_filenames: true
-        fail_fast: true
-        stages:
-          - commit
-      - id: test-backend-unit
-        name: Running backend unit tests
-        entry: bash -c 'cd backend && poetry run sh scripts/test.sh -m pytest -m \"not integration\"'
-        language: system
-        files: '^backend/'
-        types: [ python ]
-        stages:
-          - commit
       - id: check-staged-webapp-style
         name: Checking staged webapp code style
         entry: bash -c 'cd webapp && npm run prettier:check'

@@ -17,7 +17,8 @@ def user_authentication_headers(
     data = {"username": email, "password": password}
 
     r = client.post(
-        f"{get_app_settings().API_V1_STR}/login/access-token", data=data
+        f"{get_app_settings('server').host}/api/v1/login/access-token",
+        data=data,
     )
     response = r.json()
     auth_token = response["access_token"]

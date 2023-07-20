@@ -83,7 +83,7 @@ class SingleModelDeploymentControl:
         return (
             self.idle_time
             and (time() - self.idle_time)
-            > get_app_settings().DEPLOYMENT_IDLE_TIME
+            > get_app_settings("server").deployment_idle_time
         )
 
     def load_functions(self):
@@ -164,10 +164,10 @@ class SingleModelDeploymentControl:
             deployment_id=self.deployment.id, status=status
         )
         res = requests.post(
-            f"{get_app_settings().SERVER_HOST}/api/v1/deployments/deployment-manager",
+            f"{get_app_settings('server').host}/api/v1/deployments/deployment-manager",
             json=data.dict(),
             headers={
-                "Authorization": f"Bearer {get_app_settings().APPLICATION_SECRET}"
+                "Authorization": f"Bearer {get_app_settings('secrets').application_secret}"
             },
         )
         assert (

@@ -72,7 +72,7 @@ async def test_get_notifications(
 ):
     result = await experiment_fixture
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/events/report",
+        f"{get_app_settings('server').host}/api/v1/events/report",
         headers=normal_user_token_headers,
     )
     assert res.status_code == 200, "Request failed"
@@ -88,7 +88,7 @@ async def test_get_notifications(
     assert got_notification["message"] == expected_notification["message"]
     assert "events" in got_notification
     assert len(got_notification["events"]) == 1
-    expected_url = f"{get_app_settings().WEBAPP_URL}/models/{some_model_integration.id}#training"
+    expected_url = f"{get_app_settings('webapp').url}/models/{some_model_integration.id}#training"
     assert got_notification["events"][0]["url"] == expected_url
 
 

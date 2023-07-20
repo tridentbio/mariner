@@ -48,7 +48,7 @@ class TestDatasetTransforms:
         dataset_ray_transformer = DatasetTransforms.remote()
         with open(csvpath, "rb") as f:
             for chunk in iter(
-                lambda: f.read(get_app_settings().APPLICATION_CHUNK_SIZE), b""
+                lambda: f.read(get_app_settings("server").application_chunk_size), b""
             ):
                 await dataset_ray_transformer.write_dataset_buffer.remote(
                     chunk

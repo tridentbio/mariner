@@ -67,7 +67,7 @@ def normal_user_token_headers(
     client: TestClient, db: Session
 ) -> Dict[str, str]:
     return authentication_token_from_email(
-        client=client, email=get_app_settings().EMAIL_TEST_USER, db=db
+        client=client, email=get_app_settings("test").email_test_user, db=db
     )
 
 
@@ -79,7 +79,7 @@ def normal_user_token_headers_payload(
     token = normal_user_token_headers["Authorization"].split(" ")[1]
     payload = jwt.decode(
         token,
-        get_app_settings().AUTHENTICATION_SECRET_KEY,
+        get_app_settings("secrets").authentication_secret_key,
         algorithms=[security.ALGORITHM],
     )
     return TokenPayload(**payload)
@@ -260,7 +260,7 @@ def some_deployment(
         "prediction_rate_limit_unit": "month",
     }
     response = client.post(
-        f"{get_app_settings().API_V1_STR}/deployments/",
+        f"{get_app_settings('server').host}/api/v1/deployments/",
         json=deployment_data,
         headers=normal_user_token_headers,
     )

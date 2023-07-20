@@ -102,7 +102,7 @@ def test_post_models_success(
     user = get_test_user(db)
     model = mock_model(framework=framework)
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/models/",
+        f"{get_app_settings('server').host}/api/v1/models/",
         json=model.dict(),
         headers=normal_user_token_headers,
     )
@@ -136,7 +136,7 @@ def test_post_models_on_existing_model_creates_new_version(
 ):
     new_version = some_model_integration.versions[0].copy()
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/models/",
+        f"{get_app_settings('server').host}/api/v1/models/",
         json={
             "name": some_model_integration.name,
             "config": new_version.config.dict(),
@@ -163,7 +163,7 @@ def test_post_models_dataset_not_found(
     datasetname = "a dataset name that is not registered"
     model.config.dataset.name = datasetname
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/models/",
+        f"{get_app_settings('server').host}/api/v1/models/",
         json=model.dict(),
         headers=normal_user_token_headers,
     )
@@ -179,7 +179,7 @@ def test_get_models_success(
     some_model: Model,
 ):
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/models/",
+        f"{get_app_settings('server').host}/api/v1/models/",
         headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK
@@ -197,7 +197,7 @@ def test_get_model_options(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ):
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/models/options",
+        f"{get_app_settings('server').host}/api/v1/models/options",
         headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK
@@ -246,7 +246,7 @@ def test_delete_model(
         client, normal_user_token_headers, dataset_name=some_dataset.name
     )
     res = client.delete(
-        f"{get_app_settings().API_V1_STR}/models/{model.id}",
+        f"{get_app_settings('server').host}/api/v1/models/{model.id}",
         headers=normal_user_token_headers,
     )
     assert res.status_code == 200
@@ -260,7 +260,7 @@ def test_post_predict(
     some_trained_model: Model,
 ):
     model_version = some_trained_model.versions[-1].id
-    route = f"{get_app_settings().API_V1_STR}/models/{model_version}/predict"
+    route = f"{get_app_settings('server').host}/api/v1/models/{model_version}/predict"
     res = client.post(
         route,
         json={
@@ -286,7 +286,7 @@ def test_post_predict_fails_untrained_model(
     some_model_integration: Model,
 ):
     model_version = some_model_integration.versions[-1].id
-    route = f"{get_app_settings().API_V1_STR}/models/{model_version}/predict"
+    route = f"{get_app_settings('server').host}/api/v1/models/{model_version}/predict"
     res = client.post(
         route,
         json={
@@ -311,7 +311,7 @@ def test_post_predict_validates_smiles(
     some_model_integration: Model,
 ):
     model_version = some_model_integration.versions[-1].id
-    route = f"{get_app_settings().API_V1_STR}/models/{model_version}/predict"
+    route = f"{get_app_settings('server').host}/api/v1/models/{model_version}/predict"
     res = client.post(
         route,
         json={
@@ -333,7 +333,7 @@ def test_get_model_version(
     normal_user_token_headers: dict[str, str],
 ):
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/models/{some_model.id}/",
+        f"{get_app_settings('server').host}/api/v1/models/{some_model.id}/",
         headers=normal_user_token_headers,
     )
     assert res.status_code == 200
@@ -351,7 +351,7 @@ def test_post_check_config_good_model(
         model_spec=model_config(dataset_name=some_dataset.name)
     )
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/models/check-config",
+        f"{get_app_settings('server').host}/api/v1/models/check-config",
         headers=normal_user_token_headers,
         json=payload.dict(),
     )
@@ -373,7 +373,7 @@ def test_post_check_config_good_model2(
         )
     )
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/models/check-config",
+        f"{get_app_settings('server').host}/api/v1/models/check-config",
         headers=normal_user_token_headers,
         json=payload.dict(),
     )
@@ -468,7 +468,7 @@ def test_post_check_config_bad_model(
         pass
 
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/models/check-config",
+        f"{get_app_settings('server').host}/api/v1/models/check-config",
         headers=normal_user_token_headers,
         json={"modelSpec": regressor.dict()},
     )
@@ -484,7 +484,7 @@ def test_get_name_suggestion(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ):
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/models/name-suggestion",
+        f"{get_app_settings('server').host}/api/v1/models/name-suggestion",
         headers=normal_user_token_headers,
     )
     assert res.status_code == 200

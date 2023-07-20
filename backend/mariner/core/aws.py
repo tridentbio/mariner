@@ -18,11 +18,15 @@ from mariner.utils import compress_file, get_size, hash_md5
 class Bucket(enum.Enum):
     """S3 buckets available to the application"""
 
-    Datasets = get_app_settings().AWS_DATASETS
-    Models = get_app_settings().AWS_MODELS
+    Datasets = get_app_settings("secrets").aws_datasets
+    Models = get_app_settings("secrets").aws_models
 
 
 class AWS_Credentials:
+    """
+    Represents AWS credentials with utility methods.
+    """
+
     def __init__(
         self,
         expiration: Union[None, datetime],
@@ -36,9 +40,15 @@ class AWS_Credentials:
         self.session_token = session_token
 
     def is_expired(self):
+        """
+        Checks if it's expired.
+        """
         return self.expiration is None or self.expiration < datetime.now()
 
     def credentials_dict(self):
+        """
+        Returns a dictionary with boto clients credentials params.
+        """
         return {
             "aws_access_key_id": self.access_key_id,
             "aws_secret_access_key": self.secret_access_key,
@@ -50,16 +60,16 @@ _credentials: Union[AWS_Credentials, None] = None
 
 
 def _get_new_credentials():
-    settings = get_app_settings()
-    if settings.AWS_MODE == "local":
+    secrets = get_app_settings("secrets")
+    if secrets.aws_mode == "local":
         return AWS_Credentials(
             expiration=None,
-            access_key_id=settings.AWS_ACCESS_KEY_ID,
-            secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            access_key_id=secrets.aws_access_key_id,
+            secret_access_key=secrets.aws_secret_access_key,
             session_token=None,
         )
     else:
-        raise ValueError(f"Invalid AWS_MODE: {settings.AWS_MODE}")
+        raise ValueError(f"Invalid aws_mode: {secrets.aws_mode}")
 
 
 def _get_credentials():
@@ -75,17 +85,17 @@ def create_s3_client() -> BaseClient:
     Returns:
         BaseClient: boto3 s3 client
     """
-    if get_app_settings().AWS_MODE == "local":
+    if get_app_settings().secrets.aws_mode == "local":
         creds = _get_credentials()
         s3 = boto3.client(
             "s3",
-            region_name=get_app_settings().AWS_REGION,
+            region_name=get_app_settings().secrets.aws_region,
             **creds.credentials_dict(),
         )
     else:
         s3 = boto3.client(
             "s3",
-            region_name=get_app_settings().AWS_REGION,
+            region_name=get_app_settings().secrets.aws_region,
         )
     return s3
 

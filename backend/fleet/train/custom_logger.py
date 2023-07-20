@@ -93,16 +93,16 @@ class MarinerLogger(Logger):
         data["data"] = msg
         try:
             res = requests.post(
-                f"{get_app_settings().SERVER_HOST}/api/v1/experiments/epoch_metrics",
+                f"{get_app_settings('server').host}/api/v1/experiments/epoch_metrics",
                 json=data,
                 headers={
-                    "Authorization": f"Bearer {get_app_settings().APPLICATION_SECRET}"
+                    "Authorization": f"Bearer {get_app_settings('secrets').application_secret}"
                 },
             )
             if res.status_code != 200:
                 LOG.warning(
                     "POST %s failed with status %s\n%r",
-                    f"{get_app_settings().SERVER_HOST}/api/v1/experiments/epoch_metrics",
+                    f"{get_app_settings('server').host}/api/v1/experiments/epoch_metrics",
                     res.status_code,
                     res.json(),
                 )
@@ -111,7 +111,7 @@ class MarinerLogger(Logger):
 
         except (requests.ConnectionError, requests.ConnectTimeout):
             LOG.error(
-                f"Failed metrics to {get_app_settings().SERVER_HOST}/api/v1/experiments"
+                f"Failed metrics to {get_app_settings('server').host}/api/v1/experiments"
                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
                 "the ray services, and that it points to the mariner backend"
             )
