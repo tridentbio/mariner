@@ -28,7 +28,5 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build and start services
       run: make start DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="backend ray-head ray-worker mlflow mlflowdb db"
-    - name: Run migrations
-      run: make migrate
     - name: Integration tests and get report
       run: bash -c "$DOCKER_COMPOSE exec -T backend bash scripts/test.sh -m pytest -m 'integration'"
