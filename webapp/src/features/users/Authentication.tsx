@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Stack, TextField, FormControl, Button, Alert } from '@mui/material';
+import {
+  Stack,
+  TextField,
+  FormControl,
+  Button,
+  Alert,
+  Typography,
+} from '@mui/material';
 import { LargerBoldText } from 'components/molecules/Text';
 import { isApiError, messageApiError } from 'app/rtk/api';
 import { authApi } from 'app/rtk/auth';
@@ -9,10 +16,10 @@ import { TOKEN } from 'app/local-storage';
 import GithubButton from 'components/molecules/GithubButton';
 import Logo from 'components/atoms/Logo';
 import { useNotifications } from 'app/notifications';
+import { getProviders, Provider } from './usersAPI';
 
-const oauthLoginURL = `${
-  import.meta.env.VITE_API_BASE_URL
-}/api/v1/oauth?provider=github`;
+const makeOAuthUrl = (provider: string) =>
+  `${import.meta.env.VITE_API_BASE_URL}/api/v1/oauth?provider=${provider}`;
 
 const stack = (props: { children: React.ReactNode }) => {
   return (
@@ -40,12 +47,14 @@ const stack = (props: { children: React.ReactNode }) => {
 const AuthenticationPage = function () {
   const [login, { data, error, isLoading, isSuccess }] =
     authApi.useLoginMutation();
+  const [providers, setProviders] = useState<Provider[]>();
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
   const tk = params.get('tk');
   const githubError = params.get('error');
-  const { notifyError, success } = useNotifications();
+  const { notifyError } = useNotifications();
+
   const afterLogin =
     (location?.state as { from?: Location })?.from?.pathname || '/';
   useEffect(() => {
@@ -56,7 +65,10 @@ const AuthenticationPage = function () {
       );
       navigate(afterLogin, { replace: true });
     }
-  });
+  }, [tk]);
+  useEffect(() => {
+    getProviders().then(setProviders);
+  }, []);
   useEffect(() => {
     if (githubError) {
       notifyError(githubError);
@@ -132,9 +144,21 @@ const AuthenticationPage = function () {
           >
             Sign In
           </Button>
-          <a style={{ textDecoration: 'none' }} href={oauthLoginURL}>
-            <GithubButton />
-          </a>
+          {providers &&
+            providers.map(({ name, id }) => (
+              <a
+                key={id}
+                style={{ textDecoration: 'none' }}
+                href={makeOAuthUrl(id)}
+              >
+                {id === 'github' && <GithubButton />}
+                {id !== 'github' && (
+                  <Button variant="contained">
+                    <Typography>Sign in with {name}</Typography>
+                  </Button>
+                )}
+              </a>
+            ))}
         </FormControl>
       </form>
     </Box>

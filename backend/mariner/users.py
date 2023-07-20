@@ -9,7 +9,8 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
-from mariner.core import github, security
+import oauth_providers
+from mariner.core import security
 from mariner.core.config import get_app_settings
 from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
@@ -20,6 +21,7 @@ from mariner.exceptions import (
     UserNotSuperUser,
 )
 from mariner.exceptions.user_exceptions import UserEmailNotAllowed
+from mariner.oauth import oauth_manager
 from mariner.schemas.token import Token
 from mariner.schemas.user_schemas import (
     User,
@@ -109,13 +111,6 @@ class BasicAuth(BaseModel):
     password: str
 
 
-class GithubAuth(BaseModel):
-    """Payload for oauth authentication with github as a provider."""
-
-    code: str
-    state: str
-
-
 def _authenticate_basic(email: str, password: str) -> User:
     with SessionLocal() as db:
         user = user_store.authenticate(db, email=email, password=password)
@@ -126,25 +121,33 @@ def _authenticate_basic(email: str, password: str) -> User:
         return User.from_orm(user)
 
 
-def _authenticate_github(code: str, state: str) -> User:
+def _authenticate_oauth(state: str, **kwargs) -> User:
     with SessionLocal() as db:
-        state = oauth_state_store.get_state(db, state=state, provider="github")
+        state_obj = oauth_state_store.get_state(db, state=state)
         if not state:
             raise InvalidOAuthState(f"state {state} not created by us")
-
-        token = github.get_access_token(code)
-        github_user = github.get_user(token.access_token)
-        if github_user.email not in get_app_settings().ALLOWED_GITHUB_AUTH_EMAILS:
+        provider_settings = get_app_settings("auth").__root__[state_obj.provider]
+        user_data = oauth_providers.get_user_data(
+            provider=state_obj.provider,
+            credentials=(
+                provider_settings.dict() | {"redirect_uri": oauth_manager.redirect_uri}
+            ),
+            **kwargs,
+        )
+        if (
+            provider_settings.allowed_emails
+            and user_data.email not in provider_settings.allowed_emails
+        ):
             raise UserEmailNotAllowed(
-                "Email should be cleared in the ALLOWED_GITHUB_AUTH_EMAILS env var"
+                f"Email missing from conf.toml's {state_obj.provider} settings"
             )
 
-        user = user_store.get_by_email(db, email=github_user.email)
+        user = user_store.get_by_email(db, email=user_data.email)
         if not user:
             user = user_store.create(
                 db,
                 obj_in=UserCreateOAuth(
-                    email=EmailStr(github_user.email), image_url=github_user.avatar_url
+                    email=EmailStr(user_data.email), image_url=user_data.avatar_url
                 ),
             )
         if not user.is_active:
@@ -154,7 +157,7 @@ def _authenticate_github(code: str, state: str) -> User:
 
 def _make_token(user: User) -> Token:
     access_token_expires = timedelta(
-        minutes=get_app_settings().ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=get_app_settings("server").access_token_expire_minutes
     )
     return Token(
         access_token=security.create_access_token(
@@ -165,13 +168,13 @@ def _make_token(user: User) -> Token:
 
 
 def authenticate(
-    basic: Optional[BasicAuth] = None, github_oauth: Optional[GithubAuth] = None
+    basic: Optional[BasicAuth] = None, provider_oauth: Optional[dict] = None
 ) -> Token:
-    """Authenticates one of the input authentication payloads (basic, or github_oauth)
+    """Authenticates one of the input authentication payloads (basic, or provider_oauth)
 
     Args:
         basic: If present, attempts a basic authentication.
-        github_oauth: If present, attempts a github authentication. **Precedes basic**.
+        provider_oauth: If present, attempts a provider authentication. **Precedes basic**.
 
     Returns:
         Object with access token.
@@ -179,8 +182,10 @@ def authenticate(
     Raises:
         ValueError: When all authentication input options are None.
     """
-    if github_oauth:
-        user = _authenticate_github(code=github_oauth.code, state=github_oauth.state)
+    if provider_oauth:
+        if "state" not in provider_oauth:
+            raise ValueError("Missing state in provider_oauth")
+        user = _authenticate_oauth(**provider_oauth)
     elif basic:
         user = _authenticate_basic(email=basic.username, password=basic.password)
     else:

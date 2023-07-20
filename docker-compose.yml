@@ -6,60 +6,12 @@ services:
       context: ./webapp
     ports: 
       - 3000:3000
-  db:
-    image: postgres:12
-    volumes:
-      - app-db-data:/var/lib/postgresql/data/pgdata
-    environment:
-      - POSTGRES_SERVER=db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=app
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - PGUSER=postgres
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    ports: 
-      - "5432:5432"
-    networks:
-      - ray_net
-  backend:
-    image: 'image:latest'
-    ports:
-      - 80:80
-      - 8888:8888
-      - 8000:8000
-    environment:
-      - RESTART=true
-    env_file:
-      - backend/.env
-      - backend/.env.secret
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
-      timeout: 4m 
-      retries: 8
-    restart: unless-stopped
-    build:
-      context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
-    networks:
-      - ray_net
-    command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
-    volumes:
-      - ./backend:/app:z
-      - ./source:/source:z
-      - ./build:/build:z
-
   mlflowdb:
     image: postgres:12
     volumes:
       - app-mlflow-data:/var/lib/postgresql/data/pgdata
     environment:
-      - POSTGRES_SERVER=mlflow
+      - POSTGRES_SERVER=mlflowdb
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=app
@@ -74,6 +26,57 @@ services:
       retries: 15
     networks:
       - ray_net
+  db:
+    image: postgres:12
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=app
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGUSER=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 2s
+      retries: 15
+    ports: 
+      - "5432:5432"
+    networks:
+      - ray_net
+  backend:
+    image: 'image:latest'
+    ports:
+      - 80:80
+      - 8888:8888
+      - 8000:8000
+    env_file:
+      - backend/.env
+      - backend/.env.secret
+    environment:
+      - RESTART=true
+      - SERVER_HOST=http://backend
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - POSTGRES_URI=postgresql://postgres:123456@db:5432/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 4m 
+      retries: 8
+
+    restart: unless-stopped
+    build:
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.local
+    networks:
+      - ray_net
+    command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
+    volumes:
+      - ./backend:/app:z
+      - ./source:/source:z
+      - ./build:/build:z
 
 
   mlflow:
@@ -85,11 +88,9 @@ services:
     env_file:
       - backend/.env.secret
     environment:
-      - POSTGRES_SERVER=mlflowdb
-      - POSTGRES_PORT=5432
+      - MLFLOW_POSTGRES_URI=postgresql://postgres:123456@mlflowdb:5432/app
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - MLFLOW_ARTIFACT_URI=s3://dev-mariner-datasets
-      - AWS_MODELS_BUCKET=s3://dev-mariner-datasets
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 5s
@@ -97,7 +98,7 @@ services:
       retries: 3
       start_period: 90s
     restart: unless-stopped
-    command:  mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_MODELS_BUCKET-s3://dev-mariner-datasets} --backend-store-uri postgresql://postgres:123456@mlflowdb:5432/app
+    command:  mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_ARTIFACT_URI-s3://dev-mariner-datasets} --backend-store-uri ${MLFLOW_POSTGRES_URI-postgresql://postgres:123456@mlflowdb:5432/app}
     ports:
       - "5000:5000"
     networks:
@@ -111,6 +112,9 @@ services:
     env_file:
       - backend/.env
       - backend/.env.secret
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SERVER_HOST=http://backend
     ports:
       - "6379:6379"
       - "8265:8265"
@@ -125,6 +129,9 @@ services:
       context: ./backend
       dockerfile: ../dockerfiles/Dockerfile.local
     shm_size: '4.91gb'
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SERVER_HOST=http://backend
     env_file:
       - backend/.env
       - backend/.env.secret

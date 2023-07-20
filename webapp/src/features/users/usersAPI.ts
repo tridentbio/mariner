@@ -11,6 +11,12 @@ interface TokenResponse {
   token_type: string;
 }
 
+export interface Provider {
+  logo_url: string;
+  id: string;
+  name: string;
+}
+
 export const login = async (
   username: string,
   password: string
@@ -27,4 +33,8 @@ export const login = async (
 
 export const getMe = async (): Promise<User> => {
   return api.get('api/v1/users/me').then((res) => res.data);
+};
+
+export const getProviders = async (): Promise<Provider[]> => {
+  return api.get('api/v1/oauth-providers').then((res) => res.data);
 };
