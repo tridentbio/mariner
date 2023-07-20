@@ -2,9 +2,12 @@ version: "3.4"
 services:
   backend:
     depends_on:
-      - db
-      - mlflow
-      - ray-worker
+      db:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+      ray-worker:
+        condition: service_started
     environment:
       - RESTART=true
       - MLFLOW_TRACKING_URI=http://mlflow:5000
@@ -24,6 +27,9 @@ services:
     volumes:
       - ./cov:/app/cov
   mlflow:
+    depends_on:
+      mlflowdb:
+        condition: service_healthy
     environment:
       - MLFLOW_POSTGRES_URI=postgresql://postgres:123456@mlflowdb:5432/app
       - MLFLOW_TRACKING_URI=http://mlflow:5000

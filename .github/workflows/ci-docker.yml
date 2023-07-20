@@ -15,10 +15,9 @@ env:
     MLFLOW_POSTGRES_URI: postgresql://postgres:123456@mlflowdb:5432/app
     RAY_ADDRESS: ray://ray:10001
     MLFLOW_TRACKING_URI: http://mlflow:5000
-    APPLICATION_SECRET: --
-    AUTHENTICATION_SECRET_KEY: --
-    DEPLOYMENT_URL_SIGNATURE_SECRET_KEY: --
-    DEPLOYMENT_URL_SECRET_KEY: --
+    APPLICATION_SECRET: secret
+    AUTHENTICATION_SECRET_KEY: secret
+    DEPLOYMENT_URL_SIGNATURE_SECRET_KEY: secret
     COMPOSE_HTTP_TIMEOUT: 600
     COMPOSE_USER: 1000:1000
     DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
@@ -27,10 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Build services
+    - name: Build and start services
       run: make start DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="backend ray-head ray-worker mlflow mlflowdb db"
-    - name: Build services
+    - name: Run migrations
       run: make migrate
     - name: Integration tests and get report
-      if: 'failure() || success()'
       run: bash -c "$DOCKER_COMPOSE exec -T backend bash scripts/test.sh -m pytest -m 'integration'"
