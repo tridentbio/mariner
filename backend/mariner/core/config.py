@@ -66,8 +66,8 @@ class AuthSettings(BaseModel):
     client_secret: str
     name: str
     authorization_url: str
+    scope: str
     allowed_emails: Union[None, list[str]] = None
-    scope: Union[str, None] = None
     logo_url: Union[str, None] = None
     jwks_url: Union[str, None] = None
     token_url: Union[str, None] = None
@@ -207,6 +207,26 @@ class SettingsV2:
                 return string.split(",")
             return string
 
+        # populate missing_envs with missing required environment variables
+        # from oauth providers
+        missing_envs = []
+        required_fields = [
+            "CLIENT_ID",
+            "CLIENT_SECRET",
+            "NAME",
+            "AUTHORIZATION_URL",
+            "SCOPE",
+        ]
+        for provider in providers:
+            for required_field in required_fields:
+                if auth_env.get(f"{provider}_{required_field}") is None:
+                    missing_envs.append(f"OAUTH_{provider}_{required_field}")
+        # Raise error if missing_envs is not empty
+        if missing_envs:
+            raise ValueError(
+                f"Missing required environment variables for OAuth providers: {missing_envs}"
+            )
+
         # Create auth settings for each provider
         self.auth = AuthSettingsDict(
             __root__={
@@ -237,58 +257,63 @@ def _load_settings() -> SettingsV2:
 
 
 @overload
-def get_app_settings() -> SettingsV2:
+def get_app_settings(
+    name: Union[str, None] = None, use_cache: bool = False
+) -> SettingsV2:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["server"]) -> ServerSettings:
+def get_app_settings(name: Literal["server"], use_cache=False) -> ServerSettings:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["webapp"]) -> WebappSettings:
+def get_app_settings(name: Literal["webapp"], use_cache=False) -> WebappSettings:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["auth"]) -> AuthSettingsDict:
+def get_app_settings(name: Literal["auth"], use_cache=False) -> AuthSettingsDict:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["secrets"]) -> SecretEnv:
+def get_app_settings(name: Literal["secrets"], use_cache=False) -> SecretEnv:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["services"]) -> ServicesEnv:
+def get_app_settings(name: Literal["services"], use_cache=False) -> ServicesEnv:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["package"]) -> Package:
+def get_app_settings(name: Literal["package"], use_cache=False) -> Package:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["test"]) -> QA_Test_Settings:
+def get_app_settings(name: Literal["test"], use_cache=False) -> QA_Test_Settings:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["tenant"]) -> TenantSettings:
+def get_app_settings(name: Literal["tenant"], use_cache=False) -> TenantSettings:
     ...
 
 
-def get_app_settings(name: Union[str, None] = None):
+def get_app_settings(name: Union[str, None] = None, use_cache=True):
     """
     Get the application settings.
 
     Returns:
         Settings: the application settings.
     """
-    settings = _load_settings()
+    if use_cache:
+        settings = _load_settings()
+    else:
+        settings = _load_settings.__wrapped__()
     if name is None:
         return settings
     else:
