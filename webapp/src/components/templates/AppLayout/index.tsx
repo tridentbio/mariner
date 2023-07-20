@@ -1,4 +1,3 @@
-import Footer from '@components/molecules/Footer';
 import { TopBar } from '@components/organisms/TopBar';
 import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
@@ -15,7 +14,6 @@ export function AppLayout() {
     <AppContainer>
       <TopBar />
       <Outlet />
-      <Footer />
     </AppContainer>
   );
 }
