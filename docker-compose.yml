@@ -6,6 +6,26 @@ services:
       context: ./webapp
     ports: 
       - 3000:3000
+  mlflowdb:
+    image: postgres:12
+    volumes:
+      - app-mlflow-data:/var/lib/postgresql/data/pgdata
+    environment:
+      - POSTGRES_SERVER=mlflowdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=app
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGUSER=postgres
+    ports: 
+      - "54321:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 2s
+      retries: 15
+    networks:
+      - ray_net
   db:
     image: postgres:12
     volumes:
@@ -57,27 +77,6 @@ services:
       - ./source:/source:z
       - ./build:/build:z
 
-  mlflowdb:
-    image: postgres:12
-    volumes:
-      - app-mlflow-data:/var/lib/postgresql/data/pgdata
-    environment:
-      - POSTGRES_SERVER=mlflow
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=app
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - PGUSER=postgres
-    ports: 
-      - "54321:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
-      interval: 10s
-      timeout: 2s
-      retries: 15
-    networks:
-      - ray_net
-
 
   mlflow:
     depends_on:
@@ -88,7 +87,7 @@ services:
     env_file:
       - backend/.env.secret
     environment:
-      - POSTGRES_URI=postgresql://postgres:123456@mlflowdb:5432/app
+      - MLFLOW_POSTGRES_URI=postgresql://postgres:123456@mlflowdb:5432/app
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - MLFLOW_ARTIFACT_URI=s3://dev-mariner-datasets
     healthcheck:
@@ -98,7 +97,7 @@ services:
       retries: 3
       start_period: 90s
     restart: unless-stopped
-    command:  mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_ARTIFACT_URI-s3://dev-mariner-datasets} --backend-store-uri ${POSTGRES_URI-postgresql://postgres:123456@mlflowdb:5432/app}
+    command:  mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root ${AWS_ARTIFACT_URI-s3://dev-mariner-datasets} --backend-store-uri ${MLFLOW_POSTGRES_URI-postgresql://postgres:123456@mlflowdb:5432/app}
     ports:
       - "5000:5000"
     networks:

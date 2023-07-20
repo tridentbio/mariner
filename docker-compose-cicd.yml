@@ -25,7 +25,7 @@ services:
       - ./cov:/app/cov
   mlflow:
     environment:
-      - POSTGRES_URI=postgresql://postgres:123456@mlflowdb:5432/app
+      - MLFLOW_POSTGRES_URI=postgresql://postgres:123456@mlflowdb:5432/app
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - MLFLOW_ARTIFACT_URI=s3://dev-mariner-datasets
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-Variable not set}
