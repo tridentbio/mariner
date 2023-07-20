@@ -210,7 +210,7 @@ class SettingsV2:
         # Create auth settings for each provider
         self.auth = AuthSettingsDict(
             __root__={
-                provider: AuthSettings(
+                provider.lower(): AuthSettings(
                     client_id=auth_env[f"{provider}_CLIENT_ID"],
                     client_secret=auth_env[f"{provider}_CLIENT_SECRET"],
                     name=auth_env[f"{provider}_NAME"],
