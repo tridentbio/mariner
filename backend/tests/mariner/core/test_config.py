@@ -77,6 +77,7 @@ test_cases = [
 ]
 
 
+@pytest.mark.first
 @pytest.mark.parametrize("case", test_cases)
 def test_get_app_settings(case):
     """
