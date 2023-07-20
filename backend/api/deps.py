@@ -24,7 +24,7 @@ from mariner.stores.deployment_sql import deployment_store
 from mariner.stores.user_sql import user_store
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{get_app_settings().API_V1_STR}/login/access-token"
+    tokenUrl=f"{get_app_settings('server').host}/api/v1/login/access-token"
 )
 
 
@@ -53,15 +53,15 @@ def get_current_user(
     try:
         payload = jwt.decode(
             token,
-            get_app_settings().AUTHENTICATION_SECRET_KEY,
+            get_app_settings("secrets").authentication_secret_key,
             algorithms=[security.ALGORITHM],
         )
         token_data = TokenPayload(**payload)
-    except (JWTError, ValidationError):
+    except (JWTError, ValidationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
-        )
+        ) from exc
     user = user_store.get(db, id=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -136,7 +136,7 @@ def assert_trusted_service(authorization: Union[str, None] = Header("Authorizati
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     else:
         token = authorization.split(" ")
-        if len(token) < 2 or token[1] != get_app_settings().APPLICATION_SECRET:
+        if len(token) < 2 or token[1] != get_app_settings("secrets").application_secret:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
@@ -178,5 +178,5 @@ def get_current_websocket_deployment(
         assert deployment.share_strategy == "public"
 
         return deployment
-    except (AssertionError, JWTError, ValidationError) as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from e
+    except (AssertionError, JWTError, ValidationError) as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from exc

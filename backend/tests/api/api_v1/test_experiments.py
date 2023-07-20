@@ -71,7 +71,7 @@ def test_post_experiments(
     client: TestClient, mocked_experiment_payload: dict, user_headers_fixture: dict
 ):
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/experiments/",
+        f"{get_app_settings('server').host}/api/v1/experiments/",
         json=mocked_experiment_payload,
         headers=user_headers_fixture,
     )
@@ -97,7 +97,7 @@ def test_get_experiments(
 ):
     params = {"modelId": user_model_fixture.id}
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/experiments/",
+        f"{get_app_settings('server').host}/api/v1/experiments/",
         params=params,
         headers=user_headers_fixture,
     )
@@ -118,7 +118,7 @@ def test_get_experiments_ordered_by_createdAt_desc_url_encoded(
     querystring = urlencode(params)
 
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/experiments/?{querystring}",
+        f"{get_app_settings('server').host}/api/v1/experiments/?{querystring}",
         params=params,
         headers=user_headers_fixture,
     )
@@ -145,7 +145,7 @@ def test_get_experiments_ordered_by_createdAt_desc(
     params = {"modelId": user_model_fixture.id, "orderBy": "-createdAt"}
 
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/experiments/",
+        f"{get_app_settings('server').host}/api/v1/experiments/",
         params=params,
         headers=user_headers_fixture,
     )
@@ -173,7 +173,7 @@ def test_get_experiments_ordered_by_createdAt_asc_url_encoded(
     querystring = urlencode(params)
 
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/experiments/?{querystring}",
+        f"{get_app_settings('server').host}/api/v1/experiments/?{querystring}",
         headers=user_headers_fixture,
     )
     assert res.status_code == HTTP_200_OK
@@ -203,7 +203,7 @@ def test_get_experiments_by_stage(
         "stage": ["SUCCESS"],
     }
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/experiments",
+        f"{get_app_settings('server').host}/api/v1/experiments",
         params=params,
         headers=user_headers_fixture,
     )
@@ -231,7 +231,7 @@ def test_post_update_metrics_unauthorized(
         "userId": user_id,
     }
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/experiments/epoch_metrics",
+        f"{get_app_settings('server').host}/api/v1/experiments/epoch_metrics",
         json=metrics_update,
     )
     assert res.status_code == status.HTTP_403_FORBIDDEN
@@ -252,9 +252,11 @@ def test_post_update_metrics_sucess(
         "userId": user_id,
     }
     res = client.post(
-        f"{get_app_settings().API_V1_STR}/experiments/epoch_metrics",
+        f"{get_app_settings('server').host}/api/v1/experiments/epoch_metrics",
         json=metrics_update,
-        headers={"Authorization": f"Bearer {get_app_settings().APPLICATION_SECRET}"},
+        headers={
+            "Authorization": f"Bearer {get_app_settings('secrets').application_secret}"
+        },
     )
     assert res.status_code == status.HTTP_200_OK
 
@@ -269,7 +271,7 @@ def test_get_experiments_metrics_for_model_version(
     model_version_id = user_model_fixture.versions[0].id
 
     res = client.get(
-        f"{get_app_settings().API_V1_STR}/experiments/{model_version_id}/metrics",
+        f"{get_app_settings('server').host}/api/v1/experiments/{model_version_id}/metrics",
         headers=user_headers_fixture,
     )
 
