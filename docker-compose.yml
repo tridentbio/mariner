@@ -38,11 +38,10 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - PGUSER=postgres
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 5s
-      timeout: 60s
-      retries: 3
-      start_period: 90s
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 2s
+      retries: 15
     ports: 
       - "5432:5432"
     networks:
