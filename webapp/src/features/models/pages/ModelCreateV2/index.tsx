@@ -179,9 +179,11 @@ const ModelCreateV2 = () => {
         <Box sx={{ maxWidth: '100vw' }}>
           <div>
             <ModelEditor
-              value={extendSpecWithTargetForwardArgs(config)}
+              value={extendSpecWithTargetForwardArgs(
+                config as modelsApi.TorchModelSpec
+              )}
               onChange={(value) => {
-                setValue('config', value);
+                setValue('config', value as modelsApi.ModelCreate['config']);
               }}
             />
           </div>
