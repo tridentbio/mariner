@@ -6,11 +6,17 @@ from logging import error
 import requests
 from pydantic import BaseModel
 
-from mariner.core.config import get_app_settings
-from mariner.exceptions.auth_exceptions import InvalidGithubCode
-
 GITHUB_URL = "https://github.com/"
 GITHUB_API_URL = "https://api.github.com/"
+
+
+class InvalidGithubCode(Exception):
+    """Exception raised when the github token from the request is invalid
+    i.e. it didn't came from github."""
+
+
+class GithubUserUnverified(Exception):
+    """Exception raised when the github user is not verified."""
 
 
 def _make_headers(**kwargs):
@@ -30,7 +36,9 @@ def _join(url: str, path: str):
     return url + path
 
 
-def github_get(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
+def github_get(
+    path: str, client_id: str, client_secret: str, url=GITHUB_URL, **kwargs
+) -> requests.Response:
     """Makes GET/ request to github on path endpoint.
 
     Args:
@@ -41,13 +49,15 @@ def github_get(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
         The request response.
     """
     headers, kwargs = _make_headers(**kwargs)
-    kwargs["client_id"] = get_app_settings().GITHUB_CLIENT_ID
-    kwargs["client_secret"] = get_app_settings().GITHUB_CLIENT_SECRET
+    kwargs["client_id"] = client_id
+    kwargs["client_secret"] = client_secret
     url = _join(url, path)
-    return requests.get(url=url, params=kwargs, headers=headers)
+    return requests.get(url=url, params=kwargs, headers=headers, timeout=10)
 
 
-def github_post(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
+def github_post(
+    path: str, client_id: str, client_secret: str, url=GITHUB_URL, **kwargs
+) -> requests.Response:
     """Makes a POST/ request to github on path endpoint.
 
     Args:
@@ -58,10 +68,10 @@ def github_post(path: str, url=GITHUB_URL, **kwargs) -> requests.Response:
         The request response.
     """
     headers, kwargs = _make_headers(**kwargs)
-    kwargs["client_id"] = get_app_settings().GITHUB_CLIENT_ID
-    kwargs["client_secret"] = get_app_settings().GITHUB_CLIENT_SECRET
+    kwargs["client_id"] = client_id
+    kwargs["client_secret"] = client_secret
 
-    result = requests.post(url=url + path, json=kwargs, headers=headers)
+    result = requests.post(url=url + path, json=kwargs, headers=headers, timeout=5)
     return result
 
 
@@ -98,7 +108,7 @@ class GithubFailure(Exception):
         self.response = response
 
 
-def get_access_token(code: str) -> GithubAccessCode:
+def get_access_token(code: str, credentials: dict[str, str]) -> GithubAccessCode:
     """Attempts to exchange a code string for an access token.
 
     Args:
@@ -110,7 +120,7 @@ def get_access_token(code: str) -> GithubAccessCode:
     Raises:
         InvalidGithubCode: If the given input is invalid.
     """
-    result = github_post("/login/oauth/access_token", code=code)
+    result = github_post("/login/oauth/access_token", code=code, **credentials)
     if 200 <= result.status_code < 400:
         return GithubAccessCode.construct(**result.json())
     raise InvalidGithubCode()
@@ -118,11 +128,14 @@ def get_access_token(code: str) -> GithubAccessCode:
 
 def get_user(
     access_token: str,
+    credentials: dict[str, str],
 ) -> GithubUser:
     """Get's the user github owner of the access_token.
 
     Args:
         access_token: github authentication token.
+        credentials: a dictionary containing the client_id and the
+            client_secret.
 
     Returns:
         Github user object
@@ -130,12 +143,17 @@ def get_user(
     Raises:
         GithubFailure: When there's an error from github response.
     """
-    result = github_get(url=GITHUB_API_URL, path="user", access_token=access_token)
+    result = github_get(
+        url=GITHUB_API_URL, path="user", access_token=access_token, **credentials
+    )
     if 200 <= result.status_code < 400:
         github_user = GithubUser.construct(**result.json())
         if not github_user.email:
             email_response = github_get(
-                url=GITHUB_API_URL, path="user/emails", access_token=access_token
+                url=GITHUB_API_URL,
+                path="user/emails",
+                access_token=access_token,
+                **credentials,
             )
             assert (
                 200 <= email_response.status_code < 400
@@ -145,9 +163,26 @@ def get_user(
             for email in email_json:
                 if email["verified"] and email["primary"]:
                     primary_email = email["email"]
-            assert primary_email is not None, "User has no valid github visible email"
+                    break
+            if not primary_email:
+                raise GithubUserUnverified("No primary email verified found for user")
             github_user.email = primary_email
         return github_user
     else:
         error(result.json())
-        raise GithubFailure("failed to get result", response=result)
+        raise GithubFailure("Failed to get result", response=result)
+
+
+def exchange_code(code: str, credentials: dict[str, str]) -> GithubUser:
+    """Exchanges a code for a github user.
+
+    Args:
+        code: code string used during oauth.
+        credentials: a dictionary containing the client_id and the
+            client_secret.
+
+    Returns:
+        Github user object
+    """
+    access_token = get_access_token(code, credentials).access_token
+    return get_user(access_token, credentials)

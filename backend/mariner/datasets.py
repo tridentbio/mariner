@@ -38,7 +38,7 @@ from mariner.stores.dataset_sql import dataset_store
 from mariner.tasks import TaskView, get_manager
 from mariner.utils import is_compressed
 
-DATASET_BUCKET = get_app_settings().AWS_DATASETS
+DATASET_BUCKET = get_app_settings("secrets").aws_datasets
 LOG = logging.getLogger(__name__)
 
 
@@ -109,7 +109,7 @@ async def process_dataset(
         file = download_s3(key=dataset.data_url, bucket=DATASET_BUCKET)
 
         # Send the file to the ray actor by chunks
-        chunk_size = get_app_settings().APPLICATION_CHUNK_SIZE
+        chunk_size = get_app_settings("server").application_chunk_size
         dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))
         for chunk in iter(lambda: file.read(chunk_size), b""):
             await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
@@ -403,7 +403,7 @@ async def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
         List[ColumnsMeta]: list of metadata for each column in the csv file
     """
     dataset_actor = DatasetTransforms.remote()
-    chunk_size = get_app_settings().APPLICATION_CHUNK_SIZE
+    chunk_size = get_app_settings("server").application_chunk_size
     for chunk in iter(lambda: csv_file.file.read(chunk_size), b""):
         await dataset_actor.write_dataset_buffer.remote(chunk)
     await dataset_actor.set_is_dataset_fully_loaded.remote(True)
@@ -450,5 +450,7 @@ def get_csv_file(
         raise NotImplementedError(f"File type {file_type} not implemented")
 
     client = create_s3_client()
-    s3_res = client.get_object(Bucket=get_app_settings().AWS_DATASETS, Key=file_key)
+    s3_res = client.get_object(
+        Bucket=get_app_settings("secrets").aws_datasets, Key=file_key
+    )
     return s3_res["Body"].iter_chunks()
