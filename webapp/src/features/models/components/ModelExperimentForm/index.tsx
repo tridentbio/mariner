@@ -29,7 +29,7 @@ const ModelExperimentForm = ({
   loading,
 }: ModelExperimentFormProps) => {
   const [isUsingEarlyStopping, setIsUsingEarlyStopping] = useState(false);
-  const [targetColumns, setTargetColumns] = useState<APITargetConfig[] >(
+  const [targetColumns, setTargetColumns] = useState<APITargetConfig[]>(
     [] as APITargetConfig[]
   );
 
@@ -106,7 +106,8 @@ const ModelExperimentForm = ({
                   onChange={(modelVersion) => {
                     if (modelVersion)
                       setTargetColumns(
-                        modelVersion.config.dataset.targetColumns as APITargetConfig[]
+                        modelVersion.config.dataset
+                          .targetColumns as APITargetConfig[]
                       );
                     field.onChange({ target: { value: modelVersion?.id } });
                   }}
@@ -170,7 +171,9 @@ const ModelExperimentForm = ({
             />
           </Box>
           <Typography sx={{ mb: 1 }}>Checkpointing Options</Typography>
-          <CheckpointingForm targetColumns={targetColumns as APITargetConfig[]} />
+          <CheckpointingForm
+            targetColumns={targetColumns as APITargetConfig[]}
+          />
           <AdvancedOptionsForm
             open={isUsingEarlyStopping}
             onToggle={(value) => setIsUsingEarlyStopping(value)}

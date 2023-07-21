@@ -23,10 +23,10 @@ import {
   SklearnModelSpec,
 } from 'app/rtk/generated/models';
 
-export type APITargetConfig = TargetTorchColumnConfig
-export type APIColumnConfig = ColumnConfig
+export type APITargetConfig = TargetTorchColumnConfig;
+export type APIColumnConfig = ColumnConfig;
 
-export type FleetModelSpec = TorchModelSpec | SklearnModelSpec
+export type FleetModelSpec = TorchModelSpec | SklearnModelSpec;
 
 export enum EPythonClasses {
   INT_REQUIRED = "<class 'int'>",
@@ -52,7 +52,12 @@ export type FeaturizersType = ArrayElement<
 export type TransformsType = ArrayElement<
   TorchModelSpec['dataset']['transforms']
 >;
-export type ComponentType = 'layer' | 'featurizer' | 'transformer' | 'input' | 'output';
+export type ComponentType =
+  | 'layer'
+  | 'featurizer'
+  | 'transformer'
+  | 'input'
+  | 'output';
 export type LayerFeaturizerType = LayersType | FeaturizersType | TransformsType;
 export type ComponentConfigs = {
   [K in LayerFeaturizerType as K['type']]: K;

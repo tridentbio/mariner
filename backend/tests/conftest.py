@@ -46,7 +46,10 @@ from tests.fixtures.model import (
     teardown_create_model,
 )
 from tests.fixtures.user import get_test_user
-from tests.utils.user import authentication_token_from_email, create_random_user
+from tests.utils.user import (
+    authentication_token_from_email,
+    create_random_user,
+)
 from tests.utils.utils import random_lower_string
 
 

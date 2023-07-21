@@ -159,9 +159,15 @@ class Package(BaseModel):
 class QA_Test_Settings(BaseModel):  # pylint: disable=C0103
     """
     Configures the QA test parameters.
+
+    Attributes:
+        email_test_user: The email of the user to use for testing.
+        refresh_datasets: Whether to reupload datasets from tests/data/csv to
+            aws.
     """
 
     email_test_user: str = "test@domain.com"
+    refresh_datasets: bool = False
 
 
 class SettingsV2:
@@ -264,65 +270,51 @@ def _load_settings() -> SettingsV2:
 
 
 @overload
-def get_app_settings(
-    name: Union[str, None] = None, use_cache: bool = False
-) -> SettingsV2:
+def get_app_settings(name: Literal["server"]) -> ServerSettings:
     ...
 
 
 @overload
-def get_app_settings(
-    name: Literal["server"], use_cache=False
-) -> ServerSettings:
+def get_app_settings(name: Literal["webapp"]) -> WebappSettings:
     ...
 
 
 @overload
-def get_app_settings(
-    name: Literal["webapp"], use_cache=False
-) -> WebappSettings:
+def get_app_settings(name: Literal["auth"]) -> AuthSettingsDict:
     ...
 
 
 @overload
-def get_app_settings(
-    name: Literal["auth"], use_cache=False
-) -> AuthSettingsDict:
+def get_app_settings(name: Literal["secrets"]) -> SecretEnv:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["secrets"], use_cache=False) -> SecretEnv:
+def get_app_settings(name: Literal["services"]) -> ServicesEnv:
     ...
 
 
 @overload
-def get_app_settings(
-    name: Literal["services"], use_cache=False
-) -> ServicesEnv:
+def get_app_settings(name: Literal["package"]) -> Package:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["package"], use_cache=False) -> Package:
+def get_app_settings(name: Literal["test"]) -> QA_Test_Settings:
     ...
 
 
 @overload
-def get_app_settings(
-    name: Literal["test"], use_cache=False
-) -> QA_Test_Settings:
+def get_app_settings(name: Literal["tenant"]) -> TenantSettings:
     ...
 
 
 @overload
-def get_app_settings(
-    name: Literal["tenant"], use_cache=False
-) -> TenantSettings:
+def get_app_settings(name: None = None) -> SettingsV2:
     ...
 
 
-def get_app_settings(name: Union[str, None] = None, use_cache=True):
+def get_app_settings(name: Union[str, None] = None, use_cache: bool = True):
     """
     Get the application settings.
 

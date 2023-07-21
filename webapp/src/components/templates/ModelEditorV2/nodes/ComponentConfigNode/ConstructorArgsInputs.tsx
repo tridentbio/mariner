@@ -11,13 +11,14 @@ export interface ConstructorArgsInputsProps {
   editable: boolean;
 }
 
-const isString = (type: any) => typeof(type) === 'string' && type.includes('str');
+const isString = (type: any) =>
+  typeof type === 'string' && type.includes('str');
 
 const isIntOrFloat = (type: any) =>
-  typeof(type) === 'string' && (type.includes('int') || type.includes('float'))
+  typeof type === 'string' && (type.includes('int') || type.includes('float'));
 
-const isBoolean = (type: any) => typeof(type) === 'string' &&
-  type.includes('bool');
+const isBoolean = (type: any) =>
+  typeof type === 'string' && type.includes('bool');
 
 const ConstructorArgsInputs = ({
   editable,
@@ -68,9 +69,11 @@ const ConstructorArgsInputs = ({
                 editConstrutorArgs={editConstrutorArgs}
                 errors={errors}
                 value={
-                  (props.data.constructorArgs && props.data.constructorArgs[
-                    key as keyof typeof props.data.constructorArgs
-                  ]) || ''
+                  (props.data.constructorArgs &&
+                    props.data.constructorArgs[
+                      key as keyof typeof props.data.constructorArgs
+                    ]) ||
+                  ''
                 }
               ></EditorSelect>
             );
@@ -93,7 +96,8 @@ const ConstructorArgsInputs = ({
                 key={key}
                 sx={{ mb: 2 }}
                 value={
-                  props.data.constructorArgs && props.data.constructorArgs[
+                  props.data.constructorArgs &&
+                  props.data.constructorArgs[
                     key as keyof typeof props.data.constructorArgs
                   ]
                 }
@@ -118,7 +122,8 @@ const ConstructorArgsInputs = ({
                   id={key}
                   className="nodrag"
                   defaultChecked={
-                    props.data.constructorArgs && props.data.constructorArgs[
+                    props.data.constructorArgs &&
+                    props.data.constructorArgs[
                       key as keyof typeof props.data.constructorArgs
                     ]
                   }

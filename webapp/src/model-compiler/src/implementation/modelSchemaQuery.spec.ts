@@ -60,7 +60,7 @@ describe('modelSchemaQuery', () => {
             },
           ],
           featurizers: [],
-          transforms: []
+          transforms: [],
         },
         spec: {
           layers: [layer],

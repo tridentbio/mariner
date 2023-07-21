@@ -38,7 +38,9 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
         <ModelEditorContextProvider>
           {modelVersion.config && (
             <ModelEditor // TODO: change to component that supports all frameworks (update ModelEditor to TorchModelEditor)
-              value={extendSpecWithTargetForwardArgs(modelVersion.config as TorchModelSpec)}
+              value={extendSpecWithTargetForwardArgs(
+                modelVersion.config as TorchModelSpec
+              )}
               editable={false}
             />
           )}

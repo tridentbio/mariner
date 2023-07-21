@@ -4,13 +4,14 @@ AWS service
 import enum
 import io
 from datetime import datetime
-from typing import BinaryIO, Tuple, Union
+from typing import IO, BinaryIO, Tuple, Union
 
 import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from fastapi.datastructures import UploadFile
 
+from fleet.file_utils import is_compressed
 from mariner.core.config import get_app_settings
 from mariner.utils import compress_file, get_size, hash_md5
 
@@ -161,20 +162,6 @@ def download_s3(key: str, bucket: Union[str, Bucket]) -> io.BytesIO:
     )
     s3body = s3_res["Body"].read()
     return io.BytesIO(s3body)
-
-
-def is_compressed(file: bytes) -> bool:
-    """
-    Gzip compressed files start with b'\x1f\x8b'
-    """
-    gzip_mark = b"\x1f\x8b"
-
-    if "read" in dir(file):
-        file_prefix = file.read(2)
-        file.seek(0)
-        return file_prefix == gzip_mark
-
-    return file[0:2] == gzip_mark
 
 
 def upload_s3_compressed(

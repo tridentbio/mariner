@@ -1,7 +1,7 @@
 import { ModelOutputValue } from '@app/types/domain/models';
 import { Text } from '@components/molecules/Text';
 import ModelPrediction from '@features/models/components/ModelVersionInferenceView/ModelPrediction';
-import {APITargetConfig} from '@model-compiler/src/interfaces/model-editor'
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
 import { Box } from '@mui/material';
 
 export const InferenceOutput = ({

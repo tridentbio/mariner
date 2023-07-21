@@ -114,7 +114,9 @@ def mock_dataset(
     dataset: Literal["zinc", "sampl", "hiv"] = "zinc",
 ):
     key: str = f"datasets/{dataset}.csv"
-    if not aws.is_in_s3(key=key, bucket=aws.Bucket.Datasets):
+    if get_app_settings("test").refresh_datasets or not aws.is_in_s3(
+        key=key, bucket=aws.Bucket.Datasets
+    ):
         with open(file, "rb") as f:
             aws.upload_s3_file(f, key=key, bucket=aws.Bucket.Datasets)
 

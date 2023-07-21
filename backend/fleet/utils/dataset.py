@@ -6,18 +6,11 @@ import pandas as pd
 
 from fleet.data_types import SmileDataType
 from fleet.dataset_schemas import TorchDatasetConfig
+from fleet.file_utils import is_compressed
 from fleet.validation.functions import is_valid_smiles_series
 
 
-def is_compressed(file: bytes) -> bool:
-    """Check if file is compressed by checking the first two bytes
-
-    Gzip compressed files start with b'\x1f\x8b'
-    """
-    return file[0:2] == b"\x1f\x8b"
-
-
-def decompress_file(fileBytes: bytes) -> pd.DataFrame:
+def decompress_file(fileBytes: bytes) -> io.BytesIO:
     """
     Converts a csv file in bytes compressed by gzip to a BytesIO object
     """

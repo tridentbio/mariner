@@ -172,8 +172,11 @@ const ModelEditor = ({
       event.dataTransfer.getData('application/componentData')
     ) as HandleProtoDragStartParams['data'];
 
-    if (componentData.type === 'scikit_reg' || componentData.type === 'scikit_class') {
-      return
+    if (
+      componentData.type === 'scikit_reg' ||
+      componentData.type === 'scikit_class'
+    ) {
+      return;
     }
     const offset = JSON.parse(event.dataTransfer.getData('application/offset'));
     const { type: classPath } = componentData.component;

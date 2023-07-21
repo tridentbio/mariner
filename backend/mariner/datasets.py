@@ -13,8 +13,13 @@ from sqlalchemy.orm.session import Session
 from starlette.responses import ContentStream
 
 from api.websocket import WebSocketMessage, get_websockets_manager
+from fleet.file_utils import is_compressed
 from fleet.ray_actors.dataset_transforms import DatasetTransforms
-from mariner.core.aws import create_s3_client, download_s3, upload_s3_compressed
+from mariner.core.aws import (
+    create_s3_client,
+    download_s3,
+    upload_s3_compressed,
+)
 from mariner.core.config import get_app_settings
 from mariner.entities.dataset import Dataset as DatasetEntity
 from mariner.entities.user import User

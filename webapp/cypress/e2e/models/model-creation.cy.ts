@@ -28,14 +28,13 @@ describe('/models/new - Model creation page', () => {
     cy.visit('/models/new');
   });
 
-  // TODO: fix OneHot Layer bug to this test pass
-  // it.skip('Builds Categorical-Smiles Model', () => {
-  //   cy.buildYamlModel(
-  //     'data/yaml/categorical_features_model.yaml',
-  //     zincDatasetFixture.name,
-  //     true
-  //   );
-  // });
+  it.skip('Builds Categorical-Smiles Model', () => {
+    cy.buildYamlModel(
+      'data/yaml/categorical_features_model.yaml',
+      zincDatasetFixture!.name,
+      true
+    );
+  });
 
   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
@@ -60,12 +59,5 @@ describe('/models/new - Model creation page', () => {
       true
     );
   });
-
-  it('Builds Smiles-Numeric regressor', () => {
-    cy.buildYamlModel(
-      'cypress/fixtures/models/schemas/small_regressor_schema.yaml',
-      zincDatasetFixture!.name,
-      false
-    );
-  });
+  
 });

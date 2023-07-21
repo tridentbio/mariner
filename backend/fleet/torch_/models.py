@@ -13,11 +13,10 @@ import torch.nn
 import fleet.exceptions
 from fleet.metrics import Metrics
 from fleet.model_builder.component_builder import AutoBuilder
-from fleet.model_builder.dataset import DataInstance
 from fleet.model_builder.model_schema_query import get_dependencies
 from fleet.model_builder.optimizers import Optimizer
 from fleet.model_builder.schemas import TorchModelSchema
-from fleet.model_builder.utils import collect_args
+from fleet.model_builder.utils import DataInstance, collect_args
 
 if TYPE_CHECKING:
     from fleet.dataset_schemas import TorchDatasetConfig

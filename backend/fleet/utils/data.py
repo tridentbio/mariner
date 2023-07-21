@@ -93,17 +93,20 @@ def dataset_topo_sort(
         (featurizers, transforms) tuple, the preprocessing step objects.
     """
     featurizers_by_name = {
-        feat.name: feat for feat in dataset_config.featurizers
+        feat.name: feat for feat in dataset_config.featurizers or []
     }
     transforms_by_name = {
-        transform.name: transform for transform in dataset_config.transforms
+        transform.name: transform
+        for transform in dataset_config.transforms or []
     }
     featurizers, transforms = [], []
     graph = make_graph_from_dataset_config(dataset_config)
     topo_sort = nx.topological_sort(graph)
-    featurizers_names = [feat.name for feat in dataset_config.featurizers]
+    featurizers_names = [
+        feat.name for feat in dataset_config.featurizers or []
+    ]
     transformers_names = [
-        transformer.name for transformer in dataset_config.transforms
+        transformer.name for transformer in dataset_config.transforms or []
     ]
     # TODO: check that featurizers come before transforms
     for item in topo_sort:
@@ -329,32 +332,30 @@ class PreprocessingPipeline:
         """
         self.featurize_data_types = featurize_data_types
         self.dataset_config = dataset_config
-        self.featurizers = []
-        self.transforms = []
         # Flags the output columns names in the final dataframe
         # It's updated when applying the featurizers/transforms
         graph = make_graph_from_dataset_config(dataset_config)
         self.output_columns = get_leaf_nodes(graph)
         self.featurizers_config = {
-            feat.name: feat for feat in dataset_config.featurizers
+            feat.name: feat for feat in dataset_config.featurizers or []
         }
         self.transforms_config = {
             transform.name: transform
-            for transform in dataset_config.transforms
+            for transform in dataset_config.transforms or []
         }
         self.featurizers = {
             feat.name: (
                 self._prepare_transform(feat.create()),
                 feat.adapt_args_and_apply,
             )
-            for feat in dataset_config.featurizers
+            for feat in dataset_config.featurizers or []
         }
         self.transforms = {
             transform.name: (
                 self._prepare_transform(transform.create()),
                 transform.adapt_args_and_apply,
             )
-            for transform in dataset_config.transforms
+            for transform in dataset_config.transforms or []
         }
         self._fitted = False
 
@@ -757,21 +758,18 @@ class DataModule(pl.LightningDataModule):
             data=self.data,
             dataset_config=self.dataset_config,
         )
-        if stage == TrainerFn.FITTING:
-            self.train_dataset = Subset(
-                dataset=dataset,
-                indices=dataset.get_subset_idx(TrainingStep.TRAIN.value),
-            )
-        if stage in [TrainerFn.FITTING, TrainerFn.VALIDATING]:
-            self.val_dataset = Subset(
-                dataset=dataset,
-                indices=dataset.get_subset_idx(TrainingStep.VAL.value),
-            )
-        if stage in [TrainerFn.FITTING, TrainerFn.TESTING]:
-            self.test_dataset = Subset(
-                dataset=dataset,
-                indices=dataset.get_subset_idx(TrainingStep.TEST.value),
-            )
+        self.train_dataset = Subset(
+            dataset=dataset,
+            indices=dataset.get_subset_idx(TrainingStep.TRAIN.value),
+        )
+        self.val_dataset = Subset(
+            dataset=dataset,
+            indices=dataset.get_subset_idx(TrainingStep.VAL.value),
+        )
+        self.test_dataset = Subset(
+            dataset=dataset,
+            indices=dataset.get_subset_idx(TrainingStep.TEST.value),
+        )
 
     def train_dataloader(self) -> DataLoader:
         """Return the DataLoader instance used to train the custom model.
@@ -779,7 +777,9 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in train steps.
         """
-        assert self.train_dataset, 'setup(stage="fit") must be called'
+        assert (
+            self.train_dataset
+        ), 'setup(stage="fit") must be called or dataset is empty'
         return DataLoader(
             self.train_dataset,
             self.batch_size,
@@ -794,7 +794,9 @@ class DataModule(pl.LightningDataModule):
             DataLoader: instance used in test steps.
         """
 
-        assert self.test_dataset, 'setup(stage="test") must be called'
+        assert (
+            self.test_dataset
+        ), 'setup(stage="test") must be called or dataset is empty'
         return DataLoader(
             self.test_dataset,
             self.batch_size,
@@ -807,7 +809,9 @@ class DataModule(pl.LightningDataModule):
         Returns:
             DataLoader: instance used in validation steps.
         """
-        assert self.val_dataset, 'setup(stage="validate") must be called'
+        assert (
+            self.val_dataset
+        ), 'setup(stage="validate") must be called or dataset is empty'
         return DataLoader(
             self.val_dataset,
             self.batch_size,

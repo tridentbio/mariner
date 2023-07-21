@@ -44,7 +44,7 @@ const Section = ({ children, title, ...rest }: SectionProps) => {
 };
 
 // TODO: update component to support all frameworks configs.
-// Currently, only torch is supported, because it's dataset config is slightly different from 
+// Currently, only torch is supported, because it's dataset config is slightly different from
 // the usual, since it has a columnType property for each column.
 const ModelVersionInferenceView = ({
   model,

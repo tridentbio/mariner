@@ -19,6 +19,12 @@ Transforms are used to modify numeric data in a way that is useful for machine l
 See Also:
     :mod:`fleet.utils.data`
     :mod:`fleet.model_builder.featurizers`
+
+Todo:
+
+    Remove the TransformerConfig and FeaturizerConfig classes and replace them with
+    some alternative that doesn't use inheritance. This is because the inheritance
+    is not used in the elsewhere code and is confusing.
 """
 
 from typing import Annotated, Dict, List, Literal, Union, get_args
@@ -26,10 +32,12 @@ from typing import Annotated, Dict, List, Literal, Union, get_args
 from humps import camel
 from pydantic import BaseModel, Field
 
-from fleet.model_builder.layers_schema import \
-    FeaturizersType as FeaturizersType_
-from fleet.model_builder.layers_schema import \
-    FleetmoleculefeaturizerLayerConfig as FleetmoleculefeaturizerLayerConfig_
+from fleet.model_builder.layers_schema import (
+    FeaturizersType as FeaturizersType_,
+)
+from fleet.model_builder.layers_schema import (
+    FleetmoleculefeaturizerLayerConfig as FleetmoleculefeaturizerLayerConfig_,
+)
 from fleet.model_builder.utils import get_class_from_path_string
 from fleet.options import options_manager
 

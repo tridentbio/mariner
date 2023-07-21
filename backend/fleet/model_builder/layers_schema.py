@@ -9,7 +9,10 @@ import torch
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
-from fleet.model_builder.utils import CamelCaseModel, get_class_from_path_string
+from fleet.model_builder.utils import (
+    CamelCaseModel,
+    get_class_from_path_string,
+)
 from fleet.options import options_manager
 
 
@@ -1176,7 +1179,7 @@ LayersType = Annotated[
 
 FeaturizersType = Annotated[
     Union[
-        FleetmoleculefeaturizerLayerConfig,
+        # FleetmoleculefeaturizerLayerConfig,
         FleetintegerfeaturizerLayerConfig,
         FleetdnasequencefeaturizerLayerConfig,
         FleetrnasequencefeaturizerLayerConfig,

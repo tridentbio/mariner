@@ -37,7 +37,7 @@ class ModelCheckActor:
                 data=df,
                 dataset_config=config.dataset,
             )
-            dataloader = DataLoader(torch_dataset, batch_size=2)
+            dataloader = DataLoader(torch_dataset)
             model = CustomModel(
                 config=config.spec, dataset_config=config.dataset
             )
