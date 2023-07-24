@@ -14,7 +14,7 @@ export const CustomAccordion = ({
   sx,
 }: {
   children: React.ReactNode;
-  title: string;
+  title: string | React.ReactNode;
   textProps?: Record<string, any>;
   sx?: SxProps;
 }) => {

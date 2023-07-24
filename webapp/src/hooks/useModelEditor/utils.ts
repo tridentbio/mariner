@@ -94,9 +94,3 @@ export const positionNodes = <T>(
 
   return positionedNodes;
 };
-
-export const fixDomainKindCasing = (dk: DataType['domainKind']): string => {
-  if (dk === DataTypeDomainKind.Smiles) return dk.toUpperCase();
-  else if (!dk) return '';
-  else return dk.charAt(0).toUpperCase() + dk.slice(1).toLowerCase();
-};

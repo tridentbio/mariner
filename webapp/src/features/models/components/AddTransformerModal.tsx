@@ -20,7 +20,7 @@ export const AddTransformerModal = ({
   open,
   cancel,
   confirm,
-  transfomerType = 'transformer',
+  transfomerType = 'transform',
 }: {
   open: boolean;
   cancel: () => void;

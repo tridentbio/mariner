@@ -132,7 +132,7 @@ const FeatureAndTargets = ({ control }: FeatureAndTargets) => {
               options={targetFeatureSelectOptions.filter(
                 (col) =>
                   DataTypeGuard.isCategorical(col.dataType) ||
-                  DataTypeGuard.isNumerical(col.dataType) ||
+                  DataTypeGuard.isNumeric(col.dataType) ||
                   DataTypeGuard.isQuantity(col.dataType)
               )}
             />

@@ -28,7 +28,6 @@ export const ModelSetup = ({ control }: ModelSetupProps) => {
             <Select
               sx={{ width: '100%' }}
               {...(() => {
-                console.log({ field });
                 return field;
               })()}
             >

@@ -1,5 +1,6 @@
+import { ColumnConfig } from '@app/rtk/generated/models';
 import api from 'app/api';
-import { ColumnMeta } from 'app/types/domain/datasets';
+import { ColumnMeta, DataTypeGuard } from 'app/types/domain/datasets';
 import { Model, ModelVersionType } from 'app/types/domain/models';
 import { range } from './arrays';
 
@@ -217,4 +218,15 @@ export type Required<T> = T extends undefined ? never : T;
 export const defaultModeIsMax = (metricKey: string) => {
   const maxMetrics = ['ev', 'R2', 'pearson'];
   return maxMetrics.some((metric) => metricKey.includes(metric));
+};
+
+export const reprDataType = (dataType: ColumnConfig['dataType']) => {
+  if (DataTypeGuard.isQuantity(dataType)) return `${dataType.unit}`;
+  else if (DataTypeGuard.isCategorical(dataType)) return `Categorical`;
+  else if (DataTypeGuard.isNumeric(dataType)) return `Numeric`;
+  else if (DataTypeGuard.isSmiles(dataType)) return `SMILES`;
+  else if (DataTypeGuard.isDna(dataType)) return `DNA`;
+  else if (DataTypeGuard.isRna(dataType)) return `RNA`;
+  else if (DataTypeGuard.isProtein(dataType)) return `Protein`;
+  return `(${dataType.domainKind})`;
 };

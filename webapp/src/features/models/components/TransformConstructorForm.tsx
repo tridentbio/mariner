@@ -1,6 +1,4 @@
-import { Control } from 'react-hook-form';
 import { Transformer } from '../pages/ModelCreateV2/DatasetConfigurationForm';
-import { ModelCreate } from '@app/rtk/generated/models';
 import { Box, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -13,7 +11,7 @@ type TransformerConstructorFormProps = {
 const redableTransformerName = (transformer: Transformer) =>
   transformer.name.split('-')[1];
 
-export const TransformerConstructorForm = ({
+export const TransformConstructorForm = ({
   transformer,
 }: TransformerConstructorFormProps) => {
   return (
@@ -58,6 +56,7 @@ export const TransformerConstructorForm = ({
         {Object.entries(transformer.constructorArgs).map(
           ([arg, defaultValue]) => (
             <Box
+              key={arg}
               sx={{
                 display: 'flex',
                 justifyContent: 'space-evenly',

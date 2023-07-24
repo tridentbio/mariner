@@ -70,9 +70,17 @@ create-admin:           ## Creates default "admin@mariner.trident.bio" with "123
 create-test-user:       ## Creates default "test@mariner" with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_test_user; create_test_user()'" backend
 
+.PHONE: start-backend
 start-backend:         ## Builds and starts backend
 	$(DOCKER_COMPOSE) build backend
 	$(DOCKER_COMPOSE) up --wait backend
+
+.PHONY: start-backend-local
+start-backend-local:        ## Runs backend locally
+	$(DOCKER_COMPOSE) up --wait db
+	cd backend &&\
+		poetry run dotenv run python -m api.main
+
 
 .PHONY: start
 start:                  ## Starts services (without building them explicitly)
