@@ -11,6 +11,7 @@ import {
   LayerFeaturizerType,
   NodeType,
   ModelSchema,
+  NodePositionTypesMap,
 } from 'model-compiler/src/interfaces/model-editor';
 import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
 import { createContext, useContext, useMemo, ReactNode, useState } from 'react';
@@ -279,6 +280,48 @@ export const ModelEditorContextProvider = ({
     );
   };
 
+  const calculateMedianPosition = (positions: Position[]) => {
+    const x = positions.reduce((acc, cur) => acc + cur.x, 0) / positions.length;
+    const y = positions.reduce((acc, cur) => acc + cur.y, 0) / positions.length;
+
+    return { x, y };
+  };
+
+  const convertRelativePositionsToAbsolute = (
+    nodePositionMap: NodePositionTypesMap
+  ) => {
+    if (!schema || !Object.keys(nodePositionMap).length) return undefined;
+
+    const positionsMap = getNodePositionsMap();
+
+    Object.entries(nodePositionMap).forEach(([nodeName, nodePosition]) => {
+      switch (nodePosition.type) {
+        case 'relative': {
+          const referenceNodesNameList: string[] = nodePosition.references;
+
+          const referenceNodesPositions: Position[] =
+            referenceNodesNameList.reduce<Position[]>(
+              (acc, referenceNodeName) => {
+                if (referenceNodeName in positionsMap)
+                  acc.push(positionsMap[referenceNodeName]);
+                return acc;
+              },
+              []
+            );
+
+          positionsMap[nodeName] = calculateMedianPosition(
+            referenceNodesPositions
+          );
+          break;
+        }
+        default:
+          positionsMap[nodeName] = { x: nodePosition.x, y: nodePosition.y };
+      }
+    });
+
+    return positionsMap;
+  };
+
   /**
    * Updates react flow context state based on new schema
    */
@@ -333,8 +376,13 @@ export const ModelEditorContextProvider = ({
   };
 
   const applySuggestionsWithPositions = (args: ApplySuggestionsCommandArgs) => {
-    const schema = applySuggestions(args);
-    updateNodesAndEdges(schema);
+    const { schema, updatedNodePositions } = applySuggestions(args);
+
+    const updatedPositions =
+      convertRelativePositionsToAbsolute(updatedNodePositions);
+
+    updateNodesAndEdges(schema, updatedPositions);
+
     return schema;
   };
 

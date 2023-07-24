@@ -136,11 +136,32 @@ describe('ModelEditorImpl', () => {
         expect(gotTotalSuggestions).toBeGreaterThan(0);
 
         // fix suggestions
-        let newSchema: ModelSchema;
-        newSchema = editor.applySuggestions({
-          suggestions: info.getSuggestions(),
-          schema: extendSpecWithTargetForwardArgs(invalidSchema),
-        });
+        const { schema: newSchema, updatedNodePositions } =
+          editor.applySuggestions({
+            suggestions: info.getSuggestions(),
+            schema: extendSpecWithTargetForwardArgs(invalidSchema),
+          });
+
+        if (Object.keys(updatedNodePositions).length) {
+          const positions = Object.values(updatedNodePositions);
+
+          expect(positions.length).toBeGreaterThan(0);
+
+          positions.forEach((position) => {
+            expect(['absolute', 'relative']).toContain(position.type);
+
+            switch (position.type) {
+              case 'relative': {
+                expect(position.references.length).toBeGreaterThan(1);
+                break;
+              }
+              default: {
+                expect(position.x).toBeDefined();
+                expect(position.y).toBeDefined();
+              }
+            }
+          });
+        }
 
         // good model doesn't yield suggestions
         const newInfo = editor.getSuggestions({ schema: newSchema });

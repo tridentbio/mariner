@@ -36,6 +36,17 @@ export enum EPythonClasses {
 
 type ArrayElement<A> = A extends readonly (infer T)[] ? T : never;
 
+export type NodeAbsolutePosition = { type: 'absolute'; x: number; y: number };
+export type NodeRelativePosition = {
+  type: 'relative';
+  /** Components name list to be the reference for the component position when created */
+  references: string[];
+};
+
+export type NodePositionTypes = NodeAbsolutePosition | NodeRelativePosition;
+
+export type NodePositionTypesMap = { [nodeName: string]: NodePositionTypes };
+
 export type ModelOptions = GetModelOptionsApiResponse;
 export type LayersType = ArrayElement<TorchModelSpec['spec']['layers']>;
 
