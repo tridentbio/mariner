@@ -33,6 +33,7 @@ spec:
       forwardArgs:
         x: ${MolToGraphFeaturizer.x}
         edge_index: ${MolToGraphFeaturizer.edge_index}
+        edge_weight: ${MolToGraphFeaturizer.edge_attr}
     - name: GCN1_Activation
       type: torch.nn.ReLU
       constructorArgs:
@@ -45,6 +46,7 @@ spec:
       forwardArgs:
         x: ${GCN1_Activation}
         edge_index: ${MolToGraphFeaturizer.edge_index}
+        edge_weight: ${MolToGraphFeaturizer.edge_attr}
       constructorArgs:
         in_channels: 64
         out_channels: 64
@@ -61,6 +63,7 @@ spec:
       forwardArgs:
         x: ${GCN2_Activation}
         edge_index: ${MolToGraphFeaturizer.edge_index}
+        edge_weight: ${MolToGraphFeaturizer.edge_attr}
       constructorArgs:
         in_channels: 64
         out_channels: 64
@@ -76,7 +79,7 @@ spec:
       type: fleet.model_builder.layers.GlobalPooling
       forwardArgs:
         x: ${GCN3_Activation}
-        edge_index: ${MolToGraphFeaturizer.edge_index}
+        size: ${MolToGraphFeaturizer.edge_index}
         batch: ${MolToGraphFeaturizer.batch}
       constructorArgs:
         aggr: "sum"
