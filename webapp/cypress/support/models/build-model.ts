@@ -71,13 +71,14 @@ const parseEdgeName = (edgeName: string) => {
 
 const objIsEmpty = (obj: object) => !Boolean(Object.keys(obj).length);
 
-const autoFixSuggestions = () =>
+export const autoFixSuggestions = () =>
   cy.getWithoutThrow('[data-testid="AutoFixHighOutlinedIcon"]').then(($els) => {
     if ($els.length === 1)
       cy.get('[data-testid="AutoFixHighOutlinedIcon"]')
         .first()
         .click({ force: true });
-    else if ($els.length !== 0) cy.get('li').contains('Fix all').click();
+    else if ($els.length !== 0)
+      cy.get('li').contains('Fix all').click({ force: true });
   });
 
 /**
@@ -124,8 +125,19 @@ const connect = (sourceHandleId: string, targetHandleId: string) => {
 
 export const buildModel = (
   modelCreate: DeepPartial<ModelCreate>,
-  success: boolean
+  params: {
+    /** default `true` */
+    successfullRequestRequired?: boolean;
+    /** default `true` */
+    applySuggestions?: boolean;
+    /** default `true` */
+    submitModelRequest?: boolean;
+  } = {}
 ) => {
+  params.successfullRequestRequired = params.successfullRequestRequired ?? true;
+  params.applySuggestions = params.applySuggestions ?? true;
+  params.submitModelRequest = params.submitModelRequest ?? true;
+
   cy.once('uncaught:exception', () => false);
   cy.visit('/models/new');
   // Fill model name
@@ -217,15 +229,6 @@ export const buildModel = (
     })
   );
 
-  cy.intercept({
-    method: 'POST',
-    url: 'http://localhost/api/v1/models/check-config',
-  }).as('checkConfig');
-  cy.intercept({
-    method: 'POST',
-    url: 'http://localhost/api/v1/models',
-  }).as('createModel');
-
   cy.then(() => {
     iterateTopologically(config, (node, type) => {
       if (['input', 'output'].includes(type)) return;
@@ -233,48 +236,59 @@ export const buildModel = (
       if (objIsEmpty(args)) return;
 
       Object.entries(args).forEach(([key, value]) => {
-        autoFixSuggestions().then(() => {
-          const element = cy
-            .get(`[data-id="${parseEdgeName(node.type!)[0]}"]`)
-            .first();
+        if (params.applySuggestions) autoFixSuggestions();
 
-          const isBool = !['number', 'string'].includes(typeof value);
+        const parsedEdgeName = parseEdgeName(node.type!)[0];
 
-          if (!isBool) {
-            const curElement = element
-              .contains('label', key)
-              .next('div')
-              .find('input');
-            curElement.clear().type(value);
-          } else {
-            element.get(`[id="${key}"]`).then((curElement) => {
-              if (Boolean(curElement.prop('checked')) !== value)
-                curElement.trigger('click');
-            });
-          }
-        });
+        const element = cy.get(`[data-id="${parsedEdgeName}"]`).first();
+
+        const isBool = !['number', 'string'].includes(typeof value);
+
+        if (!isBool) {
+          const curElement = element
+            .find(`[data-testid="${parsedEdgeName}-${key}"]`)
+            .find('input');
+          curElement.clear().type(value);
+        } else {
+          element.get(`[id="${key}"]`).then((curElement) => {
+            if (Boolean(curElement.prop('checked')) !== value)
+              curElement.trigger('click');
+          });
+        }
       });
     });
-  }).then(() => cy.get('button').contains('CREATE').click());
-
-  cy.wait('@checkConfig').then(({ response }) => {
-    expect(response?.statusCode).to.eq(200);
-    if (success) {
-      expect(Boolean(response?.body.stackTrace)).to.eq(false);
-    }
   });
 
-  if (success)
-    cy.wait('@createModel').then(({ response }) => {
+  if (params.submitModelRequest) {
+    cy.intercept({
+      method: 'POST',
+      url: 'http://localhost/api/v1/models/check-config',
+    }).as('checkConfig');
+    cy.intercept({
+      method: 'POST',
+      url: 'http://localhost/api/v1/models',
+    }).as('createModel');
+
+    cy.get('button').contains('CREATE').click();
+
+    cy.wait('@checkConfig').then(({ response }) => {
       expect(response?.statusCode).to.eq(200);
+      if (params.successfullRequestRequired) {
+        expect(Boolean(response?.body.stackTrace)).to.eq(false);
+      }
     });
+
+    if (params.successfullRequestRequired)
+      cy.wait('@createModel').then(({ response }) => {
+        expect(response?.statusCode).to.eq(200);
+      });
+  }
 };
 
 export const buildYamlModel = (
   yamlPath: string,
   dataset: string | null = null,
-  success = true,
-  deleteModel = true,
+  buildParams: Parameters<typeof buildModel>[1],
   modelName = randomName()
 ) =>
   cy.readFile(yamlPath).then((yamlStr) => {
@@ -294,6 +308,6 @@ export const buildYamlModel = (
           },
         },
       },
-      success
+      buildParams
     );
   });

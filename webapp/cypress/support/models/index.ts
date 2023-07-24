@@ -1,4 +1,4 @@
-import { buildYamlModel } from './build-model';
+import { buildModel, buildYamlModel } from './build-model';
 import { setupSomeModel, modelFormData } from './create';
 
 Cypress.Commands.add('buildYamlModel', buildYamlModel);
@@ -10,8 +10,7 @@ declare global {
       buildYamlModel(
         yaml: string,
         datasetName?: string,
-        success?: boolean,
-        deleteModel?: boolean,
+        buildParams?: Parameters<typeof buildModel>[1],
         modelName?: string
       ): Chainable<void>;
       setupSomeModel(): Chainable<ReturnType<typeof modelFormData>>;

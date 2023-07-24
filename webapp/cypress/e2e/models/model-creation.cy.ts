@@ -31,33 +31,29 @@ describe('/models/new - Model creation page', () => {
   // TODO: fix OneHot Layer bug to this test pass
   // it.skip('Builds Categorical-Smiles Model', () => {
   //   cy.buildYamlModel(
-  //     SCHEMA_PATH + '/yaml/categorical_features_model.yaml',
-  //     zincDatasetFixture.name,
-  //     true
+  //     'data/yaml/categorical_features_model.yaml',
+  //     zincDatasetFixture.name
   //   );
   // });
 
   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
       SCHEMA_PATH + '/yaml/binary_classification_model.yaml',
-      irisDatasetFixture!.name,
-      true
+      irisDatasetFixture!.name
     );
   });
 
   it('Builds Multiclass Classification Model', () => {
     cy.buildYamlModel(
       SCHEMA_PATH + '/yaml/multiclass_classification_model.yaml',
-      irisDatasetFixture!.name,
-      true
+      irisDatasetFixture!.name
     );
   });
 
   it('Builds Multitarget Model', () => {
     cy.buildYamlModel(
       SCHEMA_PATH + '/yaml/multitarget_classification_model.yaml',
-      irisDatasetFixture!.name,
-      true
+      irisDatasetFixture!.name
     );
   });
 
@@ -65,7 +61,7 @@ describe('/models/new - Model creation page', () => {
     cy.buildYamlModel(
       SCHEMA_PATH + '/yaml/small_regressor_schema.yaml',
       zincDatasetFixture!.name,
-      false
+      { successfullRequestRequired: false }
     );
   });
 });
