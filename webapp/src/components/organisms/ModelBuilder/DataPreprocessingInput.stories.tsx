@@ -2,9 +2,11 @@ import { store } from '@app/store';
 import useModelOptions, {
   toConstructorArgsConfig,
 } from '@hooks/useModelOptions';
+import { ThemeProvider } from '@mui/system';
 import { StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { Provider } from 'react-redux';
+import { theme } from 'theme';
 import DataPreprocessingInput from './DataPreprocessingInput';
 
 export default {
@@ -13,7 +15,9 @@ export default {
   decorators: [
     (Story) => (
       <Provider store={store}>
-        <Story />
+        <ThemeProvider theme={theme}>
+          <Story />
+        </ThemeProvider>
       </Provider>
     ),
   ],
@@ -60,12 +64,16 @@ export default {
 export const SimpleAPI: StoryObj = {
   args: {},
   render: (args) => {
-    const [value, setValue] = useState(undefined);
+    const [value, setValue] = useState(args.value);
 
+    console.log('Rendering story');
     return (
       <>
-        <pre>{JSON.stringify(value, null, 2)}</pre>
-        <DataPreprocessingInput {...args} onChange={(val) => setValue(val)} />
+        <DataPreprocessingInput
+          {...args}
+          value={value}
+          onChange={(val) => console.log(val) || setValue(val)}
+        />
       </>
     );
   },

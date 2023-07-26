@@ -23,7 +23,7 @@ export default function ComboBox<T>(props: ComboBoxProps<T>) {
       value={props.value}
       freeSolo={false}
       multiple={false}
-      sx={{ width: 300 }}
+      fullWidth
       renderInput={(params) => <TextField {...params} label={props.label} />}
     />
   );

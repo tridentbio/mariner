@@ -96,37 +96,23 @@ export const toConstructorArgsConfig = (
     constructorArgs,
   } as any;
 };
-type UseModelOptions =
-  | {
-      error: any;
-    }
-  | {
-      getPreprocessingOptions: () => Option[];
-      getLayerOptions: () => Option[];
-      getScikitOptions: (
-        returnOnlyTaskType?: 'classification' | 'regression'
-      ) => Option[];
-    };
-export default function useModelOptions(): UseModelOptions {
-  const { data, status, error } = useGetModelOptionsQuery();
+export default function useModelOptions() {
+  const { data, status, error, isLoading } = useGetModelOptionsQuery();
 
-  if (!data) {
-    console.error(error);
-    return { error };
-  }
-
-  const getPreprocessingOptions = (): (FeaturizersType | TransformsType)[] => {
-    return data.filter((option) => PREPROCESSING_OPTIONS.includes(option.type));
+  const getPreprocessingOptions = () => {
+    return (data || []).filter((option) =>
+      PREPROCESSING_OPTIONS.includes(option.type)
+    );
   };
 
   const getLayerOptions = () => {
-    return data && data.filter((option) => LAYER_OPTIONS.includes(option.type));
+    return (data || []).filter((option) => LAYER_OPTIONS.includes(option.type));
   };
 
   const getScikitOptions = (
     returnOnlyTaskType?: 'classification' | 'regression'
   ) => {
-    const scikitOptions = data.filter((option) =>
+    const scikitOptions = (data || []).filter((option) =>
       SKLEARN_OPTIONS.includes(option.type)
     );
     if (!returnOnlyTaskType) return scikitOptions;
@@ -141,9 +127,11 @@ export default function useModelOptions(): UseModelOptions {
   };
 
   return {
+    error,
     getPreprocessingOptions,
     getLayerOptions,
     getScikitOptions,
     options: data,
+    isLoading,
   };
 }

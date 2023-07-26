@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import ComboBox from '@components/atoms/Select';
-import { PreprocessingStepSelectProps, StepValue } from './types';
+import {
+  PreprocessingStep,
+  PreprocessingStepSelectProps,
+  StepValue,
+} from './types';
 import ConstructorArgInput from './ConstructorArgInput';
 import {
   Accordion,
@@ -10,7 +14,17 @@ import {
   IconButton,
 } from '@mui/material';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
+import { ExpandMore } from '@mui/icons-material';
 
+export interface PreprocessingStepSelectProps {
+  value?: PreprocessingStep;
+  onChange: (step?: PreprocessingStep) => any;
+  filterOptions?: (step: PreprocessingStep) => boolean;
+  error?: boolean;
+  helperText?: string;
+  options: StepValue[];
+  extra?: ReactNode;
+}
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
   const [stepSelected, setStepSelected] = React.useState<StepValue | undefined>(
     props.options.find((opt) => opt.type && opt.type === props.value?.type)
@@ -21,6 +35,10 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
   >({});
 
   const [expanded, setExpanded] = React.useState(false);
+  const showActions =
+    (stepSelected?.constructorArgs &&
+      Object.keys(stepSelected.constructorArgs).length > 0) ||
+    props.extra;
   return (
     <Accordion expanded={expanded}>
       <AccordionSummary>
@@ -56,15 +74,23 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
           }}
           onClick={(event) => event.stopPropagation()}
         />
-        {stepSelected?.constructorArgs && (
+        {showActions && (
           <AccordionActions>
-            <IconButton onClick={() => setExpanded((expanded) => !expanded)}>
-              <ArrowDownward
-                sx={{
-                  transform: expanded ? 'rotate(180deg)' : undefined,
-                }}
-              />
-            </IconButton>
+            <>
+              {stepSelected?.constructorArgs && (
+                <IconButton
+                  onClick={() => setExpanded((expanded) => !expanded)}
+                >
+                  <ExpandMore
+                    sx={{
+                      transform: expanded ? 'rotate(180deg)' : undefined,
+                      transition: 'transform 0.2s',
+                    }}
+                  />
+                </IconButton>
+              )}
+              {props.extra || null}
+            </>
           </AccordionActions>
         )}
       </AccordionSummary>

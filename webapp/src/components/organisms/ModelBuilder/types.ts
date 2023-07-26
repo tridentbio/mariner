@@ -1,10 +1,11 @@
+import { ColumnConfig } from '@app/rtk/generated/models';
 import { TypeIdentifier } from '@hooks/useModelOptions';
 import {
   FeaturizersType,
   TransformsType,
 } from '@model-compiler/src/interfaces/model-editor';
 
-type PreprocessingStep = FeaturizersType | TransformsType;
+export type PreprocessingStep = FeaturizersType | TransformsType;
 
 type PreprocessingStepInputConfig = {
   [StepKind in PreprocessingStep as StepKind['type']]: StepKind extends {
@@ -28,11 +29,18 @@ type PreprocessingStepInputConfig = {
 
 export type StepValue =
   PreprocessingStepInputConfig[keyof PreprocessingStepInputConfig];
-export interface PreprocessingStepSelectProps {
-  value?: PreprocessingStep;
-  onChange: (step?: PreprocessingStep) => any;
-  filterOptions?: (step: PreprocessingStep) => boolean;
-  error?: boolean;
-  helperText?: string;
-  options: StepValue[];
-}
+
+export type GenericPreprocessingStep = {
+  type: string;
+  constructorArgs: object;
+};
+export type SimpleColumnConfig = {
+  name: string;
+  dataType: ColumnConfig['dataType'];
+  featurizers: GenericPreprocessingStep[];
+  transforms: GenericPreprocessingStep[];
+};
+export type DatasetConfigPreprocessing = {
+  featureColumns: SimpleColumnConfig[];
+  targetColumns: SimpleColumnConfig[];
+};
