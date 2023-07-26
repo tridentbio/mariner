@@ -4,7 +4,7 @@ import {
   Model,
   useGetExperimentsMetricsForModelVersionQuery,
 } from 'app/rtk/generated/models';
-import CenteredSelect from 'components/molecules/CenteredSelect';
+import Select from 'components/molecules/CenteredSelect';
 import { MetricsAccordionPlot } from 'components/templates/MetricsAccordionPlot';
 import { useState } from 'react';
 
@@ -34,7 +34,7 @@ const ModelMetricsView = ({ model }: ModelMetricsViewProps) => {
   return (
     <>
       <Box sx={containerSx}>
-        <CenteredSelect
+        <Select
           title="Model Version"
           items={model.versions}
           keys={{ value: 'id', children: 'name' }}
@@ -45,7 +45,7 @@ const ModelMetricsView = ({ model }: ModelMetricsViewProps) => {
         />
 
         {selectedModelVersionId !== -1 ? (
-          <CenteredSelect
+          <Select
             title="Experiment"
             items={currentExperiments}
             keys={{ value: 'experimentName', children: 'experimentName' }}

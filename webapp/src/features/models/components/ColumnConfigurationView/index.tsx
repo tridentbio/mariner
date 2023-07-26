@@ -2,7 +2,7 @@ import { DatasetConfig } from '@app/rtk/generated/models';
 import { ArrayElement } from '@utils';
 import ColumnConfigurationAccordion from './ColumnConfigAccordion';
 import { FormColumns } from './types';
-import ColumnPreprocessingPipelineForm from './ColumnPreprocessingPipelineForm';
+import ColumnPreprocessingPipelineInput from './ColumnPreprocessingPipelineForm';
 import { PreprocessingConfig } from './types';
 
 const ColumnConfigurationView = ({
@@ -67,7 +67,7 @@ const ColumnConfigurationView = ({
           name={formColumn.col.name}
           dataType={formColumn.col.dataType}
         >
-          <ColumnPreprocessingPipelineForm
+          <ColumnPreprocessingPipelineInput
             formColumn={formColumn}
             addTransformer={addTransformerFunction(formColumn)}
           />
@@ -81,7 +81,7 @@ const ColumnConfigurationView = ({
           dataType={formColumn.col.dataType}
           textProps={{ fontWeight: 'bold' }}
         >
-          <ColumnPreprocessingPipelineForm
+          <ColumnPreprocessingPipelineInput
             formColumn={formColumn}
             addTransformer={addTransformerFunction(formColumn)}
           />

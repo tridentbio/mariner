@@ -21,7 +21,7 @@ export const CustomAccordion = ({
   return (
     <Accordion sx={sx}>
       <AccordionSummary expandIcon={<GridExpandMoreIcon />}>
-        <Typography sx={textProps}>{title}</Typography>
+        <Typography sx={textProps || {}}>{title}</Typography>
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>
     </Accordion>

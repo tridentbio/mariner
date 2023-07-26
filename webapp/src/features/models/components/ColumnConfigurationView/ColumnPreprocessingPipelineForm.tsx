@@ -2,10 +2,10 @@ import { DataTypeGuard } from '@app/types/domain/datasets';
 import NoData from '@components/atoms/NoData';
 import { CustomAccordion } from '@components/molecules/CustomAccordion';
 import { Text } from '@components/molecules/Text';
+import PreprocessingStepSelect from '@components/organisms/ModelBuilder/PreprocessingStepSelect';
 import { Button, Link } from '@mui/material';
 import { Box } from '@mui/system';
 import { useState } from 'react';
-import { AddTransformerModal } from '../AddTransformerModal';
 import { TransformConstructorForm } from '../TransformConstructorForm';
 import { FormColumns, PreprocessingConfig } from './types';
 
@@ -17,9 +17,8 @@ interface ColumnConfigurationProps {
   ) => void;
 }
 
-const ColumnPreprocessingPipelineForm = ({
+const ColumnPreprocessingPipelineInput = ({
   formColumn,
-  addTransformer,
 }: ColumnConfigurationProps) => {
   const [openTransformModal, setOpenTransformModal] = useState(false);
   const [openFeaturizerModal, setOpenFeaturizerModal] = useState(false);
@@ -39,7 +38,7 @@ const ColumnPreprocessingPipelineForm = ({
       {featurizers.map((transform) => (
         <TransformConstructorForm
           key={transform.name}
-          transformer={transform}
+          transform={transform}
         />
       ))}
       {!DataTypeGuard.isNumericalOrQuantity(formColumn.col.dataType) &&
@@ -71,10 +70,7 @@ const ColumnPreprocessingPipelineForm = ({
         >
           <>
             {transforms.map((transform) => (
-              <TransformConstructorForm
-                key={transform.name}
-                transformer={transform}
-              />
+              <PreprocessingStepSelect value={transform} onChange={console.log}/>
             ))}
 
             <Button
@@ -102,36 +98,8 @@ const ColumnPreprocessingPipelineForm = ({
           </Link>
         </NoData>
       )}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'flex-start',
-          margin: 'auto',
-          gap: '1rem',
-          minWidth: '70%',
-        }}
-      >
-        <AddTransformerModal
-          open={openTransformModal}
-          cancel={() => setOpenTransformModal(false)}
-          confirm={(transform) => {
-            addTransformer(transform);
-            setOpenTransformModal(false);
-          }}
-        />
-
-        <AddTransformerModal
-          open={openFeaturizerModal}
-          cancel={() => setOpenFeaturizerModal(false)}
-          confirm={(transform) => {
-            addTransformer(transform, 'featurizers');
-            setOpenFeaturizerModal(false);
-          }}
-          transfomerType="featurizer"
-        />
-      </Box>
     </Box>
   );
 };
 
-export default ColumnPreprocessingPipelineForm;
+export default ColumnPreprocessingPipelineInput;

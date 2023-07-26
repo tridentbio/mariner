@@ -6,9 +6,9 @@ import {
   ModelCreateRequest,
 } from 'app/types/domain/models';
 import { Paginated } from 'app/api';
-import { api } from './api';
 import { ModelOptions } from 'app/types/domain/modelOptions';
-export const modelsApi = api.injectEndpoints({
+import { enhancedApi } from './generated/models';
+export const modelsApi = enhancedApi.injectEndpoints({
   endpoints: (builder) => ({
     getOptions: builder.query<ModelOptions[], void>({
       query: () => 'api/v1/models/options',

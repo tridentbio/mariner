@@ -457,12 +457,6 @@ export type FleetproteinsequencefeaturizerLayerConfig = {
   name: string;
   forwardArgs: FleetproteinsequencefeaturizerForwardArgsReferences;
 };
-export type FleetmoleculefeaturizerLayerConfig2 = {
-  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
-  name: string;
-  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
-  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
-};
 export type StandardScalerConstructorArgs = {
   with_mean?: boolean;
   with_std?: boolean;
@@ -531,9 +525,6 @@ export type TorchDatasetConfig = {
     | ({
         type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
       } & FleetproteinsequencefeaturizerLayerConfig)
-    | ({
-        type: 'fleet__preprocessing__FleetmoleculefeaturizerLayerConfig';
-      } & FleetmoleculefeaturizerLayerConfig2)
   )[];
   transforms?: (
     | ({
@@ -579,9 +570,6 @@ export type DatasetConfig = {
     | ({
         type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
       } & FleetproteinsequencefeaturizerLayerConfig)
-    | ({
-        type: 'fleet__preprocessing__FleetmoleculefeaturizerLayerConfig';
-      } & FleetmoleculefeaturizerLayerConfig2)
   )[];
   transforms?: (
     | ({

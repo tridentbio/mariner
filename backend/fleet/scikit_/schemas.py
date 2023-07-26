@@ -1,10 +1,10 @@
 """
 Pydantic Schemas for the Sklearn specs.
 """
-from typing import Dict, List, Literal, Union
+from typing import Annotated, Dict, List, Literal, Union
 
 from humps import camel
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fleet.base_schemas import DatasetConfig
 from fleet.model_builder.utils import get_class_from_path_string
@@ -290,13 +290,16 @@ class SklearnModelSchema(CamelCaseModel, YAML_Model):
     Specifies a sklearn model.
     """
 
-    model: Union[
-        KNeighborsRegressorConfig,
-        RandomForestRegressorConfig,
-        ExtraTreesRegressorConfig,
-        ExtraTreesClassifierConfig,
-        KnearestNeighborsClassifierConfig,
-        RandomForestClassifierConfig,
+    model: Annotated[
+        Union[
+            KNeighborsRegressorConfig,
+            RandomForestRegressorConfig,
+            ExtraTreesRegressorConfig,
+            ExtraTreesClassifierConfig,
+            KnearestNeighborsClassifierConfig,
+            RandomForestClassifierConfig,
+        ],
+        Field(discriminator="type"),
     ]
 
 

@@ -11,16 +11,16 @@ import { useMemo } from 'react';
 import ColumnConfigurationView from '@features/models/components/ColumnConfigurationView';
 import { Box } from '@mui/material';
 
-export type Transformer = {
+export type GenericTransform = {
   name: string;
   constructorArgs: Record<string, any>;
-  fowardArgs: Record<string, null>;
+  fowardArgs: Record<string, string | string[]>;
   type: string;
 };
 
-type Transforms = Transformer[];
+type Transforms = GenericTransform[];
 
-type Featurizers = Transformer[];
+type Featurizers = GenericTransform[];
 
 type FormColumns = Record<
   'feature' | 'target',
@@ -31,7 +31,7 @@ type FormColumns = Record<
   }[]
 >;
 
-const isTransform = (transform: Transformer) => {
+const isTransform = (transform: GenericTransform) => {
   const transformerType = transform.name.split('-').at(0) as
     | 'transform'
     | 'featurizer';
@@ -68,7 +68,7 @@ const groupColumnsTransformsFeaturizers = ({
   });
 
   const findTransformerColumn = (
-    transformer: Transformer,
+    transformer: GenericTransform,
     formColumns: FormColumns,
     stage: 'col' | 'transforms' | 'featurizers',
     colType: 'feature' | 'target' = 'feature'
@@ -98,7 +98,7 @@ const groupColumnsTransformsFeaturizers = ({
 
     for (const stage of stages) {
       [colType, colIndex] = findTransformerColumn(
-        transformer as any as Transformer,
+        transformer as any as GenericTransform,
         formColumns,
         stage
       );
@@ -107,7 +107,7 @@ const groupColumnsTransformsFeaturizers = ({
     }
     if (colIndex === -1) throw new Error('Column not found');
 
-    const transformerType = isTransform(transformer as any as Transformer)
+    const transformerType = isTransform(transformer as any as GenericTransform)
       ? 'transforms'
       : 'featurizers';
 

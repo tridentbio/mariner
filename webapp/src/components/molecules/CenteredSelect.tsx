@@ -43,7 +43,7 @@ const menuItemMapGenerator = (keys: Keys) => {
   return Component;
 };
 
-const CenteredSelect = ({
+const Select = ({
   items,
   keys,
   title,
@@ -69,4 +69,4 @@ const CenteredSelect = ({
   );
 };
 
-export default CenteredSelect;
+export default Select;

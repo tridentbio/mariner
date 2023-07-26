@@ -47,97 +47,98 @@ const ConstructorArgsInputs = ({
     {} as Record<string, string>
   );
   return (
-    <div style={{ marginTop: 5 }}>
-      {Object.entries(option.component.constructorArgsSummary)
-        .map(([key, type]) => {
-          if (
-            !('constructorArgs' in props.data) ||
-            (props.data.constructorArgs && !(key in props.data.constructorArgs))
-          ) {
-            return null;
-          } else if (
-            isString(type) &&
-            !!option.argsOptions &&
-            option.argsOptions[key]
-          ) {
-            return (
-              <EditorSelect
-                editable={editable}
-                key={key}
-                option={option}
-                argKey={key}
-                editConstrutorArgs={editConstrutorArgs}
-                errors={errors}
-                value={
-                  (props.data.constructorArgs &&
-                    props.data.constructorArgs[
+    <><h1>hi</h1>
+      <div style={{ marginTop: 5 }}>
+        {Object.entries(option.component.constructorArgsSummary)
+          .map(([key, type]) => {
+            if (
+              !('constructorArgs' in props.data) ||
+              (props.data.constructorArgs && !(key in props.data.constructorArgs))
+            ) {
+              return null;
+            } else if (
+              isString(type) &&
+              !!option.argsOptions &&
+              option.argsOptions[key]
+            ) {
+              return (
+                <EditorSelect
+                  editable={editable}
+                  key={key}
+                  option={option}
+                  argKey={key}
+                  editConstrutorArgs={editConstrutorArgs}
+                  errors={errors}
+                  value={
+                    (props.data.constructorArgs &&
+                      props.data.constructorArgs[
                       key as keyof typeof props.data.constructorArgs
-                    ]) ||
-                  ''
-                }
-              ></EditorSelect>
-            );
-          } else if (isString(type))
-            return (
-              <TextField
-                sx={{ mb: 2 }}
-                key={key}
-                onBlur={(event) => editConstrutorArgs(key, event.target.value)}
-                error={key in errors}
-                label={errors[key] || key}
-                disabled={!editable}
-              />
-            );
-          else if (isIntOrFloat(type)) {
-            return (
-              <CustomInputField
-                type="number"
-                inputMode="numeric"
-                key={key}
-                sx={{ mb: 2 }}
-                value={
-                  props.data.constructorArgs &&
-                  props.data.constructorArgs[
-                    key as keyof typeof props.data.constructorArgs
-                  ]
-                }
-                onBlur={(event) =>
-                  editConstrutorArgs(key, parseFloat(event.target.value))
-                }
-                error={key in errors}
-                label={errors[key] || key}
-                disabled={!editable}
-                inputProps={{
-                  step: '0.0001',
-                }}
-              />
-            );
-          } else if (isBoolean(type))
-            return (
-              <Box sx={{ marginBottom: 1 }} key={key}>
-                <InputLabel error={key in errors} id={`label-${key}`}>
-                  {errors[key] || key}
-                </InputLabel>
-                <Switch
-                  id={key}
-                  className="nodrag"
-                  defaultChecked={
-                    props.data.constructorArgs &&
-                    props.data.constructorArgs[
-                      key as keyof typeof props.data.constructorArgs
-                    ]
+                      ]) ||
+                    ''
                   }
-                  onChange={(event) =>
-                    editConstrutorArgs(key, event.target.checked)
-                  }
+                ></EditorSelect>
+              );
+            } else if (isString(type))
+              return (
+                <TextField
+                  sx={{ mb: 2 }}
+                  key={key}
+                  onBlur={(event) => editConstrutorArgs(key, event.target.value)}
+                  error={key in errors}
+                  label={errors[key] || key}
                   disabled={!editable}
                 />
-              </Box>
-            );
-          else return null;
-        })
-        .filter((el) => !!el)}
-    </div>
+              );
+            else if (isIntOrFloat(type)) {
+              return (
+                <CustomInputField
+                  type="number"
+                  inputMode="numeric"
+                  key={key}
+                  sx={{ mb: 2 }}
+                  value={
+                    props.data.constructorArgs &&
+                    props.data.constructorArgs[
+                    key as keyof typeof props.data.constructorArgs
+                    ]
+                  }
+                  onBlur={(event) =>
+                    editConstrutorArgs(key, parseFloat(event.target.value))
+                  }
+                  error={key in errors}
+                  label={errors[key] || key}
+                  disabled={!editable}
+                  inputProps={{
+                    step: '0.0001',
+                  }}
+                />
+              );
+            } else if (isBoolean(type))
+              return (
+                <Box sx={{ marginBottom: 1 }} key={key}>
+                  <InputLabel error={key in errors} id={`label-${key}`}>
+                    {errors[key] || key}
+                  </InputLabel>
+                  <Switch
+                    id={key}
+                    className="nodrag"
+                    defaultChecked={
+                      props.data.constructorArgs &&
+                      props.data.constructorArgs[
+                      key as keyof typeof props.data.constructorArgs
+                      ]
+                    }
+                    onChange={(event) =>
+                      editConstrutorArgs(key, event.target.checked)
+                    }
+                    disabled={!editable}
+                  />
+                </Box>
+              );
+            else return null;
+          })
+          .filter((el) => !!el)}
+      </div></>
   );
 };
 

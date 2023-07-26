@@ -205,6 +205,8 @@ class SettingsV2:
         )
         self.test = QA_Test_Settings()
 
+        self.tenant = TenantSettings(name=os.getenv("TENANT_NAME", "default"))
+
         # Get environment variables starting with AUTH
         auth_env = {
             k[6:]: v for k, v in os.environ.items() if k.startswith("OAUTH")

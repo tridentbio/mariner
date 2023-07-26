@@ -1,5 +1,6 @@
 import { makeForm } from 'utils';
 import { api } from './api';
+import { enhancedApi } from './generated/auth';
 
 export interface User {
   email: string;
@@ -12,7 +13,7 @@ interface TokenResponse {
   token_type: string;
 }
 
-export const authApi = api.injectEndpoints({
+export const authApi = enhancedApi.injectEndpoints({
   endpoints: (builder) => {
     return {
       login: builder.mutation<

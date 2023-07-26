@@ -6,7 +6,8 @@ import {
   FetchExperimentsQuery,
 } from 'app/types/domain/experiments';
 import { Paginated } from 'app/api';
-export const experimentsApi = api
+import { enhancedApi } from './generated/experiments';
+export const experimentsApi = enhancedApi
   .enhanceEndpoints({ addTagTypes: ['experiments'] })
   .injectEndpoints({
     endpoints: (builder) => ({
