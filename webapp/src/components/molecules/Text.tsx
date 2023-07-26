@@ -1,9 +1,15 @@
 import React, { forwardRef, Ref } from 'react';
-import { Typography } from '@mui/material';
+import {
+  Typography,
+  TypographyPropsVariantOverrides,
+  TypographyVariant,
+} from '@mui/material';
 import { SystemProps, TypographyProps } from '@mui/system';
 
-export type TextProps = TypographyProps &
-  SystemProps & { children: React.ReactNode; id?: string };
+export type TextProps = TypographyProps & { variant: TypographyVariant } & {
+  children: React.ReactNode;
+  id?: string;
+};
 
 export const Text = forwardRef((props: TextProps, ref: Ref<HTMLElement>) => {
   return (

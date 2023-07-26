@@ -42,7 +42,6 @@ const FormContext = () => {
 
   // // Assert children is a single element and is of type DatasetConfigurationForm
   // if (React.Children.count(children) !== 1 || !React.isValidElement(children) || children.type !== DatasetConfigurationForm) {
-  //   console.log(children);
   //   throw new Error(`FormContext must have exactly one child of type DatasetConfigurationForm but got ${children.type}`);
   // }
 

@@ -1,7 +1,4 @@
 import { store } from '@app/store';
-import useModelOptions, {
-  toConstructorArgsConfig,
-} from '@hooks/useModelOptions';
 import { ThemeProvider } from '@mui/system';
 import { StoryObj } from '@storybook/react';
 import { useState } from 'react';
@@ -66,13 +63,12 @@ export const SimpleAPI: StoryObj = {
   render: (args) => {
     const [value, setValue] = useState(args.value);
 
-    console.log('Rendering story');
     return (
       <>
         <DataPreprocessingInput
           {...args}
           value={value}
-          onChange={(val) => console.log(val) || setValue(val)}
+          onChange={(val) => setValue(val)}
         />
       </>
     );

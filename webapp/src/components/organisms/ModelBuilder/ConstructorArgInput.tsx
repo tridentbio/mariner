@@ -62,7 +62,6 @@ const ConstructorArgInput = ({
       />
     );
   } else {
-    console.error('Error for consutructor args', arg);
     throw new Error(`Unknown type ${arg.type}`);
   }
 };

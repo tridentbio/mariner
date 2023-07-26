@@ -4,6 +4,7 @@ import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import { Button, IconButton } from '@mui/material';
 import PreprocessingStepSelect from './PreprocessingStepSelect';
 import { SimpleColumnConfig, StepValue } from './types';
+import { DataTypeGuard } from '@app/types/domain/datasets';
 
 export interface ColumnsPipelineInputProps {
   onChange: (value: SimpleColumnConfig[]) => void;
@@ -101,13 +102,17 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
           dataType={column.dataType}
           name={column.name}
         >
-          <Text sx={{ width: '100%' }}>Featurizers:</Text>
-          <PreprocessingStepSelect
-            options={featurizerOptions}
-            onChange={(step) =>
-              onChange(updateColumnFeaturizer(value, columnIndex, 0, step))
-            }
-          />
+          {!DataTypeGuard.isNumericalOrQuantity(column.dataType) && (
+            <>
+              <Text sx={{ width: '100%' }}>Featurizers:</Text>
+              <PreprocessingStepSelect
+                options={featurizerOptions}
+                onChange={(step) =>
+                  onChange(updateColumnFeaturizer(value, columnIndex, 0, step))
+                }
+              />
+            </>
+          )}
 
           <Text sx={{ width: '100%' }}>Transforms:</Text>
           {column.transforms.map((step, stepIndex) => (

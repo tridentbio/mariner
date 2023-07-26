@@ -31,7 +31,7 @@ const DataPreprocessingInput = ({
   return (
     <>
       <Box sx={{ mb: 2 }}>
-        <Text sx={{ width: '100%' }}>Feature Columns:</Text>
+        <Text variant="h6">Feature Columns:</Text>
         <ColumnsPipelineInput
           value={featureColumns}
           featurizerOptions={featurizerOptions}
@@ -43,7 +43,7 @@ const DataPreprocessingInput = ({
       </Box>
 
       <Box>
-        <Text sx={{ width: '100%' }}>Target Columns:</Text>
+        <Text variant="h6">Target Columns:</Text>
         <ColumnsPipelineInput
           value={targetColumns}
           featurizerOptions={featurizerOptions}

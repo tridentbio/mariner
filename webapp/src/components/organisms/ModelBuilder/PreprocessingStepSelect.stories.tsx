@@ -59,10 +59,7 @@ export const Simple: StoryObj = {
     const [value, setValue] = useState(undefined);
     return (
       <>
-        <PreprocessingStepSelect
-          {...args}
-          onChange={(val) => console.log(val) || setValue(val)}
-        />
+        <PreprocessingStepSelect {...args} onChange={(val) => setValue(val)} />
         <pre>{JSON.stringify(value, null, 2)}</pre>
       </>
     );
@@ -74,7 +71,6 @@ export const SimpleAPI: StoryObj = {
   render: (args) => {
     const [value, setValue] = useState(undefined);
     const options = useModelOptions();
-    console.log(options);
 
     if ('error' in options) {
       return <pre>{JSON.stringify(options.error, null, 2)}</pre>;
@@ -83,9 +79,6 @@ export const SimpleAPI: StoryObj = {
     const preprocessingOptions = options.options.map(toConstructorArgsConfig);
 
     const option = options.options.find((o) => o.classPath === value?.type);
-
-    console.log(options);
-    console.log(option);
 
     return (
       <>
