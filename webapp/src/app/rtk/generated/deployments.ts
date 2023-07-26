@@ -726,12 +726,24 @@ export type RandomForestClassifierConfig = {
 };
 export type SklearnModelSchema = {
   model:
-    | KNeighborsRegressorConfig
-    | RandomForestRegressorConfig
-    | ExtraTreesRegressorConfig
-    | ExtraTreesClassifierConfig
-    | KnearestNeighborsClassifierConfig
-    | RandomForestClassifierConfig;
+    | ({
+        type: 'sklearn.neighbors.KNeighborsRegressor';
+      } & KNeighborsRegressorConfig)
+    | ({
+        type: 'sklearn.ensemble.RandomForestRegressor';
+      } & RandomForestRegressorConfig)
+    | ({
+        type: 'sklearn.ensemble.ExtraTreesRegressor';
+      } & ExtraTreesRegressorConfig)
+    | ({
+        type: 'sklearn.ensemble.ExtraTreesClassifier';
+      } & ExtraTreesClassifierConfig)
+    | ({
+        type: 'sklearn.neighbors.KNeighborsClassifier';
+      } & KnearestNeighborsClassifierConfig)
+    | ({
+        type: 'sklearn.ensemble.RandomForestClassifier';
+      } & RandomForestClassifierConfig);
 };
 export type SklearnModelSpec = {
   framework?: 'sklearn';
