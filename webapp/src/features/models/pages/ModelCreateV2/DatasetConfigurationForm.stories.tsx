@@ -74,7 +74,7 @@ export default {
   title: 'Dataset Configuration Form',
   component: DatasetConfigurationForm,
   args: {},
-  tags: ['forms']
+  tags: ['forms'],
 } as Meta;
 
 export const RegularForm = () => <FormContext></FormContext>;

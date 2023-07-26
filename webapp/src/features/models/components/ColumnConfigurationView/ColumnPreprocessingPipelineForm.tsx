@@ -36,10 +36,7 @@ const ColumnPreprocessingPipelineInput = ({
       }}
     >
       {featurizers.map((transform) => (
-        <TransformConstructorForm
-          key={transform.name}
-          transform={transform}
-        />
+        <TransformConstructorForm key={transform.name} transform={transform} />
       ))}
       {!DataTypeGuard.isNumericalOrQuantity(formColumn.col.dataType) &&
         featurizers.length === 0 && (
@@ -70,7 +67,10 @@ const ColumnPreprocessingPipelineInput = ({
         >
           <>
             {transforms.map((transform) => (
-              <PreprocessingStepSelect value={transform} onChange={console.log}/>
+              <PreprocessingStepSelect
+                value={transform}
+                onChange={console.log}
+              />
             ))}
 
             <Button

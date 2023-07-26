@@ -1,11 +1,10 @@
+import { TypeIdentifier } from '@hooks/useModelOptions';
 import {
   FeaturizersType,
   TransformsType,
 } from '@model-compiler/src/interfaces/model-editor';
 
 type PreprocessingStep = FeaturizersType | TransformsType;
-
-export type TypeIdentifier = 'string' | 'number' | 'bool';
 
 type PreprocessingStepInputConfig = {
   [StepKind in PreprocessingStep as StepKind['type']]: StepKind extends {
@@ -17,7 +16,9 @@ type PreprocessingStepInputConfig = {
         constructorArgs: {
           [key2 in keyof C]: {
             default: C[key2];
+            required?: boolean;
             type: TypeIdentifier;
+            options?: string[];
           };
         };
         type: F;

@@ -1,6 +1,9 @@
 import { ColumnConfig } from '@app/rtk/generated/models';
 import { Text } from '@components/molecules/Text';
 import ColumnConfigurationAccordion from '@features/models/components/ColumnConfigurationView/ColumnConfigAccordion';
+import useModelOptions, {
+  toConstructorArgsConfig,
+} from '@hooks/useModelOptions';
 import PreprocessingStepSelect from './PreprocessingStepSelect';
 import { StepValue } from './types';
 
@@ -19,12 +22,31 @@ type DatasetConfigPreprocessing = {
   targetColumns: SimpleColumnConfig[];
 };
 export interface DataPreprocessingInputProps {
-  value: DatasetConfigPreprocessing;
+  value?: DatasetConfigPreprocessing;
+  onChange: (value: DatasetConfigPreprocessing) => void;
 }
 const DataPreprocessingInput = ({
-  value: { featureColumns, targetColumns },
+  value,
+  onChange,
 }: DataPreprocessingInputProps) => {
-  const preprocessingOptions: StepValue[] = [];
+  const options = useModelOptions();
+  const { featureColumns, targetColumns } = value || {
+    featureColumns: [],
+    targetColumns: [],
+  };
+
+  if ('error' in options) {
+    // temporary error handling
+    return <div>Failed to load options</div>;
+  }
+  const preprocessingOptions = options.getPreprocessingOptions();
+  const transformOptions = preprocessingOptions
+    .filter((option) => option.type === 'transformer')
+    .map(toConstructorArgsConfig);
+  const featurizerOptions = preprocessingOptions
+    .filter((option) => option.type === 'featurizer')
+    .map(toConstructorArgsConfig);
+
   return (
     <>
       {featureColumns.map((column) => (
@@ -36,20 +58,28 @@ const DataPreprocessingInput = ({
           <Text sx={{ width: '100%' }}>Featurizers:</Text>
           {column.featurizers.map((step) => (
             <PreprocessingStepSelect
-              options={preprocessingOptions}
+              options={featurizerOptions}
               onChange={console.log}
               key={step.type}
             />
           ))}
+          <PreprocessingStepSelect
+            options={featurizerOptions}
+            onChange={console.log}
+          />
 
           <Text sx={{ width: '100%' }}>Transformers:</Text>
           {column.transforms.map((step) => (
             <PreprocessingStepSelect
-              options={preprocessingOptions}
+              options={transformOptions}
               onChange={console.log}
               key={step.type}
             />
           ))}
+          <PreprocessingStepSelect
+            options={transformOptions}
+            onChange={console.log}
+          />
         </ColumnConfigurationAccordion>
       ))}
 

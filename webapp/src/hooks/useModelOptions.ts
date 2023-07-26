@@ -10,14 +10,22 @@ import {
 } from '@model-compiler/src/interfaces/model-editor';
 import { ArrayElement } from '@utils';
 
+const getType = (python_type: any): TypeIdentifier | undefined => {
+  if (typeof python_type !== 'string') return;
+  if (python_type.includes('int') || python_type.includes('float'))
+    return 'number';
+  else if (python_type.includes('bool')) return 'boolean';
+  else if (python_type.includes('str')) return 'string';
+};
+
 type ScikitType = SklearnModelSchema['model'];
 
-type OptionType = FeaturizersType | TransformsType | LayersType | ScikitType;
+type ComponentType = FeaturizersType | TransformsType | LayersType | ScikitType;
 
-type TypeIdentifier = 'string' | 'number' | 'bool';
+export type TypeIdentifier = 'string' | 'number' | 'boolean';
 
-type PreprocessingStepInputConfig = {
-  [StepKind in OptionType as StepKind['type']]: StepKind extends {
+type ComponentConstructorArgsConfig = {
+  [StepKind in ComponentType as StepKind['type']]: StepKind extends {
     type: infer F;
     forwardArgs: any;
     constructorArgs?: infer C;
@@ -34,25 +42,81 @@ type PreprocessingStepInputConfig = {
     : never;
 };
 
-const PREPROCESSING_OPTIONS: ArrayElement<GetModelOptionsApiResponse>['type'][] =
-  ['transformer', 'featurizer'];
+type Option = ArrayElement<GetModelOptionsApiResponse>;
+type OptionType = Option['type'];
 
-const LAYER_OPTIONS: ArrayElement<GetModelOptionsApiResponse>['type'][] = [
-  'layer',
-];
+const PREPROCESSING_OPTIONS: OptionType[] = ['transformer', 'featurizer'];
 
-const SKLEARN_OPTIONS: ArrayElement<GetModelOptionsApiResponse>['type'][] = [
-  'scikit_class',
-  'scikit_reg',
-];
-export default function useModelOptions() {
+const LAYER_OPTIONS: OptionType[] = ['layer'];
+
+const SKLEARN_OPTIONS: OptionType[] = ['scikit_class', 'scikit_reg'];
+
+export const toConstructorArgsConfig = (
+  option: Option
+): ComponentConstructorArgsConfig[keyof ComponentConstructorArgsConfig] => {
+  const type = option.classPath;
+  const constructorArgs = {};
+  if (option.component) {
+    for (const [key, value] of Object.entries(
+      option.component.constructorArgsSummary
+    )) {
+      // @ts-ignore
+      constructorArgs[key] = {
+        type: getType(value),
+        // @ts-ignore
+        default: option.defaultArgs && option.defaultArgs[key],
+        // @ts-ignore
+        required: !value.endsWith('?'),
+      };
+    }
+  }
+  if (option.defaultArgs) {
+    for (const [key, value] of Object.entries(option.defaultArgs)) {
+      if (!(key in constructorArgs) && typeof value !== 'object') {
+        // @ts-ignore
+        constructorArgs[key] = {
+          type: typeof value,
+          default: value,
+        };
+      }
+    }
+  }
+
+  if (Object.keys(constructorArgs).length === 0) {
+    return { type } as any;
+  }
+  if (option.argsOptions) {
+    for (const [key, value] of Object.entries(option.argsOptions)) {
+      // @ts-ignore
+      constructorArgs[key].options = value;
+    }
+  }
+  return {
+    type,
+    constructorArgs,
+  } as any;
+};
+type UseModelOptions =
+  | {
+      error: any;
+    }
+  | {
+      getPreprocessingOptions: () => Option[];
+      getLayerOptions: () => Option[];
+      getScikitOptions: (
+        returnOnlyTaskType?: 'classification' | 'regression'
+      ) => Option[];
+    };
+export default function useModelOptions(): UseModelOptions {
   const { data, status, error } = useGetModelOptionsQuery();
 
-  const getPreprocessingOptions = () => {
-    return (
-      data &&
-      data.filter((option) => PREPROCESSING_OPTIONS.includes(option.type))
-    );
+  if (!data) {
+    console.error(error);
+    return { error };
+  }
+
+  const getPreprocessingOptions = (): (FeaturizersType | TransformsType)[] => {
+    return data.filter((option) => PREPROCESSING_OPTIONS.includes(option.type));
   };
 
   const getLayerOptions = () => {
@@ -62,8 +126,9 @@ export default function useModelOptions() {
   const getScikitOptions = (
     returnOnlyTaskType?: 'classification' | 'regression'
   ) => {
-    const scikitOptions =
-      data && data.filter((option) => SKLEARN_OPTIONS.includes(option.type));
+    const scikitOptions = data.filter((option) =>
+      SKLEARN_OPTIONS.includes(option.type)
+    );
     if (!returnOnlyTaskType) return scikitOptions;
     else if (returnOnlyTaskType === 'classification')
       return (
@@ -71,16 +136,14 @@ export default function useModelOptions() {
         scikitOptions.filter((option) => option.type === 'scikit_class')
       );
     else if (returnOnlyTaskType === 'regression')
-      return (
-        scikitOptions &&
-        scikitOptions.filter((option) => option.type === 'scikit_reg')
-      );
+      return scikitOptions.filter((option) => option.type === 'scikit_reg');
+    throw new Error(`Invalid task type: ${returnOnlyTaskType}`);
   };
 
   return {
     getPreprocessingOptions,
     getLayerOptions,
     getScikitOptions,
-    error,
+    options: data,
   };
 }

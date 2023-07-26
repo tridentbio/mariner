@@ -40,9 +40,15 @@ export const TransformConstructorForm = ({
             alignItems: 'center',
           }}
         >
-          <IconButton><DeleteIcon /></IconButton>
-          <IconButton><ArrowUpwardIcon /></IconButton>
-          <IconButton><ArrowDownwardIcon /></IconButton>
+          <IconButton>
+            <DeleteIcon />
+          </IconButton>
+          <IconButton>
+            <ArrowUpwardIcon />
+          </IconButton>
+          <IconButton>
+            <ArrowDownwardIcon />
+          </IconButton>
         </Box>
       </Box>
       <Box

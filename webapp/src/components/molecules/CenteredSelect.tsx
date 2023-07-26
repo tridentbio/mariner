@@ -1,7 +1,7 @@
 import {
   Box,
   MenuItem,
-  Select,
+  Select as MuiSelect,
   SelectProps,
   SxProps,
   Typography,
@@ -43,12 +43,7 @@ const menuItemMapGenerator = (keys: Keys) => {
   return Component;
 };
 
-const Select = ({
-  items,
-  keys,
-  title,
-  ...props
-}: CenteredSelectProps) => {
+const Select = ({ items, keys, title, ...props }: CenteredSelectProps) => {
   const menuItemMap = useMemo(() => menuItemMapGenerator(keys), [keys]);
 
   return (
@@ -56,7 +51,7 @@ const Select = ({
       <Typography variant="overline" sx={{ fontSize: 18 }}>
         {title}
       </Typography>
-      <Select
+      <MuiSelect
         sx={{
           width: '90%',
         }}
@@ -64,7 +59,7 @@ const Select = ({
       >
         <MenuItem value={-1} style={{ display: 'none' }} />
         {items.map(menuItemMap)}
-      </Select>
+      </MuiSelect>
     </Box>
   );
 };

@@ -47,13 +47,15 @@ const ConstructorArgsInputs = ({
     {} as Record<string, string>
   );
   return (
-    <><h1>hi</h1>
+    <>
+      <h1>hi</h1>
       <div style={{ marginTop: 5 }}>
         {Object.entries(option.component.constructorArgsSummary)
           .map(([key, type]) => {
             if (
               !('constructorArgs' in props.data) ||
-              (props.data.constructorArgs && !(key in props.data.constructorArgs))
+              (props.data.constructorArgs &&
+                !(key in props.data.constructorArgs))
             ) {
               return null;
             } else if (
@@ -72,7 +74,7 @@ const ConstructorArgsInputs = ({
                   value={
                     (props.data.constructorArgs &&
                       props.data.constructorArgs[
-                      key as keyof typeof props.data.constructorArgs
+                        key as keyof typeof props.data.constructorArgs
                       ]) ||
                     ''
                   }
@@ -83,7 +85,9 @@ const ConstructorArgsInputs = ({
                 <TextField
                   sx={{ mb: 2 }}
                   key={key}
-                  onBlur={(event) => editConstrutorArgs(key, event.target.value)}
+                  onBlur={(event) =>
+                    editConstrutorArgs(key, event.target.value)
+                  }
                   error={key in errors}
                   label={errors[key] || key}
                   disabled={!editable}
@@ -99,7 +103,7 @@ const ConstructorArgsInputs = ({
                   value={
                     props.data.constructorArgs &&
                     props.data.constructorArgs[
-                    key as keyof typeof props.data.constructorArgs
+                      key as keyof typeof props.data.constructorArgs
                     ]
                   }
                   onBlur={(event) =>
@@ -125,7 +129,7 @@ const ConstructorArgsInputs = ({
                     defaultChecked={
                       props.data.constructorArgs &&
                       props.data.constructorArgs[
-                      key as keyof typeof props.data.constructorArgs
+                        key as keyof typeof props.data.constructorArgs
                       ]
                     }
                     onChange={(event) =>
@@ -138,7 +142,8 @@ const ConstructorArgsInputs = ({
             else return null;
           })
           .filter((el) => !!el)}
-      </div></>
+      </div>
+    </>
   );
 };
 

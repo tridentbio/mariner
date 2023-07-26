@@ -1,10 +1,6 @@
 import React from 'react';
 import ComboBox from '@components/atoms/Select';
-import {
-  PreprocessingStepSelectProps,
-  StepValue,
-  TypeIdentifier,
-} from './types';
+import { PreprocessingStepSelectProps, StepValue } from './types';
 import ConstructorArgInput from './ConstructorArgInput';
 import {
   Accordion,
@@ -14,13 +10,6 @@ import {
   IconButton,
 } from '@mui/material';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
-
-const getType = (python_type: any): TypeIdentifier | undefined => {
-  if (typeof python_type !== 'string') return;
-  if (python_type.includes('int') || python_type.includes('float'))
-    return 'number';
-  else if (python_type.includes('bool')) return 'bool';
-};
 
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
   const [stepSelected, setStepSelected] = React.useState<StepValue | undefined>(
@@ -67,8 +56,8 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
           }}
           onClick={(event) => event.stopPropagation()}
         />
-        <AccordionActions>
-          {stepSelected && stepSelected.constructorArgs && (
+        {stepSelected?.constructorArgs && (
+          <AccordionActions>
             <IconButton onClick={() => setExpanded((expanded) => !expanded)}>
               <ArrowDownward
                 sx={{
@@ -76,8 +65,8 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
                 }}
               />
             </IconButton>
-          )}
-        </AccordionActions>
+          </AccordionActions>
+        )}
       </AccordionSummary>
       <AccordionDetails>
         {stepSelected &&

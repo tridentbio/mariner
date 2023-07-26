@@ -1,10 +1,12 @@
-import { InputLabel, Switch, TextField } from '@mui/material';
+import { InputLabel, MenuItem, Switch, TextField } from '@mui/material';
 import { TypeIdentifier } from './types';
 
 interface ConstructorArgInputProps {
   arg: {
     type: TypeIdentifier;
     default: any;
+    options?: any[];
+    required?: boolean;
   };
   value: any;
   label: string;
@@ -16,7 +18,7 @@ const ConstructorArgInput = ({
   label,
   onChange,
 }: ConstructorArgInputProps) => {
-  if (arg.type === 'bool') {
+  if (arg.type === 'boolean') {
     return (
       <>
         <InputLabel>{label}</InputLabel>
@@ -26,6 +28,21 @@ const ConstructorArgInput = ({
           onChange={(event) => onChange(event.target.checked)}
         />
       </>
+    );
+  } else if (arg.type === 'string' && arg.options) {
+    return (
+      <TextField
+        select
+        defaultValue={arg.default}
+        label={label}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {arg.options.map((option) => (
+          <MenuItem key={option} sx={{ width: '100%' }} value={option}>
+            {option}
+          </MenuItem>
+        ))}
+      </TextField>
     );
   } else if (arg.type === 'string') {
     return (
@@ -45,6 +62,7 @@ const ConstructorArgInput = ({
       />
     );
   } else {
+    console.error('Error for consutructor args', arg);
     throw new Error(`Unknown type ${arg.type}`);
   }
 };
