@@ -1,4 +1,4 @@
-from .dataset_creation import load_test_dataset_creation
-from .deployment_predictions import load_test_prediction
-from .model_capacity import load_test_model_capacity
-from .simultenous_trainings import load_test_number_of_simulteneous_trainings
+from .simultaneous_trainings import (
+    load_test_number_of_simulteneous_trainings,
+    load_test_trainings,
+)

@@ -41,3 +41,4 @@ def load_testing_cli(
 load_testing_cli.add_command(
     commands.load_test_number_of_simulteneous_trainings, "trainings"
 )
+load_testing_cli.add_command(commands.load_test_trainings, "scale-trainings")

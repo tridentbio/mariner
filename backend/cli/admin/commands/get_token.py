@@ -1,12 +1,12 @@
 import click
 
-import mariner.users
-
 
 @click.command()
 @click.argument("username", type=str)
 @click.argument("password", type=str)
 def get_token(username: str, password: str):
+    import mariner.users
+
     auth = mariner.users.BasicAuth(
         username="admin@mariner.trident.bio", password="123456"
     )
