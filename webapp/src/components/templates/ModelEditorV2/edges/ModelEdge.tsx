@@ -44,39 +44,28 @@ export const ModelEdge = ({ editable = true, ...props }: ModelEdgeProps) => {
   const { suggestionsByEdge, editComponent, schema, options } =
     useModelEditor();
 
-  const getEdgeStrokeColor = useMemo(() => {
-    const startMap = new Map<Suggestion['severity'], boolean>();
+  const edgeStrokeColor = useMemo(() => {
+    const severityColorMap = new Map<
+      Suggestion['severity'],
+      { color: string; priority: number }
+    >([
+      ['ERROR', { color: 'red', priority: 1 }],
+      ['WARNING', { color: '#ff7e14', priority: 2 }],
+    ]);
 
-    const suggestionsSeverities = isArray(suggestionsByEdge[id])
-      ? suggestionsByEdge[id].reduce(
-          (acc, suggestion) => acc.set(suggestion.severity, true),
-          startMap
-        )
-      : startMap;
+    const suggestions = suggestionsByEdge[id];
 
-    const colorStates: {
-      [state in Suggestion['severity']]?: {
-        getCondition: () => boolean;
-        color: string;
-      };
-    } = {
-      ERROR: {
-        color: 'red',
-        getCondition: () =>
-          typeof suggestionsByEdge[id] == 'string' ||
-          suggestionsSeverities.has('ERROR'),
-      },
-      WARNING: {
-        color: '#ff7e14',
-        getCondition: () => suggestionsSeverities.has('WARNING'),
-      },
-    };
+    if (!isArray(suggestions)) return undefined;
 
-    for (const state in colorStates) {
-      let colorState = colorStates[state as keyof typeof colorStates];
+    suggestions.sort(
+      (a, b) =>
+        severityColorMap.get(a.severity)!.priority -
+        severityColorMap.get(b.severity)!.priority
+    );
 
-      if (colorState?.getCondition())
-        return colorStates[state as keyof typeof colorStates]?.color;
+    for (const suggestion of suggestions) {
+      if (severityColorMap.has(suggestion.severity))
+        return severityColorMap.get(suggestion.severity)!.color;
     }
 
     return undefined;
@@ -88,7 +77,7 @@ export const ModelEdge = ({ editable = true, ...props }: ModelEdgeProps) => {
         id={id}
         style={{
           ...(style || {}),
-          stroke: getEdgeStrokeColor,
+          stroke: edgeStrokeColor,
         }}
         className={'react-flow__edge-path'}
         d={edgePath}

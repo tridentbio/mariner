@@ -6,15 +6,7 @@ import { getDependents } from '../../modelSchemaQuery';
 import ComponentVisitor from './ComponentVisitor';
 
 export default class LinearLinearWarningVisitor extends ComponentVisitor {
-  visitLinear: ComponentVisitor['visitLinear'] = ({
-    info,
-    component,
-    type,
-  }) => {
-    const edgeMap = info.edgesMap[component.name];
-
-    if (!edgeMap) return;
-
+  visitLinear: ComponentVisitor['visitLinear'] = ({ info, component }) => {
     const dependents = getDependents(component, info.schema);
 
     let dependentLinearLayer = dependents.find(

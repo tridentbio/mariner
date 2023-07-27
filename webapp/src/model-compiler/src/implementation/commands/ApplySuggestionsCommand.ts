@@ -26,8 +26,6 @@ class ApplySuggestionsCommand extends Command<
 
     this.args.suggestions.forEach((suggestion) => {
       suggestion.commands.forEach((command) => {
-        //? When applying many suggestions, the next suggestion in the loop wasn't using the updated schema from the previous suggestion modification
-        //? Solutions: Remove the command instance validation or add a new instance validation for each Command that needs it
         if (
           command instanceof EditComponentsCommand ||
           command instanceof AddComponentCommand

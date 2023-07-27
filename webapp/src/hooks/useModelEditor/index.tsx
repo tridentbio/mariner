@@ -280,7 +280,7 @@ export const ModelEditorContextProvider = ({
     );
   };
 
-  const calculateMedianPosition = (positions: Position[]) => {
+  const getMiddlePosition = (positions: Position[]) => {
     const x = positions.reduce((acc, cur) => acc + cur.x, 0) / positions.length;
     const y = positions.reduce((acc, cur) => acc + cur.y, 0) / positions.length;
 
@@ -309,9 +309,7 @@ export const ModelEditorContextProvider = ({
               []
             );
 
-          positionsMap[nodeName] = calculateMedianPosition(
-            referenceNodesPositions
-          );
+          positionsMap[nodeName] = getMiddlePosition(referenceNodesPositions);
           break;
         }
         default:
