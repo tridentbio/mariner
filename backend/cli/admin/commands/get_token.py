@@ -1,3 +1,5 @@
+import json
+
 import click
 
 
@@ -9,4 +11,4 @@ def get_token(username: str, password: str):
 
     auth = mariner.users.BasicAuth(username=username, password=password)
     token = mariner.users.authenticate(basic=auth)
-    print(token.json())
+    print(json.dumps({"token": token.access_token}))

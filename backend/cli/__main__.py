@@ -9,7 +9,7 @@ from cli.admin.group import admin_cli
 from cli.load_testing.group import load_testing_cli
 
 
-@click.group()
+@click.group(context_settings={"show_default": True})
 @click.option(
     "--log-level",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
@@ -17,7 +17,6 @@ from cli.load_testing.group import load_testing_cli
     help="Set the logging level.",
 )
 def _cli(log_level: str = "INFO"):
-
     logger = logging.getLogger("cli")
     logger.setLevel(log_level)
 

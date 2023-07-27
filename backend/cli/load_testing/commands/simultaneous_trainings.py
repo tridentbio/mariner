@@ -281,7 +281,11 @@ def load_test_number_of_simulteneous_trainings(
     _run_n_trainings(url, headers, dataset, model, num_trainings)
 
 
-@click.command("trainings", help="Load test the number of trainings")
+@click.command(
+    "trainings",
+    help="Load test the number of trainings",
+    context_settings={"show_default": True},
+)
 @click.option(
     "--max-trainings",
     type=int,
