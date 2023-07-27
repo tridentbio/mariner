@@ -93,30 +93,11 @@ spec:
         batch: ${MolToGraphFeaturizer.batch}
       constructorArgs:
         aggr: "sum"
-    # End of fst branch
-
-    # Second branch would simply be linear layers in mwt
-    - name: "Linear1"
-      type: torch.nn.Linear
-      constructorArgs:
-        in_features: 1
-        out_features: 10
-      forwardArgs:
-        input: ${mwt}
-
-    - name: Combiner
-      type: fleet.model_builder.layers.Concat
-      constructorArgs:
-        dim: -1
-      forwardArgs:
-        xs:
-          - "${AddPool}"
-          - "${Linear1}"
 
     - name: LinearJoined
       type: torch.nn.Linear
       forwardArgs:
-        input: $Combiner
+        input: $AddPool
       constructorArgs:
-        in_features: 74
+        in_features: 64
         out_features: 1

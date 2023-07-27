@@ -77,22 +77,9 @@ def _setup_group(
                         "description": "smiles column",
                     },
                     {
-                        "pattern": "mwt",
+                        "pattern": "exp",
                         "data_type": {"domain_kind": "numeric", "unit": "mole"},
                         "description": "Molecular Weigth",
-                    },
-                    {
-                        "pattern": "tpsa",
-                        "data_type": {"domain_kind": "numeric", "unit": "mole"},
-                        "description": "T Polar surface",
-                    },
-                    {
-                        "pattern": "mwt_group",
-                        "data_type": {
-                            "domain_kind": "categorical",
-                            "classes": {"yes": 0, "no": 1},
-                        },
-                        "description": "yes if mwt is larger than 300 otherwise no",
                     },
                 ]
             ),
@@ -133,7 +120,7 @@ def _setup_group(
     response = requests.post(
         f"{url}/api/v1/models/",
         json={
-            "name": "Test model",
+            "name": str(uuid4()),
             "modelDescription": "Model used during load testing",
             "modelVersionDescription": "Version used during load testing",
             "config": model_architecture_config,
@@ -158,11 +145,11 @@ def _run_n_trainings(
     num_trainings: int = 1,
 ):
     training_config = {
-        "epochs": 1,
+        "epochs": 5,
         "batchSize": 32,
         "optimizer": {"class_path": "torch.optim.Adam", "params": {}},
         "checkpointConfig": {
-            "metricKey": "val/loss/tpsa",
+            "metricKey": "val/loss/exp",
             "mode": "min",
         },
     }
@@ -191,7 +178,7 @@ def _run_n_trainings(
             json={
                 "name": "Test experiment",
                 "datasetId": dataset["id"],
-                "modelVersionId": model["versions"][0]["id"],
+                "modelVersionId": model["versions"][-1]["id"],
                 "framework": model["versions"][0]["config"]["framework"],
                 "config": training_config,
             },
@@ -289,7 +276,7 @@ def load_test_number_of_simulteneous_trainings(
 @click.option(
     "--max-trainings",
     type=int,
-    default=2**12,
+    default=2 ** 12,
     help="Maximum number of trainings to perform.",
 )
 @click.option(
@@ -323,7 +310,7 @@ def load_test_trainings(
     ctx: click.Context,
     model_config: IO,
     dataset_csv: IO,
-    max_trainings: int = 2**12,
+    max_trainings: int = 2 ** 12,
     timeout: int = 60 * 60 * 2,
     max_failed_trainings_rate=0.1,
 ):
@@ -377,4 +364,4 @@ def load_test_trainings(
         )
         if ctx.parent:
             outfile = ctx.parent.params["output"]
-            df.to_csv(outfile)
+            df.to_csv(outfile, index=False)
