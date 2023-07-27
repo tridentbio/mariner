@@ -1,3 +1,6 @@
+"""
+Load testing CLI group.
+"""
 import click
 
 from cli.load_testing import commands
@@ -24,18 +27,17 @@ from cli.load_testing import commands
     help="Backend URL to perform the test",
 )
 def load_testing_cli(
-    num_trials: int = 2,
     output: str = "load_test_results.csv",
     credentials: str = "credentials.json",
     timeout: int = 60,
     url: str = "http://localhost:8000",
 ):
+    """
+    Load testing CLI group.
+    """
     pass
 
 
 load_testing_cli.add_command(
     commands.load_test_number_of_simulteneous_trainings, "trainings"
 )
-load_testing_cli.add_command(commands.load_test_prediction, "deployments")
-load_testing_cli.add_command(commands.load_test_dataset_creation, "dataset-creation")
-load_testing_cli.add_command(commands.load_test_model_capacity, "model-capacity")
