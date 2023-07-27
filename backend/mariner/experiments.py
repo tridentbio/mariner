@@ -86,7 +86,9 @@ def handle_training_complete(task: Task, experiment_id: int):
             experiment_store.update(
                 db,
                 obj_in=ExperimentUpdateRepo(
-                    stage="ERROR", stack_trace=stack_trace, updated_at=datetime.now()
+                    stage="ERROR",
+                    stack_trace=stack_trace,
+                    updated_at=datetime.now().isoformat(),
                 ),
                 db_obj=experiment,
             )
@@ -120,7 +122,7 @@ def handle_training_complete(task: Task, experiment_id: int):
             obj_in=ExperimentUpdateRepo(
                 mlflow_id=result.mlflow_experiment_id,
                 stage="SUCCESS",
-                updated_at=datetime.now(),
+                updated_at=datetime.now().isoformat(),
             ),
             db_obj=experiment,
         )
