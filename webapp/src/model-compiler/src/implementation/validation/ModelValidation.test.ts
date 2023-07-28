@@ -13,6 +13,7 @@ import {
 import EditComponentsCommand from '../commands/EditComponentsCommand';
 import ModelValidation from './ModelValidation';
 import { TorchModelSpec } from '@app/rtk/generated/models';
+import { NodeEdgeTypes } from './TransversalInfo';
 
 const getTestValidator = (): ModelValidation => {
   return new ModelValidation();
@@ -202,5 +203,24 @@ describe('ModelValidation', () => {
         );
       }
     });
+  });
+
+  it('should mount the TransversalInfo edgesMap attribute properly with "one to many" node association', () => {
+    const info = getTestValidator().validate(
+      extendSpecWithTargetForwardArgs(
+        BrokenSchemas().testOneToManyEdgeAssociation
+      )
+    );
+
+    const rootNodeEdgeMap = info.edgesMap[
+      'rootNode'
+    ] as NodeEdgeTypes<'torch.nn.Linear'>;
+
+    expect(rootNodeEdgeMap?.type).toBe('torch.nn.Linear');
+    expect(rootNodeEdgeMap?.edges).toBeDefined();
+    expect(rootNodeEdgeMap?.edges?.input).toHaveLength(3);
+    expect(rootNodeEdgeMap?.edges?.input).toContain('childNode1');
+    expect(rootNodeEdgeMap?.edges?.input).toContain('childNode2');
+    expect(rootNodeEdgeMap?.edges?.input).toContain('childNode3');
   });
 });
