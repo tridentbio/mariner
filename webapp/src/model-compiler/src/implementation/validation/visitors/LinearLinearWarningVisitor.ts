@@ -1,19 +1,23 @@
 import { LayersType } from '@model-compiler/src/interfaces/model-editor';
+import ComponentVisitor from './ComponentVisitor';
+import { getDependents } from '../../modelSchemaQuery';
 import Suggestion from '../../Suggestion';
 import AddComponentCommand from '../../commands/AddComponentCommand';
 import EditComponentsCommand from '../../commands/EditComponentsCommand';
-import { getDependents } from '../../modelSchemaQuery';
-import ComponentVisitor from './ComponentVisitor';
 
 export default class LinearLinearWarningVisitor extends ComponentVisitor {
   visitLinear: ComponentVisitor['visitLinear'] = ({ info, component }) => {
+    const edgeMap = info.edgesMap[component.name];
+
+    if (!edgeMap) return;
+
     const dependents = getDependents(component, info.schema);
 
-    let dependentLinearLayer = dependents.find(
+    let dependentLinearLayers = dependents.filter(
       (dependent) => dependent.type == component.type
-    ) as LayersType & { type: 'torch.nn.Linear' };
+    ) as (LayersType & { type: 'torch.nn.Linear' })[];
 
-    if (dependentLinearLayer) {
+    dependentLinearLayers.forEach((dependentLinearLayer) => {
       const nonLinearLayer: LayersType = {
         name: `${dependentLinearLayer.name}-${component.name}-ReLu`,
         type: 'torch.nn.ReLU',
@@ -51,6 +55,6 @@ export default class LinearLinearWarningVisitor extends ComponentVisitor {
           }
         )
       );
-    }
+    });
   };
 }
