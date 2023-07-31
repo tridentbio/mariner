@@ -99,20 +99,30 @@ export const toConstructorArgsConfig = (
 export default function useModelOptions() {
   const { data, status, error, isLoading } = useGetModelOptionsQuery();
 
+  const sortedData = useMemo(() => {
+    const sorted = [...(data || [])];
+    sorted.sort((a, b) => {
+      if (a.classPath> b.classPath) return 1;
+      if (a.classPath< b.classPath) return -1;
+      return 0;
+    })
+    return sorted;
+  },[data])
+
   const getPreprocessingOptions = () => {
-    return (data || []).filter((option) =>
+    return (sortedData|| []).filter((option) =>
       PREPROCESSING_OPTIONS.includes(option.type)
     );
   };
 
   const getLayerOptions = () => {
-    return (data || []).filter((option) => LAYER_OPTIONS.includes(option.type));
+    return (sortedData|| []).filter((option) => LAYER_OPTIONS.includes(option.type));
   };
 
   const getScikitOptions = (
     returnOnlyTaskType?: 'classification' | 'regression'
   ) => {
-    const scikitOptions = (data || []).filter((option) =>
+    const scikitOptions = (sortedData|| []).filter((option) =>
       SKLEARN_OPTIONS.includes(option.type)
     );
     if (!returnOnlyTaskType) return scikitOptions;
