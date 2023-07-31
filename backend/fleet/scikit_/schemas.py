@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from fleet.base_schemas import DatasetConfig
 from fleet.model_builder.utils import get_class_from_path_string
+from fleet.options import options_manager
 from fleet.yaml_model import YAML_Model
 
 TaskType = Literal["regressor", "multiclass", "multilabel"]
@@ -60,6 +61,7 @@ class KNeighborsRegressorConstructorArgs(BaseModel):
     algorithm: Literal["kd_tree"] = "kd_tree"
 
 
+@options_manager.config_scikit_reg()
 class KNeighborsRegressorConfig(CamelCaseModel, CreateFromType):
     """
     Describes the usage of the :py:class:`KNeighborsRegressor` class.
@@ -105,6 +107,7 @@ class RandomForestRegressorConstructorArgs(BaseModel):
     max_samples: Union[None, int, float] = None
 
 
+@options_manager.config_scikit_reg()
 class RandomForestRegressorConfig(CamelCaseModel, CreateFromType):
     """
     Describes the usage of the :py:class`sklearn.ensemble.RandomForestRegressor` class.
@@ -142,12 +145,12 @@ class ExtraTreesRegressorConstructorArgs(BaseModel):
     oob_score: bool = False
     n_jobs: Union[int, None] = None
     random_state: Union[int, None] = None
-    verbose: int = 0
     warm_start: bool = False
     ccp_alpha: float = 0.0
     max_samples: Union[None, int, float] = None
 
 
+@options_manager.config_scikit_reg()
 class ExtraTreesRegressorConfig(CamelCaseModel, CreateFromType):
     """
     Describes the usage of the :py:class`sklearn.ensemble.ExtraTreesRegressor` class.
@@ -183,7 +186,6 @@ class ExtraTreesClassifierConstructorArgs(BaseModel):
     oob_score: bool = False
     n_jobs: Union[int, None] = None
     random_state: Union[int, None] = None
-    verbose: int = 0
     warm_start: bool = False
     class_weight: Union[
         None, Literal["balanced", "balanced_subsample"], Dict, List[Dict]
@@ -192,6 +194,7 @@ class ExtraTreesClassifierConstructorArgs(BaseModel):
     max_samples: Union[None, int, float] = None
 
 
+@options_manager.config_scikit_class()
 class ExtraTreesClassifierConfig(CamelCaseModel, CreateFromType):
     """
     Describes the usage of the `sklearn.ensemble.ExtraTreesClassifier` class.
@@ -224,6 +227,7 @@ class KnearestNeighborsClassifierConstructorArgs(BaseModel):
     n_jobs: Union[None, int] = None
 
 
+@options_manager.config_scikit_class()
 class KnearestNeighborsClassifierConfig(CamelCaseModel, CreateFromType):
     """
     Describes the usage of the `sklearn.neighbors.KNeighborsClassifier` class.
@@ -261,7 +265,6 @@ class RandomForestClassifierConstructorArgs(BaseModel):
     oob_score: bool = False
     n_jobs: Union[int, None] = None
     random_state: Union[int, None] = None
-    verbose: int = 0
     warm_start: bool = False
     class_weight: Union[
         None, Literal["balanced", "balanced_subsample"], Dict, List[Dict]
@@ -270,6 +273,7 @@ class RandomForestClassifierConstructorArgs(BaseModel):
     max_samples: Union[None, int, float] = None
 
 
+@options_manager.config_scikit_class()
 class RandomForestClassifierConfig(CamelCaseModel, CreateFromType):
     """
     Describes the usage of the `sklearn.ensemble.RandomForestClassifier` class.

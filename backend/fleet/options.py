@@ -94,6 +94,24 @@ class ComponentType(enum.Enum):
     SCIKIT_CLASS = "scikit_class"
 
 
+class ArgumentOptionMetadata(BaseModel):
+    """
+    Models the metadata of an argument.
+
+    Attributes:
+        key: The name of the argument.
+        label: The label of the argument.
+        latex: The latex representation of the argument.
+    """
+
+    key: str
+    label: Union[None, str]
+    latex: Union[None, str]
+
+
+ArgsOptions = Dict[str, List[Union[str, ArgumentOptionMetadata]]]
+
+
 class Overrides(BaseModel):
     """
     Defines the model of the component_overrides.yml file.
@@ -103,7 +121,7 @@ class Overrides(BaseModel):
         defaults: override default value of an argument.
     """
 
-    args_options: Union[Dict[str, List[str]], None] = None
+    args_options: Union[ArgsOptions, None] = None
     defaults: Union[Dict[str, Any], None] = None
 
 
@@ -135,7 +153,7 @@ class ComponentOption(BaseModel):
     class_path: str
     component: Any
     type: ComponentType
-    args_options: Union[Dict[str, List[str]], None] = None
+    args_options: Union[ArgsOptions, None] = None
     docs_link: Union[str, None] = None
     docs: Union[str, None] = None
     output_type: Union[str, None] = None
@@ -270,6 +288,7 @@ class ComponentOptionsManager:
         # import scripts that are needed for populating options_manager.
         import fleet.model_builder.layers_schema  # pylint: disable=C0415,W0611
         import fleet.preprocessing  # pylint: disable=C0415,W0611
+        import fleet.scikit_.schemas  # pylint: disable=C0415,W0611
 
 
 options_manager = ComponentOptionsManager()

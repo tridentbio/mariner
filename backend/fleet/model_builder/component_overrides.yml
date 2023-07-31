@@ -14,3 +14,121 @@ torch.nn.Embedding:
   defaults:
     max_norm: 1
     norm_type: 2
+
+sklearn.ensemble.RandomForestRegressor:
+  args_options:
+    max_features:
+      - key: sqrt
+        label: sqrt(n_features)
+        latex: ...
+      - key: log2
+        label: log2(n_features)
+        latex: ...
+
+sklearn.ensemble.RandomForestClassifier:
+  args_options:
+    max_features:
+      - key: sqrt
+        label: sqrt(n_features)
+        latex: ...
+      - key: log2
+        label: log2(n_features)
+        latex: ...
+    criterion:
+      - key: squared_error
+        label: Squared Error
+      - key: absolute_error
+        label: Absolute Error
+      - key: Friedman MSE
+        label: friedman_mse
+      - key: Poisson
+        label: poisson
+
+
+sklearn.ensemble.ExtraTreesRegressor:
+  args_options:
+    max_features:
+      - key: sqrt
+        label: sqrt(n_features)
+        latex: ...
+      - key: log2
+        label: log2(n_features)
+        latex: ...
+    criterion:
+      - key: squared_error
+        label: Squared Error
+      - key: absolute_error
+        label: Absolute Error
+      - key: Friedman MSE
+        label: friedman_mse
+      - key: Poisson
+        label: poisson
+
+sklearn.ensemble.ExtraTreesClassifier:
+  args_options:
+    max_features:
+      - key: sqrt
+        label: sqrt(n_features)
+        latex: ...
+      - key: log2
+        label: log2(n_features)
+        latex: ...
+    criterion:
+      - key: gini
+        label: Gini impurity
+        latex: ...
+      - key: entropy
+        label: Entropy
+        latex: ...
+      - key: log_loss
+        label: Log loss
+        latex: ...
+    class_weight:
+      - key: balanced
+        label: Balanced
+      - key: balanced_subsample
+        label: Balanced Subsample
+
+sklearn.neighbors.KNeighborsClassifier:
+  args_options:
+    weights:
+      - uniform
+      - distance
+    algorithm:
+      - auto
+      - ball_tree
+      - kd_tree
+      - brute
+    metric:
+      - key: l1
+        label: cityblock (l1)
+        latex: ...
+      - key: l2
+        label: euclidean (l2)
+        latex: ...
+      - key: haversine
+        label: haversine
+        latex: ...
+      - key: cosine
+        label: cosine
+        latex: ...
+sklearn.neighbors.KNeighborsRegressor:
+  args_options:
+    algorithm:
+      - auto
+      - ball_tree
+      - kd_tree
+      - brute
+    metric:
+      - key: l1
+        label: cityblock (l1)
+        latex: ...
+      - key: l2
+        label: euclidean (l2)
+        latex: ...
+      - key: haversine
+        label: haversine
+        latex: ...
+      - key: cosine
+        label: cosine
+        latex: ...
