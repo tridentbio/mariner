@@ -24,7 +24,9 @@ export interface PreprocessingStepSelectProps {
   helperText?: string;
   options: StepValue[];
   extra?: ReactNode;
+  label?: string;
 }
+// todo: Rename to ComponentSelect or ComponentConfig
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
   const [stepSelected, setStepSelected] = React.useState<StepValue | undefined>(
     props.options.find((opt) => opt.type && opt.type === props.value?.type)
@@ -53,7 +55,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
             }
             return 'Select one';
           }}
-          label="Preprocessing Step"
+          label={props.label || "Preprocessing Step" }
           value={stepSelected || null}
           onChange={(_event, newValue) => {
             if (newValue) setStepSelected(newValue);
