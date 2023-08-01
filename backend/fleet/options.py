@@ -5,7 +5,7 @@ learning models.
 
 
 import enum
-from inspect import signature
+from inspect import Parameter, signature
 from typing import Any, Callable, Dict, List, Union, get_type_hints
 
 import yaml
@@ -135,6 +135,86 @@ def _get_option_overrides() -> OptionOverrides:
         return {key: Overrides(**value) for key, value in data.items()}
 
 
+def is_bad(parameter: Parameter) -> bool:
+    """Returns True if the parameter is bad
+
+    Bad parameters are those that are not positional or keyword only
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is bad else False
+    """
+    return parameter.annotation == Parameter.empty and type(
+        parameter.default
+    ) not in [int, str, float, bool]
+
+
+def is_positional(parameter: Parameter) -> bool:
+    """Returns True if the parameter is positional
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is positional else False
+    """
+    return parameter.name != "self" and (
+        (
+            parameter.kind == Parameter.POSITIONAL_OR_KEYWORD
+            and parameter.default == Parameter.empty
+        )
+        or parameter.kind == Parameter.POSITIONAL_ONLY
+    )
+
+
+def is_optional(parameter: Parameter) -> bool:
+    """Returns True if the parameter is optional
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is optional else False
+    """
+    return parameter.name != "self" and (
+        parameter.kind == Parameter.KEYWORD_ONLY
+        or (
+            parameter.kind == Parameter.POSITIONAL_OR_KEYWORD
+            and parameter.default != Parameter.empty
+        )
+    )
+
+
+def _get_parameters(parameters: dict[str, Parameter]) -> dict[str, str]:
+    parsed_parameters = {}
+    for key, parameter in parameters.items():
+        if is_bad(parameter):
+            continue
+        t = (
+            parameter.annotation
+            if parameter.annotation != Parameter.empty
+            else type(parameter.default)
+        )
+        if is_optional(parameter):
+            parsed_parameters[key] = f"{str(t)}?"
+        elif is_positional(parameter):
+            parsed_parameters[key] = str(t)
+
+    return parsed_parameters
+
+
+def _get_component(class_path: str) -> Any:
+    cls = get_class_from_path_string(class_path)
+    print(cls)
+    constructor_args = _get_parameters(signature(cls).parameters)
+    print(constructor_args)
+    return {
+        "constructorArgsSummary": constructor_args,
+    }
+
+
 class ComponentOption(BaseModel):
     """
     Models an option to build torch, sklearn or preprocessing pipelines.
@@ -178,6 +258,8 @@ class ComponentOption(BaseModel):
             A ComponentOption object.
         """
         docs_link = _get_documentation_link(class_path)
+        # Todo: find better name for get_component
+        component = component if component else _get_component(class_path)
         docs = _get_docs(class_path)
         described_cls = get_class_from_path_string(class_path)
         output_type = _get_return_type(described_cls, ["forward", "__call__"])
