@@ -31,7 +31,7 @@ COPY ./fleet /app/fleet
 COPY ./scripts /app/scripts
 COPY ./tests /app/tests
 COPY ./oauth_providers /app/oauth_providers
-COPY ./conf.toml /app/conf.toml
+# COPY ./conf.toml /app/conf.toml
 COPY ./alembic.ini /app/alembic.ini
 ENV PYTHONPATH=/app
 
