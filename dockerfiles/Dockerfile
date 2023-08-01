@@ -20,6 +20,9 @@ RUN python3 -m venv $POETRY_VENV \
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 RUN poetry config virtualenvs.create false
 
+RUN apt-get update
+RUN apt-get install libpq-dev gcc less curl unzip -y
+
 RUN poetry install --no-root --no-cache --without dev && poetry cache clear --no-interaction --all pypi
 
 COPY ./mariner /app/mariner
@@ -28,11 +31,10 @@ COPY ./fleet /app/fleet
 COPY ./scripts /app/scripts
 COPY ./tests /app/tests
 COPY ./oauth_providers /app/oauth_providers
+COPY ./conf.toml /app/conf.toml
 COPY ./alembic.ini /app/alembic.ini
 ENV PYTHONPATH=/app
 
-RUN apt-get update
-RUN apt-get install libpq-dev less curl unzip -y
 RUN bash -c "poetry run install_deps_${GEO_DEPS-cpu}"
 
 # COPY --from=quay.io/oauth2-proxy/oauth2-proxy:v7.3.0-amd64 /bin/oauth2-proxy /usr/local/bin/oauth2-proxy
