@@ -85,7 +85,11 @@ def handle_training_complete(task: Task, experiment_id: int):
             stack_trace = str(exception)
             experiment_store.update(
                 db,
-                obj_in=ExperimentUpdateRepo(stage="ERROR", stack_trace=stack_trace),
+                obj_in=ExperimentUpdateRepo(
+                    stage="ERROR",
+                    stack_trace=stack_trace,
+                    updated_at=datetime.now().isoformat(),
+                ),
                 db_obj=experiment,
             )
             asyncio.ensure_future(
@@ -116,7 +120,9 @@ def handle_training_complete(task: Task, experiment_id: int):
         experiment_store.update(
             db,
             obj_in=ExperimentUpdateRepo(
-                mlflow_id=result.mlflow_experiment_id, stage="SUCCESS"
+                mlflow_id=result.mlflow_experiment_id,
+                stage="SUCCESS",
+                updated_at=datetime.now().isoformat(),
             ),
             db_obj=experiment,
         )
@@ -216,7 +222,7 @@ async def create_model_training(
 def get_experiments(
     db: Session, user: UserEntity, query: ListExperimentsQuery
 ) -> tuple[List[Experiment], int]:
-    """Gets the experiments from ``user``
+    """Gets the experiments from ``user``.
 
     Args:
         db: Session
@@ -246,6 +252,28 @@ def get_experiments(
         order_by=query.order_by,
     )
     return Experiment.from_orm_array(exps), total
+
+
+def get_experiment(db: Session, user: UserEntity, experiment_id: int) -> Experiment:
+    """
+    Gets the experiment from ``user``.
+
+    Args:
+        db: Session
+        user: user associated to the request
+        experiment_id: id of the experiment
+
+    Returns:
+        Experiment
+
+    Raises:
+        ExperimentNotFound: when the experiment is not found
+        or not owned by that user
+    """
+    experiment = experiment_store.get(db, experiment_id)
+    if not experiment or experiment.created_by_id != user.id:
+        raise ExperimentNotFound()
+    return Experiment.from_orm(experiment)
 
 
 def log_metrics(
