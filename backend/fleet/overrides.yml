@@ -1,0 +1,150 @@
+# This file allows to override the model options used in the model builder.
+# It works by using a class path such as `torch.nn.Linear` as index to an
+# object that describes options' subsets (args_options) (to be used in dropdowns menus).
+# and default layer parameter values (defaults)
+overrides:
+  - classPath: torch.nn.TransformerEncoderLayer
+    constructorArgs:
+      activation:
+        options:
+          - relu
+          - sigmoid
+        default: relu
+
+  - classPath: torch.nn.Embedding
+    constructorArgs:
+      max_norm: 
+        default: 1
+      norm_type:
+        default: 2
+
+  - classPath: sklearn.ensemble.RandomForestRegressor
+    constructorArgs:
+      max_features:
+        options:
+          - key: sqrt
+            label: sqrt(n_features)
+            latex: ...
+          - key: log2
+            label: log2(n_features)
+            latex: ...
+
+  - classPath: sklearn.ensemble.RandomForestClassifier
+    constructorArgs:
+      max_features:
+        options:
+          - key: sqrt
+            label: sqrt(n_features)
+            latex: ...
+          - key: log2
+            label: log2(n_features)
+            latex: ...
+      criterion:
+        options:
+          - key: squared_error
+            label: Squared Error
+          - key: absolute_error
+            label: Absolute Error
+          - key: Friedman MSE
+            label: friedman_mse
+          - key: Poisson
+            label: poisson
+
+
+  - classPath: sklearn.ensemble.ExtraTreesRegressor
+    constructorArgs:
+      max_features:
+        options:
+          - key: sqrt
+            label: sqrt(n_features)
+            latex: ...
+          - key: log2
+            label: log2(n_features)
+            latex: ...
+      criterion:
+        options:
+          - key: squared_error
+            label: Squared Error
+          - key: absolute_error
+            label: Absolute Error
+          - key: Friedman MSE
+            label: friedman_mse
+          - key: Poisson
+            label: poisson
+
+  - classPath: sklearn.ensemble.ExtraTreesClassifier
+    constructorArgs:
+      max_features:
+        options:
+          - key: sqrt
+            label: sqrt(n_features)
+            latex: ...
+          - key: log2
+            label: log2(n_features)
+            latex: ...
+      criterion:
+        options:
+          - key: gini
+            label: Gini impurity
+            latex: ...
+          - key: entropy
+            label: Entropy
+            latex: ...
+          - key: log_loss
+            label: Log loss
+            latex: ...
+      class_weight:
+        options:
+          - key: balanced
+            label: Balanced
+          - key: balanced_subsample
+            label: Balanced Subsample
+
+  - classPath: sklearn.neighbors.KNeighborsClassifier
+    constructorArgs:
+      weights:
+        options:
+          - uniform
+          - distance
+      algorithm:
+        options:
+          - auto
+          - ball_tree
+          - kd_tree
+          - brute
+      metric:
+        options:
+          - key: l1
+            label: cityblock (l1)
+            latex: ...
+          - key: l2
+            label: euclidean (l2)
+            latex: ...
+          - key: haversine
+            label: haversine
+            latex: ...
+          - key: cosine
+            label: cosine
+            latex: ...
+  - classPath: sklearn.neighbors.KNeighborsRegressor
+    constructorArgs:
+      algorithm:
+        options:
+          - auto
+          - ball_tree
+          - kd_tree
+          - brute
+      metric:
+        options:
+          - key: l1
+            label: cityblock (l1)
+            latex: ...
+          - key: l2
+            label: euclidean (l2)
+            latex: ...
+          - key: haversine
+            label: haversine
+            latex: ...
+          - key: cosine
+            label: cosine
+            latex: ...

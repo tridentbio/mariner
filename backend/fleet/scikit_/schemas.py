@@ -6,13 +6,10 @@ from typing import TYPE_CHECKING, Annotated, Dict, List, Literal, Union
 from humps import camel
 from pydantic import BaseModel, Field
 
+from fleet.base_schemas import DatasetConfig
 from fleet.model_builder.utils import get_class_from_path_string
 from fleet.options import options_manager
 from fleet.yaml_model import YAML_Model
-
-if TYPE_CHECKING:
-    from fleet.base_schemas import DatasetConfig
-
 
 TaskType = Literal["regressor", "multiclass", "multilabel"]
 
@@ -317,5 +314,5 @@ class SklearnModelSpec(CamelCaseModel, YAML_Model):
 
     framework: Literal["sklearn"] = "sklearn"
     name: str
-    dataset: "DatasetConfig"
+    dataset: DatasetConfig
     spec: SklearnModelSchema

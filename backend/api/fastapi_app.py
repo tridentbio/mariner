@@ -10,8 +10,8 @@ from starlette.middleware.cors import CORSMiddleware
 from api import startup_functions
 from api.api_v1.api import api_router
 from api.websocket import ws_router
+from fleet.options import options_manager
 from mariner.core.config import get_app_settings
-
 
 app = FastAPI(
     title=get_app_settings("package").name,
@@ -24,6 +24,7 @@ async def startup_event():
     """
     Runs the startup functions once the server is started.
     """
+    options_manager.import_libs()
     await startup_functions.deployments_manager_startup()
 
 
@@ -64,7 +65,9 @@ def metadata():
 if get_app_settings("server").cors:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[str(origin) for origin in get_app_settings("server").cors],
+        allow_origins=[
+            str(origin) for origin in get_app_settings("server").cors
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
