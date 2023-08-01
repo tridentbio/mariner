@@ -8,6 +8,8 @@ type ConfiguredAutocompleteProps<T> = Omit<
 export interface ComboBoxProps<T> extends ConfiguredAutocompleteProps<T> {
   options: T[];
   label: string;
+  error?: boolean;
+  helperText?: string;
 }
 
 export default function ComboBox<T>(props: ComboBoxProps<T>) {
@@ -24,7 +26,14 @@ export default function ComboBox<T>(props: ComboBoxProps<T>) {
       freeSolo={false}
       multiple={false}
       fullWidth
-      renderInput={(params) => <TextField {...params} label={props.label} />}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={props.label}
+          error={props.error}
+          helperText={props.helperText}
+        />
+      )}
     />
   );
 }

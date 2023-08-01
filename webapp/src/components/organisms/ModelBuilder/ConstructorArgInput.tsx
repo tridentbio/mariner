@@ -1,7 +1,7 @@
 import { InputLabel, MenuItem, Switch, TextField } from '@mui/material';
-import { TypeIdentifier } from './types';
+import { TypeIdentifier } from '@hooks/useModelOptions';
 
-interface ConstructorArgInputProps {
+export interface ConstructorArgInputProps {
   arg: {
     type: TypeIdentifier;
     default: any;
@@ -10,21 +10,28 @@ interface ConstructorArgInputProps {
   };
   value: any;
   label: string;
+  error?: boolean;
+  helpText?: string;
   onChange: (value: any) => void;
 }
 const ConstructorArgInput = ({
   arg,
   value,
   label,
+  error,
+  helpText,
   onChange,
 }: ConstructorArgInputProps) => {
   if (arg.type === 'boolean') {
     return (
       <>
-        <InputLabel>{label}</InputLabel>
+        {/* //? Color change workaround (Input label `color` prop doesn't seem to be working properly) */}
+        <InputLabel sx={{ color: error ? '#d32f2f' : null }}>
+          {label}
+        </InputLabel>
         <Switch
-          defaultValue={arg.default}
-          checked={value}
+          defaultValue={arg.default || null}
+          checked={!!value}
           onChange={(event) => onChange(event.target.checked)}
         />
       </>
@@ -33,7 +40,9 @@ const ConstructorArgInput = ({
     return (
       <TextField
         select
-        defaultValue={arg.default}
+        error={error}
+        helperText={helpText}
+        defaultValue={arg.default || null}
         label={label}
         onChange={(event) => onChange(event.target.value)}
       >
@@ -47,7 +56,9 @@ const ConstructorArgInput = ({
   } else if (arg.type === 'string') {
     return (
       <TextField
-        defaultValue={arg.default}
+        defaultValue={arg.default || null}
+        error={error}
+        helperText={helpText}
         label={label}
         onChange={(event) => onChange(event.target.value)}
       />
@@ -56,7 +67,9 @@ const ConstructorArgInput = ({
     return (
       <TextField
         type="number"
-        defaultValue={arg.default}
+        error={error}
+        helperText={helpText}
+        defaultValue={arg.default || null}
         label={label}
         onChange={(event) => onChange(event.target.value)}
       />
