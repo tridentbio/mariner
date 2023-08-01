@@ -26,6 +26,7 @@ RUN apt-get install libpq-dev gcc less curl unzip -y
 RUN poetry install --no-root --no-cache --without dev && poetry cache clear --no-interaction --all pypi
 
 COPY ./mariner /app/mariner
+COPY ./cli /app/cli
 COPY ./api /app/api
 COPY ./fleet /app/fleet
 COPY ./scripts /app/scripts
