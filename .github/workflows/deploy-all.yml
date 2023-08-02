@@ -182,7 +182,7 @@ jobs:
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$SECRETS"  -n ray
+        kubectl apply -f -n ray - <<< "$SECRETS"
         kubectl apply -f ./infrastructure/configmaps/dev/ray-head.yaml  -n ray
         helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-ray-head/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
@@ -230,7 +230,7 @@ jobs:
         curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl &&\
         chmod +x ./kubectl &&\
         mv ./kubectl /usr/local/bin/kubectl &&\
-        kubectl apply -f - <<< "$SECRETS"  -n ray
+        kubectl apply -f -n ray - <<< "$SECRETS"
         kubectl apply -f ./infrastructure/configmaps/dev/ray-worker.yaml -n ray
         helm upgrade -i "$DEPLOYMENT_NAME" infrastructure/helm/helm-ray-worker/.  -n ray \
           --set "replicaCount=$REPLICA_COUNT" \
