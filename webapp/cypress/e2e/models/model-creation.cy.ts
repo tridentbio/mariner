@@ -1,6 +1,6 @@
 import { DatasetFormData } from '../../support/dataset/create';
 
-const DATA_PATH = Cypress.env('DATA_PATH');
+const SCHEMA_PATH = Cypress.env('SCHEMA_PATH');
 
 describe('/models/new - Model creation page', () => {
   let zincDatasetFixture: DatasetFormData | null = null;
@@ -30,34 +30,37 @@ describe('/models/new - Model creation page', () => {
 
   it.skip('Builds Categorical-Smiles Model', () => {
     cy.buildYamlModel(
-      'data/yaml/categorical_features_model.yaml',
+      SCHEMA_PATH + '/yaml/categorical_features_model.yaml',
       zincDatasetFixture!.name,
-      true
     );
   });
 
   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
-      DATA_PATH + '/yaml/binary_classification_model.yaml',
-      irisDatasetFixture!.name,
-      true
+      SCHEMA_PATH + '/yaml/binary_classification_model.yaml',
+      irisDatasetFixture!.name
     );
   });
 
   it('Builds Multiclass Classification Model', () => {
     cy.buildYamlModel(
-      DATA_PATH + '/yaml/multiclass_classification_model.yaml',
-      irisDatasetFixture!.name,
-      true
+      SCHEMA_PATH + '/yaml/multiclass_classification_model.yaml',
+      irisDatasetFixture!.name
     );
   });
 
   it('Builds Multitarget Model', () => {
     cy.buildYamlModel(
-      DATA_PATH + '/yaml/multitarget_classification_model.yaml',
-      irisDatasetFixture!.name,
-      true
+      SCHEMA_PATH + '/yaml/multitarget_classification_model.yaml',
+      irisDatasetFixture!.name
     );
   });
-  
+
+  it('Builds Smiles-Numeric regressor', () => {
+    cy.buildYamlModel(
+      SCHEMA_PATH + '/yaml/small_regressor_schema.yaml',
+      zincDatasetFixture!.name,
+      { successfullRequestRequired: false }
+    );
+  });
 });

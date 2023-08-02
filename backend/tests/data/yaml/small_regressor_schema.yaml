@@ -77,7 +77,6 @@ spec:
       type: fleet.model_builder.layers.GlobalPooling
       forwardArgs:
         x: ${GCN3_Activation}
-        edge_index: ${MolToGraphFeaturizer.edge_index}
         batch: ${MolToGraphFeaturizer.batch}
       constructorArgs:
         aggr: "sum"

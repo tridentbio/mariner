@@ -158,6 +158,29 @@ export const BrokenSchemas = () => {
     }
   };
 
+  const testLinearLinearValidator: TorchModelSpec = {
+    ...baseSchema,
+    spec: {
+      layers: [
+        {
+          type: 'torch.nn.Linear',
+          name: 'firstNode',
+          forwardArgs: { input: '$mwt' },
+          constructorArgs: {
+            in_features: 1,
+            out_features: 8,
+          },
+        },
+        {
+          type: 'torch.nn.Linear',
+          name: 'secondNode',
+          forwardArgs: { input: '$firstNode' },
+          constructorArgs: { in_features: 8, out_features: 1 },
+        },
+      ],
+    }
+  }
+
   const testMolFeaturizer1: TorchModelSpec = {
     ...baseSchema,
     dataset: {
@@ -264,11 +287,49 @@ export const BrokenSchemas = () => {
       ],
     }
   };
+
+  const testOneToManyEdgeAssociation: TorchModelSpec = {
+    ...baseSchema,
+    spec: {
+      layers: [
+        {
+          type: 'torch.nn.Linear',
+          name: 'rootNode',
+          forwardArgs: { input: '$mwt' },
+          constructorArgs: {
+            in_features: 2,
+            out_features: 8,
+          },
+        },
+        {
+          type: 'torch.nn.Linear',
+          name: 'childNode1',
+          forwardArgs: { input: '$rootNode' },
+          constructorArgs: { in_features: 8, out_features: 1 },
+        },
+        {
+          type: 'torch.nn.Linear',
+          name: 'childNode2',
+          forwardArgs: { input: '$rootNode' },
+          constructorArgs: { in_features: 8, out_features: 1 },
+        },
+        {
+          type: 'torch.nn.Linear',
+          name: 'childNode3',
+          forwardArgs: { input: '$rootNode' },
+          constructorArgs: { in_features: 8, out_features: 1 },
+        },
+      ],
+    }
+  }
+
   return {
     testMolFeaturizer1,
     testLinearValidator1,
+    testLinearLinearValidator,
     testGcnConv,
     testConcatValidatorInvalid1,
+    testOneToManyEdgeAssociation
   } as const;
 };
 

@@ -1,18 +1,23 @@
 import { expect, test } from '@jest/globals';
-import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import {
   GcnConv,
+  LayersType,
   Linear,
   MolFeaturizer,
+  NodeRelativePosition,
 } from 'model-compiler/src/interfaces/model-editor';
+import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import {
   BrokenSchemas,
   getValidModelSchemas,
 } from '../../../../../tests/fixtures/model-schemas';
 
+import { TorchModelSpec } from '@app/rtk/generated/models';
+import Suggestion from '../Suggestion';
+import AddComponentCommand from '../commands/AddComponentCommand';
 import EditComponentsCommand from '../commands/EditComponentsCommand';
 import ModelValidation from './ModelValidation';
-import { TorchModelSpec } from '@app/rtk/generated/models';
+import { NodeEdgeTypes } from './TransversalInfo';
 
 const getTestValidator = (): ModelValidation => {
   return new ModelValidation();
@@ -202,5 +207,87 @@ describe('ModelValidation', () => {
         );
       }
     });
+  });
+
+  describe('LinearLinear validation', () => {
+    it('should returns a correction suggestion when two linear nodes are applied in sequence', () => {
+      const info = getTestValidator().validate(
+        extendSpecWithTargetForwardArgs(
+          BrokenSchemas().testLinearLinearValidator
+        )
+      );
+
+      const suggestions = info.getSuggestions();
+      const suggestion = suggestions.at(-1) as Suggestion;
+
+      expect(suggestion).toBeDefined();
+      expect(suggestion.commands).toHaveLength(2);
+
+      expect(suggestion.severity).toBe('WARNING' as Suggestion['severity']);
+      expect(suggestion.message).toContain(
+        'Sequential Linear layers are not recommended without a nonlinear layer'
+      );
+    });
+
+    it('should define a non linear layer between two linear layers in the schema', () => {
+      const info = getTestValidator().validate(
+        extendSpecWithTargetForwardArgs(
+          BrokenSchemas().testLinearLinearValidator
+        )
+      );
+
+      const suggestion = info.getSuggestions().at(-1) as Suggestion;
+      const addCommand = suggestion?.commands[0];
+
+      expect(addCommand).toBeInstanceOf(AddComponentCommand);
+
+      if (!(addCommand instanceof AddComponentCommand))
+        throw new Error('Command is not an instance of AddComponentCommand');
+
+      const nonLinearNodeAdded = addCommand.args.data as LayersType;
+
+      expect(nonLinearNodeAdded.type).toBe('torch.nn.ReLU');
+      expect(addCommand.args.position).toBeDefined();
+      expect(addCommand.args.position?.type).toBe('relative');
+
+      const referenceNodeNames = (
+        addCommand.args.position as NodeRelativePosition
+      ).references;
+
+      expect(referenceNodeNames).toContain('firstNode');
+      expect(referenceNodeNames).toContain('secondNode');
+
+      const editCommand = suggestion?.commands[1];
+
+      expect(editCommand).toBeInstanceOf(EditComponentsCommand);
+
+      if (!(editCommand instanceof EditComponentsCommand))
+        throw new Error('Command is not an instance of EditComponentsCommand');
+
+      const secondNode = editCommand.args.data as LayersType & {
+        type: 'torch.nn.Linear';
+      };
+
+      expect(secondNode.forwardArgs.input).toBe(nonLinearNodeAdded.name);
+    });
+  });
+
+  it('should mount the TransversalInfo edgesMap attribute properly with "one to many" node association', () => {
+    const info = getTestValidator().validate(
+      extendSpecWithTargetForwardArgs(
+        BrokenSchemas().testOneToManyEdgeAssociation
+      )
+    );
+
+    const rootNodeEdgeMap = info.edgesMap[
+      'rootNode'
+    ] as NodeEdgeTypes<'torch.nn.Linear'>;
+
+    expect(rootNodeEdgeMap?.type).toBe('torch.nn.Linear');
+    expect(rootNodeEdgeMap?.edges).toBeDefined();
+    expect(rootNodeEdgeMap?.edges?.input).toHaveLength(3);
+    expect(rootNodeEdgeMap?.edges?.input).toContain('childNode1');
+    expect(rootNodeEdgeMap?.edges?.input).toContain('childNode2');
+    expect(rootNodeEdgeMap?.edges?.input).toContain('childNode3');
   });
 });
