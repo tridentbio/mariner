@@ -5,15 +5,16 @@ learning models.
 
 
 import enum
-from inspect import signature
-from typing import Any, Callable, Dict, List, Union, get_type_hints
+from inspect import Parameter, signature
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Type, Union, get_type_hints
 
-import yaml
 from humps import camel
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fleet.model_builder import generate
 from fleet.model_builder.utils import get_class_from_path_string
+from fleet.yaml_model import YAML_Model
 
 
 def _get_documentation_link(class_path: str) -> Union[str, None]:
@@ -94,27 +95,197 @@ class ComponentType(enum.Enum):
     SCIKIT_CLASS = "scikit_class"
 
 
-class Overrides(BaseModel):
+class ArgumentOptionMetadata(BaseModel):
     """
-    Defines the model of the component_overrides.yml file.
+    Models the metadata of an argument.
+
+    Attributes:
+        key: The name of the argument.
+        label: The label of the argument.
+        latex: The latex representation of the argument.
+    """
+
+    key: str
+    label: Union[None, str] = None
+    latex: Union[None, str] = None
+
+
+ArgsOptions = Dict[str, List[Union[str, ArgumentOptionMetadata]]]
+
+
+class ConstructorArgsMetadata(BaseModel):
+    """
+    Models the metadata of the constructor args.
 
     Attributes:
         args_options: possibly narrow string types to a subset of possible strings.
         defaults: override default value of an argument.
     """
 
-    args_options: Union[Dict[str, List[str]], None] = None
-    defaults: Union[Dict[str, Any], None] = None
+    options: List[Union[str, ArgumentOptionMetadata]] = Field(
+        default_factory=list
+    )
+    default: Any = None
+
+    def normalize_options(self):
+        """
+        Normalizes the options to ArgumentOptionMetadata.
+        """
+        for index, option in enumerate(self.options):
+            if isinstance(option, str):
+                self.options[index] = ArgumentOptionMetadata(key=option)
 
 
-OptionOverrides = Dict[str, Overrides]
+class ComponentOverride(BaseModel):
+    """
+    Models the metadata of a component.
+
+    Attributes:
+        class_path: The class path of the component.
+        constructor_args: A dictionary that maps constructor arguments to their
+            metadata.
+        documentation: The documentation of the component.
+    """
+
+    class_path: str
+    constructor_args: Dict[str, ConstructorArgsMetadata] = Field(
+        default_factory=dict
+    )
+    documentation: Union[str, None] = None
+
+    def get_options_dict(self) -> ArgsOptions:
+        """
+        Returns:
+            A dictionary that maps constructor arguments to their options.
+        """
+        return {
+            arg: arg_data.options
+            for arg, arg_data in self.constructor_args.items()
+        }
+
+    class Config:  # pylint: disable=C0115
+        alias_generator = camel.case
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+        underscore_attrs_are_private = True
 
 
-def _get_option_overrides() -> OptionOverrides:
-    annotation_path = "fleet/model_builder/component_overrides.yml"
-    with open(annotation_path, "r", encoding="utf-8") as file:
-        data = yaml.safe_load(file)
-        return {key: Overrides(**value) for key, value in data.items()}
+class FleetConfigV2(BaseModel, YAML_Model):
+    """
+    Specifies the format of the yaml file with fleet configs.
+    """
+
+    overrides: List[ComponentOverride] = []
+
+    def get(self, class_path: str) -> Union[None, ComponentOverride]:
+        """
+        Gets the component override for the class_path.
+
+        Returns:
+            The component override for the class_path.
+        """
+
+        for override in self.overrides:
+            if override.class_path == class_path:
+                return override
+        return None
+
+    class Config:  # pylint: disable=C0115
+        alias_generator = camel.case
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+        underscore_attrs_are_private = True
+
+
+def _get_option_overrides() -> FleetConfigV2:
+    # The path of overrides.yml file relative to the root of the project
+    overrides_path = Path("fleet") / "overrides.yml"
+    return FleetConfigV2.from_yaml(overrides_path)
+
+
+def is_bad(parameter: Parameter) -> bool:
+    """Returns True if the parameter is bad
+
+    Bad parameters are those that are not positional or keyword only
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is bad else False
+    """
+    return parameter.annotation == Parameter.empty and type(
+        parameter.default
+    ) not in [
+        int,
+        str,
+        float,
+        bool,
+    ]
+
+
+def is_positional(parameter: Parameter) -> bool:
+    """Returns True if the parameter is positional
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is positional else False
+    """
+    return parameter.name != "self" and (
+        (
+            parameter.kind == Parameter.POSITIONAL_OR_KEYWORD
+            and parameter.default == Parameter.empty
+        )
+        or parameter.kind == Parameter.POSITIONAL_ONLY
+    )
+
+
+def is_optional(parameter: Parameter) -> bool:
+    """Returns True if the parameter is optional
+
+    Args:
+        parameter (Parameter): the parameter
+
+    Returns:
+        bool: True if the parameter is optional else False
+    """
+    return parameter.name != "self" and (
+        parameter.kind == Parameter.KEYWORD_ONLY
+        or (
+            parameter.kind == Parameter.POSITIONAL_OR_KEYWORD
+            and parameter.default != Parameter.empty
+        )
+    )
+
+
+def _get_parameters(parameters: dict[str, Parameter]) -> dict[str, str]:
+    parsed_parameters = {}
+    for key, parameter in parameters.items():
+        if is_bad(parameter):
+            continue
+        t = (
+            parameter.annotation
+            if parameter.annotation != Parameter.empty
+            else type(parameter.default)
+        )
+        if is_optional(parameter):
+            parsed_parameters[key] = f"{str(t)}?"
+        elif is_positional(parameter):
+            parsed_parameters[key] = str(t)
+
+    return parsed_parameters
+
+
+def _get_component(class_path: str) -> Any:
+    cls = get_class_from_path_string(class_path)
+    constructor_args = _get_parameters(dict(signature(cls).parameters))
+    return {
+        "constructorArgsSummary": constructor_args,
+        # forwardArgsSummary is not necessary for all components
+        "forwardArgsSummary": {},
+    }
 
 
 class ComponentOption(BaseModel):
@@ -135,7 +306,7 @@ class ComponentOption(BaseModel):
     class_path: str
     component: Any
     type: ComponentType
-    args_options: Union[Dict[str, List[str]], None] = None
+    args_options: Union[ArgsOptions, None] = None
     docs_link: Union[str, None] = None
     docs: Union[str, None] = None
     output_type: Union[str, None] = None
@@ -146,8 +317,8 @@ class ComponentOption(BaseModel):
         cls,
         class_path: str,
         type_: ComponentType,
-        config_cls: type,
-        overrides: Union[Overrides, None] = None,
+        config_cls: Type,
+        overrides: Union[ComponentOverride, None] = None,
         component: Union[Any, None] = None,
     ):
         """
@@ -160,6 +331,8 @@ class ComponentOption(BaseModel):
             A ComponentOption object.
         """
         docs_link = _get_documentation_link(class_path)
+        # Todo: find better name for get_component
+        component = component if component else _get_component(class_path)
         docs = _get_docs(class_path)
         described_cls = get_class_from_path_string(class_path)
         output_type = _get_return_type(described_cls, ["forward", "__call__"])
@@ -168,9 +341,13 @@ class ComponentOption(BaseModel):
                 _get_default_constructor_args(config_cls, "constructorArgs")
                 or {}
             )
-            if overrides and overrides.defaults:
-                for arg, default in overrides.defaults.items():
-                    default_args[arg] = default
+            if overrides and overrides.constructor_args:
+                for (
+                    constructor_arg,
+                    arg_metadata,
+                ) in overrides.constructor_args.items():
+                    if arg_metadata.default:
+                        default_args[constructor_arg] = arg_metadata.default
         except KeyError:
             default_args = None
 
@@ -182,7 +359,7 @@ class ComponentOption(BaseModel):
             output_type=str(output_type) if output_type else None,
             default_args=default_args,
             component=component,
-            args_options=overrides.args_options if overrides else None,
+            args_options=overrides.get_options_dict() if overrides else None,
         )
 
     class Config:  # pylint: disable=C0115
@@ -270,6 +447,7 @@ class ComponentOptionsManager:
         # import scripts that are needed for populating options_manager.
         import fleet.model_builder.layers_schema  # pylint: disable=C0415,W0611
         import fleet.preprocessing  # pylint: disable=C0415,W0611
+        import fleet.scikit_.schemas  # pylint: disable=C0415,W0611
 
 
 options_manager = ComponentOptionsManager()

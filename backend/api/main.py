@@ -6,11 +6,9 @@ import urllib.parse
 
 import uvicorn
 
-from fleet.options import options_manager
 from mariner.core.config import get_app_settings
 
 if __name__ == "__main__":
-    options_manager.import_libs()
     url = urllib.parse.urlparse(get_app_settings("server").host)
     uvicorn.run(
         "api.fastapi_app:app",

@@ -32,7 +32,9 @@ export interface PreprocessingStepSelectProps {
   stepFieldName: `${'featureColumns' | 'targetColumns'}.${number}.${
     | 'transforms'
     | 'featurizers'}.${number}`;
+  label?: string;
 }
+// todo: Rename to ComponentSelect or ComponentConfig
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
   const [expanded, setExpanded] = React.useState(false);
 
@@ -102,7 +104,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
                   }
                   return 'Select one';
                 }}
-                label="Preprocessing Step"
+                label={props.label || "Preprocessing Step"}
                 onChange={(_event, newValue) =>
                   onTypeSelect(field, newValue as StepValue)
                 }
