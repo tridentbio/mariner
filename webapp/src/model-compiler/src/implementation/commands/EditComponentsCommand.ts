@@ -5,6 +5,7 @@ import {
   FeaturizersType,
   LayersType,
   ModelSchema,
+  NodePositionTypes,
   NodeType,
   Output,
 } from '../../interfaces/model-editor';
@@ -30,10 +31,11 @@ const isForwardArgList = (
   return false;
 };
 
-export type EditComponentsCommandArgs = {
+export interface EditComponentsCommandArgs {
   schema: ModelSchema;
   data: NodeType;
-};
+  position?: NodePositionTypes;
+}
 
 class EditComponentsCommand extends Command<
   EditComponentsCommandArgs,

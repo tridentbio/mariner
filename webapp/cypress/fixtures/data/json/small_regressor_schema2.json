@@ -30,144 +30,144 @@
         }
       }
     ],
-  "featurizers": [
-    {
-      "name": "MoleculeFeaturizer-sydcccxojrvrbfip",
-      "type": "fleet.model_builder.featurizers.MoleculeFeaturizer",
-      "constructorArgs": {
-        "allow_unknown": false,
-        "sym_bond_list": true,
-        "per_atom_fragmentation": false
-      },
-      "forwardArgs": {
-        "mol": "$smiles"
+    "featurizers": [
+      {
+        "name": "MoleculeFeaturizer-sydcccxojrvrbfip",
+        "type": "fleet.model_builder.featurizers.MoleculeFeaturizer",
+        "constructorArgs": {
+          "allow_unknown": false,
+          "sym_bond_list": true,
+          "per_atom_fragmentation": false
+        },
+        "forwardArgs": {
+          "mol": "$smiles"
+        }
       }
-    }
-  ]
+    ]
   },
   "spec": {
-  "layers": [
-    {
-      "name": "GCNConv-qxpfhktivtecfmou",
-      "type": "torch_geometric.nn.GCNConv",
-      "constructorArgs": {
-        "in_channels": "26",
-        "out_channels": "64",
-        "improved": false,
-        "cached": false,
-        "add_self_loops": true,
-        "normalize": true,
-        "bias": true
+    "layers": [
+      {
+        "name": "GCNConv-qxpfhktivtecfmou",
+        "type": "torch_geometric.nn.GCNConv",
+        "constructorArgs": {
+          "in_channels": "26",
+          "out_channels": "64",
+          "improved": false,
+          "cached": false,
+          "add_self_loops": true,
+          "normalize": true,
+          "bias": true
+        },
+        "forwardArgs": {
+          "x": "$MoleculeFeaturizer-sydcccxojrvrbfip.x",
+          "edge_index": "$MoleculeFeaturizer-sydcccxojrvrbfip.edge_index"
+        }
       },
-      "forwardArgs": {
-        "x": "$MoleculeFeaturizer-sydcccxojrvrbfip.x",
-        "edge_index": "$MoleculeFeaturizer-sydcccxojrvrbfip.edge_index"
-      }
-    },
-    {
-      "name": "ReLU-whmtskaqwnnoqsqc",
-      "type": "torch.nn.ReLU",
-      "constructorArgs": {
-        "inplace": false
+      {
+        "name": "ReLU-whmtskaqwnnoqsqc",
+        "type": "torch.nn.ReLU",
+        "constructorArgs": {
+          "inplace": false
+        },
+        "forwardArgs": {
+          "input": "$GCNConv-qxpfhktivtecfmou"
+        }
       },
-      "forwardArgs": {
-        "input": "$GCNConv-qxpfhktivtecfmou"
-      }
-    },
-    {
-      "name": "GCNConv-voewtwvcimwxceaa",
-      "type": "torch_geometric.nn.GCNConv",
-      "constructorArgs": {
-        "in_channels": 64,
-        "out_channels": "64",
-        "improved": false,
-        "cached": false,
-        "add_self_loops": true,
-        "normalize": true,
-        "bias": true
+      {
+        "name": "GCNConv-voewtwvcimwxceaa",
+        "type": "torch_geometric.nn.GCNConv",
+        "constructorArgs": {
+          "in_channels": 64,
+          "out_channels": "64",
+          "improved": false,
+          "cached": false,
+          "add_self_loops": true,
+          "normalize": true,
+          "bias": true
+        },
+        "forwardArgs": {
+          "edge_index": "$MoleculeFeaturizer-sydcccxojrvrbfip.edge_index",
+          "x": "$ReLU-whmtskaqwnnoqsqc"
+        }
       },
-      "forwardArgs": {
-        "edge_index": "$MoleculeFeaturizer-sydcccxojrvrbfip.edge_index",
-        "x": "$ReLU-whmtskaqwnnoqsqc"
-      }
-    },
-    {
-      "name": "ReLU-vjpijemjudftbwnc",
-      "type": "torch.nn.ReLU",
-      "constructorArgs": {
-        "inplace": false
+      {
+        "name": "ReLU-vjpijemjudftbwnc",
+        "type": "torch.nn.ReLU",
+        "constructorArgs": {
+          "inplace": false
+        },
+        "forwardArgs": {
+          "input": "$GCNConv-voewtwvcimwxceaa"
+        }
       },
-      "forwardArgs": {
-        "input": "$GCNConv-voewtwvcimwxceaa"
-      }
-    },
-    {
-      "name": "GCNConv-dmmkrtbrtgtrvbso",
-      "type": "torch_geometric.nn.GCNConv",
-      "constructorArgs": {
-        "in_channels": 64,
-        "out_channels": "64",
-        "improved": false,
-        "cached": false,
-        "add_self_loops": true,
-        "normalize": true,
-        "bias": true
+      {
+        "name": "GCNConv-dmmkrtbrtgtrvbso",
+        "type": "torch_geometric.nn.GCNConv",
+        "constructorArgs": {
+          "in_channels": 64,
+          "out_channels": "64",
+          "improved": false,
+          "cached": false,
+          "add_self_loops": true,
+          "normalize": true,
+          "bias": true
+        },
+        "forwardArgs": {
+          "edge_index": "$MoleculeFeaturizer-sydcccxojrvrbfip.edge_index",
+          "x": "$ReLU-vjpijemjudftbwnc"
+        }
       },
-      "forwardArgs": {
-        "edge_index": "$MoleculeFeaturizer-sydcccxojrvrbfip.edge_index",
-        "x": "$ReLU-vjpijemjudftbwnc"
-      }
-    },
-    {
-      "name": "ReLU-vcanditdwldmewrc",
-      "type": "torch.nn.ReLU",
-      "constructorArgs": {
-        "inplace": false
+      {
+        "name": "ReLU-vcanditdwldmewrc",
+        "type": "torch.nn.ReLU",
+        "constructorArgs": {
+          "inplace": false
+        },
+        "forwardArgs": {
+          "input": "$GCNConv-dmmkrtbrtgtrvbso"
+        }
       },
-      "forwardArgs": {
-        "input": "$GCNConv-dmmkrtbrtgtrvbso"
-      }
-    },
-    {
-      "name": "GlobalPooling-yqkfljhjlijafjmm",
-      "type": "fleet.model_builder.layers.GlobalPooling",
-      "constructorArgs": {
-        "aggr": "sum"
+      {
+        "name": "GlobalPooling-yqkfljhjlijafjmm",
+        "type": "fleet.model_builder.layers.GlobalPooling",
+        "constructorArgs": {
+          "aggr": "sum"
+        },
+        "forwardArgs": {
+          "x": "$ReLU-vcanditdwldmewrc",
+          "batch": "$MoleculeFeaturizer-sydcccxojrvrbfip.batch"
+        }
       },
-      "forwardArgs": {
-        "x": "$ReLU-vcanditdwldmewrc",
-        "batch": "$MoleculeFeaturizer-sydcccxojrvrbfip.batch"
-      }
-    },
-    {
-      "name": "OneHot-coxfalicvdgaparx",
-      "type": "fleet.model_builder.layers.OneHot",
-      "constructorArgs": {},
-      "forwardArgs": {
-        "x1": "$mwt_group"
-      }
-    },
-    {
-      "name": "Concat-cjmiqkirnarxtfis",
-      "type": "fleet.model_builder.layers.Concat",
-      "constructorArgs": {
-        "dim": 0
+      {
+        "name": "OneHot-coxfalicvdgaparx",
+        "type": "fleet.model_builder.layers.OneHot",
+        "constructorArgs": {},
+        "forwardArgs": {
+          "x1": "$mwt_group"
+        }
       },
-      "forwardArgs": {
-        "xs": ["$GlobalPooling-yqkfljhjlijafjmm", "$OneHot-coxfalicvdgaparx"]
-      }
-    },
-    {
-      "name": "Linear-ipahhxqjalemtbcs",
-      "type": "torch.nn.Linear",
-      "constructorArgs": {
-        "in_features": "66",
-        "out_features": "1"
+      {
+        "name": "Concat-cjmiqkirnarxtfis",
+        "type": "fleet.model_builder.layers.Concat",
+        "constructorArgs": {
+          "dim": 0
+        },
+        "forwardArgs": {
+          "xs": ["$GlobalPooling-yqkfljhjlijafjmm", "$OneHot-coxfalicvdgaparx"]
+        }
       },
-      "forwardArgs": {
-        "input": "$Concat-cjmiqkirnarxtfis"
+      {
+        "name": "Linear-ipahhxqjalemtbcs",
+        "type": "torch.nn.Linear",
+        "constructorArgs": {
+          "in_features": "66",
+          "out_features": "1"
+        },
+        "forwardArgs": {
+          "input": "$Concat-cjmiqkirnarxtfis"
+        }
       }
-    }
-  ]
+    ]
   }
 }

@@ -3,6 +3,9 @@ import { makeComponentEdit } from 'model-compiler/src/implementation/commands/Ed
 import { getComponent } from 'model-compiler/src/implementation/modelSchemaQuery';
 import { getBezierPath, getEdgeCenter, EdgeProps } from 'react-flow-renderer';
 import { EdgeButton, EdgeButtonContainer } from './styles';
+import Suggestion from '@model-compiler/src/implementation/Suggestion';
+import { isArray } from '@utils';
+import { useMemo } from 'react';
 interface ModelEdgeProps extends EdgeProps {
   editable?: boolean;
 }
@@ -41,13 +44,40 @@ export const ModelEdge = ({ editable = true, ...props }: ModelEdgeProps) => {
   const { suggestionsByEdge, editComponent, schema, options } =
     useModelEditor();
 
+  const edgeStrokeColor = useMemo(() => {
+    const severityColorMap = new Map<
+      Suggestion['severity'],
+      { color: string; priority: number }
+    >([
+      ['ERROR', { color: 'red', priority: 1 }],
+      ['WARNING', { color: '#ff7e14', priority: 2 }],
+    ]);
+
+    const suggestions = suggestionsByEdge[id];
+
+    if (!isArray(suggestions)) return undefined;
+
+    suggestions.sort(
+      (a, b) =>
+        severityColorMap.get(a.severity)!.priority -
+        severityColorMap.get(b.severity)!.priority
+    );
+
+    for (const suggestion of suggestions) {
+      if (severityColorMap.has(suggestion.severity))
+        return severityColorMap.get(suggestion.severity)!.color;
+    }
+
+    return undefined;
+  }, [id, suggestionsByEdge]);
+
   return (
     <>
       <path
         id={id}
         style={{
           ...(style || {}),
-          stroke: id in suggestionsByEdge ? 'red' : undefined,
+          stroke: edgeStrokeColor,
         }}
         className={'react-flow__edge-path'}
         d={edgePath}

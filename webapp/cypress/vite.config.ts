@@ -13,12 +13,9 @@
 import { defineConfig, UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-
 let config: UserConfig = {
   plugins: [],
-  build: {
-  },
+  build: {},
 };
-
 
 export default defineConfig(config);

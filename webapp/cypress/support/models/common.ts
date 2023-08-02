@@ -8,6 +8,8 @@ import {
   MODEL_SMILES_NUMERIC_NAME,
 } from '../constants';
 
+const SCHEMA_PATH = Cypress.env('SCHEMA_PATH');
+
 type ComponentTypeByDataId = {
   [key: string]: { type: string; filled: Record<string, boolean> };
 };
@@ -64,10 +66,10 @@ export const dragComponentsAndMapConfig = (
   const maxwidth = 700;
   const positions = generatePositions(total, xoffset, yoffset, maxwidth);
   let i = 0;
-  const newLayers: ModelSchema['spec']['layers'] = []
-  const newFeaturizers: ModelSchema['dataset']['featurizers'] = []
+  const newLayers: ModelSchema['spec']['layers'] = [];
+  const newFeaturizers: ModelSchema['dataset']['featurizers'] = [];
   iterateTopologically(config, (node, type) => {
-    cy.log('Dragging component', node, type)
+    cy.log('Dragging component', node, type);
     if (['input', 'output'].includes(type)) return;
     const position = positions[i];
     const componentName = substrAfterLast(node.type || '', '.');
@@ -77,17 +79,17 @@ export const dragComponentsAndMapConfig = (
       const layer = {
         ...node,
         type: `${node.type}-${i}`,
-      }
+      };
       //@ts-ignore
-      newLayers.push(layer)
+      newLayers.push(layer);
     } else if (type === 'featurizer') {
       //@ts-ignore
       const featurizer = {
         ...node,
         type: `${node.type}-${i}`,
-      }
+      };
       //@ts-ignore
-      newFeaturizers.push(featurizer)
+      newFeaturizers.push(featurizer);
     }
     i += 1;
   });
@@ -95,12 +97,12 @@ export const dragComponentsAndMapConfig = (
     ...config,
     dataset: {
       ...config.dataset,
-      featurizers: newFeaturizers
+      featurizers: newFeaturizers,
     },
     spec: {
-      layers: newLayers
-    }
-  }
+      layers: newLayers,
+    },
+  };
   return newSchema;
 };
 export const dragComponents = (componentNames: string[]) => {
@@ -144,13 +146,14 @@ export const fillDatasetInfo = ({
     cy.get('div').contains(col).click();
   });
 };
+//? Not being used currently
 export const createModelFixture = (
   modelData: Parameters<typeof fillDatasetInfo>[0]
 ) => {
   cy.visit('/models/new');
   fillDatasetInfo(modelData);
   cy.get('button').contains('NEXT').click();
-  cy.buildYamlModel('models/schemas/small_regressor_schema.yaml');
+  cy.buildYamlModel(SCHEMA_PATH + 'yaml/small_regressor_schema.yaml');
 };
 
 export const connectAndFill = ({
