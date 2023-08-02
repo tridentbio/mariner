@@ -8,12 +8,8 @@ import { DatasetConfigPreprocessing, StepValue } from './types';
 
 export interface DataPreprocessingInputProps {
   value?: DatasetConfigPreprocessing;
-  onChange: (value: DatasetConfigPreprocessing) => void;
 }
-const DataPreprocessingInput = ({
-  value,
-  onChange,
-}: DataPreprocessingInputProps) => {
+const DataPreprocessingInput = ({ value }: DataPreprocessingInputProps) => {
   const options = useModelOptions();
   const { featureColumns, targetColumns } = value || {
     featureColumns: [],
@@ -32,26 +28,34 @@ const DataPreprocessingInput = ({
     <>
       <Box sx={{ mb: 2 }}>
         <Text variant="h6">Feature Columns:</Text>
-        <ColumnsPipelineInput
-          value={featureColumns}
-          featurizerOptions={featurizerOptions}
-          transformOptions={transformOptions}
-          onChange={(columns) =>
-            onChange({ targetColumns, featureColumns: columns })
-          }
-        />
+        {featureColumns.map((column, index) => (
+          <ColumnsPipelineInput
+            key={index}
+            column={{
+              config: column,
+              index,
+              type: 'featureColumns',
+            }}
+            featurizerOptions={featurizerOptions}
+            transformOptions={transformOptions}
+          />
+        ))}
       </Box>
 
       <Box>
         <Text variant="h6">Target Columns:</Text>
-        <ColumnsPipelineInput
-          value={targetColumns}
-          featurizerOptions={featurizerOptions}
-          transformOptions={transformOptions}
-          onChange={(columns) =>
-            onChange({ targetColumns: columns, featureColumns })
-          }
-        />
+        {targetColumns.map((column, index) => (
+          <ColumnsPipelineInput
+            key={index}
+            column={{
+              config: column,
+              index,
+              type: 'targetColumns',
+            }}
+            featurizerOptions={featurizerOptions}
+            transformOptions={transformOptions}
+          />
+        ))}
       </Box>
     </>
   );

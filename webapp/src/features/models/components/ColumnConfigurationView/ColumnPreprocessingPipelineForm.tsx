@@ -67,11 +67,7 @@ const ColumnPreprocessingPipelineInput = ({
         >
           <>
             {transforms.map((transform) => (
-              <PreprocessingStepSelect
-                key={transform.name}
-                value={transform}
-                onChange={console.log}
-              />
+              <PreprocessingStepSelect key={transform.name} value={transform} />
             ))}
 
             <Button

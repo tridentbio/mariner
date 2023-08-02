@@ -1,20 +1,22 @@
-import { FormControl, FormControlLabel, Input, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material';
-import { TypeIdentifier } from './types';
+import { FormControl, FormControlLabel, FormHelperText, Input, InputLabel, MenuItem, Select, Switch, } from '@mui/material';
+import { TypeIdentifier } from '@hooks/useModelOptions';
 
 interface ArgOption {
   key: string
   label?: string
   latex?: string
 }
-interface ConstructorArgInputProps {
+export interface ConstructorArgInputProps {
   arg: {
     type: TypeIdentifier;
     default: any;
-    options?: string | ArgOption[];
+    options?: ArgOption[];
     required?: boolean;
   };
   value: any;
   label: string;
+  error?: boolean;
+  helperText?: string;
   onChange: (value: any) => void;
 }
 
@@ -29,6 +31,8 @@ const ConstructorArgInput = ({
   arg,
   value,
   label,
+  error,
+  helperText,
   onChange,
 }: ConstructorArgInputProps) => {
   const formControlStyle = { minWidth: 200 }
@@ -36,7 +40,7 @@ const ConstructorArgInput = ({
   const variant = "standard"
   if (arg.options && arg.options.length) {
     return (
-      <FormControl sx={formControlStyle}>
+      <FormControl error={error} sx={formControlStyle}>
         <InputLabel variant={variant} htmlFor="arg-option">{label}</InputLabel>
         <Select
           variant={variant}
@@ -50,33 +54,45 @@ const ConstructorArgInput = ({
             </MenuItem>
           ))}
         </Select>
+        <FormHelperText>
+          {helperText}
+        </FormHelperText>
       </FormControl>
     );
   }
   else if (arg.type === 'boolean') {
     return (
-      <FormControl sx={formControlStyle}>
+      <FormControl error={error} sx={formControlStyle}>
         <FormControlLabel control={<Switch
           defaultValue={arg.default}
           checked={value}
           onChange={(event) => onChange(event.target.checked)}
         />} label={label}  labelPlacement="end"/>
+
+        <FormHelperText>
+          {helperText}
+        </FormHelperText>
+
       </FormControl>
     );
   } else if (arg.type === 'string') {
     return (
-      <FormControl sx={formControlStyle}>
+      <FormControl error={error} sx={formControlStyle}>
         <InputLabel variant={variant} htmlFor={inputId}>{label}</InputLabel>
         <Input
           id={inputId}
           defaultValue={arg.default}
           onChange={(event) => onChange(event.target.value)}
         />
+
+        <FormHelperText>
+          {helperText}
+        </FormHelperText>
       </FormControl>
     );
   } else if (arg.type === 'number') {
     return (
-      <FormControl sx={formControlStyle}>
+      <FormControl error={error} sx={formControlStyle}>
         <InputLabel variant={variant} htmlFor={inputId}>{label}</InputLabel>
         <Input
           id={inputId}
@@ -84,6 +100,10 @@ const ConstructorArgInput = ({
           defaultValue={arg.default}
           onChange={(event) => onChange(event.target.value)}
         />
+
+        <FormHelperText>
+          {helperText}
+        </FormHelperText>
       </FormControl>
     );
   } else {

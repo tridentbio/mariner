@@ -1,16 +1,20 @@
 import { store } from '@app/store';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { ThemeProvider } from '@mui/system';
-import { StoryObj } from '@storybook/react';
-import { useState } from 'react';
+import { StoryFn, StoryObj } from '@storybook/react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { theme } from 'theme';
 import DataPreprocessingInput from './DataPreprocessingInput';
+import { dataPreprocessingFormSchema } from './formSchema';
+import { DatasetConfigPreprocessing } from './types';
+import { set } from 'cypress/types/lodash';
 
 export default {
   title: 'components/DataPreprocessingInputt',
   component: DataPreprocessingInput,
   decorators: [
-    (Story) => (
+    (Story: StoryFn) => (
       <Provider store={store}>
         <ThemeProvider theme={theme}>
           <Story />
@@ -54,22 +58,28 @@ export default {
           transforms: [],
         },
       ],
-    },
+    } as DatasetConfigPreprocessing,
   },
 };
 
 export const SimpleAPI: StoryObj = {
   args: {},
-  render: (args) => {
-    const [value, setValue] = useState(args.value);
+  render: (args: { value?: DatasetConfigPreprocessing }) => {
+    const methods = useForm<DatasetConfigPreprocessing>({
+      defaultValues: args.value,
+      mode: 'all',
+      criteriaMode: 'all',
+      reValidateMode: 'onChange',
+      resolver: yupResolver(dataPreprocessingFormSchema),
+    });
+
+    const formValue = methods.watch();
 
     return (
       <>
-        <DataPreprocessingInput
-          {...args}
-          value={value}
-          onChange={(val) => setValue(val)}
-        />
+        <FormProvider {...methods}>
+          <DataPreprocessingInput {...args} value={formValue} />
+        </FormProvider>
       </>
     );
   },
