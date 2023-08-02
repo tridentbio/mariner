@@ -12,9 +12,10 @@ from api.api_v1.api import api_router
 from api.websocket import ws_router
 from mariner.core.config import get_app_settings
 
+
 app = FastAPI(
-    title=get_app_settings().PROJECT_NAME,
-    openapi_url=f"{get_app_settings().API_V1_STR}/openapi.json",
+    title=get_app_settings("package").name,
+    openapi_url="/api/v1/openapi.json",
 )
 
 
@@ -42,13 +43,28 @@ def openapijson():
     return get_openapi(title=app.title, version=app.version, routes=app.routes)
 
 
+@app.get("/metadata", include_in_schema=False)
+def metadata():
+    """
+    Returns the API metadata: version, tenant, etc.
+    """
+    package_settings = get_app_settings("package")
+    tenant_settings = get_app_settings("tenant")
+    return {
+        "name": package_settings.name,
+        "version": package_settings.version,
+        "description": package_settings.description,
+        "tenant": {
+            "name": tenant_settings.name,
+        },
+    }
+
+
 # Set all CORS enabled origins
-if get_app_settings().BACKEND_CORS_ORIGINS:
+if get_app_settings("server").cors:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            str(origin) for origin in get_app_settings().BACKEND_CORS_ORIGINS
-        ],
+        allow_origins=[str(origin) for origin in get_app_settings("server").cors],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -56,7 +72,7 @@ if get_app_settings().BACKEND_CORS_ORIGINS:
 
 app.add_middleware(GZipMiddleware, minimum_size=100)
 
-app.include_router(api_router, prefix=get_app_settings().API_V1_STR)
+app.include_router(api_router, prefix="/api/v1")
 app.include_router(ws_router)
 
 simplify_operation_ids(app)

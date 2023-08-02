@@ -5,12 +5,12 @@ repos:
     hooks:
       - id: check-staged-backend-style
         name: Checking staged backend code style
-        entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh ${@#"backend/"}'
+        entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh ${@#"backend/"}' --
         fail_fast: true
         pass_filenames: true
         language: system
         types: [python]
-        files: 'backend.*(mariner|model_builder|api|tests).*\.py'
+        files: '^backend/'
         stages:
           - commit
       - id: check-staged-webapp-style

@@ -37,7 +37,9 @@ class CRUDOAuthState(CRUDBase[OAuthState, Any, Any]):
         db.commit()
         return state
 
-    def get_state(self, db: Session, state: str, provider: Optional[str] = None):
+    def get_state(
+        self, db: Session, state: str, provider: Optional[str] = None
+    ) -> OAuthState:
         """Gets a single instance of state entity that matches the state string.
 
         Args:
