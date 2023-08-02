@@ -5,6 +5,7 @@ import {
   AccordionActions,
   AccordionDetails,
   AccordionSummary,
+  Box,
   IconButton,
 } from '@mui/material';
 import React, { ReactNode } from 'react';
@@ -29,10 +30,9 @@ export interface PreprocessingStepSelectProps {
   helperText?: string;
   options: StepValue[];
   extra?: ReactNode;
-  stepFieldName: `${'featureColumns' | 'targetColumns'}.${number}.${
-    | 'transforms'
-    | 'featurizers'}.${number}`;
   label?: string;
+  stepFieldName: `${'featureColumns' | 'targetColumns'}.${number}.${| 'transforms'
+  | 'featurizers'}.${number}`;
 }
 // todo: Rename to ComponentSelect or ComponentConfig
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
@@ -104,7 +104,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
                   }
                   return 'Select one';
                 }}
-                label={props.label || "Preprocessing Step"}
+                label={ props.label || "Preprocessing Step"}
                 onChange={(_event, newValue) =>
                   onTypeSelect(field, newValue as StepValue)
                 }
@@ -137,21 +137,24 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
           stepSelected.constructorArgs &&
           Object.entries(stepSelected.constructorArgs).map(([key, arg]) => {
             return (
-              <Controller
-                key={key}
-                control={control}
-                name={`${props.stepFieldName}.constructorArgs.${key}` as any}
-                render={({ field, fieldState: { error } }) => (
-                  <ConstructorArgInput
-                    value={field.value.default || arg.default}
-                    label={key}
-                    error={!!error}
-                    helpText={error?.message}
-                    arg={arg as ConstructorArgInputProps['arg']}
-                    onChange={(value) => onConstructorArgChange(field, value)}
-                  />
-                )}
-              />
+              <Box sx={{ margin: '16px 0', flex: 1, display: 'flex', width: 'fit-content' }} key={key}>
+                <Controller
+                  key={key}
+                  control={control}
+                  name={`${props.stepFieldName}.constructorArgs.${key}` as any}
+                  render={({ field, fieldState: { error } }) => (
+                    <ConstructorArgInput
+                      value={field.value.default || arg.default}
+                      label={key}
+                      error={!!error}
+                      helperText={error?.message}
+                      arg={arg as ConstructorArgInputProps['arg']}
+                      onChange={(value) => onConstructorArgChange(field, value)}
+                    />
+                  )}
+                />
+
+              </Box>
             );
           })}
       </AccordionDetails>

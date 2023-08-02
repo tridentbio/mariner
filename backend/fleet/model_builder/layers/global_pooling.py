@@ -99,7 +99,7 @@ class GlobalPooling(torch.nn.Module):
             different outputs will get concatenated in the last dimension.
     """
 
-    def __init__(self, aggr: str):
+    def __init__(self, aggr: str = "add"):
         super().__init__()
 
         self.aggrs = [aggr] if isinstance(aggr, str) else aggr

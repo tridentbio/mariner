@@ -5,6 +5,7 @@ learning models.
 
 
 import enum
+import logging
 from inspect import Parameter, signature
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Type, Union, get_type_hints
@@ -15,6 +16,8 @@ from pydantic import BaseModel, Field
 from fleet.model_builder import generate
 from fleet.model_builder.utils import get_class_from_path_string
 from fleet.yaml_model import YAML_Model
+
+LOG = logging.getLogger("fleet").getChild(__name__)
 
 
 def _get_documentation_link(class_path: str) -> Union[str, None]:
@@ -158,6 +161,9 @@ class ComponentOverride(BaseModel):
         Returns:
             A dictionary that maps constructor arguments to their options.
         """
+
+        for option in self.constructor_args.values():
+            option.normalize_options()
         return {
             arg: arg_data.options
             for arg, arg_data in self.constructor_args.items()
@@ -203,27 +209,6 @@ def _get_option_overrides() -> FleetConfigV2:
     return FleetConfigV2.from_yaml(overrides_path)
 
 
-def is_bad(parameter: Parameter) -> bool:
-    """Returns True if the parameter is bad
-
-    Bad parameters are those that are not positional or keyword only
-
-    Args:
-        parameter (Parameter): the parameter
-
-    Returns:
-        bool: True if the parameter is bad else False
-    """
-    return parameter.annotation == Parameter.empty and type(
-        parameter.default
-    ) not in [
-        int,
-        str,
-        float,
-        bool,
-    ]
-
-
 def is_positional(parameter: Parameter) -> bool:
     """Returns True if the parameter is positional
 
@@ -263,8 +248,6 @@ def is_optional(parameter: Parameter) -> bool:
 def _get_parameters(parameters: dict[str, Parameter]) -> dict[str, str]:
     parsed_parameters = {}
     for key, parameter in parameters.items():
-        if is_bad(parameter):
-            continue
         t = (
             parameter.annotation
             if parameter.annotation != Parameter.empty
@@ -278,7 +261,7 @@ def _get_parameters(parameters: dict[str, Parameter]) -> dict[str, str]:
     return parsed_parameters
 
 
-def _get_component(class_path: str) -> Any:
+def _get_component(class_path: str) -> dict:
     cls = get_class_from_path_string(class_path)
     constructor_args = _get_parameters(dict(signature(cls).parameters))
     return {
@@ -319,7 +302,7 @@ class ComponentOption(BaseModel):
         type_: ComponentType,
         config_cls: Type,
         overrides: Union[ComponentOverride, None] = None,
-        component: Union[Any, None] = None,
+        component: Union[BaseModel, None] = None,
     ):
         """
         Makes a component option from the class_path.
@@ -332,7 +315,11 @@ class ComponentOption(BaseModel):
         """
         docs_link = _get_documentation_link(class_path)
         # Todo: find better name for get_component
-        component = component if component else _get_component(class_path)
+        component_dict = (
+            component.dict(by_alias=True)
+            if component
+            else _get_component(class_path)
+        )
         docs = _get_docs(class_path)
         described_cls = get_class_from_path_string(class_path)
         output_type = _get_return_type(described_cls, ["forward", "__call__"])
@@ -341,15 +328,50 @@ class ComponentOption(BaseModel):
                 _get_default_constructor_args(config_cls, "constructorArgs")
                 or {}
             )
-            if overrides and overrides.constructor_args:
-                for (
-                    constructor_arg,
-                    arg_metadata,
-                ) in overrides.constructor_args.items():
-                    if arg_metadata.default:
-                        default_args[constructor_arg] = arg_metadata.default
         except KeyError:
-            default_args = None
+            default_args = {}
+        constructor_args_summary = component_dict.get(
+            "constructorArgsSummary", {}
+        )
+        for key in default_args:
+            if key not in constructor_args_summary:
+                raise ValueError(
+                    (
+                        f"Error getting options for {class_path}\n"
+                        f"Default argument {key} not found in constructorArgsSummary"
+                    )
+                )
+        config_class_params = signature(config_cls).parameters
+        config_ctr_args_parameters = (
+            dict(
+                signature(
+                    config_class_params["constructorArgs"].annotation
+                ).parameters
+            ).keys()
+            if "constructorArgs" in config_class_params
+            else []
+        )
+        keys_not_in_config = list(
+            set(constructor_args_summary.keys())
+            - set(config_ctr_args_parameters)
+        )
+        if keys_not_in_config:
+            LOG.info(
+                f"Some keys are in ctr args summary but not in config for class %s\n%r",
+                class_path,
+                keys_not_in_config,
+            )
+            for key in keys_not_in_config:
+                del constructor_args_summary[key]
+            component_dict["constructorArgsSummary"] = constructor_args_summary
+            print(component_dict)
+        if overrides and overrides.constructor_args:
+            for (
+                constructor_arg,
+                arg_metadata,
+            ) in overrides.constructor_args.items():
+                if constructor_arg in default_args and arg_metadata.default:
+                    default_args[constructor_arg] = arg_metadata.default
 
         return ComponentOption(
             class_path=class_path,
@@ -358,7 +380,7 @@ class ComponentOption(BaseModel):
             docs=docs,
             output_type=str(output_type) if output_type else None,
             default_args=default_args,
-            component=component,
+            component=component_dict,
             args_options=overrides.get_options_dict() if overrides else None,
         )
 

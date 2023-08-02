@@ -93,18 +93,11 @@ class RandomForestRegressorConstructorArgs(BaseModel):
     """
 
     n_estimators: int = 50
-    max_depth: Union[None, int] = None
+    # max_depth: Union[None, int] = None
+    criterion: Literal[
+        "squared_error", "absolute_error", "friedman_mse", "poisson"
+    ] = "squared_error"
     min_samples_split: Union[float, int] = 2
-    min_samples_leaf: Union[float, int] = 1
-    min_weight_fraction_leaf: float = 0.0
-    max_features: Union[None, float, Literal["sqrt", "log2"]] = 1.0
-    max_leaf_nodes: Union[None, int] = None
-    min_impurity_decrease: float = 0.0
-    bootstrap: bool = True
-    oob_score: bool = False
-    n_jobs: Union[int, None] = None
-    ccp_alpha: float = 0.0
-    max_samples: Union[None, int, float] = None
 
 
 @options_manager.config_scikit_reg()
@@ -134,20 +127,8 @@ class ExtraTreesRegressorConstructorArgs(BaseModel):
     criterion: Literal[
         "squared_error", "absolute_error", "friedman_mse", "poisson"
     ] = "squared_error"
-    max_depth: Union[None, int] = None
+    # max_depth: Union[None, int] = None
     min_samples_split: Union[float, int] = 2
-    min_samples_leaf: Union[float, int] = 1
-    min_weight_fraction_leaf: float = 0.0
-    max_features: Union[None, float, Literal["sqrt", "log2"]] = 1.0
-    max_leaf_nodes: Union[None, int] = None
-    min_impurity_decrease: float = 0.0
-    bootstrap: bool = False
-    oob_score: bool = False
-    n_jobs: Union[int, None] = None
-    random_state: Union[int, None] = None
-    warm_start: bool = False
-    ccp_alpha: float = 0.0
-    max_samples: Union[None, int, float] = None
 
 
 @options_manager.config_scikit_reg()
@@ -175,23 +156,8 @@ class ExtraTreesClassifierConstructorArgs(BaseModel):
 
     n_estimators: int = 100
     criterion: Literal["gini", "entropy", "log_loss"] = "gini"
-    max_depth: Union[None, int] = None
+    # max_depth: Union[None, int] = None
     min_samples_split: Union[int, float] = 2
-    min_samples_leaf: Union[int, float] = 1
-    min_weight_fraction_leaf: float = 0.0
-    max_features: Union[None, int, float, Literal["sqrt", "log2"]] = "sqrt"
-    max_leaf_nodes: Union[None, int] = None
-    min_impurity_decrease: float = 0.0
-    bootstrap: bool = False
-    oob_score: bool = False
-    n_jobs: Union[int, None] = None
-    random_state: Union[int, None] = None
-    warm_start: bool = False
-    class_weight: Union[
-        None, Literal["balanced", "balanced_subsample"], Dict, List[Dict]
-    ] = None
-    ccp_alpha: float = 0.0
-    max_samples: Union[None, int, float] = None
 
 
 @options_manager.config_scikit_class()
@@ -254,23 +220,8 @@ class RandomForestClassifierConstructorArgs(BaseModel):
 
     n_estimators: int = 100
     criterion: Literal["gini", "entropy", "log_loss"] = "gini"
-    max_depth: Union[None, int] = None
+    # max_depth: Union[None, int] = None
     min_samples_split: Union[int, float] = 2
-    min_samples_leaf: Union[int, float] = 1
-    min_weight_fraction_leaf: float = 0.0
-    max_features: Union[None, int, float, Literal["sqrt", "log2"]] = "sqrt"
-    max_leaf_nodes: Union[None, int] = None
-    min_impurity_decrease: float = 0.0
-    bootstrap: bool = True
-    oob_score: bool = False
-    n_jobs: Union[int, None] = None
-    random_state: Union[int, None] = None
-    warm_start: bool = False
-    class_weight: Union[
-        None, Literal["balanced", "balanced_subsample"], Dict, List[Dict]
-    ] = None
-    ccp_alpha: float = 0.0
-    max_samples: Union[None, int, float] = None
 
 
 @options_manager.config_scikit_class()

@@ -79,7 +79,7 @@ start-backend:         ## Builds and starts backend
 start-backend-local:        ## Runs backend locally
 	$(DOCKER_COMPOSE) up --wait db
 	cd backend &&\
-		poetry run dotenv run python -m api.main
+		RESTART=true poetry run dotenv run python -m api.main
 
 
 .PHONY: start

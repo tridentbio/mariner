@@ -1,78 +1,110 @@
-import { InputLabel, MenuItem, Switch, TextField } from '@mui/material';
+import { FormControl, FormControlLabel, FormHelperText, Input, InputLabel, MenuItem, Select, Switch, } from '@mui/material';
 import { TypeIdentifier } from '@hooks/useModelOptions';
 
+interface ArgOption {
+  key: string
+  label?: string
+  latex?: string
+}
 export interface ConstructorArgInputProps {
   arg: {
     type: TypeIdentifier;
     default: any;
-    options?: any[];
+    options?: ArgOption[];
     required?: boolean;
   };
   value: any;
   label: string;
   error?: boolean;
-  helpText?: string;
+  helperText?: string;
   onChange: (value: any) => void;
+}
+
+const getLabel = (argOption: string | ArgOption) => {
+  if (typeof argOption === 'string') {
+    return argOption;
+  } else {
+    return argOption.label || argOption.key;
+  }
 }
 const ConstructorArgInput = ({
   arg,
   value,
   label,
   error,
-  helpText,
+  helperText,
   onChange,
 }: ConstructorArgInputProps) => {
-  if (arg.type === 'boolean') {
+  const formControlStyle = { minWidth: 200 }
+  const inputId = `arg-option-${label}`
+  const variant = "standard"
+  if (arg.options && arg.options.length) {
     return (
-      <>
-        {/* //? Color change workaround (Input label `color` prop doesn't seem to be working properly) */}
-        <InputLabel sx={{ color: error ? '#d32f2f' : null }}>
-          {label}
-        </InputLabel>
-        <Switch
-          defaultValue={arg.default || null}
-          checked={!!value}
-          onChange={(event) => onChange(event.target.checked)}
-        />
-      </>
+      <FormControl error={error} sx={formControlStyle}>
+        <InputLabel variant={variant} htmlFor="arg-option">{label}</InputLabel>
+        <Select
+          variant={variant}
+          id={inputId}
+          defaultValue={arg.default}
+          onChange={(event) => onChange(event.target.value)}
+        >
+          {arg.options.map((option) => (
+            <MenuItem key={option.key} sx={{ minWidth: '100%' }} value={option.key}>
+              {getLabel(option)}
+            </MenuItem>
+          ))}
+        </Select>
+        <FormHelperText>
+          {helperText}
+        </FormHelperText>
+      </FormControl>
     );
-  } else if (arg.type === 'string' && arg.options) {
+  }
+  else if (arg.type === 'boolean') {
     return (
-      <TextField
-        select
-        error={error}
-        helperText={helpText}
-        defaultValue={arg.default || null}
-        label={label}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        {arg.options.map((option) => (
-          <MenuItem key={option} sx={{ width: '100%' }} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </TextField>
+      <FormControl error={error} sx={formControlStyle}>
+        <FormControlLabel control={<Switch
+          defaultValue={arg.default}
+          checked={value}
+          onChange={(event) => onChange(event.target.checked)}
+        />} label={label}  labelPlacement="end"/>
+
+        <FormHelperText>
+          {helperText}
+        </FormHelperText>
+
+      </FormControl>
     );
   } else if (arg.type === 'string') {
     return (
-      <TextField
-        defaultValue={arg.default || null}
-        error={error}
-        helperText={helpText}
-        label={label}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      <FormControl error={error} sx={formControlStyle}>
+        <InputLabel variant={variant} htmlFor={inputId}>{label}</InputLabel>
+        <Input
+          id={inputId}
+          defaultValue={arg.default}
+          onChange={(event) => onChange(event.target.value)}
+        />
+
+        <FormHelperText>
+          {helperText}
+        </FormHelperText>
+      </FormControl>
     );
   } else if (arg.type === 'number') {
     return (
-      <TextField
-        type="number"
-        error={error}
-        helperText={helpText}
-        defaultValue={arg.default || null}
-        label={label}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      <FormControl error={error} sx={formControlStyle}>
+        <InputLabel variant={variant} htmlFor={inputId}>{label}</InputLabel>
+        <Input
+          id={inputId}
+          type="number"
+          defaultValue={arg.default}
+          onChange={(event) => onChange(event.target.value)}
+        />
+
+        <FormHelperText>
+          {helperText}
+        </FormHelperText>
+      </FormControl>
     );
   } else {
     throw new Error(`Unknown type ${arg.type}`);

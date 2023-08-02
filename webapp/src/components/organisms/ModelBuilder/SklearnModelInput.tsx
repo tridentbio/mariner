@@ -10,8 +10,8 @@ export interface SklearnModelInputProps {
 }
 
 export default function SklearnModelInput(props: SklearnModelInputProps) {
-  const { value, onChange } = props
-  const {getScikitOptions} = useModelOptions()
+  const { value, onChange, } = props
+  const {getScikitOptions, ...modelOptions} = useModelOptions()
   const options = useMemo(() => {
     return getScikitOptions().map(toConstructorArgsConfig)
   }, [getScikitOptions])

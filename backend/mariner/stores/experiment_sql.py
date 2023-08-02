@@ -45,6 +45,7 @@ class ExperimentUpdateRepo(pydantic.BaseModel):
     history: Optional[Dict[str, List[float]]] = None
     epochs: Optional[int] = None
     stack_trace: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 class CRUDExperiment(

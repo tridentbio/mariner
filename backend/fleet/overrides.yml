@@ -20,6 +20,16 @@ overrides:
 
   - classPath: sklearn.ensemble.RandomForestRegressor
     constructorArgs:
+      criterion:
+        options:
+          - key: squared_error
+            label: Squared Error
+          - key: absolute_error
+            label: Absolute Error
+          - key: Friedman MSE
+            label: friedman_mse
+          - key: Poisson
+            label: poisson
       max_features:
         options:
           - key: sqrt
@@ -41,16 +51,15 @@ overrides:
             latex: ...
       criterion:
         options:
-          - key: squared_error
-            label: Squared Error
-          - key: absolute_error
-            label: Absolute Error
-          - key: Friedman MSE
-            label: friedman_mse
-          - key: Poisson
-            label: poisson
-
-
+          - key: gini
+            label: Gini impurity
+            latex: ...
+          - key: entropy
+            label: Entropy
+            latex: ...
+          - key: log_loss
+            label: Log loss
+            latex: ...
   - classPath: sklearn.ensemble.ExtraTreesRegressor
     constructorArgs:
       max_features:
