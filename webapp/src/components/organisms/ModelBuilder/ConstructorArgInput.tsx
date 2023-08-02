@@ -1,16 +1,29 @@
-import { InputLabel, MenuItem, Switch, TextField } from '@mui/material';
+import { FormControl, FormControlLabel, Input, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material';
 import { TypeIdentifier } from './types';
 
+interface ArgOption {
+  key: string
+  label?: string
+  latex?: string
+}
 interface ConstructorArgInputProps {
   arg: {
     type: TypeIdentifier;
     default: any;
-    options?: any[];
+    options?: string | ArgOption[];
     required?: boolean;
   };
   value: any;
   label: string;
   onChange: (value: any) => void;
+}
+
+const getLabel = (argOption: string | ArgOption) => {
+  if (typeof argOption === 'string') {
+    return argOption;
+  } else {
+    return argOption.label || argOption.key;
+  }
 }
 const ConstructorArgInput = ({
   arg,
@@ -18,48 +31,60 @@ const ConstructorArgInput = ({
   label,
   onChange,
 }: ConstructorArgInputProps) => {
-  if (arg.type === 'boolean') {
+  const formControlStyle = { minWidth: 200 }
+  const inputId = `arg-option-${label}`
+  const variant = "standard"
+  if (arg.options && arg.options.length) {
     return (
-      <>
-        <InputLabel>{label}</InputLabel>
-        <Switch
+      <FormControl sx={formControlStyle}>
+        <InputLabel variant={variant} htmlFor="arg-option">{label}</InputLabel>
+        <Select
+          variant={variant}
+          id={inputId}
+          defaultValue={arg.default}
+          onChange={(event) => onChange(event.target.value)}
+        >
+          {arg.options.map((option) => (
+            <MenuItem key={option.key} sx={{ minWidth: '100%' }} value={option.key}>
+              {getLabel(option)}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    );
+  }
+  else if (arg.type === 'boolean') {
+    return (
+      <FormControl sx={formControlStyle}>
+        <FormControlLabel control={<Switch
           defaultValue={arg.default}
           checked={value}
           onChange={(event) => onChange(event.target.checked)}
-        />
-      </>
-    );
-  } else if (arg.type === 'string' && arg.options) {
-    return (
-      <TextField
-        select
-        defaultValue={arg.default}
-        label={label}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        {arg.options.map((option) => (
-          <MenuItem key={option} sx={{ width: '100%' }} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </TextField>
+        />} label={label}  labelPlacement="end"/>
+      </FormControl>
     );
   } else if (arg.type === 'string') {
     return (
-      <TextField
-        defaultValue={arg.default}
-        label={label}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      <FormControl sx={formControlStyle}>
+        <InputLabel variant={variant} htmlFor={inputId}>{label}</InputLabel>
+        <Input
+          id={inputId}
+          defaultValue={arg.default}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </FormControl>
     );
   } else if (arg.type === 'number') {
     return (
-      <TextField
-        type="number"
-        defaultValue={arg.default}
-        label={label}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      <FormControl sx={formControlStyle}>
+        <InputLabel variant={variant} htmlFor={inputId}>{label}</InputLabel>
+        <Input
+          id={inputId}
+          type="number"
+          defaultValue={arg.default}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </FormControl>
     );
   } else {
     throw new Error(`Unknown type ${arg.type}`);

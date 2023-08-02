@@ -11,6 +11,7 @@ import {
   AccordionActions,
   AccordionDetails,
   AccordionSummary,
+  Box,
   IconButton,
 } from '@mui/material';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
@@ -55,7 +56,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
             }
             return 'Select one';
           }}
-          label={props.label || "Preprocessing Step" }
+          label={props.label || "Preprocessing Step"}
           value={stepSelected || null}
           onChange={(_event, newValue) => {
             if (newValue) setStepSelected(newValue);
@@ -101,7 +102,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
           stepSelected.constructorArgs &&
           Object.entries(stepSelected.constructorArgs).map(([key, value]) => {
             return (
-              <div key={key}>
+              <Box sx={{ margin: '16px 0', flex: 1, display: 'flex', width: 'fit-content' }} key={key}>
                 <ConstructorArgInput
                   label={key}
                   arg={value}
@@ -120,7 +121,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
                       });
                   }}
                 />
-              </div>
+              </Box>
             );
           })}
       </AccordionDetails>

@@ -9,6 +9,7 @@ import {
   TransformsType,
 } from '@model-compiler/src/interfaces/model-editor';
 import { ArrayElement } from '@utils';
+import { useMemo } from 'react';
 
 const getType = (python_type: any): TypeIdentifier | undefined => {
   if (typeof python_type !== 'string') return;
@@ -30,16 +31,16 @@ type ComponentConstructorArgsConfig = {
     forwardArgs: any;
     constructorArgs?: infer C;
   }
-    ? {
-        constructorArgs: {
-          [key2 in keyof C]: {
-            default: C[key2];
-            type: TypeIdentifier;
-          };
-        };
-        type: F;
-      }
-    : never;
+  ? {
+    constructorArgs: {
+      [key2 in keyof C]: {
+        default: C[key2];
+        type: TypeIdentifier;
+      };
+    };
+    type: F;
+  }
+  : never;
 };
 
 type Option = ArrayElement<GetModelOptionsApiResponse>;
@@ -87,8 +88,12 @@ export const toConstructorArgsConfig = (
   }
   if (option.argsOptions) {
     for (const [key, value] of Object.entries(option.argsOptions)) {
-      // @ts-ignore
-      constructorArgs[key].options = value;
+      if (key in constructorArgs) {
+        // @ts-ignore
+        constructorArgs[key].options = value;
+      } else {
+        console.warn(`Key ${key} not found in constructorArgs`);
+      }
     }
   }
   return {
@@ -141,7 +146,7 @@ export default function useModelOptions() {
     getPreprocessingOptions,
     getLayerOptions,
     getScikitOptions,
-    options: data,
+    options: sortedData,
     isLoading,
   };
 }
