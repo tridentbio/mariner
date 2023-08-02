@@ -3,31 +3,27 @@ kind: ConfigMap
 metadata:
   name: ray-head
 data:
+  SERVER_CORS: https://backend.dev.mariner.trident.bio,https://mlflow.dev.mariner.trident.bio,https://ray-dashboard.dev.mariner.trident.bio,https://dev.mariner.trident.bio
+  OAUTH_GITHUB_NAME: "Github"
+  OAUTH_GITHUB_CLIENT_ID: '0805f51ee373c7f1343a'
+  OAUTH_GITHUB_CLIENT_SECRET: 'dd01b6a3f2dddbb97eaed538c28ad6273723556e'
+  OAUTH_GITHUB_SCOPE: 'read:email'
+  OAUTH_GENENTECH_AUTHORIZATION_URL: '...'
   AWS_DATASETS: dev-mariner-datasets
-  AWS_MODELS_BUCKET: s3://dev-mariner-datasets
   AWS_REGION: us-east-1
-  BACKEND_CORS_ORIGINS: '["https://dev.mariner.trident.bio", "https://backend.dev.mariner.trident.bio"]'
+  AWS_MODE: local
+  WEBAPP_URL: http://dev.mariner.trident.bio
+  LIGHTNING_LOGS_DIR: s3://dev-mariner-datasets/lightning-logs
   DOMAIN: backend.dev.mariner.trident.bio
-  EMAILS_FROM_EMAIL: info@mariner.trident.bio
   FIRST_SUPERUSER: admin@mariner.trident.bio
-  FLOWER_BASIC_AUTH: admin:123456
-  MLFLOW_ARTIFACT_URI: s3://dev-mariner-datasets
-  MLFLOW_TRACKING_URI: http://mlflow:5000
-  # OAUTH2_PROXY_CLIENT_ID: 6a7002b10b812e1e4b8e
-  # OAUTH2_PROXY_HTTP_ADDRESS: http://0.0.0.0:4180
-  # OAUTH2_PROXY_PROVIDER: github
-  # OAUTH2_PROXY_UPSTREAMS: http://127.0.0.1:8265
   PROJECT_NAME: mariner
-  RAY_HEAD_ADDRESS: ray-cluster
-  RAY_HEAD_PORT: "6379"
-  RAY_NUM_CPU: "1"
+  RAY_ADDRESS: ray://ray-head-backend.ray.svc.cluster.local:10001
   SENTRY_DSN: ""
   SERVER_HOST: https://backend.dev.mariner.trident.bio
   SERVER_NAME: backend.dev.mariner.trident.bio
-  SMTP_HOST: smtp.gmail.com
-  SMTP_PORT: "587"
-  SMTP_TLS: "True"
-  SMTP_USER: admin@mariner.trident.bio
-  STACK_NAME: mariner-trident-bio
-  USERS_OPEN_REGISTRATION: "False"
+  MLFLOW_ARTIFACT_URI: 's3://dev-mariner-datasets'
+  MLFLOW_TRACKING_URI: 'http://mlflow-default.mariner.svc.cluster.local:5000'
   ID: '0805f51ee373c7f1343a'
+  ENV: 'development'
+  GITHUB_CLIENT_ID: '0805f51ee373c7f1343a'
+  AWS_MODELS_BUCKET: 's3://dev-mariner-datasets'
