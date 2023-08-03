@@ -9,6 +9,12 @@ normal_deploy:
 
 version: mariner-v1
 
+infisical:
+  enabled: true
+  host: https://infisical.dev.mariner.trident.bio/api
+  namespace: default
+  environment: dev
+
 port: 80
 
 image:
