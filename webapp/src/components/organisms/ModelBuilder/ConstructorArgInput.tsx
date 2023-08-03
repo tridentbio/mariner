@@ -1,10 +1,19 @@
-import { FormControl, FormControlLabel, FormHelperText, Input, InputLabel, MenuItem, Select, Switch, } from '@mui/material';
+import {
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  Input,
+  InputLabel,
+  MenuItem,
+  Select,
+  Switch,
+} from '@mui/material';
 import { TypeIdentifier } from '@hooks/useModelOptions';
 
 interface ArgOption {
-  key: string
-  label?: string
-  latex?: string
+  key: string;
+  label?: string;
+  latex?: string;
 }
 export interface ConstructorArgInputProps {
   arg: {
@@ -26,7 +35,7 @@ const getLabel = (argOption: string | ArgOption) => {
   } else {
     return argOption.label || argOption.key;
   }
-}
+};
 const ConstructorArgInput = ({
   arg,
   value,
@@ -35,13 +44,15 @@ const ConstructorArgInput = ({
   helperText,
   onChange,
 }: ConstructorArgInputProps) => {
-  const formControlStyle = { minWidth: 200 }
-  const inputId = `arg-option-${label}`
-  const variant = "standard"
+  const formControlStyle = { minWidth: 200 };
+  const inputId = `arg-option-${label}`;
+  const variant = 'standard';
   if (arg.options && arg.options.length) {
     return (
       <FormControl error={error} sx={formControlStyle}>
-        <InputLabel variant={variant} htmlFor="arg-option">{label}</InputLabel>
+        <InputLabel variant={variant} htmlFor="arg-option">
+          {label}
+        </InputLabel>
         <Select
           variant={variant}
           id={inputId}
@@ -49,51 +60,57 @@ const ConstructorArgInput = ({
           onChange={(event) => onChange(event.target.value)}
         >
           {arg.options.map((option) => (
-            <MenuItem key={option.key} sx={{ minWidth: '100%' }} value={option.key}>
+            <MenuItem
+              key={option.key}
+              sx={{ minWidth: '100%' }}
+              value={option.key}
+            >
               {getLabel(option)}
             </MenuItem>
           ))}
         </Select>
-        <FormHelperText>
-          {helperText}
-        </FormHelperText>
+        <FormHelperText>{helperText}</FormHelperText>
       </FormControl>
     );
-  }
-  else if (arg.type === 'boolean') {
+  } else if (arg.type === 'boolean') {
     return (
       <FormControl error={error} sx={formControlStyle}>
-        <FormControlLabel control={<Switch
-          defaultValue={arg.default}
-          checked={value}
-          onChange={(event) => onChange(event.target.checked)}
-        />} label={label}  labelPlacement="end"/>
+        <FormControlLabel
+          control={
+            <Switch
+              defaultValue={arg.default}
+              checked={value}
+              onChange={(event) => onChange(event.target.checked)}
+            />
+          }
+          label={label}
+          labelPlacement="end"
+        />
 
-        <FormHelperText>
-          {helperText}
-        </FormHelperText>
-
+        <FormHelperText>{helperText}</FormHelperText>
       </FormControl>
     );
   } else if (arg.type === 'string') {
     return (
       <FormControl error={error} sx={formControlStyle}>
-        <InputLabel variant={variant} htmlFor={inputId}>{label}</InputLabel>
+        <InputLabel variant={variant} htmlFor={inputId}>
+          {label}
+        </InputLabel>
         <Input
           id={inputId}
           defaultValue={arg.default}
           onChange={(event) => onChange(event.target.value)}
         />
 
-        <FormHelperText>
-          {helperText}
-        </FormHelperText>
+        <FormHelperText>{helperText}</FormHelperText>
       </FormControl>
     );
   } else if (arg.type === 'number') {
     return (
       <FormControl error={error} sx={formControlStyle}>
-        <InputLabel variant={variant} htmlFor={inputId}>{label}</InputLabel>
+        <InputLabel variant={variant} htmlFor={inputId}>
+          {label}
+        </InputLabel>
         <Input
           id={inputId}
           type="number"
@@ -101,9 +118,7 @@ const ConstructorArgInput = ({
           onChange={(event) => onChange(event.target.value)}
         />
 
-        <FormHelperText>
-          {helperText}
-        </FormHelperText>
+        <FormHelperText>{helperText}</FormHelperText>
       </FormControl>
     );
   } else {
