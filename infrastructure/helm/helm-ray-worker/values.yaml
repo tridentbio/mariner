@@ -8,6 +8,12 @@ canary:
 normal_deploy:
   enabled: true
 
+infisical:
+  enabled: true
+  host: https://infisical.dev.mariner.trident.bio/api
+  namespace: ray
+  environment: dev
+
 version: ray-worker-v1
 
 port: 5000

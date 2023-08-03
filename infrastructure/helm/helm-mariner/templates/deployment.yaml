@@ -85,12 +85,8 @@ spec:
             failureThreshold: {{ .Values.image.readinessProbe.failureThreshold }}
             timeoutSeconds: {{ .Values.image.readinessProbe.timeoutSeconds }}
           envFrom:
-            - configMapRef:
-                name: {{ .Release.Name }}
-            - configMapRef:
-                name: {{ .Release.Name }}-secrets
-            - configMapRef:
-                name: {{ .Release.Name }}-emails
+            - secretRef:
+                name: {{ .Release.Name }}-infisical
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

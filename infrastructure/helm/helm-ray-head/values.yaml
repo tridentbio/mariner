@@ -10,6 +10,12 @@ normal_deploy:
 
 version: ray-head-v1
 
+infisical:
+  enabled: true
+  host: https://infisical.dev.mariner.trident.bio/api
+  namespace: ray
+  environment: dev
+
 port: 8265
 
 image:

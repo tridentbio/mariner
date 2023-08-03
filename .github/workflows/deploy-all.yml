@@ -8,48 +8,48 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 jobs:
   #This step builds and pushes the template image that will be used in all deployments.
-  docker_image:
-    name: docker_image
-    runs-on: ubuntu-20.04
-    env:
-      ECR_REPOSITORY: mariner-template-dev
-    steps:
-    #Setup AWS Credentials using github secrets
-    - name: Build - Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-    #Checkout branch
-    - name: Build - Git Checkout
-      uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.inputs.branch }}
-        persist-credentials: false
-    #Create or validade the ECR repository (Our private registry for docker images)
-    - name: Build - Get ECR Repository
-      run: |
-        aws ecr describe-repositories --region $AWS_REGION --repository-names $ECR_REPOSITORY > /dev/null 2>&1 || \
-          aws ecr create-repository --region $AWS_REGION  --repository-name $ECR_REPOSITORY
-    #Authenticates to the ECR
-    - name: Build - Login to ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-    #Build and push docker image
-    - name: Build - Build and push image
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      run: |
-        docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile backend
-        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
+  # docker_image:
+  #   name: docker_image
+  #   runs-on: ubuntu-20.04
+  #   env:
+  #     ECR_REPOSITORY: mariner-template-dev
+  #   steps:
+  #   #Setup AWS Credentials using github secrets
+  #   - name: Build - Configure AWS credentials
+  #     uses: aws-actions/configure-aws-credentials@v1
+  #     with:
+  #       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #       aws-region: ${{ env.AWS_REGION }}
+  #   #Checkout branch
+  #   - name: Build - Git Checkout
+  #     uses: actions/checkout@v2
+  #     with:
+  #       ref: ${{ github.event.inputs.branch }}
+  #       persist-credentials: false
+  #   #Create or validade the ECR repository (Our private registry for docker images)
+  #   - name: Build - Get ECR Repository
+  #     run: |
+  #       aws ecr describe-repositories --region $AWS_REGION --repository-names $ECR_REPOSITORY > /dev/null 2>&1 || \
+  #         aws ecr create-repository --region $AWS_REGION  --repository-name $ECR_REPOSITORY
+  #   #Authenticates to the ECR
+  #   - name: Build - Login to ECR
+  #     id: login-ecr
+  #     uses: aws-actions/amazon-ecr-login@v1
+  #   #Build and push docker image
+  #   - name: Build - Build and push image
+  #     id: build-image
+  #     env:
+  #       ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #     run: |
+  #       docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f dockerfiles/Dockerfile backend
+  #       docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+  #       docker push $ECR_REGISTRY/$ECR_REPOSITORY -a
   #Deployment Mariner Backend
   mariner:
     name: Mariner
     runs-on: ubuntu-20.04
-    needs: docker_image
+    # needs: docker_image
     env:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: mariner-backend
@@ -97,7 +97,7 @@ jobs:
   mlflow:
     name: MLFlow
     runs-on: ubuntu-20.04
-    needs: docker_image
+    # needs: docker_image
     env:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: mlflow
@@ -146,7 +146,7 @@ jobs:
   ray-head:
     name: Ray Head
     runs-on: ubuntu-20.04
-    needs: docker_image
+    # needs: docker_image
     env:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: ray-head
@@ -194,7 +194,7 @@ jobs:
   ray-worker:
     name: Ray Worker
     runs-on: ubuntu-20.04
-    needs: docker_image
+    # needs: docker_image
     env:
       ECR_REPOSITORY: 515402585597.dkr.ecr.us-east-1.amazonaws.com/mariner-template-dev
       DEPLOYMENT_NAME: ray-worker
