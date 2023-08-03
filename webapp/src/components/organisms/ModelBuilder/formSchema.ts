@@ -1,9 +1,9 @@
-import * as yup from 'yup';
 import { DataTypeGuard } from '@app/types/domain/datasets';
-import { SimpleColumnConfig } from './types';
 import { TypeIdentifier } from '@hooks/useModelOptions';
+import * as yup from 'yup';
 import { MixedSchema } from 'yup/lib/mixed';
 import { AnyObject } from 'yup/lib/types';
+import { SimpleColumnConfig } from './types';
 
 const requiredError = 'This field is required';
 
@@ -26,29 +26,23 @@ export const preprocessingStepSchema = yup.object({
                 argSchema[key] = yup.mixed<TypeIdentifier>().required();
                 break;
               case 'default': {
-                argSchema[key] = yup
-                  .mixed<string | number | boolean>()
-                  .when('required', {
-                    is: true,
-                    then: (field) => field.required(),
-                  })
-                  .when(
-                    ['required', 'type'],
-                    // @ts-ignore
-                    (
-                      required: boolean,
-                      type: TypeIdentifier,
-                      field: MixedSchema<
-                        string | number | boolean,
-                        AnyObject,
-                        any
-                      >
-                    ) => {
-                      return required && type === 'boolean'
-                        ? field.required().test((value) => !!value)
-                        : field.required();
-                    }
-                  );
+                argSchema[key] = yup.mixed<string | number | boolean>().when(
+                  ['required', 'type'],
+                  // @ts-ignore
+                  (
+                    required: boolean,
+                    type: TypeIdentifier,
+                    field: MixedSchema<
+                      string | number | boolean,
+                      AnyObject,
+                      any
+                    >
+                  ) => {
+                    return required && type != 'boolean'
+                      ? field.required().test((value) => !!value)
+                      : field;
+                  }
+                );
                 break;
               }
             }
