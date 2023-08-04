@@ -13,12 +13,18 @@ import click
 import pandas as pd
 import requests
 import yaml
+import os
 
 logging.basicConfig()
 LOG = logging.getLogger("cli").getChild(__name__)
 
-EXPERIMENT_TIMEOUT = timedelta(hours=1)
-DATASET_PROCESSING_TIMEOUT = timedelta(minutes=10)
+EXPERIMENT_TIMEOUT = timedelta(minutes=int(os.getenv("EXPERIMENT_TIMEOUT", 120)))
+DATASET_PROCESSING_TIMEOUT = timedelta(
+    minutes=int(os.getenv("DATASET_PROCESSING_TIMEOUT", 10))
+)
+DATASET_CREATION_TIMEOUT = timedelta(
+    minutes=int(os.getenv("DATASET_CREATION_TIMEOUT", 1))
+)
 
 
 class ExperimentTimeoutError(Exception):
@@ -60,7 +66,7 @@ def _setup_group(
     LOG.debug("Creating dataset %s", dataset_name)
     response = requests.post(
         f"{url}/api/v1/datasets/",
-        timeout=10,
+        timeout=DATASET_CREATION_TIMEOUT.total_seconds(),
         data={
             "name": dataset_name,
             "description": "Dataset used during load testing",
@@ -276,7 +282,7 @@ def load_test_number_of_simulteneous_trainings(
 @click.option(
     "--max-trainings",
     type=int,
-    default=2 ** 12,
+    default=2**12,
     help="Maximum number of trainings to perform.",
 )
 @click.option(
@@ -310,7 +316,7 @@ def load_test_trainings(
     ctx: click.Context,
     model_config: IO,
     dataset_csv: IO,
-    max_trainings: int = 2 ** 12,
+    max_trainings: int = 2**12,
     timeout: int = 60 * 60 * 2,
     max_failed_trainings_rate=0.1,
 ):
