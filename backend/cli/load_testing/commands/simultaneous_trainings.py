@@ -4,6 +4,7 @@ This script is used to load test the number of simultaneous trainings that can b
 import asyncio
 import json
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import IO, Coroutine, List
@@ -13,7 +14,6 @@ import click
 import pandas as pd
 import requests
 import yaml
-import os
 
 logging.basicConfig()
 LOG = logging.getLogger("cli").getChild(__name__)
@@ -25,6 +25,7 @@ DATASET_PROCESSING_TIMEOUT = timedelta(
 DATASET_CREATION_TIMEOUT = timedelta(
     minutes=int(os.getenv("DATASET_CREATION_TIMEOUT", 1))
 )
+DEFAULT_TIMEOUT = timedelta(minutes=int(os.getenv("DEFAULT_TIMEOUT", 10)))
 
 
 class ExperimentTimeoutError(Exception):
@@ -106,7 +107,7 @@ def _setup_group(
         while True:
             response = requests.get(
                 f"{url}/api/v1/datasets/{dataset_id}",
-                timeout=10,
+                timeout=DEFAULT_TIMEOUT.total_seconds(),
                 headers=headers,
             )
             _assert_response_ok(response)
@@ -115,7 +116,7 @@ def _setup_group(
                 break
             assert (
                 datetime.now() - initial_time < DATASET_PROCESSING_TIMEOUT
-            ), "Dataset took too long to be processed"
+            ), "Dataset took too long to be processed."
 
             asyncio.run(asyncio.sleep(1))
 
@@ -136,7 +137,7 @@ def _setup_group(
             "config": model_architecture_config,
             "datasetId": dataset["id"],
         },
-        timeout=10,
+        timeout=DEFAULT_TIMEOUT.total_seconds(),
         headers=headers,
     )
     _assert_response_ok(response)
@@ -169,7 +170,7 @@ def _run_n_trainings(
         while True:
             response = requests.get(
                 f"{url}/api/v1/experiments/{training_id}",
-                timeout=10,
+                timeout=DEFAULT_TIMEOUT.total_seconds(),
                 headers=headers,
             )
             _assert_response_ok(response)
@@ -192,7 +193,7 @@ def _run_n_trainings(
                 "framework": model["versions"][0]["config"]["framework"],
                 "config": training_config,
             },
-            timeout=10,
+            timeout=DEFAULT_TIMEOUT.total_seconds(),
             headers=headers,
         )
         training = response.json()
@@ -288,7 +289,7 @@ def load_test_number_of_simulteneous_trainings(
 @click.option(
     "--max-trainings",
     type=int,
-    default=2**12,
+    default=2 ** 12,
     help="Maximum number of trainings to perform.",
 )
 @click.option(
@@ -322,7 +323,7 @@ def load_test_trainings(
     ctx: click.Context,
     model_config: IO,
     dataset_csv: IO,
-    max_trainings: int = 2**12,
+    max_trainings: int = 2 ** 12,
     timeout: int = 60 * 60 * 2,
     max_failed_trainings_rate=0.1,
 ):
