@@ -81,7 +81,7 @@ def handle_training_complete(task: Task, experiment_id: int):
         if not done:
             raise RuntimeError("Task is not done")
         if exception:
-            LOG.error(exception)
+            LOG.exception(exception)
             stack_trace = str(exception)
             experiment_store.update(
                 db,

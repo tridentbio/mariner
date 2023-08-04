@@ -362,7 +362,8 @@ def load_test_trainings(
 
             num_trainings *= 2
     except Exception as exc:
-        LOG.error("Error while running load test: %s", exc)
+        LOG.exception(exc)
+        LOG.error("Error while running load test")
     finally:
         # convert results to a dataframe
         df = pd.DataFrame(
