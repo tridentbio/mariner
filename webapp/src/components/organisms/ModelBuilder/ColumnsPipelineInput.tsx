@@ -1,8 +1,10 @@
+import { ModelCreate } from '@app/rtk/generated/models';
 import { DataTypeGuard } from '@app/types/domain/datasets';
 import { Text } from '@components/molecules/Text';
 import ColumnConfigurationAccordion from '@features/models/components/ColumnConfigurationView/ColumnConfigAccordion';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import { Button, IconButton } from '@mui/material';
+import { useEffect } from 'react';
 import {
   Controller,
   ControllerRenderProps,
@@ -14,12 +16,10 @@ import PreprocessingStepSelect, {
   PreprocessingStepSelectGetErrorFn,
 } from './PreprocessingStepSelect';
 import {
-  DatasetConfigPreprocessing,
   GenericPreprocessingStep,
   SimpleColumnConfig,
   StepValue,
 } from './types';
-import { useEffect } from 'react';
 
 export interface ColumnsPipelineInputProps {
   column: {
@@ -38,17 +38,17 @@ type StepFormFieldError = {
 
 export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
   const { featurizerOptions, transformOptions, column } = props;
-  const { control, trigger } = useFormContext<DatasetConfigPreprocessing>();
+  const { control, trigger } = useFormContext<ModelCreate>();
 
   //? Being used as a single item array on featurizers <PreprocessingStepSelect /> list
   const featurizersOptionsField = useFieldArray({
     control,
-    name: `${column.type}.${column.index}.featurizers`,
+    name: `config.dataset.${column.type}.${column.index}.featurizers`,
   });
 
   const transformsOptionsField = useFieldArray({
     control,
-    name: `${column.type}.${column.index}.transforms`,
+    name: `config.dataset.${column.type}.${column.index}.transforms`,
   });
 
   const emptyStep = {
@@ -69,11 +69,11 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
   };
 
   const onStepSelect = <
-    FieldNames extends `${(typeof column)['type']}.${number}.${
+    FieldNames extends `config.dataset.${(typeof column)['type']}.${number}.${
       | 'transforms'
       | 'featurizers'}.${number}`
   >(
-    field: ControllerRenderProps<DatasetConfigPreprocessing, FieldNames>,
+    field: ControllerRenderProps<ModelCreate, FieldNames>,
     newValue: GenericPreprocessingStep | null
   ) => {
     field.onChange(newValue ?? emptyStep);
@@ -121,7 +121,7 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
               <Controller
                 key={step.id}
                 control={control}
-                name={`${column.type}.${column.index}.featurizers.${stepIndex}`}
+                name={`config.dataset.${column.type}.${column.index}.featurizers.${stepIndex}`}
                 render={({ field, fieldState: { error } }) => (
                   <PreprocessingStepSelect
                     options={featurizerOptions}
@@ -129,6 +129,7 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
                     getError={getStepError(error as StepFormFieldError)}
                     value={field.value || null}
                     helperText={error?.message}
+                    onBlur={field.onBlur}
                     onChanges={(step) => onStepSelect(field, step)}
                   />
                 )}
@@ -141,7 +142,7 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
           <Controller
             key={step.id}
             control={control}
-            name={`${column.type}.${column.index}.transforms.${stepIndex}`}
+            name={`config.dataset.${column.type}.${column.index}.transforms.${stepIndex}`}
             render={({ field, fieldState: { error } }) => {
               return (
                 <PreprocessingStepSelect
@@ -149,6 +150,7 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
                   // @ts-ignore
                   getError={getStepError(error as StepFormFieldError)}
                   helperText={error?.message}
+                  onBlur={field.onBlur}
                   onChanges={(updatedStep) => onStepSelect(field, updatedStep)}
                   value={field.value || null}
                   extra={

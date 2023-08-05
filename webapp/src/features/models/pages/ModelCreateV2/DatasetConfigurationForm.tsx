@@ -1,15 +1,28 @@
-import { Section } from '@components/molecules/Section';
-import { Control, useWatch } from 'react-hook-form';
 import {
-  ColumnConfig,
   DatasetConfig,
   ModelCreate,
   TorchDatasetConfig,
 } from '@app/rtk/generated/models';
-import { unwrapDollar } from '@model-compiler/src/utils';
-import { useMemo } from 'react';
+import { Section } from '@components/molecules/Section';
+import DataPreprocessingInput from '@components/organisms/ModelBuilder/DataPreprocessingInput';
+import {
+  DatasetConfigPreprocessing,
+  SimpleColumnConfig,
+} from '@components/organisms/ModelBuilder/types';
 import ColumnConfigurationView from '@features/models/components/ColumnConfigurationView';
+import { FormColumns } from '@features/models/components/ColumnConfigurationView/types';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { unwrapDollar } from '@model-compiler/src/utils';
 import { Box } from '@mui/material';
+import { useEffect, useMemo } from 'react';
+import {
+  Control,
+  Controller,
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 
 export type GenericTransform = {
   name: string;
@@ -17,19 +30,6 @@ export type GenericTransform = {
   fowardArgs: Record<string, string | string[]>;
   type: string;
 };
-
-type Transforms = GenericTransform[];
-
-type Featurizers = GenericTransform[];
-
-type FormColumns = Record<
-  'feature' | 'target',
-  {
-    col: ColumnConfig;
-    transforms: Transforms;
-    featurizers: Featurizers;
-  }[]
->;
 
 const isTransform = (transform: GenericTransform) => {
   const transformerType = transform.name.split('-').at(0) as
@@ -40,7 +40,7 @@ const isTransform = (transform: GenericTransform) => {
 
 const stages = ['col', 'featurizers', 'transforms'] as const;
 
-const groupColumnsTransformsFeaturizers = ({
+/* const groupColumnsTransformsFeaturizers = ({
   datasetConfig,
 }: {
   datasetConfig: TorchDatasetConfig | DatasetConfig;
@@ -116,36 +116,27 @@ const groupColumnsTransformsFeaturizers = ({
   });
 
   return formColumns;
-};
+}; */
 
-interface DatasetConfigurationProps {
-  control: Control<ModelCreate>;
-  setValue: (name: string, value: any) => void;
-}
-export const DatasetConfigurationForm = ({
-  control,
-  setValue,
-}: DatasetConfigurationProps) => {
-  const datasetConfig = useWatch({
-    control,
-    name: 'config.dataset',
-  });
-
-  const formColumns = useMemo(
-    () =>
-      groupColumnsTransformsFeaturizers({
-        datasetConfig,
-      }),
-    [datasetConfig]
-  );
+export const DatasetConfigurationForm = () => {
+  const { control } = useFormContext<ModelCreate>();
 
   return (
     <Box>
       <Section title="Data Configuration">
-        <ColumnConfigurationView
-          datasetConfig={datasetConfig}
-          formColumns={formColumns}
-          setValue={setValue}
+        <Controller
+          control={control}
+          name="config.dataset"
+          render={({ field }) => (
+            <DataPreprocessingInput
+              value={{
+                featureColumns: field.value
+                  .featureColumns as SimpleColumnConfig[],
+                targetColumns: field.value
+                  .targetColumns as SimpleColumnConfig[],
+              }}
+            />
+          )}
         />
       </Section>
     </Box>

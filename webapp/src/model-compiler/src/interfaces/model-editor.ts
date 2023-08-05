@@ -1,3 +1,4 @@
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import {
   TorchModelSpec,
   TargetTorchColumnConfig,
@@ -25,6 +26,7 @@ import {
 
 export type APITargetConfig = TargetTorchColumnConfig;
 export type APIColumnConfig = ColumnConfig;
+export type APISimpleColumnConfig = SimpleColumnConfig;
 
 export type FleetModelSpec = TorchModelSpec | SklearnModelSpec;
 
@@ -145,13 +147,30 @@ interface ColumnConfigWithForward extends APIColumnConfig {
 interface TargetConfigWithForward extends APITargetConfig {
   forwardArgs?: { '': string };
 }
-interface DatasetWithForwards {
+interface SimpleColumnConfigWithForward extends SimpleColumnConfig {
+  forwardArgs?: { '': string };
+}
+interface DatasetWithForwards<TargetColumnConfig, FeatureColumnConfig> {
   name: string;
-  targetColumns: TargetConfigWithForward[];
-  featureColumns: ColumnConfigWithForward[];
+  targetColumns: TargetColumnConfig[];
+  featureColumns: FeatureColumnConfig[];
   featurizers: FeaturizersType[];
   transforms: TransformsType[];
 }
-export interface ModelSchema extends TorchModelSpec {
-  dataset: DatasetWithForwards;
+
+export interface TorchModel extends TorchModelSpec {
+  dataset: DatasetWithForwards<
+    TargetConfigWithForward,
+    ColumnConfigWithForward
+  >;
 }
+
+export interface SkLearnModel extends SklearnModelSpec {
+  dataset: DatasetWithForwards<
+    SimpleColumnConfigWithForward,
+    SimpleColumnConfigWithForward
+  >;
+}
+
+export type ModelSchema<Model extends 'torch' | 'sklearn' = 'torch'> =
+  Model extends 'torch' ? TorchModel : SkLearnModel;

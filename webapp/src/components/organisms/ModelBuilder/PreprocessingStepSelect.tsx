@@ -8,7 +8,7 @@ import {
   Box,
   IconButton,
 } from '@mui/material';
-import React, { ReactNode } from 'react';
+import React, { FocusEventHandler, ReactNode } from 'react';
 import ConstructorArgInput, {
   ConstructorArgInputProps,
 } from './ConstructorArgInput';
@@ -26,6 +26,7 @@ export type PreprocessingStepSelectGetErrorFn = (
 export interface PreprocessingStepSelectProps {
   value?: GenericPreprocessingStep;
   onChanges?: (step: GenericPreprocessingStep | null) => void;
+  onBlur?: FocusEventHandler<HTMLDivElement>;
   getError?: PreprocessingStepSelectGetErrorFn;
   filterOptions?: (step: PreprocessingStep) => boolean;
   helperText?: string;
@@ -63,6 +64,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
           }}
           isOptionEqualToValue={(option, value) => option?.type == value?.type}
           label={props.label || 'Preprocessing Step'}
+          onBlur={props.onBlur}
           onChange={(_event, newValue) =>
             props.onChanges && props.onChanges(newValue)
           }

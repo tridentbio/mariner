@@ -56,7 +56,7 @@ export const preprocessingStepSchema = yup.object({
   }),
 });
 
-export const columnSchema = yup.object({
+export const simpleColumnSchema = yup.object({
   name: yup.string().required(requiredError),
   dataType: yup.object({
     domainKind: yup.string().required(requiredError),
@@ -65,17 +65,10 @@ export const columnSchema = yup.object({
   featurizers: yup
     .array()
     .of(preprocessingStepSchema)
-    .when('dataType.domainKind', {
-      is: (domainKind: SimpleColumnConfig['dataType']['domainKind']) =>
-        !DataTypeGuard.isNumericalOrQuantity(domainKind),
+    .when('dataType', {
+      is: (dataType: SimpleColumnConfig['dataType']) =>
+        !DataTypeGuard.isNumericalOrQuantity(dataType),
       then: (field) => field.min(1).required(),
     }),
   transforms: yup.array().of(preprocessingStepSchema),
 });
-
-export const dataPreprocessingFormSchema = yup
-  .object({
-    featureColumns: yup.array().of(columnSchema),
-    targetColumns: yup.array().of(columnSchema),
-  })
-  .required();
