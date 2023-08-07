@@ -204,11 +204,13 @@ def test_train(case: TestCase):
                 mlflow_experiment_name=mlflow_experiment_name,
                 datamodule_args=case.datamodule_args,
             )
+            assert (
+                result.mlflow_model_version is not None
+            ), "model version is None"
             assert_mlflow_data(
                 spec=case.model_spec,
                 mlflow_experiment_id=result.mlflow_experiment_id,
             )
-
             run_test(
                 spec=case.model_spec,
                 mlflow_model_name=mlflow_model_name,
