@@ -14,6 +14,17 @@ def test_sklearn_spec_supports_DatasetConfigWithPreprocessing():
     ) as f:
         assert isinstance(f, dict)
         spec = Foo.parse_obj({"spec": f}).spec
-        assert isinstance(
-            spec.dataset, DatasetConfigWithPreprocessing
-        ), "DatasetConfigWithPreprocessing not supported by sklearn models"
+        assert isinstance(spec.dataset, DatasetConfigWithPreprocessing), (
+            "Expected spec.dataset to be DatasetConfigWithPreprocessing "
+            f"got {type(spec.dataset)}"
+        )
+        dataset_config = spec.dataset.to_dataset_config()
+        assert dataset_config
+        assert dataset_config.featurizers[0].name == "smiles-out", (
+            'Expected first featurizer to be "smiles-out", '
+            f"got {dataset_config.featurizers[0].name}"
+        )
+        assert (
+            dataset_config.featurizers[0].type
+            == "molfeat.trans.fp.FPVecFilteredTransformer"
+        )

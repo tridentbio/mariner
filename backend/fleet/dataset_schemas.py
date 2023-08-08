@@ -281,10 +281,12 @@ class DatasetConfigWithPreprocessing(BaseDatasetModel, YAML_Model):
                     for idx, col_featurizer in enumerate(getattr(col, attr)):
                         if idx == len(getattr(col, attr)) - 1:
                             key = f"{col.name}-out"
-                        key = f"{col.name}-feat-{idx}"
+                        else:
+                            key = f"{col.name}-feat-{idx}"
                         featurizer_args = col_featurizer.dict() | {
                             "name": key,
-                            "forward_args": [f"${previous_key}"],
+                            # would be cool to support arrays as well
+                            "forward_args": {"X": f"${previous_key}"},
                         }
                         if featurizer_args["constructor_args"] is None:
                             featurizer_args.pop("constructor_args")

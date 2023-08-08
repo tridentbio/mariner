@@ -58,7 +58,7 @@ class CamelCaseModel(BaseModel):
         underscore_attrs_are_private = True
 
 
-class CreateFromType(BaseModel):
+class CreateFromType(CamelCaseModel):
     """
     Adds a method to instantiate a class from it's class path (type) and constructor_args.
 
@@ -109,9 +109,7 @@ class FPVecFilteredTransformerConstructorArgs(BaseModel):
 
 
 @options_manager.config_featurizer()
-class FPVecFilteredTransformerConfig(
-    CamelCaseModel, CreateFromType, TransformConfigBase
-):
+class FPVecFilteredTransformerConfig(CreateFromType, TransformConfigBase):
     """
     Models the usage of FPVecFilteredTransformer.
     """
