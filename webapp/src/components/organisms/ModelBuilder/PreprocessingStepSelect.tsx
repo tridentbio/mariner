@@ -7,6 +7,8 @@ import {
   AccordionSummary,
   Box,
   IconButton,
+  SxProps,
+  Theme,
 } from '@mui/material';
 import React, { FocusEventHandler, ReactNode } from 'react';
 import ConstructorArgInput, {
@@ -33,6 +35,7 @@ export interface PreprocessingStepSelectProps {
   options: StepValue[];
   extra?: ReactNode;
   label?: string;
+  sx?: SxProps<Theme>;
 }
 // todo: Rename to ComponentSelect or ComponentConfig
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
@@ -46,7 +49,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
     props.extra;
 
   return (
-    <Accordion expanded={expanded}>
+    <Accordion expanded={expanded} sx={props.sx}>
       <AccordionSummary>
         <ComboBox
           value={stepSelected?.type ? stepSelected : null}

@@ -147,30 +147,18 @@ interface ColumnConfigWithForward extends APIColumnConfig {
 interface TargetConfigWithForward extends APITargetConfig {
   forwardArgs?: { '': string };
 }
-interface SimpleColumnConfigWithForward extends SimpleColumnConfig {
-  forwardArgs?: { '': string };
-}
-interface DatasetWithForwards<TargetColumnConfig, FeatureColumnConfig> {
+
+interface DatasetWithForwards {
   name: string;
-  targetColumns: TargetColumnConfig[];
-  featureColumns: FeatureColumnConfig[];
+  targetColumns: TargetConfigWithForward[];
+  featureColumns: ColumnConfigWithForward[];
   featurizers: FeaturizersType[];
   transforms: TransformsType[];
 }
 
-export interface TorchModel extends TorchModelSpec {
-  dataset: DatasetWithForwards<
-    TargetConfigWithForward,
-    ColumnConfigWithForward
-  >;
-}
-
-export interface SkLearnModel extends SklearnModelSpec {
-  dataset: DatasetWithForwards<
-    SimpleColumnConfigWithForward,
-    SimpleColumnConfigWithForward
-  >;
+export interface TorchModelSchema extends TorchModelSpec {
+  dataset: DatasetWithForwards;
 }
 
 export type ModelSchema<Model extends 'torch' | 'sklearn' = 'torch'> =
-  Model extends 'torch' ? TorchModel : SkLearnModel;
+  Model extends 'torch' ? TorchModelSchema : SklearnModelSpec;

@@ -9,7 +9,7 @@ import { ModelEditorContextProvider } from 'hooks/useModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import { MouseEvent, useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FieldPath, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DatasetConfigurationForm } from './DatasetConfigurationForm';
 import ModelConfigForm from './ModelConfigForm';
@@ -17,6 +17,7 @@ import { ModelSetup } from './ModelSetup';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { simpleColumnSchema } from '@components/organisms/ModelBuilder/formSchema';
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 
 type ModelCreationStep = {
   title: string;
@@ -52,6 +53,8 @@ export const modelCreateSchema = yup.object({
   }),
 });
 
+type FormFieldNames = FieldPath<modelsApi.ModelCreate>;
+
 const ModelCreateV2 = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
   const [checkModel, { isLoading: checkingModel, data: configCheckData }] =
@@ -83,38 +86,52 @@ const ModelCreateV2 = () => {
 
   const [createModel, { error, isLoading, data }] =
     modelsApi.useCreateModelMutation();
-  const { control, getValues, setValue, watch, unregister, resetField } =
-    methods;
+  const { control, getValues, setValue, watch, unregister } = methods;
   const config = watch('config');
 
-  type FormFieldNames = Parameters<(typeof methods)['trigger']>[0][];
+  const selectedFramework: 'torch' | 'sklearn' = watch('config.framework');
 
-  const selectedFramework = watch('config.framework');
+  const onFrameworkChange = () => {
+    if (selectedFramework == 'torch') {
+      setValue('config.dataset', {
+        name: config.dataset.name,
+        featureColumns: config.dataset.featureColumns.map((column) => ({
+          name: column.name,
+          dataType: column.dataType,
+        })),
+        targetColumns: config.dataset.targetColumns.map((column) => ({
+          name: column.name,
+          dataType: column.dataType,
+          outModule: '',
+        })),
+        featurizers: [],
+        transforms: [],
+      } as modelsApi.TorchDatasetConfig);
+    } else {
+      const getSimpleColumnConfigTemplate = (
+        column: modelsApi.ColumnConfig | SimpleColumnConfig
+      ) =>
+        ({
+          name: column.name,
+          dataType: column.dataType,
+          featurizers: [],
+          transforms: [],
+        } as SimpleColumnConfig);
+
+      setValue('config.dataset', {
+        name: config.dataset.name,
+        featureColumns: config.dataset.featureColumns.map(
+          getSimpleColumnConfigTemplate
+        ),
+        targetColumns: config.dataset.targetColumns.map(
+          getSimpleColumnConfigTemplate
+        ),
+      } as modelsApi.DatasetConfig);
+    }
+  };
 
   useEffect(() => {
-    let fieldsToRemove: FormFieldNames = [];
-
-    const appendColumnFieldsToRemove = (index: number) => {
-      fieldsToRemove = [
-        ...fieldsToRemove,
-        `config.dataset.featureColumns.${index}.featurizers`,
-        `config.dataset.featureColumns.${index}.transforms`,
-      ];
-
-      // resetField(`config.dataset.featureColumns.${index}.featurizers`)
-      // resetField(`config.dataset.featureColumns.${index}.transforms`)
-    };
-
-    if (selectedFramework == 'torch') {
-      config.dataset.featureColumns.forEach((column, index) =>
-        appendColumnFieldsToRemove(index)
-      );
-      config.dataset.targetColumns.forEach((column, index) =>
-        appendColumnFieldsToRemove(index)
-      );
-
-      // unregister(fieldsToRemove as any, {keepValue: false})
-    }
+    onFrameworkChange();
   }, [selectedFramework]);
 
   const navigate = useNavigate();
@@ -145,7 +162,7 @@ const ModelCreateV2 = () => {
     )();
   };
 
-  const revalidateErrorsOnFields = (field: FormFieldNames) =>
+  const revalidateErrorsOnFields = (field: FormFieldNames[]) =>
     field.forEach((field) => methods.trigger(field));
 
   const onStepChange = (stepIndex: number, oldIndex: number) => {
@@ -296,14 +313,18 @@ const ModelCreateV2 = () => {
       content: (
         <Box sx={{ maxWidth: '100vw' }}>
           <div>
-            <ModelEditor
-              value={extendSpecWithTargetForwardArgs(
-                config as modelsApi.TorchModelSpec
-              )}
-              onChange={(value) => {
-                setValue('config', value as modelsApi.ModelCreate['config']);
-              }}
-            />
+            {selectedFramework == 'torch' ? (
+              <ModelEditor
+                value={extendSpecWithTargetForwardArgs(
+                  config as modelsApi.TorchModelSpec
+                )}
+                onChange={(value) => {
+                  setValue('config', value as modelsApi.ModelCreate['config']);
+                }}
+              />
+            ) : (
+              <div>empty</div>
+            )}
           </div>
           {configCheckData?.stackTrace && (
             <StackTrace
@@ -317,10 +338,6 @@ const ModelCreateV2 = () => {
       ),
     },
   ];
-
-  const test = watch('config');
-
-  console.log(test);
 
   return (
     <ReactFlowProvider>

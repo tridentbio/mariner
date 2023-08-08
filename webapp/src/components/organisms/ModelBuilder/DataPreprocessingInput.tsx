@@ -26,8 +26,8 @@ const DataPreprocessingInput = ({ value }: DataPreprocessingInputProps) => {
 
   return (
     <>
-      <Box sx={{ mb: 2 }}>
-        <Text variant="h6">Feature Columns:</Text>
+      <Box sx={{ mb: 2, mt: 3 }}>
+        <Text variant="subtitle1">Feature Columns:</Text>
         {featureColumns.map((column, index) => (
           <ColumnsPipelineInput
             key={index}
@@ -43,7 +43,7 @@ const DataPreprocessingInput = ({ value }: DataPreprocessingInputProps) => {
       </Box>
 
       <Box>
-        <Text variant="h6">Target Columns:</Text>
+        <Text variant="subtitle1">Target Columns:</Text>
         {targetColumns.map((column, index) => (
           <ColumnsPipelineInput
             key={index}

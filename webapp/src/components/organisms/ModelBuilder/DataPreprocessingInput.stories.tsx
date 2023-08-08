@@ -28,8 +28,6 @@ export default {
       config: {
         dataset: {
           name: 'Test dataset',
-          transforms: [],
-          featurizers: [],
           featureColumns: [
             {
               name: 'Smiles Column 2',
@@ -79,10 +77,9 @@ export default {
 };
 
 export const SimpleAPI: StoryObj = {
-  args: {},
-  render: (args: { value?: ModelCreate }) => {
+  render: ({ value }: { value?: ModelCreate }) => {
     const methods = useForm<ModelCreate>({
-      defaultValues: args.value,
+      defaultValues: value,
       mode: 'all',
       criteriaMode: 'all',
       reValidateMode: 'onChange',
@@ -95,10 +92,10 @@ export const SimpleAPI: StoryObj = {
           <DataPreprocessingInput
             value={{
               featureColumns:
-                (args.value?.config?.dataset
+                (value?.config?.dataset
                   ?.featureColumns as SimpleColumnConfig[]) || [],
               targetColumns:
-                (args.value?.config?.dataset
+                (value?.config?.dataset
                   ?.targetColumns as SimpleColumnConfig[]) || [],
             }}
           />

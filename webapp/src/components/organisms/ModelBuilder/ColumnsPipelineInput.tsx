@@ -124,6 +124,7 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
                 name={`config.dataset.${column.type}.${column.index}.featurizers.${stepIndex}`}
                 render={({ field, fieldState: { error } }) => (
                   <PreprocessingStepSelect
+                    sx={{ mb: 3 }}
                     options={featurizerOptions}
                     // @ts-ignore
                     getError={getStepError(error as StepFormFieldError)}
