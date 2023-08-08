@@ -35,26 +35,26 @@ def hash_md5(
     Returns:
         str: md5 hash as a string
     """
-    hash_md5 = hashlib.md5()
+    md5_buffer = hashlib.md5()
     if data:
-        hash_md5.update(data)
+        md5_buffer.update(data)
     elif file:
         if isinstance(file, (str, Path)):
             with open(file, "rb") as f:
                 # type: ignore
                 for chunk in iter(lambda: f.read(chunk_size), b""):
-                    hash_md5.update(chunk)
+                    md5_buffer.update(chunk)
         elif isinstance(file, io.BytesIO):
             for chunk in iter(lambda: file.read(chunk_size), b""):  # type: ignore
-                hash_md5.update(chunk)
+                md5_buffer.update(chunk)
         elif isinstance(file, (FAUploadFile, SUploadFile)):
             for chunk in iter(lambda: file.file.read(chunk_size), b""):  # type: ignore
-                hash_md5.update(bytes(chunk))
+                md5_buffer.update(bytes(chunk))
         else:
             raise TypeError("file must be UploadFile")
     else:
         raise TypeError('Either "file" or "data" should be provided')
-    return hash_md5.hexdigest()
+    return md5_buffer.hexdigest()
 
 
 def random_pretty_name() -> str:
@@ -73,8 +73,8 @@ def decompress_file(file: io.BytesIO) -> io.BytesIO:
         file.seek(0)
         return file
 
-    except AttributeError:
-        raise TypeError("file must be instance of file")
+    except AttributeError as exc:
+        raise TypeError("file must be instance of file") from exc
 
     except Exception as e:
         raise e
