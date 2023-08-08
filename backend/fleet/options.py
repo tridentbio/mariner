@@ -364,7 +364,6 @@ class ComponentOption(BaseModel):
             for key in keys_not_in_config:
                 del constructor_args_summary[key]
             component_dict["constructorArgsSummary"] = constructor_args_summary
-            print(component_dict)
         if overrides and overrides.constructor_args:
             for (
                 constructor_arg,
