@@ -279,6 +279,8 @@ class DatasetConfigWithPreprocessing(BaseDatasetModel, YAML_Model):
                 if hasattr(col, attr) and isinstance(getattr(col, attr), list):
                     previous_key = col.name
                     for idx, col_featurizer in enumerate(getattr(col, attr)):
+                        if idx == len(getattr(col, attr)) - 1:
+                            key = f"{col.name}-out"
                         key = f"{col.name}-feat-{idx}"
                         featurizer_args = col_featurizer.dict() | {
                             "name": key,

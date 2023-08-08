@@ -7,19 +7,20 @@ dataset:
     - name: smiles
       dataType:
         domainKind: smiles
+      featurizers:
+        - type: molfeat.trans.fp.FPVecFilteredTransformer
+          forward_args:
+            X: $smiles
   targetColumns:
     - name: expt
       dataType:
         domainKind: numeric
   featurizers:
     - name: MolFPFeaturizer
-      type: molfeat.trans.fp.FPVecFilteredTransformer
-      forward_args:
-        X: $smiles
 
 spec:
   model:
     type: sklearn.neighbors.KNeighborsRegressor
     fitArgs:
-      X: $MolFPFeaturizer
+      X: $smiles-out
       y: $expt

@@ -23,7 +23,10 @@ from fleet.base_schemas import (
     FleetModelSpec,
     TorchModelSpec,
 )
-from fleet.dataset_schemas import TorchDatasetConfig
+from fleet.dataset_schemas import (
+    DatasetConfigWithPreprocessing,
+    TorchDatasetConfig,
+)
 from fleet.mlflow import load_pipeline, save_pipeline
 from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SklearnModelSpec
@@ -103,6 +106,10 @@ def fit(
         RuntimeError: When the experiment creation in mlflow fails.
         ValueError: dataset_uri
     """
+    if isinstance(spec, SklearnModelSpec) and isinstance(
+        spec.dataset, DatasetConfigWithPreprocessing
+    ):
+        spec.dataset = spec.dataset.to_dataset_config()
     functions: Union[BaseModelFunctions, None] = None
     try:
         mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
@@ -191,6 +198,10 @@ def run_test(
         dataset(optional): The dataframe with the dataset. Should have a step
             column.
     """
+    if isinstance(spec, SklearnModelSpec) and isinstance(
+        spec.dataset, DatasetConfigWithPreprocessing
+    ):
+        spec.dataset = spec.dataset.to_dataset_config()
     dataset = _get_dataframe(dataset, dataset_uri)
     client = mlflow.MlflowClient()
     model_uri = f"models:/{mlflow_model_name}/{mlflow_model_version}"
@@ -215,6 +226,15 @@ def run_test(
 
 
 def check_input(input_: pd.DataFrame, config: TorchDatasetConfig):
+    """Checks if the input conforms to the dataset config.
+
+    Args:
+        input_: The dataframe with the input data.
+        config: The dataset config.
+
+    Raises:
+        InvalidDataframe: When the input does not conform to the dataset config.
+    """
     broken_checks = check_dataframe_conforms_dataset(input_, config)
     if len(broken_checks) > 0:
         raise InvalidDataframe(
@@ -251,6 +271,8 @@ def predict(
     pipeline = load_pipeline(modelversion.run_id)
 
     if isinstance(spec, SklearnModelSpec):
+        if isinstance(spec.dataset, DatasetConfigWithPreprocessing):
+            spec.dataset = spec.dataset.to_dataset_config()
         model = mlflow.sklearn.load_model(model_uri)
         functions = SciKitFunctions(
             spec, None, model=model, preprocessing_pipeline=pipeline

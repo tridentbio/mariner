@@ -30,7 +30,7 @@ class TestCase:
     model_spec: FleetModelSpec
     train_spec: Any
     dataset_file: Union[Path, str]
-    predict_sample: dict = None
+    predict_sample: Union[None, dict] = None
     should_fail: Union[None, Any] = None
     datamodule_args = {"split_type": "random", "split_target": "60-20-20"}
 
@@ -225,11 +225,9 @@ def test_train(case: TestCase):
                     mlflow_model_version=result.mlflow_model_version.version,
                     input_=case.predict_sample,
                 )
-                assert (
-                    len(result)
-                    == len(next(iter(case.predict_sample.values()))),
-                    "prediction result needs to have the same length as the input",
-                )
+                assert len(result) == len(
+                    next(iter(case.predict_sample.values()))
+                ), "prediction result needs to have the same length as the input"
 
         else:
             with pytest.raises(case.should_fail):

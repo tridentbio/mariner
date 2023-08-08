@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+echo Linting $@
 pylint --extension-pkg-whitelist='pydantic' $@
 PYLINT_RESULT=$?
 

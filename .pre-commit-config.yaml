@@ -7,10 +7,10 @@ repos:
         name: Checking staged backend code style
         entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh ${@#"backend/"}' --
         fail_fast: true
+        files: '^backend/'
         pass_filenames: true
         language: system
         types: [python]
-        files: '^backend/'
         stages:
           - commit
       - id: check-staged-webapp-style
@@ -20,6 +20,16 @@ repos:
         files: 'webapp.*\.(ts|tsc)'
         pass_filenames: false
         language: system
+        stages:
+          - commit
+      - id: lint-staged-backend
+        name: Linting staged code in backend
+        entry: bash -c 'cd backend && poetry run sh scripts/lint-single.sh ${@#"backend/"}' --
+        language: system
+        types: [python]
+        files: '^backend/'
+        pass_filenames: true
+        fail_fast: true
         stages:
           - commit
       - id: lint-staged-webapp

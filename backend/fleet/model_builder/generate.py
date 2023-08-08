@@ -189,14 +189,15 @@ def args_to_list(params: List[Parameter]) -> List[tuple[str, Any, Any]]:
         List[tuple[str, Any, Any]]:
             list of tuples with the name, type and default value of the parameters
     """
-    return [
-        (
-            param.name,
-            str(param.annotation),
-            param.default if is_primitive(param.default) else None,
-        )
-        for param in params
-    ]
+    args = []
+    for param in params:
+        default = None
+        if isinstance(param.default, str):
+            default = f'"{param.default}"'
+        elif is_primitive(param.default):
+            default = param.default
+        args.append((param.name, str(param.annotation), default))
+    return args
 
 
 def get_component_template_args_v2(layer: Layer):

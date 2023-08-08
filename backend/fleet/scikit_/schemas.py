@@ -1,12 +1,13 @@
 """
 Pydantic Schemas for the Sklearn specs.
 """
-from typing import TYPE_CHECKING, Annotated, Dict, List, Literal, Union
+from typing import Annotated, Dict, List, Literal, Union
 
 from humps import camel
 from pydantic import BaseModel, Field
 
 from fleet.base_schemas import DatasetConfig
+from fleet.dataset_schemas import DatasetConfigWithPreprocessing
 from fleet.model_builder.utils import get_class_from_path_string
 from fleet.options import options_manager
 from fleet.yaml_model import YAML_Model
@@ -19,7 +20,7 @@ class CamelCaseModel(BaseModel):
     Subclass this class to work with camel case serialization of the model.
     """
 
-    class Config:
+    class Config:  # pylint: disable=C0115
         alias_generator = camel.case
         allow_population_by_field_name = True
         allow_population_by_alias = True
@@ -265,5 +266,5 @@ class SklearnModelSpec(CamelCaseModel, YAML_Model):
 
     framework: Literal["sklearn"] = "sklearn"
     name: str
-    dataset: DatasetConfig
+    dataset: Union[DatasetConfig, DatasetConfigWithPreprocessing]
     spec: SklearnModelSchema
