@@ -82,7 +82,9 @@ def get_experiment(
     Returns:
         The experiment queried.
     """
-    experiment = experiments_ctl.get_experiment(db, current_user, experiment_id)
+    experiment = experiments_ctl.get_experiment(
+        db, current_user, experiment_id
+    )
     return experiment
 
 

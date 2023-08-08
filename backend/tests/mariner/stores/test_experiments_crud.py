@@ -2,7 +2,10 @@ from sqlalchemy.orm import Session
 
 from mariner.entities import Experiment as ExperimentEntity
 from mariner.schemas.experiment_schemas import Experiment
-from mariner.stores.experiment_sql import ExperimentUpdateRepo, experiment_store
+from mariner.stores.experiment_sql import (
+    ExperimentUpdateRepo,
+    experiment_store,
+)
 
 
 class TestExperimentRepo:

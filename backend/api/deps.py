@@ -138,7 +138,10 @@ def assert_trusted_service(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     else:
         token = authorization.split(" ")
-        if len(token) < 2 or token[1] != get_app_settings("secrets").application_secret:
+        if (
+            len(token) < 2
+            or token[1] != get_app_settings("secrets").application_secret
+        ):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 

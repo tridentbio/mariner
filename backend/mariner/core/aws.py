@@ -4,7 +4,7 @@ AWS service
 import enum
 import io
 from datetime import datetime
-from typing import IO, BinaryIO, Tuple, Union
+from typing import BinaryIO, Tuple, Union
 
 import boto3
 from botocore.client import BaseClient

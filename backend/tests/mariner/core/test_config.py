@@ -84,7 +84,9 @@ def test_get_app_settings(case):
     Tests the Config class.
     """
     if case.environment is None:
-        assert case.raises is None, "pytest default environment shouldn't raise errors"
+        assert (
+            case.raises is None
+        ), "pytest default environment shouldn't raise errors"
         settings = get_app_settings(use_cache=False)
         assert settings is not None
         return

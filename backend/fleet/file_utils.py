@@ -4,7 +4,6 @@ Package with utility functions for file handling.
 todo: Move this package as all other common utility functions between
 mariner and fleet to a 'common' package outside both.
 """
-import io
 from typing import IO, Union
 
 

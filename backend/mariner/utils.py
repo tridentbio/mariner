@@ -5,7 +5,7 @@ import hashlib
 import io
 from gzip import compress, decompress
 from pathlib import Path
-from typing import IO, BinaryIO, Union
+from typing import BinaryIO, Union
 
 from fastapi.datastructures import UploadFile as FAUploadFile
 from starlette.datastructures import UploadFile as SUploadFile

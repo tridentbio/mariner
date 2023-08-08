@@ -78,7 +78,10 @@ def _setup_group(
                     },
                     {
                         "pattern": "exp",
-                        "data_type": {"domain_kind": "numeric", "unit": "mole"},
+                        "data_type": {
+                            "domain_kind": "numeric",
+                            "unit": "mole",
+                        },
                         "description": "Molecular Weigth",
                     },
                 ]
@@ -112,7 +115,8 @@ def _setup_group(
 
     _wait_for_dataset(dataset["id"])
     LOG.debug(
-        "Dataset created in %d seconds", (datetime.now() - initial_time).total_seconds()
+        "Dataset created in %d seconds",
+        (datetime.now() - initial_time).total_seconds(),
     )
     model_architecture_config["dataset"]["name"] = dataset["name"]
 
@@ -233,7 +237,9 @@ def _run_n_trainings(
     )
 
 
-@click.command("trainings", help="Load test the number of simultaneous trainings")
+@click.command(
+    "trainings", help="Load test the number of simultaneous trainings"
+)
 @click.option(
     "--num-trainings",
     type=int,
@@ -340,7 +346,10 @@ def load_test_trainings(
                 break
 
             # stops if the number of failed trainings is greater than 10% of the total
-            if result.num_failed > result.num_trainings * max_failed_trainings_rate:
+            if (
+                result.num_failed
+                > result.num_trainings * max_failed_trainings_rate
+            ):
                 LOG.info("Max rate of failed trainings reached")
                 break
 

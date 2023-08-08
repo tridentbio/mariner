@@ -195,7 +195,9 @@ class PredictRequest(ApiBaseModel):
     model_input: Any
 
 
-def get_model_prediction(db: Session, request: PredictRequest) -> Dict[str, List[Any]]:
+def get_model_prediction(
+    db: Session, request: PredictRequest
+) -> Dict[str, List[Any]]:
     """(Slowly) Loads a model version and apply it to a sample input
 
     .. warning::

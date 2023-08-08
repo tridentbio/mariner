@@ -71,7 +71,9 @@ def github_post(
     kwargs["client_id"] = client_id
     kwargs["client_secret"] = client_secret
 
-    result = requests.post(url=url + path, json=kwargs, headers=headers, timeout=5)
+    result = requests.post(
+        url=url + path, json=kwargs, headers=headers, timeout=5
+    )
     return result
 
 
@@ -108,7 +110,9 @@ class GithubFailure(Exception):
         self.response = response
 
 
-def get_access_token(code: str, credentials: dict[str, str]) -> GithubAccessCode:
+def get_access_token(
+    code: str, credentials: dict[str, str]
+) -> GithubAccessCode:
     """Attempts to exchange a code string for an access token.
 
     Args:
@@ -144,7 +148,10 @@ def get_user(
         GithubFailure: When there's an error from github response.
     """
     result = github_get(
-        url=GITHUB_API_URL, path="user", access_token=access_token, **credentials
+        url=GITHUB_API_URL,
+        path="user",
+        access_token=access_token,
+        **credentials,
     )
     if 200 <= result.status_code < 400:
         github_user = GithubUser.construct(**result.json())
@@ -165,7 +172,9 @@ def get_user(
                     primary_email = email["email"]
                     break
             if not primary_email:
-                raise GithubUserUnverified("No primary email verified found for user")
+                raise GithubUserUnverified(
+                    "No primary email verified found for user"
+                )
             github_user.email = primary_email
         return github_user
     else:

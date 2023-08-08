@@ -10,7 +10,6 @@ from typing import Any, Union
 
 import mlflow
 import torch.nn
-from mlflow.entities import Run
 from mlflow.entities.model_registry.model_version import ModelVersion
 from mlflow.store.artifact.runs_artifact_repo import RunsArtifactRepository
 from mlflow.tracking.client import MlflowClient

@@ -126,11 +126,14 @@ def _authenticate_oauth(state: str, **kwargs) -> User:
         state_obj = oauth_state_store.get_state(db, state=state)
         if not state:
             raise InvalidOAuthState(f"state {state} not created by us")
-        provider_settings = get_app_settings("auth").__root__[state_obj.provider]
+        provider_settings = get_app_settings("auth").__root__[
+            state_obj.provider
+        ]
         user_data = oauth_providers.get_user_data(
             provider=state_obj.provider,
             credentials=(
-                provider_settings.dict() | {"redirect_uri": oauth_manager.redirect_uri}
+                provider_settings.dict()
+                | {"redirect_uri": oauth_manager.redirect_uri}
             ),
             **kwargs,
         )
@@ -147,7 +150,8 @@ def _authenticate_oauth(state: str, **kwargs) -> User:
             user = user_store.create(
                 db,
                 obj_in=UserCreateOAuth(
-                    email=EmailStr(user_data.email), image_url=user_data.avatar_url
+                    email=EmailStr(user_data.email),
+                    image_url=user_data.avatar_url,
                 ),
             )
         if not user.is_active:

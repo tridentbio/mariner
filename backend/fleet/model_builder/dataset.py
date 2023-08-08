@@ -1,32 +1,16 @@
 """Dataset related classes to use for training/evaluating/testing"""
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Callable, List, Sequence, Union
+from typing import Sequence, TYPE_CHECKING
 
-import lightning.pytorch as pl
-import pandas as pd
 import torch
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import DataLoader, Dataset, Subset, random_split
 from torch.utils.data.dataloader import default_collate
 from torch_geometric.data import Batch
 from torch_geometric.data.data import BaseData
 
-from fleet import data_types
-from fleet.model_builder.component_builder import AutoBuilder
-from fleet.model_builder.featurizers.base_featurizers import BaseFeaturizer
-from fleet.model_builder.featurizers.bio_sequence_featurizer import (
-    DNASequenceFeaturizer,
-    ProteinSequenceFeaturizer,
-    RNASequenceFeaturizer,
-)
-from fleet.model_builder.featurizers.integer_featurizer import (
-    IntegerFeaturizer,
-)
-from fleet.model_builder.model_schema_query import get_dependencies
-from fleet.model_builder.schemas import TorchModelSchema
 
 if TYPE_CHECKING:
-    from fleet.dataset_schemas import ColumnConfig, TorchDatasetConfig
+    pass
 
 
 class Collater:
