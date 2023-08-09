@@ -4,7 +4,7 @@ Actors for dataset processing
 import io
 import logging
 from io import BytesIO
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union, get_args
 
 import pandas as pd
 import ray
@@ -34,6 +34,97 @@ from mariner.schemas.dataset_schemas import (
 )
 
 LOG = logging.getLogger(__name__)
+
+
+def infer_domain_type_from_series(
+    series: pd.Series, strict=False, len_uniques_to_categorical=100
+) -> Any:
+
+    """Infers the domain type from a pd.Series
+
+    Checks some type of series and returns the corresponding
+    domain type based on the priority:
+        1. If the series is a float:
+            it will be considered as a numerical data type
+        2. If the series is an object:
+            it will be checked if it is a smiles first, then if it is a
+            categorical data type
+        3. If the series is an int:
+            it will be checked if it is a categorical data type
+
+    Args:
+        series (pd.Series): the series to infer the domain type from
+
+    Returns:
+        Any: inferred domain type
+    """
+    if series.dtype == float:
+        return NumericalDataType(domain_kind="numeric")
+    elif series.dtype == object:
+        # check if it is a biological sequence
+        bio_info = check_biological_sequence_series(series)
+        if bio_info["valid"]:
+            TypeClass: BiologicalDataType = {
+                "dna": DNADataType,
+                "rna": RNADataType,
+                "protein": ProteinDataType,
+            }[bio_info["type"]]
+            return TypeClass(**bio_info["kwargs"])
+
+        # check if it is smiles
+        if is_valid_smiles_series(series):
+            return SmileDataType(domain_kind="smiles")
+
+        # check if it is likely to be categorical
+        series = series.sort_values()
+        uniques = series.unique()
+        if len(uniques) / len(series) < 0.4:
+            return CategoricalDataType(
+                domain_kind="categorical",
+                # Classes will need to be overwritten by complete data type checking
+                classes={val: idx for idx, val in enumerate(uniques)},
+            )
+
+        return StringDataType(
+            domain_kind="string",
+        )
+    elif series.dtype == int:
+        series = series.sort_values()
+        uniques = series.unique()
+        if len(uniques) <= len_uniques_to_categorical:
+            return CategoricalDataType(
+                domain_kind="categorical",
+                classes={val: idx for idx, val in enumerate(uniques)},
+            )
+    else:
+        if strict:
+            raise ValueError(f"Unknown dtype {series.dtype}")
+
+
+def get_columns_metadata(
+    df: pd.DataFrame,
+    first_n_rows=20,
+    strict=False,
+    len_uniques_to_categorical=100,
+) -> List[ColumnsMeta]:
+    """Returns data type about columns based on the underlying dataframe types
+
+    Returns:
+        List[ColumnsMeta]
+    """
+    metadata = [
+        ColumnsMeta(
+            name=key,
+            dtype=infer_domain_type_from_series(
+                df[key][: min(first_n_rows, len(df))],
+                strict=strict,
+                len_uniques_to_categorical=len_uniques_to_categorical,
+            ),
+        )
+        for key in df
+    ]
+
+    return metadata
 
 
 @ray.remote
@@ -153,17 +244,7 @@ class DatasetTransforms:
         Returns:
             List[ColumnsMeta]
         """
-        metadata = [
-            ColumnsMeta(
-                name=key,
-                dtype=self._infer_domain_type_from_series(
-                    self.df[key][: min(first_n_rows, len(self.df))]
-                ),
-            )
-            for key in self.df
-        ]
-
-        return metadata
+        return get_columns_metadata(self.df, first_n_rows=first_n_rows)
 
     def apply_split_indexes(
         self,
@@ -191,64 +272,6 @@ class DatasetTransforms:
             split_target=split_target,
             split_column=split_column,
         )
-
-    def _infer_domain_type_from_series(self, series: pd.Series) -> Any:
-        """Infers the domain type from a pd.Series
-
-        Checks some type of series and returns the corresponding
-        domain type based on the priority:
-            1. If the series is a float:
-                it will be considered as a numerical data type
-            2. If the series is an object:
-                it will be checked if it is a smiles first, then if it is a
-                categorical data type
-            3. If the series is an int:
-                it will be checked if it is a categorical data type
-
-        Args:
-            series (pd.Series): the series to infer the domain type from
-
-        Returns:
-            Any: inferred domain type
-        """
-        if series.dtype == float:
-            return NumericalDataType(domain_kind="numeric")
-        elif series.dtype == object:
-            # check if it is a biological sequence
-            bio_info = check_biological_sequence_series(series)
-            if bio_info["valid"]:
-                TypeClass: BiologicalDataType = {
-                    "dna": DNADataType,
-                    "rna": RNADataType,
-                    "protein": ProteinDataType,
-                }[bio_info["type"]]
-                return TypeClass(**bio_info["kwargs"])
-
-            # check if it is smiles
-            if is_valid_smiles_series(series):
-                return SmileDataType(domain_kind="smiles")
-
-            # check if it is likely to be categorical
-            series = series.sort_values()
-            uniques = series.unique()
-            if len(uniques) / len(series) < 0.4:
-                return CategoricalDataType(
-                    domain_kind="categorical",
-                    # Classes will need to be overwritten by complete data type checking
-                    classes={val: idx for idx, val in enumerate(uniques)},
-                )
-
-            return StringDataType(
-                domain_kind="string",
-            )
-        elif series.dtype == int:
-            series = series.sort_values()
-            uniques = series.unique()
-            if len(uniques) <= 100:
-                return CategoricalDataType(
-                    domain_kind="categorical",
-                    classes={val: idx for idx, val in enumerate(uniques)},
-                )
 
     def get_entity_info_from_csv(self):
         """Gets the row count, column count, and a dictionary
@@ -284,7 +307,7 @@ class DatasetTransforms:
         biological_columns = []
         categorical_columns = []
         for metadata in columns_metadata:
-            if type(metadata.data_type) in BiologicalDataType.__args__:
+            if type(metadata.data_type) in get_args(BiologicalDataType):
                 biological_columns.extend(
                     [
                         {"col": col, "metadata": metadata}
@@ -348,7 +371,7 @@ class DatasetTransforms:
         else:
             for i, col in enumerate(columns):
                 if col.data_type.domain_kind in ["categorical", "dna", "rna"]:
-                    columns[i].data_type = self._infer_domain_type_from_series(
+                    columns[i].data_type = infer_domain_type_from_series(
                         self.df[col.pattern]
                     )
 
