@@ -20,13 +20,6 @@ from pydantic import (
 )
 
 
-class Settings(BaseSettings):
-    """Models the environment variables used around the application."""
-
-    GITHUB_CLIENT_ID: Union[None, str] = None
-    GITHUB_CLIENT_SECRET: Union[None, str] = None
-
-
 class ServerSettings(BaseModel):
     """
     Configures server parameters.
@@ -156,7 +149,7 @@ class Package(BaseModel):
     authors: list[str]
 
 
-class QA_Test_Settings(BaseModel):  # pylint: disable=C0103
+class QA_Test_Settings(BaseSettings):  # pylint: disable=C0103
     """
     Configures the QA test parameters.
 
