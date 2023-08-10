@@ -39,7 +39,6 @@ LOG = logging.getLogger(__name__)
 def infer_domain_type_from_series(
     series: pd.Series, strict=False, len_uniques_to_categorical=100
 ) -> Any:
-
     """Infers the domain type from a pd.Series
 
     Checks some type of series and returns the corresponding

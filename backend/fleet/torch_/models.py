@@ -281,7 +281,6 @@ class CustomModel(pl.LightningModule):
 
         losses = {}
         for target_column in self.dataset_config.target_columns:
-
             args = (
                 prediction[target_column.name].squeeze(),
                 batch[target_column.name].squeeze(),

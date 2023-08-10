@@ -1,13 +1,12 @@
 """Dataset related classes to use for training/evaluating/testing"""
 from collections.abc import Mapping
-from typing import Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data.dataloader import default_collate
 from torch_geometric.data import Batch
 from torch_geometric.data.data import BaseData
-
 
 if TYPE_CHECKING:
     pass

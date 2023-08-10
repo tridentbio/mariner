@@ -41,7 +41,6 @@ class OAuthManager(Mapping):
     def __init__(
         self, auth_providers: Union[None, Dict[str, AuthSettings]] = None
     ):
-
         self.redirect_uri = (
             f"{get_app_settings('server').host}/api/v1/oauth-callback"
         )
@@ -72,7 +71,6 @@ class OAuthManager(Mapping):
             oauth_settings: A dictionary with the attributes to build the url.
         """
         with SessionLocal() as db:
-
             state = oauth_state_store.create_state(db, provider=key).state
             oauth_settings = self[key]
             params = {

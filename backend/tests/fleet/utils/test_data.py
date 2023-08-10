@@ -56,7 +56,7 @@ class TestMarinerTorchDataset:
         """
         Tests __len__ method.
         """
-        for (model, csv, expected_len) in zip(
+        for model, csv, expected_len in zip(
             [
                 "small_regressor_schema.yaml",
                 "multitarget_classification_model.yaml",

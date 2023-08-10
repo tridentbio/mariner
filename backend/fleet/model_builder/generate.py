@@ -386,7 +386,6 @@ todo_include_todos = True"""
     with open(
         os.path.join(templatesdir, "layout.html"), "w", encoding="utf-8"
     ) as file:
-
         file.write(html_template)
     doctreedir = os.path.join(srcdir, "doctrees")
     confoverrides = {"html_context": {}, "master_doc": "docstring"}
