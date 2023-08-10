@@ -171,26 +171,24 @@ export const buildModel = (
   const targetCols =
     modelCreate.config?.dataset?.targetColumns?.map(
       // domainKind used to determine end of column name
-      (col) => col!.name! + col!.dataType!.domainKind!
+      (col) => `${col!.name!}-${col!.dataType!.domainKind!}`
     ) || [];
 
-  const featureCols =
+  const featureColsTestIdList =
     modelCreate.config?.dataset?.featureColumns?.map(
       // domainKind used to determine end of column name
-      (col) => col!.name! + col!.dataType!.domainKind!
+      (col) => `${col!.name!}-${col!.dataType!.domainKind!}`
     ) || [];
 
-  targetCols.forEach((col) => {
+  targetCols.forEach((colId) => {
     cy.get('#target-col').click();
-    cy.get('li')
-      .contains(new RegExp(`^${col}`, 'gi'))
+    cy.get(`li[data-testid="${colId}"`)
       .click();
   });
 
-  featureCols.forEach((col) => {
+  featureColsTestIdList.forEach((colId) => {
     cy.get('#feature-cols').click();
-    cy.get('li')
-      .contains(new RegExp(`^${col}`, 'gi'))
+    cy.get(`li[data-testid="${colId}"`)
       .click();
   });
 
