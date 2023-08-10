@@ -1,4 +1,3 @@
-
 import { store } from '@app/store';
 import useModelOptions, {
   toConstructorArgsConfig,
@@ -19,8 +18,7 @@ export default {
       </Provider>
     ),
   ],
-  args: {
-  }
+  args: {},
 };
 
 export const Simple: StoryObj = {
@@ -28,11 +26,10 @@ export const Simple: StoryObj = {
   render: (args) => {
     const [value, setValue] = useState(undefined);
     return (
-      <div style={{height: 'fit-content'}}>
-        <SklearnModelInput/>
+      <div style={{ height: 'fit-content' }}>
+        <SklearnModelInput />
         <pre>{JSON.stringify(value, null, 2)}</pre>
       </div>
     );
   },
 };
-

@@ -1,29 +1,33 @@
-import { SklearnModelSpec } from "@app/rtk/generated/models";
-import useModelOptions, { toConstructorArgsConfig } from "@hooks/useModelOptions";
-import { useMemo } from "react";
-import PreprocessingStepSelect from "./PreprocessingStepSelect";
+import { ModelCreate } from '@app/rtk/generated/models';
+import useModelOptions, {
+  ComponentConstructorArgsConfigOfType,
+  ScikitType,
+  toConstructorArgsConfig,
+} from '@hooks/useModelOptions';
+import { useMemo } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
+import PreprocessingStepSelect from './PreprocessingStepSelect';
 
-type SklearnModelConfig = SklearnModelSpec['spec']
-export interface SklearnModelInputProps {
-  value?: SklearnModelConfig;
-  onChange?: (value: SklearnModelConfig | null) => void
-}
+export default function SklearnModelInput() {
+  const { getScikitOptions } = useModelOptions();
+  const { control } = useFormContext<ModelCreate>();
 
-export default function SklearnModelInput(props: SklearnModelInputProps) {
-  const { value, onChange, } = props
-  const {getScikitOptions, ...modelOptions} = useModelOptions()
   const options = useMemo(() => {
-    return getScikitOptions().map(toConstructorArgsConfig)
-  }, [getScikitOptions])
+    return getScikitOptions().map(toConstructorArgsConfig);
+  }, [getScikitOptions]) as ComponentConstructorArgsConfigOfType<ScikitType>[];
+
   return (
-    <div>
-      <PreprocessingStepSelect
-        label={"Sklearn Model"}
-        options={options}
-        value={undefined}
-        onChange={value => console.log(value)}
-      />
-    </div>
+    <Controller
+      control={control}
+      name="config.spec"
+      render={({ field }) => (
+        <PreprocessingStepSelect
+          label="Sklearn Model"
+          options={options}
+          value={(field.value as ScikitType | null) || undefined}
+          onChanges={(value) => field.onChange(value)}
+        />
+      )}
+    />
   );
 }
-

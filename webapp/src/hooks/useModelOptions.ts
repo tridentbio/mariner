@@ -19,29 +19,34 @@ const getType = (python_type: any): TypeIdentifier | undefined => {
   else if (python_type.includes('str')) return 'string';
 };
 
-type ScikitType = SklearnModelSchema['model'];
+export type ScikitType = SklearnModelSchema['model'];
 
 type ComponentType = FeaturizersType | TransformsType | LayersType | ScikitType;
 
 export type TypeIdentifier = 'string' | 'number' | 'boolean';
 
-type ComponentConstructorArgsConfig = {
-  [StepKind in ComponentType as StepKind['type']]: StepKind extends {
+export type ComponentConstructorArgsConfig<
+  T extends ComponentType = ComponentType
+> = {
+  [StepKind in T as StepKind['type']]: StepKind extends {
     type: infer F;
-    forwardArgs: any;
+    forwardArgs?: any;
     constructorArgs?: infer C;
   }
-  ? {
-    constructorArgs: {
-      [key2 in keyof C]: {
-        default: C[key2];
-        type: TypeIdentifier;
-      };
-    };
-    type: F;
-  }
-  : never;
+    ? {
+        constructorArgs: {
+          [key2 in keyof C]: {
+            default: C[key2];
+            type: TypeIdentifier;
+          };
+        };
+        type: F;
+      }
+    : never;
 };
+
+export type ComponentConstructorArgsConfigOfType<T extends ComponentType> =
+  ComponentConstructorArgsConfig[keyof ComponentConstructorArgsConfig<T>];
 
 type Option = ArrayElement<GetModelOptionsApiResponse>;
 type OptionType = Option['type'];
@@ -107,27 +112,29 @@ export default function useModelOptions() {
   const sortedData = useMemo(() => {
     const sorted = [...(data || [])];
     sorted.sort((a, b) => {
-      if (a.classPath> b.classPath) return 1;
-      if (a.classPath< b.classPath) return -1;
+      if (a.classPath > b.classPath) return 1;
+      if (a.classPath < b.classPath) return -1;
       return 0;
-    })
+    });
     return sorted;
-  },[data])
+  }, [data]);
 
   const getPreprocessingOptions = () => {
-    return (sortedData|| []).filter((option) =>
+    return (sortedData || []).filter((option) =>
       PREPROCESSING_OPTIONS.includes(option.type)
     );
   };
 
   const getLayerOptions = () => {
-    return (sortedData|| []).filter((option) => LAYER_OPTIONS.includes(option.type));
+    return (sortedData || []).filter((option) =>
+      LAYER_OPTIONS.includes(option.type)
+    );
   };
 
   const getScikitOptions = (
     returnOnlyTaskType?: 'classification' | 'regression'
   ) => {
-    const scikitOptions = (sortedData|| []).filter((option) =>
+    const scikitOptions = (sortedData || []).filter((option) =>
       SKLEARN_OPTIONS.includes(option.type)
     );
     if (!returnOnlyTaskType) return scikitOptions;

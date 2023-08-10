@@ -72,3 +72,33 @@ export const simpleColumnSchema = yup.object({
     }),
   transforms: yup.array().of(preprocessingStepSchema),
 });
+
+export const sklearnDatasetSchema = yup.object({
+  name: yup.string().required('Dataset is required'),
+  featureColumns: yup
+    .array()
+    .required('The feature columns are required')
+    .min(1, 'The feature columns must not be empty')
+    .of(simpleColumnSchema),
+  targetColumns: yup
+    .array()
+    .required()
+    .min(1, 'The target columns must not be empty')
+    .of(simpleColumnSchema),
+});
+
+export const torchDatasetSchema = yup.object({
+  name: yup.string().required('Dataset is required'),
+  featureColumns: yup
+    .array()
+    .required('The feature columns are required')
+    .min(1, 'The feature columns must not be empty'),
+  // .of(simpleColumnSchema),
+  targetColumns: yup
+    .array()
+    .required()
+    .min(1, 'The target columns must not be empty'),
+  // .of(simpleColumnSchema)
+  featurizers: yup.array().required(),
+  transforms: yup.array().required(),
+});

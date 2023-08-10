@@ -1,3 +1,10 @@
+import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
+import {
+  sklearnDatasetSchema,
+  torchDatasetSchema,
+} from '@components/organisms/ModelBuilder/formSchema';
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { Button, Step, StepLabel, Stepper } from '@mui/material';
 import { Box } from '@mui/system';
 import { useNotifications } from 'app/notifications';
@@ -11,13 +18,10 @@ import { MouseEvent, useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { FieldPath, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import * as yup from 'yup';
 import { DatasetConfigurationForm } from './DatasetConfigurationForm';
 import ModelConfigForm from './ModelConfigForm';
 import { ModelSetup } from './ModelSetup';
-import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { simpleColumnSchema } from '@components/organisms/ModelBuilder/formSchema';
-import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 
 type ModelCreationStep = {
   title: string;
@@ -26,10 +30,12 @@ type ModelCreationStep = {
     | 'model-description'
     | 'dataset-configuration'
     | 'model-architecture';
-  content: JSX.Element;
+  content: JSX.Element | null;
 };
 
-export const modelCreateSchema = yup.object({
+type FormFieldNames = FieldPath<modelsApi.ModelCreate>;
+
+const schema = yup.object({
   name: yup.string().required('Model name field is required'),
   config: yup.object({
     name: yup.string().required('Model version name is required'),
@@ -37,23 +43,13 @@ export const modelCreateSchema = yup.object({
       .string()
       .oneOf(['torch', 'sklearn'])
       .required('The framework is required'),
-    dataset: yup.object({
-      name: yup.string().required('Dataset is required'),
-      featureColumns: yup
-        .array()
-        .required('The feature columns are required')
-        .min(1, 'The feature columns must not be empty')
-        .of(simpleColumnSchema),
-      targetColumns: yup
-        .array()
-        .required()
-        .min(1, 'The target columns must not be empty')
-        .of(simpleColumnSchema),
+    dataset: yup.object().required().when('framework', {
+      is: 'sklearn',
+      then: sklearnDatasetSchema,
+      otherwise: torchDatasetSchema,
     }),
   }),
 });
-
-type FormFieldNames = FieldPath<modelsApi.ModelCreate>;
 
 const ModelCreateV2 = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
@@ -81,32 +77,36 @@ const ModelCreateV2 = () => {
         spec: { layers: [] },
       },
     },
-    resolver: yupResolver(modelCreateSchema),
+    resolver: yupResolver(schema),
   });
 
   const [createModel, { error, isLoading, data }] =
     modelsApi.useCreateModelMutation();
-  const { control, getValues, setValue, watch, unregister } = methods;
+  const { control, getValues, setValue, watch } = methods;
   const config = watch('config');
 
   const selectedFramework: 'torch' | 'sklearn' = watch('config.framework');
 
   const onFrameworkChange = () => {
     if (selectedFramework == 'torch') {
-      setValue('config.dataset', {
-        name: config.dataset.name,
-        featureColumns: config.dataset.featureColumns.map((column) => ({
-          name: column.name,
-          dataType: column.dataType,
-        })),
-        targetColumns: config.dataset.targetColumns.map((column) => ({
-          name: column.name,
-          dataType: column.dataType,
-          outModule: '',
-        })),
-        featurizers: [],
-        transforms: [],
-      } as modelsApi.TorchDatasetConfig);
+      setValue('config', {
+        ...config,
+        dataset: {
+          name: config.dataset.name,
+          featureColumns: config.dataset.featureColumns.map((column) => ({
+            name: column.name,
+            dataType: column.dataType,
+          })),
+          targetColumns: config.dataset.targetColumns.map((column) => ({
+            name: column.name,
+            dataType: column.dataType,
+            outModule: '',
+          })),
+          featurizers: [],
+          transforms: [],
+        },
+        spec: { layers: [] },
+      } as typeof config & { framework: 'torch' });
     } else {
       const getSimpleColumnConfigTemplate = (
         column: modelsApi.ColumnConfig | SimpleColumnConfig
@@ -118,17 +118,23 @@ const ModelCreateV2 = () => {
           transforms: [],
         } as SimpleColumnConfig);
 
-      setValue('config.dataset', {
-        name: config.dataset.name,
-        featureColumns: config.dataset.featureColumns.map(
-          getSimpleColumnConfigTemplate
-        ),
-        targetColumns: config.dataset.targetColumns.map(
-          getSimpleColumnConfigTemplate
-        ),
-      } as modelsApi.DatasetConfig);
+      setValue('config', {
+        ...config,
+        dataset: {
+          name: config.dataset.name,
+          featureColumns: config.dataset.featureColumns.map(
+            getSimpleColumnConfigTemplate
+          ),
+          targetColumns: config.dataset.targetColumns.map(
+            getSimpleColumnConfigTemplate
+          ),
+        },
+        spec: null as modelsApi.SklearnModelSchema | null,
+      } as typeof config & { framework: 'sklearn' });
     }
   };
+
+  console.log(config);
 
   useEffect(() => {
     onFrameworkChange();
@@ -156,7 +162,7 @@ const ModelCreateV2 = () => {
           }
         });
       },
-      () => {
+      (errors) => {
         notifyError('Error creating dataset');
       }
     )();
@@ -305,7 +311,8 @@ const ModelCreateV2 = () => {
     {
       title: 'Dataset Configuration',
       stepId: 'dataset-configuration',
-      content: <DatasetConfigurationForm />,
+      content:
+        selectedFramework == 'sklearn' ? <DatasetConfigurationForm /> : null,
     },
     {
       title: 'Model Architecture',
@@ -323,7 +330,11 @@ const ModelCreateV2 = () => {
                 }}
               />
             ) : (
-              <div>empty</div>
+              <Box
+                style={{height: '45vh'}}
+              >
+                <SklearnModelInput />
+              </Box>
             )}
           </div>
           {configCheckData?.stackTrace && (
