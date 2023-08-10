@@ -98,7 +98,6 @@ class RandomForestRegressorConstructorArgs(BaseModel):
     criterion: Literal[
         "squared_error", "absolute_error", "friedman_mse", "poisson"
     ] = "squared_error"
-    min_samples_split: Union[float, int] = 2
 
 
 @options_manager.config_scikit_reg()
@@ -129,7 +128,6 @@ class ExtraTreesRegressorConstructorArgs(BaseModel):
         "squared_error", "absolute_error", "friedman_mse", "poisson"
     ] = "squared_error"
     # max_depth: Union[None, int] = None
-    min_samples_split: Union[float, int] = 2
 
 
 @options_manager.config_scikit_reg()
@@ -158,7 +156,6 @@ class ExtraTreesClassifierConstructorArgs(BaseModel):
     n_estimators: int = 100
     criterion: Literal["gini", "entropy", "log_loss"] = "gini"
     # max_depth: Union[None, int] = None
-    min_samples_split: Union[int, float] = 2
 
 
 @options_manager.config_scikit_class()
@@ -222,7 +219,6 @@ class RandomForestClassifierConstructorArgs(BaseModel):
     n_estimators: int = 100
     criterion: Literal["gini", "entropy", "log_loss"] = "gini"
     # max_depth: Union[None, int] = None
-    min_samples_split: Union[int, float] = 2
 
 
 @options_manager.config_scikit_class()
