@@ -15,8 +15,6 @@ dataset:
     - name: expt
       dataType:
         domainKind: numeric
-  featurizers:
-    - name: MolFPFeaturizer
 
 spec:
   model:

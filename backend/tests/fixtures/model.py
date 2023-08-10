@@ -3,6 +3,8 @@ from typing import Literal, Optional
 import mlflow.tracking
 from fastapi import status
 from fastapi.testclient import TestClient
+from mlflow.exceptions import RestException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from fleet.base_schemas import SklearnModelSpec, TorchModelSpec
@@ -138,14 +140,14 @@ def setup_create_model_db(
         mlflow_name=random_lower_string(),
         created_by_id=user.id,
         columns=[
-            ModelFeaturesAndTarget(
+            ModelFeaturesAndTarget(  # type: ignore
                 column_name=feature_col.name,
                 column_type="feature",
             )
             for feature_col in model.config.dataset.feature_columns
         ]
         + [
-            ModelFeaturesAndTarget(
+            ModelFeaturesAndTarget(  # type: ignore
                 column_name=target_col.name,
                 column_type="target",
             )
@@ -181,3 +183,61 @@ def teardown_create_model(db: Session, model: Model, skip_mlflow=False):
         if not skip_mlflow:
             mlflowclient = mlflow.tracking.MlflowClient()
             mlflowclient.delete_registered_model(model.mlflow_name)
+
+
+def setup_create_model_db2(
+    db: Session,
+    owner_id: int,
+    dataset_id: int,
+    config: dict,
+):
+    model_name = config["name"]
+    framework = config["framework"]
+    try:
+        mlflow_model = mlflow.MlflowClient().create_registered_model(
+            model_name
+        )
+    except RestException:
+        mlflow_model = mlflow.MlflowClient().get_registered_model(model_name)
+    parsed_config = (
+        SklearnModelSpec.parse_obj(config)
+        if framework == "sklearn"
+        else TorchModelSpec.parse_obj(config)
+    )
+    model_create = ModelCreateRepo(
+        name=model_name,
+        dataset_id=dataset_id,
+        mlflow_name=model_name,
+        created_by_id=owner_id,
+        columns=[
+            ModelFeaturesAndTarget(  # type: ignore
+                column_name=feature_col.name,
+                column_type="feature",
+            )
+            for feature_col in parsed_config.dataset.feature_columns
+        ]
+        + [
+            ModelFeaturesAndTarget(  # type: ignore
+                column_name=target_col.name,
+                column_type="target",
+            )
+            for target_col in parsed_config.dataset.target_columns
+        ],
+    )
+    # Create model in db
+    try:
+        created_model = model_sql.model_store.create(db, model_create)
+    except IntegrityError:
+        db.rollback()
+        created_model = model_sql.model_store.get_by_name_from_user(
+            db, model_name, owner_id
+        )
+    version_create = ModelVersionCreateRepo(
+        model_id=created_model.id,
+        name=created_model.name,
+        config=parsed_config,
+        mlflow_model_name=mlflow_model.name,
+        description="test version",
+    )
+    model_sql.model_store.create_model_version(db, version_create)
+    return created_model

@@ -17,17 +17,19 @@ def normalize_extension(ext: str):
 
 
 @contextmanager
-def load_test(filename: str):
+def load_test(filename: str, raw=False):
     # Gets filename extension
     ext = filename.split(".")[-1]
     path = TEST_DIR / normalize_extension(str(ext)) / filename
-    file = open(path, "r", encoding="utf-8")
-    if ext == "yaml":
+    file = open(path, "rb")
+    if raw:
+        yield file
+    elif ext in ["yaml", "yml"]:
         yield yaml.safe_load(file)
     elif ext == "json":
         yield json.load(file)
     elif ext == "csv":
-        yield pd.read_csv(file.read())
+        yield pd.read_csv(file)
     else:
         raise ValueError('Unknown extension "{}"'.format(ext))
     file.close()

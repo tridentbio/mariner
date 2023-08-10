@@ -12,6 +12,28 @@ from mariner.stores.experiment_sql import (
 from tests.utils.utils import random_lower_string
 
 
+def mocked_training_config(some_model: Model):
+    version = some_model.versions[-1]
+    target_column = version.config.dataset.target_columns[0]
+    return {
+        "optimizer": {
+            "classPath": "torch.optim.Adam",
+            "params": {
+                "lr": 0.05,
+            },
+        },
+        "epochs": 1,
+        "checkpointConfig": {
+            "metricKey": f"val/loss/{target_column.name}",
+            "mode": "min",
+        },
+        "earlyStoppingConfig": {
+            "metricKey": f"val/loss/{target_column.name}",
+            "mode": "min",
+        },
+    }
+
+
 def mock_experiment(
     version: ModelVersion,
     user_id: int,

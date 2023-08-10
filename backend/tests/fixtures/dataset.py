@@ -1,17 +1,25 @@
 import json
 from datetime import datetime
-from typing import Dict, Literal, Optional
+from typing import Dict, Literal, Optional, Union
 
+import pandas as pd
 from fastapi import status
 from fastapi.testclient import TestClient
+from pandas import DataFrame
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from fleet.ray_actors.dataset_transforms import get_columns_metadata
 from mariner.core import aws
 from mariner.core.config import get_app_settings
 from mariner.entities.dataset import Dataset
-from mariner.schemas.dataset_schemas import DatasetCreateRepo
+from mariner.schemas.dataset_schemas import (
+    ColumnsDescription,
+    DatasetCreateRepo,
+)
 from mariner.stores import dataset_sql
 from tests.fixtures.user import get_test_user
+from tests.fleet import helpers
 
 
 def mock_columns_metadatas(dataset: Literal["zinc", "sampl", "hiv"] = "zinc"):
@@ -180,4 +188,57 @@ def setup_create_dataset_db(
     )
     dataset = dataset_sql.dataset_store.create(db, create_data)
     db.commit()
+    return dataset
+
+
+def setup_create_dataset_db2(
+    db: Session,
+    owner_id: int,
+    csv_path: str,
+    name: Union[str, None] = None,
+):
+    with helpers.load_test(csv_path, raw=True) as file:
+        df = pd.read_csv(file)  # type: ignore
+        assert isinstance(df, DataFrame), "df is not a DataFrame"
+        file.seek(0)
+        if not aws.is_in_s3(key=csv_path, bucket=aws.Bucket.Datasets):
+            aws.upload_s3_file(file, key=csv_path, bucket=aws.Bucket.Datasets)
+        data_url = csv_path
+        columns_metadata = get_columns_metadata(
+            df=df,
+            first_n_rows=5,
+            strict=False,
+            len_uniques_to_categorical=5,
+        )
+        create_obj = DatasetCreateRepo(
+            name=name if name is not None else f"Test dataset: {csv_path}",
+            description="Test dataset",
+            rows=len(df),
+            columns=len(df.columns),
+            bytes=33,
+            stats={},
+            data_url=data_url,
+            split_target="60-20-20",  # type: ignore
+            split_type="random",
+            split_actual="60-20-20",  # type: ignore
+            created_at=datetime.now(),  # type:ignore
+            updated_at=datetime.now(),  # type:ignore
+            created_by_id=owner_id,
+            columns_metadata=[
+                ColumnsDescription(
+                    data_type=metadata.dtype,  # type: ignore
+                    pattern=metadata.name,
+                    description="...",
+                )
+                for metadata in columns_metadata
+            ],
+        )
+        try:
+            dataset = dataset_sql.dataset_store.create(db, create_obj)
+        except IntegrityError:
+            db.rollback()
+            dataset = dataset_sql.dataset_store.get_by_name(
+                db, create_obj.name
+            )
+
     return dataset

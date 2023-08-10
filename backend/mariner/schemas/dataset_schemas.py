@@ -183,6 +183,7 @@ class ColumnsDescription(ApiBaseModel):
 
     data_type: Union[
         QuantityDataType,
+        NumericalDataType,
         StringDataType,
         CategoricalDataType,
         SmileDataType,

@@ -21,35 +21,6 @@ from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
 
-@pytest.fixture(scope="module")
-def mocked_experiment_payload(some_model: Model):
-    experiment_name = random_lower_string()
-    version = some_model.versions[-1]
-    target_column = version.config.dataset.target_columns[0]
-    return {
-        "name": experiment_name,
-        "modelVersionId": version.id,
-        "framework": "torch",
-        "config": {
-            "optimizer": {
-                "classPath": "torch.optim.Adam",
-                "params": {
-                    "lr": 0.05,
-                },
-            },
-            "epochs": 1,
-            "checkpointConfig": {
-                "metricKey": f"val/mse/{target_column.name}",
-                "mode": "min",
-            },
-            "earlyStoppingConfig": {
-                "metricKey": f"val/mse/{target_column.name}",
-                "mode": "min",
-            },
-        },
-    }
-
-
 @pytest.fixture(scope="function")
 def some_experiment(
     db: Session, some_model: Model

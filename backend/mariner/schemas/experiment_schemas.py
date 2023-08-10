@@ -1,9 +1,10 @@
 """
 Experiment related DTOs
 """
-from typing import Dict, List, Literal, Optional, Union
+from typing import Annotated, Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
+from pydantic import Field
 
 from fleet.torch_.schemas import TorchTrainingConfig
 from mariner.schemas.api import (
@@ -28,7 +29,7 @@ class BaseTrainingRequest(ApiBaseModel):
 
 
 class TorchTrainingRequest(BaseTrainingRequest):
-    framework = "torch"
+    framework: Literal["torch"] = "torch"
     config: TorchTrainingConfig
 
     @classmethod
@@ -42,6 +43,15 @@ class TorchTrainingRequest(BaseTrainingRequest):
             config=config,
         )
 
+
+class SklearnTrainingRequest(BaseTrainingRequest):
+    framework: Literal["sklearn"] = "sklearn"
+
+
+TrainingRequest = Annotated[
+    Union[TorchTrainingRequest, SklearnTrainingRequest],
+    Field(discriminator="framework"),
+]
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]
 

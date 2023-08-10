@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from re import search
 from typing import Dict, Generator, List
@@ -18,7 +19,11 @@ from tests.fixtures.dataset import (
     setup_create_dataset,
     teardown_create_dataset,
 )
-from tests.fixtures.experiments import setup_experiments, teardown_experiments
+from tests.fixtures.experiments import (
+    mocked_training_config,
+    setup_experiments,
+    teardown_experiments,
+)
 from tests.fixtures.model import setup_create_model, teardown_create_model
 from tests.fixtures.user import get_random_test_user, get_test_user
 from tests.utils.user import authentication_token_from_email
@@ -72,12 +77,13 @@ def user_model_fixture(
 @pytest.mark.integration
 def test_post_experiments(
     client: TestClient,
-    mocked_experiment_payload: dict,
+    some_model: Model,
     user_headers_fixture: dict,
 ):
+    payload = mocked_training_config(some_model)
     res = client.post(
         f"{get_app_settings('server').host}/api/v1/experiments/",
-        json=mocked_experiment_payload,
+        json=payload,
         headers=user_headers_fixture,
     )
     assert res.status_code == HTTP_200_OK, res.json()
@@ -315,3 +321,52 @@ def test_get_experiments_metrics_for_model_version(
                 ), f"Invalid metric name: {key}"
 
                 assert_all_is_number(value)
+
+
+@pytest.mark.integration
+def test_post_experiment_n(
+    client, datasets_and_models, normal_user_token_headers
+):
+    parsed = [Model.from_orm(model) for _, model in datasets_and_models]
+    for model in parsed:
+        version = model.versions[-1]
+        payload = {
+            "framework": version.config.framework,
+            "name": random_lower_string(),
+            "modelVersionId": version.id,
+            "config": mocked_training_config(model),
+        }
+        res = client.post(
+            f"{get_app_settings('server').host}/api/v1/experiments/",
+            json=payload,
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == HTTP_200_OK, res.json()
+        timeout = 60  # around 65 seconds per case
+
+        while True:
+            res = client.get(
+                f"{get_app_settings('server').host}/api/v1/experiments/{res.json()['id']}",
+                headers=normal_user_token_headers,
+            )
+            experiment = Experiment.parse_obj(res.json())
+            if experiment.stage == "SUCCESS":
+                break
+            elif experiment.stage == "FAILED":
+                assert False, "Experiment failed"
+
+            time.sleep(1)
+            timeout -= 1
+
+            if timeout == 0:
+                assert False, f"Experiment model {model.name} timed out"
+
+        # Get experiment by id
+        experiment_id = res.json()["id"]
+        res = client.get(
+            f"{get_app_settings('server').host}/api/v1/experiments/{experiment_id}",
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == HTTP_200_OK, (
+            "Request failed with body: %r" % res.json()
+        )

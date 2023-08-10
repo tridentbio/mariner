@@ -83,7 +83,9 @@ def create_model(
     """
     dataset = dataset_store.get_by_name(db, model_create.config.dataset.name)
     if not dataset:
-        raise DatasetNotFound()
+        raise DatasetNotFound(
+            f"Dataset {model_create.config.dataset.name} not found"
+        )
 
     client = mlflowapi.create_tracking_client()
     # Handle case where model_create.name refers to existing model

@@ -36,6 +36,7 @@ from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
+    TrainingRequest,
 )
 from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
 from mariner.stores.dataset_sql import dataset_store
@@ -145,7 +146,7 @@ def handle_training_complete(task: Task, experiment_id: int):
 
 
 async def create_model_training(
-    db: Session, user: UserEntity, training_request: BaseTrainingRequest
+    db: Session, user: UserEntity, training_request: TrainingRequest
 ) -> Experiment:
     """Creates an experiment associated with a model training
 
@@ -173,6 +174,9 @@ async def create_model_training(
     dataset = dataset_store.get_by_name(
         db, model_version_parsed.config.dataset.name
     )
+    assert (
+        dataset
+    ), f"Dataset {model_version_parsed.config.dataset.name} not found"
 
     mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
 
@@ -184,7 +188,8 @@ async def create_model_training(
             model_version_id=training_request.model_version_id,
             epochs=training_request.config.epochs,
             hyperparams={
-                "learning_rate": training_request.config.optimizer.params.lr
+                "learning_rate": training_request.config.optimizer.params.lr,
+                "epochs": training_request.config.epochs,
             },
             stage="RUNNING",
         ),
