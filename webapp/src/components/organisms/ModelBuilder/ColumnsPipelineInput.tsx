@@ -8,18 +8,16 @@ import { useEffect } from 'react';
 import {
   Controller,
   ControllerRenderProps,
-  FieldError,
   useFieldArray,
   useFormContext,
 } from 'react-hook-form';
-import PreprocessingStepSelect, {
-  PreprocessingStepSelectGetErrorFn,
-} from './PreprocessingStepSelect';
+import PreprocessingStepSelect from './PreprocessingStepSelect';
 import {
   GenericPreprocessingStep,
   SimpleColumnConfig,
   StepValue,
 } from './types';
+import { StepFormFieldError, getStepSelectError } from './utils';
 
 export interface ColumnsPipelineInputProps {
   column: {
@@ -30,11 +28,6 @@ export interface ColumnsPipelineInputProps {
   featurizerOptions: StepValue[];
   transformOptions: StepValue[];
 }
-
-type StepFormFieldError = {
-  type: FieldError;
-  constructorArgs: { [key: string]: FieldError };
-};
 
 export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
   const { featurizerOptions, transformOptions, column } = props;
@@ -89,24 +82,6 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
       addFeaturizer();
   }, []);
 
-  const getStepError = (
-    fieldError?: StepFormFieldError
-  ): PreprocessingStepSelectGetErrorFn => {
-    return (type, key) => {
-      if (!fieldError) return false;
-
-      switch (type) {
-        case 'type':
-          return !!fieldError.type;
-        default: {
-          const constructorArgsError = fieldError.constructorArgs;
-
-          return constructorArgsError && !!constructorArgsError[key as string];
-        }
-      }
-    };
-  };
-
   return (
     <>
       <ColumnConfigurationAccordion
@@ -126,8 +101,9 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
                   <PreprocessingStepSelect
                     sx={{ mb: 3 }}
                     options={featurizerOptions}
-                    // @ts-ignore
-                    getError={getStepError(error as StepFormFieldError)}
+                    getError={getStepSelectError(
+                      () => error as StepFormFieldError | undefined
+                    )}
                     value={field.value || null}
                     helperText={error?.message}
                     onBlur={field.onBlur}
@@ -148,8 +124,9 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
               return (
                 <PreprocessingStepSelect
                   options={transformOptions}
-                  // @ts-ignore
-                  getError={getStepError(error as StepFormFieldError)}
+                  getError={getStepSelectError(
+                    () => error as StepFormFieldError | undefined
+                  )}
                   helperText={error?.message}
                   onBlur={field.onBlur}
                   onChanges={(updatedStep) => onStepSelect(field, updatedStep)}

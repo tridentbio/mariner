@@ -1,4 +1,4 @@
-import { ModelCreate } from '@app/rtk/generated/models';
+import { ModelCreate, SklearnModelSchema } from '@app/rtk/generated/models';
 import useModelOptions, {
   ComponentConstructorArgsConfigOfType,
   ScikitType,
@@ -7,10 +7,11 @@ import useModelOptions, {
 import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import PreprocessingStepSelect from './PreprocessingStepSelect';
+import { StepFormFieldError, getStepSelectError } from './utils';
 
 export default function SklearnModelInput() {
   const { getScikitOptions } = useModelOptions();
-  const { control } = useFormContext<ModelCreate>();
+  const { control, trigger } = useFormContext<ModelCreate>();
 
   const options = useMemo(() => {
     return getScikitOptions().map(toConstructorArgsConfig);
@@ -20,12 +21,22 @@ export default function SklearnModelInput() {
     <Controller
       control={control}
       name="config.spec"
-      render={({ field }) => (
+      render={({ field, fieldState: { error } }) => (
         <PreprocessingStepSelect
           label="Sklearn Model"
           options={options}
-          value={(field.value as ScikitType | null) || undefined}
-          onChanges={(value) => field.onChange(value)}
+          getError={getStepSelectError(
+            //@ts-ignore
+            () => error?.model as StepFormFieldError | undefined
+          )}
+          value={
+            field.value ? (field.value as SklearnModelSchema).model : undefined
+          }
+          onChanges={(value) => {
+            field.onChange({ model: value });
+            trigger(field.name);
+          }}
+          onBlur={field.onBlur}
         />
       )}
     />

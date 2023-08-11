@@ -32,7 +32,7 @@ export type StepValue =
 
 export type GenericPreprocessingStep = {
   type: string;
-  constructorArgs?: object;
+  constructorArgs?: { [key: string]: any };
 };
 export type SimpleColumnConfig = {
   name: string;

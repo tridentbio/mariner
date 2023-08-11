@@ -1,5 +1,6 @@
 import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
 import {
+  preprocessingStepSchema,
   sklearnDatasetSchema,
   torchDatasetSchema,
 } from '@components/organisms/ModelBuilder/formSchema';
@@ -47,6 +48,13 @@ const schema = yup.object({
       is: 'sklearn',
       then: sklearnDatasetSchema,
       otherwise: torchDatasetSchema,
+    }),
+    spec: yup.object().when('framework', {
+      is: 'sklearn',
+      then: yup
+        .object({ model: preprocessingStepSchema.required() })
+        .required('Sklearn model is required'),
+      otherwise: yup.object({ layers: yup.array() }).required(),
     }),
   }),
 });
@@ -129,12 +137,10 @@ const ModelCreateV2 = () => {
             getSimpleColumnConfigTemplate
           ),
         },
-        spec: null as modelsApi.SklearnModelSchema | null,
+        spec: { model: null as modelsApi.SklearnModelSchema['model'] | null },
       } as typeof config & { framework: 'sklearn' });
     }
   };
-
-  console.log(config);
 
   useEffect(() => {
     onFrameworkChange();
@@ -330,9 +336,7 @@ const ModelCreateV2 = () => {
                 }}
               />
             ) : (
-              <Box
-                style={{height: '45vh'}}
-              >
+              <Box style={{ height: '45vh' }}>
                 <SklearnModelInput />
               </Box>
             )}
@@ -349,6 +353,9 @@ const ModelCreateV2 = () => {
       ),
     },
   ];
+
+  console.log(config);
+  console.log(methods.formState.errors);
 
   return (
     <ReactFlowProvider>

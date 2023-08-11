@@ -10,7 +10,7 @@ import {
   SxProps,
   Theme,
 } from '@mui/material';
-import React, { FocusEventHandler, ReactNode } from 'react';
+import React, { FocusEventHandler, ReactNode, useMemo } from 'react';
 import ConstructorArgInput, {
   ConstructorArgInputProps,
 } from './ConstructorArgInput';
@@ -21,8 +21,9 @@ import {
 } from './types';
 
 export type PreprocessingStepSelectGetErrorFn = (
-  field: keyof GenericPreprocessingStep,
-  key?: string
+  field: 'type' | 'constructorArgs',
+  value: any,
+  params?: { key: string; config: ConstructorArgInputProps['arg'] }
 ) => boolean;
 
 export interface PreprocessingStepSelectProps {
@@ -43,6 +44,34 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
 
   const stepSelected = props.value;
 
+  const getStepOption = (type: GenericPreprocessingStep['type']) => {
+    return props.options.find((option) => option.type === type);
+  };
+
+  const formatStepOption = (step: StepValue) => {
+    let value = step;
+
+    if (step.constructorArgs) {
+      value.constructorArgs = Object.keys(step.constructorArgs).reduce<{
+        [key in keyof (typeof step)['constructorArgs']]: GenericPreprocessingStep;
+      }>((acc: { [key: string]: any }, key) => {
+        acc[key] =
+          step.constructorArgs[
+            key as keyof StepValue['constructorArgs']
+            //@ts-ignore
+          ]?.default;
+
+        return acc;
+      }, {});
+    }
+
+    return value as GenericPreprocessingStep;
+  };
+
+  const selectedStep = useMemo(() => {
+    return stepSelected ? getStepOption(stepSelected?.type) : undefined;
+  }, [stepSelected?.type]);
+
   const showActions =
     (stepSelected?.constructorArgs &&
       Object.keys(stepSelected.constructorArgs).length > 0) ||
@@ -52,8 +81,8 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
     <Accordion expanded={expanded} sx={props.sx}>
       <AccordionSummary>
         <ComboBox
-          value={stepSelected?.type ? stepSelected : null}
-          error={props.getError && props.getError('type')}
+          value={selectedStep || null}
+          error={props.getError && props.getError('type', selectedStep)}
           helperText={props.helperText}
           options={props.options}
           getOptionLabel={(option) => {
@@ -69,7 +98,8 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
           label={props.label || 'Preprocessing Step'}
           onBlur={props.onBlur}
           onChange={(_event, newValue) =>
-            props.onChanges && props.onChanges(newValue)
+            props.onChanges &&
+            props.onChanges(newValue ? formatStepOption(newValue) : null)
           }
         />
         {showActions && (
@@ -95,45 +125,53 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
       <AccordionDetails>
         {stepSelected &&
           stepSelected.constructorArgs &&
-          Object.entries(stepSelected.constructorArgs).map(([key, arg]) => {
-            return (
-              <Box
-                sx={{
-                  margin: '16px 0',
-                  flex: 1,
-                  display: 'flex',
-                  width: 'fit-content',
-                }}
-                key={key}
-              >
-                <ConstructorArgInput
-                  key={key}
-                  value={arg.default || null}
-                  label={key}
-                  error={
-                    props.getError && props.getError('constructorArgs', key)
-                  }
-                  helperText={props.helperText}
-                  arg={arg as ConstructorArgInputProps['arg']}
-                  onChange={(value) => {
-                    let updatedConstructorArgs = stepSelected;
+          Object.entries(stepSelected.constructorArgs).map(
+            ([arg, argValue]) => {
+              type ArgKey = keyof StepValue['constructorArgs'];
+              const selectedArg = getStepOption(stepSelected.type)
+                ?.constructorArgs[arg as ArgKey] as
+                | ConstructorArgInputProps['arg']
+                | undefined;
 
-                    const argKey =
-                      key as keyof GenericPreprocessingStep['constructorArgs'];
+              if (!selectedArg) return;
 
-                    // @ts-ignore
-                    updatedConstructorArgs.constructorArgs[argKey] = {
-                      // @ts-ignore
-                      ...updatedConstructorArgs.constructorArgs[argKey],
-                      default: value,
-                    };
-
-                    props.onChanges && props.onChanges(updatedConstructorArgs);
+              return (
+                <Box
+                  sx={{
+                    margin: '16px 0',
+                    flex: 1,
+                    display: 'flex',
+                    width: 'fit-content',
                   }}
-                />
-              </Box>
-            );
-          })}
+                  key={arg}
+                >
+                  <ConstructorArgInput
+                    value={argValue || null}
+                    label={arg}
+                    error={
+                      props.getError &&
+                      props.getError('constructorArgs', argValue, {
+                        key: arg,
+                        config: selectedArg,
+                      })
+                    }
+                    helperText={props.helperText}
+                    arg={selectedArg}
+                    onChange={(value) => {
+                      const updatedStep = stepSelected;
+
+                      if (updatedStep.constructorArgs)
+                        (updatedStep.constructorArgs as { [key: string]: any })[
+                          arg
+                        ] = value;
+
+                      props.onChanges && props.onChanges(updatedStep);
+                    }}
+                  />
+                </Box>
+              );
+            }
+          )}
       </AccordionDetails>
     </Accordion>
   );
