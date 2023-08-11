@@ -52,7 +52,13 @@ const schema = yup.object({
     spec: yup.object().when('framework', {
       is: 'sklearn',
       then: yup
-        .object({ model: preprocessingStepSchema.required() })
+        .object({
+          model: preprocessingStepSchema
+            .shape({
+              fitArgs: yup.object().required(),
+            })
+            .required(),
+        })
         .required('Sklearn model is required'),
       otherwise: yup.object({ layers: yup.array() }).required(),
     }),
@@ -353,9 +359,6 @@ const ModelCreateV2 = () => {
       ),
     },
   ];
-
-  console.log(config);
-  console.log(methods.formState.errors);
 
   return (
     <ReactFlowProvider>

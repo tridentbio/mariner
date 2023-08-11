@@ -10,24 +10,19 @@ export const getStepSelectError = (
   getFormFieldError: () => StepFormFieldError | undefined
 ): PreprocessingStepSelectGetErrorFn => {
   return (type, value, params) => {
-    let invalid = false;
-    const fieldError = getFormFieldError();
+    const formFieldError = getFormFieldError();
 
-    switch (type) {
-      case 'type':
-        if (fieldError) invalid = !!fieldError.type;
-        break;
-      default: {
-        if (params?.config.required && !value) return true;
+    if (type == 'constructorArgs' && params?.config.required && !value)
+      return true;
 
-        if (fieldError) {
-          const constructorArgsError = fieldError.constructorArgs;
-          if (constructorArgsError)
-            invalid = !!constructorArgsError[params?.key as string];
-        }
+    if (formFieldError) {
+      switch (type) {
+        case 'type':
+          return !!formFieldError.type;
+        case 'constructorArgs':
+          return !!formFieldError.constructorArgs?.[params?.key as string];
       }
     }
-
-    return invalid;
+    return false;
   };
 };

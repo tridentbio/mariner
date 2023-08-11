@@ -68,7 +68,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
     return value as GenericPreprocessingStep;
   };
 
-  const selectedStep = useMemo(() => {
+  const selectedStepOption = useMemo(() => {
     return stepSelected ? getStepOption(stepSelected?.type) : undefined;
   }, [stepSelected?.type]);
 
@@ -81,8 +81,8 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
     <Accordion expanded={expanded} sx={props.sx}>
       <AccordionSummary>
         <ComboBox
-          value={selectedStep || null}
-          error={props.getError && props.getError('type', selectedStep)}
+          value={selectedStepOption || null}
+          error={props.getError && props.getError('type', stepSelected)}
           helperText={props.helperText}
           options={props.options}
           getOptionLabel={(option) => {
@@ -128,10 +128,9 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
           Object.entries(stepSelected.constructorArgs).map(
             ([arg, argValue]) => {
               type ArgKey = keyof StepValue['constructorArgs'];
-              const selectedArg = getStepOption(stepSelected.type)
-                ?.constructorArgs[arg as ArgKey] as
-                | ConstructorArgInputProps['arg']
-                | undefined;
+              const selectedArg = selectedStepOption?.constructorArgs[
+                arg as ArgKey
+              ] as ConstructorArgInputProps['arg'] | undefined;
 
               if (!selectedArg) return;
 
