@@ -28,12 +28,12 @@ const injectedRtkApi = api
       }),
       createDeployment: build.mutation<
         CreateDeploymentApiResponse,
-        CreateDeploymentApiArg
+        DeploymentBase
       >({
         query: (queryArg) => ({
           url: `/api/v1/deployments/`,
           method: 'POST',
-          body: queryArg.deploymentBase,
+          body: queryArg,
         }),
         invalidatesTags: ['deployments'],
       }),
@@ -128,9 +128,7 @@ export type GetDeploymentsApiArg = {
 };
 export type CreateDeploymentApiResponse =
   /** status 200 Successful Response */ Deployment;
-export type CreateDeploymentApiArg = {
-  deploymentBase: DeploymentBase;
-};
+
 export type GetDeploymentApiResponse =
   /** status 200 Successful Response */ DeploymentWithTrainingData;
 export type GetDeploymentApiArg = {
