@@ -262,5 +262,7 @@ class SklearnModelSpec(CamelCaseModel, YAML_Model):
 
     framework: Literal["sklearn"] = "sklearn"
     name: str
-    dataset: Union[DatasetConfig, DatasetConfigWithPreprocessing]
+    dataset: Union[DatasetConfig, DatasetConfigWithPreprocessing] = Field(
+        ..., discriminator="strategy"
+    )
     spec: SklearnModelSchema

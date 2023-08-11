@@ -1,6 +1,7 @@
 name: multiclass_classification_model
 dataset:
   name: Iris
+  strategy: forwardArgs
   targetColumns:
     - name: species
       dataType:

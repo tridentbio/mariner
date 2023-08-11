@@ -1,6 +1,7 @@
 name: binary_classification_model
 dataset:
   name: Iris
+  strategy: forwardArgs
   targetColumns:
     - name: large_petal_length
       dataType:

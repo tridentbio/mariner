@@ -3,6 +3,7 @@ framework: sklearn
 
 dataset:
   name: HIV
+  strategy: forwardArgs
   featureColumns:
     - name: smiles
       dataType:

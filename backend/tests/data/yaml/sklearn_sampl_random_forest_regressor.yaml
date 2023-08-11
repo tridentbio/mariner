@@ -1,6 +1,7 @@
 name: SAMPL Random Forest Regressor 
 dataset:
   name: SAMPL
+  strategy: forwardArgs
   featureColumns:
     - name: smiles
       dataType:

@@ -2,6 +2,7 @@ name: GNNExample
 framework: torch
 dataset:
   name: Small Zinc dataset
+  strategy: forwardArgs
   targetColumns:
     - name: tpsa
       dataType:

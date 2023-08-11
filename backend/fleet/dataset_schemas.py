@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Literal, NewType, Optional, Union
 import pandas as pd
 from humps import camel
 from pydantic import BaseModel, Field, root_validator
+from pydantic.typing import NoneType
 
 from fleet import data_types
 from fleet.preprocessing import (
@@ -108,10 +109,11 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
     """
 
     name: str
+    strategy: Literal["forwardArgs"] = "forwardArgs"
     target_columns: List[ColumnConfig]
     feature_columns: List[ColumnConfig]
-    featurizers: Union[None, List[FeaturizersType]] = []
-    transforms: Union[None, List[TransformerType]] = []
+    featurizers: List[FeaturizersType] = Field(default_factory=lambda: list())
+    transforms: List[TransformerType] = Field(default_factory=lambda: list())
 
     @property
     def columns(self):
@@ -264,6 +266,7 @@ class DatasetConfigWithPreprocessing(BaseDatasetModel, YAML_Model):
     """
 
     name: str
+    strategy: Literal["pipeline"] = "pipeline"
     target_columns: List[ColumnConfigWithPreprocessing]
     feature_columns: List[ColumnConfigWithPreprocessing]
 

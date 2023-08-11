@@ -3,6 +3,7 @@ framework: sklearn
 
 dataset:
   name: SAMPL
+  strategy: forwardArgs
   featureColumns:
     - name: smiles
       dataType:

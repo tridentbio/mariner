@@ -2,6 +2,7 @@ name: Lipophilicity
 framework: torch
 dataset:
   name: Lipo
+  strategy: forwardArgs
   targetColumns:
     - name: exp
       dataType:

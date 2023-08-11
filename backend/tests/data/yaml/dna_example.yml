@@ -1,6 +1,7 @@
 name: DnaExampleModel
 dataset:
   name: Dna Example Dataset
+  strategy: forwardArgs
   featureColumns:
     - name: aaMutations
       dataType:

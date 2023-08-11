@@ -78,13 +78,19 @@ def user_model_fixture(
 def test_post_experiments(
     client: TestClient,
     some_model: Model,
-    user_headers_fixture: dict,
+    normal_user_token_headers: dict,
 ):
-    payload = mocked_training_config(some_model)
+    version = some_model.versions[-1]
+    payload = {
+        "framework": version.config.framework,
+        "name": random_lower_string(),
+        "modelVersionId": version.id,
+        "config": mocked_training_config(some_model),
+    }
     res = client.post(
         f"{get_app_settings('server').host}/api/v1/experiments/",
         json=payload,
-        headers=user_headers_fixture,
+        headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK, res.json()
 

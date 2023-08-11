@@ -2,6 +2,7 @@ name: SAMPL KNN Regressor
 framework: sklearn
 dataset:
   name: SAMPL
+  strategy: forwardArgs
   feature_columns:
     - name: smiles
       dataType:
