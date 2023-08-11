@@ -60,6 +60,7 @@ const ConstructorArgsInputs = ({
           ) {
             return (
               <EditorSelect
+                data-testid={`${props.data.name}-${key}`}
                 editable={editable}
                 key={key}
                 option={option}
@@ -76,6 +77,7 @@ const ConstructorArgsInputs = ({
           } else if (isString(type))
             return (
               <TextField
+                data-testid={`${props.data.name}-${key}`}
                 sx={{ mb: 2 }}
                 key={key}
                 onBlur={(event) => editConstrutorArgs(key, event.target.value)}
@@ -87,6 +89,7 @@ const ConstructorArgsInputs = ({
           else if (isIntOrFloat(type)) {
             return (
               <CustomInputField
+                data-testid={`${props.data.name}-${key}`}
                 type="number"
                 inputMode="numeric"
                 key={key}
@@ -115,6 +118,7 @@ const ConstructorArgsInputs = ({
                 </InputLabel>
                 <Switch
                   id={key}
+                  data-testid={`${props.data.name}-${key}`}
                   className="nodrag"
                   defaultChecked={
                     props.data.constructorArgs[

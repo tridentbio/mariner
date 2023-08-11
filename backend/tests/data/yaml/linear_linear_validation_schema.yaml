@@ -8,21 +8,38 @@ dataset:
         classes:
           mwt_small: 0 # mwt <= 300
           mwt_big: 1 # mwt > 300
-      outModule: Sigmoid1
+      outModule: Linear4
   featureColumns:
     - name: mwt
       dataType:
         domainKind: numeric
 spec:
   layers:
-    - name: "Linear1"
+    - name: 'Linear1'
       type: torch.nn.Linear
       constructorArgs:
         in_features: 1
         out_features: 2
       forwardArgs:
         input: $mwt
-    - name: "Sigmoid1"
-      type: torch.nn.Sigmoid
+    - name: 'Linear2'
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 2
+        out_features: 3
       forwardArgs:
         input: $Linear1
+    - name: 'Linear3'
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 3
+        out_features: 4
+      forwardArgs:
+        input: $Linear2
+    - name: 'Linear4'
+      type: torch.nn.Linear
+      constructorArgs:
+        in_features: 4
+        out_features: 1
+      forwardArgs:
+        input: $Linear3

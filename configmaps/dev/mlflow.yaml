@@ -2,27 +2,29 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mlflow
+  namespace: default
 data:
+  SERVER_CORS: https://backend.dev.mariner.trident.bio,https://mlflow.dev.mariner.trident.bio,https://ray-dashboard.dev.mariner.trident.bio,https://dev.mariner.trident.bio
+  OAUTH_GITHUB_NAME: "Github"
+  OAUTH_GITHUB_CLIENT_ID: '0805f51ee373c7f1343a'
+  OAUTH_GITHUB_CLIENT_SECRET: 'dd01b6a3f2dddbb97eaed538c28ad6273723556e'
+  OAUTH_GITHUB_SCOPE: 'read:email'
+  OAUTH_GENENTECH_AUTHORIZATION_URL: '...'
   AWS_DATASETS: dev-mariner-datasets
   AWS_REGION: us-east-1
-  BACKEND_CORS_ORIGINS: '["https://dev.mariner.trident.bio", "https://backend.dev.mariner.trident.bio"]'
-  DOMAIN: dev.backend.mariner.trident.bio
-  EMAILS_FROM_EMAIL: info@mariner.trident.bio
+  AWS_MODE: local
+  WEBAPP_URL: http://dev.mariner.trident.bio
+  LIGHTNING_LOGS_DIR: s3://dev-mariner-datasets/lightning-logs
+  DOMAIN: backend.dev.mariner.trident.bio
   FIRST_SUPERUSER: admin@mariner.trident.bio
-  MLFLOW_ARTIFACT_URI: s3://dev-mariner-datasets
-  MLFLOW_TRACKING_URI: https://mlflow.dev.mariner.trident.bio
-  OAUTH2_PROXY_CLIENT_ID: 9e3418123ae0f27c5b32
-  OAUTH2_PROXY_HTTP_ADDRESS: http://0.0.0.0:4180
-  OAUTH2_PROXY_PROVIDER: github
-  OAUTH2_PROXY_UPSTREAMS: http://127.0.0.1:5000
   PROJECT_NAME: mariner
-  RAY_ADDRESS: ray://ray-cluster.ray.svc.cluster.local:10001
+  RAY_ADDRESS: ray://ray-head-backend.ray.svc.cluster.local:10001
   SENTRY_DSN: ""
-  SERVER_HOST: https://dev.backend.mariner.trident.bio
-  SERVER_NAME: mariner-backend
-  SMTP_HOST: smtp.gmail.com
-  SMTP_PORT: "587"
-  SMTP_TLS: "True"
-  SMTP_USER: admin@mariner.trident.bio
-  USERS_OPEN_REGISTRATION: "False"
+  SERVER_HOST: https://backend.dev.mariner.trident.bio
+  SERVER_NAME: backend.dev.mariner.trident.bio
+  MLFLOW_ARTIFACT_URI: 's3://dev-mariner-datasets'
+  MLFLOW_TRACKING_URI: 'http://mlflow-default.mariner.svc.cluster.local:5000'
   ID: '0805f51ee373c7f1343a'
+  ENV: 'development'
+  GITHUB_CLIENT_ID: '0805f51ee373c7f1343a'
+  AWS_MODELS_BUCKET: 's3://dev-mariner-datasets'

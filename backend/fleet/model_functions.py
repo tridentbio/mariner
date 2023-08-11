@@ -81,7 +81,7 @@ def fit(
     try:
         mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     except Exception as exp:
-        LOG.error("%r", exp)
+        LOG.exception(exp)
         raise RuntimeError("Failed to create mlflow experiment") from exp
 
     if dataset is None and dataset_uri is None:
