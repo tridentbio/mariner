@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Literal, NewType, Optional, Union
 import pandas as pd
 from humps import camel
 from pydantic import BaseModel, Field, root_validator
-from pydantic.typing import NoneType
 
 from fleet import data_types
 from fleet.preprocessing import (

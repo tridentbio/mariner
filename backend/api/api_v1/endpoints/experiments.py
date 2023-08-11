@@ -13,7 +13,6 @@ from fleet.model_builder.optimizers import OptimizerSchema
 from mariner.entities.user import User
 from mariner.schemas.api import ApiBaseModel, Paginated
 from mariner.schemas.experiment_schemas import (
-    BaseTrainingRequest,
     Experiment,
     ListExperimentsQuery,
     RunningHistory,

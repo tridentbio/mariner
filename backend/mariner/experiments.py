@@ -32,7 +32,6 @@ from mariner.exceptions import (
 )
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.experiment_schemas import (
-    BaseTrainingRequest,
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
