@@ -12,6 +12,8 @@ import {
 } from 'model-compiler/src/utils';
 import { NodeType } from 'model-compiler/src/interfaces/model-editor';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 const randomName = () => randomLowerCase(8);
 
 const getTypeByName = (config: TorchModelSpec, name: string): string => {
@@ -273,11 +275,11 @@ export const buildModel = (
   if (params.submitModelRequest) {
     cy.intercept({
       method: 'POST',
-      url: 'http://localhost/api/v1/models/check-config',
+      url: `${API_BASE_URL}/api/v1/models/check-config`,
     }).as('checkConfig');
     cy.intercept({
       method: 'POST',
-      url: 'http://localhost/api/v1/models',
+      url: `${API_BASE_URL}/api/v1/models`,
     }).as('createModel');
 
     cy.get('button').contains('CREATE').click();
