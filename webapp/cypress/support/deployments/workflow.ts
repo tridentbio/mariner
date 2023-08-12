@@ -1,5 +1,7 @@
 type Status = 'stopped' | 'active' | 'starting' | 'idle';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 const getDeploymentStatus = (deploymentName: string) =>
   cy
     .contains('td', deploymentName)
@@ -64,7 +66,7 @@ export const makePrediction = (expectSuccess: boolean) => {
 
   cy.intercept({
     method: 'POST',
-    url: 'http://localhost/api/v1/deployments/*/predict*',
+    url: `${API_BASE_URL}/api/v1/deployments/*/predict*`,
   }).as('makePrediction');
   cy.get('button').contains('Predict').click();
   cy.wait('@makePrediction').then(({ response }) => {

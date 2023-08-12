@@ -1,7 +1,7 @@
 const vitePreprocessor = require('cypress-vite');
 const { defineConfig } = require('cypress');
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const DATA_PATH = process.env.DATA_PATH || 'cypress/fixtures/data';
 const SCHEMA_PATH = process.env.SCHEMA_PATH || '../backend/tests/data';
 
