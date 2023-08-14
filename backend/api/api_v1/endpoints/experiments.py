@@ -62,26 +62,6 @@ def get_experiments(
     return Paginated(data=data, total=total)
 
 
-@router.get("/{experiment_id}", response_model=Experiment)
-def get_experiment(
-    experiment_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
-) -> Experiment:
-    """Gets a user's experiment.
-
-    Args:
-        experiment_id: Id of the experiment to get.
-        db: Connection to the database.
-        current_user: User that originated the request.
-
-    Returns:
-        The experiment queried.
-    """
-    experiment = experiments_ctl.get_experiment(db, current_user, experiment_id)
-    return experiment
-
-
 @router.get("/running-history", response_model=List[RunningHistory])
 def get_experiments_running_history(
     user: User = Depends(deps.get_current_active_user),
@@ -186,6 +166,27 @@ def get_training_experiment_optimizers():
     """Gets the options for experiment optimizers."""
     return experiments_ctl.get_optimizer_options()
 
+
+@router.get("/{experiment_id}", response_model=Experiment)
+def get_experiment(
+    experiment_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Experiment:
+    """Gets a user's experiment.
+
+    Args:
+        experiment_id: Id of the experiment to get.
+        db: Connection to the database.
+        current_user: User that originated the request.
+
+    Returns:
+        The experiment queried.
+    """
+    experiment = experiments_ctl.get_experiment(
+        db, current_user, experiment_id
+    )
+    return experiment
 
 @router.get(
     "/{model_version_id}/metrics",

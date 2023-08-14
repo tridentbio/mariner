@@ -95,6 +95,7 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
           <Box sx={{ width: 'inherit' }}>
             <InputLabel>Target Column</InputLabel>
             <Select
+              disabled={!targetColumns?.length}
               sx={{ width: '100%' }}
               onChange={(event) => {
                 setColumn(getColumn(event.target.value as string));

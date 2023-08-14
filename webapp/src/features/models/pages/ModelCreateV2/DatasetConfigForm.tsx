@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useAppSelector } from 'app/hooks';
 import {
   Dataset,
   useLazyGetMyDatasetQuery,
   useLazyGetMyDatasetsQuery,
 } from 'app/rtk/generated/datasets';
+import { ModelCreate } from 'app/rtk/generated/models';
+import { DataTypeGuard } from 'app/types/domain/datasets';
 import DatasetSelect from 'features/datasets/components/DatasetSelect';
 import ColumnDescriptionSelector from 'features/models/components/ColumnDescriptionSelector';
-import { ModelCreate } from 'app/rtk/generated/models';
+import { useEffect, useMemo, useState } from 'react';
 import { Control, Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
-import { DataTypeGuard } from 'app/types/domain/datasets';
-import { useAppSelector } from 'app/hooks';
 
 export interface DatasetConfigForm {
   control: Control<ModelCreate>;
@@ -26,7 +26,7 @@ const sortColumnsMetadata = (columnsMetadata: Dataset['columnsMetadata']) => {
   return arr;
 };
 const DatasetConfigForm = ({ control }: DatasetConfigForm) => {
-  const { setValue } = useFormContext();
+  const { setValue, watch, getValues } = useFormContext();
   const [fetchDatasetById] = useLazyGetMyDatasetQuery();
   const [fetchDatasets] = useLazyGetMyDatasetsQuery();
   const [searchParams] = useSearchParams();
@@ -34,6 +34,11 @@ const DatasetConfigForm = ({ control }: DatasetConfigForm) => {
   const datasetName = useWatch({
     control,
     name: 'config.dataset.name',
+  });
+
+  const targetColumns = useWatch({
+    control,
+    name: 'config.dataset.targetColumns',
   });
 
   const datasetInStore = useAppSelector((store) =>
@@ -50,12 +55,56 @@ const DatasetConfigForm = ({ control }: DatasetConfigForm) => {
   }, []);
   // @ts-ignore
   const [dataset, setDataset] = useState<Dataset | undefined>(datasetInStore);
-  const targetFeatureSelectOptions = useMemo(() => {
+  const selectOptions = useMemo(() => {
     return (dataset?.columnsMetadata || []).map((col) => ({
       name: col.pattern,
       dataType: col.dataType,
     }));
   }, [dataset]);
+
+  const targetSelectOptions = useMemo(() => {
+    return selectOptions.filter(
+      (col) =>
+        DataTypeGuard.isCategorical(col.dataType) ||
+        DataTypeGuard.isNumerical(col.dataType) ||
+        DataTypeGuard.isQuantity(col.dataType)
+    );
+  }, [selectOptions]);
+
+  const featureSelectOptions = useMemo(() => {
+    if (!targetColumns.length) return selectOptions;
+
+    return selectOptions.filter((col) => {
+      const declaredInTargetColumnsList = targetColumns.some(
+        (targetCol) => targetCol.name == col.name
+      );
+
+      return !declaredInTargetColumnsList;
+    });
+  }, [targetColumns, selectOptions]);
+
+  const removeTargetColumnsFromFeatureColumnsList = () => {
+    const featureColumnsFieldValue: typeof featureSelectOptions = getValues(
+      'config.dataset.featureColumns'
+    );
+
+    const columnToRemove = featureColumnsFieldValue.find((featureCol) => {
+      return !featureSelectOptions.some((col) => col.name == featureCol.name);
+    });
+
+    if (columnToRemove) {
+      const updatedFeatureColumnsFieldValue = featureColumnsFieldValue.filter(
+        (featureCol) => featureCol.name != columnToRemove.name
+      );
+
+      setValue(
+        'config.dataset.featureColumns',
+        updatedFeatureColumnsFieldValue
+      );
+    }
+  };
+
+  useEffect(removeTargetColumnsFromFeatureColumnsList, [targetColumns]);
 
   const datasetId = searchParams.get('datasetId');
   useEffect(() => {
@@ -128,12 +177,7 @@ const DatasetConfigForm = ({ control }: DatasetConfigForm) => {
                 });
               }}
               label={fieldState.error?.message || 'Target Column'}
-              options={targetFeatureSelectOptions.filter(
-                (col) =>
-                  DataTypeGuard.isCategorical(col.dataType) ||
-                  DataTypeGuard.isNumerical(col.dataType) ||
-                  DataTypeGuard.isQuantity(col.dataType)
-              )}
+              options={targetSelectOptions}
             />
           );
         }}
@@ -167,7 +211,7 @@ const DatasetConfigForm = ({ control }: DatasetConfigForm) => {
                 field.onChange({ target: { value: featureCols } })
               }
               label={fieldState.error?.message || 'Feature Column'}
-              options={targetFeatureSelectOptions}
+              options={featureSelectOptions}
             />
           )
         }
