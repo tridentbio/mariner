@@ -1,25 +1,23 @@
+import { ModelCreate } from '@app/rtk/generated/models';
 import { DataTypeGuard } from '@app/types/domain/datasets';
 import { Text } from '@components/molecules/Text';
 import ColumnConfigurationAccordion from '@features/models/components/ColumnConfigurationView/ColumnConfigAccordion';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import { Button, IconButton } from '@mui/material';
+import { useEffect } from 'react';
 import {
   Controller,
   ControllerRenderProps,
-  FieldError,
   useFieldArray,
   useFormContext,
 } from 'react-hook-form';
-import PreprocessingStepSelect, {
-  PreprocessingStepSelectGetErrorFn,
-} from './PreprocessingStepSelect';
+import PreprocessingStepSelect from './PreprocessingStepSelect';
 import {
-  DatasetConfigPreprocessing,
   GenericPreprocessingStep,
   SimpleColumnConfig,
   StepValue,
 } from './types';
-import { useEffect } from 'react';
+import { StepFormFieldError, getStepSelectError } from './utils';
 
 export interface ColumnsPipelineInputProps {
   column: {
@@ -31,24 +29,19 @@ export interface ColumnsPipelineInputProps {
   transformOptions: StepValue[];
 }
 
-type StepFormFieldError = {
-  type: FieldError;
-  constructorArgs: { [key: string]: FieldError };
-};
-
 export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
   const { featurizerOptions, transformOptions, column } = props;
-  const { control, trigger } = useFormContext<DatasetConfigPreprocessing>();
+  const { control, trigger } = useFormContext<ModelCreate>();
 
   //? Being used as a single item array on featurizers <PreprocessingStepSelect /> list
   const featurizersOptionsField = useFieldArray({
     control,
-    name: `${column.type}.${column.index}.featurizers`,
+    name: `config.dataset.${column.type}.${column.index}.featurizers`,
   });
 
   const transformsOptionsField = useFieldArray({
     control,
-    name: `${column.type}.${column.index}.transforms`,
+    name: `config.dataset.${column.type}.${column.index}.transforms`,
   });
 
   const emptyStep = {
@@ -69,11 +62,11 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
   };
 
   const onStepSelect = <
-    FieldNames extends `${(typeof column)['type']}.${number}.${
+    FieldNames extends `config.dataset.${(typeof column)['type']}.${number}.${
       | 'transforms'
       | 'featurizers'}.${number}`
   >(
-    field: ControllerRenderProps<DatasetConfigPreprocessing, FieldNames>,
+    field: ControllerRenderProps<ModelCreate, FieldNames>,
     newValue: GenericPreprocessingStep | null
   ) => {
     field.onChange(newValue ?? emptyStep);
@@ -89,24 +82,6 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
       addFeaturizer();
   }, []);
 
-  const getStepError = (
-    fieldError?: StepFormFieldError
-  ): PreprocessingStepSelectGetErrorFn => {
-    return (type, key) => {
-      if (!fieldError) return false;
-
-      switch (type) {
-        case 'type':
-          return !!fieldError.type;
-        default: {
-          const constructorArgsError = fieldError.constructorArgs;
-
-          return constructorArgsError && !!constructorArgsError[key as string];
-        }
-      }
-    };
-  };
-
   return (
     <>
       <ColumnConfigurationAccordion
@@ -121,14 +96,17 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
               <Controller
                 key={step.id}
                 control={control}
-                name={`${column.type}.${column.index}.featurizers.${stepIndex}`}
+                name={`config.dataset.${column.type}.${column.index}.featurizers.${stepIndex}`}
                 render={({ field, fieldState: { error } }) => (
                   <PreprocessingStepSelect
+                    sx={{ mb: 3 }}
                     options={featurizerOptions}
-                    // @ts-ignore
-                    getError={getStepError(error as StepFormFieldError)}
+                    getError={getStepSelectError(
+                      () => error as StepFormFieldError | undefined
+                    )}
                     value={field.value || null}
                     helperText={error?.message}
+                    onBlur={field.onBlur}
                     onChanges={(step) => onStepSelect(field, step)}
                   />
                 )}
@@ -141,14 +119,16 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
           <Controller
             key={step.id}
             control={control}
-            name={`${column.type}.${column.index}.transforms.${stepIndex}`}
+            name={`config.dataset.${column.type}.${column.index}.transforms.${stepIndex}`}
             render={({ field, fieldState: { error } }) => {
               return (
                 <PreprocessingStepSelect
                   options={transformOptions}
-                  // @ts-ignore
-                  getError={getStepError(error as StepFormFieldError)}
+                  getError={getStepSelectError(
+                    () => error as StepFormFieldError | undefined
+                  )}
                   helperText={error?.message}
+                  onBlur={field.onBlur}
                   onChanges={(updatedStep) => onStepSelect(field, updatedStep)}
                   value={field.value || null}
                   extra={

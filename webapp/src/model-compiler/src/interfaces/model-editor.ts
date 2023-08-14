@@ -1,3 +1,4 @@
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import {
   TorchModelSpec,
   TargetTorchColumnConfig,
@@ -25,6 +26,7 @@ import {
 
 export type APITargetConfig = TargetTorchColumnConfig;
 export type APIColumnConfig = ColumnConfig;
+export type APISimpleColumnConfig = SimpleColumnConfig;
 
 export type FleetModelSpec = TorchModelSpec | SklearnModelSpec;
 
@@ -41,6 +43,17 @@ export enum EPythonClasses {
 }
 
 type ArrayElement<A> = A extends readonly (infer T)[] ? T : never;
+
+export type NodeAbsolutePosition = { type: 'absolute'; x: number; y: number };
+export type NodeRelativePosition = {
+  type: 'relative';
+  /** Components name list to be the reference for the component position when created */
+  references: string[];
+};
+
+export type NodePositionTypes = NodeAbsolutePosition | NodeRelativePosition;
+
+export type NodePositionTypesMap = { [nodeName: string]: NodePositionTypes };
 
 export type ModelOptions = GetModelOptionsApiResponse;
 export type LayersType = ArrayElement<TorchModelSpec['spec']['layers']>;
@@ -145,6 +158,7 @@ interface ColumnConfigWithForward extends APIColumnConfig {
 interface TargetConfigWithForward extends APITargetConfig {
   forwardArgs?: { '': string };
 }
+
 interface DatasetWithForwards {
   name: string;
   targetColumns: TargetConfigWithForward[];
@@ -152,6 +166,10 @@ interface DatasetWithForwards {
   featurizers: FeaturizersType[];
   transforms: TransformsType[];
 }
-export interface ModelSchema extends TorchModelSpec {
+
+export interface TorchModelSchema extends TorchModelSpec {
   dataset: DatasetWithForwards;
 }
+
+export type ModelSchema<Model extends 'torch' | 'sklearn' = 'torch'> =
+  Model extends 'torch' ? TorchModelSchema : SklearnModelSpec;

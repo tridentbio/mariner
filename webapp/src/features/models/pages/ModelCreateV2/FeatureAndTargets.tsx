@@ -83,9 +83,6 @@ const FeatureAndTargets = ({ control }: FeatureAndTargets) => {
       <Controller
         control={control}
         name="config.dataset.name"
-        rules={{
-          required: { value: true, message: 'Dataset is required' },
-        }}
         render={({ field, fieldState }) => (
           <DatasetSelect
             data-testid="dataset-selector"
@@ -108,9 +105,6 @@ const FeatureAndTargets = ({ control }: FeatureAndTargets) => {
       <Controller
         control={control}
         name="config.dataset.targetColumns"
-        rules={{
-          required: { value: true, message: 'A target column is required' },
-        }}
         render={({ field, fieldState }) => {
           if (!dataset) return <div />;
           return (
@@ -119,7 +113,7 @@ const FeatureAndTargets = ({ control }: FeatureAndTargets) => {
               data-testid="dataset-target-column"
               multiple
               onBlur={field.onBlur}
-              error={!!fieldState.error}
+              error={!!fieldState.error?.ref}
               value={field.value}
               onChange={(colDescription) => {
                 field.onChange({
@@ -143,23 +137,13 @@ const FeatureAndTargets = ({ control }: FeatureAndTargets) => {
       <Controller
         control={control}
         name="config.dataset.featureColumns"
-        rules={{
-          required: {
-            value: true,
-            message: 'The feature columns is required',
-          },
-          minLength: {
-            value: 1,
-            message: 'The feature columns must not be empty',
-          },
-        }}
         render={({ field, fieldState }) =>
           !dataset ? (
             <div />
           ) : (
             <ColumnDescriptionSelector
               onBlur={field.onBlur}
-              error={!!fieldState.error}
+              error={!!fieldState.error?.ref}
               id="feature-cols"
               data-testid="dataset-feature-columns"
               multiple

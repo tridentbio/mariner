@@ -9,6 +9,12 @@ canary:
 normal_deploy:
   enabled: true
 
+infisical:
+  enabled: true
+  host: https://infisical.dev.mariner.trident.bio/api
+  namespace: default
+  environment: dev
+
 version: mlflow-v1
 
 port: 4180

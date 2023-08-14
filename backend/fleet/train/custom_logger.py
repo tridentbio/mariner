@@ -117,7 +117,7 @@ class MarinerLogger(Logger):
             )
         except Exception as exp:
             LOG.error("Failed to send data from custom logger")
-            LOG.error(exp)
+            LOG.exception(exp)
 
     @rank_zero_only
     def finalize(self, status):

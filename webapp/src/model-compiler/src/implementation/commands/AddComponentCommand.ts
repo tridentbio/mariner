@@ -5,12 +5,13 @@ import {
   LayersType,
   ModelSchema,
   TransformsType,
+  NodePositionTypes,
 } from '../../interfaces/model-editor';
 import { wrapForwardArgs } from '../../utils';
 import Command from './Command';
 
 export type AddCompArgs<T extends ComponentType> = {
-  readonly schema: ModelSchema;
+  schema: ModelSchema;
   readonly type: T;
   readonly data: T extends 'layer'
     ? LayersType
@@ -19,6 +20,7 @@ export type AddCompArgs<T extends ComponentType> = {
     : T extends 'transformer'
     ? TransformsType
     : never;
+  position?: NodePositionTypes;
 };
 
 class AddComponentCommand<T extends ComponentType> extends Command<

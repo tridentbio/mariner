@@ -208,6 +208,7 @@ async def process_dataset(
         return event
 
     except Exception as exc:  # pylint: disable=broad-exception-caught
+        LOG.exception(exc)
         LOG.error(
             'Unexpected error while processing dataset "%s":\n%r',
             dataset.name,

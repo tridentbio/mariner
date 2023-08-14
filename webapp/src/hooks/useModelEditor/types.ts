@@ -18,7 +18,7 @@ export type MarinerNode = Node<NodeType>;
  *
  */
 export interface IModelEditorContext
-  extends Omit<ModelEditorImpl, 'addComponent'>,
+  extends Omit<ModelEditorImpl, 'addComponent' | 'applySuggestions'>,
     ReactFlowInstance<NodeType, any> {
   /**
    * Maps a model schema to react flow's graph
@@ -53,6 +53,14 @@ export interface IModelEditorContext
       componentType: 'layer' | 'featurizer' | 'transformer';
     },
     position: { x: number; y: number }
+  ): ModelSchema;
+
+  /**
+   * Apply suggestioned modifications to the schema
+   * @see {@link IModelEditorContext}
+   */
+  applySuggestions(
+    args: Parameters<ModelEditorImpl['applySuggestions']>[0]
   ): ModelSchema;
 
   /**

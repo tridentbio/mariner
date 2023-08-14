@@ -1,4 +1,8 @@
-import { ComponentType, ModelSchema } from '../interfaces/model-editor';
+import {
+  ComponentType,
+  ModelSchema,
+  NodePositionTypesMap,
+} from '../interfaces/model-editor';
 import AddComponentCommand, {
   AddCompArgs,
 } from './commands/AddComponentCommand';
@@ -72,9 +76,11 @@ class ModelEditorImpl {
    * Applies fixes (represented as commands) of suggestion's list
    *
    * @param {ApplySuggestionsCommandArgs} args - arguments of the ApplySuggestionsCommand
-   * @returns {ModelSchema}
+   * @returns {{schema: ModelSchema, updatedNodePositions: NodePositionTypesMap}}
    */
-  applySuggestions = (args: ApplySuggestionsCommandArgs): ModelSchema => {
+  applySuggestions = (
+    args: ApplySuggestionsCommandArgs
+  ): { schema: ModelSchema; updatedNodePositions: NodePositionTypesMap } => {
     const command = new ApplySuggestionsCommand(args);
     return command.execute();
   };

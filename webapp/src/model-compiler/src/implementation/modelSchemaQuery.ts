@@ -18,15 +18,16 @@ export const getNodes = (schema: ModelSchema): NodeType[] => {
   layersAndFeats = layersAndFeats.concat(
     schema.dataset.targetColumns.map((targetColumn) => {
       return {
+        ...targetColumn,
         type: 'output',
-        name: targetColumn.name,
         dataType: targetColumn.dataType as DataType,
-        columnType: targetColumn.columnType,
-        lossFn: targetColumn.lossFn,
-        outModule: targetColumn.outModule,
         forwardArgs: targetColumn.outModule
           ? { '': `$${targetColumn.outModule}` }
           : targetColumn.forwardArgs || { '': '' },
+        // name: targetColumn.name,
+        // columnType: targetColumn.columnType,
+        // lossFn: targetColumn.lossFn,
+        // outModule: targetColumn.outModule,
       };
     })
   );

@@ -171,9 +171,8 @@ class SingleModelDeploymentControl:
             },
         )
         assert (
-            res.status_code == 200,
-            f"Request to update deployment failed with status  {res.status_code}",
-        )
+            res.status_code == 200
+        ), f"Request to update deployment failed with status  {res.status_code}"
 
         self.deployment = Deployment(**res.json())
 
@@ -256,9 +255,8 @@ class DeploymentsManager:
             )
             assert (
                 self.deployments_map[deployment.id].deployment.status
-                == DeploymentStatus.IDLE,
-                "Deployment must be idle when added.",
-            )
+                == DeploymentStatus.IDLE
+            ), "Deployment must be idle when added"
         return self.deployments_map[deployment.id].deployment
 
     def remove_deployment(self, deployment_id: int):

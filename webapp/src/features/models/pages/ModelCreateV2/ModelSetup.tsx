@@ -18,12 +18,6 @@ export const ModelSetup = ({ control }: ModelSetupProps) => {
         <Controller
           control={control}
           name="config.framework"
-          rules={{
-            required: {
-              value: true,
-              message: 'The framework is required',
-            },
-          }}
           render={({ field, fieldState }) => (
             <Select
               sx={{ width: '100%' }}

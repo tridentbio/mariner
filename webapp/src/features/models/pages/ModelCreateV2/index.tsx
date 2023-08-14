@@ -1,19 +1,69 @@
-import { MouseEvent, useEffect, useState } from 'react';
-import { ModelEditorContextProvider } from 'hooks/useModelEditor';
-import { FormProvider, useForm, useWatch } from 'react-hook-form';
-import * as modelsApi from 'app/rtk/generated/models';
-import ModelEditor from 'components/templates/ModelEditorV2';
-import ModelConfigForm from './ModelConfigForm';
-import { DatasetConfigurationForm } from './DatasetConfigurationForm';
-import { ReactFlowProvider } from 'react-flow-renderer';
-import Content from 'components/templates/AppLayout/Content';
-import { useNotifications } from 'app/notifications';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import StackTrace from 'components/organisms/StackTrace';
+import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
+import {
+  preprocessingStepSchema,
+  sklearnDatasetSchema,
+  torchDatasetSchema,
+} from '@components/organisms/ModelBuilder/formSchema';
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Button, Step, StepLabel, Stepper } from '@mui/material';
 import { Box } from '@mui/system';
-import { Stepper, Step, Container, Button, StepLabel } from '@mui/material';
+import { useNotifications } from 'app/notifications';
+import * as modelsApi from 'app/rtk/generated/models';
+import StackTrace from 'components/organisms/StackTrace';
+import Content from 'components/templates/AppLayout/Content';
+import ModelEditor from 'components/templates/ModelEditorV2';
+import { ModelEditorContextProvider } from 'hooks/useModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
+import { MouseEvent, useEffect, useState } from 'react';
+import { ReactFlowProvider } from 'react-flow-renderer';
+import { FieldPath, FormProvider, useForm } from 'react-hook-form';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import * as yup from 'yup';
+import { DatasetConfigurationForm } from './DatasetConfigurationForm';
+import ModelConfigForm from './ModelConfigForm';
 import { ModelSetup } from './ModelSetup';
+
+type ModelCreationStep = {
+  title: string;
+  stepId:
+    | 'model-setup'
+    | 'model-description'
+    | 'dataset-configuration'
+    | 'model-architecture';
+  content: JSX.Element | null;
+};
+
+type FormFieldNames = FieldPath<modelsApi.ModelCreate>;
+
+const schema = yup.object({
+  name: yup.string().required('Model name field is required'),
+  config: yup.object({
+    name: yup.string().required('Model version name is required'),
+    framework: yup
+      .string()
+      .oneOf(['torch', 'sklearn'])
+      .required('The framework is required'),
+    dataset: yup.object().required().when('framework', {
+      is: 'sklearn',
+      then: sklearnDatasetSchema,
+      otherwise: torchDatasetSchema,
+    }),
+    spec: yup.object().when('framework', {
+      is: 'sklearn',
+      then: yup
+        .object({
+          model: preprocessingStepSchema
+            .shape({
+              fitArgs: yup.object().required(),
+            })
+            .required(),
+        })
+        .required('Sklearn model is required'),
+      otherwise: yup.object({ layers: yup.array() }).required(),
+    }),
+  }),
+});
 
 const ModelCreateV2 = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
@@ -21,8 +71,10 @@ const ModelCreateV2 = () => {
     modelsApi.usePostModelCheckConfigMutation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { notifyError } = useNotifications();
+
   const methods = useForm<modelsApi.ModelCreate>({
     mode: 'all',
+    reValidateMode: 'onBlur',
     defaultValues: {
       name: '',
       modelDescription: '',
@@ -39,11 +91,67 @@ const ModelCreateV2 = () => {
         spec: { layers: [] },
       },
     },
+    resolver: yupResolver(schema),
   });
+
   const [createModel, { error, isLoading, data }] =
     modelsApi.useCreateModelMutation();
-  const { control, getValues, setValue } = methods;
-  const config = useWatch({ control, name: 'config' });
+  const { control, getValues, setValue, watch } = methods;
+  const config = watch('config');
+
+  const selectedFramework: 'torch' | 'sklearn' = watch('config.framework');
+
+  const onFrameworkChange = () => {
+    if (selectedFramework == 'torch') {
+      setValue('config', {
+        ...config,
+        dataset: {
+          name: config.dataset.name,
+          featureColumns: config.dataset.featureColumns.map((column) => ({
+            name: column.name,
+            dataType: column.dataType,
+          })),
+          targetColumns: config.dataset.targetColumns.map((column) => ({
+            name: column.name,
+            dataType: column.dataType,
+            outModule: '',
+          })),
+          featurizers: [],
+          transforms: [],
+        },
+        spec: { layers: [] },
+      } as typeof config & { framework: 'torch' });
+    } else {
+      const getSimpleColumnConfigTemplate = (
+        column: modelsApi.ColumnConfig | SimpleColumnConfig
+      ) =>
+        ({
+          name: column.name,
+          dataType: column.dataType,
+          featurizers: [],
+          transforms: [],
+        } as SimpleColumnConfig);
+
+      setValue('config', {
+        ...config,
+        dataset: {
+          name: config.dataset.name,
+          featureColumns: config.dataset.featureColumns.map(
+            getSimpleColumnConfigTemplate
+          ),
+          targetColumns: config.dataset.targetColumns.map(
+            getSimpleColumnConfigTemplate
+          ),
+        },
+        spec: { model: null as modelsApi.SklearnModelSchema['model'] | null },
+      } as typeof config & { framework: 'sklearn' });
+    }
+  };
+
+  useEffect(() => {
+    onFrameworkChange();
+  }, [selectedFramework]);
+
   const navigate = useNavigate();
   const handleModelCreate = (event: MouseEvent) => {
     event.preventDefault();
@@ -66,37 +174,71 @@ const ModelCreateV2 = () => {
           }
         });
       },
-      () => {
+      (errors) => {
         notifyError('Error creating dataset');
       }
     )();
   };
 
+  const revalidateErrorsOnFields = (field: FormFieldNames[]) =>
+    field.forEach((field) => methods.trigger(field));
+
   const onStepChange = (stepIndex: number, oldIndex: number) => {
-    if (stepIndex < oldIndex) return setActiveStep(stepIndex);
-    let error: string | undefined;
-    if (oldIndex === 0) {
-      // Validate model config step
-      const modelName = getValues('name');
-      const modelVersionName = getValues('config.name');
-      if (!modelName) error = 'Missing model name';
-      else if (!modelVersionName) error = 'Missing model version name';
-    } else if (oldIndex === 1) {
-      // Validate Dataset config step
-      const dataset = getValues('config.dataset');
-      if (!dataset?.name) error = 'Missing dataset name';
-      else if (!dataset.targetColumns?.length)
-        error = 'Missing dataset target column selection';
-      else if (!dataset.featureColumns?.length)
-        error = 'Missing dataset feature columns selection';
-    } else if (oldIndex === 2) {
-      // Validate model architecture step
-    }
-    if (!error) {
+    const direction = stepIndex < oldIndex ? 'backward' : 'forward';
+
+    const previousStepPageId = steps[oldIndex].stepId;
+    const config = getValues('config');
+
+    try {
+      if (direction == 'forward') {
+        switch (previousStepPageId) {
+          case 'model-description':
+            revalidateErrorsOnFields(['name', 'config.name']);
+
+            const modelName = getValues('name');
+
+            if (!modelName) throw 'Missing model name';
+            if (!config.name) throw 'Missing model version name';
+            break;
+          case 'model-setup':
+            revalidateErrorsOnFields(['config.dataset']);
+
+            if (!config.dataset?.name) throw 'Missing dataset name';
+            if (!config.dataset.targetColumns?.length)
+              throw 'Missing dataset target column selection';
+            if (!config.dataset.featureColumns?.length)
+              throw 'Missing dataset feature columns selection';
+
+            if (config.framework == 'torch')
+              return moveToStepById('model-architecture');
+            break;
+          case 'dataset-configuration':
+            revalidateErrorsOnFields(['config.dataset']);
+
+            if (methods.getFieldState('config.dataset.targetColumns').invalid)
+              throw 'Invalid target columns';
+            if (methods.getFieldState('config.dataset.featureColumns').invalid)
+              throw 'Invalid feature columns';
+            break;
+        }
+      } else {
+        switch (previousStepPageId) {
+          case 'model-architecture':
+            if (config.framework == 'torch')
+              return moveToStepById('model-setup');
+        }
+      }
+
       setActiveStep(stepIndex);
-    } else {
-      notifyError(error);
+    } catch (error) {
+      notifyError(error as string);
     }
+  };
+
+  const moveToStepById = (stepId: ModelCreationStep['stepId']) => {
+    const stepIndex = steps.findIndex((step) => step.stepId === stepId);
+    if (stepIndex < 0) return;
+    setActiveStep(stepIndex);
   };
 
   const [getExistingModel, { data: existingModel, isLoading: fetchingModel }] =
@@ -167,37 +309,43 @@ const ModelCreateV2 = () => {
     onStepChange(newStep, activeStep);
   };
 
-  const steps = [
+  const steps: ModelCreationStep[] = [
     {
       title: 'Model Description',
+      stepId: 'model-description',
       content: <ModelConfigForm control={control} />,
     },
     {
       title: 'Model Setup',
+      stepId: 'model-setup',
       content: <ModelSetup control={control} />,
     },
     {
       title: 'Dataset Configuration',
-      content: (
-        <DatasetConfigurationForm
-          control={control}
-          setValue={setValue as (name: string, value: any) => void}
-        />
-      ),
+      stepId: 'dataset-configuration',
+      content:
+        selectedFramework == 'sklearn' ? <DatasetConfigurationForm /> : null,
     },
     {
       title: 'Model Architecture',
+      stepId: 'model-architecture',
       content: (
         <Box sx={{ maxWidth: '100vw' }}>
           <div>
-            <ModelEditor
-              value={extendSpecWithTargetForwardArgs(
-                config as modelsApi.TorchModelSpec
-              )}
-              onChange={(value) => {
-                setValue('config', value as modelsApi.ModelCreate['config']);
-              }}
-            />
+            {selectedFramework == 'torch' ? (
+              <ModelEditor
+                value={extendSpecWithTargetForwardArgs(
+                  config as modelsApi.TorchModelSpec
+                )}
+                onChange={(value) => {
+                  setValue('config', value as modelsApi.ModelCreate['config']);
+                }}
+              />
+            ) : (
+              <Box style={{ height: '45vh' }}>
+                <SklearnModelInput />
+              </Box>
+            )}
           </div>
           {configCheckData?.stackTrace && (
             <StackTrace

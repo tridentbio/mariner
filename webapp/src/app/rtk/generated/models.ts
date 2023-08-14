@@ -1,3 +1,4 @@
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import { api } from '../api';
 export const addTagTypes = ['models', 'experiments'] as const;
 const injectedRtkApi = api
@@ -588,8 +589,8 @@ export type TorchModelSpec = {
 };
 export type DatasetConfig = {
   name: string;
-  targetColumns: ColumnConfig[];
-  featureColumns: ColumnConfig[];
+  targetColumns: SimpleColumnConfig[];
+  featureColumns: SimpleColumnConfig[];
   featurizers?: (
     | ({
         type: 'molfeat.trans.fp.FPVecFilteredTransformer';

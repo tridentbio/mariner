@@ -1,16 +1,16 @@
 import { ColumnConfig } from '@app/rtk/generated/models';
-import { TypeIdentifier } from '@hooks/useModelOptions';
+import { ScikitType, TypeIdentifier } from '@hooks/useModelOptions';
 import {
   FeaturizersType,
   TransformsType,
 } from '@model-compiler/src/interfaces/model-editor';
 
-export type PreprocessingStep = FeaturizersType | TransformsType;
+export type PreprocessingStep = FeaturizersType | TransformsType | ScikitType;
 
 type PreprocessingStepInputConfig = {
   [StepKind in PreprocessingStep as StepKind['type']]: StepKind extends {
     type: infer F;
-    forwardArgs: any;
+    forwardArgs?: any;
     constructorArgs?: infer C;
   }
     ? {
@@ -32,7 +32,7 @@ export type StepValue =
 
 export type GenericPreprocessingStep = {
   type: string;
-  constructorArgs: object;
+  constructorArgs?: { [key: string]: any };
 };
 export type SimpleColumnConfig = {
   name: string;

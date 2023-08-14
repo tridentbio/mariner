@@ -11,7 +11,7 @@ export interface Paginated<T> {
 
 const api = axios.create({
   validateStatus: (status) => status === 200,
-  baseURL: import.meta.env.VITE_API_BASE_URL, // http://localhost/api
+  baseURL: import.meta.env.VITE_API_BASE_URL,
 });
 
 api.interceptors.response.use(async (res) => {

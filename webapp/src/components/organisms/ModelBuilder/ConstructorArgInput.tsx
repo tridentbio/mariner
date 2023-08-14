@@ -56,7 +56,7 @@ const ConstructorArgInput = ({
         <Select
           variant={variant}
           id={inputId}
-          defaultValue={arg.default}
+          defaultValue={arg.default || null}
           onChange={(event) => onChange(event.target.value)}
         >
           {arg.options.map((option) => (
@@ -78,7 +78,7 @@ const ConstructorArgInput = ({
         <FormControlLabel
           control={
             <Switch
-              defaultValue={arg.default}
+              defaultValue={arg.default || null}
               checked={value}
               onChange={(event) => onChange(event.target.checked)}
             />
@@ -98,7 +98,7 @@ const ConstructorArgInput = ({
         </InputLabel>
         <Input
           id={inputId}
-          defaultValue={arg.default}
+          defaultValue={arg.default || null}
           onChange={(event) => onChange(event.target.value)}
         />
 
@@ -114,7 +114,7 @@ const ConstructorArgInput = ({
         <Input
           id={inputId}
           type="number"
-          defaultValue={arg.default}
+          defaultValue={arg.default || null}
           onChange={(event) => onChange(event.target.value)}
         />
 

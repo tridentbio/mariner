@@ -1,37 +1,94 @@
 import {
+  FleetaddpoolingForwardArgsReferences,
+  FleetconcatForwardArgsReferences,
+  FleetdnasequencefeaturizerForwardArgsReferences,
+  FleetglobalpoolingForwardArgsReferences,
+  FleetintegerfeaturizerForwardArgsReferences,
+  FleetonehotForwardArgsReferences,
+  FleetproteinsequencefeaturizerForwardArgsReferences,
+  FleetrnasequencefeaturizerForwardArgsReferences,
+  TorchembeddingForwardArgsReferences,
+  TorchgeometricgcnconvForwardArgsReferences,
+  TorchlinearForwardArgsReferences,
+  TorchreluForwardArgsReferences,
+  TorchsigmoidForwardArgsReferences,
+  TorchtransformerencoderlayerForwardArgsReferences,
+} from '@app/rtk/generated/models';
+import {
   DataType,
   FeaturizersType,
   LayersType,
   ModelSchema,
+  NodeType,
+  Output,
 } from '../../interfaces/model-editor';
-import { getNodes } from '../modelSchemaQuery';
 import Suggestion from '../Suggestion';
+import { getDependents, getNodes } from '../modelSchemaQuery';
+import { unwrapDollar } from '../../utils';
 
-type EdgeMap<V> = {
+type NodeEdgeEntry<K extends string, T> = {
+  type: K;
+  edges: { [edgeId in keyof T]: string[] };
+};
+
+type NodeEdgeTypesMap = {
+  'fleet.model_builder.layers.OneHot': FleetonehotForwardArgsReferences;
+  'fleet.model_builder.layers.GlobalPooling': FleetglobalpoolingForwardArgsReferences;
+  'fleet.model_builder.layers.Concat': FleetconcatForwardArgsReferences;
+  'fleet.model_builder.layers.AddPooling': FleetaddpoolingForwardArgsReferences;
+  'torch.nn.Linear': TorchlinearForwardArgsReferences;
+  'torch.nn.Sigmoid': TorchsigmoidForwardArgsReferences;
+  'torch.nn.ReLU': TorchreluForwardArgsReferences;
+  'torch_geometric.nn.GCNConv': TorchgeometricgcnconvForwardArgsReferences;
+  'torch.nn.Embedding': TorchembeddingForwardArgsReferences;
+  'torch.nn.TransformerEncoderLayer': TorchtransformerencoderlayerForwardArgsReferences;
+  'fleet.model_builder.featurizers.MoleculeFeaturizer': TorchtransformerencoderlayerForwardArgsReferences;
+  'fleet.model_builder.featurizers.IntegerFeaturizer': FleetintegerfeaturizerForwardArgsReferences;
+  'fleet.model_builder.featurizers.DNASequenceFeaturizer': FleetdnasequencefeaturizerForwardArgsReferences;
+  'fleet.model_builder.featurizers.RNASequenceFeaturizer': FleetrnasequencefeaturizerForwardArgsReferences;
+  'fleet.model_builder.featurizers.ProteinSequenceFeaturizer': FleetproteinsequencefeaturizerForwardArgsReferences;
+  output: Output['forwardArgs'];
+  default: NodeType['type'];
+};
+
+export type NodeEdgeTypes<T extends string = ''> =
+  T extends keyof NodeEdgeTypesMap
+    ? NodeEdgeEntry<T, NodeEdgeTypesMap[T]>
+    : NodeEdgeEntry<NodeType['type'], { [key: string]: string[] }>;
+
+type BiDimensionalDictionary<V> = {
   [key1: string]: {
     [key2: string]: V;
   };
 };
 
-const getFromMap = <T>(key1: string, key2: string, map: EdgeMap<T>) => {
+const getFromMap = <T>(
+  key1: string,
+  key2: string,
+  map: BiDimensionalDictionary<T>
+) => {
   if (key1 in map && key2 in map[key1]) {
     return map[key1][key2];
   }
 };
 
-const setMap = <T>(key1: string, key2: string, value: T, map: EdgeMap<T>) => {
+const setMap = <T>(
+  key1: string,
+  key2: string,
+  value: T,
+  map: BiDimensionalDictionary<T>
+) => {
   if (!(key1 in map)) map[key1] = {};
   map[key1][key2] = value;
 };
 
 class TransversalInfo {
   suggestions: Suggestion[] = [];
-  outgoingShapes: EdgeMap<number[]> = {};
-  requiredShapes: EdgeMap<number[]> = {};
-  dataTypes: EdgeMap<DataType> = {};
-  // Used to answer queries: "What node is connected to node key1 following
-  // the edge key2?"
-  edgesMap: EdgeMap<string> = {};
+  outgoingShapes: BiDimensionalDictionary<number[]> = {};
+  requiredShapes: BiDimensionalDictionary<number[]> = {};
+  dataTypes: BiDimensionalDictionary<DataType> = {};
+  /** Used to answer queries like: "What nodes are connected to the node X following the edge Y?" */
+  edgesMap: { [nodeId: string]: NodeEdgeTypes } = {};
 
   readonly schema: ModelSchema;
   readonly nodesByName: {
@@ -46,9 +103,16 @@ class TransversalInfo {
       this.nodesByName[node.name] = node;
     });
     schema.dataset.targetColumns.forEach((targetColumn) => {
-      this.edgesMap[targetColumn.outModule] = {
-        '': targetColumn.name,
-      };
+      if (targetColumn.outModule && targetColumn.forwardArgs) {
+        const edgeId = Object.keys(targetColumn.forwardArgs)[0];
+
+        this.edgesMap[targetColumn.outModule] = {
+          type: 'output',
+          edges: {
+            [edgeId]: [targetColumn.name],
+          },
+        };
+      }
     });
   }
 
@@ -131,6 +195,7 @@ class TransversalInfo {
     setMap(name, '', shape, this.outgoingShapes);
   }
 
+  //! Not being used currently
   setOutgoingShape = (
     nodeName: string,
     outgoingEdge: string,
@@ -143,6 +208,7 @@ class TransversalInfo {
     setMap(name, '', shape, this.requiredShapes);
   }
 
+  //! Not being used currently
   setRequiredShape = (
     nodeName: string,
     outgoingEdge: string,
@@ -162,6 +228,29 @@ class TransversalInfo {
     const [head, ...tail] = nodeName.split('.');
     if (!head) return;
     setMap(nodeName, tail.join('.'), dataType, this.dataTypes);
+  };
+
+  updateInfoEdgesMap = (node: NodeType): void => {
+    const dependents = getDependents(node, this.schema);
+
+    dependents.forEach((dependent) => {
+      if ('forwardArgs' in dependent && dependent.forwardArgs) {
+        Object.keys(dependent.forwardArgs).forEach((edgeId) => {
+          if (this.edgesMap[node.name]) {
+            this.edgesMap[node.name].edges[edgeId]?.push(
+              unwrapDollar(dependent.name)
+            );
+          } else {
+            this.edgesMap[node.name] = {
+              type: node.type,
+              edges: {
+                [edgeId]: [unwrapDollar(dependent.name)],
+              },
+            };
+          }
+        });
+      }
+    });
   };
 }
 
