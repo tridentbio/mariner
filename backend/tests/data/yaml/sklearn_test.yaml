@@ -1,0 +1,48 @@
+name: sklearn test model
+framework: sklearn
+
+dataset:
+  name: Iris
+  strategy: forwardArgs
+  targetColumns:
+    - name: large_petal_length
+      dataType:
+        domainKind: categorical
+        classes:
+          0: no
+          1: yes
+      outModule: Linear2
+  featureColumns:
+    - name: sepal_length
+      dataType:
+        domainKind: numeric
+        unit: cm
+    - name: sepal_width
+      dataType:
+        domainKind: numeric
+        unit: cm
+  
+  featurizers:
+    - name: MolFPFeaturizer
+      type: molfeat.trans.fp.FPVecFilteredTransformer
+      forwardArgs:
+        X: $large_petal_length
+      constructorArgs:
+        del_invariant: False
+        length: 512
+
+  transforms:
+    - name: StandardScaler
+      type: sklearn.preprocessing.StandardScaler
+      forwardArgs:
+        X: $sepal_length
+
+spec:
+  model:
+    type: sklearn.ensemble.RandomForestClassifier
+    constructorArgs:
+      n_estimators: 100
+      criterion: entropy
+    fitArgs:
+      X: $sepal_length
+      y: $large_petal_length

@@ -55,6 +55,7 @@ export default function SklearnModelInput() {
       render={({ field, fieldState: { error } }) => (
         <PreprocessingStepSelect
           label="Sklearn Model"
+          testId="sklearn-model-select"
           options={options}
           getError={getStepSelectError(
             //@ts-ignore

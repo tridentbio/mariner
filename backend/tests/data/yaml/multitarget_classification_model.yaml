@@ -1,4 +1,5 @@
 name: binary_classification_model
+framework: torch
 dataset:
   name: Iris
   strategy: forwardArgs
