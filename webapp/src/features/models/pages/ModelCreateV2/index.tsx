@@ -83,6 +83,7 @@ const ModelCreateV2 = () => {
         name: '',
         framework: 'torch',
         dataset: {
+          strategy: 'forwardArgs',
           featureColumns: [],
           featurizers: [],
           transforms: [],
@@ -106,6 +107,7 @@ const ModelCreateV2 = () => {
       setValue('config', {
         ...config,
         dataset: {
+          strategy: 'forwardArgs',
           name: config.dataset.name,
           featureColumns: config.dataset.featureColumns.map((column) => ({
             name: column.name,
@@ -135,6 +137,7 @@ const ModelCreateV2 = () => {
       setValue('config', {
         ...config,
         dataset: {
+          strategy: 'pipeline',
           name: config.dataset.name,
           featureColumns: config.dataset.featureColumns.map(
             getSimpleColumnConfigTemplate

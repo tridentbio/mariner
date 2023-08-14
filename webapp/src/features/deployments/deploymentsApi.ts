@@ -33,11 +33,9 @@ export const deploymentsApi = api
         ],
       }),
       createDeployment: builder.mutation<Deployment, DeploymentCreateRequest>({
-        query: (params) => ({
-          url: `/api/v1/deployments/`,
-          body: params,
-          method: 'POST',
-        }),
+        query: (params) => {
+          return { url: `/api/v1/deployments/`, body: params, method: 'POST' };
+        },
         invalidatesTags: ['deployments'],
       }),
       updateDeployment: builder.mutation<Deployment, DeploymentUpdateRequest>({

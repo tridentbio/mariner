@@ -114,6 +114,7 @@ def fit(
     try:
         mlflow_experiment_id = mlflow.create_experiment(mlflow_experiment_name)
     except Exception as exc:
+        LOG.exception(exc)
         raise RuntimeError("Failed to create mlflow experiment") from exc
     dataset = _get_dataframe(dataset, dataset_uri)
     assert isinstance(dataset, DataFrame), "Dataset must be DataFrame"

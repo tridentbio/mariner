@@ -11,7 +11,6 @@ import {
 const SCHEMA_PATH = Cypress.env('SCHEMA_PATH');
 
 const API_BASE_URL = Cypress.env('API_BASE_URL');
-
 type ComponentTypeByDataId = {
   [key: string]: { type: string; filled: Record<string, boolean> };
 };
