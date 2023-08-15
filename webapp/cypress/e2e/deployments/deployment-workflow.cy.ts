@@ -6,6 +6,11 @@ describe('Deployments Workflow.', () => {
   let deploymentName: string | null = null;
 
   before(() => {
+    cy.on(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
+    
     cy.loginSuper();
 
     cy.setupSomeModel().then((model) => {

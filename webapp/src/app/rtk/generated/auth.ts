@@ -17,6 +17,13 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['login'],
       }),
+      getOauthProviders: build.query<
+        GetOauthProvidersApiResponse,
+        GetOauthProvidersApiArg
+      >({
+        query: () => ({ url: `/api/v1/oauth-providers` }),
+        providesTags: ['oauth'],
+      }),
       getOauthProviderRedirect: build.query<
         GetOauthProviderRedirectApiResponse,
         GetOauthProviderRedirectApiArg
@@ -25,6 +32,13 @@ const injectedRtkApi = api
           url: `/api/v1/oauth`,
           params: { provider: queryArg.provider },
         }),
+        providesTags: ['oauth'],
+      }),
+      getOauthCallback: build.query<
+        GetOauthCallbackApiResponse,
+        GetOauthCallbackApiArg
+      >({
+        query: () => ({ url: `/api/v1/oauth-callback` }),
         providesTags: ['oauth'],
       }),
     }),
@@ -36,11 +50,17 @@ export type LoginAccessTokenApiResponse =
 export type LoginAccessTokenApiArg = {
   bodyLoginAccessTokenApiV1LoginAccessTokenPost: BodyLoginAccessTokenApiV1LoginAccessTokenPost;
 };
+export type GetOauthProvidersApiResponse =
+  /** status 200 Successful Response */ Provider[];
+export type GetOauthProvidersApiArg = void;
 export type GetOauthProviderRedirectApiResponse =
   /** status 200 Successful Response */ any;
 export type GetOauthProviderRedirectApiArg = {
   provider: string;
 };
+export type GetOauthCallbackApiResponse =
+  /** status 200 Successful Response */ any;
+export type GetOauthCallbackApiArg = void;
 export type Token = {
   access_token: string;
   token_type: string;
@@ -61,8 +81,17 @@ export type BodyLoginAccessTokenApiV1LoginAccessTokenPost = {
   client_id?: string;
   client_secret?: string;
 };
+export type Provider = {
+  id: string;
+  logo_url?: string;
+  name: string;
+};
 export const {
   useLoginAccessTokenMutation,
+  useGetOauthProvidersQuery,
+  useLazyGetOauthProvidersQuery,
   useGetOauthProviderRedirectQuery,
   useLazyGetOauthProviderRedirectQuery,
+  useGetOauthCallbackQuery,
+  useLazyGetOauthCallbackQuery,
 } = injectedRtkApi;

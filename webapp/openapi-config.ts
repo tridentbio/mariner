@@ -1,6 +1,6 @@
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
 const config: ConfigFile = {
-  schemaFile: 'http://localhost/openapi.json',
+  schemaFile: 'http://localhost:8000/openapi.json',
   apiFile: './src/app/rtk/api.ts',
   apiImport: 'api',
   tag: true,
@@ -10,7 +10,6 @@ const config: ConfigFile = {
     },
     './src/app/rtk/generated/datasets.ts': {
       filterEndpoints: [/dataset/i, 'getS3Data'],
-      endpointOverrides: false
     },
     './src/app/rtk/generated/models.ts': {
       filterEndpoints: [/model/i],
