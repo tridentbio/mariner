@@ -179,17 +179,21 @@ async def create_model_training(
 
     mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
 
+    hyperparams = (
+        {
+            "learning_rate": training_request.config.optimizer.params.lr,
+            "epochs": training_request.config.epochs,
+        }
+        if training_request.framework == "torch"
+        else {}
+    )
     experiment = experiment_store.create(
         db,
         obj_in=ExperimentCreateRepo(
             experiment_name=training_request.name,
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,
-            epochs=training_request.config.epochs,
-            hyperparams={
-                "learning_rate": training_request.config.optimizer.params.lr,
-                "epochs": training_request.config.epochs,
-            },
+            hyperparams=hyperparams,
             stage="RUNNING",
         ),
     )
