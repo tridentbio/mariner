@@ -157,6 +157,16 @@ export const fillModelDescriptionStepForm = (
   });
 };
 
+export const fillDatasetCols = (cols: (ColumnConfig | SimpleColumnConfig)[], colInputSelector: string) => {
+  cols.map(col => {
+    const colId = getColumnConfigTestId(col! as (ColumnConfig | SimpleColumnConfig))
+  
+    cy.get(colInputSelector).click();
+    cy.get(`li[data-testid="${colId}"`)
+      .click();
+  })
+}
+
 export const buildModel = (
   modelCreate: DeepPartial<ModelCreate>,
   params: {
@@ -189,21 +199,15 @@ export const buildModel = (
   const featureCols = modelCreate.config?.dataset?.featureColumns || [];
   const targetCols = modelCreate.config?.dataset?.targetColumns || [];
 
-  targetCols.map(col => {
-    const colId = getColumnConfigTestId(col! as (ColumnConfig | SimpleColumnConfig))
-    
-    cy.get('#target-col').click();
-    cy.get(`li[data-testid="${colId}"`)
-      .click();
-  })
-
-  featureCols.map(col => {
-    const colId = getColumnConfigTestId(col! as (ColumnConfig | SimpleColumnConfig))
+  fillDatasetCols(
+    (targetCols as (SimpleColumnConfig[] | ColumnConfig[])) ?? [],
+    '#target-col'
+  );
   
-    cy.get('#feature-cols').click();
-    cy.get(`li[data-testid="${colId}"`)
-      .click();
-  })
+  fillDatasetCols(
+    (featureCols as (SimpleColumnConfig[] | ColumnConfig[])) ?? [],
+    '#feature-cols'
+  );
 
   cy.get('#framework-selector').click()    
   cy.get(`[role="option"][data-value="${modelCreate.config?.framework}"]`).click()
