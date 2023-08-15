@@ -1,8 +1,12 @@
 """
 Useful functions when developing on a fresh database
+
+************* Module mariner.db.init_db
+mariner/db/init_db.py:13:12: W0613: Unused argument 'db' (unused-argument)
+mariner/db/init_db.py:24:0: C0116: Missing function or method docstring (missing-function-docstring)
+
 """
 import sqlalchemy.exc
-from sqlalchemy.orm import Session
 
 from mariner.core.config import get_app_settings
 from mariner.core.security import get_password_hash
@@ -10,18 +14,10 @@ from mariner.db.session import SessionLocal
 from mariner.entities.user import User
 
 
-def init_db(db: Session) -> None:
-    """
-    Function is deprecated to be used in production as long
-    as using alembic migrations
-    """
-    # Tables should be created with Alembic migrations
-    # But if you don't want to use migrations, create
-    # the tables un-commenting the next line
-    # Base.metadata.create_all(bind=engine)
-
-
 def create_user(email: str, password: str, superuser: bool = False):
+    """
+    Creates a user with email and password.
+    """
     user = User(
         email=email,
         hashed_password=get_password_hash(password),
@@ -57,7 +53,7 @@ def create_admin_user() -> User:
         the super user entity
     """
     return create_user(
-        email="admin@mariner.trident.bio", password="123456", superuser=True
+        email="admin@mariner.trident.bio", password="123456", superuser=False
     )
 
 
