@@ -23,7 +23,11 @@ from mariner.entities import Model as ModelEntity
 from mariner.entities import User
 from mariner.entities.event import EventReadEntity
 from mariner.schemas.deployment_schemas import Deployment
-from mariner.schemas.experiment_schemas import BaseTrainingRequest, Experiment
+from mariner.schemas.experiment_schemas import (
+    BaseTrainingRequest,
+    Experiment,
+    TorchTrainingRequest,
+)
 from mariner.schemas.model_schemas import Model
 from mariner.schemas.token import TokenPayload
 from mariner.stores.experiment_sql import experiment_store
@@ -307,7 +311,7 @@ async def some_trained_model(
     )
     version = model.versions[-1]
     target_column = version.config.dataset.target_columns[0]
-    request = BaseTrainingRequest(
+    request = TorchTrainingRequest(
         model_version_id=version.id,
         name=random_lower_string(),
         framework="torch",

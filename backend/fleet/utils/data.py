@@ -291,7 +291,6 @@ def prepare_data(
         y: Union[pd.DataFrame, np.ndarray, None] = None,
     ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
         X, y = self._prepare_X_and_y(X, y)  # pylint: disable=W0212
-
         if self.featurize_data_types:
             self._apply_default_featurizers(  # pylint: disable=W0212
                 X, self.dataset_config.feature_columns
@@ -346,14 +345,18 @@ class PreprocessingPipeline:
         self.featurizers = {
             feat.name: (
                 self._prepare_transform(feat.create()),
-                feat.adapt_args_and_apply,
+                feat.adapt_args_and_apply
+                if hasattr(feat, "adapt_args_and_apply")
+                else None,
             )
             for feat in dataset_config.featurizers or []
         }
         self.transforms = {
             transform.name: (
                 self._prepare_transform(transform.create()),
-                transform.adapt_args_and_apply,
+                transform.adapt_args_and_apply
+                if hasattr(transform, "adapt_args_and_apply")
+                else None,
             )
             for transform in dataset_config.transforms or []
         }
@@ -489,7 +492,10 @@ class PreprocessingPipeline:
         ) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
-                adapt_args_and_apply(transformer.fit, args)
+                if adapt_args_and_apply:
+                    adapt_args_and_apply(transformer.fit, args)
+                else:
+                    transformer.fit(*args)
             except Exception as exp:
                 raise fleet.exceptions.FitError(
                     f"Failed to fit {config}"
@@ -517,7 +523,12 @@ class PreprocessingPipeline:
         ) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
-                transformed = adapt_args_and_apply(transformer.transform, args)
+                if adapt_args_and_apply:
+                    transformed = adapt_args_and_apply(
+                        transformer.transform, args
+                    )
+                else:
+                    transformed = transformer.transform(*args)
                 data[config.name] = transformed
             except Exception as exp:
                 raise fleet.exceptions.TransformError(
@@ -546,7 +557,12 @@ class PreprocessingPipeline:
         ) in self.get_preprocess_steps():
             args = get_args(data, config)
             try:
-                result = adapt_args_and_apply(transformer.fit_transform, args)
+                if adapt_args_and_apply:
+                    result = adapt_args_and_apply(
+                        transformer.fit_transform, args
+                    )
+                else:
+                    result = transformer.fit_transform(*args)
                 data[config.name] = result
             except Exception as exp:
                 raise fleet.exceptions.FitError(
