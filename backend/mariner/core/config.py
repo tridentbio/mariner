@@ -159,7 +159,7 @@ class QA_Test_Settings(BaseModel):  # pylint: disable=C0103
     Configures the QA test parameters.
     """
 
-    email_test_user: str = "test@domain.com"
+    email_test_user: str = os.getenv("TEST_USER", "test@domain.com")
 
 
 class SettingsV2:
