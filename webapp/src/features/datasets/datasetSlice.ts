@@ -36,10 +36,10 @@ export const datasetSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addMatcher(
-      rtkDatasetApi.endpoints.deleteDataset.matchFulfilled,
+      enhancedApi.endpoints.deleteDataset.matchFulfilled,
       (state, action) => {
         state.datasets = state.datasets.filter(
-          (ds) => ds.id !== action.meta.arg.originalArgs
+          (ds) => ds.id !== action.meta.arg.originalArgs.datasetId
         );
       }
     );
