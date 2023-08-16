@@ -55,6 +55,13 @@ export const datasetsApi = api
         }),
         providesTags: ['datasets'],
       }),
+      deleteDataset: builder.mutation<Dataset, { datasetId: number }>({
+        query: (datasetArg) => ({
+          url: `api/v1/datasets/${datasetArg.datasetId}`,
+          method: 'DELETE',
+        }),
+        invalidatesTags: ['datasets'],
+      }),
       getDatasetById: builder.query<Dataset, number>({
         query: (datasetId) => `api/v1/datasets/${datasetId}`,
         providesTags: (_result, _error, arg) => [{ type: 'datasets', id: arg }],

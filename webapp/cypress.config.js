@@ -4,7 +4,7 @@ const { defineConfig } = require('cypress');
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost';
 const DATA_PATH = process.env.DATA_PATH || 'cypress/fixtures/data';
 const SCHEMA_PATH = process.env.SCHEMA_PATH || '../backend/tests/data';
-const TEST_USER = process.env.TEST_USER || 'test@domain.com'
+const TEST_USER = 'test@domain.com'
 
 module.exports = defineConfig({
   env: {
