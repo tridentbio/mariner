@@ -10,7 +10,6 @@ import { addTraining } from 'features/models/modelSlice';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import defaultExperimentFormValues from './defaultExperimentFormValues';
 
 const CreateTraining: React.FC = () => {
   const [startTraining, { isLoading }] =
