@@ -145,6 +145,9 @@ const FeatureAndTargets = ({ control }: FeatureAndTargets) => {
                 field.onChange({ target: { value: undefined } });
                 setDataset(undefined);
               }
+
+              setValue('config.dataset.featureColumns', []);
+              setValue('config.dataset.targetColumns', []);
             }}
           />
         )}
