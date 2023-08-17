@@ -1,6 +1,5 @@
 name: HIV Extra Trees Classifier
 framework: sklearn
-
 dataset:
   name: HIV
   strategy: forwardArgs
@@ -14,12 +13,10 @@ dataset:
         classes:
           CI: 0
           CM: 1
-
   targetColumns:
     - name: HIV_active
       dataType:
         domainKind: numeric
-
   featurizers:
     - name: MolFPFeaturizer
       type: molfeat.trans.fp.FPVecFilteredTransformer
@@ -32,19 +29,6 @@ dataset:
       type: sklearn.preprocessing.OneHotEncoder
       forward_args:
         X: $activity
-
-  transforms:
-
-    - name: Concat
-      type: fleet.model_builder.transforms.np_concatenate.NpConcatenate
-      forward_args:
-        X:
-          - $MolFPFeaturizer
-          - $OneHotEncoder
-
 spec:
   model:
     type: sklearn.ensemble.ExtraTreesClassifier
-    fitArgs:
-      X: $Concat
-      y: $HIV_active

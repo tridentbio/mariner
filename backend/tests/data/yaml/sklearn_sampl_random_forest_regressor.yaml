@@ -20,6 +20,3 @@ spec:
     type: sklearn.ensemble.RandomForestRegressor
     constructor_args:
       n_estimators: 100
-    fitArgs:
-      X: $MolFPFeaturizer
-      y: $expt

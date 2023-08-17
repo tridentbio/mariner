@@ -6,14 +6,18 @@ from pathlib import Path
 import pandas as pd
 import pytest
 import torch
+from pydantic import BaseModel
 from torch.utils.data import Subset
 
 from fleet import data_types
-from fleet.base_schemas import TorchModelSpec
-from fleet.dataset_schemas import DatasetConfigBuilder
+from fleet.base_schemas import FleetModelSpec, TorchModelSpec
+from fleet.dataset_schemas import (
+    DatasetConfigBuilder,
+    DatasetConfigWithPreprocessing,
+)
 from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.splitters import apply_split_indexes
-from fleet.utils.data import MarinerTorchDataset
+from fleet.utils.data import MarinerTorchDataset, PreprocessingPipeline
 
 dataset_configs = [
     ("multiclass_classification_schema.yaml", "iris.csv"),
@@ -126,3 +130,52 @@ class TestMarinerTorchDataset:
         dataset = MarinerTorchDataset(data=df, dataset_config=dataset_config)
         assert len(dataset) == 100
         assert len(dataset.get_subset_idx(TrainingStep.TRAIN.value)) == 60
+
+
+from tests.fleet import helpers
+
+
+class TestPreprocessingPipeline:
+
+    # This class is used to resolve the FleetModelSpec union
+    class ModelConfigWrapper(BaseModel):
+        model_config: FleetModelSpec
+
+    def pipeline_fixture(
+        self, model_config_filename, featurize_data_types=True
+    ):
+        with helpers.load_test(model_config_filename) as model_config_dict:
+            model_config = self.ModelConfigWrapper(
+                **{"model_config": model_config_dict}
+            ).model_config
+            model_config.dataset = (
+                model_config.dataset.to_dataset_config()
+                if isinstance(
+                    model_config.dataset, DatasetConfigWithPreprocessing
+                )
+                else model_config.dataset
+            )
+            return PreprocessingPipeline(
+                model_config.dataset, featurize_data_types=featurize_data_types
+            )
+
+    def test_feature_leaves(self):
+        cases = [
+            (
+                "sklearn_hiv_knearest_neighbor_classifier.yaml",
+                ["MolFPFeaturizer", "OneHotEncoder"],
+            ),
+            (
+                "sklearn_hiv_random_forest_classifier.yaml",
+                ["smiles-out", "activity-out"],
+            ),
+        ]
+        for (
+            model_path,
+            expected_feature_leaves,
+        ) in cases:
+            pipeline = self.pipeline_fixture(model_path)
+            assert pipeline.features_leaves == expected_feature_leaves, (
+                f"Expected feature leaves to be {', '.join(expected_feature_leaves)}, "
+                f"but got {pipeline.features_leaves}"
+            )

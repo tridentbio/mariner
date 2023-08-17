@@ -42,7 +42,11 @@ from fleet.model_builder.featurizers.small_molecule_featurizer import (
 from fleet.model_builder.layers_schema import FeaturizersType
 from fleet.model_builder.splitters import apply_split_indexes
 from fleet.model_builder.utils import DataInstance, get_references_dict
-from fleet.utils.graph import get_leaf_nodes, make_graph_from_forward_args
+from fleet.utils.graph import (
+    get_leaf_nodes,
+    iterate_topologically,
+    make_graph_from_forward_args,
+)
 
 
 def make_graph_from_dataset_config(
@@ -264,7 +268,7 @@ TransformFunction = Dict[
 ]
 
 
-def prepare_data(
+def _prepare_data(
     func: Callable[
         [Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]],
         Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]],
@@ -289,13 +293,13 @@ def prepare_data(
         self: "PreprocessingPipeline",
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray, None] = None,
+        **kwargs,
     ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
         X, y = self._prepare_X_and_y(X, y)  # pylint: disable=W0212
         if self.featurize_data_types:
             self._apply_default_featurizers(  # pylint: disable=W0212
                 X, self.dataset_config.feature_columns
             )
-
             if y is not None and not y.empty:
                 self._apply_default_featurizers(  # pylint: disable=W0212
                     y, self.dataset_config.target_columns
@@ -304,7 +308,7 @@ def prepare_data(
         data = self._dataframe_to_dict(  # pylint: disable=W0212
             pd.concat([X, y], axis=1)
         )
-        data = func(self, data)
+        data = func(self, data, **kwargs)
         return data
 
     return wrapper
@@ -335,6 +339,31 @@ class PreprocessingPipeline:
         # It's updated when applying the featurizers/transforms
         graph = make_graph_from_dataset_config(dataset_config)
         self.output_columns = get_leaf_nodes(graph)
+        self.features_leaves = []
+        self.target_leaves = []
+
+        def if_last_add_on(arr: list):
+            def func(item, is_last):
+                print(item, is_last)
+                if is_last:
+                    arr.append(item)
+
+            return func
+
+        iterate_topologically(
+            graph,
+            if_last_add_on(self.features_leaves),
+            skip_roots=[
+                target.name for target in dataset_config.target_columns
+            ],
+        )
+        iterate_topologically(
+            graph,
+            if_last_add_on(self.target_leaves),
+            skip_roots=[
+                feature.name for feature in dataset_config.feature_columns
+            ],
+        )
         self.featurizers_config = {
             feat.name: feat for feat in dataset_config.featurizers or []
         }
@@ -342,6 +371,7 @@ class PreprocessingPipeline:
             transform.name: transform
             for transform in dataset_config.transforms or []
         }
+
         self.featurizers = {
             feat.name: (
                 self._prepare_transform(feat.create()),
@@ -411,15 +441,17 @@ class PreprocessingPipeline:
         Returns:
             X and y dataframes.
         """
-        feature_columns = [
-            col.name for col in self.dataset_config.feature_columns
+        feature_names = [
+            feature.name
+            for feature in self.dataset_config.feature_columns
+            if feature.name in df.columns
         ]
-        target_columns = [
-            col.name
-            for col in self.dataset_config.target_columns
-            if col.name in df.columns
+        target_names = [
+            target.name
+            for target in self.dataset_config.target_columns
+            if target.name in df.columns
         ]
-        return df.loc[:, feature_columns], df.loc[:, target_columns]
+        return df.loc[:, feature_names], df.loc[:, target_names]
 
     def _prepare_X_and_y(
         self,
@@ -479,7 +511,7 @@ class PreprocessingPipeline:
             dictionary[column] = df[column]
         return dictionary
 
-    @prepare_data
+    @_prepare_data
     def fit(
         self, data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]
     ):
@@ -503,9 +535,12 @@ class PreprocessingPipeline:
 
         self._fitted = True
 
-    @prepare_data
+    @_prepare_data
     def transform(
-        self, data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]
+        self,
+        data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]],
+        concat_features=False,
+        concat_targets=False,
     ):
         """Transforms X and y according to preprocessor config.
 
@@ -535,12 +570,20 @@ class PreprocessingPipeline:
                     f"Failed to transform {config}"
                 ) from exp
 
+        if concat_features:
+            data["dataset-feats-out"] = self._concat_features(data)
+        if concat_targets:
+            data["dataset-targets-out"] = self._concat_targets(data)
+
         self._fitted = True
         return data
 
-    @prepare_data
+    @_prepare_data
     def fit_transform(
-        self, data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]
+        self,
+        data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]],
+        concat_features=False,
+        concat_targets=False,
     ):
         """Fits and transforms X and y according to preprocessor config.
 
@@ -568,9 +611,26 @@ class PreprocessingPipeline:
                 raise fleet.exceptions.FitError(
                     f"Failed to fit {config}"
                 ) from exp
+
+        if concat_features:
+            data["dataset-feats-out"] = self._concat_features(data)
+        if concat_targets:
+            data["dataset-targets-out"] = self._concat_targets(data)
         self._fitted = True
 
         return data
+
+    def _concat_features(self, data):
+        out_features = [
+            data[out_feature_key] for out_feature_key in self.features_leaves
+        ]
+        return np.concatenate(out_features, axis=-1)
+
+    def _concat_targets(self, data):
+        out_targets = [
+            data[out_target_key] for out_target_key in self.target_leaves
+        ]
+        return np.concatenate(out_targets, axis=-1)
 
 
 def adapt_numpy_to_tensor(

@@ -21,6 +21,3 @@ dataset:
 spec:
   model:
     type: sklearn.ensemble.ExtraTreesRegressor
-    fitArgs:
-      X: $MolFPFeaturizer
-      y: $expt
