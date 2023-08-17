@@ -1,7 +1,14 @@
-import { Autocomplete, AutocompleteProps, TextField } from '@mui/material';
-import { Box } from '@mui/system';
-import { useState } from 'react';
+import {
+  Autocomplete,
+  AutocompleteProps,
+  Chip,
+  MenuItem,
+  SxProps,
+  TextField,
+  Theme,
+} from '@mui/material';
 import { Model, ModelVersion } from 'app/types/domain/models';
+import { useState } from 'react';
 
 export interface ModelVersionSelectProps {
   model: Model;
@@ -9,6 +16,8 @@ export interface ModelVersionSelectProps {
   onChange: (value: ModelVersion | undefined) => void;
   error?: boolean;
   helperText?: string;
+  sx?: SxProps<Theme>;
+  disableClearable?: boolean;
 }
 
 const ModelVersionSelect = ({
@@ -17,6 +26,8 @@ const ModelVersionSelect = ({
   onChange,
   error,
   helperText,
+  sx,
+  disableClearable,
 }: ModelVersionSelectProps) => {
   const [options, setOptions] = useState(model.versions);
 
@@ -37,6 +48,8 @@ const ModelVersionSelect = ({
 
   return (
     <Autocomplete
+      disableClearable={disableClearable}
+      sx={sx}
       value={value || null}
       isOptionEqualToValue={(option, value) => {
         return option.id === value.id;
@@ -49,9 +62,10 @@ const ModelVersionSelect = ({
         onChange(option || undefined);
       }}
       renderOption={(params, option) => (
-        <li {...params}>
-          <Box>{option.name}</Box>
-        </li>
+        <MenuItem {...params} key={option.name}>
+          {option.name}
+          <Chip sx={{ ml: 'auto' }} label={option.config.framework} />
+        </MenuItem>
       )}
       renderInput={(params) => (
         <TextField
