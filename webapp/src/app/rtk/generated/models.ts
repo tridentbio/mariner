@@ -868,6 +868,10 @@ export type ComponentOption = {
   docs?: string;
   outputType?: string;
   defaultArgs?: object;
+  compatibleWith?: {
+    domains?: ColumnConfig['dataType']['domainKind'][];
+    framework?: ('torch' | 'sklearn')[];
+  };
 };
 export type GetNameSuggestionResponse = {
   name: string;
