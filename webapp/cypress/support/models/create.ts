@@ -1,6 +1,8 @@
 import { randomLowerCase } from '@utils';
 import { SOME_MODEL_NAME } from '../constants';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 export const modelFormData = (datasetName: string) => ({
   name: SOME_MODEL_NAME,
   modelDescription: 'cqlqrats',
@@ -124,7 +126,7 @@ const modelExists = (name: string): Cypress.Chainable<boolean> =>
     cy
       .request({
         method: 'GET',
-        url: `http://localhost/api/v1/models?page=0&perPage=50&q=${name}`,
+        url: `${API_BASE_URL}/api/v1/models?page=0&perPage=50&q=${name}`,
         headers: {
           authorization,
         },
@@ -142,7 +144,7 @@ const createModelDirectly = (modelFormData: any) =>
     cy
       .request({
         method: 'POST',
-        url: `http://localhost/api/v1/models`,
+        url: `${API_BASE_URL}/api/v1/models`,
         headers: {
           authorization,
         },

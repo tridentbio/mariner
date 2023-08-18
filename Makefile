@@ -67,7 +67,7 @@ create-admin:           ## Creates default "admin@mariner.trident.bio" with "123
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
 
 .PHONY: create-test-user
-create-test-user:       ## Creates default "test@mariner" with "123456" password
+create-test-user:       ## Creates default user (from `email_test_user` attribute) with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_test_user; create_test_user()'" backend
 
 start-backend:         ## Builds and starts backend

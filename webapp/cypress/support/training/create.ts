@@ -13,6 +13,8 @@ const defaultTrainingConfig: TrainingConfig = {
   learningRate: 0.05,
 };
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 const checkTrainFinishes = (
   experimentName: string,
   timeout = 60000
@@ -32,11 +34,11 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
   cy.once('uncaught:exception', () => false);
   // Visits models listing page
   cy.intercept({
-    url: 'http://localhost/api/v1/experiments',
+    url: `${API_BASE_URL}/api/v1/experiments`,
     method: 'POST',
   }).as('createExperiment');
   cy.intercept({
-    url: 'http://localhost/api/v1/models/*',
+    url: `${API_BASE_URL}/api/v1/models/*`,
     method: 'GET',
   }).as('getModels');
   cy.visit('/models');

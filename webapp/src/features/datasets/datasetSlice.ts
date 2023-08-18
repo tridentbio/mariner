@@ -39,7 +39,7 @@ export const datasetSlice = createSlice({
       rtkDatasetApi.endpoints.deleteDataset.matchFulfilled,
       (state, action) => {
         state.datasets = state.datasets.filter(
-          (ds) => ds.id !== action.meta.arg.originalArgs
+          (ds) => ds.id !== action.meta.arg.originalArgs.datasetId
         );
       }
     );

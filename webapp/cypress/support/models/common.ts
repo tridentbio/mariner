@@ -10,6 +10,8 @@ import {
 
 const SCHEMA_PATH = Cypress.env('SCHEMA_PATH');
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 type ComponentTypeByDataId = {
   [key: string]: { type: string; filled: Record<string, boolean> };
 };
@@ -268,7 +270,7 @@ export const findNotFilled = (
 export const deleteTestModelsIfExist = () => {
   cy.intercept({
     method: 'GET',
-    url: 'http://localhost/api/v1/models/*',
+    url: `${API_BASE_URL}/api/v1/models/*`,
   }).as('getModels');
   cy.visit('/models');
   cy.wait('@getModels');
@@ -292,7 +294,7 @@ export const deleteTestModelsIfExist = () => {
 export const deleteModelIfExist = (modelName: string) => {
   cy.intercept({
     method: 'GET',
-    url: 'http://localhost/api/v1/models/*',
+    url: `${API_BASE_URL}/api/v1/models/*`,
   }).as('getModels');
   cy.visit('/models');
   cy.wait('@getModels');

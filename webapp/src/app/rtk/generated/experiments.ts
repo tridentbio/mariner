@@ -55,6 +55,14 @@ const injectedRtkApi = api
         query: () => ({ url: `/api/v1/experiments/optimizers` }),
         providesTags: ['experiments'],
       }),
+      getExperiment: build.query<GetExperimentApiResponse, GetExperimentApiArg>(
+        {
+          query: (queryArg) => ({
+            url: `/api/v1/experiments/${queryArg.experimentId}`,
+          }),
+          providesTags: ['experiments'],
+        }
+      ),
       getExperimentsMetricsForModelVersion: build.query<
         GetExperimentsMetricsForModelVersionApiResponse,
         GetExperimentsMetricsForModelVersionApiArg
@@ -100,6 +108,11 @@ export type GetTrainingExperimentOptimizersApiResponse =
       } & SgdParamsSchema)
   )[];
 export type GetTrainingExperimentOptimizersApiArg = void;
+export type GetExperimentApiResponse =
+  /** status 200 Successful Response */ Experiment;
+export type GetExperimentApiArg = {
+  experimentId: number;
+};
 export type GetExperimentsMetricsForModelVersionApiResponse =
   /** status 200 Successful Response */ Experiment[];
 export type GetExperimentsMetricsForModelVersionApiArg = {
@@ -554,6 +567,8 @@ export const {
   useLazyGetExperimentsMetricsQuery,
   useGetTrainingExperimentOptimizersQuery,
   useLazyGetTrainingExperimentOptimizersQuery,
+  useGetExperimentQuery,
+  useLazyGetExperimentQuery,
   useGetExperimentsMetricsForModelVersionQuery,
   useLazyGetExperimentsMetricsForModelVersionQuery,
 } = injectedRtkApi;

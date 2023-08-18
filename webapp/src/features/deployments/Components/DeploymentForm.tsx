@@ -85,7 +85,7 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
       });
       return;
     }
-    createDeploy(value);
+    createDeploy({ deploymentBase: value });
   };
   const onSubmit = (value: DeploymentFormFields) => {
     if (value.shareStrategy === EShareStrategies.PUBLIC) {

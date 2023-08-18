@@ -82,7 +82,7 @@ const injectedRtkApi = api
         invalidatesTags: ['datasets'],
       }),
     }),
-    overrideExisting: true,
+    overrideExisting: false,
   });
 export { injectedRtkApi as enhancedApi };
 export type GetMyDatasetsApiResponse =

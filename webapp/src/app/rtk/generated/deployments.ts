@@ -28,12 +28,12 @@ const injectedRtkApi = api
       }),
       createDeployment: build.mutation<
         CreateDeploymentApiResponse,
-        DeploymentBase
+        CreateDeploymentApiArg
       >({
         query: (queryArg) => ({
           url: `/api/v1/deployments/`,
           method: 'POST',
-          body: queryArg,
+          body: queryArg.deploymentBase,
         }),
         invalidatesTags: ['deployments'],
       }),
@@ -110,7 +110,7 @@ const injectedRtkApi = api
         invalidatesTags: ['deployments'],
       }),
     }),
-    overrideExisting: true,
+    overrideExisting: false,
   });
 export { injectedRtkApi as enhancedApi };
 export type GetDeploymentsApiResponse =
@@ -128,7 +128,9 @@ export type GetDeploymentsApiArg = {
 };
 export type CreateDeploymentApiResponse =
   /** status 200 Successful Response */ Deployment;
-
+export type CreateDeploymentApiArg = {
+  deploymentBase: DeploymentBase;
+};
 export type GetDeploymentApiResponse =
   /** status 200 Successful Response */ DeploymentWithTrainingData;
 export type GetDeploymentApiArg = {
@@ -574,9 +576,8 @@ export type DeploymentUpdateInput = {
   predictionRateLimitUnit?: RateLimitUnit;
 };
 export type DeploymentManagerComunication = {
-  deploymentId?: number;
-  status?: DeploymentStatus;
-  firstInit?: boolean;
+  deploymentId: number;
+  status: DeploymentStatus;
 };
 export const {
   useGetDeploymentsQuery,

@@ -8,6 +8,8 @@ import './deployments';
 import { drag, move } from './dragdrop';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
 
+const TEST_USER = Cypress.env('TEST_USER');
+
 Cypress.Commands.add('notificationShouldContain', (text: string) => {
   return cy
     .get('.MuiAlert-message', { timeout: 20000 })
@@ -26,7 +28,7 @@ Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
 Cypress.Commands.add('loginTest', (timeout: number = 15000) => {
   cy.clearAllCookies();
   cy.visit('/login');
-  cy.get('#username-input', { timeout }).type('test@example.com');
+  cy.get('#username-input', { timeout }).type(TEST_USER);
   cy.get('#password-input').type('123456');
   cy.get('button[type="submit"]').click();
   cy.url().should('eq', Cypress.config('baseUrl'));
