@@ -17,7 +17,11 @@ import {
   SimpleColumnConfig,
   StepValue,
 } from './types';
-import { StepFormFieldError, getStepSelectError } from './utils';
+import {
+  StepFormFieldError,
+  getColumnConfigTestId,
+  getStepSelectError,
+} from './utils';
 
 export interface ColumnsPipelineInputProps {
   column: {
@@ -86,19 +90,30 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
     <>
       <ColumnConfigurationAccordion
         key={column.config.name}
+        testId={getColumnConfigTestId(column.config)}
         dataType={column.config.dataType}
         name={column.config.name}
       >
         {!DataTypeGuard.isNumericalOrQuantity(column.config.dataType) &&
           featurizersOptionsField.fields.map((step, stepIndex) => (
             <>
-              <Text sx={{ width: '100%' }}>Featurizers:</Text>
+              <Text
+                sx={{ width: '100%' }}
+                data-testid={`${getColumnConfigTestId(
+                  column.config
+                )}-featurizer-label`}
+              >
+                Featurizers:
+              </Text>
               <Controller
                 key={step.id}
                 control={control}
                 name={`config.dataset.${column.type}.${column.index}.featurizers.${stepIndex}`}
                 render={({ field, fieldState: { error } }) => (
                   <PreprocessingStepSelect
+                    testId={`${getColumnConfigTestId(
+                      column.config
+                    )}-featurizer-${stepIndex}`}
                     sx={{ mb: 3 }}
                     options={featurizerOptions}
                     getError={getStepSelectError(
@@ -123,6 +138,9 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
             render={({ field, fieldState: { error } }) => {
               return (
                 <PreprocessingStepSelect
+                  testId={`${getColumnConfigTestId(
+                    column.config
+                  )}-transform-${stepIndex}`}
                   options={transformOptions}
                   getError={getStepSelectError(
                     () => error as StepFormFieldError | undefined

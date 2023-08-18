@@ -1,7 +1,8 @@
 import * as modelsApi from 'app/rtk/generated/models';
 import { DeepPartial } from 'react-hook-form';
 import { DatasetFormData } from '../../support/dataset/create';
-import { fillModelDescriptionStepForm } from '../../support/models/build-model';
+import { fillDatasetCols, fillModelDescriptionStepForm } from '../../support/models/build-model';
+import { getColumnConfigTestId } from '@components/organisms/ModelBuilder/utils';
 
 describe('DatasetConfigForm', () => {
   let irisDatasetFixture: DatasetFormData | null = null;
@@ -87,14 +88,7 @@ describe('DatasetConfigForm', () => {
   });
 
   it('should not include target columns on the feature columns list', () => {
-    targetCols.forEach((col) => {
-      cy.get('#target-col').click();
-      cy.get('li')
-        .contains(
-          new RegExp(`^${col!.name! + col!.dataType!.domainKind!}`, 'gi')
-        )
-        .click();
-    });
+    fillDatasetCols(targetCols as modelsApi.ColumnConfig[], '#target-col');
 
     cy.get('#feature-cols').click();
 
@@ -104,26 +98,13 @@ describe('DatasetConfigForm', () => {
   });
 
   it('Should remove feature column options when they are selected as target columns', () => {
-    featureCols.forEach((col) => {
-      cy.get('#feature-cols').click();
-      cy.get('li')
-        .contains(
-          new RegExp(`^${col!.name! + col!.dataType!.domainKind!}`, 'gi')
-        )
-        .click();
-    });
+    fillDatasetCols(featureCols as modelsApi.ColumnConfig[], '#feature-cols');
 
-    const firstTargetCol = targetCols[0];
+    const firstTargetCol = targetCols[0]
+    const firstTargetColTestId = getColumnConfigTestId(targetCols[0] as modelsApi.ColumnConfig);
 
     cy.get('#target-col').click();
-    cy.get('li')
-      .contains(
-        new RegExp(
-          `^${firstTargetCol!.name! + firstTargetCol!.dataType!.domainKind!}`,
-          'gi'
-        )
-      )
-      .click();
+    cy.get(`li[data-testid="${firstTargetColTestId}"`).click();
 
     cy.get('[data-testid="dataset-feature-columns"]').should(
       'not.contain.text',

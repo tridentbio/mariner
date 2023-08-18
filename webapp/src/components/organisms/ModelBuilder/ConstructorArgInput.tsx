@@ -55,7 +55,13 @@ const ConstructorArgInput = ({
         </InputLabel>
         <Select
           variant={variant}
-          id={inputId}
+          componentsProps={{
+            root: {
+              //@ts-ignore
+              'data-argtype': 'options',
+              id: inputId,
+            },
+          }}
           defaultValue={arg.default || null}
           onChange={(event) => onChange(event.target.value)}
         >
@@ -78,6 +84,11 @@ const ConstructorArgInput = ({
         <FormControlLabel
           control={
             <Switch
+              inputProps={{
+                //@ts-ignore
+                'data-argtype': arg.type,
+              }}
+              id={inputId}
               defaultValue={arg.default || null}
               checked={value}
               onChange={(event) => onChange(event.target.checked)}
@@ -97,6 +108,9 @@ const ConstructorArgInput = ({
           {label}
         </InputLabel>
         <Input
+          inputProps={{
+            'data-argtype': arg.type,
+          }}
           id={inputId}
           defaultValue={arg.default || null}
           onChange={(event) => onChange(event.target.value)}
@@ -112,6 +126,9 @@ const ConstructorArgInput = ({
           {label}
         </InputLabel>
         <Input
+          inputProps={{
+            'data-argtype': arg.type,
+          }}
           id={inputId}
           type="number"
           defaultValue={arg.default || null}

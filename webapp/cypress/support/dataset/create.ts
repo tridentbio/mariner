@@ -2,6 +2,7 @@ import { addDescription } from '../commands';
 import { irisDatasetFixture, zincDatasetFixture } from './examples';
 
 const API_BASE_URL = Cypress.env('API_BASE_URL');
+const SCHEMA_PATH = Cypress.env('SCHEMA_PATH');
 
 export interface DatasetFormData {
   name: string;
@@ -140,16 +141,15 @@ export const createDatasetDirectly = (
   cy.once('uncaught:exception', () => false);
 
   cy.getCurrentAuthString().then((authorization) => {
-    cy.wrap(
-      new Promise<Blob>((res) => cy.fixture(dataset.file, 'binary').then(res))
-    ).then((file) => {
+    cy.readFile<string>(SCHEMA_PATH + dataset.file)
+    .then((file) => {
       const formData = new FormData();
       formData.setFormValue('name', dataset.name);
       formData.setFormValue(
         'columnsMetadata',
         JSON.stringify(dataset.descriptions.map(everyLowerCase))
       );
-      formData.setFormValue('file', sliced(file as string, numRows), {
+      formData.setFormValue('file', sliced(file, numRows), {
         filename: dataset.file,
         contentType: 'text/csv',
       });

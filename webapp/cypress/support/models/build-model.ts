@@ -1,16 +1,21 @@
 /// <reference types="cypress" />
 
-import { parse } from 'yaml';
+import { ColumnConfig, DatasetConfig, ModelCreate, SklearnModelSchema, TorchModelSpec } from '@app/rtk/generated/models';
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
+import { getColumnConfigTestId, getStepValueLabelData } from '@components/organisms/ModelBuilder/utils';
 import { DeepPartial } from '@reduxjs/toolkit';
-import { ModelCreate, TorchModelSpec } from '@app/rtk/generated/models';
-import { randomLowerCase } from 'utils';
-import { dragComponentsAndMapConfig, flowDropSelector } from './common';
+import { NodeType } from 'model-compiler/src/interfaces/model-editor';
 import {
   extendSpecWithTargetForwardArgs,
   iterateTopologically,
   unwrapDollar,
 } from 'model-compiler/src/utils';
-import { NodeType } from 'model-compiler/src/interfaces/model-editor';
+import { isArray, randomLowerCase } from 'utils';
+import { parse } from 'yaml';
+import { dragComponentsAndMapConfig, flowDropSelector } from './common';
+
+type SklearnColumnFeaturizer = NonNullable<DatasetConfig['featurizers']>[0]
+type SklearnColumnTransform = NonNullable<DatasetConfig['transforms']>[0]
 
 const API_BASE_URL = Cypress.env('API_BASE_URL');
 
@@ -152,6 +157,16 @@ export const fillModelDescriptionStepForm = (
   });
 };
 
+export const fillDatasetCols = (cols: (ColumnConfig | SimpleColumnConfig)[], colInputSelector: string) => {
+  cols.map(col => {
+    const colId = getColumnConfigTestId(col! as (ColumnConfig | SimpleColumnConfig))
+  
+    cy.get(colInputSelector).click();
+    cy.get(`li[data-testid="${colId}"`)
+      .click();
+  })
+}
+
 export const buildModel = (
   modelCreate: DeepPartial<ModelCreate>,
   params: {
@@ -181,30 +196,191 @@ export const buildModel = (
     .first()
     .click();
 
-  const targetCols =
-    modelCreate.config?.dataset?.targetColumns?.map(
-      // domainKind used to determine end of column name
-      (col) => `${col!.name!}-${col!.dataType!.domainKind!}`
-    ) || [];
+  const featureCols = modelCreate.config?.dataset?.featureColumns || [];
+  const targetCols = modelCreate.config?.dataset?.targetColumns || [];
 
-  const featureColsTestIdList =
-    modelCreate.config?.dataset?.featureColumns?.map(
-      // domainKind used to determine end of column name
-      (col) => `${col!.name!}-${col!.dataType!.domainKind!}`
-    ) || [];
+  fillDatasetCols(
+    (targetCols as (SimpleColumnConfig[] | ColumnConfig[])) ?? [],
+    '#target-col'
+  );
+  
+  fillDatasetCols(
+    (featureCols as (SimpleColumnConfig[] | ColumnConfig[])) ?? [],
+    '#feature-cols'
+  );
 
-  targetCols.forEach((colId) => {
-    cy.get('#target-col').click();
-    cy.get(`li[data-testid="${colId}"`)
-      .click();
-  });
+  cy.get('#framework-selector').click()    
+  cy.get(`[role="option"][data-value="${modelCreate.config?.framework}"]`).click()
 
-  featureColsTestIdList.forEach((colId) => {
-    cy.get('#feature-cols').click();
-    cy.get(`li[data-testid="${colId}"`)
-      .click();
-  });
+  if(modelCreate.config?.framework == 'torch') {
+    buildFlowSchema(modelCreate, params);
+  } else {
+    cy.get('button').contains('NEXT').click();
 
+    buildSklearnPreprocessingForm(modelCreate, featureCols as SimpleColumnConfig[], targetCols as SimpleColumnConfig[]);
+  }
+
+  if (params.submitModelRequest) {
+    cy.intercept({
+      method: 'POST',
+      url: `${API_BASE_URL}/api/v1/models/check-config`,
+    }).as('checkConfig');
+    cy.intercept({
+      method: 'POST',
+      url: `${API_BASE_URL}/api/v1/models`,
+    }).as('createModel');
+
+    cy.get('button').contains('CREATE').click();
+
+    if(modelCreate.config?.framework == 'torch') {
+      cy.wait('@checkConfig').then(({ response }) => {
+        expect(response?.statusCode).to.eq(200);
+        if (params.successfullRequestRequired) {
+          expect(Boolean(response?.body.stackTrace)).to.eq(false);
+        }
+      });
+    }
+
+    if (params.successfullRequestRequired)
+      cy.wait('@createModel').then(({ response }) => {
+        expect(response?.statusCode).to.eq(200);
+      });
+  }
+};
+
+const buildSklearnPreprocessingForm = (
+  modelCreate: DeepPartial<ModelCreate>,
+  featureCols: SimpleColumnConfig[],
+  targetCols: SimpleColumnConfig[]
+) => {
+  const sklearnDataset = modelCreate.config?.dataset as DatasetConfig
+  const cols = featureCols.concat(targetCols)
+
+  cols.map((col, colIndex) => {
+    const colId = getColumnConfigTestId(col! as SimpleColumnConfig)
+
+    const colAccordion = cy.get(`[data-testid="${colId}-accordion"]`)
+    colAccordion.click()
+
+    let processors: {
+      featurizers: SklearnColumnFeaturizer[]
+      transforms: SklearnColumnTransform[]
+    } = {
+      featurizers: [],
+      transforms: []
+    }
+
+    let columnTransforms: SklearnColumnTransform[] = sklearnDataset.transforms?.filter(
+      transform => filterColumnRelatedSteps(col.name, transform)
+    ) || []
+
+    processors.transforms = columnTransforms
+
+    //? Fill column steps
+    cy.get("body").then($body => {
+      const colHasFeaturizer = $body.find(`[data-testid="${colId}-featurizer-label"]`).length > 0
+
+      //? Fill column featurizer (if exists)
+      if (colHasFeaturizer) {
+        const foundFeaturizer = sklearnDataset.featurizers?.find(featurizer => filterColumnRelatedSteps(col.name, featurizer))
+
+        if(!foundFeaturizer) throw new Error(`No featurizer found for column ${col?.name}`)
+
+        processors.featurizers = [foundFeaturizer]
+      }
+
+      Object.entries(processors).forEach(([processorType, steps]) => {
+        steps.forEach((step, stepIndex) => {
+          const stepName = processorType == 'featurizers' ? 'featurizer' : 'transform'
+          const stepLabelData = getStepValueLabelData(step.type)
+
+          if(stepName == 'transform') colAccordion.find('button').contains('ADD').click()
+  
+          cy.get(`[data-testid="${colId}-${stepName}-${stepIndex}"] .step-select`)
+            .click()
+            .type(stepLabelData?.class || '')
+            .get('li[role="option"]')
+            .first()
+            .click();
+  
+          //? Fill step constructorArgs
+          if('constructorArgs' in step && step.constructorArgs) {
+            const actionBtnId = `${colId}-${stepName}-${stepIndex}-action-btn`
+  
+            cy.get(`[data-testid="${actionBtnId}"]`).click()
+  
+            const args: {[key: string]: any} = step.constructorArgs || {}
+  
+            buildStepConstructorArgs(`${colId}-${stepName}-${stepIndex}`, args)
+          }
+        })
+      })
+    });
+  })
+
+  cy.get('button').contains('NEXT').click();
+
+  const modelSchema = modelCreate.config?.spec as SklearnModelSchema
+  const modelLabel = getStepValueLabelData(modelSchema.model.type)
+
+  cy.get(`[data-testid="sklearn-model-select"] .step-select`)
+    .click()
+    .type(modelLabel?.class || '')
+    .get('li[role="option"]')
+    .first()
+    .click();
+
+  if('constructorArgs' in modelSchema.model && modelSchema.model.constructorArgs) {
+    cy.get(`[data-testid="sklearn-model-select-action-btn"]`).click()
+    
+    const args: {[key: string]: any} = modelSchema.model.constructorArgs || {}
+    buildStepConstructorArgs(`sklearn-model-select`, args)
+  }
+}
+
+const filterColumnRelatedSteps = (colName: string, processor: (NonNullable<DatasetConfig['featurizers']> | NonNullable<DatasetConfig['transforms']>)[0]) => {
+  const referenceCols = (processor?.forwardArgs as {[key: string]: any})['X']
+
+  if(isArray(referenceCols)) {
+    const unwrappedColNameList = referenceCols.map(colName => unwrapDollar(colName))
+
+    return colName && unwrappedColNameList.includes(colName)
+  } else {
+    return unwrapDollar(referenceCols) == colName
+  }
+}
+
+const buildStepConstructorArgs = (stepId: string, args: {[key: string]: any}) => {
+  type ArgInputType = 'string' | 'number' | 'boolean' | 'options'
+
+  Object.keys(args).map(arg => {
+    const argInput = cy.get(`[data-testid="${stepId}"] #arg-option-${arg}`)
+
+    argInput.then($argInput => {
+      const argInputType = $argInput.attr('data-argtype') as ArgInputType
+
+      switch(argInputType) {
+        case 'options':
+          argInput.click()    
+          cy.get(`[role="option"][data-value="${args[arg]}"]`).click({force: true})
+          break
+        case 'boolean':
+          !!args[arg] ? argInput.check({force: true}) : argInput.uncheck({force: true})
+          break
+        default:
+          argInput
+            .click()
+            .clear()
+            .type(args[arg])
+      }
+    })
+  })
+}
+
+const buildFlowSchema = (
+  modelCreate: DeepPartial<ModelCreate>,
+  params: Parameters<typeof buildModel>[1]
+) => {
   cy.get('button').contains('NEXT').click();
 
   cy.get(flowDropSelector).trigger('wheel', {
@@ -215,7 +391,7 @@ export const buildModel = (
   });
 
   const mod = extendSpecWithTargetForwardArgs(
-    modelCreate.config as unknown as TorchModelSpec
+    modelCreate.config as TorchModelSpec
   );
 
   cy.log('Dragging components');
@@ -247,7 +423,7 @@ export const buildModel = (
       if (!args || objIsEmpty(args)) return;
 
       Object.entries(args).forEach(([key, value]) => {
-        if (params.applySuggestions) autoFixSuggestions();
+        if (params?.applySuggestions) autoFixSuggestions();
 
         const parsedEdgeName = parseEdgeName(node.type!)[0];
 
@@ -269,39 +445,14 @@ export const buildModel = (
       });
     });
   });
-
-  if (params.submitModelRequest) {
-    cy.intercept({
-      method: 'POST',
-      url: `${API_BASE_URL}/api/v1/models/check-config`,
-    }).as('checkConfig');
-    cy.intercept({
-      method: 'POST',
-      url: `${API_BASE_URL}/api/v1/models`,
-    }).as('createModel');
-
-    cy.get('button').contains('CREATE').click();
-
-    cy.wait('@checkConfig').then(({ response }) => {
-      expect(response?.statusCode).to.eq(200);
-      if (params.successfullRequestRequired) {
-        expect(Boolean(response?.body.stackTrace)).to.eq(false);
-      }
-    });
-
-    if (params.successfullRequestRequired)
-      cy.wait('@createModel').then(({ response }) => {
-        expect(response?.statusCode).to.eq(200);
-      });
-  }
-};
+}
 
 export const buildYamlModel = (
   yamlPath: string,
   dataset: string | null = null,
   buildParams: Parameters<typeof buildModel>[1],
   modelName = randomName()
-) =>
+) => (
   cy.readFile(yamlPath).then((yamlStr) => {
     const jsonSchema: TorchModelSpec = parse(yamlStr);
 
@@ -321,4 +472,5 @@ export const buildYamlModel = (
       },
       buildParams
     );
-  });
+  })
+)

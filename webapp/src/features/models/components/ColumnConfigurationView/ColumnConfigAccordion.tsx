@@ -6,6 +6,7 @@ interface ColumnConfigurationAccordionProps {
   dataType: ColumnConfig['dataType'];
   textProps?: Record<string, any>;
   children: React.ReactNode;
+  testId?: string;
 }
 
 const ColumnConfigurationAccordion = ({
@@ -13,9 +14,11 @@ const ColumnConfigurationAccordion = ({
   dataType,
   textProps = {},
   children,
+  testId,
 }: ColumnConfigurationAccordionProps) => {
   return (
     <CustomAccordion
+      testId={testId}
       title={<DataTypeChip prefix={name} {...dataType} />}
       textProps={textProps}
     >
