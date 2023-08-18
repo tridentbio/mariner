@@ -84,7 +84,9 @@ const CreateTraining: React.FC = () => {
           {steps.map((step, index) => (
             <Step key={step.label}>
               <StepLabel>{step.label}</StepLabel>
-              <StepContent>{step.content}</StepContent>
+              <StepContent TransitionProps={{ unmountOnExit: false }}>
+                {step.content}
+              </StepContent>
             </Step>
           ))}
         </Stepper>

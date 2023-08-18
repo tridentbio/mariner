@@ -1,18 +1,27 @@
+import { ModelVersion } from '@app/rtk/generated/models';
+import { BaseTrainingRequest } from '@app/types/domain/experiments';
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
 import { Button, TextField, Typography } from '@mui/material';
 import { Box, SystemStyleObject } from '@mui/system';
+import { deepClone } from '@utils';
 import { useNotifications } from 'app/notifications';
-import { FormEvent, useEffect, useState } from 'react';
 import { Model } from 'app/types/domain/models';
-import ModelVersionSelect from '../ModelVersionSelect';
-import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
-import { required } from 'utils/reactFormRules';
-import CheckpointingForm from 'features/trainings/components/CheckpointingForm';
 import AdvancedOptionsForm from 'features/trainings/components/AdvancedOptionsForm';
-import { DeepPartial } from 'react-hook-form';
+import CheckpointingForm from 'features/trainings/components/CheckpointingForm';
+import defaultExperimentFormValues from 'features/trainings/pages/CreateTraining/defaultExperimentFormValues';
+import { useEffect, useState } from 'react';
+import {
+  Controller,
+  ControllerRenderProps,
+  DeepPartial,
+  FormProvider,
+  SubmitErrorHandler,
+  SubmitHandler,
+  useForm,
+} from 'react-hook-form';
+import { required } from 'utils/reactFormRules';
+import ModelVersionSelect from '../ModelVersionSelect';
 import OptimizerForm from './OptimizerForm';
-import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
-import { BaseTrainingRequest } from '@app/types/domain/experiments';
-import { ModelVersion } from '@app/rtk/generated/models';
 
 export interface ModelExperimentFormProps {
   onSubmit: (value: BaseTrainingRequest) => any;
@@ -33,7 +42,6 @@ const ModelExperimentForm = ({
   const [targetColumns, setTargetColumns] = useState<APITargetConfig[]>(
     [] as APITargetConfig[]
   );
-  const [framework, setFramework] = useState<'torch' | 'sklearn' | null>(null);
 
   const methods = useForm<BaseTrainingRequest>({
     defaultValues: initialValues || {
@@ -44,51 +52,40 @@ const ModelExperimentForm = ({
     mode: 'onChange',
     shouldUnregister: true,
   });
-  const { control } = methods;
+
+  const { control, handleSubmit, watch, reset, register, unregister } = methods;
+
+  //? make it be registered by the form as a field (when not declared by <Controller />).
+  register('framework');
 
   const { notifyError } = useNotifications();
-
-  const [modelVersion, setModelVersion] = useState<ModelVersion | undefined>();
 
   const fieldStyle: SystemStyleObject = {
     mb: 1,
     width: '100%',
   };
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    if (!framework) {
-      throw new Error('Missing framework');
-    }
-    methods.handleSubmit(
-      (training) => {
-        onSubmit({
-          ...training,
-          framework,
-          config: { ...training.config },
-        } as BaseTrainingRequest);
-      },
-      () => {
-        notifyError('Resolve errors in the form');
-      }
-    )(event);
+  const onSubmitHandler: SubmitHandler<BaseTrainingRequest> = (training) => {
+    if (!training.framework) throw new Error('Missing framework');
+
+    onSubmit(training);
   };
 
-  const modelVersionId = useWatch({
-    control,
-    name: 'modelVersionId',
-  }) as number | null;
+  const onFormError: SubmitErrorHandler<BaseTrainingRequest> = (errors) => {
+    notifyError('Resolve errors in the form');
+  };
 
-  const modelVersionFramework = modelVersion?.config?.framework;
+  const modelVersionFramework = watch('framework');
 
   useEffect(() => {
     if (initialValues && initialValues.modelVersionId) {
       const modelVersion = model.versions.find(
         (v) => v.id === initialValues.modelVersionId
       );
+
       if (modelVersion) {
-        setModelVersion(modelVersion);
-        setFramework(modelVersion.config.framework);
+        reset(modelVersion);
+
         setTargetColumns(
           modelVersion.config.dataset.targetColumns as APITargetConfig[]
         );
@@ -96,9 +93,53 @@ const ModelExperimentForm = ({
     }
   }, [initialValues]);
 
+  const handleModelVersionChange = (
+    modelVersion: ModelVersion | undefined,
+    field: ControllerRenderProps<BaseTrainingRequest, 'modelVersionId'>
+  ) => {
+    if (modelVersion) {
+      setTargetColumns(
+        modelVersion.config.dataset.targetColumns as APITargetConfig[]
+      );
+
+      reset((previousValue) => {
+        if (modelVersion.config.framework == 'torch') {
+          register('config');
+
+          const previousTorchVersion =
+            previousValue.framework == 'torch' && previousValue.modelVersionId;
+
+          return {
+            ...previousValue,
+            modelVersionId: modelVersion.id,
+            config: previousTorchVersion
+              ? previousValue.config
+              : deepClone(defaultExperimentFormValues.config || {}),
+            framework: modelVersion.config.framework,
+          } as BaseTrainingRequest;
+        }
+
+        unregister('config');
+
+        return {
+          name: previousValue.name,
+          modelVersionId: modelVersion.id,
+          framework: modelVersion.config.framework,
+        };
+      });
+    } else {
+      reset(
+        (previousValue) =>
+          ({
+            name: previousValue.name,
+          } as BaseTrainingRequest)
+      );
+    }
+  };
+
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmitHandler, onFormError)}>
         <Box sx={{ p: 0 }}>
           <Controller
             rules={{ ...required }}
@@ -126,21 +167,9 @@ const ModelExperimentForm = ({
                   helperText={error?.message}
                   model={model as Model}
                   value={model?.versions.find((v) => v.id === field.value)}
-                  onChange={(modelVersion) => {
-                    console.log('Selection of model version', modelVersion);
-                    if (modelVersion) {
-                      setTargetColumns(
-                        modelVersion.config.dataset
-                          .targetColumns as APITargetConfig[]
-                      );
-                      setModelVersion(modelVersion);
-                      setFramework(modelVersion.config.framework);
-                    } else {
-                      setModelVersion(undefined);
-                      setFramework(null);
-                    }
-                    field.onChange({ target: { value: modelVersion?.id } });
-                  }}
+                  onChange={(modelVersion) =>
+                    handleModelVersionChange(modelVersion, field)
+                  }
                 />
               )}
             />
@@ -153,6 +182,7 @@ const ModelExperimentForm = ({
                 name="config.optimizer"
                 render={({ field, fieldState: { error } }) => (
                   <OptimizerForm
+                    data-testid="optimizer"
                     onChange={field.onChange}
                     value={field.value}
                     aria-label="optimizer"

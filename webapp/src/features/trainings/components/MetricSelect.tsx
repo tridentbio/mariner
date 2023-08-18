@@ -104,6 +104,7 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
               }}
               value={column?.name || ''}
               ref={ref}
+              error={!!error}
               label={'Target Column'}
             >
               {targetColumns.map((column) => (
@@ -121,9 +122,11 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
                 setSelected(event.target.value);
                 setValue(defaultModeIsMax(event.target.value) ? 'max' : 'min');
               }}
+              disabled={!column?.name}
               value={selected || ''}
               ref={ref}
               name={name}
+              error={!!error}
               label={error?.message || undefined}
             >
               {sortedFilteredMetrics.map((metric) => (
