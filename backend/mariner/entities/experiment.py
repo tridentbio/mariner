@@ -49,12 +49,12 @@ class Experiment(Base):
     )
     updated_at = Column(DateTime, server_default=current_timestamp())
     stage = Column(String, server_default="RUNNING", nullable=False)
-    epochs = Column(Integer, nullable=False)
+    epochs = Column(Integer, nullable=True)
     history = Column(JSON)
     train_metrics = Column(JSON)
     val_metrics = Column(JSON)
     test_metrics = Column(JSON)
-    hyperparams = Column(JSON)
+    hyperparams = Column(JSON, nullable=True)
     stack_trace = Column(String)
 
     created_by = relationship(

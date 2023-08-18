@@ -113,7 +113,7 @@ async def test_create_model_training(
     )
     assert db_exp.model_version_id == exp.model_version_id
     assert db_exp.created_by_id == user.id
-    assert db_exp.epochs == request.config.epochs
+    assert db_exp.hyperparams["epochs"] == request.config.epochs
 
     # Await for task
     await task

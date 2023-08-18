@@ -115,7 +115,7 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
             featurized_mols.append(self(mol))
         return featurized_mols
 
-    def __call__(self, mol: Union[RDKitMol, str, list]) -> PyGData:
+    def __call__(self, mol: Union[RDKitMol, str, np.ndarray]) -> PyGData:
         if isinstance(mol, (list, np.ndarray)):
             return self.featurize_list(mol)
         return self._featurize(mol, self.sym_bond_list)

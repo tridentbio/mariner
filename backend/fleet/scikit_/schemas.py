@@ -82,7 +82,7 @@ class KNeighborsRegressorConfig(CamelCaseModel, CreateFromType):
     constructor_args: KNeighborsRegressorConstructorArgs = (
         KNeighborsRegressorConstructorArgs()
     )
-    fit_args: Dict[str, str]
+    fit_args: Union[None, Dict[str, str]] = None
     task_type: List[TaskType] = ["regressor"]
 
 
@@ -113,7 +113,7 @@ class RandomForestRegressorConfig(CamelCaseModel, CreateFromType):
     constructor_args: RandomForestRegressorConstructorArgs = (
         RandomForestRegressorConstructorArgs()
     )
-    fit_args: Dict[str, str]
+    fit_args: Union[None, Dict[str, str]] = None
 
 
 class ExtraTreesRegressorConstructorArgs(BaseModel):
@@ -143,7 +143,7 @@ class ExtraTreesRegressorConfig(CamelCaseModel, CreateFromType):
     constructor_args: ExtraTreesRegressorConstructorArgs = (
         ExtraTreesRegressorConstructorArgs()
     )
-    fit_args: Dict[str, str]
+    fit_args: Union[None, Dict[str, str]] = None
 
 
 class ExtraTreesClassifierConstructorArgs(BaseModel):
@@ -171,7 +171,7 @@ class ExtraTreesClassifierConfig(CamelCaseModel, CreateFromType):
     constructor_args: ExtraTreesClassifierConstructorArgs = (
         ExtraTreesClassifierConstructorArgs()
     )
-    fit_args: Dict[str, str]
+    fit_args: Union[None, Dict[str, str]] = None
 
 
 class KnearestNeighborsClassifierConstructorArgs(BaseModel):
@@ -205,7 +205,7 @@ class KnearestNeighborsClassifierConfig(CamelCaseModel, CreateFromType):
     constructor_args: KnearestNeighborsClassifierConstructorArgs = (
         KnearestNeighborsClassifierConstructorArgs()
     )
-    fit_args: Dict[str, str]
+    fit_args: Union[None, Dict[str, str]] = None
     task_type: List[TaskType] = ["multiclass", "multilabel"]
 
 
@@ -234,7 +234,7 @@ class RandomForestClassifierConfig(CamelCaseModel, CreateFromType):
     constructor_args: RandomForestClassifierConstructorArgs = (
         RandomForestClassifierConstructorArgs()
     )
-    fit_args: Dict[str, str]
+    fit_args: Union[None, Dict[str, str]] = None
 
 
 class SklearnModelSchema(CamelCaseModel, YAML_Model):

@@ -19,6 +19,3 @@ dataset:
 spec:
   model:
     type: sklearn.neighbors.KNeighborsRegressor
-    fitArgs:
-      X: $MolFPFeaturizer
-      y: $expt

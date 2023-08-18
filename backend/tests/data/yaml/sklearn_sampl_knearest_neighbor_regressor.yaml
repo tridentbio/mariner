@@ -20,6 +20,3 @@ dataset:
 spec:
   model:
     type: sklearn.neighbors.KNeighborsRegressor
-    fitArgs:
-      X: $smiles-out
-      y: $expt

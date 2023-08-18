@@ -18,7 +18,7 @@ class ExperimentCreateRepo(pydantic.BaseModel):
 
     model_version_id: int
     created_by_id: int
-    epochs: int
+    epochs: Union[None, int] = None
     mlflow_id: Optional[str] = None
     experiment_name: Optional[str] = None
     stage: Literal[

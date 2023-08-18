@@ -24,11 +24,17 @@ class BaseTrainingRequest(ApiBaseModel):
 
     name: str
     model_version_id: int
-    framework: str
-    config: TorchTrainingConfig  # a Union of different framework configs later
 
 
 class TorchTrainingRequest(BaseTrainingRequest):
+    """
+    Configures the parameters for training a torch model.
+
+    Attributes:
+        framework: The framework to use for training. Must be "torch".
+        config: The parameters.
+    """
+
     framework: Literal["torch"] = "torch"
     config: TorchTrainingConfig
 
@@ -36,6 +42,11 @@ class TorchTrainingRequest(BaseTrainingRequest):
     def create(
         cls, name: str, model_version_id: int, config: TorchTrainingConfig
     ):
+        """
+        Builder method for TorchTrainingRequest class.
+
+        Allows to create an instance without specifying framework.
+        """
         return cls(
             framework="torch",
             name=name,
@@ -45,7 +56,16 @@ class TorchTrainingRequest(BaseTrainingRequest):
 
 
 class SklearnTrainingRequest(BaseTrainingRequest):
+    """
+    Configures the parameters for training a sklearn model.
+
+    Attributes:
+        framework: The framework to use for training. Must be "sklearn".
+        config: The parameters.
+    """
+
     framework: Literal["sklearn"] = "sklearn"
+    config: Union[None, dict] = None
 
 
 TrainingRequest = Annotated[

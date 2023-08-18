@@ -220,8 +220,6 @@ class NpConcatenateConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
 TransformerType = Annotated[
     Union[
         StandardScalerConfig,
-        LabelEncoderConfig,
-        OneHotEncoderConfig,
         NpConcatenateConfig,
     ],
     Field(discriminator="type"),
@@ -230,7 +228,7 @@ TransformerType = Annotated[
 
 FeaturizersType = Annotated[
     Union[
-        (FPVecFilteredTransformerConfig, FleetmoleculefeaturizerLayerConfig)  # type: ignore
+        (OneHotEncoderConfig, LabelEncoderConfig, FPVecFilteredTransformerConfig, FleetmoleculefeaturizerLayerConfig)  # type: ignore
         + get_args(get_args(FeaturizersType_)[0])  # type: ignore
     ],
     Field(discriminator="type"),

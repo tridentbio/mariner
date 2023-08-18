@@ -10,7 +10,6 @@ import { addTraining } from 'features/models/modelSlice';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import defaultExperimentFormValues from './defaultExperimentFormValues';
 
 const CreateTraining: React.FC = () => {
   const [startTraining, { isLoading }] =
@@ -24,8 +23,15 @@ const CreateTraining: React.FC = () => {
   const handleStartTraning = async (
     exp: experimentsApi.BaseTrainingRequest
   ) => {
+    const { config, ...experimentPayload } = exp;
+    const payload =
+      exp.framework === 'sklearn'
+        ? {
+            ...experimentPayload,
+          }
+        : exp;
     await startTraining({
-      baseTrainingRequest: { ...exp, framework: 'torch' },
+      baseTrainingRequest: payload,
     })
       .unwrap()
       .then((newExp) => {
@@ -62,7 +68,6 @@ const CreateTraining: React.FC = () => {
           {selectedModel && (
             <ModelExperimentForm
               model={selectedModel}
-              initialValues={defaultExperimentFormValues}
               onSubmit={handleStartTraning}
               onCancel={() => setActiveStep(0)}
             />

@@ -62,14 +62,10 @@ class SciKitFunctions(BaseModelFunctions):
             self.preprocessing_pipeline = data.PreprocessingPipeline(
                 dataset_config=spec.dataset
             )
-        self.references = get_references_dict(spec.spec.model.fit_args)
-
-    def _prepare_data(self, fit=False):
-        X, y = self.preprocessing_pipeline.get_X_and_y(self.dataset)
-        if fit:
-            self.data = self.preprocessing_pipeline.fit_transform(X, y)
-        else:
-            self.data = self.preprocessing_pipeline.transform(X, y)
+        self.references = get_references_dict(
+            spec.spec.model.fit_args
+            or {"X": "$dataset-feats-out", "y": "$dataset-targets-out"}
+        )
 
     def _filter_data(
         self,
@@ -107,6 +103,17 @@ class SciKitFunctions(BaseModelFunctions):
             args = map(lambda x: self._filter_data(filtering, x), args)
 
         return args
+
+    def _prepare_data(self, fit=False):
+        X, y = self.preprocessing_pipeline.get_X_and_y(self.dataset)
+        if fit:
+            self.data = self.preprocessing_pipeline.fit_transform(
+                X, y, concat_features=True, concat_targets=True
+            )
+        else:
+            self.data = self.preprocessing_pipeline.transform(
+                X, y, concat_features=True, concat_targets=True
+            )
 
     def get_metrics(
         self,
@@ -205,7 +212,9 @@ class SciKitFunctions(BaseModelFunctions):
         Args:
             input_ (pd.DataFrame): The dataset to predict on.
         """
-        transformed_data = self.preprocessing_pipeline.transform(input_)
+        transformed_data = self.preprocessing_pipeline.transform(
+            input_, concat_features=True
+        )
         X = transformed_data[self.references["X"]]
         return self.model.predict(X)
 

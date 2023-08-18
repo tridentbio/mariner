@@ -1,7 +1,7 @@
 """
 Utility functions to operate on graphs.
 """
-from typing import Any, Callable, Iterable, List, Tuple
+from typing import Any, Callable, Iterable, List, Tuple, Union
 
 import networkx as nx
 
@@ -92,3 +92,37 @@ def get_leaf_nodes(graph: nx.DiGraph) -> List[str]:
         A list with the leaf nodes.
     """
     return [node for node in graph.nodes if graph.out_degree(node) == 0]
+
+
+def iterate_topologically(
+    graph: nx.DiGraph,
+    fn: Callable[[str, bool], None],
+    skip_roots: Union[None, list[str]] = None,
+) -> None:
+    """Iterates over a graph in topological order.
+
+    If skip_roots is provided, the branches starting from the roots
+    in skip_roots are skipped.
+
+    Args:
+        graph: a directed graph.
+        fn: a function to be called on each node.
+        skip_roots: a list of nodes to skip.
+
+    Raises:
+        ValueError: if the graph has at least one cycle.
+    """
+    roots = [
+        n
+        for n, d in dict(graph.in_degree).items()
+        if d == 0 and n not in skip_roots
+    ]
+    visited = set()
+    for root in roots:
+        enumerated_branch = list(enumerate(nx.dfs_preorder_nodes(graph, root)))
+        depth = len(enumerated_branch)
+        for index, node in enumerated_branch:
+            if node in visited:
+                continue
+            fn(node, index == depth - 1)
+            visited.add(node)
