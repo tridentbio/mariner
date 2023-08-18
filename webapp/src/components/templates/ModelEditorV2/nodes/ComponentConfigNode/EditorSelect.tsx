@@ -66,11 +66,17 @@ const EditorSelect = (props: EditorSelectProps) => {
         },
       }}
     >
-      {option.argsOptions[props.argKey].map((item) => (
-        <MenuItem key={item} value={item}>
-          {item}
-        </MenuItem>
-      ))}
+      {option.argsOptions[props.argKey].map((item) => {
+        return typeof item == 'string' ? (
+          <MenuItem key={item} value={item}>
+            {item}
+          </MenuItem>
+        ) : (
+          <MenuItem key={item.label} value={item.label}>
+            {item.label}
+          </MenuItem>
+        );
+      })}
     </TextField>
   );
 };

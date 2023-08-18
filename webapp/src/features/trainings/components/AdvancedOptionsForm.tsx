@@ -19,7 +19,7 @@ import {
   RadioButtonUncheckedOutlined,
 } from '@mui/icons-material';
 import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
-import { BaseTrainingRequest } from '@app/rtk/generated/experiments';
+import { BaseTrainingRequest } from '@app/types/domain/experiments';
 
 interface AdvancedOptionsProps {
   open?: boolean;

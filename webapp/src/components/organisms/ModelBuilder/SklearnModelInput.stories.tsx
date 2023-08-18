@@ -2,7 +2,7 @@ import { store } from '@app/store';
 import useModelOptions, {
   toConstructorArgsConfig,
 } from '@hooks/useModelOptions';
-import { StoryObj } from '@storybook/react';
+import { StoryFn, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { Provider } from 'react-redux';
 import PreprocessingStepSelect from './PreprocessingStepSelect';
@@ -12,7 +12,7 @@ export default {
   title: 'components/SklearnModelInput',
   component: SklearnModelInput,
   decorators: [
-    (Story) => (
+    (Story: StoryFn) => (
       <Provider store={store}>
         <Story />
       </Provider>

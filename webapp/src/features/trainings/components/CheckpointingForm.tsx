@@ -1,5 +1,5 @@
 import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
-import { BaseTrainingRequest } from 'app/rtk/generated/experiments';
+import { BaseTrainingRequest } from 'app/types/domain/experiments';
 import { MetricMode } from 'app/types/domain/experiments';
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';

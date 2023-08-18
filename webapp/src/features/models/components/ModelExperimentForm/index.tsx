@@ -11,7 +11,7 @@ import AdvancedOptionsForm from 'features/trainings/components/AdvancedOptionsFo
 import { DeepPartial } from 'react-hook-form';
 import OptimizerForm from './OptimizerForm';
 import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
-import { BaseTrainingRequest } from '@app/rtk/generated/experiments';
+import { BaseTrainingRequest } from '@app/types/domain/experiments';
 import { ModelVersion } from '@app/rtk/generated/models';
 
 export interface ModelExperimentFormProps {
@@ -66,7 +66,7 @@ const ModelExperimentForm = ({
           ...training,
           framework,
           config: { ...training.config },
-        });
+        } as BaseTrainingRequest);
       },
       () => {
         notifyError('Resolve errors in the form');

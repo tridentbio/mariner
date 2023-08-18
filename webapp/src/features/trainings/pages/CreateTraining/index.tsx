@@ -2,6 +2,7 @@ import { Box, Step, StepContent, StepLabel, Stepper } from '@mui/material';
 import { useNotifications } from 'app/notifications';
 import * as experimentsApi from 'app/rtk/generated/experiments';
 import { Model } from 'app/types/domain/models';
+import { BaseTrainingRequest } from 'app/types/domain/experiments';
 import Content from 'components/templates/AppLayout/Content';
 import ModelsSelect from 'components/atoms/ModelsSelect';
 import ProcessingModal from 'components/organisms/ProcessingModal';
@@ -20,18 +21,17 @@ const CreateTraining: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleStartTraning = async (
-    exp: experimentsApi.BaseTrainingRequest
-  ) => {
+  const handleStartTraning = async (exp: BaseTrainingRequest) => {
     const { config, ...experimentPayload } = exp;
-    const payload =
+    const payload = (
       exp.framework === 'sklearn'
         ? {
             ...experimentPayload,
           }
-        : exp;
+        : exp
+    ) as BaseTrainingRequest;
     await startTraining({
-      baseTrainingRequest: payload,
+      body: payload,
     })
       .unwrap()
       .then((newExp) => {

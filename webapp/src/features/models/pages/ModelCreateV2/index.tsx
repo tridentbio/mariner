@@ -36,7 +36,7 @@ type ModelCreationStep = {
 
 type FormFieldNames = FieldPath<modelsApi.ModelCreate>;
 
-const schema = yup.object({
+export const schema = yup.object({
   name: yup.string().required('Model name field is required'),
   config: yup.object({
     name: yup.string().required('Model version name is required'),

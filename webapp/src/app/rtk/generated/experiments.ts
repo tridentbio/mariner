@@ -1,4 +1,3 @@
-import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import { api } from '../api';
 export const addTagTypes = ['experiments'] as const;
 const injectedRtkApi = api
@@ -31,7 +30,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/v1/experiments/`,
           method: 'POST',
-          body: queryArg.baseTrainingRequest,
+          body: queryArg.body,
         }),
         invalidatesTags: ['experiments'],
       }),
@@ -56,6 +55,14 @@ const injectedRtkApi = api
         query: () => ({ url: `/api/v1/experiments/optimizers` }),
         providesTags: ['experiments'],
       }),
+      getExperiment: build.query<GetExperimentApiResponse, GetExperimentApiArg>(
+        {
+          query: (queryArg) => ({
+            url: `/api/v1/experiments/${queryArg.experimentId}`,
+          }),
+          providesTags: ['experiments'],
+        }
+      ),
       getExperimentsMetricsForModelVersion: build.query<
         GetExperimentsMetricsForModelVersionApiResponse,
         GetExperimentsMetricsForModelVersionApiArg
@@ -83,7 +90,7 @@ export type GetExperimentsApiArg = {
 export type PostExperimentsApiResponse =
   /** status 200 Successful Response */ Experiment;
 export type PostExperimentsApiArg = {
-  baseTrainingRequest: BaseTrainingRequest;
+  body: TorchTrainingRequest | SklearnTrainingRequest;
 };
 export type GetExperimentsRunningHistoryApiResponse =
   /** status 200 Successful Response */ RunningHistory[];
@@ -101,6 +108,11 @@ export type GetTrainingExperimentOptimizersApiResponse =
       } & SgdParamsSchema)
   )[];
 export type GetTrainingExperimentOptimizersApiArg = void;
+export type GetExperimentApiResponse =
+  /** status 200 Successful Response */ Experiment;
+export type GetExperimentApiArg = {
+  experimentId: number;
+};
 export type GetExperimentsMetricsForModelVersionApiResponse =
   /** status 200 Successful Response */ Experiment[];
 export type GetExperimentsMetricsForModelVersionApiArg = {
@@ -115,7 +127,7 @@ export type FleetonehotLayerConfig = {
   forwardArgs: FleetonehotForwardArgsReferences;
 };
 export type FleetglobalpoolingConstructorArgs = {
-  aggr: string;
+  aggr?: string;
 };
 export type FleetglobalpoolingForwardArgsReferences = {
   x: string;
@@ -334,6 +346,27 @@ export type ColumnConfig = {
     | RnaDataType
     | ProteinDataType;
 };
+export type BaseModel = {};
+export type OneHotEncoderConfig = {
+  type?: 'sklearn.preprocessing.OneHotEncoder';
+  constructorArgs?: BaseModel;
+  name: string;
+  forwardArgs:
+    | {
+        [key: string]: string;
+      }
+    | string[];
+};
+export type LabelEncoderConfig = {
+  type?: 'sklearn.preprocessing.LabelEncoder';
+  constructorArgs?: BaseModel;
+  name: string;
+  forwardArgs:
+    | {
+        [key: string]: string;
+      }
+    | string[];
+};
 export type FpVecFilteredTransformerConstructorArgs = {
   del_invariant?: boolean;
   length?: number;
@@ -390,6 +423,12 @@ export type FleetproteinsequencefeaturizerLayerConfig = {
   name: string;
   forwardArgs: FleetproteinsequencefeaturizerForwardArgsReferences;
 };
+export type FleetmoleculefeaturizerLayerConfig2 = {
+  type?: 'fleet.model_builder.featurizers.MoleculeFeaturizer';
+  name: string;
+  constructorArgs: FleetmoleculefeaturizerConstructorArgs;
+  forwardArgs: FleetmoleculefeaturizerForwardArgsReferences;
+};
 export type StandardScalerConstructorArgs = {
   with_mean?: boolean;
   with_std?: boolean;
@@ -397,27 +436,6 @@ export type StandardScalerConstructorArgs = {
 export type StandardScalerConfig = {
   type?: 'sklearn.preprocessing.StandardScaler';
   constructorArgs?: StandardScalerConstructorArgs;
-  name: string;
-  forwardArgs:
-    | {
-        [key: string]: string;
-      }
-    | string[];
-};
-export type BaseModel = {};
-export type LabelEncoderConfig = {
-  type?: 'sklearn.preprocessing.LabelEncoder';
-  constructorArgs?: BaseModel;
-  name: string;
-  forwardArgs:
-    | {
-        [key: string]: string;
-      }
-    | string[];
-};
-export type OneHotEncoderConfig = {
-  type?: 'sklearn.preprocessing.OneHotEncoder';
-  constructorArgs?: BaseModel;
   name: string;
   forwardArgs:
     | {
@@ -437,9 +455,16 @@ export type NpConcatenateConfig = {
 };
 export type TorchDatasetConfig = {
   name: string;
+  strategy?: 'forwardArgs';
   targetColumns: TargetTorchColumnConfig[];
   featureColumns: ColumnConfig[];
   featurizers?: (
+    | ({
+        type: 'sklearn.preprocessing.OneHotEncoder';
+      } & OneHotEncoderConfig)
+    | ({
+        type: 'sklearn.preprocessing.LabelEncoder';
+      } & LabelEncoderConfig)
     | ({
         type: 'molfeat.trans.fp.FPVecFilteredTransformer';
       } & FpVecFilteredTransformerConfig)
@@ -458,17 +483,14 @@ export type TorchDatasetConfig = {
     | ({
         type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
       } & FleetproteinsequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet__preprocessing__FleetmoleculefeaturizerLayerConfig';
+      } & FleetmoleculefeaturizerLayerConfig2)
   )[];
   transforms?: (
     | ({
         type: 'sklearn.preprocessing.StandardScaler';
       } & StandardScalerConfig)
-    | ({
-        type: 'sklearn.preprocessing.LabelEncoder';
-      } & LabelEncoderConfig)
-    | ({
-        type: 'sklearn.preprocessing.OneHotEncoder';
-      } & OneHotEncoderConfig)
     | ({
         type: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
       } & NpConcatenateConfig)
@@ -482,9 +504,16 @@ export type TorchModelSpec = {
 };
 export type DatasetConfig = {
   name: string;
-  targetColumns: SimpleColumnConfig[];
-  featureColumns: SimpleColumnConfig[];
+  strategy?: 'forwardArgs';
+  targetColumns: ColumnConfig[];
+  featureColumns: ColumnConfig[];
   featurizers?: (
+    | ({
+        type: 'sklearn.preprocessing.OneHotEncoder';
+      } & OneHotEncoderConfig)
+    | ({
+        type: 'sklearn.preprocessing.LabelEncoder';
+      } & LabelEncoderConfig)
     | ({
         type: 'molfeat.trans.fp.FPVecFilteredTransformer';
       } & FpVecFilteredTransformerConfig)
@@ -503,21 +532,41 @@ export type DatasetConfig = {
     | ({
         type: 'fleet.model_builder.featurizers.ProteinSequenceFeaturizer';
       } & FleetproteinsequencefeaturizerLayerConfig)
+    | ({
+        type: 'fleet__preprocessing__FleetmoleculefeaturizerLayerConfig';
+      } & FleetmoleculefeaturizerLayerConfig2)
   )[];
   transforms?: (
     | ({
         type: 'sklearn.preprocessing.StandardScaler';
       } & StandardScalerConfig)
     | ({
-        type: 'sklearn.preprocessing.LabelEncoder';
-      } & LabelEncoderConfig)
-    | ({
-        type: 'sklearn.preprocessing.OneHotEncoder';
-      } & OneHotEncoderConfig)
-    | ({
         type: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
       } & NpConcatenateConfig)
   )[];
+};
+export type CreateFromType = {
+  type: string;
+  constructorArgs?: BaseModel;
+};
+export type ColumnConfigWithPreprocessing = {
+  name: string;
+  dataType:
+    | NumericDataType
+    | CategoricalDataType
+    | QuantityDataType
+    | SmileDataType
+    | DnaDataType
+    | RnaDataType
+    | ProteinDataType;
+  transforms?: CreateFromType[];
+  featurizers?: CreateFromType[];
+};
+export type DatasetConfigWithPreprocessing = {
+  name: string;
+  strategy?: 'pipeline';
+  targetColumns: ColumnConfigWithPreprocessing[];
+  featureColumns: ColumnConfigWithPreprocessing[];
 };
 export type KNeighborsRegressorConstructorArgs = {
   n_neighbors?: number;
@@ -526,86 +575,44 @@ export type KNeighborsRegressorConstructorArgs = {
 export type KNeighborsRegressorConfig = {
   type?: 'sklearn.neighbors.KNeighborsRegressor';
   constructorArgs?: KNeighborsRegressorConstructorArgs;
-  fitArgs: {
+  fitArgs?: {
     [key: string]: string;
   };
   taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
 };
 export type RandomForestRegressorConstructorArgs = {
   n_estimators?: number;
-  max_depth?: number;
-  min_samples_split?: number | number;
-  min_samples_leaf?: number | number;
-  min_weight_fraction_leaf?: number;
-  max_features?: number | ('sqrt' | 'log2');
-  max_leaf_nodes?: number;
-  min_impurity_decrease?: number;
-  bootstrap?: boolean;
-  oob_score?: boolean;
-  n_jobs?: number;
-  ccp_alpha?: number;
-  max_samples?: number | number;
+  criterion?: 'squared_error' | 'absolute_error' | 'friedman_mse' | 'poisson';
 };
 export type RandomForestRegressorConfig = {
   type?: 'sklearn.ensemble.RandomForestRegressor';
   taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
   constructorArgs?: RandomForestRegressorConstructorArgs;
-  fitArgs: {
+  fitArgs?: {
     [key: string]: string;
   };
 };
 export type ExtraTreesRegressorConstructorArgs = {
   n_estimators?: number;
   criterion?: 'squared_error' | 'absolute_error' | 'friedman_mse' | 'poisson';
-  max_depth?: number;
-  min_samples_split?: number | number;
-  min_samples_leaf?: number | number;
-  min_weight_fraction_leaf?: number;
-  max_features?: number | ('sqrt' | 'log2');
-  max_leaf_nodes?: number;
-  min_impurity_decrease?: number;
-  bootstrap?: boolean;
-  oob_score?: boolean;
-  n_jobs?: number;
-  random_state?: number;
-  verbose?: number;
-  warm_start?: boolean;
-  ccp_alpha?: number;
-  max_samples?: number | number;
 };
 export type ExtraTreesRegressorConfig = {
   type?: 'sklearn.ensemble.ExtraTreesRegressor';
   taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
   constructorArgs?: ExtraTreesRegressorConstructorArgs;
-  fitArgs: {
+  fitArgs?: {
     [key: string]: string;
   };
 };
 export type ExtraTreesClassifierConstructorArgs = {
   n_estimators?: number;
   criterion?: 'gini' | 'entropy' | 'log_loss';
-  max_depth?: number;
-  min_samples_split?: number | number;
-  min_samples_leaf?: number | number;
-  min_weight_fraction_leaf?: number;
-  max_features?: number | number | ('sqrt' | 'log2');
-  max_leaf_nodes?: number;
-  min_impurity_decrease?: number;
-  bootstrap?: boolean;
-  oob_score?: boolean;
-  n_jobs?: number;
-  random_state?: number;
-  verbose?: number;
-  warm_start?: boolean;
-  class_weight?: ('balanced' | 'balanced_subsample') | object | object[];
-  ccp_alpha?: number;
-  max_samples?: number | number;
 };
 export type ExtraTreesClassifierConfig = {
   type?: 'sklearn.ensemble.ExtraTreesClassifier';
   taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
   constructorArgs?: ExtraTreesClassifierConstructorArgs;
-  fitArgs: {
+  fitArgs?: {
     [key: string]: string;
   };
 };
@@ -624,7 +631,7 @@ export type KnearestNeighborsClassifierConstructorArgs = {
 export type KnearestNeighborsClassifierConfig = {
   type?: 'sklearn.neighbors.KNeighborsClassifier';
   constructorArgs?: KnearestNeighborsClassifierConstructorArgs;
-  fitArgs: {
+  fitArgs?: {
     [key: string]: string;
   };
   taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
@@ -632,28 +639,12 @@ export type KnearestNeighborsClassifierConfig = {
 export type RandomForestClassifierConstructorArgs = {
   n_estimators?: number;
   criterion?: 'gini' | 'entropy' | 'log_loss';
-  max_depth?: number;
-  min_samples_split?: number | number;
-  min_samples_leaf?: number | number;
-  min_weight_fraction_leaf?: number;
-  max_features?: number | number | ('sqrt' | 'log2');
-  max_leaf_nodes?: number;
-  min_impurity_decrease?: number;
-  bootstrap?: boolean;
-  oob_score?: boolean;
-  n_jobs?: number;
-  random_state?: number;
-  verbose?: number;
-  warm_start?: boolean;
-  class_weight?: ('balanced' | 'balanced_subsample') | object | object[];
-  ccp_alpha?: number;
-  max_samples?: number | number;
 };
 export type RandomForestClassifierConfig = {
   type?: 'sklearn.ensemble.RandomForestClassifier';
   taskType?: ('regressor' | 'multiclass' | 'multilabel')[];
   constructorArgs?: RandomForestClassifierConstructorArgs;
-  fitArgs: {
+  fitArgs?: {
     [key: string]: string;
   };
 };
@@ -681,7 +672,13 @@ export type SklearnModelSchema = {
 export type SklearnModelSpec = {
   framework?: 'sklearn';
   name: string;
-  dataset: DatasetConfig;
+  dataset:
+    | ({
+        strategy: 'forwardArgs';
+      } & DatasetConfig)
+    | ({
+        strategy: 'pipeline';
+      } & DatasetConfigWithPreprocessing);
   spec: SklearnModelSchema;
 };
 export type ModelVersion = {
@@ -791,11 +788,17 @@ export type TorchTrainingConfig = {
       } & SgdOptimizer);
   earlyStoppingConfig?: EarlyStoppingConfig;
 };
-export type BaseTrainingRequest = {
+export type TorchTrainingRequest = {
   name: string;
   modelVersionId: number;
-  framework: string;
+  framework?: 'torch';
   config: TorchTrainingConfig;
+};
+export type SklearnTrainingRequest = {
+  name: string;
+  modelVersionId: number;
+  framework?: 'sklearn';
+  config?: object;
 };
 export type RunningHistory = {
   experimentId: number;
@@ -837,6 +840,8 @@ export const {
   useLazyGetExperimentsMetricsQuery,
   useGetTrainingExperimentOptimizersQuery,
   useLazyGetTrainingExperimentOptimizersQuery,
+  useGetExperimentQuery,
+  useLazyGetExperimentQuery,
   useGetExperimentsMetricsForModelVersionQuery,
   useLazyGetExperimentsMetricsForModelVersionQuery,
 } = injectedRtkApi;

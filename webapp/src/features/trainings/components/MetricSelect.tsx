@@ -11,10 +11,10 @@ import {
 import { ControllerRenderProps, FieldError } from 'react-hook-form';
 import { Box } from '@mui/system';
 import {
-  BaseTrainingRequest,
   GetExperimentsMetricsApiResponse,
   useGetExperimentsMetricsQuery,
 } from 'app/rtk/generated/experiments';
+import { BaseTrainingRequest } from '@app/types/domain/experiments';
 // TODO: fix MathJax in TexMath
 // import TexMath from 'components/atoms/TexMath';
 import { defaultModeIsMax } from 'utils';

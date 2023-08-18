@@ -1,4 +1,4 @@
-import { BaseTrainingRequest } from '@app/rtk/generated/experiments';
+import { BaseTrainingRequest } from '@app/types/domain/experiments';
 import { MetricMode } from 'app/types/domain/experiments';
 import { DeepPartial } from 'react-hook-form';
 
