@@ -52,13 +52,7 @@ const schema = yup.object({
     spec: yup.object().when('framework', {
       is: 'sklearn',
       then: yup
-        .object({
-          model: preprocessingStepSchema
-            .shape({
-              fitArgs: yup.object().required(),
-            })
-            .required(),
-        })
+        .object({ model: preprocessingStepSchema.required() })
         .required('Sklearn model is required'),
       otherwise: yup.object({ layers: yup.array() }).required(),
     }),
