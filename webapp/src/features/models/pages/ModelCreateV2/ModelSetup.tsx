@@ -24,6 +24,7 @@ export const ModelSetup = ({ control }: ModelSetupProps) => {
               {...(() => {
                 return field;
               })()}
+              id="framework-selector"
             >
               <MenuItem value="torch">Torch</MenuItem>
               <MenuItem value="sklearn">Sklearn</MenuItem>

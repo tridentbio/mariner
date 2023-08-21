@@ -12,14 +12,16 @@ export const CustomAccordion = ({
   title,
   textProps,
   sx,
+  testId,
 }: {
   children: React.ReactNode;
   title: string | React.ReactNode;
   textProps?: Record<string, any>;
   sx?: SxProps;
+  testId?: string;
 }) => {
   return (
-    <Accordion sx={sx}>
+    <Accordion sx={sx} data-testid={`${testId}-accordion`}>
       <AccordionSummary expandIcon={<GridExpandMoreIcon />}>
         <Typography sx={textProps || {}}>{title}</Typography>
       </AccordionSummary>

@@ -19,6 +19,7 @@ import {
   PreprocessingStep,
   StepValue,
 } from './types';
+import { getStepValueLabelData } from './utils';
 
 export type PreprocessingStepSelectGetErrorFn = (
   field: 'type' | 'constructorArgs',
@@ -37,6 +38,7 @@ export interface PreprocessingStepSelectProps {
   extra?: ReactNode;
   label?: string;
   sx?: SxProps<Theme>;
+  testId?: string;
 }
 // todo: Rename to ComponentSelect or ComponentConfig
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
@@ -78,21 +80,20 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
     props.extra;
 
   return (
-    <Accordion expanded={expanded} sx={props.sx}>
+    <Accordion expanded={expanded} sx={props.sx} data-testid={props.testId}>
       <AccordionSummary>
         <ComboBox
+          className="step-select"
           value={selectedStepOption || null}
           error={props.getError && props.getError('type', stepSelected)}
           helperText={props.helperText}
           options={props.options}
           getOptionLabel={(option) => {
-            if (option.type) {
-              const parts = option.type.split('.');
-              const lib = parts[0];
-              const class_ = parts.at(-1);
-              return `${class_} (${lib})`;
-            }
-            return 'Select one';
+            const labelData = getStepValueLabelData(option.type);
+
+            return labelData
+              ? `${labelData.class} (${labelData.lib})`
+              : 'Select one';
           }}
           isOptionEqualToValue={(option, value) => option?.type == value?.type}
           label={props.label || 'Preprocessing Step'}
@@ -107,6 +108,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
             <>
               {stepSelected?.constructorArgs && (
                 <IconButton
+                  data-testid={`${props.testId}-action-btn`}
                   onClick={() => setExpanded((expanded) => !expanded)}
                 >
                   <ExpandMore

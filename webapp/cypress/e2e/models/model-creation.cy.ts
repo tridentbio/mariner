@@ -35,7 +35,14 @@ describe('/models/new - Model creation page', () => {
     );
   });
 
-  it('Builds Binary Classification Model', () => {
+  it('Builds Sklearn Test Model', () => {
+    cy.buildYamlModel(
+      SCHEMA_PATH + '/yaml/sklearn_test.yaml',
+      irisDatasetFixture!.name
+    );
+  });
+
+   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
       SCHEMA_PATH + '/yaml/binary_classification_model.yaml',
       irisDatasetFixture!.name
