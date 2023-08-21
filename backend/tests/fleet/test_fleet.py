@@ -127,6 +127,7 @@ specs = [
         predict_samples.get(predict_sample_key),
     )
     for model_file, dataset_file, predict_sample_key in [
+        ("binary_classification_model.yaml", "iris.csv", "iris_binary"),
         (
             "sklearn_sampl_random_forest_regressor.yaml",
             "SAMPL.csv",
@@ -153,7 +154,6 @@ specs = [
         ("small_regressor_schema.yaml", "zinc.csv", ""),
         ("multiclass_classification_model.yaml", "iris.csv", ""),
         ("multitarget_classification_model.yaml", "iris.csv", ""),
-        ("binary_classification_model.yaml", "iris.csv", "iris_binary"),
         ("dna_example.yml", "sarkisyan_full_seq_data.csv", ""),
     ]
 ]
@@ -225,7 +225,9 @@ def test_train(case: TestCase):
                     mlflow_model_version=result.mlflow_model_version.version,
                     input_=case.predict_sample,
                 )
-                assert len(result) == len(
+                assert len(
+                    result[case.model_spec.dataset.target_columns[0].name]
+                ) == len(
                     next(iter(case.predict_sample.values()))
                 ), "prediction result needs to have the same length as the input"
 

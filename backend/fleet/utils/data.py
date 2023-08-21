@@ -344,7 +344,6 @@ class PreprocessingPipeline:
 
         def if_last_add_on(arr: list):
             def func(item, is_last):
-                print(item, is_last)
                 if is_last:
                     arr.append(item)
 
@@ -699,9 +698,8 @@ class MarinerTorchDataset(Dataset):
             self.preprocessing_pipeline = PreprocessingPipeline(dataset_config)
         else:
             self.preprocessing_pipeline = preprocessing_pipeline
-        transformed = self.preprocessing_pipeline.transform(
-            *self.preprocessing_pipeline.get_X_and_y(self.data)
-        )
+        args = self.preprocessing_pipeline.get_X_and_y(self.data)
+        transformed = self.preprocessing_pipeline.transform(*args)
         for field, result in transformed.items():
             self.data[field] = result
 

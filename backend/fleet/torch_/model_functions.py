@@ -12,6 +12,7 @@ from lightning.pytorch.loggers import Logger
 from mlflow import MlflowClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
+from torch import Tensor
 from torch_geometric.loader import DataLoader
 from typing_extensions import override
 
@@ -227,4 +228,7 @@ class TorchFunctions(BaseModelFunctions):
             key: value.detach().numpy().tolist()
             for key, value in result.items()
         }
-        return result
+        prediction: Dict[str, List[float]] = {}
+        for column, item in result.items():
+            prediction[column] = item if isinstance(item, list) else [item]
+        return prediction
