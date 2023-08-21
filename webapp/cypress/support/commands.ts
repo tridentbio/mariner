@@ -7,6 +7,7 @@ import './models';
 import './deployments';
 import { drag, move } from './dragdrop';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
+import { mount } from 'cypress/react';
 
 Cypress.Commands.add('notificationShouldContain', (text: string) => {
   return cy
@@ -133,6 +134,7 @@ declare global {
       ): Chainable<JQuery<HTMLElement>>;
       getWithoutThrow(selector: string): Chainable<JQuery<HTMLElement>>;
       getCurrentAuthString(): Chainable<string>;
+      mount: typeof mount;
     }
   }
 }

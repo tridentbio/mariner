@@ -20,7 +20,9 @@
     "build-storybook": "storybook build -s public",
     "lint-staged": "lint-staged",
     "cypress:open": "cypress open --e2e -b chrome",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "cypress:open:component": "cypress open --component -b chrome",
+    "cypress:run:component": "cypress run --component"
   },
   "dependencies": {
     "@emotion/css": "^11.10.0",
