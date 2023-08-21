@@ -326,7 +326,7 @@ class PreprocessingPipeline:
     transforms: TransformFunction
 
     def __init__(
-        self, dataset_config: DatasetConfig, featurize_data_types: bool = True
+        self, dataset_config: DatasetConfig, featurize_data_types: bool = False
     ):
         """Creates the pipeline steps without executing them.
 

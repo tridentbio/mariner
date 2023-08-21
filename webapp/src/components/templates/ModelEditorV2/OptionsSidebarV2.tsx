@@ -28,14 +28,6 @@ interface OptionsSidebarProps {
   editable?: boolean;
 }
 
-// Hack to hide some featurizers in order to avoid a double
-// featurization of data types that are automatically featurized
-// in the backend
-const HIDDEN_FEATURIZERS: string[] = [
-  'model_builder.featurizers.DNASequenceFeaturizer' as const,
-  'model_builder.featurizers.RNASequenceFeaturizer' as const,
-  'model_builder.featurizers.ProteinSequenceFeaturizer' as const,
-];
 
 /**
  * The sidebar of the model editor that shows layers and featurizers options.
@@ -46,9 +38,7 @@ const OptionsSidebarV2 = ({
 }: OptionsSidebarProps) => {
   const { data } = useGetModelOptionsQuery();
   // Hack to hide some featurizers
-  const modelOptions = (data || []).filter(
-    (option) => !HIDDEN_FEATURIZERS.includes(option.classPath)
-  );
+  const modelOptions = data  || []
   const [isModelOptionsOpened, setIsModelOptionsOpened] = useState(false);
   const handleToggleNodesRetraction = () => {
     setIsModelOptionsOpened((value) => !value);
