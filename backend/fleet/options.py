@@ -205,7 +205,7 @@ class FleetConfigV2(BaseModel, YAML_Model):
 
 def _get_option_overrides() -> FleetConfigV2:
     # The path of overrides.yml file relative to the root of the project
-    overrides_path = Path("fleet") / "overrides.yml"
+    overrides_path = Path(__file__).parent / "overrides.yml"
     return FleetConfigV2.from_yaml(overrides_path)
 
 

@@ -329,6 +329,23 @@ def test_get_experiments_metrics_for_model_version(
                 assert_all_is_number(value)
 
 
+def get_predict_payload(model: Model):
+    return {
+        "smiles": ["CCC", "CC"],
+        "activity": ["CI", "CI"],
+        "sepal_length": [1.0, 2.0],
+        "petal_length": [1.0, 2.0],
+        "sepal_width": [1.0, 2.0],
+        "petal_width": [1.0, 2.0],
+        "large_petal_width": [1, 2],
+        "large_petal_length": [1, 2],
+        "aaMutations": ["SKGEELFT", "SKGEELFT"],
+        "mwt": [1.0, 2.0],
+        "mwt_group": [1, 0],
+        "tpsa": [1.0, 2.0],
+    }
+
+
 @pytest.mark.integration
 def test_post_experiment_n(
     client, datasets_and_models, normal_user_token_headers
@@ -357,6 +374,15 @@ def test_post_experiment_n(
             )
             experiment = Experiment.parse_obj(res.json())
             if experiment.stage == "SUCCESS":
+                model_version_id = experiment.model_version_id
+                predict_res = client.post(
+                    f"{get_app_settings('server').host}/api/v1/models/{model_version_id}/predict",
+                    json=get_predict_payload(model),
+                    headers=normal_user_token_headers,
+                )
+                assert (
+                    predict_res.status_code == HTTP_200_OK
+                ), predict_res.json()
                 break
             elif experiment.stage == "FAILED":
                 assert False, "Experiment failed"
@@ -366,7 +392,6 @@ def test_post_experiment_n(
 
             if timeout == 0:
                 assert False, f"Experiment model {model.name} timed out"
-
         # Get experiment by id
         experiment_id = res.json()["id"]
         res = client.get(

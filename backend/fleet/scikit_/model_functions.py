@@ -216,7 +216,8 @@ class SciKitFunctions(BaseModelFunctions):
             input_, concat_features=True
         )
         X = transformed_data[self.references["X"]]
-        return self.model.predict(X)
+        target_column = self.spec.dataset.target_columns[0].name
+        return {target_column: self.model.predict(X).tolist()}
 
     def log_models(
         self,

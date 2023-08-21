@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import List, Union
 
 import mlflow
+import numpy as np
 import pandas as pd
 from lightning.pytorch.loggers.logger import Logger
 from lightning.pytorch.loggers.mlflow import MLFlowLogger
@@ -260,6 +261,11 @@ def predict(
         mlflow_model_version: The version of the model.
         input_: The dataframe with the input data.
     """
+    filtered_input = {}
+    for feature in spec.dataset.feature_columns:
+        filtered_input[feature.name] = input_[feature.name]
+    input_ = filtered_input
+
     client = mlflow.MlflowClient()
     model_uri = f"models:/{mlflow_model_name}/{mlflow_model_version}"
     modelversion = client.get_model_version(

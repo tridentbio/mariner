@@ -1,9 +1,10 @@
 """
 Handlers for api/v1/models* endpoints
 """
-from typing import Any, Dict, List, Optional, Union
+from typing import Annotated, Any, Dict, List, Optional, Union
 
 import torch
+from fastapi import Body
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
@@ -134,32 +135,48 @@ def get_model_name_suggestion():
 
 
 @router.post(
-    "/{model_version_id}/predict", response_model=Dict[str, List[Any]]
+    "/{model_version_id}/predict",
+    response_model=Dict[str, List[Any]],
 )
 def post_model_predict(
     model_version_id: int,
-    model_input: Dict[str, List[Any]],  # Any json
+    model_input: Annotated[
+        Dict[str, List[Any]],
+        Body(
+            examples=[
+                {
+                    "smiles": ["CC", "CCC"],
+                    "mwt": [16.0, 30.0],
+                }
+            ]
+        ),
+    ],  # Any json
     current_user: User = Depends(deps.get_current_active_user),
     db: Session = Depends(deps.get_db),
 ) -> Any:
-    """Endpoint to use a trained model for prediction.
+    """Gets a prediction from a trained model.
 
-    Args:
-        model_version_id: Id of the model version to be used for prediction.
-        model_input: JSON version of the pandas dataframe used as input.
-        current_user: User that originated the request.
-        db: Connection to the db
+    The request body must be a json from which we can bulid the input matrix.
+    E.g. You've trained a model to predict the ``tpsa`` property from the
+    ``smiles`` and ``mwt`` properties. The body would be:
 
-    Returns:
-        The model prediction as a torch tensor or pandas dataframe.
+    ```json
+    {
+        "smiles": ["CC", "CCC"],
+        "mwt": [16.0, 30.0],
+    }
+    ```
 
-    Raises:
-        HTTPException: When app is not able to get the prediction
-        TypeError: When the model output is not a Tensor or a Dataframe
+    And the returned prediction could be:
+
+    ```json
+    {
+        "tpsa": [12.0, 20.0],
+    }
+    ```
     """
-    prediction: Optional[Dict[str, Union[torch.Tensor, List[Any]]]] = None
     try:
-        prediction = controller.get_model_prediction(
+        result = controller.get_model_prediction(
             db,
             controller.PredictRequest(
                 user_id=current_user.id,
@@ -167,6 +184,7 @@ def post_model_predict(
                 model_input=model_input,
             ),
         )
+        return result
     except InvalidDataframe as exp:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -182,18 +200,14 @@ def post_model_predict(
             detail="Model version was not trained yet",
         ) from exp
 
-    for column, result in prediction.items():
-        prediction[column] = result if isinstance(result, list) else [result]
-
-    return prediction
-
 
 @router.get(
     "/losses",
     response_model=AllowedLosses,
 )
 def get_model_losses():
-    """Endpoint to get the available losses"""
+    """Gets the available loss functions that can be used for training neural
+    networks."""
     return AllowedLosses()
 
 
@@ -203,13 +217,7 @@ def get_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    """Endpoint to get a single model from the database.
-
-    Args:
-        model_id: Id of the model.
-        db: Database connection.
-        current_user: User that is requested the action
-    """
+    """Gets a single model from the database"""
     model = controller.get_model(db, current_user, model_id)
     return model
 
@@ -220,13 +228,7 @@ def delete_model(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ):
-    """Endpoint to delete a model
-
-    Args:
-        model_id: id of the model to be deleted
-        db: Connection to the database.
-        current_user: User that is requested the action
-    """
+    """Deletes a model from the database and mlflow."""
     model = controller.delete_model(db, current_user, model_id)
     return model
 
@@ -239,11 +241,7 @@ def delete_model(
 async def post_model_check_config(
     model_config: TrainingCheckRequest, db: Session = Depends(deps.get_db)
 ):
-    """Endpoint to check the forward method of a ModelSchema
-
-    Args:
-        model_config: Model schema to be checked
-        db: Database connection
-    """
+    """Checks if the torch model config in the request body doesn't raise
+    any errors."""
     result = await controller.check_model_step_exception(db, model_config)
     return result
