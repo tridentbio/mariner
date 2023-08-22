@@ -435,7 +435,7 @@ const buildFlowSchema = (
           const curElement = element
             .find(`[data-testid="${parsedEdgeName}-${key}"]`)
             .find('input');
-          curElement.clear().type(value);
+          curElement.clear().type(value as string);
         } else {
           element.get(`[id="${key}"]`).then((curElement) => {
             if (Boolean(curElement.prop('checked')) !== value)

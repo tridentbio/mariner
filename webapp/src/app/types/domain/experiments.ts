@@ -1,3 +1,7 @@
+import {
+  SklearnTrainingRequest,
+  TorchTrainingRequest,
+} from '@app/rtk/generated/experiments';
 import { User } from 'app/rtk/auth';
 import { Model, ModelVersion } from 'app/rtk/generated/models';
 
@@ -71,3 +75,5 @@ export interface Experiment {
   history?: HistoryMetrics;
   stackTrace?: string;
 }
+
+export type BaseTrainingRequest = TorchTrainingRequest | SklearnTrainingRequest;

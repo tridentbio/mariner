@@ -11,10 +11,10 @@ import {
 import { ControllerRenderProps, FieldError } from 'react-hook-form';
 import { Box } from '@mui/system';
 import {
-  BaseTrainingRequest,
   GetExperimentsMetricsApiResponse,
   useGetExperimentsMetricsQuery,
 } from 'app/rtk/generated/experiments';
+import { BaseTrainingRequest } from '@app/types/domain/experiments';
 // TODO: fix MathJax in TexMath
 // import TexMath from 'components/atoms/TexMath';
 import { defaultModeIsMax } from 'utils';
@@ -104,6 +104,7 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
               }}
               value={column?.name || ''}
               ref={ref}
+              error={!!error}
               label={'Target Column'}
             >
               {targetColumns.map((column) => (
@@ -121,9 +122,11 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
                 setSelected(event.target.value);
                 setValue(defaultModeIsMax(event.target.value) ? 'max' : 'min');
               }}
+              disabled={!column?.name}
               value={selected || ''}
               ref={ref}
               name={name}
+              error={!!error}
               label={error?.message || undefined}
             >
               {sortedFilteredMetrics.map((metric) => (

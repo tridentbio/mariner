@@ -1,11 +1,15 @@
-import { SxProps, Theme, Typography, TypographyVariant } from '@mui/material';
+import {
+  SxProps,
+  Theme,
+  Typography,
+  TypographyTypeMap,
+  TypographyVariant,
+} from '@mui/material';
 import { SystemProps, TypographyProps } from '@mui/system';
 import React, { forwardRef, Ref } from 'react';
 
-export type TextProps = TypographyProps & { variant?: TypographyVariant } & {
-  children: React.ReactNode;
+export type TextProps = TypographyTypeMap['props'] & {
   id?: string;
-  sx?: SxProps<Theme>;
 };
 
 export const Text = forwardRef((props: TextProps, ref: Ref<HTMLElement>) => {

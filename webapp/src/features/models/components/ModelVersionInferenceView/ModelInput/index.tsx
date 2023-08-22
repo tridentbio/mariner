@@ -2,6 +2,7 @@ import {
   forwardRef,
   ReactNode,
   Ref,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useState,
@@ -54,16 +55,20 @@ const ModelInput = forwardRef(
       return featureColumns.map((col) => col.name).includes(colName);
     };
 
-    const makeInitialValues = (columns: string[]): ModelInputValue => {
+    const initialValues = useMemo<ModelInputValue>(() => {
       const result: ModelInputValue = {};
       for (const key of columns) {
         if (isFeatureColumn(key)) result[key] = [''];
       }
       return result;
-    };
-    const [value, setValue] = useState<ModelInputValue>(
-      makeInitialValues(columns)
-    );
+    }, [config]);
+
+    const [value, setValue] = useState<ModelInputValue>(initialValues);
+
+    useEffect(() => {
+      setValue(initialValues);
+    }, [initialValues]);
+
     const handleChange = (key: string, fieldValue: number | string) => {
       const newValue: ModelInputValue = {
         ...value,
@@ -75,7 +80,7 @@ const ModelInput = forwardRef(
 
     useImperativeHandle(ref, () => ({
       reset: () => {
-        setValue(makeInitialValues(columns));
+        setValue(initialValues);
       },
     }));
 
@@ -100,7 +105,11 @@ const ModelInput = forwardRef(
           }
           const dataType = meta.dataType;
           let children: ReactNode;
+
           const fieldValue = value[col];
+
+          if (!fieldValue) return null;
+
           if (dataType.domainKind === DataTypeDomainKind.Smiles) {
             children = (
               <SmileInput

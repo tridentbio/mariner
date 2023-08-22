@@ -1,6 +1,6 @@
 import { ModelCreate } from '@app/rtk/generated/models';
 import { store } from '@app/store';
-import { modelCreateSchema } from '@features/models/pages/ModelCreateV2';
+import { schema } from '@features/models/pages/ModelCreateV2';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ThemeProvider } from '@mui/system';
 import { StoryFn, StoryObj } from '@storybook/react';
@@ -28,6 +28,7 @@ export default {
       config: {
         dataset: {
           name: 'Test dataset',
+          strategy: 'pipeline',
           featureColumns: [
             {
               name: 'Smiles Column 2',
@@ -83,7 +84,7 @@ export const SimpleAPI: StoryObj = {
       mode: 'all',
       criteriaMode: 'all',
       reValidateMode: 'onChange',
-      resolver: yupResolver(modelCreateSchema),
+      resolver: yupResolver(schema),
     });
 
     return (

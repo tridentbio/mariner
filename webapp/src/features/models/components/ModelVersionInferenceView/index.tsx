@@ -21,6 +21,8 @@ import DataSummary from './DataSummary';
 import { datasetsApi } from 'app/rtk/datasets';
 import { getPrediction } from 'features/models/modelsApi';
 import { TorchModelSpec } from '@app/rtk/generated/models';
+import { useNotifications } from '@app/notifications';
+import { HTTPError } from '@utils/http';
 
 interface ModelVersionInferenceViewProps {
   model: Model;
@@ -53,6 +55,7 @@ const ModelVersionInferenceView = ({
   const [modelInputs, setModelInputs] = useState<ModelInputValue>({});
   const [modelOutputs, setModelOutputs] = useState<ModelOutputValue>([]);
   const [predictionLoading, setPredictionLoading] = useState(false);
+  const { notifyError, success } = useNotifications();
   const { data: dataset } = datasetsApi.useGetDatasetByIdQuery(
     model.datasetId!
   );
@@ -61,6 +64,7 @@ const ModelVersionInferenceView = ({
     setPredictionLoading(true);
     getPrediction({ modelVersionId, modelInputs })
       .then(setModelOutputs)
+      .catch((err: HTTPError) => notifyError(err.response.data.detail))
       .finally(() => setPredictionLoading(false));
   };
   const resetModelInputs = () => {

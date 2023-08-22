@@ -36,7 +36,7 @@ type ModelCreationStep = {
 
 type FormFieldNames = FieldPath<modelsApi.ModelCreate>;
 
-const schema = yup.object({
+export const schema = yup.object({
   name: yup.string().required('Model name field is required'),
   config: yup.object({
     name: yup.string().required('Model version name is required'),
@@ -52,13 +52,7 @@ const schema = yup.object({
     spec: yup.object().when('framework', {
       is: 'sklearn',
       then: yup
-        .object({
-          model: preprocessingStepSchema
-            .shape({
-              fitArgs: yup.object().required(),
-            })
-            .required(),
-        })
+        .object({ model: preprocessingStepSchema.required() })
         .required('Sklearn model is required'),
       otherwise: yup.object({ layers: yup.array() }).required(),
     }),
@@ -246,62 +240,75 @@ const ModelCreateV2 = () => {
 
   const [getExistingModel, { data: existingModel, isLoading: fetchingModel }] =
     modelsApi.useLazyGetModelQuery();
-  const registeredModel = searchParams.get('registeredModel');
-  useEffect(() => {
-    const go = async () => {
-      if (!registeredModel) return;
-      const result = await getExistingModel({
-        modelId: parseInt(registeredModel),
-      }).unwrap();
-      methods.setValue('name', result.name);
-      methods.setValue('modelDescription', result.description || '');
-      methods.setValue('config.dataset.name', result?.dataset?.name || '');
-      const modelFeatures = result.columns.filter(
-        (col) => col.columnType === 'feature'
-      );
-      const modelTarget = result.columns.filter(
-        (col) => col.columnType === 'target'
-      );
-      const featureColumns = result?.dataset?.columnsMetadata?.filter((meta) =>
-        modelFeatures.map((feat) => feat.columnName).includes(meta.pattern)
-      );
-      // const targetColumns = result?.dataset?.columnsMetadata?.find(
-      //   (meta) => modelTarget?.columnName === meta.pattern
-      // );
-      const targetColumns = result?.dataset?.columnsMetadata?.filter((meta) =>
-        modelTarget.map((target) => target.columnName).includes(meta.pattern)
-      );
-      const makeColumnConfigFromDescription = (
-        description: modelsApi.ColumnsDescription
-      ): modelsApi.ColumnConfig => {
-        return {
-          name: description.pattern,
-          dataType: description.dataType,
-        };
-      };
-      const makeTargetColumnConfigFromDescription = (
-        description: modelsApi.ColumnsDescription
-      ): modelsApi.TargetTorchColumnConfig => {
-        return {
-          name: description.pattern,
-          dataType: description.dataType,
-          outModule: '',
-        };
-      };
-      if (featureColumns)
-        methods.setValue(
-          'config.dataset.featureColumns',
-          featureColumns.map(makeColumnConfigFromDescription)
-        );
 
-      if (targetColumns)
-        methods.setValue(
-          'config.dataset.targetColumns',
-          targetColumns.map(makeTargetColumnConfigFromDescription)
-        );
-    };
-    go();
+  const registeredModel = searchParams.get('registeredModel');
+
+  useEffect(() => {
+    handleRegisteredModel();
   }, [registeredModel]);
+
+  const handleRegisteredModel = async () => {
+    if (!registeredModel) return;
+
+    const result = await getExistingModel({
+      modelId: parseInt(registeredModel),
+    }).unwrap();
+
+    methods.setValue('name', result.name);
+    methods.setValue('modelDescription', result.description || '');
+    methods.setValue('config.dataset.name', result?.dataset?.name || '');
+
+    const lastVersion = result.versions.length
+      ? result.versions[result.versions.length - 1]
+      : null;
+
+    methods.setValue(
+      'config.framework',
+      lastVersion ? lastVersion.config.framework : 'torch'
+    );
+
+    const modelFeatures = result.columns.filter(
+      (col) => col.columnType === 'feature'
+    );
+    const modelTarget = result.columns.filter(
+      (col) => col.columnType === 'target'
+    );
+    const featureColumns = result?.dataset?.columnsMetadata?.filter((meta) =>
+      modelFeatures.map((feat) => feat.columnName).includes(meta.pattern)
+    );
+
+    const targetColumns = result?.dataset?.columnsMetadata?.filter((meta) =>
+      modelTarget.map((target) => target.columnName).includes(meta.pattern)
+    );
+    const makeColumnConfigFromDescription = (
+      description: modelsApi.ColumnsDescription
+    ): modelsApi.ColumnConfig => {
+      return {
+        name: description.pattern,
+        dataType: description.dataType,
+      };
+    };
+    const makeTargetColumnConfigFromDescription = (
+      description: modelsApi.ColumnsDescription
+    ): modelsApi.TargetTorchColumnConfig => {
+      return {
+        name: description.pattern,
+        dataType: description.dataType,
+        outModule: '',
+      };
+    };
+    if (featureColumns)
+      methods.setValue(
+        'config.dataset.featureColumns',
+        featureColumns.map(makeColumnConfigFromDescription)
+      );
+
+    if (targetColumns)
+      methods.setValue(
+        'config.dataset.targetColumns',
+        targetColumns.map(makeTargetColumnConfigFromDescription)
+      );
+  };
 
   const handlePrevious = () => {
     const newStep = activeStep - 1;

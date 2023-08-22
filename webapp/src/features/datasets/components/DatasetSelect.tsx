@@ -1,5 +1,6 @@
 import { Autocomplete, AutocompleteProps, TextField } from '@mui/material';
 import { Box } from '@mui/system';
+import { debounce } from '@utils';
 import { useAppSelector } from 'app/hooks';
 import { Dataset, useLazyGetMyDatasetsQuery } from 'app/rtk/generated/datasets';
 import { FocusEventHandler, useEffect, useState } from 'react';
@@ -19,9 +20,7 @@ export interface DatasetSelectProps
 const DatasetSelect = (props: DatasetSelectProps) => {
   const { value: propsValue } = props;
   const [value, setValue] = useState<null | Dataset>(propsValue || null);
-  const data = useAppSelector((store) => store.datasets.datasets);
   const [fetchDatasets] = useLazyGetMyDatasetsQuery();
-  const datasets = data;
 
   useEffect(() => {
     if (propsValue) {
@@ -30,25 +29,28 @@ const DatasetSelect = (props: DatasetSelectProps) => {
   }, [propsValue]);
 
   useEffect(() => {
-    if (!data.length)
-      fetchDatasets({
-        page: 0,
-        perPage: 50,
-        searchByName: '',
-      });
-  }, [data]);
+    fetchDatasets({
+      page: 0,
+      perPage: 50,
+      searchByName: '',
+    });
+  }, []);
+
+  const data = useAppSelector((store) => store.datasets.datasets);
+  const datasets = data;
+
   const handleSearchChange: AutocompleteProps<
     any,
     any,
     any,
     any
-  >['onInputChange'] = (_ev, input) => {
+  >['onInputChange'] = debounce((_ev, input) => {
     fetchDatasets({
       page: 0,
       perPage: 50,
       searchByName: input,
     });
-  };
+  });
 
   return (
     <Autocomplete

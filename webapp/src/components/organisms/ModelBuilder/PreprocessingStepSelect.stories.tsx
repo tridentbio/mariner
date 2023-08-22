@@ -2,16 +2,17 @@ import { store } from '@app/store';
 import useModelOptions, {
   toConstructorArgsConfig,
 } from '@hooks/useModelOptions';
-import { StoryObj } from '@storybook/react';
+import { StoryFn, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { Provider } from 'react-redux';
 import PreprocessingStepSelect from './PreprocessingStepSelect';
+import { GenericPreprocessingStep, StepValue } from './types';
 
 export default {
   title: 'components/PreprocessingStepSelect',
   component: PreprocessingStepSelect,
   decorators: [
-    (Story) => (
+    (Story: StoryFn) => (
       <Provider store={store}>
         <Story />
       </Provider>
@@ -55,11 +56,14 @@ export default {
 
 export const Simple: StoryObj = {
   args: {},
-  render: (args) => {
-    const [value, setValue] = useState(undefined);
+  render: (args: { [key: string]: any }) => {
+    const [value, setValue] = useState<GenericPreprocessingStep | null>(null);
     return (
       <>
-        <PreprocessingStepSelect {...args} onChange={(val) => setValue(val)} />
+        <PreprocessingStepSelect
+          options={args.options as StepValue[]}
+          onChanges={(val) => setValue(val)}
+        />
         <pre>{JSON.stringify(value, null, 2)}</pre>
       </>
     );
@@ -69,12 +73,12 @@ export const Simple: StoryObj = {
 export const SimpleAPI: StoryObj = {
   args: {},
   render: (args) => {
-    const [value, setValue] = useState(undefined);
+    const [value, setValue] = useState<any>(undefined);
     const options = useModelOptions();
 
-    if ('error' in options) {
+    /* if ('error' in options) {
       return <pre>{JSON.stringify(options.error, null, 2)}</pre>;
-    }
+    } */
 
     const preprocessingOptions = options.options.map(toConstructorArgsConfig);
 
@@ -85,8 +89,8 @@ export const SimpleAPI: StoryObj = {
         <pre>{JSON.stringify(value, null, 2)}</pre>
         <PreprocessingStepSelect
           {...args}
-          onChange={(val) => setValue(val)}
-          options={preprocessingOptions}
+          onChanges={(val) => setValue(val)}
+          options={preprocessingOptions as StepValue[]}
         />
         <pre>{JSON.stringify(option, null, 2)}</pre>
       </>
