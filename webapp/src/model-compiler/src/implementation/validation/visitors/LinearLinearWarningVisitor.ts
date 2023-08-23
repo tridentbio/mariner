@@ -21,7 +21,7 @@ export default class LinearLinearWarningVisitor extends ComponentVisitor {
       const nonLinearLayer: LayersType = {
         name: `${dependentLinearLayer.name}-${component.name}-ReLu`,
         type: 'torch.nn.ReLU',
-        constructorArgs: {},
+        constructorArgs: { inplace: false },
         forwardArgs: {
           input: component.name,
         },
