@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  EdgeProps,
-  getBezierPath,
-  getEdgeCenter,
-  Node,
-  useNodes,
-} from 'react-flow-renderer';
+import { EdgeProps, getBezierPath, Node, useNodes } from 'reactflow';
 import { EdgeButton, EdgeButtonContainer } from './styles';
 
 const foreignObjectSize = 60;
@@ -33,7 +27,8 @@ export const CustomEdge: React.FC<CustomEdgeProps> = ({
   contentEditable = true,
 }) => {
   const nodes = useNodes();
-  const edgePath = getBezierPath({
+
+  const [path, labelX, labelY, offsetX, offsetY] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -41,27 +36,22 @@ export const CustomEdge: React.FC<CustomEdgeProps> = ({
     targetY,
     targetPosition,
   });
-  const [edgeCenterX, edgeCenterY] = getEdgeCenter({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-  });
+
   return (
     <>
       <path
         id={id}
         style={style}
         className="react-flow__edge-path error"
-        d={edgePath}
+        d={path}
         markerEnd={markerEnd}
       />
       {contentEditable && (
         <foreignObject
           width={foreignObjectSize}
           height={foreignObjectSize}
-          x={edgeCenterX - foreignObjectSize / 2}
-          y={edgeCenterY - foreignObjectSize / 2}
+          x={labelX - foreignObjectSize / 2}
+          y={labelY - foreignObjectSize / 2}
           className="edgebutton-foreignobject"
           requiredExtensions="http://www.w3.org/1999/xhtml"
         >

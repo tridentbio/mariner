@@ -6,6 +6,7 @@ import {
 } from '@components/organisms/ModelBuilder/formSchema';
 import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { LoadingButton } from '@mui/lab';
 import { Button, Step, StepLabel, Stepper } from '@mui/material';
 import { Box } from '@mui/system';
 import { useNotifications } from 'app/notifications';
@@ -16,7 +17,7 @@ import ModelEditor from 'components/templates/ModelEditorV2';
 import { ModelEditorContextProvider } from 'hooks/useModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import { MouseEvent, useEffect, useState } from 'react';
-import { ReactFlowProvider } from 'react-flow-renderer';
+import { ReactFlowProvider } from 'reactflow';
 import { FieldPath, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as yup from 'yup';
@@ -89,7 +90,7 @@ const ModelCreateV2 = () => {
     resolver: yupResolver(schema),
   });
 
-  const [createModel, { error, isLoading, data }] =
+  const [createModel, { error, isLoading: creatingModel, data }] =
     modelsApi.useCreateModelMutation();
   const { control, getValues, setValue, watch } = methods;
   const config = watch('config');
@@ -343,14 +344,21 @@ const ModelCreateV2 = () => {
         <Box sx={{ maxWidth: '100vw' }}>
           <div>
             {selectedFramework == 'torch' ? (
-              <ModelEditor
-                value={extendSpecWithTargetForwardArgs(
-                  config as modelsApi.TorchModelSpec
-                )}
-                onChange={(value) => {
-                  setValue('config', value as modelsApi.ModelCreate['config']);
-                }}
-              />
+              <ReactFlowProvider>
+                <ModelEditorContextProvider>
+                  <ModelEditor
+                    value={extendSpecWithTargetForwardArgs(
+                      config as modelsApi.TorchModelSpec
+                    )}
+                    onChange={(value) => {
+                      setValue(
+                        'config',
+                        value as modelsApi.ModelCreate['config']
+                      );
+                    }}
+                  />
+                </ModelEditorContextProvider>
+              </ReactFlowProvider>
             ) : (
               <Box style={{ height: '45vh' }}>
                 <SklearnModelInput />
@@ -371,54 +379,55 @@ const ModelCreateV2 = () => {
   ];
 
   return (
-    <ReactFlowProvider>
-      <ModelEditorContextProvider>
-        <Content>
-          <FormProvider {...methods}>
-            <form style={{ position: 'relative', overflowX: 'hidden' }}>
-              <Stepper
-                orientation={'horizontal'}
-                activeStep={activeStep}
-                sx={{ mb: 5, mt: 2 }}
+    <Content>
+      <FormProvider {...methods}>
+        <form style={{ position: 'relative', overflowX: 'hidden' }}>
+          <Stepper
+            orientation={'horizontal'}
+            activeStep={activeStep}
+            sx={{ mb: 5, mt: 2 }}
+          >
+            {steps.map(({ title }) => (
+              <Step key={title}>
+                <StepLabel>{title}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+          {steps[activeStep].content}
+          <Box key="footer" sx={{ mt: 2, ml: 3 }}>
+            {activeStep !== 0 && (
+              <Button
+                onClick={handlePrevious}
+                variant="contained"
+                sx={{ mr: 3 }}
+                data-testid="previous"
+                disabled={checkingModel || creatingModel}
               >
-                {steps.map(({ title }) => (
-                  <Step key={title}>
-                    <StepLabel>{title}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-              {steps[activeStep].content}
-              <Box key="footer" sx={{ mt: 2, ml: 3 }}>
-                {activeStep !== 0 && (
-                  <Button
-                    onClick={handlePrevious}
-                    variant="contained"
-                    sx={{ mr: 3 }}
-                    data-testid="previous"
-                  >
-                    PREVIOUS
-                  </Button>
-                )}
-                {activeStep !== steps.length - 1 && (
-                  <Button
-                    data-testid="next"
-                    onClick={handleNext}
-                    variant="contained"
-                  >
-                    NEXT
-                  </Button>
-                )}
-                {activeStep === steps.length - 1 && (
-                  <Button variant="contained" onClick={handleModelCreate}>
-                    CREATE
-                  </Button>
-                )}
-              </Box>
-            </form>
-          </FormProvider>
-        </Content>
-      </ModelEditorContextProvider>
-    </ReactFlowProvider>
+                PREVIOUS
+              </Button>
+            )}
+            {activeStep !== steps.length - 1 && (
+              <Button
+                data-testid="next"
+                onClick={handleNext}
+                variant="contained"
+              >
+                NEXT
+              </Button>
+            )}
+            {activeStep === steps.length - 1 && (
+              <LoadingButton
+                loading={checkingModel || creatingModel}
+                variant="contained"
+                onClick={handleModelCreate}
+              >
+                <span>CREATE</span>
+              </LoadingButton>
+            )}
+          </Box>
+        </form>
+      </FormProvider>
+    </Content>
   );
 };
 

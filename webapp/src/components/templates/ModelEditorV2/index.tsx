@@ -1,32 +1,7 @@
-import {
-  useEffect,
-  useRef,
-  DragEvent,
-  useState,
-  useLayoutEffect,
-  useCallback,
-} from 'react';
-import ReactFlow, {
-  Background,
-  BackgroundVariant,
-  NodeProps,
-  applyNodeChanges,
-  applyEdgeChanges,
-  Edge,
-} from 'react-flow-renderer';
-import useModelEditor from 'hooks/useModelEditor';
-import ModelEditorControls from 'components/templates/ModelEditor/Components/ModelEditorControls';
+import { useModelEditor } from '@hooks';
 import { Box } from '@mui/material';
-import OptionsSidebarV2, {
-  HandleProtoDragStartParams,
-} from './OptionsSidebarV2';
-import { substrAfterLast } from 'utils';
-import ComponentConfigNode from './nodes/ComponentConfigNode';
-import InputNode from './nodes/InputNode';
-import OutputNode from './nodes/OutputNode';
-import SuggestionsList from './SuggestionsList';
-import ModelEdge from './edges/ModelEdge';
-import { StyleOverrides } from './styles';
+import FullScreenWrapper from 'components/organisms/FullScreenWrapper';
+import ModelEditorControls from 'components/templates/ModelEditor/Components/ModelEditorControls';
 import { makeComponentEdit } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
 import {
   getComponent,
@@ -36,8 +11,28 @@ import {
   ModelSchema,
   NodeType,
 } from 'model-compiler/src/interfaces/model-editor';
-import { useMemo } from 'react';
-import FullScreenWrapper from 'components/organisms/FullScreenWrapper';
+import {
+  DragEvent,
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import ReactFlow, { Background, BackgroundVariant, NodeProps } from 'reactflow';
+import 'reactflow/dist/style.css';
+import { substrAfterLast } from 'utils';
+import OptionsSidebarV2, {
+  HandleProtoDragStartParams,
+} from './OptionsSidebarV2';
+import SuggestionsList from './SuggestionsList';
+import ModelEdge from './edges/ModelEdge';
+import ComponentConfigNode from './nodes/ComponentConfigNode';
+import InputNode from './nodes/InputNode';
+import OutputNode from './nodes/OutputNode';
+import { StyleOverrides } from './styles';
 
 type ModelEditorProps = {
   value: ModelSchema;
@@ -53,6 +48,35 @@ const getGoodDistance = (nodesNumber: number) => {
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const SideBar = memo(
+  ({ editable }: { editable: boolean }) => (
+    <OptionsSidebarV2
+      onDragStart={({ event, data }: HandleProtoDragStartParams) => {
+        event.dataTransfer.setData(
+          'application/reactflow',
+          'ComponentConfigNode'
+        );
+        event.dataTransfer.setData(
+          'application/componentData',
+          JSON.stringify(data)
+        );
+        event.dataTransfer.setData(
+          'application/offset',
+          JSON.stringify({
+            x: event.clientX - event.currentTarget.getBoundingClientRect().x,
+            y: event.clientY - event.currentTarget.getBoundingClientRect().y,
+          })
+        );
+        event.dataTransfer.effectAllowed = 'move';
+      }}
+      editable={editable}
+    />
+  ),
+  (prevValue, nextValue) => prevValue.editable === nextValue.editable
+);
+
+SideBar.displayName = 'SideBar';
 
 const ModelEditor = ({
   value,
@@ -78,6 +102,8 @@ const ModelEditor = ({
     clearPositionOrdering,
     options,
     fitView,
+    onNodeChanges,
+    onEdgesChanges,
   } = useModelEditor();
   const [fullScreen, setFullScreen] = useState(false);
   const [connectingNode, setConnectingNode] = useState<
@@ -245,6 +271,7 @@ const ModelEditor = ({
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [listeningForKeyPress, keyAssignments]);
+
   return (
     <FullScreenWrapper fullScreen={fullScreen} setFullScreen={setFullScreen}>
       <StyleOverrides>
@@ -261,17 +288,13 @@ const ModelEditor = ({
           <ReactFlow
             nodes={nodes}
             edges={edges}
+            onNodesChange={onNodeChanges}
+            onEdgesChange={onEdgesChanges}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             minZoom={0.1}
             onDragOver={onDragOver}
             onDrop={onDrop}
-            onNodesChange={(changes) => {
-              setNodes((nodes) => applyNodeChanges(changes, nodes));
-            }}
-            onEdgesChange={(changes) =>
-              setEdges((edges) => applyEdgeChanges(changes, edges))
-            }
             onConnectEnd={() => {
               clearPositionOrdering();
             }}
@@ -341,33 +364,7 @@ const ModelEditor = ({
             />
           </ReactFlow>
 
-          {editable && (
-            <OptionsSidebarV2
-              onDragStart={({ event, data }: HandleProtoDragStartParams) => {
-                event.dataTransfer.setData(
-                  'application/reactflow',
-                  'ComponentConfigNode'
-                );
-                event.dataTransfer.setData(
-                  'application/componentData',
-                  JSON.stringify(data)
-                );
-                event.dataTransfer.setData(
-                  'application/offset',
-                  JSON.stringify({
-                    x:
-                      event.clientX -
-                      event.currentTarget.getBoundingClientRect().x,
-                    y:
-                      event.clientY -
-                      event.currentTarget.getBoundingClientRect().y,
-                  })
-                );
-                event.dataTransfer.effectAllowed = 'move';
-              }}
-              editable={editable}
-            />
-          )}
+          {editable ? <SideBar editable /> : null}
         </Box>
         <div>
           {suggestions?.length > 0 && (

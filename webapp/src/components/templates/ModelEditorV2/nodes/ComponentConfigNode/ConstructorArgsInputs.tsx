@@ -5,6 +5,7 @@ import { makeComponentEdit } from 'model-compiler/src/implementation/commands/Ed
 import { getComponent } from 'model-compiler/src/implementation/modelSchemaQuery';
 import { LayerFeaturizerType } from 'model-compiler/src/interfaces/model-editor';
 import EditorSelect from './EditorSelect';
+import { useMemo } from 'react';
 
 export interface ConstructorArgsInputsProps {
   data: LayerFeaturizerType;
@@ -46,9 +47,10 @@ const ConstructorArgsInputs = ({
     (acc, sug) => ({ ...acc, ...sug.getConstructorArgsErrors() }),
     {} as Record<string, string>
   );
-  return (
-    <>
-      <div style={{ marginTop: 5 }}>
+
+  const ArgsList = useMemo(() => {
+    return (
+      <>
         {Object.entries(option.component.constructorArgsSummary)
           .map(([key, type]) => {
             if (
@@ -145,9 +147,11 @@ const ConstructorArgsInputs = ({
             else return null;
           })
           .filter((el) => !!el)}
-      </div>
-    </>
-  );
+      </>
+    );
+  }, [editable, option.component.constructorArgsSummary, props.data]);
+
+  return ArgsList;
 };
 
 export default ConstructorArgsInputs;

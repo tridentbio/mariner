@@ -28,7 +28,6 @@ interface OptionsSidebarProps {
   editable?: boolean;
 }
 
-
 /**
  * The sidebar of the model editor that shows layers and featurizers options.
  */
@@ -38,7 +37,7 @@ const OptionsSidebarV2 = ({
 }: OptionsSidebarProps) => {
   const { data } = useGetModelOptionsQuery();
   // Hack to hide some featurizers
-  const modelOptions = data  || []
+  const modelOptions = data || [];
   const [isModelOptionsOpened, setIsModelOptionsOpened] = useState(false);
   const handleToggleNodesRetraction = () => {
     setIsModelOptionsOpened((value) => !value);

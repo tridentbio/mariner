@@ -1,7 +1,8 @@
 import BaseNode from './BaseNode';
 import { Input } from 'model-compiler/src/interfaces/model-editor';
-import { NodeProps, Position } from 'react-flow-renderer';
+import { NodeProps, Position } from 'reactflow';
 import CustomHandle from './CustomHandle';
+import { memo } from 'react';
 
 type InputNodeProps = NodeProps<Input>;
 
@@ -23,4 +24,4 @@ const InputNode = (props: InputNodeProps) => {
   );
 };
 
-export default InputNode;
+export default memo(InputNode);
