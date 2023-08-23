@@ -52,8 +52,8 @@ export const ModelEditorContextProvider = ({
   } = new ModelEditorImpl();
   const reactFlowValue = useReactFlow<NodeType, any>();
   const [schema, setSchema] = useState<ModelSchema | undefined>();
-  const [nodes, setNodes, onNodeChanges] = useNodesState([]);
-  const [edges, setEdges, onEdgesChanges] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const nodeInternals = useStore((state) => {
     return state.nodeInternals;
   });
@@ -524,8 +524,8 @@ export const ModelEditorContextProvider = ({
         getHandleKey,
         keyAssignments: handleKeysByNodeId,
         clearPositionOrdering,
-        onNodeChanges,
-        onEdgesChanges,
+        onNodesChange,
+        onEdgesChange,
       }}
     >
       {children}

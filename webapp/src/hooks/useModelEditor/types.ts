@@ -173,6 +173,6 @@ export interface IModelEditorContext
 
   clearPositionOrdering: () => void;
 
-  onNodeChanges: OnNodesChange;
-  onEdgesChanges: OnEdgesChange;
+  onNodesChange: OnNodesChange;
+  onEdgesChange: OnEdgesChange;
 }

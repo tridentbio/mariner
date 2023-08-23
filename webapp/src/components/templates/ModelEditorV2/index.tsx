@@ -102,8 +102,8 @@ const ModelEditor = ({
     clearPositionOrdering,
     options,
     fitView,
-    onNodeChanges,
-    onEdgesChanges,
+    onNodesChange,
+    onEdgesChange,
   } = useModelEditor();
   const [fullScreen, setFullScreen] = useState(false);
   const [connectingNode, setConnectingNode] = useState<
@@ -288,8 +288,8 @@ const ModelEditor = ({
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodeChanges}
-            onEdgesChange={onEdgesChanges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             minZoom={0.1}
