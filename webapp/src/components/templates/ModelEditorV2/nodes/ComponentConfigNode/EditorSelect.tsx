@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 interface EditorSelectProps {
   editable?: boolean;
   errors: any;
-  editConstrutorArgs: (key: string, value: any) => void;
+  onChange: (value: string) => void;
   option: ComponentOption;
   argKey: string;
   value: any;
@@ -14,7 +14,7 @@ interface EditorSelectProps {
 const EditorSelect = (props: EditorSelectProps) => {
   const [open, setOpen] = useState(false);
 
-  const { editable, errors, editConstrutorArgs, option } = props;
+  const { editable, errors, onChange, option } = props;
 
   const handleOpen = () => {
     setOpen(true);
@@ -44,7 +44,7 @@ const EditorSelect = (props: EditorSelectProps) => {
       key={props.argKey}
       value={props.value || ''}
       onChange={(event) => {
-        editConstrutorArgs(props.argKey, event.target.value);
+        onChange(event.target.value);
       }}
       error={props.argKey in errors}
       label={errors[props.argKey] || props.argKey}

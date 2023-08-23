@@ -1,5 +1,4 @@
 import { toSvg } from 'html-to-image';
-import { ReactFlowInstance } from 'react-flow-renderer';
 
 export async function exportModelToImage() {
   const filter = (node: HTMLElement) => {

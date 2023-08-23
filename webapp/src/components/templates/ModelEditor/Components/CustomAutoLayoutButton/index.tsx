@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { SvgIconTypeMap, Tooltip, Typography } from '@mui/material';
 import { OverridableComponent } from '@mui/material/OverridableComponent';
-import { ControlButton } from 'react-flow-renderer';
+import { ControlButton } from 'reactflow';
 import { marks } from './constants';
 
 import { ButtonContainer, CustomSlider, InputContainer } from './styles';

@@ -6,6 +6,12 @@ describe('Deployments Workflow.', () => {
   let deploymentName: string | null = null;
 
   before(() => {
+    //? Prevents ResizerObserver errors during the E2E tests occurring by React state anomalies.
+    cy.on(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
+    
     cy.loginSuper();
 
     cy.setupSomeModel().then((model) => {

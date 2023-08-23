@@ -141,7 +141,7 @@ export const createDatasetDirectly = (
   cy.once('uncaught:exception', () => false);
 
   cy.getCurrentAuthString().then((authorization) => {
-    cy.readFile<string>(SCHEMA_PATH + dataset.file)
+    cy.readFile<string>(`${SCHEMA_PATH}/csv/${dataset.file}`)
     .then((file) => {
       const formData = new FormData();
       formData.setFormValue('name', dataset.name);

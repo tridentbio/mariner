@@ -7,7 +7,14 @@ import {
   NodeType,
 } from 'model-compiler/src/interfaces/model-editor';
 import { Dispatch } from 'react';
-import { Edge, HandleType, Node, ReactFlowInstance } from 'react-flow-renderer';
+import {
+  Edge,
+  HandleType,
+  Node,
+  ReactFlowInstance,
+  OnNodesChange,
+  OnEdgesChange,
+} from 'reactflow';
 import { ArrayElement } from 'utils';
 
 export type MarinerNode = Node<NodeType>;
@@ -165,4 +172,7 @@ export interface IModelEditorContext
   ) => string | undefined;
 
   clearPositionOrdering: () => void;
+
+  onNodesChange: OnNodesChange;
+  onEdgesChange: OnEdgesChange;
 }

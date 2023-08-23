@@ -1,6 +1,6 @@
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
 const config: ConfigFile = {
-  schemaFile: 'http://localhost:8888/openapi.json',
+  schemaFile: 'http://localhost:8000/openapi.json',
   apiFile: './src/app/rtk/api.ts',
   apiImport: 'api',
   tag: true,

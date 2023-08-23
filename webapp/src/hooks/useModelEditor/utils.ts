@@ -1,4 +1,4 @@
-import { Edge, Node, Position } from 'react-flow-renderer';
+import { Edge, Node, Position } from 'reactflow';
 import dagre from 'dagre';
 import { DataTypeDomainKind } from 'app/types/domain/datasets';
 import { DataType } from 'model-compiler/src/interfaces/model-editor';

@@ -1,6 +1,6 @@
 import { FormLabel } from '@mui/material';
 import NotFound from 'components/atoms/NotFound';
-import { ReactFlowProvider } from 'react-flow-renderer';
+import { ReactFlowProvider } from 'reactflow';
 import ModelEditor from 'components/templates/ModelEditorV2';
 import { modelsApi } from 'app/rtk/models';
 import { ModelEditorContextProvider } from 'hooks/useModelEditor';
