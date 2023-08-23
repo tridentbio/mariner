@@ -492,10 +492,33 @@ class PreprocessingPipeline:
                 data.drop(labels=[column.name], axis="columns", inplace=True)
                 data[column.name] = feat.transform(value)
 
-    def get_preprocess_steps(self):
+    def get_preprocess_steps(self, only_features=False):
         """
         Returns the featurizers and transforms in the order they are applied.
         """
+        if only_features:
+            feats, transforms = [], []
+
+            def add_on_arr(config_name, is_last):
+                if config_name in self.featurizers:
+                    feats.append(config_name)
+                elif config_name in self.transforms:
+                    transforms.append(config_name)
+
+            iterate_topologically(
+                make_graph_from_dataset_config(self.dataset_config),
+                add_on_arr,
+                skip_roots=[
+                    target.name
+                    for target in self.dataset_config.target_columns
+                ],
+            )
+            for name in feats:
+                yield (self.featurizers_config[name], self.featurizers[name])
+            for name in transforms:
+                yield (self.transforms_config[name], self.transforms[name])
+            return
+
         feats, transforms = map(list, dataset_topo_sort(self.dataset_config))
         for config in feats:
             yield (config, self.featurizers[config.name])
@@ -540,6 +563,7 @@ class PreprocessingPipeline:
         data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]],
         concat_features=False,
         concat_targets=False,
+        only_features=False,
     ):
         """Transforms X and y according to preprocessor config.
 
@@ -554,7 +578,7 @@ class PreprocessingPipeline:
         for config, (
             transformer,
             adapt_args_and_apply,
-        ) in self.get_preprocess_steps():
+        ) in self.get_preprocess_steps(only_features=only_features):
             args = get_args(data, config)
             try:
                 if adapt_args_and_apply:
@@ -574,7 +598,6 @@ class PreprocessingPipeline:
         if concat_targets:
             data["dataset-targets-out"] = self._concat_targets(data)
 
-        self._fitted = True
         return data
 
     @_prepare_data
@@ -583,6 +606,7 @@ class PreprocessingPipeline:
         data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]],
         concat_features=False,
         concat_targets=False,
+        only_features=False,
     ):
         """Fits and transforms X and y according to preprocessor config.
 
@@ -596,7 +620,7 @@ class PreprocessingPipeline:
         for config, (
             transformer,
             adapt_args_and_apply,
-        ) in self.get_preprocess_steps():
+        ) in self.get_preprocess_steps(only_features=only_features):
             args = get_args(data, config)
             try:
                 if adapt_args_and_apply:
@@ -626,6 +650,9 @@ class PreprocessingPipeline:
         return np.concatenate(out_features, axis=-1)
 
     def _concat_targets(self, data):
+        print("concating targets")
+        print(self.target_leaves)
+        print(data.keys())
         out_targets = [
             data[out_target_key] for out_target_key in self.target_leaves
         ]

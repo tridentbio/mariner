@@ -29,6 +29,10 @@ dataset:
       type: sklearn.preprocessing.OneHotEncoder
       forward_args:
         X: $activity
+    - name: OneHotEncoder-targets
+      type: sklearn.preprocessing.OneHotEncoder
+      forward_args:
+        X: $HIV_active
 spec:
   model:
     type: sklearn.ensemble.ExtraTreesClassifier

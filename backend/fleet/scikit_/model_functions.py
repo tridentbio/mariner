@@ -104,7 +104,7 @@ class SciKitFunctions(BaseModelFunctions):
 
         return args
 
-    def _prepare_data(self, fit=False):
+    def _prepare_data(self, fit=False, only_features=False):
         X, y = self.preprocessing_pipeline.get_X_and_y(self.dataset)
         if fit:
             self.data = self.preprocessing_pipeline.fit_transform(
@@ -112,7 +112,11 @@ class SciKitFunctions(BaseModelFunctions):
             )
         else:
             self.data = self.preprocessing_pipeline.transform(
-                X, y, concat_features=True, concat_targets=True
+                X,
+                y,
+                concat_features=True,
+                concat_targets=True,
+                only_features=only_features,
             )
 
     def get_metrics(
@@ -213,7 +217,7 @@ class SciKitFunctions(BaseModelFunctions):
             input_ (pd.DataFrame): The dataset to predict on.
         """
         transformed_data = self.preprocessing_pipeline.transform(
-            input_, concat_features=True
+            input_, concat_features=True, only_features=True
         )
         X = transformed_data[self.references["X"]]
         target_column = self.spec.dataset.target_columns[0].name
