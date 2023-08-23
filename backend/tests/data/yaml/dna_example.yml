@@ -12,6 +12,11 @@ dataset:
         domainKind: numeric
         unit: mole
       outModule: linear 2
+  featurizers:
+    - name: protein_vector
+      type: fleet.model_builder.featurizers.ProteinSequenceFeaturizer
+      forwardArgs:
+        input_: $aaMutations
 spec:
   layers:
     - name: embeddings
@@ -21,7 +26,7 @@ spec:
         embedding_dim: 16
         padding_idx: 0
       forwardArgs:
-        input: $aaMutations
+        input: $protein_vector
 
     - name: transformer 1
       type: torch.nn.TransformerEncoderLayer
