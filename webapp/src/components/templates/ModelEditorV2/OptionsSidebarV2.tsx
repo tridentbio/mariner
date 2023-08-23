@@ -56,99 +56,114 @@ const OptionsSidebarV2 = ({
     );
   }, [modelOptions]);
 
-  const sidebarStyleRight = isModelOptionsOpened ? '0' : '-450px';
+  const sidebarStyleRight = isModelOptionsOpened ? '0' : '-435px';
 
   const top = 0;
   return (
-    <Box
-      sx={{
-        ...(editable ? {} : { display: 'none' }),
-        position: 'absolute',
-        top,
-        p: 2,
-        width: 400,
-        right: sidebarStyleRight,
-        zIndex: 200,
-        borderRadius: 2,
-        boxShadow: 'rgba(0,0,0,0.24) 0px 3px 8px',
-        transition: 'right 0.6s',
-        backgroundColor: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row' }}>
-        <IconButton color="primary" onClick={handleToggleNodesRetraction}>
-          <RemoveSharp />
+    <>
+      {!isModelOptionsOpened && (
+        <IconButton
+          data-testid="openOptionsSidebarButton"
+          color="primary"
+          sx={{
+            zIndex: 200,
+            position: 'absolute',
+            right: 0,
+            top: top + 100,
+          }}
+          onClick={() => handleToggleNodesRetraction()}
+        >
+          <TurnLeft />
         </IconButton>
-        {!isModelOptionsOpened && (
-          <IconButton
-            data-testid="openOptionsSidebarButton"
-            color="primary"
-            sx={{
-              zIndex: 200,
-              position: 'absolute',
-              right: 450,
-              // border: '3px solid red',
-              top: top + 100,
-            }}
-            onClick={() => handleToggleNodesRetraction()}
-          >
-            <TurnLeft />
-          </IconButton>
-        )}
-        <Text>You can drag these nodes to the editor</Text>
-      </Box>
-
-      <div
-        style={{
+      )}
+      <Box
+        sx={{
+          ...(editable ? {} : { display: 'none' }),
+          position: 'absolute',
+          top,
+          p: 2,
+          width: 400,
+          height: 'calc(100% - 32px)',
+          right: sidebarStyleRight,
+          zIndex: 200,
+          borderTopLeftRadius: 10,
+          borderBottomLeftRadius: 10,
+          boxShadow: 'rgba(0,0,0,0.10) -3px 0px 8px',
+          transition: 'right 0.6s',
+          backgroundColor: 'white',
           display: 'flex',
           flexDirection: 'column',
+          overflowY: 'scroll',
         }}
       >
-        {Object.entries(modelsByLib).map(([lib, models], _index) => (
-          <Box key={lib}>
-            <Text ml={2} fontSize="1.2rem" fontWeight="600" marginTop="0.5rem">
-              {lib === 'model_builder'
-                ? 'mariner'.toUpperCase()
-                : lib.toUpperCase()}
-            </Text>
-            <Box>
-              <div
-                style={{
-                  flexDirection: 'row',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                }}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flexDirection: 'row',
+          }}
+        >
+          <IconButton color="primary" onClick={handleToggleNodesRetraction}>
+            <RemoveSharp />
+          </IconButton>
+          <Text>You can drag these nodes to the editor</Text>
+        </Box>
+
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {Object.entries(modelsByLib).map(([lib, models], _index) => (
+            <Box key={lib}>
+              <Text
+                ml={2}
+                fontSize="1.2rem"
+                fontWeight="600"
+                marginTop="0.5rem"
               >
-                {models.map((option) => (
-                  <Box
-                    sx={styleProto}
-                    draggable
-                    onDragStart={(event) => {
-                      onDragStart({
-                        event,
-                        data: option,
-                      });
-                    }}
-                    key={option.classPath}
-                  >
-                    {substrAfterLast(option.classPath, '.')}
-                    <DocsModel
-                      commonIconProps={{
-                        fontSize: 'small',
+                {lib === 'model_builder'
+                  ? 'mariner'.toUpperCase()
+                  : lib.toUpperCase()}
+              </Text>
+              <Box>
+                <div
+                  style={{
+                    flexDirection: 'row',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {models.map((option) => (
+                    <Box
+                      sx={styleProto}
+                      draggable
+                      onDragStart={(event) => {
+                        onDragStart({
+                          event,
+                          data: option,
+                        });
                       }}
-                      docs={option.docs}
-                      docsLink={option.docsLink || ''}
-                    />
-                  </Box>
-                ))}
-              </div>
+                      key={option.classPath}
+                    >
+                      {substrAfterLast(option.classPath, '.')}
+                      <DocsModel
+                        commonIconProps={{
+                          fontSize: 'small',
+                        }}
+                        docs={option.docs}
+                        docsLink={option.docsLink || ''}
+                      />
+                    </Box>
+                  ))}
+                </div>
+              </Box>
             </Box>
-          </Box>
-        ))}
-      </div>
-    </Box>
+          ))}
+        </div>
+      </Box>
+    </>
   );
 };
 

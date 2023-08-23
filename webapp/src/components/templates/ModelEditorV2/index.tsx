@@ -283,6 +283,7 @@ const ModelEditor = ({
             height: fullScreen ? '100vh' : '80vh',
             border: '1px solid black',
             overflow: 'hidden',
+            position: 'relative',
           }}
         >
           <ReactFlow
