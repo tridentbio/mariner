@@ -25,7 +25,7 @@ const ModelEditorControls: React.FC<ModelEditorControlsProps> = ({
   contentEditable = true,
 }) => {
   const { expandNodes, contractNodes } = useModelEditor();
-  const [allNodesExpanded, setAllNodesExpanded] = useState(false);
+  const [allNodesExpanded, setAllNodesExpanded] = useState(true);
   const [slidersState, setSlidersState] = useState({
     horizontal: false,
     vertical: false,
