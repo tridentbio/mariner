@@ -49,19 +49,19 @@ export const datasetsApi = generatedDatasetsApi
           { type: 'datasets', id: arg.datasetId },
         ],
       }),
-      deleteDataset: builder.mutation<Dataset, number>({
-        query: (datasetId) => ({
-          url: `api/v1/datasets/${datasetId}`,
-          method: 'DELETE',
-        }),
-        invalidatesTags: ['datasets'],
-      }),
       getDatasets: builder.query<Paginated<Dataset>, DatasetsListingFilters>({
         query: (params) => ({
           url: 'api/v1/datasets/',
           params,
         }),
         providesTags: ['datasets'],
+      }),
+      deleteDataset: builder.mutation<Dataset, { datasetId: number }>({
+        query: (datasetArg) => ({
+          url: `api/v1/datasets/${datasetArg.datasetId}`,
+          method: 'DELETE',
+        }),
+        invalidatesTags: ['datasets'],
       }),
       getDatasetById: builder.query<Dataset, number>({
         query: (datasetId) => `api/v1/datasets/${datasetId}`,
