@@ -3,11 +3,12 @@ import DocsModel from 'components/templates/ModelEditor/Components/DocsModel/Doc
 import BaseNode from 'components/templates/ModelEditorV2/nodes/BaseNode';
 import useModelEditor from 'hooks/useModelEditor';
 import { LayerFeaturizerType } from 'model-compiler/src/interfaces/model-editor';
-import { NodeProps } from 'react-flow-renderer';
+import { NodeProps } from 'reactflow';
 import { substrAfterLast } from 'utils';
 import CustomHandles from '../CustomHandles';
 import NodeHeader from '../NodeHeader';
 import ConstructorArgsInputs from './ConstructorArgsInputs';
+import { memo } from 'react';
 
 export interface ComponentConfigNodeProps
   extends NodeProps<LayerFeaturizerType> {
@@ -22,8 +23,10 @@ const ComponentConfigNode = ({
     useModelEditor();
   const option = (options || {})[props.data.type!];
   const { docs, docsLink } = option || {};
+
   return (
     <BaseNode
+      key={props.id}
       title={substrAfterLast(props.data.type!, '.')}
       docs={docs}
       docsLink={docsLink}
@@ -67,4 +70,4 @@ const ComponentConfigNode = ({
   );
 };
 
-export default ComponentConfigNode;
+export default memo(ComponentConfigNode);

@@ -1,6 +1,6 @@
 import { ArrowDownward, ArrowForward } from '@mui/icons-material';
 import React, { useState } from 'react';
-import { ControlButton, Controls } from 'react-flow-renderer';
+import { ControlButton, Controls } from 'reactflow';
 import CustomAutoLayoutButton from '../CustomAutoLayoutButton';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';

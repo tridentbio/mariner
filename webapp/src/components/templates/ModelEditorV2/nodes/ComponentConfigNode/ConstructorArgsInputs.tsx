@@ -5,6 +5,7 @@ import { makeComponentEdit } from 'model-compiler/src/implementation/commands/Ed
 import { getComponent } from 'model-compiler/src/implementation/modelSchemaQuery';
 import { LayerFeaturizerType } from 'model-compiler/src/interfaces/model-editor';
 import EditorSelect from './EditorSelect';
+import { useEffect, useMemo, useState } from 'react';
 
 export interface ConstructorArgsInputsProps {
   data: LayerFeaturizerType;
@@ -26,29 +27,41 @@ const ConstructorArgsInputs = ({
 }: ConstructorArgsInputsProps) => {
   const { options, editComponent, schema, suggestionsByNode } =
     useModelEditor();
+
   if (!options) return null;
+
   const option = options[props.data.type!];
+
   if (!option || !option.component.constructorArgsSummary) return null;
-  const editConstrutorArgs = (key: string, value: any) =>
-    schema &&
-    !editComponent({
-      schema,
-      data: makeComponentEdit({
-        component: getComponent(schema, props.data.name),
-        constructorArgs: {
-          [key]: value,
-        },
-        options,
-      }),
-    });
+
+  const editConstrutorArgs = () => {
+    if (schema && editable) {
+      editComponent({
+        schema,
+        data: makeComponentEdit({
+          component: getComponent(schema, props.data.name),
+          constructorArgs: argsForm,
+          options,
+        }),
+      });
+    }
+  };
+
   const suggestions = suggestionsByNode[props.data.name] || [];
   const errors = suggestions.reduce(
     (acc, sug) => ({ ...acc, ...sug.getConstructorArgsErrors() }),
     {} as Record<string, string>
   );
-  return (
-    <>
-      <div style={{ marginTop: 5 }}>
+
+  const [argsForm, setArgsForm] = useState<{ [field: string]: any }>({});
+
+  useEffect(() => {
+    editConstrutorArgs();
+  }, [argsForm]);
+
+  const ArgsList = useMemo(() => {
+    return (
+      <>
         {Object.entries(option.component.constructorArgsSummary)
           .map(([key, type]) => {
             if (
@@ -69,7 +82,9 @@ const ConstructorArgsInputs = ({
                   key={key}
                   option={option}
                   argKey={key}
-                  editConstrutorArgs={editConstrutorArgs}
+                  onChange={(value) =>
+                    setArgsForm((prev) => ({ ...prev, [key]: value }))
+                  }
                   errors={errors}
                   value={
                     (props.data.constructorArgs &&
@@ -86,9 +101,12 @@ const ConstructorArgsInputs = ({
                   data-testid={`${props.data.name}-${key}`}
                   sx={{ mb: 2 }}
                   key={key}
-                  onBlur={(event) =>
-                    editConstrutorArgs(key, event.target.value)
-                  }
+                  onBlur={(event) => {
+                    setArgsForm((prev) => ({
+                      ...prev,
+                      [key]: event.target.value,
+                    }));
+                  }}
                   error={key in errors}
                   label={errors[key] || key}
                   disabled={!editable}
@@ -103,14 +121,17 @@ const ConstructorArgsInputs = ({
                   key={key}
                   sx={{ mb: 2 }}
                   value={
-                    props.data.constructorArgs &&
-                    props.data.constructorArgs[
+                    argsForm[key] ||
+                    props.data.constructorArgs?.[
                       key as keyof typeof props.data.constructorArgs
                     ]
                   }
-                  onBlur={(event) =>
-                    editConstrutorArgs(key, parseFloat(event.target.value))
-                  }
+                  onBlur={(event) => {
+                    setArgsForm((prev) => ({
+                      ...prev,
+                      [key]: parseFloat(event.target.value),
+                    }));
+                  }}
                   error={key in errors}
                   label={errors[key] || key}
                   disabled={!editable}
@@ -131,13 +152,17 @@ const ConstructorArgsInputs = ({
                     className="nodrag"
                     defaultChecked={
                       props.data.constructorArgs &&
-                      props.data.constructorArgs[
+                      (props.data.constructorArgs[
                         key as keyof typeof props.data.constructorArgs
-                      ]
+                      ] ||
+                        null)
                     }
-                    onChange={(event) =>
-                      editConstrutorArgs(key, event.target.checked)
-                    }
+                    onChange={(event) => {
+                      setArgsForm((prev) => ({
+                        ...prev,
+                        [key]: event.target.checked,
+                      }));
+                    }}
                     disabled={!editable}
                   />
                 </Box>
@@ -145,9 +170,11 @@ const ConstructorArgsInputs = ({
             else return null;
           })
           .filter((el) => !!el)}
-      </div>
-    </>
-  );
+      </>
+    );
+  }, [editable, props.data]);
+
+  return ArgsList;
 };
 
 export default ConstructorArgsInputs;

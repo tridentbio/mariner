@@ -3,15 +3,16 @@ framework: sklearn
 
 dataset:
   name: Iris
-  strategy: forwardArgs
+  strategy: pipeline
   targetColumns:
-    - name: large_petal_length
+    - name: species
       dataType:
         domainKind: categorical
         classes:
-          0: no
-          1: yes
-      outModule: Linear2
+          0: 0
+          1: 1
+          2: 2
+      outModule: Linear1
   featureColumns:
     - name: sepal_length
       dataType:
@@ -23,13 +24,10 @@ dataset:
         unit: cm
   
   featurizers:
-    - name: MolFPFeaturizer
-      type: molfeat.trans.fp.FPVecFilteredTransformer
+    - name: OneHotEncoder
+      type: sklearn.preprocessing.OneHotEncoder
       forwardArgs:
-        X: $large_petal_length
-      constructorArgs:
-        del_invariant: False
-        length: 512
+        X: $species
 
   transforms:
     - name: StandardScaler
@@ -43,6 +41,3 @@ spec:
     constructorArgs:
       n_estimators: 100
       criterion: entropy
-    fitArgs:
-      X: $sepal_length
-      y: $large_petal_length

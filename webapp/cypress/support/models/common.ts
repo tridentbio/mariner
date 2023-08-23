@@ -16,7 +16,7 @@ type ComponentTypeByDataId = {
 };
 
 export const flowDropSelector =
-  'div[class="react-flow__pane react-flow__container"]';
+  'div[class="react-flow__pane"]';
 
 const dragComponent = (component: string, x: number, y: number): void => {
   const sourceSelector = 'div[draggable="true"]';

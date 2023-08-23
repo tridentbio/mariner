@@ -21,7 +21,7 @@ import {
   useNodesState,
   useEdgesState,
   useStore,
-} from 'react-flow-renderer';
+} from 'reactflow';
 import { ArrayElement, isArray, Required } from 'utils';
 import { IModelEditorContext, MarinerNode } from './types';
 import {
@@ -52,8 +52,8 @@ export const ModelEditorContextProvider = ({
   } = new ModelEditorImpl();
   const reactFlowValue = useReactFlow<NodeType, any>();
   const [schema, setSchema] = useState<ModelSchema | undefined>();
-  const [nodes, setNodes] = useNodesState([]);
-  const [edges, setEdges] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const nodeInternals = useStore((state) => {
     return state.nodeInternals;
   });
@@ -524,6 +524,8 @@ export const ModelEditorContextProvider = ({
         getHandleKey,
         keyAssignments: handleKeysByNodeId,
         clearPositionOrdering,
+        onNodesChange,
+        onEdgesChange,
       }}
     >
       {children}

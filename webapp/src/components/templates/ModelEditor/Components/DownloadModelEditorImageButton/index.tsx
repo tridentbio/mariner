@@ -2,7 +2,7 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import PhotoIcon from '@mui/icons-material/Photo';
 import { useCallback } from 'react';
 import { toSvg } from 'html-to-image';
-import { ReactFlowInstance, useReactFlow } from 'react-flow-renderer';
+import { ReactFlowInstance, useReactFlow } from 'reactflow';
 
 type DownloadButtonProps = {
   tooltipText?: string;

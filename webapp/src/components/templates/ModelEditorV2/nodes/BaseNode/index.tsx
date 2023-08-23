@@ -38,6 +38,7 @@ const BaseNode = (props: BaseNodeProps) => {
           <div
             style={{
               marginTop: 10,
+              padding: displayingChildren ? 10 : 0,
               height: displayingChildren ? 'fit-content' : 0,
               transition: 'height 1s',
               display: 'flex',
