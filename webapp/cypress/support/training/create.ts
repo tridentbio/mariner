@@ -102,10 +102,10 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
       return cy.wrap(response);
     })
     .then((response) => {
-      const experimentName = response.body.experimentName
+      const experimentName = response?.body.experimentName
       checkTrainFinishes(experimentName).then((trained) =>
         assert.isTrue(trained)
       );
-      return cy.wrap(response.body);
+      return cy.wrap(response?.body);
     });
 };

@@ -10,14 +10,14 @@ describe('Model Training Page', () => {
     cy.loginSuper();
     cy.setupSomeModel().then((deployment) => {
       modelName = deployment.name;
-      modelId = deployment.id
+      if ('id' in deployment)
+        modelId = deployment.id
     });
   });
   it('Creates training succesfully', () => {
     trainModel(modelName!).then((experiment: any) => {
       assert.isNotNull(experiment);
       // Assert metrics are found in metrics table
-      cy.visit(`/models/${modelId}`)
       cy.contains('button', 'Metrics', {timeout: 3000}).should('exist').click()
       cy.get('#model-version-select').click().get('li[role="option"]').contains(experiment.modelVersion.name).click()
       cy.get('[data-testid="experiment-select"] div').click().get('li[role="option"]').contains(experiment.experimentName).click()

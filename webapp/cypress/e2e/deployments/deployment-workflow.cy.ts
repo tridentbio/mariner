@@ -16,7 +16,7 @@ describe('Deployments Workflow.', () => {
 
     cy.setupSomeModel().then((model) => {
       modelName = model.name;
-      modelVersionName = model.config.name;
+      modelVersionName = 'config' in model ? model.config.name : model.versions[0].config.name;
 
       trainModel(modelName, { modelVersion: modelVersionName }).then(
         (experimentName) => {

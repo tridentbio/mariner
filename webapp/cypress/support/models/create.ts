@@ -1,5 +1,4 @@
 import { Model } from '@app/rtk/generated/models';
-import { randomLowerCase } from '@utils';
 import { SOME_MODEL_NAME } from '../constants';
 
 const API_BASE_URL = Cypress.env('API_BASE_URL');
@@ -158,13 +157,16 @@ export const createModelDirectly = (modelFormData: any) =>
       })
   );
 
-export const setupSomeModel = () =>
+// @ts-ignore
+export const setupSomeModel = (): Cypress.Chainable<ReturnType<typeof modelFormData> | Model> => {
   modelExists(SOME_MODEL_NAME).then((exists) => {
-    return cy.setupIrisDatset().then((fixture) => {
+    cy.setupIrisDatset().then((fixture) => {
       const formData = modelFormData(fixture.name);
-
-      return createModelDirectly(formData).then((model) => {
-        return model
-      })
+      if (exists)
+        return cy.wrap(formData)
+      else {
+        return cy.wrap(createModelDirectly(formData))
+      }
     });
   });
+}

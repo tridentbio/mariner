@@ -3,6 +3,7 @@ import { buildModel, buildYamlModel } from './build-model';
 import { setupSomeModel, modelFormData } from './create';
 
 Cypress.Commands.add('buildYamlModel', buildYamlModel);
+// @ts-ignore
 Cypress.Commands.add('setupSomeModel', setupSomeModel);
 
 declare global {
@@ -14,7 +15,7 @@ declare global {
         buildParams?: Parameters<typeof buildModel>[1],
         modelName?: string
       ): Chainable<void>;
-      setupSomeModel(): Chainable<Model | ReturnType<typeof modelFormData>>; 
+      setupSomeModel(): Chainable<ReturnType<typeof modelFormData> | Model>; 
     }
   }
 }
