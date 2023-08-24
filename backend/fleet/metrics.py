@@ -122,9 +122,16 @@ class Metrics:
                         prediction.squeeze(), batch.squeeze()
                     )
                 if self.return_type == "numpy":
-                    metrics_dict[key] = metrics_dict[key].numpy()
+                    metrics_dict[key] = [
+                        item if not np.isnan(item) else "NaN"
+                        for item in metrics_dict[key].numpy()
+                    ]
+
                 elif self.return_type == "float":
-                    metrics_dict[key] = metrics_dict[key].item()
+                    metrics_dict[key] = [
+                        item if not np.isnan(item) else "NaN"
+                        for item in metrics_dict[key].item()
+                    ]
             except Exception as exc:  # pylint: disable=W0718
                 LOG.warning("Gor error with metric %s", metric)
                 LOG.warning(exc)
