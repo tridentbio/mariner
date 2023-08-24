@@ -1,3 +1,4 @@
+import { Model } from '@app/rtk/generated/models';
 import { randomLowerCase } from '@utils';
 import { SOME_MODEL_NAME } from '../constants';
 
@@ -9,6 +10,7 @@ export const modelFormData = (datasetName: string) => ({
   modelVersionDescription: 'fwscttrs',
   config: {
     name: 'test model version',
+    framework: 'torch',
     dataset: {
       featureColumns: [
         {
@@ -139,10 +141,10 @@ const modelExists = (name: string): Cypress.Chainable<boolean> =>
       })
   );
 
-const createModelDirectly = (modelFormData: any) =>
+export const createModelDirectly = (modelFormData: any) =>
   cy.getCurrentAuthString().then((authorization) =>
     cy
-      .request({
+      .request<Model>({
         method: 'POST',
         url: `${API_BASE_URL}/api/v1/models`,
         headers: {
@@ -152,6 +154,7 @@ const createModelDirectly = (modelFormData: any) =>
       })
       .then((response) => {
         expect(response?.status).to.eq(200);
+        return response.body
       })
   );
 
@@ -160,11 +163,8 @@ export const setupSomeModel = () =>
     return cy.setupIrisDatset().then((fixture) => {
       const formData = modelFormData(fixture.name);
 
-      if (exists) {
-        return cy.wrap(formData);
-      }
-
-      createModelDirectly(formData);
-      return cy.wrap(formData);
+      return createModelDirectly(formData).then((model) => {
+        return model
+      })
     });
   });

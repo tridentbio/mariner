@@ -51,7 +51,7 @@ const ModelDetailsView = ({ modelId }: ModelDetailsProps) => {
       label: 'Training',
       panel: model && (
         <>
-          <Box>
+          <Box data-testid="create-training">
             <Button
               variant="contained"
               color="primary"
@@ -67,7 +67,7 @@ const ModelDetailsView = ({ modelId }: ModelDetailsProps) => {
     {
       label: 'Inference',
       panel: model && (
-        <Box>
+        <Box data-testid="inference">
           <ModelInferenceView model={model} />
         </Box>
       ),
@@ -75,7 +75,7 @@ const ModelDetailsView = ({ modelId }: ModelDetailsProps) => {
     {
       label: 'Metrics',
       panel: model?.versions.length && (
-        <Box>
+        <Box data-testid="metrics">
           <ModelMetricsView model={model} />
         </Box>
       ),
@@ -83,7 +83,7 @@ const ModelDetailsView = ({ modelId }: ModelDetailsProps) => {
     {
       label: 'Deployments',
       panel: model?.versions.length && (
-        <Box>
+        <Box data-testid="deployments">
           <ModelDeployments model={model} />
         </Box>
       ),

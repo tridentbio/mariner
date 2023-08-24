@@ -1,3 +1,4 @@
+import { Model } from '@app/rtk/generated/models';
 import { buildModel, buildYamlModel } from './build-model';
 import { setupSomeModel, modelFormData } from './create';
 
@@ -13,7 +14,7 @@ declare global {
         buildParams?: Parameters<typeof buildModel>[1],
         modelName?: string
       ): Chainable<void>;
-      setupSomeModel(): Chainable<ReturnType<typeof modelFormData>>;
+      setupSomeModel(): Chainable<Model | ReturnType<typeof modelFormData>>; 
     }
   }
 }

@@ -186,6 +186,7 @@ const ModelMetricsView = ({ model }: ModelMetricsViewProps) => {
           items={currentExperiments}
           keys={{ value: 'experimentName', children: 'experimentName' }}
           value={selectedExperiment?.experimentName || ''}
+          data-testid="experiment-select"
           onChange={({ target }) => {
             setSelectedExperiment(
               currentExperiments.find(

@@ -99,14 +99,13 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
     .wait('@createExperiment', { timeout: 10000 })
     .then(({ response }) => {
       expect(response?.statusCode).to.eq(200);
-      return cy.wrap(experimentName);
+      return cy.wrap(response);
     })
-    .then((experimentName) => {
+    .then((response) => {
+      const experimentName = response.body.experimentName
       checkTrainFinishes(experimentName).then((trained) =>
         assert.isTrue(trained)
       );
-
-      cy.wait(10000);
-      return cy.wrap(experimentName);
+      return cy.wrap(response.body);
     });
 };
