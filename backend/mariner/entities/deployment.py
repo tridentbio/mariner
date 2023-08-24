@@ -3,7 +3,7 @@ Deployment entity and core relations
 """
 
 from enum import Enum as PyEnum
-from typing import List
+from typing import List, Union
 
 from sqlalchemy import Boolean, Column, Enum, Integer, String
 from sqlalchemy.orm import relationship
@@ -17,6 +17,10 @@ from mariner.entities.user import User
 
 
 class DeploymentStatus(str, PyEnum):
+    """
+    Deployment status.
+    """
+
     STOPPED = "stopped"
     ACTIVE = "active"
     IDLE = "idle"
@@ -24,11 +28,19 @@ class DeploymentStatus(str, PyEnum):
 
 
 class ShareStrategy(str, PyEnum):
+    """
+    Share strategy options for deployment endpoints.
+    """
+
     PUBLIC = "public"
     PRIVATE = "private"
 
 
 class RateLimitUnit(str, PyEnum):
+    """
+    Time unit options for rate limits.
+    """
+
     MINUTE = "minute"
     HOUR = "hour"
     DAY = "day"
@@ -40,7 +52,9 @@ class Predictions(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     deployment_id = Column(
-        Integer, ForeignKey("deployment.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("deployment.id", ondelete="CASCADE"),
+        nullable=False,
     )
     deployment = relationship("Deployment", back_populates="predictions")
 
@@ -55,7 +69,9 @@ class SharePermission(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     deployment_id = Column(
-        Integer, ForeignKey("deployment.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("deployment.id", ondelete="CASCADE"),
+        nullable=False,
     )
     deployment = relationship("Deployment", back_populates="share_permissions")
 
@@ -67,7 +83,11 @@ class SharePermission(Base):
     organization = Column(String, nullable=True)
 
     @classmethod
-    def build(cls, users_id: List[int] = [], organizations: List[str] = []) -> list:
+    def build(
+        cls,
+        users_id: Union[List[int], None] = None,
+        organizations: Union[List[str], None] = None,
+    ) -> list:
         """Build a list of SharePermission from users_id and organizations.
 
         Args:
@@ -77,13 +97,15 @@ class SharePermission(Base):
         Returns:
             List of SharePermission
         """
+        if not users_id:
+            users_id = []
+        if not organizations:
+            organizations = []
         share_permissions = []
-        if len(users_id):
-            share_permissions += [cls(user_id=id) for id in users_id]
-        if len(organizations):
-            share_permissions += [
-                cls(organization=org_alias) for org_alias in organizations
-            ]
+        share_permissions += [cls(user_id=id) for id in users_id]
+        share_permissions += [
+            cls(organization=org_alias) for org_alias in organizations
+        ]
         return share_permissions
 
 
@@ -110,7 +132,9 @@ class Deployment(Base):
     )
 
     model_version_id = Column(
-        Integer, ForeignKey("modelversion.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("modelversion.id", ondelete="CASCADE"),
+        nullable=False,
     )
     model_version = relationship(ModelVersion)
 

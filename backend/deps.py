@@ -15,7 +15,9 @@ def install_deps(cuda):
     pip_install_command = ["poetry", "run", "pip", "install"]
     deps = ["torch-scatter", "torch-sparse", "torch-geometric"]
     for lib in deps:
-        subprocess.call(pip_install_command + [lib, "-f", make_download_uri(cuda)])
+        subprocess.call(
+            pip_install_command + [lib, "-f", make_download_uri(cuda)]
+        )
 
 
 def install_deps_cpu():

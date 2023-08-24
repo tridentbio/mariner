@@ -7,7 +7,11 @@ from typing import Dict, List, Union
 
 from pydantic import BaseModel
 
-from mariner.core.config import AuthSettings, AuthSettingsDict, get_app_settings
+from mariner.core.config import (
+    AuthSettings,
+    AuthSettingsDict,
+    get_app_settings,
+)
 from mariner.db.session import SessionLocal
 from mariner.stores.oauth_state_sql import oauth_state_store
 
@@ -34,13 +38,18 @@ class OAuthManager(Mapping):
 
     auth_providers: Dict[str, AuthSettings]
 
-    def __init__(self, auth_providers: Union[None, Dict[str, AuthSettings]] = None):
-
-        self.redirect_uri = f"{get_app_settings('server').host}/api/v1/oauth-callback"
+    def __init__(
+        self, auth_providers: Union[None, Dict[str, AuthSettings]] = None
+    ):
+        self.redirect_uri = (
+            f"{get_app_settings('server').host}/api/v1/oauth-callback"
+        )
         if not auth_providers:
             self.auth_providers = get_app_settings("auth").__root__
         else:
-            self.auth_providers = AuthSettingsDict.parse_obj(auth_providers).__root__
+            self.auth_providers = AuthSettingsDict.parse_obj(
+                auth_providers
+            ).__root__
 
     def __getitem__(self, key):
         return self.auth_providers[key]
@@ -62,7 +71,6 @@ class OAuthManager(Mapping):
             oauth_settings: A dictionary with the attributes to build the url.
         """
         with SessionLocal() as db:
-
             state = oauth_state_store.create_state(db, provider=key).state
             oauth_settings = self[key]
             params = {
@@ -84,7 +92,11 @@ class OAuthManager(Mapping):
         for provider_id, provider in self.auth_providers.items():
             provider = self[provider_id]
             providers.append(
-                Provider(id=provider_id, logo_url=provider.logo_url, name=provider.name)
+                Provider(
+                    id=provider_id,
+                    logo_url=provider.logo_url,
+                    name=provider.name,
+                )
             )
         return providers
 

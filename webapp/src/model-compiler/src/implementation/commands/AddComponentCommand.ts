@@ -4,6 +4,7 @@ import {
   FeaturizersType,
   LayersType,
   ModelSchema,
+  TransformsType,
   NodePositionTypes,
 } from '../../interfaces/model-editor';
 import { wrapForwardArgs } from '../../utils';
@@ -16,6 +17,8 @@ export type AddCompArgs<T extends ComponentType> = {
     ? LayersType
     : T extends 'featurizer'
     ? FeaturizersType
+    : T extends 'transformer'
+    ? TransformsType
     : never;
   position?: NodePositionTypes;
 };

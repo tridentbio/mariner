@@ -32,10 +32,10 @@ from mariner.exceptions import (
 )
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.experiment_schemas import (
-    BaseTrainingRequest,
     Experiment,
     ListExperimentsQuery,
     RunningHistory,
+    TrainingRequest,
 )
 from mariner.schemas.model_schemas import ModelVersion, ModelVersionUpdateRepo
 from mariner.stores.dataset_sql import dataset_store
@@ -145,7 +145,7 @@ def handle_training_complete(task: Task, experiment_id: int):
 
 
 async def create_model_training(
-    db: Session, user: UserEntity, training_request: BaseTrainingRequest
+    db: Session, user: UserEntity, training_request: TrainingRequest
 ) -> Experiment:
     """Creates an experiment associated with a model training
 
@@ -170,18 +170,30 @@ async def create_model_training(
         raise ModelVersionNotFound()
 
     model_version_parsed = ModelVersion.from_orm(model_version)
-    dataset = dataset_store.get_by_name(db, model_version_parsed.config.dataset.name)
+    dataset = dataset_store.get_by_name(
+        db, model_version_parsed.config.dataset.name
+    )
+    assert (
+        dataset
+    ), f"Dataset {model_version_parsed.config.dataset.name} not found"
 
     mlflow_experiment_name = f"{training_request.name}-{str(uuid4())}"
 
+    hyperparams = (
+        {
+            "learning_rate": training_request.config.optimizer.params.lr,
+            "epochs": training_request.config.epochs,
+        }
+        if training_request.framework == "torch"
+        else {}
+    )
     experiment = experiment_store.create(
         db,
         obj_in=ExperimentCreateRepo(
             experiment_name=training_request.name,
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,
-            epochs=training_request.config.epochs,
-            hyperparams={"learning_rate": training_request.config.optimizer.params.lr},
+            hyperparams=hyperparams,
             stage="RUNNING",
         ),
     )
@@ -212,7 +224,9 @@ async def create_model_training(
         ExperimentView(
             experiment_id=experiment.id,
             user_id=user.id,
-            task=asyncio.create_task(make_coroutine_from_ray_objectref(training_ref)),
+            task=asyncio.create_task(
+                make_coroutine_from_ray_objectref(training_ref)
+            ),
         ),
         handle_training_complete,
     )
@@ -254,7 +268,9 @@ def get_experiments(
     return Experiment.from_orm_array(exps), total
 
 
-def get_experiment(db: Session, user: UserEntity, experiment_id: int) -> Experiment:
+def get_experiment(
+    db: Session, user: UserEntity, experiment_id: int
+) -> Experiment:
     """
     Gets the experiment from ``user``.
 
@@ -324,7 +340,9 @@ def log_metrics(
     )
 
 
-def log_hyperparams(db: Session, experiment_id: int, hyperparams: dict[str, Any]):
+def log_hyperparams(
+    db: Session, experiment_id: int, hyperparams: dict[str, Any]
+):
     """Saves the hyperparameters logged by ``CustomLogger``
 
     Args:
@@ -449,10 +467,16 @@ def get_metrics_for_monitoring() -> List[MonitorableMetric]:
         MonitorableMetric(key="mae", label="MAE", type="regressor"),
         MonitorableMetric(key="ev", label="EV", type="regressor"),
         MonitorableMetric(key="mape", label="MAPE", type="regressor"),
-        MonitorableMetric(key="R2", label="R2", tex_label="R^2", type="regressor"),
+        MonitorableMetric(
+            key="R2", label="R2", tex_label="R^2", type="regressor"
+        ),
         MonitorableMetric(key="pearson", label="Pearson", type="regressor"),
-        MonitorableMetric(key="accuracy", label="Accuracy", type="classification"),
-        MonitorableMetric(key="precision", label="Precision", type="classification"),
+        MonitorableMetric(
+            key="accuracy", label="Accuracy", type="classification"
+        ),
+        MonitorableMetric(
+            key="precision", label="Precision", type="classification"
+        ),
         MonitorableMetric(key="recall", label="Recall", type="classification"),
         MonitorableMetric(key="f1", label="F1", type="classification"),
         # removed on UI fixes - 2/6/2023:

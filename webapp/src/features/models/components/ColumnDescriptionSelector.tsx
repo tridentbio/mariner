@@ -70,7 +70,11 @@ const ColumnDescriptionSelector = <M extends boolean>(
           <ColumnOption label={props.label} error={props.error} {...params} />
         )}
         renderOption={(liProps, option) => (
-          <MenuItem {...liProps} key={option.name}>
+          <MenuItem
+            {...liProps}
+            key={option.name}
+            data-testid={`${option.name}-${option.dataType.domainKind}`}
+          >
             {option.name}
             <DataTypeChip sx={{ ml: 'auto' }} {...option.dataType} />
           </MenuItem>

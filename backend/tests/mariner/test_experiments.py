@@ -34,7 +34,9 @@ async def test_get_experiments_ordered_by_createdAt_asceding(
         page=0,
         per_page=15,
         model_version_ids=None,
-        order_by=OrderByQuery(clauses=[OrderByClause(field="createdAt", order="asc")]),
+        order_by=OrderByQuery(
+            clauses=[OrderByClause(field="createdAt", order="asc")]
+        ),
     )
     experiments, total = experiments_ctl.get_experiments(db, user, query)
     assert (
@@ -58,7 +60,9 @@ async def test_get_experiments_ordered_by_createdAt_desceding(
         page=0,
         per_page=15,
         model_version_ids=None,
-        order_by=OrderByQuery(clauses=[OrderByClause(field="createdAt", order="desc")]),
+        order_by=OrderByQuery(
+            clauses=[OrderByClause(field="createdAt", order="desc")]
+        ),
     )
     experiments, total = experiments_ctl.get_experiments(db, user, query)
     assert (
@@ -74,7 +78,9 @@ async def test_get_experiments_ordered_by_createdAt_desceding(
 @pytest.mark.asyncio
 @pytest.mark.long
 @pytest.mark.integration
-async def test_create_model_training(db: Session, some_model_integration: Model):
+async def test_create_model_training(
+    db: Session, some_model_integration: Model
+):
     user = get_test_user(db)
     version = some_model_integration.versions[-1]
     target_column = version.config.dataset.target_columns[0]
@@ -101,25 +107,32 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
 
     # Assertions before task completion
     db_exp = Experiment.from_orm(
-        db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
+        db.query(ExperimentEntity)
+        .filter(ExperimentEntity.id == exp.id)
+        .first()
     )
     assert db_exp.model_version_id == exp.model_version_id
     assert db_exp.created_by_id == user.id
-    assert db_exp.epochs == request.config.epochs
+    assert db_exp.hyperparams["epochs"] == request.config.epochs
 
     # Await for task
     await task
 
     db.commit()
     # Assertions over task outcome
-    db_exp = db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
+    db_exp = (
+        db.query(ExperimentEntity)
+        .filter(ExperimentEntity.id == exp.id)
+        .first()
+    )
     db_exp = Experiment.from_orm(db_exp)
     assert db_exp.train_metrics
     assert db_exp.history
     assert db_exp.stage == "SUCCESS"
     assert f"train/loss/{target_column.name}" in db_exp.train_metrics
     assert (
-        len(db_exp.history[f"train/loss/{target_column.name}"]) == request.config.epochs
+        len(db_exp.history[f"train/loss/{target_column.name}"])
+        == request.config.epochs
     )
     collected_regression_metrics = [
         f"train/mse/{target_column.name}",
@@ -137,7 +150,9 @@ async def test_create_model_training(db: Session, some_model_integration: Model)
     assert len(runs) == 1
     run = runs[0]
     for metric_key in collected_regression_metrics:
-        metric = client.get_metric_history(run_id=run.info.run_id, key=metric_key)
+        metric = client.get_metric_history(
+            run_id=run.info.run_id, key=metric_key
+        )
         assert metric
         assert len(metric) == request.config.epochs
 
@@ -172,7 +187,9 @@ async def test_experiment_has_stacktrace_when_training_fails(
         raise Exception("bad bad model")
 
     # Patch remote ray training for local
-    with patch(fleet.model_builder.model.CustomModel.forward, lambda x: _raise(x)):
+    with patch(
+        fleet.model_builder.model.CustomModel.forward, lambda x: _raise(x)
+    ):
         exp = await experiments_ctl.create_model_training(db, user, request)
         assert exp.model_version_id == version.id
         assert exp.model_version.name == version.name
@@ -185,7 +202,9 @@ async def test_experiment_has_stacktrace_when_training_fails(
         db.commit()
         # Assertions over task outcome
         db_exp = (
-            db.query(ExperimentEntity).filter(ExperimentEntity.id == exp.id).first()
+            db.query(ExperimentEntity)
+            .filter(ExperimentEntity.id == exp.id)
+            .first()
         )
         db_exp = Experiment.from_orm(db_exp)
         assert db_exp.stack_trace

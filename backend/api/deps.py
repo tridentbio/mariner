@@ -123,7 +123,9 @@ async def get_cookie_or_token(
     return token
 
 
-def assert_trusted_service(authorization: Union[str, None] = Header("Authorization")):
+def assert_trusted_service(
+    authorization: Union[str, None] = Header("Authorization")
+):
     """Checks a basic inter service authentication using the Authorization HTTP header.
 
     Args:
@@ -136,7 +138,10 @@ def assert_trusted_service(authorization: Union[str, None] = Header("Authorizati
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     else:
         token = authorization.split(" ")
-        if len(token) < 2 or token[1] != get_app_settings("secrets").application_secret:
+        if (
+            len(token) < 2
+            or token[1] != get_app_settings("secrets").application_secret
+        ):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 

@@ -1,5 +1,5 @@
 """
-Actors for Training, validation and testing models
+Actors for Training, validation and testing models.
 """
 from typing import List, Union
 

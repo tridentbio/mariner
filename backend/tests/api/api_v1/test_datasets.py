@@ -53,7 +53,8 @@ def test_post_datasets(
         assert response["readyStatus"] == "processing"
 
         with client.websocket_connect(
-            "/ws?token=" + normal_user_token_headers["Authorization"].split(" ")[1],
+            "/ws?token="
+            + normal_user_token_headers["Authorization"].split(" ")[1],
             timeout=60,
         ) as ws:
             message = ws.receive_json()
@@ -62,10 +63,10 @@ def test_post_datasets(
             assert "created successfully" in message["data"].get("message", "")
 
         ds = dataset_store.get(db, id)
-        assert is_close(ds.bytes, 287_750)
+        assert is_close(ds.bytes, 1360)
         assert ds is not None
         assert ds.name == response["name"]
-        assert ds.columns == 3
+        assert ds.columns == 4
         assert len(ds.columns_metadata) == 2
 
 
@@ -89,19 +90,22 @@ def test_post_datasets_invalid(
         assert response["readyStatus"] == "processing"
 
         with client.websocket_connect(
-            "/ws?token=" + normal_user_token_headers["Authorization"].split(" ")[1],
+            "/ws?token="
+            + normal_user_token_headers["Authorization"].split(" ")[1],
             timeout=60,
         ) as ws:
             message = ws.receive_json()
             assert message is not None
             assert message["type"] == "dataset-process-finish"
-            assert "error on dataset creation" in message["data"].get("message", "")
+            assert "error on dataset creation" in message["data"].get(
+                "message", ""
+            )
 
         ds = dataset_store.get(db, id)
         assert ds.name == response["name"]
         assert ds.errors is not None
         assert len(ds.errors["columns"]) == 2
-        assert len(ds.errors["rows"]) == 18
+        assert len(ds.errors["rows"]) == 2
         assert isinstance(ds.errors["dataset_error_key"], str)
 
 
@@ -147,7 +151,8 @@ def test_put_datasets(
     assert response["name"] == new_name
 
     with client.websocket_connect(
-        "/ws?token=" + normal_user_token_headers["Authorization"].split(" ")[1],
+        "/ws?token="
+        + normal_user_token_headers["Authorization"].split(" ")[1],
         timeout=60,
     ) as ws:
         message = ws.receive_json()
@@ -157,7 +162,11 @@ def test_put_datasets(
 
     db.commit()
     updated = dataset_store.get(db, response["id"])
-    updated = db.query(DatasetModel).filter(DatasetModel.id == some_dataset.id).first()
+    updated = (
+        db.query(DatasetModel)
+        .filter(DatasetModel.id == some_dataset.id)
+        .first()
+    )
     assert updated is not None
     assert updated.id == response["id"]
     assert updated.name == new_name

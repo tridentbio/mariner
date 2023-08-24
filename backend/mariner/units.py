@@ -19,7 +19,9 @@ class Unit(ApiBaseModel):
     latex: str
 
 
-def make_api_unit_from_pint_unit(punit: Union[pint.Quantity, pint.Unit]) -> Unit:
+def make_api_unit_from_pint_unit(
+    punit: Union[pint.Quantity, pint.Unit]
+) -> Unit:
     """Maps pint unit to the mariner's unit object.
 
     Args:
@@ -103,7 +105,12 @@ def check_logarithmic_unit(unit: str) -> CheckedLogarithmicUnit:
                 raise ValueError(f"ln does not accept a base")
             return "e", inner_str, rest_bef_str, rest_aft_str
         else:
-            return base if base else "10", inner_str, rest_bef_str, rest_aft_str
+            return (
+                base if base else "10",
+                inner_str,
+                rest_bef_str,
+                rest_aft_str,
+            )
     else:
         return None, None, None, None
 
@@ -130,7 +137,9 @@ def parse_rest_unit(
 
     search = re.search(regex, rest_unit.strip() or "")
     if search:
-        operation, operator = search.groups()[::-1] if before else search.groups()
+        operation, operator = (
+            search.groups()[::-1] if before else search.groups()
+        )
         if operation not in ["*", "/", "**", ""]:
             raise ValueError(f"Invalid operation: {operation}")
 
@@ -161,7 +170,9 @@ def generate_serialized_unit(unit: str) -> Dict[Literal["name", "latex"], str]:
     if logarithmic_base:
         inner_unit = generate_serialized_unit(inner_unit_str)
         if not inner_unit:
-            raise ValueError(f"Invalid unit inside a logarithmic: {inner_unit}")
+            raise ValueError(
+                f"Invalid unit inside a logarithmic: {inner_unit}"
+            )
 
         log, log_ = (
             (f"log{logarithmic_base}", f"log_{logarithmic_base} ")

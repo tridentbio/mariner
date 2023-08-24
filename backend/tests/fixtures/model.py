@@ -3,9 +3,11 @@ from typing import Literal, Optional
 import mlflow.tracking
 from fastapi import status
 from fastapi.testclient import TestClient
+from mlflow.exceptions import RestException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from fleet.base_schemas import TorchModelSpec
+from fleet.base_schemas import SklearnModelSpec, TorchModelSpec
 from mariner.core.config import get_app_settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
@@ -25,9 +27,23 @@ ModelType = Literal["regressor", "regressor-with-categorical", "classifier"]
 
 
 def model_config(
-    model_type: ModelType = "regressor", dataset_name: Optional[str] = None
+    model_type: ModelType = "regressor",
+    framework: Literal["sklearn", "torch"] = "torch",
+    dataset_name: Optional[str] = None,
 ) -> TorchModelSpec:
-    path = get_config_path_for_model_type(model_type)
+    """[TODO:summary]
+
+    Mocks a model spec parsing it from data/yaml folder.
+
+    Args:
+        model_type: the model type wanted.
+        framework: Either "torch" or "sklearn"
+        dataset_name: The name of the dataset used by this model.
+
+    Returns:
+        [TODO:description]
+    """
+    path = get_config_path_for_model_type(model_type, framework)
     if path.endswith("yaml") or path.endswith("yml"):
         model = TorchModelSpec.from_yaml(path)
     else:
@@ -39,16 +55,32 @@ def model_config(
     return model
 
 
-def get_config_path_for_model_type(model_type: ModelType) -> str:
-    if model_type == "regressor":
-        model_path = "tests/data/yaml/small_regressor_schema.yaml"
-    elif model_type == "classifier":
-        model_path = "tests/data/yaml/small_classifier_schema.yaml"
-    elif model_type == "regressor-with-categorical":
-        model_path = "tests/data/json/small_regressor_schema2.json"
-    else:
-        raise NotImplementedError(f"No model config yaml for model type {model_type}")
-    return model_path
+def get_config_path_for_model_type(
+    model_type: ModelType, framework: Literal["sklearn", "torch"] = "torch"
+) -> str:
+    torch_models = {
+        "regressor": "tests/data/yaml/small_regressor_schema.yaml",
+        "classifier": "tests/data/yaml/small_classifier_schema.yaml",
+        "regressor-with-categorical": "tests/data/json/small_regressor_schema2.json",
+    }
+    sklearn_models = {
+        "regressor": "tests/data/yaml/sklearn_sampl_random_forest_regressor.yaml",
+        "classifier": "tests/data/yaml/sklearn_hiv_random_forest_classifier.yaml",
+    }
+
+    try:
+        if framework == "sklearn":
+            return sklearn_models[model_type]
+        elif framework == "torch":
+            return torch_models[model_type]
+        else:
+            raise NotImplementedError(
+                f"No test yamls for framework {framework}"
+            )
+    except KeyError as exc:
+        raise NotImplementedError(
+            f"No test yamls of type {model_type} found for framework {framework}"
+        ) from exc
 
 
 def mock_model(
@@ -56,9 +88,17 @@ def mock_model(
     name: Optional[str] = None,
     dataset_name: Optional[str] = None,
     model_type: ModelType = "regressor",
+    framework: Literal["sklearn", "torch"] = "torch",
 ) -> ModelCreate:
-    model_path = get_config_path_for_model_type(model_type)
-    config = TorchModelSpec.from_yaml(model_path)
+    model_path = get_config_path_for_model_type(
+        model_type, framework=framework
+    )
+
+    if framework == "torch":
+        config = TorchModelSpec.from_yaml(model_path)
+    elif framework == "sklearn":
+        config = SklearnModelSpec.from_yaml(model_path)
+
     if dataset_name:
         config.dataset.name = dataset_name
     model = ModelCreate(
@@ -91,21 +131,23 @@ def setup_create_model_db(
     **mock_model_kwargs,
 ):
     model = mock_model(**mock_model_kwargs, dataset_name=dataset.name)
-    user = get_test_user(db) if owner == "test_user" else get_random_test_user(db)
+    user = (
+        get_test_user(db) if owner == "test_user" else get_random_test_user(db)
+    )
     model_create = ModelCreateRepo(
         dataset_id=dataset.id,
         name=model.name,
         mlflow_name=random_lower_string(),
         created_by_id=user.id,
         columns=[
-            ModelFeaturesAndTarget(
+            ModelFeaturesAndTarget(  # type: ignore
                 column_name=feature_col.name,
                 column_type="feature",
             )
             for feature_col in model.config.dataset.feature_columns
         ]
         + [
-            ModelFeaturesAndTarget(
+            ModelFeaturesAndTarget(  # type: ignore
                 column_name=target_col.name,
                 column_type="target",
             )
@@ -128,7 +170,11 @@ def setup_create_model_db(
 
 
 def teardown_create_model(db: Session, model: Model, skip_mlflow=False):
-    obj = db.query(ModelVersion).filter(ModelVersion.model_id == model.id).first()
+    obj = (
+        db.query(ModelVersion)
+        .filter(ModelVersion.model_id == model.id)
+        .first()
+    )
     db.delete(obj)
     obj = db.query(ModelEntity).filter(ModelEntity.id == model.id).first()
     if obj:
@@ -137,3 +183,61 @@ def teardown_create_model(db: Session, model: Model, skip_mlflow=False):
         if not skip_mlflow:
             mlflowclient = mlflow.tracking.MlflowClient()
             mlflowclient.delete_registered_model(model.mlflow_name)
+
+
+def setup_create_model_db2(
+    db: Session,
+    owner_id: int,
+    dataset_id: int,
+    config: dict,
+):
+    model_name = config["name"]
+    framework = config["framework"]
+    try:
+        mlflow_model = mlflow.MlflowClient().create_registered_model(
+            model_name
+        )
+    except RestException:
+        mlflow_model = mlflow.MlflowClient().get_registered_model(model_name)
+    parsed_config = (
+        SklearnModelSpec.parse_obj(config)
+        if framework == "sklearn"
+        else TorchModelSpec.parse_obj(config)
+    )
+    model_create = ModelCreateRepo(
+        name=model_name,
+        dataset_id=dataset_id,
+        mlflow_name=model_name,
+        created_by_id=owner_id,
+        columns=[
+            ModelFeaturesAndTarget(  # type: ignore
+                column_name=feature_col.name,
+                column_type="feature",
+            )
+            for feature_col in parsed_config.dataset.feature_columns
+        ]
+        + [
+            ModelFeaturesAndTarget(  # type: ignore
+                column_name=target_col.name,
+                column_type="target",
+            )
+            for target_col in parsed_config.dataset.target_columns
+        ],
+    )
+    # Create model in db
+    try:
+        created_model = model_sql.model_store.create(db, model_create)
+    except IntegrityError:
+        db.rollback()
+        created_model = model_sql.model_store.get_by_name_from_user(
+            db, model_name, owner_id
+        )
+    version_create = ModelVersionCreateRepo(
+        model_id=created_model.id,
+        name=created_model.name,
+        config=parsed_config,
+        mlflow_model_name=mlflow_model.name,
+        description="test version",
+    )
+    model_sql.model_store.create_model_version(db, version_create)
+    return created_model

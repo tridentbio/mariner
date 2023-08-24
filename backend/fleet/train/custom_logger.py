@@ -122,7 +122,9 @@ class MarinerLogger(Logger):
     @rank_zero_only
     def finalize(self, status):
         if status != "success":
-            raise Exception(f"training finised unsuccessfull, with status {status}")
+            raise Exception(
+                f"training finised unsuccessfull, with status {status}"
+            )
         data = {"metrics": {}}
         for metric_name, metric_values in self.running_history.items():
             data["metrics"][metric_name] = metric_values[-1]

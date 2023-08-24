@@ -18,13 +18,13 @@ import {
   RadioButtonCheckedOutlined,
   RadioButtonUncheckedOutlined,
 } from '@mui/icons-material';
-import { TargetConfig } from 'app/rtk/generated/models';
-import { BaseTrainingRequest } from '@app/rtk/generated/experiments';
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
+import { BaseTrainingRequest } from '@app/types/domain/experiments';
 
 interface AdvancedOptionsProps {
   open?: boolean;
   onToggle: (opened: boolean) => void;
-  targetColumns: TargetConfig[];
+  targetColumns: APITargetConfig[];
 }
 
 const AdvancedOptionsForm = ({

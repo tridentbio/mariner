@@ -2,7 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
 import { DeploymentsState } from './types';
 import { Deployment, DeploymentStatus } from 'app/rtk/generated/deployments';
-import * as deploymentsApi from '@app/rtk/generated/deployments';
+import { generatedDeploymentsApi as deploymentsApi } from '@app/rtk/generated/deployments';
 
 const initialState: DeploymentsState = {
   deployments: [],

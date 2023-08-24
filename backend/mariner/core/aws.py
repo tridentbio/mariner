@@ -7,18 +7,13 @@ from datetime import datetime
 from typing import BinaryIO, Tuple, Union
 
 import boto3
-import pandas as pd
 from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 from fastapi.datastructures import UploadFile
 
+from fleet.file_utils import is_compressed
 from mariner.core.config import get_app_settings
-from mariner.utils import (
-    compress_file,
-    get_size,
-    hash_md5,
-    is_compressed,
-    read_compressed_csv,
-)
+from mariner.utils import compress_file, get_size, hash_md5
 
 
 class Bucket(enum.Enum):
@@ -121,7 +116,9 @@ def list_s3_objects(bucket: Bucket, prefix: str):
     return response
 
 
-def upload_s3_file(file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket, key):
+def upload_s3_file(
+    file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket, key
+):
     """Upload a file to S3
 
     Args:
@@ -134,28 +131,6 @@ def upload_s3_file(file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket
         s3.upload_fileobj(file, bucket.value, key)
     else:
         s3.upload_fileobj(file.file, bucket.value, key)
-
-
-def download_file_as_dataframe(bucket: Union[Bucket, str], key: str) -> pd.DataFrame:
-    """Downloads s3 file and attempts to parse it as pd.Dataframe
-
-    Will raise exceptions if object is not in csv format.
-
-    Args:
-        bucket: Bucket enum value where the object is located.
-        key: The key identifying the object.
-
-    Returns:
-        The pandas Dataframe stored in s3.
-    """
-    s3 = create_s3_client()
-    s3_res = s3.get_object(
-        Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
-    )
-    s3body = s3_res["Body"].read()
-    data = io.BytesIO(s3body)
-    df = pd.read_csv(data) if not is_compressed(data) else read_compressed_csv(s3body)
-    return df
 
 
 def delete_s3_file(key: str, bucket: Bucket):
@@ -171,7 +146,7 @@ def delete_s3_file(key: str, bucket: Bucket):
     s3.delete_object(Bucket=bucket.value, Key=key)
 
 
-def download_s3(key: str, bucket: str) -> io.BytesIO:
+def download_s3(key: str, bucket: Union[str, Bucket]) -> io.BytesIO:
     """Download a file from S3
 
     Args:
@@ -182,13 +157,16 @@ def download_s3(key: str, bucket: str) -> io.BytesIO:
         io.BytesIO: downloaded file
     """
     s3 = create_s3_client()
-    s3_res = s3.get_object(Bucket=bucket, Key=key)
+    s3_res = s3.get_object(
+        Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
+    )
     s3body = s3_res["Body"].read()
     return io.BytesIO(s3body)
 
 
 def upload_s3_compressed(
-    file: Union[UploadFile, io.BytesIO, BinaryIO], bucket: Bucket = Bucket.Datasets
+    file: Union[UploadFile, io.BytesIO, BinaryIO],
+    bucket: Bucket = Bucket.Datasets,
 ) -> Tuple[str, int]:
     """Upload a file to S3 and compress it if it's not already compressed
 
@@ -199,7 +177,9 @@ def upload_s3_compressed(
     Returns:
         Tuple[str, int]: s3 key and file size in bytes
     """
-    file_instance = file if isinstance(file, (io.BytesIO, BinaryIO)) else file.file
+    file_instance = (
+        file if isinstance(file, (io.BytesIO, BinaryIO)) else file.file
+    )
 
     file_size = get_size(file_instance)
 
@@ -211,3 +191,21 @@ def upload_s3_compressed(
     key = f"datasets/{file_md5}.csv"
     upload_s3_file(file=file_instance, bucket=bucket, key=key)
     return key, file_size
+
+
+def is_in_s3(key: str, bucket: Bucket) -> bool:
+    """Check if a file is in S3
+
+    Args:
+        key (str): s3 file key
+        bucket (Bucket): s3 bucket
+
+    Returns:
+        bool: True if file is in S3, False otherwise
+    """
+    s3 = create_s3_client()
+    try:
+        s3.head_object(Bucket=bucket.value, Key=key)
+        return True
+    except (s3.exceptions.NoSuchKey, ClientError):
+        return False

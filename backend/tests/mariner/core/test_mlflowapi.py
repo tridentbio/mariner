@@ -45,7 +45,9 @@ def mlflow_model():
     client = mlflow.tracking.MlflowClient()
     model = client.create_registered_model(random_lower_string())
     model_config = mock_model().config
-    file = CustomModel(config=model_config.spec, dataset_config=model_config.dataset)
+    file = CustomModel(
+        config=model_config.spec, dataset_config=model_config.dataset
+    )
     create_model_version(client, model.name, file)
     yield client.get_registered_model(model.name)
     client.delete_registered_model(model.name)

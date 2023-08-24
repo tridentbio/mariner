@@ -1,3 +1,5 @@
+// TODO: move to app/rtk
+
 import { Paginated } from 'app/api';
 import { api } from 'app/rtk/api';
 import {
@@ -11,9 +13,11 @@ import {
 } from './types';
 
 export const addTagTypes = ['deployments'];
+
 export const deploymentsApi = api
   .enhanceEndpoints({ addTagTypes })
   .injectEndpoints({
+    overrideExisting: true,
     endpoints: (builder) => ({
       getDeployments: builder.query<Paginated<Deployment>, DeploymentsQuery>({
         query: () => '/api/v1/deployments/',

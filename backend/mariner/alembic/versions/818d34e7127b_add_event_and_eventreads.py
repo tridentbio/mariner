@@ -40,7 +40,9 @@ def upgrade():
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=True,
         ),
-        sa.ForeignKeyConstraint(["event_id"], ["event.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["event_id"], ["event.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],

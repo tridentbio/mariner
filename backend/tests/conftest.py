@@ -23,7 +23,11 @@ from mariner.entities import Model as ModelEntity
 from mariner.entities import User
 from mariner.entities.event import EventReadEntity
 from mariner.schemas.deployment_schemas import Deployment
-from mariner.schemas.experiment_schemas import BaseTrainingRequest, Experiment
+from mariner.schemas.experiment_schemas import (
+    BaseTrainingRequest,
+    Experiment,
+    TorchTrainingRequest,
+)
 from mariner.schemas.model_schemas import Model
 from mariner.schemas.token import TokenPayload
 from mariner.stores.experiment_sql import experiment_store
@@ -32,6 +36,7 @@ from mariner.tasks import get_exp_manager
 from tests.fixtures.dataset import (
     setup_create_dataset,
     setup_create_dataset_db,
+    setup_create_dataset_db2,
     teardown_create_dataset,
 )
 from tests.fixtures.events import get_test_events, teardown_events
@@ -43,10 +48,15 @@ from tests.fixtures.experiments import (
 from tests.fixtures.model import (
     setup_create_model,
     setup_create_model_db,
+    setup_create_model_db2,
     teardown_create_model,
 )
 from tests.fixtures.user import get_test_user
-from tests.utils.user import authentication_token_from_email, create_random_user
+from tests.fleet import helpers
+from tests.utils.user import (
+    authentication_token_from_email,
+    create_random_user,
+)
 from tests.utils.utils import random_lower_string
 
 
@@ -63,7 +73,9 @@ def client() -> Generator:
 
 
 @pytest.fixture(scope="module")
-def normal_user_token_headers(client: TestClient, db: Session) -> Dict[str, str]:
+def normal_user_token_headers(
+    client: TestClient, db: Session
+) -> Dict[str, str]:
     return authentication_token_from_email(
         client=client, email=get_app_settings("test").email_test_user, db=db
     )
@@ -108,15 +120,125 @@ def some_dataset(
 
 
 @pytest.fixture(scope="module")
-def some_bio_dataset(
+def sampl_dataset(
     db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
 ):
-    ds = setup_create_dataset(
-        db, client, normal_user_token_headers, file="tests/data/csv/chimpanzee.csv"
+    ds = setup_create_dataset_db(
+        db, file="tests/data/csv/SAMPL.csv", dataset="sampl", name="SAMPL"
     )
     assert ds is not None
     yield ds
     teardown_create_dataset(db, ds)
+
+
+@pytest.fixture(scope="module")
+def hiv_dataset(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    ds = setup_create_dataset_db(
+        db, file="tests/data/csv/HIV.csv", dataset="hiv", name="HIV"
+    )
+    assert ds is not None
+    yield ds
+    teardown_create_dataset(db, ds)
+
+
+@pytest.fixture(scope="module")
+def some_bio_dataset(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    ds = setup_create_dataset(
+        db,
+        client,
+        normal_user_token_headers,
+        file="tests/data/csv/chimpanzee.csv",
+    )
+    assert ds is not None
+    yield ds
+    teardown_create_dataset(db, ds)
+
+
+@pytest.fixture(scope="module")
+def datasets_and_models(
+    db: Session, client: TestClient, normal_user_token_headers: Dict[str, str]
+):
+    cases = [
+        (
+            "sklearn_sampl_extra_trees_regressor.yaml",
+            "SAMPL.csv",
+        ),
+        (
+            "sklearn_sampl_knearest_neighbor_regressor.yaml",
+            "SAMPL.csv",
+        ),
+        (
+            "multitarget_classification_model.yaml",
+            "iris.csv",
+        ),
+        (
+            "binary_classification_model.yaml",
+            "iris.csv",
+        ),
+        (
+            "dna_example.yml",
+            "sarkisyan_full_seq_data.csv",
+        ),
+        (
+            "sklearn_sampl_random_forest_regressor.yaml",
+            "SAMPL.csv",
+        ),
+        (
+            "sklearn_sampl_knn_regressor.yaml",
+            "SAMPL.csv",
+        ),
+        (
+            "sklearn_hiv_extra_trees_classifier.yaml",
+            "HIV.csv",
+        ),
+        (
+            "sklearn_hiv_knearest_neighbor_classifier.yaml",
+            "HIV.csv",
+        ),
+        (
+            "sklearn_hiv_random_forest_classifier.yaml",
+            "HIV.csv",
+        ),
+        (
+            "small_regressor_schema.yaml",
+            "zinc.csv",
+        ),
+        (
+            "multiclass_classification_model.yaml",
+            "iris.csv",
+        ),
+    ]
+    user = get_test_user(db)
+    stuff = []
+    for model_path, dataset_path in cases:
+        try:
+            with helpers.load_test(model_path) as model:
+                ds = setup_create_dataset_db2(
+                    db,
+                    name=model["dataset"]["name"],
+                    csv_path=dataset_path,
+                    owner_id=user.id,
+                )
+        except Exception as exc:
+            raise ValueError(f"Error on {dataset_path}") from exc
+
+        try:
+            assert ds is not None
+            if model_path.startswith("sklearn"):
+                model["framework"] = "sklearn"
+            else:
+                model["framework"] = "torch"
+            model = setup_create_model_db2(
+                db, dataset_id=ds.id, owner_id=user.id, config=model
+            )
+            stuff += [(ds, model)]
+        except Exception as exc:
+            raise ValueError(f"Error on {model_path}") from exc
+    return stuff
 
 
 # MODEL GLOBAL FIXTURES
@@ -136,6 +258,7 @@ def some_model(
         normal_user_token_headers: authenticated headers
         some_dataset: dataset to be used on model
     """
+
     model = setup_create_model_db(
         db=db,
         dataset=some_dataset,
@@ -188,7 +311,7 @@ async def some_trained_model(
     )
     version = model.versions[-1]
     target_column = version.config.dataset.target_columns[0]
-    request = BaseTrainingRequest(
+    request = TorchTrainingRequest(
         model_version_id=version.id,
         name=random_lower_string(),
         framework="torch",

@@ -24,7 +24,9 @@ def upgrade():
         sa.Column("provider", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_oauthstate_state"), "oauthstate", ["state"], unique=False)
+    op.create_index(
+        op.f("ix_oauthstate_state"), "oauthstate", ["state"], unique=False
+    )
     op.alter_column(
         "user", "hashed_password", existing_type=sa.VARCHAR(), nullable=True
     )

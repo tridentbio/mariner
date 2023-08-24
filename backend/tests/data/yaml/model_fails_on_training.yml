@@ -1,6 +1,7 @@
 name: A model that fails only when computing the loss
 dataset:
   name: zinc dataset # replace by mocked ds name
+  strategy: forwardArgs
   targetColumns:
     - name: mwt_group
       dataType:

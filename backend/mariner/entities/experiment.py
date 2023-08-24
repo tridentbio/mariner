@@ -39,7 +39,9 @@ class Experiment(Base):
     experiment_name = Column(String, nullable=False)
     mlflow_id = Column(String, nullable=True)
     model_version_id = Column(
-        Integer, ForeignKey("modelversion.id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("modelversion.id", ondelete="CASCADE"),
+        nullable=False,
     )
     created_at = Column(DateTime, server_default=current_timestamp())
     created_by_id = Column(
@@ -47,12 +49,12 @@ class Experiment(Base):
     )
     updated_at = Column(DateTime, server_default=current_timestamp())
     stage = Column(String, server_default="RUNNING", nullable=False)
-    epochs = Column(Integer, nullable=False)
+    epochs = Column(Integer, nullable=True)
     history = Column(JSON)
     train_metrics = Column(JSON)
     val_metrics = Column(JSON)
     test_metrics = Column(JSON)
-    hyperparams = Column(JSON)
+    hyperparams = Column(JSON, nullable=True)
     stack_trace = Column(String)
 
     created_by = relationship(

@@ -2,6 +2,7 @@ import { Box, Step, StepContent, StepLabel, Stepper } from '@mui/material';
 import { useNotifications } from 'app/notifications';
 import * as experimentsApi from 'app/rtk/generated/experiments';
 import { Model } from 'app/types/domain/models';
+import { BaseTrainingRequest } from 'app/types/domain/experiments';
 import Content from 'components/templates/AppLayout/Content';
 import ModelsSelect from 'components/atoms/ModelsSelect';
 import ProcessingModal from 'components/organisms/ProcessingModal';
@@ -10,7 +11,6 @@ import { addTraining } from 'features/models/modelSlice';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import defaultExperimentFormValues from './defaultExperimentFormValues';
 
 const CreateTraining: React.FC = () => {
   const [startTraining, { isLoading }] =
@@ -21,11 +21,17 @@ const CreateTraining: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleStartTraning = async (
-    exp: experimentsApi.BaseTrainingRequest
-  ) => {
+  const handleStartTraning = async (exp: BaseTrainingRequest) => {
+    const { config, ...experimentPayload } = exp;
+    const payload = (
+      exp.framework === 'sklearn'
+        ? {
+            ...experimentPayload,
+          }
+        : exp
+    ) as BaseTrainingRequest;
     await startTraining({
-      baseTrainingRequest: { ...exp, framework: 'torch' },
+      body: payload,
     })
       .unwrap()
       .then((newExp) => {
@@ -62,7 +68,6 @@ const CreateTraining: React.FC = () => {
           {selectedModel && (
             <ModelExperimentForm
               model={selectedModel}
-              initialValues={defaultExperimentFormValues}
               onSubmit={handleStartTraning}
               onCancel={() => setActiveStep(0)}
             />
@@ -79,7 +84,9 @@ const CreateTraining: React.FC = () => {
           {steps.map((step, index) => (
             <Step key={step.label}>
               <StepLabel>{step.label}</StepLabel>
-              <StepContent>{step.content}</StepContent>
+              <StepContent TransitionProps={{ unmountOnExit: false }}>
+                {step.content}
+              </StepContent>
             </Step>
           ))}
         </Stepper>

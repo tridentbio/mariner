@@ -1,7 +1,7 @@
 import pytest
-import torch
 from sqlalchemy.orm.session import Session
 
+from fleet.utils.dataset import converts_file_to_dataframe
 from mariner import models as model_ctl
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
@@ -18,7 +18,7 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
     test_user = get_test_user(db)
     ds = dataset_store.get(db, some_trained_model.dataset_id)
     assert ds
-    df = ds.get_dataframe()
+    df = converts_file_to_dataframe(ds.get_dataset_file())
     df = df.to_dict()
     assert df
     result = model_ctl.get_model_prediction(
@@ -28,14 +28,16 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
         ),
     )
     for prediction in result.values():
-        assert isinstance(prediction, torch.Tensor)
+        assert isinstance(prediction, list)
 
 
 @pytest.mark.integration
 def test_delete_model(db: Session, model: Model):
     user = get_test_user(db)
     model_ctl.delete_model(db, user, model.id)
-    model_db = db.query(ModelEntity).filter(ModelEntity.name == model.name).first()
+    model_db = (
+        db.query(ModelEntity).filter(ModelEntity.name == model.name).first()
+    )
     assert not model_db
 
 
@@ -44,7 +46,9 @@ def test_delete_model(db: Session, model: Model):
 async def test_check_forward_exception_good_regressor(
     db: Session, some_dataset: DatasetEntity
 ):
-    regressor = model_config(model_type="regressor", dataset_name=some_dataset.name)
+    regressor = model_config(
+        model_type="regressor", dataset_name=some_dataset.name
+    )
     check = await model_ctl.check_model_step_exception(
         db, TrainingCheckRequest(model_spec=regressor)
     )

@@ -20,7 +20,7 @@ class YAML_Model:  # pylint: disable=invalid-name
             yamlstr (str): yaml str
         """
         config_dict = yaml.safe_load(yamlstr)
-        return cls(**config_dict)
+        return cls.parse_obj(config_dict)
 
     @classmethod
     def from_yaml(cls, yamlpath: Union[str, Path]):

@@ -1,14 +1,15 @@
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import {
   TorchModelSpec,
-  ColumnConfig as APIColumnConfig,
-  TargetConfig as APITargetConfig,
+  TargetTorchColumnConfig,
+  ColumnConfig,
   ColumnsDescription,
   TorchlinearLayerConfig,
   TorchreluLayerConfig,
   TorchsigmoidLayerConfig,
   TorchgeometricgcnconvLayerConfig,
   GetModelOptionsApiResponse,
-  NumericalDataType,
+  NumericDataType,
   TorchembeddingLayerConfig,
   TorchtransformerencoderlayerLayerConfig,
   FleetconcatLayerConfig,
@@ -20,7 +21,14 @@ import {
   FleetrnasequencefeaturizerLayerConfig,
   FleetproteinsequencefeaturizerLayerConfig,
   FleetintegerfeaturizerLayerConfig,
+  SklearnModelSpec,
 } from 'app/rtk/generated/models';
+
+export type APITargetConfig = TargetTorchColumnConfig;
+export type APIColumnConfig = ColumnConfig;
+export type APISimpleColumnConfig = SimpleColumnConfig;
+
+export type FleetModelSpec = TorchModelSpec | SklearnModelSpec;
 
 export enum EPythonClasses {
   INT_REQUIRED = "<class 'int'>",
@@ -53,8 +61,17 @@ export type LayersType = ArrayElement<TorchModelSpec['spec']['layers']>;
 export type FeaturizersType = ArrayElement<
   TorchModelSpec['dataset']['featurizers']
 >;
-export type ComponentType = 'layer' | 'featurizer' | 'input' | 'output';
-export type LayerFeaturizerType = LayersType | FeaturizersType;
+
+export type TransformsType = ArrayElement<
+  TorchModelSpec['dataset']['transforms']
+>;
+export type ComponentType =
+  | 'layer'
+  | 'featurizer'
+  | 'transformer'
+  | 'input'
+  | 'output';
+export type LayerFeaturizerType = LayersType | FeaturizersType | TransformsType;
 export type ComponentConfigs = {
   [K in LayerFeaturizerType as K['type']]: K;
 };
@@ -86,13 +103,13 @@ export type Output = {
   dataType: DataType;
   forwardArgs?: { '': string };
   outModule: string;
-  columnType?: TargetConfig['columnType'];
-  lossFn?: TargetConfig['lossFn'];
+  columnType?: APITargetConfig['columnType'];
+  lossFn?: APITargetConfig['lossFn'];
 };
 
 export type NodeType = LayersType | FeaturizersType | Input | Output;
 
-export type DataType = ColumnsDescription['dataType'] | NumericalDataType;
+export type DataType = ColumnsDescription['dataType'] | NumericDataType;
 
 export type Linear = TorchlinearLayerConfig & { type: 'torch.nn.Linear' };
 export type Relu = TorchreluLayerConfig & { type: 'torch.nn.ReLU' };
@@ -135,20 +152,24 @@ export type IntegerFeaturizer = FleetintegerfeaturizerLayerConfig & {
   type: 'fleet.model_builder.featurizers.IntegerFeaturizer';
 };
 
-type ColumnConfig = APIColumnConfig;
-interface ColumnConfigWithForward extends ColumnConfig {
+interface ColumnConfigWithForward extends APIColumnConfig {
   forwardArgs?: { '': string };
 }
-type TargetConfig = APITargetConfig;
-interface TargetConfigWithForward extends TargetConfig {
+interface TargetConfigWithForward extends APITargetConfig {
   forwardArgs?: { '': string };
 }
+
 interface DatasetWithForwards {
   name: string;
   targetColumns: TargetConfigWithForward[];
   featureColumns: ColumnConfigWithForward[];
   featurizers: FeaturizersType[];
+  transforms: TransformsType[];
 }
-export interface ModelSchema extends TorchModelSpec {
+
+export interface TorchModelSchema extends TorchModelSpec {
   dataset: DatasetWithForwards;
 }
+
+export type ModelSchema<Model extends 'torch' | 'sklearn' = 'torch'> =
+  Model extends 'torch' ? TorchModelSchema : SklearnModelSpec;

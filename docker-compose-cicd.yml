@@ -8,6 +8,11 @@ services:
         condition: service_healthy
       ray-worker:
         condition: service_started
+    healthcheck:
+      test: curl -f http://backend/health
+      interval: 5s
+      timeout: 15s
+      retries: 15
     environment:
       - RESTART=true
       - MLFLOW_TRACKING_URI=http://mlflow:5000

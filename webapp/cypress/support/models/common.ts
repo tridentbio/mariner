@@ -11,13 +11,12 @@ import {
 const SCHEMA_PATH = Cypress.env('SCHEMA_PATH');
 
 const API_BASE_URL = Cypress.env('API_BASE_URL');
-
 type ComponentTypeByDataId = {
   [key: string]: { type: string; filled: Record<string, boolean> };
 };
 
 export const flowDropSelector =
-  'div[class="react-flow__pane react-flow__container"]';
+  'div[class="react-flow__pane"]';
 
 const dragComponent = (component: string, x: number, y: number): void => {
   const sourceSelector = 'div[draggable="true"]';

@@ -13,8 +13,13 @@ from sqlalchemy.orm.session import Session
 from starlette.responses import ContentStream
 
 from api.websocket import WebSocketMessage, get_websockets_manager
+from fleet.file_utils import is_compressed
 from fleet.ray_actors.dataset_transforms import DatasetTransforms
-from mariner.core.aws import create_s3_client, download_s3, upload_s3_compressed
+from mariner.core.aws import (
+    create_s3_client,
+    download_s3,
+    upload_s3_compressed,
+)
 from mariner.core.config import get_app_settings
 from mariner.entities.dataset import Dataset as DatasetEntity
 from mariner.entities.user import User
@@ -36,7 +41,6 @@ from mariner.schemas.dataset_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.tasks import TaskView, get_manager
-from mariner.utils import is_compressed
 
 DATASET_BUCKET = get_app_settings("secrets").aws_datasets
 LOG = logging.getLogger(__name__)
@@ -63,7 +67,9 @@ def get_my_datasets(
     return datasets, total
 
 
-def get_my_dataset_by_id(db: Session, current_user: User, dataset_id: int) -> Dataset:
+def get_my_dataset_by_id(
+    db: Session, current_user: User, dataset_id: int
+) -> Dataset:
     """Fetches a dataset owned by the current user by id
 
     Args:
@@ -137,7 +143,9 @@ async def process_dataset(
         (
             columns_metadata,
             errors,
-        ) = await dataset_ray_transformer.check_data_types.remote(columns_metadata)
+        ) = await dataset_ray_transformer.check_data_types.remote(
+            columns_metadata
+        )
 
         if errors:
             # If there are errors, the dataset is updated with the errors
@@ -182,7 +190,9 @@ async def process_dataset(
             rows=rows,
             data_url=data_url,
             columns_metadata=columns_metadata,
-            stats=stats if isinstance(stats, dict) else jsonable_encoder(stats),
+            stats=stats
+            if isinstance(stats, dict)
+            else jsonable_encoder(stats),
             updated_at=datetime.datetime.now(),
             ready_status="ready",
             errors=None,
@@ -200,7 +210,9 @@ async def process_dataset(
     except Exception as exc:  # pylint: disable=broad-exception-caught
         LOG.exception(exc)
         LOG.error(
-            'Unexpected error while processing dataset "%s":\n%r', dataset.name, exc
+            'Unexpected error while processing dataset "%s":\n%r',
+            dataset.name,
+            exc,
         )
         # Handle unexpected errors
         dataset_update = DatasetUpdateRepo(
@@ -221,7 +233,9 @@ async def process_dataset(
 
 
 def start_process(
-    db: Session, dataset: DatasetEntity, columns_metadata: List[ColumnsDescription]
+    db: Session,
+    dataset: DatasetEntity,
+    columns_metadata: List[ColumnsDescription],
 ):
     """Triggers the processing of a dataset, adding it to the task manager
 
@@ -236,7 +250,9 @@ def start_process(
             list of columns with metadata defined by the user
     """
     task = asyncio.create_task(
-        process_dataset(db=db, dataset_id=dataset.id, columns_metadata=columns_metadata)
+        process_dataset(
+            db=db, dataset_id=dataset.id, columns_metadata=columns_metadata
+        )
     )
 
     def finish_task(task: asyncio.Task, _):
@@ -365,7 +381,9 @@ async def update_dataset(
     return Dataset.from_orm(saved)
 
 
-def delete_dataset(db: Session, current_user: User, dataset_id: int) -> Dataset:
+def delete_dataset(
+    db: Session, current_user: User, dataset_id: int
+) -> Dataset:
     """Deletes a dataset from the database
 
     Args:
@@ -443,7 +461,9 @@ def get_csv_file(
 
     elif file_type == "error":
         if not dataset.errors:
-            raise DatasetNotFound(f"Dataset with id {dataset_id} has no errors")
+            raise DatasetNotFound(
+                f"Dataset with id {dataset_id} has no errors"
+            )
 
         file_key = dataset.errors["dataset_error_key"]
 

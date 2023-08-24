@@ -1,6 +1,5 @@
 import { keys, makeForm } from 'utils';
 import { Paginated } from 'app/api';
-import { api } from './api';
 import {
   NewDataset,
   Dataset,
@@ -8,6 +7,7 @@ import {
   ColumnInfo,
   DatasetsListingFilters,
 } from 'app/types/domain/datasets';
+import { generatedDatasetsApi } from './generated/datasets';
 
 const makeNewDatasetForm = (dataset: Partial<NewDataset>) => {
   const form = new FormData();
@@ -24,11 +24,12 @@ const makeNewDatasetForm = (dataset: Partial<NewDataset>) => {
 
 export const addTagTypes = ['datasets', 'utils'] as const;
 
-export const datasetsApi = api
+export const datasetsApi = generatedDatasetsApi
   .enhanceEndpoints({
     addTagTypes,
   })
   .injectEndpoints({
+    overrideExisting: true,
     endpoints: (builder) => ({
       postDatasets: builder.mutation<Dataset, NewDataset>({
         query: (payload) => ({

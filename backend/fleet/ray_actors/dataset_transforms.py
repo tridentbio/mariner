@@ -4,13 +4,15 @@ Actors for dataset processing
 import io
 import logging
 from io import BytesIO
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union, get_args
 
 import pandas as pd
 import ray
 
-from fleet.model_builder.splitters import RandomSplitter, ScaffoldSplitter
+from fleet.dataset_schemas import StatsType
+from fleet.model_builder.splitters import apply_split_indexes
 from fleet.stats import get_metadata, get_stats
+from fleet.utils.dataset import converts_file_to_dataframe
 from fleet.validation.checker import CompatibilityChecker, ErrorsType
 from fleet.validation.functions import (
     check_biological_sequence_series,
@@ -28,12 +30,100 @@ from mariner.schemas.dataset_schemas import (
     ProteinDataType,
     RNADataType,
     SmileDataType,
-    StatsType,
     StringDataType,
 )
-from mariner.utils import decompress_file
 
 LOG = logging.getLogger(__name__)
+
+
+def infer_domain_type_from_series(
+    series: pd.Series, strict=False, len_uniques_to_categorical=100
+) -> Any:
+    """Infers the domain type from a pd.Series
+
+    Checks some type of series and returns the corresponding
+    domain type based on the priority:
+        1. If the series is a float:
+            it will be considered as a numerical data type
+        2. If the series is an object:
+            it will be checked if it is a smiles first, then if it is a
+            categorical data type
+        3. If the series is an int:
+            it will be checked if it is a categorical data type
+
+    Args:
+        series (pd.Series): the series to infer the domain type from
+
+    Returns:
+        Any: inferred domain type
+    """
+    if series.dtype == float:
+        return NumericalDataType(domain_kind="numeric")
+    elif series.dtype == object:
+        # check if it is a biological sequence
+        bio_info = check_biological_sequence_series(series)
+        if bio_info["valid"]:
+            TypeClass: BiologicalDataType = {
+                "dna": DNADataType,
+                "rna": RNADataType,
+                "protein": ProteinDataType,
+            }[bio_info["type"]]
+            return TypeClass(**bio_info["kwargs"])
+
+        # check if it is smiles
+        if is_valid_smiles_series(series):
+            return SmileDataType(domain_kind="smiles")
+
+        # check if it is likely to be categorical
+        series = series.sort_values()
+        uniques = series.unique()
+        if len(uniques) / len(series) < 0.4:
+            return CategoricalDataType(
+                domain_kind="categorical",
+                # Classes will need to be overwritten by complete data type checking
+                classes={val: idx for idx, val in enumerate(uniques)},
+            )
+
+        return StringDataType(
+            domain_kind="string",
+        )
+    elif series.dtype == int:
+        series = series.sort_values()
+        uniques = series.unique()
+        if len(uniques) <= len_uniques_to_categorical:
+            return CategoricalDataType(
+                domain_kind="categorical",
+                classes={val: idx for idx, val in enumerate(uniques)},
+            )
+    else:
+        if strict:
+            raise ValueError(f"Unknown dtype {series.dtype}")
+
+
+def get_columns_metadata(
+    df: pd.DataFrame,
+    first_n_rows=20,
+    strict=False,
+    len_uniques_to_categorical=100,
+) -> List[ColumnsMeta]:
+    """Returns data type about columns based on the underlying dataframe types
+
+    Returns:
+        List[ColumnsMeta]
+    """
+    metadata = [
+        ColumnsMeta(
+            name=key,
+            dtype=infer_domain_type_from_series(
+                df[key][: min(first_n_rows, len(df))],
+                strict=strict,
+                len_uniques_to_categorical=len_uniques_to_categorical,
+            ),
+        )
+        for key in df
+    ]
+
+    return metadata
 
 
 @ray.remote
@@ -49,12 +139,11 @@ class DatasetTransforms:
 
     def __init__(
         self,
-        is_compressed: bool = False,
+        df: Union[pd.DataFrame, None] = None,
     ):
         self._file_input = io.BytesIO()
         self._is_dataset_fully_loaded = False
-        self._df = None
-        self.is_compressed = is_compressed
+        self._df = df
 
     def write_dataset_buffer(self, chunk: bytes):
         """Writes to the underlying csv file
@@ -89,16 +178,13 @@ class DatasetTransforms:
             value (bool): True if the dataset is fully loaded
         """
         if self._is_dataset_fully_loaded:
-            LOG.warning("Can't update a dataset already loaded into dataframe'")
+            LOG.warning(
+                "Can't update a dataset already loaded into dataframe'"
+            )
             return
         self._is_dataset_fully_loaded = value
         if value:
-            self._file_input.seek(0)
-            self.df = self._df = pd.read_csv(
-                decompress_file(self._file_input)
-                if self.is_compressed
-                else self._file_input
-            )
+            self.df = converts_file_to_dataframe(self._file_input)
 
     def get_dataframe(self) -> pd.DataFrame:
         """Returns the underlying dataframe
@@ -136,7 +222,9 @@ class DatasetTransforms:
             pd.DataFrame: the underlying dataframe
         """
         if not self._is_dataset_fully_loaded:
-            raise RuntimeError("Must set dataset as loaded before using dataframe")
+            raise RuntimeError(
+                "Must set dataset as loaded before using dataframe"
+            )
         assert self._df is not None, "loading dataset as dataframe failed"
         return self._df
 
@@ -155,17 +243,7 @@ class DatasetTransforms:
         Returns:
             List[ColumnsMeta]
         """
-        metadata = [
-            ColumnsMeta(
-                name=key,
-                dtype=self._infer_domain_type_from_series(
-                    self.df[key][: min(first_n_rows, len(self.df))]
-                ),
-            )
-            for key in self.df
-        ]
-
-        return metadata
+        return get_columns_metadata(self.df, first_n_rows=first_n_rows)
 
     def apply_split_indexes(
         self,
@@ -187,80 +265,12 @@ class DatasetTransforms:
         Raises:
             NotImplementedError: in case the split_type is not recognized
         """
-        train_size, val_size, test_size = map(
-            lambda x: int(x) / 100, split_target.split("-")
+        apply_split_indexes(
+            self.df,
+            split_type=split_type,
+            split_target=split_target,
+            split_column=split_column,
         )
-        if split_type == "random":
-            splitter = RandomSplitter()
-            self.df = splitter.split(self.df, train_size, test_size, val_size)
-        elif split_type == "scaffold":
-            splitter = ScaffoldSplitter()
-            assert (
-                split_column is not None
-            ), "split column can't be none when split_type is scaffold"
-            self.df = splitter.split(
-                self.df, split_column, train_size, test_size, val_size
-            )
-        else:
-            raise NotImplementedError(f"{split_type} splitting is not implemented")
-
-    def _infer_domain_type_from_series(self, series: pd.Series) -> Any:
-        """Infers the domain type from a pd.Series
-
-        Checks some type of series and returns the corresponding
-        domain type based on the priority:
-            1. If the series is a float:
-                it will be considered as a numerical data type
-            2. If the series is an object:
-                it will be checked if it is a smiles first, then if it is a
-                categorical data type
-            3. If the series is an int:
-                it will be checked if it is a categorical data type
-
-        Args:
-            series (pd.Series): the series to infer the domain type from
-
-        Returns:
-            Any: inferred domain type
-        """
-        if series.dtype == float:
-            return NumericalDataType(domain_kind="numeric")
-        elif series.dtype == object:
-            # check if it is a biological sequence
-            bio_info = check_biological_sequence_series(series)
-            if bio_info["valid"]:
-                TypeClass: BiologicalDataType = {
-                    "dna": DNADataType,
-                    "rna": RNADataType,
-                    "protein": ProteinDataType,
-                }[bio_info["type"]]
-                return TypeClass(**bio_info["kwargs"])
-
-            # check if it is smiles
-            if is_valid_smiles_series(series):
-                return SmileDataType(domain_kind="smiles")
-
-            # check if it is likely to be categorical
-            series = series.sort_values()
-            uniques = series.unique()
-            if len(uniques) / len(series) < 0.4:
-                return CategoricalDataType(
-                    domain_kind="categorical",
-                    # Classes will need to be overwritten by complete data type checking
-                    classes={val: idx for idx, val in enumerate(uniques)},
-                )
-
-            return StringDataType(
-                domain_kind="string",
-            )
-        elif series.dtype == int:
-            series = series.sort_values()
-            uniques = series.unique()
-            if len(uniques) <= 100:
-                return CategoricalDataType(
-                    domain_kind="categorical",
-                    classes={val: idx for idx, val in enumerate(uniques)},
-                )
 
     def get_entity_info_from_csv(self):
         """Gets the row count, column count, and a dictionary
@@ -296,7 +306,7 @@ class DatasetTransforms:
         biological_columns = []
         categorical_columns = []
         for metadata in columns_metadata:
-            if type(metadata.data_type) in BiologicalDataType.__args__:
+            if type(metadata.data_type) in get_args(BiologicalDataType):
                 biological_columns.extend(
                     [
                         {"col": col, "metadata": metadata}
@@ -360,7 +370,7 @@ class DatasetTransforms:
         else:
             for i, col in enumerate(columns):
                 if col.data_type.domain_kind in ["categorical", "dna", "rna"]:
-                    columns[i].data_type = self._infer_domain_type_from_series(
+                    columns[i].data_type = infer_domain_type_from_series(
                         self.df[col.pattern]
                     )
 

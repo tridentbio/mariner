@@ -45,6 +45,7 @@ s3fs = "^2023.3.0"
 boto3 = "1.24.59"
 ray = {version = "2.4.0", extras = ["default"]}
 scikit-learn = "^1.2.2"
+molfeat = "^0.8.9"
 toml = "^0.10.2"
 psycopg2 = "^2.9.6"
 
@@ -68,6 +69,7 @@ pylint-pydantic = "^0.1.4"
 coverage = "^7.1.0"
 pytest-dotenv = "^0.5.2"
 docstr-coverage = "^2.2.0"
+pylint-pytest = "^1.1.2"
 sphinx-rtd-theme = "^1.2.1"
 sphinx-toolbox = "^3.4.0"
 sphinx-copybutton = "^0.5.2"
@@ -125,6 +127,10 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = "scripts.*"
 ignore_errors = true
+
+[tool.black]
+line-length = 79
+target-version = ['py39']
 
 [tool.coverage.report]
 include = [

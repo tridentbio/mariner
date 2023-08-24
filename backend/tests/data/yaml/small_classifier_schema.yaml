@@ -1,6 +1,7 @@
 name: Simple Classifier
 dataset:
   name: zinc dataset # replace by mocked ds name
+  strategy: forwardArgs
   targetColumns:
     - name: mwt_group
       dataType:

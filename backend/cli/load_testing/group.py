@@ -9,11 +9,15 @@ from cli.load_testing import commands
 @click.group("load-testing")
 @click.option(
     "--output",
-    type=click.Path(exists=False, file_okay=True, dir_okay=False, writable=True),
+    type=click.Path(
+        exists=False, file_okay=True, dir_okay=False, writable=True
+    ),
     help="Path to save report csv.",
     default="load_test_results.csv",
 )
-@click.option("--timeout", type=int, default=60, help="Time in minutes until timeout")
+@click.option(
+    "--timeout", type=int, default=60, help="Time in minutes until timeout"
+)
 @click.option(
     "--credentials",
     type=click.File("r", encoding="utf-8"),
@@ -35,7 +39,6 @@ def load_testing_cli(
     """
     Load testing CLI group.
     """
-    pass
 
 
 load_testing_cli.add_command(

@@ -64,7 +64,9 @@ class GenentechClient:
             claims,
         )
 
-    def get_access_token(self, code: str, grant_type: str) -> GenentechAccessCode:
+    def get_access_token(
+        self, code: str, grant_type: str
+    ) -> GenentechAccessCode:
         """
         Get an access token from Genentech.
         """

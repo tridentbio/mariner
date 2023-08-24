@@ -28,15 +28,21 @@ describe('/models/new - Model creation page', () => {
     cy.visit('/models/new');
   });
 
-  // TODO: fix OneHot Layer bug to this test pass
-  // it.skip('Builds Categorical-Smiles Model', () => {
-  //   cy.buildYamlModel(
-  //     'data/yaml/categorical_features_model.yaml',
-  //     zincDatasetFixture.name
-  //   );
-  // });
+  it.skip('Builds Categorical-Smiles Model', () => {
+    cy.buildYamlModel(
+      SCHEMA_PATH + '/yaml/categorical_features_model.yaml',
+      zincDatasetFixture!.name,
+    );
+  });
 
-  it('Builds Binary Classification Model', () => {
+  it('Builds Sklearn Test Model', () => {
+    cy.buildYamlModel(
+      SCHEMA_PATH + '/yaml/sklearn_test.yaml',
+      irisDatasetFixture!.name
+    );
+  });
+
+   it('Builds Binary Classification Model', () => {
     cy.buildYamlModel(
       SCHEMA_PATH + '/yaml/binary_classification_model.yaml',
       irisDatasetFixture!.name

@@ -1,11 +1,268 @@
-from pydantic import BaseModel
+"""
+Pydantic Schemas for the Sklearn specs.
+"""
+from typing import Annotated, Dict, List, Literal, Union
 
-from fleet.base_schemas import BaseFleetModelSpec
+from humps import camel
+from pydantic import BaseModel, Field
+
+from fleet.base_schemas import DatasetConfig
+from fleet.dataset_schemas import DatasetConfigWithPreprocessing
+from fleet.model_builder.utils import get_class_from_path_string
+from fleet.options import options_manager
+from fleet.yaml_model import YAML_Model
+
+TaskType = Literal["regressor", "multiclass", "multilabel"]
 
 
-class SciKitModelSpec(BaseFleetModelSpec):
-    pass
+class CamelCaseModel(BaseModel):
+    """
+    Subclass this class to work with camel case serialization of the model.
+    """
+
+    class Config:  # pylint: disable=C0115
+        alias_generator = camel.case
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+        underscore_attrs_are_private = True
 
 
-class SciKitTrainingConfig(BaseModel):
-    pass
+class CreateFromType:
+    """
+    Adds a method to instantiate a class from it's class path (type) and constructor_args.
+
+    Attributes:
+        type (str): The class path of the class that will be instantiated.
+        constructor_args (BaseModel): The constructor arguments passed to the class.
+    """
+
+    type: str
+    constructor_args: Union[None, BaseModel] = None
+
+    def create(self):
+        """Creates an instance of the class specified by the type attribute."""
+        class_ = get_class_from_path_string(self.type)
+        if self.constructor_args:
+            return class_(**self.constructor_args.dict())
+        return class_()
+
+
+class KNeighborsRegressorConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the :py:class:`sklearn.neighbors.KNeighborsRegressor` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
+
+    Attributes:
+        n_neighbors (int): The number of neighbors to use.
+        algorithm (str): The algorithm to use to compute the nearest neighbors.
+    """
+
+    n_neighbors: int = 5
+    algorithm: Literal["kd_tree"] = "kd_tree"
+
+
+@options_manager.config_scikit_reg()
+class KNeighborsRegressorConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the :py:class:`KNeighborsRegressor` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
+
+    Attributes:
+        type (str): The class path of the class that will be instantiated.
+        constructor_args (BaseModel): The constructor arguments passed to the class.
+        fit_args (Dict[str, str]): The arguments passed to the fit method.
+        task_type (List[TaskType]): The task types that this model can be used for.
+    """
+
+    type: Literal[
+        "sklearn.neighbors.KNeighborsRegressor"
+    ] = "sklearn.neighbors.KNeighborsRegressor"
+    constructor_args: KNeighborsRegressorConstructorArgs = (
+        KNeighborsRegressorConstructorArgs()
+    )
+    fit_args: Union[None, Dict[str, str]] = None
+    task_type: List[TaskType] = ["regressor"]
+
+
+class RandomForestRegressorConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the :py:class`sklearn.ensemble.RandomForestRegressor` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+    """
+
+    n_estimators: int = 50
+    # max_depth: Union[None, int] = None
+    criterion: Literal[
+        "squared_error", "absolute_error", "friedman_mse", "poisson"
+    ] = "squared_error"
+
+
+@options_manager.config_scikit_reg()
+class RandomForestRegressorConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the :py:class`sklearn.ensemble.RandomForestRegressor` class.
+    """
+
+    type: Literal[
+        "sklearn.ensemble.RandomForestRegressor"
+    ] = "sklearn.ensemble.RandomForestRegressor"
+    task_type: List[TaskType] = ["regressor"]
+    constructor_args: RandomForestRegressorConstructorArgs = (
+        RandomForestRegressorConstructorArgs()
+    )
+    fit_args: Union[None, Dict[str, str]] = None
+
+
+class ExtraTreesRegressorConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the :py:class`sklearn.ensemble.ExtraTreesRegressor` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html
+    """
+
+    n_estimators: int = 100
+    criterion: Literal[
+        "squared_error", "absolute_error", "friedman_mse", "poisson"
+    ] = "squared_error"
+    # max_depth: Union[None, int] = None
+
+
+@options_manager.config_scikit_reg()
+class ExtraTreesRegressorConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the :py:class`sklearn.ensemble.ExtraTreesRegressor` class.
+    """
+
+    type: Literal[
+        "sklearn.ensemble.ExtraTreesRegressor"
+    ] = "sklearn.ensemble.ExtraTreesRegressor"
+    task_type: List[TaskType] = ["regressor"]
+    constructor_args: ExtraTreesRegressorConstructorArgs = (
+        ExtraTreesRegressorConstructorArgs()
+    )
+    fit_args: Union[None, Dict[str, str]] = None
+
+
+class ExtraTreesClassifierConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the `sklearn.ensemble.ExtraTreesClassifier` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html
+    """
+
+    n_estimators: int = 100
+    criterion: Literal["gini", "entropy", "log_loss"] = "gini"
+    # max_depth: Union[None, int] = None
+
+
+@options_manager.config_scikit_class()
+class ExtraTreesClassifierConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the `sklearn.ensemble.ExtraTreesClassifier` class.
+    """
+
+    type: Literal[
+        "sklearn.ensemble.ExtraTreesClassifier"
+    ] = "sklearn.ensemble.ExtraTreesClassifier"
+    task_type: List[TaskType] = ["multiclass"]
+    constructor_args: ExtraTreesClassifierConstructorArgs = (
+        ExtraTreesClassifierConstructorArgs()
+    )
+    fit_args: Union[None, Dict[str, str]] = None
+
+
+class KnearestNeighborsClassifierConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the `sklearn.neighbors.KNeighborsClassifier` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
+    """
+
+    n_neighbors: int = 5
+    weights: Union[Literal["uniform", "distance"], None] = "uniform"
+    algorithm: Literal["auto", "ball_tree", "kd_tree", "brute"] = "auto"
+    leaf_size: int = 30
+    p: int = 2
+    metric: str = "minkowski"
+    metric_params: Union[None, Dict[str, Union[str, float, int]]] = None
+    n_jobs: Union[None, int] = None
+
+
+@options_manager.config_scikit_class()
+class KnearestNeighborsClassifierConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the `sklearn.neighbors.KNeighborsClassifier` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
+    """
+
+    type: Literal[
+        "sklearn.neighbors.KNeighborsClassifier"
+    ] = "sklearn.neighbors.KNeighborsClassifier"
+    constructor_args: KnearestNeighborsClassifierConstructorArgs = (
+        KnearestNeighborsClassifierConstructorArgs()
+    )
+    fit_args: Union[None, Dict[str, str]] = None
+    task_type: List[TaskType] = ["multiclass", "multilabel"]
+
+
+class RandomForestClassifierConstructorArgs(BaseModel):
+    """
+    The constructor arguments for the `sklearn.ensemble.RandomForestClassifier` class.
+
+    :see: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+    """
+
+    n_estimators: int = 100
+    criterion: Literal["gini", "entropy", "log_loss"] = "gini"
+    # max_depth: Union[None, int] = None
+
+
+@options_manager.config_scikit_class()
+class RandomForestClassifierConfig(CamelCaseModel, CreateFromType):
+    """
+    Describes the usage of the `sklearn.ensemble.RandomForestClassifier` class.
+    """
+
+    type: Literal[
+        "sklearn.ensemble.RandomForestClassifier"
+    ] = "sklearn.ensemble.RandomForestClassifier"
+    task_type: List[TaskType] = ["multiclass"]
+    constructor_args: RandomForestClassifierConstructorArgs = (
+        RandomForestClassifierConstructorArgs()
+    )
+    fit_args: Union[None, Dict[str, str]] = None
+
+
+class SklearnModelSchema(CamelCaseModel, YAML_Model):
+    """
+    Specifies a sklearn model.
+    """
+
+    model: Annotated[
+        Union[
+            KNeighborsRegressorConfig,
+            RandomForestRegressorConfig,
+            ExtraTreesRegressorConfig,
+            ExtraTreesClassifierConfig,
+            KnearestNeighborsClassifierConfig,
+            RandomForestClassifierConfig,
+        ],
+        Field(discriminator="type"),
+    ]
+
+
+class SklearnModelSpec(CamelCaseModel, YAML_Model):
+    """
+    Specifies a sklearn model along with the dataset it will be used on.
+    """
+
+    framework: Literal["sklearn"] = "sklearn"
+    name: str
+    dataset: Union[DatasetConfig, DatasetConfigWithPreprocessing] = Field(
+        ..., discriminator="strategy"
+    )
+    spec: SklearnModelSchema

@@ -1,9 +1,10 @@
 """
 Experiment related DTOs
 """
-from typing import Dict, List, Literal, Optional, Union
+from typing import Annotated, Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
+from pydantic import Field
 
 from fleet.torch_.schemas import TorchTrainingConfig
 from mariner.schemas.api import (
@@ -23,16 +24,29 @@ class BaseTrainingRequest(ApiBaseModel):
 
     name: str
     model_version_id: int
-    framework: str
-    config: TorchTrainingConfig  # a Union of different framework configs later
 
 
 class TorchTrainingRequest(BaseTrainingRequest):
-    framework = "torch"
+    """
+    Configures the parameters for training a torch model.
+
+    Attributes:
+        framework: The framework to use for training. Must be "torch".
+        config: The parameters.
+    """
+
+    framework: Literal["torch"] = "torch"
     config: TorchTrainingConfig
 
     @classmethod
-    def create(cls, name: str, model_version_id: int, config: TorchTrainingConfig):
+    def create(
+        cls, name: str, model_version_id: int, config: TorchTrainingConfig
+    ):
+        """
+        Builder method for TorchTrainingRequest class.
+
+        Allows to create an instance without specifying framework.
+        """
         return cls(
             framework="torch",
             name=name,
@@ -40,6 +54,24 @@ class TorchTrainingRequest(BaseTrainingRequest):
             config=config,
         )
 
+
+class SklearnTrainingRequest(BaseTrainingRequest):
+    """
+    Configures the parameters for training a sklearn model.
+
+    Attributes:
+        framework: The framework to use for training. Must be "sklearn".
+        config: The parameters.
+    """
+
+    framework: Literal["sklearn"] = "sklearn"
+    config: Union[None, dict] = None
+
+
+TrainingRequest = Annotated[
+    Union[TorchTrainingRequest, SklearnTrainingRequest],
+    Field(discriminator="framework"),
+]
 
 ExperimentStage = Literal["NOT RUNNING", "RUNNING", "SUCCESS", "ERROR"]
 

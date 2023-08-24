@@ -2,8 +2,9 @@
 Concrete implementation of :py:class:`fleet.base_schemas.BaseModelFunctions` for
 torch based models.
 """
+import logging
 from os import getenv
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
 from lightning.pytorch import Callback, Trainer
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
@@ -11,13 +12,21 @@ from lightning.pytorch.loggers import Logger
 from mlflow import MlflowClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
+from torch import Tensor
+from torch_geometric.loader import DataLoader
 from typing_extensions import override
 
+import fleet.mlflow
 from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
-from fleet.model_builder.dataset import Collater, DataModule
 from fleet.torch_.models import CustomModel
 from fleet.torch_.schemas import TorchTrainingConfig
-from mariner.core.mlflowapi import log_models_and_create_version
+from fleet.utils.data import (
+    DataModule,
+    MarinerTorchDataset,
+    PreprocessingPipeline,
+)
+
+LOG = logging.getLogger(__name__)
 
 
 class TorchFunctions(BaseModelFunctions):
@@ -41,11 +50,32 @@ class TorchFunctions(BaseModelFunctions):
 
     _loggers: List[Logger] = []
 
-    def __init__(self):
+    def __init__(
+        self,
+        spec: TorchModelSpec,
+        dataset: DataFrame = None,
+        model: CustomModel = None,
+        preprocessing_pipeline: Union[None, "PreprocessingPipeline"] = None,
+    ):
         """
         Instantiates the class. Takes no arguments.
         """
         super().__init__()
+        self.dataset = dataset
+        self.spec = spec
+        if model:
+            self.model = model
+        else:
+            self.model = CustomModel(
+                config=spec.spec, dataset_config=spec.dataset
+            )
+
+        if preprocessing_pipeline:
+            self.preprocessing_pipeline = preprocessing_pipeline
+        else:
+            self.preprocessing_pipeline = PreprocessingPipeline(
+                dataset_config=spec.dataset
+            )
 
     @property
     def loggers(self):
@@ -59,8 +89,6 @@ class TorchFunctions(BaseModelFunctions):
     @override
     def train(
         self,
-        dataset: DataFrame,
-        spec: TorchModelSpec,
         params: TorchTrainingConfig,
         datamodule_args: Union[None, dict] = None,
     ):
@@ -76,30 +104,29 @@ class TorchFunctions(BaseModelFunctions):
         Raises:
             ValueError: When the `params.checkpoint_config` property is not set.
         """
-        self.spec = spec
-        model = CustomModel(config=spec.spec, dataset_config=spec.dataset)
-        model.set_optimizer(params.optimizer)
+        spec = self.spec
+        self.model.set_optimizer(params.optimizer)
         batch_size = params.batch_size or 32
         if not datamodule_args:
             datamodule_args = {}
         datamodule = DataModule(
+            data=self.dataset,
             config=spec.dataset,
-            model_config=spec.spec,
-            data=dataset,
             batch_size=batch_size,
-            collate_fn=Collater(),
             **datamodule_args,
         )
 
+        callbacks: List[Callback] = []
         if not params.checkpoint_config:
-            raise ValueError("params.checkpoint_config is required to log models")
+            LOG.warning("params.checkpoint_config is required to log models")
+        else:
+            self.checkpoint_callback = ModelCheckpoint(
+                monitor=params.checkpoint_config.metric_key,
+                mode=params.checkpoint_config.mode,
+                save_last=True,
+            )
+            callbacks.append(self.checkpoint_callback)
 
-        self.checkpoint_callback = ModelCheckpoint(
-            monitor=params.checkpoint_config.metric_key,
-            mode=params.checkpoint_config.mode,
-            save_last=True,
-        )
-        callbacks: List[Callback] = [self.checkpoint_callback]
         if params.early_stopping_config is not None:
             callbacks.append(
                 EarlyStopping(
@@ -110,6 +137,7 @@ class TorchFunctions(BaseModelFunctions):
                     check_finite=params.early_stopping_config.check_finite,
                 )
             )
+
         trainer = Trainer(
             max_epochs=params.epochs,
             log_every_n_steps=max(batch_size // 2, 10),
@@ -118,15 +146,14 @@ class TorchFunctions(BaseModelFunctions):
             default_root_dir=getenv("LIGHTNING_LOGS_DIR") or "lightning_logs/",
             logger=self.loggers,
         )
-        datamodule.setup()
-        trainer.fit(model, datamodule)
+
+        trainer.fit(self.model, datamodule)
 
     @override
     def log_models(
-        self, mlflow_experiment_id: str, mlflow_model_name: str
-    ) -> ModelVersion:
+        self, mlflow_model_name, run_id, version_description=None
+    ) -> Union[ModelVersion, None]:
         """[Logs best and last models to mlflow tracker.
-        t
 
         Args:
             mlflow_experiment_id: The mlflow experiment string identifier.
@@ -142,25 +169,34 @@ class TorchFunctions(BaseModelFunctions):
                 the `checkpoint_callback` property is not set.
         """
         if not self.checkpoint_callback:
-            raise ValueError("train() must be called first")
+            LOG.warning(
+                "Skipping logging models because checkpoint_callback is missing."
+            )
+            return
         client = MlflowClient()
         best_model_path = self.checkpoint_callback.best_model_path
         model_kwargs = {"dataset_config": self.spec.dataset}
-        best_model = CustomModel.load_from_checkpoint(best_model_path, **model_kwargs)
-        assert isinstance(best_model, CustomModel), "best_model failed to be logged"
+        best_model = CustomModel.load_from_checkpoint(
+            best_model_path, **model_kwargs
+        )
+        assert isinstance(
+            best_model, CustomModel
+        ), "best_model failed to be logged"
         last_model_path = self.checkpoint_callback.last_model_path
-        last_model = CustomModel.load_from_checkpoint(last_model_path, **model_kwargs)
-        assert isinstance(last_model, CustomModel), "last_model failed to be logged"
-        runs = client.search_runs(experiment_ids=[mlflow_experiment_id])
-        assert len(runs) >= 1
-        run = runs[0]
-        run_id = run.info.run_id
-        mlflow_model_version = log_models_and_create_version(
-            mlflow_model_name,
-            best_model,
-            last_model,
-            run_id,
-            client=client,
+        last_model = CustomModel.load_from_checkpoint(
+            last_model_path, **model_kwargs
+        )
+        assert isinstance(
+            last_model, CustomModel
+        ), "last_model failed to be logged"
+        mlflow_model_version = (
+            fleet.mlflow.log_torch_models_and_create_version(
+                mlflow_model_name,
+                best_model,
+                last_model,
+                version_description=version_description,
+                client=client,
+            )
         )
         return mlflow_model_version
 
@@ -169,3 +205,30 @@ class TorchFunctions(BaseModelFunctions):
 
     def load(self) -> None:
         return super().load()
+
+    def predict(self, input_: Union[DataFrame, dict]) -> Dict[str, List[Any]]:
+        """
+        Makes predictions on the current loaded model.
+        """
+        assert self.model is not None, "Model is not loaded."
+
+        if not isinstance(input_, DataFrame):
+            input_ = DataFrame.from_dict(input_, dtype=float)
+
+        dataset = MarinerTorchDataset(
+            data=input_,
+            dataset_config=self.spec.dataset,
+            preprocessing_pipeline=self.preprocessing_pipeline,
+        )
+        dataloader = DataLoader(dataset, batch_size=len(input_))
+        X = next(iter(dataloader))
+
+        result: dict = self.model.predict_step(X)
+        result = {
+            key: value.detach().numpy().tolist()
+            for key, value in result.items()
+        }
+        prediction: Dict[str, List[float]] = {}
+        for column, item in result.items():
+            prediction[column] = item if isinstance(item, list) else [item]
+        return prediction

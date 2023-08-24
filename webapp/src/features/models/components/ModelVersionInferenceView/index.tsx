@@ -20,7 +20,9 @@ import ModelInput from './ModelInput';
 import DataSummary from './DataSummary';
 import { datasetsApi } from 'app/rtk/datasets';
 import { getPrediction } from 'features/models/modelsApi';
-import { extractVal } from 'features/models/common';
+import { TorchModelSpec } from '@app/rtk/generated/models';
+import { useNotifications } from '@app/notifications';
+import { HTTPError } from '@utils/http';
 
 interface ModelVersionInferenceViewProps {
   model: Model;
@@ -43,6 +45,9 @@ const Section = ({ children, title, ...rest }: SectionProps) => {
   );
 };
 
+// TODO: update component to support all frameworks configs.
+// Currently, only torch is supported, because it's dataset config is slightly different from
+// the usual, since it has a columnType property for each column.
 const ModelVersionInferenceView = ({
   model,
   modelVersionId,
@@ -50,6 +55,7 @@ const ModelVersionInferenceView = ({
   const [modelInputs, setModelInputs] = useState<ModelInputValue>({});
   const [modelOutputs, setModelOutputs] = useState<ModelOutputValue>([]);
   const [predictionLoading, setPredictionLoading] = useState(false);
+  const { notifyError, success } = useNotifications();
   const { data: dataset } = datasetsApi.useGetDatasetByIdQuery(
     model.datasetId!
   );
@@ -58,6 +64,7 @@ const ModelVersionInferenceView = ({
     setPredictionLoading(true);
     getPrediction({ modelVersionId, modelInputs })
       .then(setModelOutputs)
+      .catch((err: HTTPError) => notifyError(err.response.data.detail))
       .finally(() => setPredictionLoading(false));
   };
   const resetModelInputs = () => {
@@ -69,7 +76,7 @@ const ModelVersionInferenceView = ({
     );
   }, [model, modelVersionId]);
   const targetColumns = useMemo(
-    () => modelVersion?.config.dataset.targetColumns || [],
+    () => (modelVersion?.config as TorchModelSpec).dataset.targetColumns || [],
     [modelVersion?.config.dataset.targetColumns]
   );
 

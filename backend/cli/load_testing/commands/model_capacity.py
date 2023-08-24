@@ -1,7 +1,9 @@
 import click
 
 
-@click.command("model-capacity", help="Load test the capacity in width and depth")
+@click.command(
+    "model-capacity", help="Load test the capacity in width and depth"
+)
 @click.option(
     "--model-width",
     type=int,

@@ -71,7 +71,9 @@ def create_temporary_deployment(
             model_version_id=some_model.versions[0].id,
             prediction_rate_limit_value=100,
             share_strategy=(
-                ShareStrategy.PUBLIC if share_by == "public" else ShareStrategy.PRIVATE
+                ShareStrategy.PUBLIC
+                if share_by == "public"
+                else ShareStrategy.PRIVATE
             ),
         ),
     )
@@ -196,7 +198,9 @@ def test_create_deployment(
 
     db_data = deployment_store.get(db, payload["id"])
     assert bool(db_data), "Should have created the deployment in the database."
-    assert db_data.name == deployment_data["name"], "Should have the same name."
+    assert (
+        db_data.name == deployment_data["name"]
+    ), "Should have the same name."
 
 
 @pytest.mark.integration
@@ -221,7 +225,9 @@ def test_update_deployment(
     assert r.status_code == 200
     payload = r.json()
     assert payload["name"] == "Updated Name", "Should have updated the name."
-    assert payload["shareStrategy"] == "public", "Should have updated to public."
+    assert (
+        payload["shareStrategy"] == "public"
+    ), "Should have updated to public."
     assert bool(
         payload["shareUrl"]
     ), "Should have a share url after updating to public."
@@ -297,7 +303,10 @@ def test_create_permission(
     r = client.get(
         f"{get_app_settings('server').host}/api/v1/deployments",
         headers=normal_user_token_headers,
-        params={"name": deployment_fixture.name, "created_by_id": test_user.id},
+        params={
+            "name": deployment_fixture.name,
+            "created_by_id": test_user.id,
+        },
     )
     payload = r.json()
 
@@ -385,7 +394,9 @@ def test_get_public_deployment(
         assert r.status_code == 200
         deployment = r.json()
         public_url = deployment["shareUrl"]
-        assert bool(public_url), "Should have a public url after updating to public."
+        assert bool(
+            public_url
+        ), "Should have a public url after updating to public."
 
         token = ".".join(public_url.split("/")[-3:])
         r = client.get(
@@ -398,7 +409,9 @@ def test_get_public_deployment(
 
         payload = r.json()
         assert payload["id"] == some_deployment.id, "Should have the same id."
-        assert payload["name"] == some_deployment.name, "Should have the same name."
+        assert (
+            payload["name"] == some_deployment.name
+        ), "Should have the same name."
 
 
 @pytest.fixture(scope="module")
@@ -439,7 +452,9 @@ def test_post_make_prediction(
         },
         headers=normal_user_token_headers,
     )
-    assert r.status_code == 200, "Should update deployment instance status to active."
+    assert (
+        r.status_code == 200
+    ), "Should update deployment instance status to active."
 
     r = client.post(
         f"{get_app_settings('server').host}/api/v1/deployments/{some_deployment.id}/predict",

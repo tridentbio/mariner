@@ -4,7 +4,7 @@ import { store } from 'app/store';
 import { ModelEditorContextProvider } from 'hooks/useModelEditor';
 import { ModelSchema } from 'model-compiler/src/interfaces/model-editor';
 import { useState } from 'react';
-import { ReactFlowProvider } from 'react-flow-renderer';
+import { ReactFlowProvider } from 'reactflow';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { theme } from 'theme';
@@ -51,6 +51,7 @@ export const Default = () => {
         },
       ],
       featurizers: [],
+      transforms: [],
     },
     spec: {
       layers: [],
@@ -75,6 +76,7 @@ export const InvalidSchema = () => {
           dataType: { domainKind: 'numeric', unit: 'mole' },
         },
       ],
+      transforms: [],
       featurizers: [
         {
           name: 'MolFeaturizer1',

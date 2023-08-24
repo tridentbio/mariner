@@ -1,0 +1,34 @@
+name: HIV Random Forest Classifier
+framework: sklearn
+
+dataset:
+  name: HIV
+  strategy: pipeline
+  featureColumns:
+    - name: smiles
+      dataType:
+        domainKind: smiles
+      featurizers:
+        - name: MolFPFeaturizer
+          type: molfeat.trans.fp.FPVecFilteredTransformer
+      constructor_args:
+        del_invariant: False
+        length: 512
+    - name: activity
+      dataType:
+        domainKind: categorical
+        classes:
+          CI: 0
+          CM: 1
+      featurizers:
+        - name: OneHotEncoder
+          type: sklearn.preprocessing.OneHotEncoder
+
+  targetColumns:
+    - name: HIV_active
+      dataType:
+        domainKind: numeric
+spec:
+  model:
+    type: sklearn.ensemble.RandomForestClassifier
+

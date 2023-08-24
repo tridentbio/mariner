@@ -1,4 +1,4 @@
-import { getEdgeCenter, ReactFlowInstance } from 'react-flow-renderer';
+import { ReactFlowInstance } from 'reactflow';
 
 type NodeSchemaContext = {
   nodeId: string;
@@ -32,16 +32,10 @@ export const locateContext = (
   } else if (SchemaContextTypeGuard.isEdgeSchema(ctx)) {
     const edge = value.getEdge(ctx.edgeId);
     if (!edge) return;
-    //const sourceX = edge.sourceNode?.position.x || 0;
-    //const sourceY = edge.sourceNode?.position.y || 0;
+
     const targetX = edge.targetNode?.position.x || 0;
     const targetY = edge.targetNode?.position.y || 0;
-    //const [edgeCenterX, edgeCenterY] = getEdgeCenter({
-    //  sourceX,
-    //  sourceY,
-    //  targetX,
-    //  targetY,
-    //});
+
     return {
       x: targetX,
       y: targetY,

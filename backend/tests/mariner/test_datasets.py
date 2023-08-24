@@ -55,7 +55,9 @@ def mock_dataset_create_request(
 @pytest.mark.parametrize(
     "create_obj",
     [
-        mock_dataset_create_request(split_type="scaffold", split_column="smiles"),
+        mock_dataset_create_request(
+            split_type="scaffold", split_column="smiles"
+        ),
         mock_dataset_create_request(split_type="random"),
     ],
 )
@@ -65,11 +67,11 @@ async def test_create_dataset(db: Session, create_obj: DatasetCreate):
     with open("tests/data/csv/Lipophilicity.csv", "rb") as f:
         user = get_test_user(db)
         create_obj.file = UploadFile("file", f)
-        # print(create_obj.file.file.read())
-        # create_obj.file.file.seek(0)
         dataset = await dataset_ctl.create_dataset(db, user, create_obj)
         assert dataset
         assert dataset.name == create_obj.name
-        db_obj = db.query(Dataset).filter(Dataset.name == create_obj.name).first()
+        db_obj = (
+            db.query(Dataset).filter(Dataset.name == create_obj.name).first()
+        )
         assert db_obj
         assert db_obj.id

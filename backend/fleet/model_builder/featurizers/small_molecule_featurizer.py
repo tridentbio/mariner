@@ -66,7 +66,12 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
         self.TOTAL_NUM_HS_SET = [0, 1, 2, 3, 4]
 
         # Bond feature lists
-        self.BOND_STEREO_SET = ["STEREONONE", "STEREOANY", "STEREOE", "STEREOZ"]
+        self.BOND_STEREO_SET = [
+            "STEREONONE",
+            "STEREOANY",
+            "STEREOE",
+            "STEREOZ",
+        ]
         self.BOND_TYPE_SET = ["SINGLE", "DOUBLE", "TRIPLE", "AROMATIC"]
 
         # Default feature sets
@@ -102,17 +107,31 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
 
         self._get_slices()
 
-    def __call__(self, mol: Union[RDKitMol, str]) -> PyGData:
+    def featurize_list(
+        self, mols_list: List[Union[RDKitMol, str]]
+    ) -> List[PyGData]:
+        featurized_mols = []
+        for mol in mols_list:
+            featurized_mols.append(self(mol))
+        return featurized_mols
+
+    def __call__(self, mol: Union[RDKitMol, str, np.ndarray]) -> PyGData:
+        if isinstance(mol, (list, np.ndarray)):
+            return self.featurize_list(mol)
         return self._featurize(mol, self.sym_bond_list)
 
     def __repr__(self):
         atom_features = "atom = {}".format(
-            ", ".join([f"{i}: {s}" for i, s in self.NODE_FEATURE_SLICES.items()])
+            ", ".join(
+                [f"{i}: {s}" for i, s in self.NODE_FEATURE_SLICES.items()]
+            )
         )
         bond_features = "bond = {}".format(
-            ", ".join([f"{i}: {s}" for i, s in self.EDGE_FEATURE_SLICES.items()])
+            ", ".join(
+                [f"{i}: {s}" for i, s in self.EDGE_FEATURE_SLICES.items()]
+            )
         )
-        return f"Featurizer({atom_features}; {bond_features})"
+        return f"MoleculeFeaturizer({atom_features}; {bond_features})"
 
     def _get_slices(self):
         if self.allow_unknown:
@@ -186,7 +205,9 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
 
     def _get_atom_hybridization_one_hot(self, atom: RDKitAtom) -> List[float]:
         return self._one_hot_encode(
-            str(atom.GetHybridization()), self.HYBRIDIZATION_SET, self.allow_unknown
+            str(atom.GetHybridization()),
+            self.HYBRIDIZATION_SET,
+            self.allow_unknown,
         )
 
     @staticmethod
@@ -205,7 +226,9 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
 
     def _get_atom_num_hs_one_hot(self, atom: RDKitAtom) -> List[float]:
         return self._one_hot_encode(
-            int(atom.GetTotalNumHs()), self.TOTAL_NUM_HS_SET, self.allow_unknown
+            int(atom.GetTotalNumHs()),
+            self.TOTAL_NUM_HS_SET,
+            self.allow_unknown,
         )
 
     def _get_mol_atom_features(self, mol: RDKitMol) -> List[List[float]]:
@@ -252,7 +275,9 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
         return [int(bond.GetIsConjugated())]
 
     @staticmethod
-    def _get_bond_indices(bond: RDKitBond, symmetric: bool = False) -> List[List[int]]:
+    def _get_bond_indices(
+        bond: RDKitBond, symmetric: bool = False
+    ) -> List[List[int]]:
         start = bond.GetBeginAtomIdx()
         end = bond.GetEndAtomIdx()
 
@@ -344,7 +369,9 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
                 "bond_features": torch.as_tensor(
                     np.array(mol_bond_features, dtype=np.float32)
                 ),
-                "bond_list": torch.as_tensor(np.array(mol_bond_list, dtype=np.int64)),
+                "bond_list": torch.as_tensor(
+                    np.array(mol_bond_list, dtype=np.int64)
+                ),
             }
 
             frags.append(
@@ -406,7 +433,9 @@ class MoleculeFeaturizer(BaseFeaturizer[str]):
             "bond_features": torch.as_tensor(
                 np.array(mol_bond_features, dtype=np.float32)
             ),
-            "bond_list": torch.as_tensor(np.array(mol_bond_list, dtype=np.int64)),
+            "bond_list": torch.as_tensor(
+                np.array(mol_bond_list, dtype=np.int64)
+            ),
         }
 
         return PyGData(

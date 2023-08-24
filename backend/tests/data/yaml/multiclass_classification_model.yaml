@@ -1,6 +1,8 @@
 name: multiclass_classification_model
+framework: torch
 dataset:
   name: Iris
+  strategy: forwardArgs
   targetColumns:
     - name: species
       dataType:
@@ -9,13 +11,21 @@ dataset:
           0: 0
           1: 1
           2: 2
-      outModule: Linear2
+      outModule: Linear1
   featureColumns:
     - name: sepal_length
       dataType:
         domainKind: numeric
         unit: cm
     - name: sepal_width
+      dataType:
+        domainKind: numeric
+        unit: cm
+    - name: petal_length
+      dataType:
+        domainKind: numeric
+        unit: cm
+    - name: petal_width
       dataType:
         domainKind: numeric
         unit: cm
@@ -30,12 +40,14 @@ spec:
         xs:
           - $sepal_length
           - $sepal_width
+          - $petal_length
+          - $petal_width
 
     - name: Linear0
       type: torch.nn.Linear
       constructorArgs:
-        in_features: 2
-        out_features: 16
+        in_features: 4
+        out_features: 128
       forwardArgs:
         input: $Concat
 
@@ -49,22 +61,7 @@ spec:
     - name: Linear1
       type: torch.nn.Linear
       constructorArgs:
-        in_features: 16
-        out_features: 16
-      forwardArgs:
-        input: $ReLU0
-
-    - name: ReLU1
-      type: torch.nn.ReLU
-      constructorArgs:
-        inplace: false
-      forwardArgs:
-        input: $Linear1
-
-    - name: Linear2
-      type: torch.nn.Linear
-      constructorArgs:
-        in_features: 16
+        in_features: 128
         out_features: 3
       forwardArgs:
-        input: $ReLU1
+        input: $ReLU0

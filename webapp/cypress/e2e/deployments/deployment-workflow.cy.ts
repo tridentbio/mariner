@@ -76,18 +76,18 @@ describe('Deployments Workflow.', () => {
     cy.notificationShouldContain(
       'You have reached the prediction limit for this deployment.'
     );
+  });
 
-    it('Make prediction on public deployment.', () => {
-      cy.goToDeploymentWithinModel(modelName!);
+  it('Make prediction on public deployment.', () => {
+    cy.goToDeploymentWithinModel(modelName!);
 
-      cy.updateDeployment(modelName!, deploymentName!, {
-        shareStrategy: 'Public',
-      }).then((res) => {
-        const shareUrl = res?.body.shareUrl as string;
-        assert.exists(shareUrl);
-        cy.goToPublicDeployment(shareUrl!);
-        cy.makePrediction(true);
-      });
+    cy.updateDeployment(modelName!, deploymentName!, {
+      shareStrategy: 'Public',
+    }).then((res) => {
+      const shareUrl = res?.body.shareUrl as string;
+      assert.exists(shareUrl);
+      cy.goToPublicDeployment(shareUrl!);
+      cy.makePrediction(true);
     });
   });
 });

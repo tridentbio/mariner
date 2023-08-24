@@ -26,13 +26,13 @@ WEBAPP_DEPENDENCY_FILES = webapp/package.json webapp/package-lock.json
 
 
 .PHONY: webapp-install
-webapp-install:         ## Install dependencies to run webapp locally and run webapp tools
+webapp-install: webapp/package-lock.json         ## Install dependencies to run webapp locally and run webapp tools
 	cd webapp &&\
 		npm ci
 
 
 .PHONY: backend-install
-backend-install:        ## Install dependencies to run backend locally and run it's CLI tools
+backend-install: backend/poetry.lock       ## Install dependencies to run backend locally and run it's CLI tools
 	cd backend &&\
 		poetry install &&\
 		poetry run install_deps_cpu
@@ -70,9 +70,17 @@ create-admin:           ## Creates default "admin@mariner.trident.bio" with "123
 create-test-user:       ## Creates default user (from `email_test_user` attribute) with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_test_user; create_test_user()'" backend
 
+.PHONE: start-backend
 start-backend:         ## Builds and starts backend
 	$(DOCKER_COMPOSE) build backend
 	$(DOCKER_COMPOSE) up --wait backend
+
+.PHONY: start-backend-local
+start-backend-local:        ## Runs backend locally
+	$(DOCKER_COMPOSE) up --wait db
+	cd backend &&\
+		RESTART=true poetry run dotenv run python -m api.main
+
 
 .PHONY: start
 start:                  ## Starts services (without building them explicitly)
@@ -122,13 +130,8 @@ test-e2e: build start create-admin create-test-user## Runs test target
 	$(DOCKER_COMPOSE) up e2e
 
 
-.PHONY: test-target
-test-target:  ## Runs test target
-	echo hello
-
-
 .PHONY: pre-commit
-pre-commit: backend-install webapp-install  ## Runs pre-commit hooks (formatting, linting and unit testing)
+pre-commit:  ## Runs pre-commit hooks (formatting, linting and unit testing)
 	pre-commit
 
 
@@ -142,14 +145,9 @@ pre-commit-uninstall:   ## Removes pre-commit managed git hooks from .git direct
 	pre-commit uninstall
 
 
-.PHONY: pre-commit-fix
-fix:
+.PHONY: fix
+fix: ## Runs code styling fixing scripts
 	pre-commit run --hook-stage manual
-
-.PHONY: jupyter
-jupyter: ## Parse RELEASE.md file into mariner events that will show up as notifications
-	cd backend &&\
-		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
 
 .PHONY: publish
 publish: ## Parse RELEASE.md file into mariner events that will show up as notifications

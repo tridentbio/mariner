@@ -65,7 +65,9 @@ class DataInstance(BaseStorage):
 
     def __repr__(self) -> str:
         cls = self.__class__.__name__
-        info_parts = [size_repr(k, v, indent=2) for k, v in self._store.items()]
+        info_parts = [
+            size_repr(k, v, indent=2) for k, v in self._store.items()
+        ]
         info = ",\n".join(info_parts)
         return f"{cls}(\n{info}\n)"
 
@@ -151,11 +153,10 @@ def get_class_from_path_string(pathstring: str) -> type:
         Any: The class.
     """
     components = pathstring.split(".")
-    mod = components[:-1]
-    mod = __import__(components[0])
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return mod
+    submodule = __import__(
+        ".".join(components[:-1]), fromlist=[components[-1]]
+    )
+    return getattr(submodule, components[-1])
 
 
 def unwrap_dollar(value: str) -> tuple[str, bool]:
@@ -171,8 +172,8 @@ def unwrap_dollar(value: str) -> tuple[str, bool]:
 
 
 def get_references_dict(
-    forward_args_dict: dict[str, Any]
-) -> dict[str, Union[str, list[str]]]:
+    forward_args: Union[dict[str, Any], list[str]],
+) -> Union[dict[str, Union[str, list[str]]], list[str]]:
     """Gets a dictionary with the same shape of forward_args_dict
     but with all string values representing reference mapped to the
     reference name.
@@ -182,27 +183,53 @@ def get_references_dict(
 
     Returns:
         dictionary mapping forward argument keys to schema references.
+
+    Example:
+    >>> forward_args_dict = {
+    ...     "x": "${data.x}",
+    ...     "y": ["${data.y}", "${data.y}"],
+    ...     "z": "z"
+    ... }
+    >>> get_references_dict(forward_args_dict)
+    {
+        "x": "data.x",
+        "y": ["data.y", "data.y"],
+        "z": "z"
+    }
     """
 
     # Init a dict
     result: dict[str, Union[str, list[str]]] = {}
 
     # Loop through the forward args dict
-    for key, value in forward_args_dict.items():
-        # Handle list instances
-        if isinstance(value, list):
-            result_key = []
-            for item in value:
-                ref, is_ref = unwrap_dollar(item)
-                if is_ref:
-                    result_key.append(ref)
-            result[key] = result_key
-        elif isinstance(value, str):
-            ref, is_ref = unwrap_dollar(value)
-            if is_ref:
-                result[key] = ref
 
-    return result
+    if isinstance(forward_args, dict):
+        for key, value in forward_args.items():
+            # Handle list instances
+            if isinstance(value, list):
+                result_key = []
+                for item in value:
+                    ref, is_ref = unwrap_dollar(item)
+                    if is_ref:
+                        result_key.append(ref)
+                result[key] = result_key
+            elif isinstance(value, str):
+                ref, is_ref = unwrap_dollar(value)
+                if is_ref:
+                    result[key] = ref
+        return result
+    elif isinstance(forward_args, list):
+        list_result: list[str] = []
+        for item in forward_args:
+            ref, is_ref = unwrap_dollar(item)
+            if is_ref:
+                list_result.append(ref)
+        return list_result
+    else:
+        raise TypeError(
+            "Expected forward_args_dict to be a dict or a list"
+            f" but got {type(forward_args)}"
+        )
 
 
 def get_ref_from_data_instance(accessor_str: str, input_: DataInstance):
@@ -243,17 +270,17 @@ def get_ref_from_input(
 ):
     """Gets the accessor_str of a DataInstance or a batch of DataInstance's
 
-
     Args:
         accessor_str: string represented accessor_str to get, e.g. "mol_featurizer.x", "mwt".
         input(Union[DataInstance, List[DataInstance]):
     """
     if isinstance(input_, list):
-        values = [get_ref_from_data_instance(accessor_str, item) for item in input_]
+        values = [
+            get_ref_from_data_instance(accessor_str, item) for item in input_
+        ]
         assert len(values) > 0, "failed to get values from input"
         if isinstance(values[0], torch.Tensor):
             return torch.cat(values)  # type: ignore
-
     else:
         return get_ref_from_data_instance(accessor_str, input_)
 

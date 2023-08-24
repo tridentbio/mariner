@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from re import search
 from typing import Dict, Generator, List
@@ -14,8 +15,15 @@ from mariner.entities.dataset import Dataset
 from mariner.entities.user import User
 from mariner.schemas.experiment_schemas import Experiment
 from mariner.schemas.model_schemas import Model
-from tests.fixtures.dataset import setup_create_dataset, teardown_create_dataset
-from tests.fixtures.experiments import setup_experiments, teardown_experiments
+from tests.fixtures.dataset import (
+    setup_create_dataset,
+    teardown_create_dataset,
+)
+from tests.fixtures.experiments import (
+    mocked_training_config,
+    setup_experiments,
+    teardown_experiments,
+)
 from tests.fixtures.model import setup_create_model, teardown_create_model
 from tests.fixtures.user import get_random_test_user, get_test_user
 from tests.utils.user import authentication_token_from_email
@@ -68,12 +76,21 @@ def user_model_fixture(
 @pytest.mark.long
 @pytest.mark.integration
 def test_post_experiments(
-    client: TestClient, mocked_experiment_payload: dict, user_headers_fixture: dict
+    client: TestClient,
+    some_model: Model,
+    normal_user_token_headers: dict,
 ):
+    version = some_model.versions[-1]
+    payload = {
+        "framework": version.config.framework,
+        "name": random_lower_string(),
+        "modelVersionId": version.id,
+        "config": mocked_training_config(some_model),
+    }
     res = client.post(
         f"{get_app_settings('server').host}/api/v1/experiments/",
-        json=mocked_experiment_payload,
-        headers=user_headers_fixture,
+        json=payload,
+        headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK, res.json()
 
@@ -104,7 +121,9 @@ def test_get_experiments(
     assert res.status_code == HTTP_200_OK
     body = res.json()
     exps, total = body["data"], body["total"]
-    assert total == len(exps) == len(user_experiments_fixture), "gets all experiments"
+    assert (
+        total == len(exps) == len(user_experiments_fixture)
+    ), "gets all experiments"
 
 
 @pytest.mark.integration  # fixtures use other services
@@ -130,7 +149,9 @@ def test_get_experiments_ordered_by_createdAt_desc_url_encoded(
     ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
-        assert datetime.fromisoformat(next["createdAt"]) < datetime.fromisoformat(
+        assert datetime.fromisoformat(
+            next["createdAt"]
+        ) < datetime.fromisoformat(
             current["createdAt"]
         ), "createdAt descending order is not respected"
 
@@ -157,7 +178,9 @@ def test_get_experiments_ordered_by_createdAt_desc(
     ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
-        assert datetime.fromisoformat(next["createdAt"]) < datetime.fromisoformat(
+        assert datetime.fromisoformat(
+            next["createdAt"]
+        ) < datetime.fromisoformat(
             current["createdAt"]
         ), "createdAt descending order is not respected"
 
@@ -184,7 +207,9 @@ def test_get_experiments_ordered_by_createdAt_asc_url_encoded(
     ), "gets all experiments"
     for i in range(len(exps[:-1])):
         current, next = exps[i], exps[i + 1]
-        assert datetime.fromisoformat(next["createdAt"]) > datetime.fromisoformat(
+        assert datetime.fromisoformat(
+            next["createdAt"]
+        ) > datetime.fromisoformat(
             current["createdAt"]
         ), "createdAt ascending order is not respected"
 
@@ -208,7 +233,9 @@ def test_get_experiments_by_stage(
         headers=user_headers_fixture,
     )
     body = res.json()
-    assert res.status_code == HTTP_200_OK, "Request failed with body: %r" % body
+    assert res.status_code == HTTP_200_OK, (
+        "Request failed with body: %r" % body
+    )
     exps, total = body["data"], body["total"]
     for exp in exps:
         assert exp["stage"] == "SUCCESS", "experiment out of stage filter"
@@ -275,7 +302,9 @@ def test_get_experiments_metrics_for_model_version(
         headers=user_headers_fixture,
     )
 
-    assert res.status_code == HTTP_200_OK, "Request failed with body: %r" % res.json()
+    assert res.status_code == HTTP_200_OK, (
+        "Request failed with body: %r" % res.json()
+    )
 
     experiments_metrics: List[dict] = res.json()
     assert len(experiments_metrics) == len(
@@ -298,3 +327,77 @@ def test_get_experiments_metrics_for_model_version(
                 ), f"Invalid metric name: {key}"
 
                 assert_all_is_number(value)
+
+
+def get_predict_payload(model: Model):
+    return {
+        "smiles": ["CCC", "CC"],
+        "activity": ["CI", "CI"],
+        "sepal_length": [1.0, 2.0],
+        "petal_length": [1.0, 2.0],
+        "sepal_width": [1.0, 2.0],
+        "petal_width": [1.0, 2.0],
+        "large_petal_width": [1, 2],
+        "large_petal_length": [1, 2],
+        "aaMutations": ["SKGEELFT", "SKGEELFT"],
+        "mwt": [1.0, 2.0],
+        "mwt_group": [1, 0],
+        "tpsa": [1.0, 2.0],
+    }
+
+
+@pytest.mark.integration
+def test_post_experiment_n(
+    client, datasets_and_models, normal_user_token_headers
+):
+    parsed = [Model.from_orm(model) for _, model in datasets_and_models]
+    for model in parsed:
+        version = model.versions[-1]
+        payload = {
+            "framework": version.config.framework,
+            "name": random_lower_string(),
+            "modelVersionId": version.id,
+            "config": mocked_training_config(model),
+        }
+        res = client.post(
+            f"{get_app_settings('server').host}/api/v1/experiments/",
+            json=payload,
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == HTTP_200_OK, res.json()
+        timeout = 60  # around 65 seconds per case
+
+        while True:
+            res = client.get(
+                f"{get_app_settings('server').host}/api/v1/experiments/{res.json()['id']}",
+                headers=normal_user_token_headers,
+            )
+            experiment = Experiment.parse_obj(res.json())
+            if experiment.stage == "SUCCESS":
+                model_version_id = experiment.model_version_id
+                predict_res = client.post(
+                    f"{get_app_settings('server').host}/api/v1/models/{model_version_id}/predict",
+                    json=get_predict_payload(model),
+                    headers=normal_user_token_headers,
+                )
+                assert (
+                    predict_res.status_code == HTTP_200_OK
+                ), predict_res.json()
+                break
+            elif experiment.stage == "FAILED":
+                assert False, "Experiment failed"
+
+            time.sleep(1)
+            timeout -= 1
+
+            if timeout == 0:
+                assert False, f"Experiment model {model.name} timed out"
+        # Get experiment by id
+        experiment_id = res.json()["id"]
+        res = client.get(
+            f"{get_app_settings('server').host}/api/v1/experiments/{experiment_id}",
+            headers=normal_user_token_headers,
+        )
+        assert res.status_code == HTTP_200_OK, (
+            "Request failed with body: %r" % res.json()
+        )

@@ -1,6 +1,7 @@
 name: GNNE
 dataset:
   name: Zinc Extra
+  strategy: forwardArgs
   targetColumns:
     - name: mwt
       dataType:

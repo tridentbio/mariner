@@ -21,10 +21,14 @@ class BaseDataType(BaseModel):
         underscore_attrs_are_private = True
 
 
-class NumericalDataType(BaseDataType):
+class NumericDataType(BaseDataType):
     """
     Data type for a numerical series.
     """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.domain_kind = "numeric"
 
     domain_kind: Literal["numeric"] = Field("numeric")
 
@@ -34,12 +38,16 @@ class NumericalDataType(BaseDataType):
         return "numeric"
 
 
-class QuantityDataType(NumericalDataType):
+class QuantityDataType(NumericDataType):
     """
     Data type for a numerical series bound to a unit
     """
 
     unit: str
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.domain_kind = "numeric"
 
 
 class StringDataType(BaseDataType):
@@ -53,6 +61,10 @@ class StringDataType(BaseDataType):
     def check_domain_kind(cls, _value: Any):
         """Validates domain_kind"""
         return "string"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.domain_kind = "string"
 
 
 class CategoricalDataType(BaseDataType):
@@ -68,6 +80,10 @@ class CategoricalDataType(BaseDataType):
         """Validates domain_kind"""
         return "categorical"
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.domain_kind = "categorical"
+
 
 class SmileDataType(BaseDataType):
     """
@@ -75,6 +91,10 @@ class SmileDataType(BaseDataType):
     """
 
     domain_kind: Literal["smiles"] = Field("smiles")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.domain_kind = "smiles"
 
     @validator("domain_kind")
     def check_domain_kind(cls, _value: Any):
@@ -89,6 +109,10 @@ class DNADataType(BaseDataType):
 
     domain_kind: Literal["dna"] = Field("dna")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.domain_kind = "dna"
+
     @validator("domain_kind")
     def check_domain_kind(cls, _value: Any):
         """Validates domain_kind"""
@@ -101,6 +125,10 @@ class RNADataType(BaseDataType):
     """
 
     domain_kind: Literal["rna"] = Field("rna")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.domain_kind = "rna"
 
     @validator("domain_kind")
     def check_domain_kind(cls, _value: Any):
@@ -115,7 +143,22 @@ class ProteinDataType(BaseDataType):
 
     domain_kind: Literal["protein"] = Field("protein")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.domain_kind = "protein"
+
     @validator("domain_kind")
     def check_domain_kind(cls, _value: Any):
         """Validates domain_kind"""
         return "protein"
+
+
+DataType = Union[
+    NumericDataType,
+    CategoricalDataType,
+    QuantityDataType,
+    SmileDataType,
+    DNADataType,
+    RNADataType,
+    ProteinDataType,
+]

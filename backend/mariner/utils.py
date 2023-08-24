@@ -7,7 +7,6 @@ from gzip import compress, decompress
 from pathlib import Path
 from typing import BinaryIO, Union
 
-import pandas as pd
 from fastapi.datastructures import UploadFile as FAUploadFile
 from starlette.datastructures import UploadFile as SUploadFile
 from wonderwords import RandomWord
@@ -36,80 +35,31 @@ def hash_md5(
     Returns:
         str: md5 hash as a string
     """
-    hash_md5 = hashlib.md5()
+    md5_buffer = hashlib.md5()
     if data:
-        hash_md5.update(data)
+        md5_buffer.update(data)
     elif file:
         if isinstance(file, (str, Path)):
             with open(file, "rb") as f:
                 # type: ignore
                 for chunk in iter(lambda: f.read(chunk_size), b""):
-                    hash_md5.update(chunk)
+                    md5_buffer.update(chunk)
         elif isinstance(file, io.BytesIO):
             for chunk in iter(lambda: file.read(chunk_size), b""):  # type: ignore
-                hash_md5.update(chunk)
+                md5_buffer.update(chunk)
         elif isinstance(file, (FAUploadFile, SUploadFile)):
             for chunk in iter(lambda: file.file.read(chunk_size), b""):  # type: ignore
-                hash_md5.update(bytes(chunk))
+                md5_buffer.update(bytes(chunk))
         else:
             raise TypeError("file must be UploadFile")
     else:
         raise TypeError('Either "file" or "data" should be provided')
-    return hash_md5.hexdigest()
+    return md5_buffer.hexdigest()
 
 
 def random_pretty_name() -> str:
     """Generate a random name"""
     return RandomWord().word(word_min_length=4)
-
-
-def is_compressed(file: Union[FAUploadFile, bytes, io.BytesIO, BinaryIO]) -> bool:
-    """Check if file is compressed by checking the first two bytes
-
-    Gzip compressed files start with b'\x1f\x8b'
-
-    Args:
-        file (Union[FAUploadFile, bytes, io.BytesIO]):
-            file to check if it is compressed
-
-    Raises:
-        TypeError: if the file param is not a file
-
-    Returns:
-        bool: True if file is compressed, False otherwise
-    """
-    try:
-        if isinstance(file, bytes):
-            return file[0:2] == b"\x1f\x8b"
-
-        file.seek(0)
-        result = file.read(2) == b"\x1f\x8b"
-        file.seek(0)
-        return result
-    except AttributeError as e:
-        raise TypeError(f"file must be instance of file {e}")
-
-
-def read_compressed_csv(fileBytes: bytes) -> pd.DataFrame:
-    """Read csv file in bytes compressed by gzip
-
-    First check if the file is compressed
-    if it is then decompress it and read it as a csv file
-
-    Args:
-        fileBytes (bytes): bytes of the file to read
-
-    Raises:
-        TypeError: if the file is not compressed
-
-    Returns:
-        pd.DataFrame: dataframe of the csv file
-    """
-    if is_compressed(fileBytes):
-        fileBytes = decompress(fileBytes)
-        return pd.read_csv(io.BytesIO(fileBytes))
-    else:
-        raise TypeError("file must be UploadFile")
 
 
 def decompress_file(file: io.BytesIO) -> io.BytesIO:
@@ -123,8 +73,8 @@ def decompress_file(file: io.BytesIO) -> io.BytesIO:
         file.seek(0)
         return file
 
-    except AttributeError:
-        raise TypeError("file must be instance of file")
+    except AttributeError as exc:
+        raise TypeError("file must be instance of file") from exc
 
     except Exception as e:
         raise e

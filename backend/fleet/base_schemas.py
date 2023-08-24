@@ -9,16 +9,16 @@ FleetModelSpec, which unifies the descriptions of all framework schemas,
 and FleetTrainingConfig, that does the same for framework training parameters.
 """
 from abc import ABC
-from typing import Literal, Union
+from typing import Annotated, Literal, Union
 
 from mlflow.entities.model_registry.model_version import ModelVersion
-from pandas import DataFrame
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import Protocol
 
 from fleet.dataset_schemas import DatasetConfig, TorchDatasetConfig
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import CamelCaseModel
+from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.yaml_model import YAML_Model
 
 
@@ -56,20 +56,10 @@ class TorchModelSpec(CamelCaseModel, YAML_Model):
     dataset: "TorchDatasetConfig"
 
 
-class ScikitModelSpec(CamelCaseModel, YAML_Model):
-    """
-    Concrete implementation of sklearn model specs.
-    TODO: move to fleet.sklearn_.schemas
-    """
-
-    name: str
-    framework: Literal["sklearn"] = "sklearn"
-    spec: "TorchModelSchema"
-    dataset: "TorchDatasetConfig"
-
-
 # TODO: move to fleet.schemas
-FleetModelSpec = Union[TorchModelSpec, ScikitModelSpec]
+FleetModelSpec = Annotated[
+    Union[TorchModelSpec, SklearnModelSpec], Field(discriminator="framework")
+]
 
 
 class BaseModelFunctions(Protocol):
@@ -77,14 +67,7 @@ class BaseModelFunctions(Protocol):
     Interface for training, testing and using a model for a specific framework.
     """
 
-    def train(
-        self,
-        *,
-        dataset: DataFrame,
-        spec: BaseFleetModelSpec,
-        params: BaseModel,
-        datamodule_args: Union[None, dict] = None,
-    ) -> None:
+    def train(self, **kwargs) -> None:
         """Trains a model.
 
         Trains the model described by `spec` with the `dataset` and training
@@ -105,7 +88,7 @@ class BaseModelFunctions(Protocol):
         """
 
     def log_models(
-        self, mlflow_experiment_id: str, mlflow_model_name: str
+        self, mlflow_model_name: str, version_description: str, run_id: str
     ) -> ModelVersion:
         """Publishes the model to mlflow.
 
@@ -121,3 +104,6 @@ class BaseModelFunctions(Protocol):
 
     def load(self) -> None:
         """Loads a model to be tested."""
+
+    def predict(self) -> None:
+        """Predicts using a loaded model."""

@@ -2,12 +2,17 @@ from sqlalchemy.orm import Session
 
 from mariner.entities import Experiment as ExperimentEntity
 from mariner.schemas.experiment_schemas import Experiment
-from mariner.stores.experiment_sql import ExperimentUpdateRepo, experiment_store
+from mariner.stores.experiment_sql import (
+    ExperimentUpdateRepo,
+    experiment_store,
+)
 
 
 class TestExperimentRepo:
     def test_update(self, db: Session, some_experiment: Experiment):
-        target_column = some_experiment.model_version.config.dataset.target_columns[0]
+        target_column = (
+            some_experiment.model_version.config.dataset.target_columns[0]
+        )
         update = ExperimentUpdateRepo(
             epochs=13,
             train_metrics={

@@ -10,11 +10,11 @@ from typing import TYPE_CHECKING, Sequence, Set, Union
 from fleet.model_builder.utils import unwrap_dollar
 
 if TYPE_CHECKING:
-    from fleet.dataset_schemas import ColumnConfig, TorchDatasetConfig
+    from fleet.dataset_schemas import ColumnConfig, DatasetConfig
     from fleet.model_builder.layers_schema import FeaturizersType, LayersType
 
 
-def get_columns_configs(config: "TorchDatasetConfig") -> Sequence["ColumnConfig"]:
+def get_columns_configs(config: "DatasetConfig") -> Sequence["ColumnConfig"]:
     """Gets the column configs from targets and featurizers of a ModelSchema object
 
     Args:
@@ -27,7 +27,7 @@ def get_columns_configs(config: "TorchDatasetConfig") -> Sequence["ColumnConfig"
 
 
 def get_column_config(
-    config: "TorchDatasetConfig", column_name: str
+    config: "DatasetConfig", column_name: str
 ) -> Union["ColumnConfig", None]:
     """Gets the column config of any column (target or featurizer) with name
     equals ``column_name``

@@ -1,4 +1,4 @@
-import { Edge, Node, Position } from 'react-flow-renderer';
+import { Edge, Node, Position } from 'reactflow';
 import dagre from 'dagre';
 import { DataTypeDomainKind } from 'app/types/domain/datasets';
 import { DataType } from 'model-compiler/src/interfaces/model-editor';
@@ -93,10 +93,4 @@ export const positionNodes = <T>(
   });
 
   return positionedNodes;
-};
-
-export const fixDomainKindCasing = (dk: DataType['domainKind']): string => {
-  if (dk === DataTypeDomainKind.Smiles) return dk.toUpperCase();
-  else if (!dk) return '';
-  else return dk.charAt(0).toUpperCase() + dk.slice(1).toLowerCase();
 };

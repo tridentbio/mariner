@@ -7,7 +7,10 @@ payload = {
         "targetColumns": [
             {
                 "name": "large_petal_length",
-                "dataType": {"domainKind": "categorical", "classes": {"0": 0, "1": 1}},
+                "dataType": {
+                    "domainKind": "categorical",
+                    "classes": {"0": 0, "1": 1},
+                },
                 "outModule": "Linear-7",
                 "lossFn": "torch.nn.BCEWithLogitsLoss",
                 "columnType": "binary",
@@ -51,7 +54,11 @@ payload = {
         {
             "type": "torch.nn.Linear",
             "name": "Linear-1",
-            "constructorArgs": {"in_features": 2, "out_features": 16, "bias": True},
+            "constructorArgs": {
+                "in_features": 2,
+                "out_features": 16,
+                "bias": True,
+            },
             "forwardArgs": {"input": "$Concat-0"},
         },
         {
@@ -63,7 +70,11 @@ payload = {
         {
             "type": "torch.nn.Linear",
             "name": "Linear-3",
-            "constructorArgs": {"in_features": 16, "out_features": 16, "bias": True},
+            "constructorArgs": {
+                "in_features": 16,
+                "out_features": 16,
+                "bias": True,
+            },
             "forwardArgs": {"input": "$ReLU-2"},
         },
         {
@@ -75,19 +86,31 @@ payload = {
         {
             "type": "torch.nn.Linear",
             "name": "Linear-5",
-            "constructorArgs": {"in_features": 16, "out_features": 1, "bias": True},
+            "constructorArgs": {
+                "in_features": 16,
+                "out_features": 1,
+                "bias": True,
+            },
             "forwardArgs": {"input": "$ReLU-4"},
         },
         {
             "type": "torch.nn.Linear",
             "name": "Linear-6",
-            "constructorArgs": {"in_features": 16, "out_features": 3, "bias": True},
+            "constructorArgs": {
+                "in_features": 16,
+                "out_features": 3,
+                "bias": True,
+            },
             "forwardArgs": {"input": "$ReLU-4"},
         },
         {
             "type": "torch.nn.Linear",
             "name": "Linear-7",
-            "constructorArgs": {"in_features": 16, "out_features": 1, "bias": True},
+            "constructorArgs": {
+                "in_features": 16,
+                "out_features": 1,
+                "bias": True,
+            },
             "forwardArgs": {"input": "$ReLU-4"},
         },
     ],

@@ -1,7 +1,7 @@
-import { TargetConfig } from '@app/rtk/generated/models';
 import { ModelOutputValue } from '@app/types/domain/models';
 import { Text } from '@components/molecules/Text';
 import ModelPrediction from '@features/models/components/ModelVersionInferenceView/ModelPrediction';
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
 import { Box } from '@mui/material';
 
 export const InferenceOutput = ({
@@ -9,7 +9,7 @@ export const InferenceOutput = ({
   targetColumns,
 }: {
   outputValues: ModelOutputValue;
-  targetColumns: TargetConfig[];
+  targetColumns: APITargetConfig[]; // TODO: accept APIColumntConfig
 }) => (
   <>
     <Text fontWeight="bold" marginBottom={'0.5rem'} marginTop={'2rem'} key="1">

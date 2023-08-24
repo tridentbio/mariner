@@ -5,8 +5,33 @@ from sqlalchemy.orm.session import Session
 from mariner.entities.experiment import Experiment as ExperimentEntity
 from mariner.schemas.experiment_schemas import Experiment
 from mariner.schemas.model_schemas import Model, ModelVersion
-from mariner.stores.experiment_sql import ExperimentCreateRepo, experiment_store
+from mariner.stores.experiment_sql import (
+    ExperimentCreateRepo,
+    experiment_store,
+)
 from tests.utils.utils import random_lower_string
+
+
+def mocked_training_config(some_model: Model):
+    version = some_model.versions[-1]
+    target_column = version.config.dataset.target_columns[0]
+    return {
+        "optimizer": {
+            "classPath": "torch.optim.Adam",
+            "params": {
+                "lr": 0.05,
+            },
+        },
+        "epochs": 1,
+        "checkpointConfig": {
+            "metricKey": f"val/loss/{target_column.name}",
+            "mode": "min",
+        },
+        "earlyStoppingConfig": {
+            "metricKey": f"val/loss/{target_column.name}",
+            "mode": "min",
+        },
+    }
 
 
 def mock_experiment(
@@ -43,7 +68,9 @@ def mock_experiment(
     return create_obj
 
 
-def setup_experiments(db: Session, model: Model, num_experiments=4) -> List[Experiment]:
+def setup_experiments(
+    db: Session, model: Model, num_experiments=4
+) -> List[Experiment]:
     version = model.versions[-1]
     # creates 1 started experiment and 2 successful
     exps = [

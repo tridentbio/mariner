@@ -17,7 +17,8 @@ def user_authentication_headers(
     data = {"username": email, "password": password}
 
     r = client.post(
-        f"{get_app_settings('server').host}/api/v1/login/access-token", data=data
+        f"{get_app_settings('server').host}/api/v1/login/access-token",
+        data=data,
     )
     response = r.json()
     auth_token = response["access_token"]
@@ -44,10 +45,14 @@ def authentication_token_from_email(
     password = random_lower_string()
     user = user_store.get_by_email(db, email=email)
     if not user:
-        user_in_create = UserCreateBasic(email=EmailStr(email), password=password)
+        user_in_create = UserCreateBasic(
+            email=EmailStr(email), password=password
+        )
         user = user_store.create(db, obj_in=user_in_create)
     else:
         user_in_update = UserUpdate(password=password)
         user = user_store.update(db, db_obj=user, obj_in=user_in_update)
 
-    return user_authentication_headers(client=client, email=email, password=password)
+    return user_authentication_headers(
+        client=client, email=email, password=password
+    )

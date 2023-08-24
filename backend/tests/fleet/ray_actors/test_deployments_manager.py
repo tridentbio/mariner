@@ -1,7 +1,6 @@
 from typing import Dict
 
 import pytest
-import torch
 
 from fleet.ray_actors.deployments_manager import get_deployments_manager
 from mariner.entities.deployment import DeploymentStatus
@@ -13,7 +12,9 @@ class TestDeploymentsManager:
     @pytest.mark.asyncio
     async def test_add_deployment(self, some_deployment: Deployment):
         manager = get_deployments_manager()
-        deployment: Deployment = await manager.add_deployment.remote(some_deployment)
+        deployment: Deployment = await manager.add_deployment.remote(
+            some_deployment
+        )
         assert deployment.status == DeploymentStatus.IDLE
         assert some_deployment.id in await manager.get_deployments.remote()
 
@@ -69,11 +70,13 @@ class TestDeploymentsManager:
             ],
             "mwt": [3, 1, 9],
         }
-        prediction: Dict[str, torch.Tensor] = await manager.make_prediction.remote(
+        prediction: Dict[str, list] = await manager.make_prediction.remote(
             some_deployment.id, data
         )
         assert "tpsa" in prediction, "'tpsa' column should be in prediction"
         assert isinstance(
-            prediction["tpsa"], torch.Tensor
-        ), "'tpsa' column should be a torch.Tensor"
-        assert prediction["tpsa"].shape == (3,), "'tpsa' column should have shape (3,)"
+            prediction["tpsa"], list
+        ), "'tpsa' column should be a list"
+        assert (
+            len(prediction["tpsa"]) == 3
+        ), "'tpsa' result should have length 3"

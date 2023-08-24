@@ -1,0 +1,23 @@
+name: SAMPL Extra Trees Regressor
+framework: sklearn
+
+dataset:
+  name: SAMPL
+  strategy: forwardArgs
+  featureColumns:
+    - name: smiles
+      dataType:
+        domainKind: smiles
+  targetColumns:
+    - name: expt
+      dataType:
+        domainKind: numeric
+  featurizers:
+    - name: MolFPFeaturizer
+      type: molfeat.trans.fp.FPVecFilteredTransformer
+      forward_args:
+        X: $smiles
+
+spec:
+  model:
+    type: sklearn.ensemble.ExtraTreesRegressor

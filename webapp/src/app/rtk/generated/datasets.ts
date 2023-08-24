@@ -84,7 +84,7 @@ const injectedRtkApi = api
     }),
     overrideExisting: false,
   });
-export { injectedRtkApi as enhancedApi };
+export { injectedRtkApi as generatedDatasetsApi };
 export type GetMyDatasetsApiResponse =
   /** status 200 Successful Response */ PaginatedDataset;
 export type GetMyDatasetsApiArg = {
@@ -131,6 +131,9 @@ export type QuantityDataType = {
   domainKind?: 'numeric';
   unit: string;
 };
+export type NumericalDataType = {
+  domainKind?: 'numeric';
+};
 export type StringDataType = {
   domainKind?: 'string';
 };
@@ -157,6 +160,7 @@ export type ProteinDataType = {
 export type ColumnsDescription = {
   dataType:
     | QuantityDataType
+    | NumericalDataType
     | StringDataType
     | CategoricalDataType
     | SmileDataType
@@ -223,9 +227,6 @@ export type DatasetUpdateInput = {
   splitType?: 'scaffold' | 'random';
   file?: Blob;
   columnsMetadata?: string;
-};
-export type NumericalDataType = {
-  domainKind?: 'numeric';
 };
 export type ColumnsMeta = {
   name: string;

@@ -1,8 +1,10 @@
 """
 Defines the integer featurizer
 """
+from collections.abc import Iterable
 from typing import Union
 
+import numpy as np
 import torch
 from typing_extensions import override
 
@@ -25,18 +27,23 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
     classes: dict[Union[str, int], int]
     reversed_classes: dict[int, Union[str, int]]
 
-    def __call__(self, input_: str) -> torch.Tensor:
+    def __call__(self, input_: str) -> np.ndarray:
         return self.featurize(input_)
 
     def featurize(self, input_: Union[str, int, float]):
-        if isinstance(input_, float):
+        if not isinstance(input_, str) and isinstance(input_, Iterable):
+            return np.array(
+                [self.featurize(i) for i in input_], dtype=np.int64
+            )
+        elif isinstance(input_, float):
             input_ = int(input_)
-        if str(input_) not in self.classes:
+        elif str(input_) not in self.classes:
             raise RuntimeError(
                 f"Element {input_} of type {input_.__class__} is not defined"
                 f" in the classes dictionary {self.classes}"
             )
-        return torch.Tensor([self.classes[str(input_)]]).long()
+        else:
+            return self.classes[str(input_)]
 
     def unfeaturize(self, input_: torch.Tensor):
         idx = int(input_.item())
@@ -48,7 +55,9 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         return self.reversed_classes[idx]
 
     @override
-    def set_from_model_schema(self, config, dataset_config=None, deps=None):
+    def set_from_model_schema(
+        self, config=None, dataset_config=None, deps=None
+    ):
         if not deps or len(deps) == 0:
             raise ValueError("deps cannot be None")
         if not dataset_config:
@@ -58,11 +67,14 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
         column_info = get_column_config(dataset_config, input_)
         # Handle missing column information
         if not column_info:
-            raise RuntimeError(f"Column {input_} was not found in the config columns")
+            raise RuntimeError(
+                f"Column {input_} was not found in the config columns"
+            )
 
         # Handle column info not being from categorical
-
-        if not isinstance(column_info.data_type, data_types.CategoricalDataType):
+        if not isinstance(
+            column_info.data_type, data_types.CategoricalDataType
+        ):
             raise DataTypeMismatchException(
                 "expecteing CategoricalDataType, but found"
                 f"{column_info.data_type.__class__}",
@@ -70,4 +82,6 @@ class IntegerFeaturizer(ReversibleFeaturizer[Union[str, int]], AutoBuilder):
                 got_item=column_info.data_type,
             )
         self.classes = column_info.data_type.classes
-        self.reversed_classes = {value: key for key, value in self.classes.items()}
+        self.reversed_classes = {
+            value: key for key, value in self.classes.items()
+        }

@@ -1,13 +1,17 @@
 import { Chip, ChipProps, Typography } from '@mui/material';
 import { Box } from '@mui/system';
+import { reprDataType } from '@utils';
 import { ColumnConfig } from 'app/rtk/generated/models';
 import { DataTypeGuard } from 'app/types/domain/datasets';
-import { fixDomainKindCasing } from 'hooks/useModelEditor/utils';
 
 const DataTypeChip = ({
   sx,
+  prefix,
   ...props
-}: ColumnConfig['dataType'] & { sx?: ChipProps['sx'] }) => {
+}: ColumnConfig['dataType'] & { sx?: ChipProps['sx']; prefix?: string }) => {
+  const content = prefix
+    ? `${prefix} - (${reprDataType(props)})`
+    : reprDataType(props);
   return (
     <Chip
       sx={sx}
@@ -21,17 +25,10 @@ const DataTypeChip = ({
             justifyContent: 'flex-start',
           }}
         >
-          {props.domainKind && (
-            <Typography>{fixDomainKindCasing(props.domainKind)}</Typography>
-          )}
+          {props.domainKind && <Typography>{content}</Typography>}
           {DataTypeGuard.isCategorical(props) && (
             <Typography ml={2} variant="overline">
               NUM CLASSES: {Object.keys(props.classes).length}
-            </Typography>
-          )}
-          {DataTypeGuard.isQuantity(props) && (
-            <Typography ml={2} variant="overline">
-              {props.unit}
             </Typography>
           )}
         </Box>

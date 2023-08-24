@@ -1,3 +1,4 @@
+// Break into view (move view to templates) and business logic (move to router).
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -14,6 +15,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+
 import styled from 'styled-components';
 import { logout } from '../../features/users/usersSlice';
 import { useAppDispatch } from '../../app/hooks';

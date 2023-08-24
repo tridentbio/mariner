@@ -9,12 +9,15 @@ from tests.utils.utils import random_lower_string
 
 
 def get_test_user(db: Session) -> User:
-    user = user_store.get_by_email(db, email=get_app_settings("test").email_test_user)
+    user = user_store.get_by_email(
+        db, email=get_app_settings("test").email_test_user
+    )
     if not user:
         user = user_store.create(
             db,
             obj_in=UserCreateBasic(
-                email=get_app_settings("test").email_test_user, password="123456"
+                email=get_app_settings("test").email_test_user,
+                password="123456",
             ),
         )
     assert user is not None

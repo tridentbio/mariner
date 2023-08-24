@@ -80,7 +80,8 @@ def get_deployment(
         return deployment
     except DeploymentNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment not found",
         ) from e
 
 
@@ -107,7 +108,9 @@ def create_deployment(
         HTTPException(status_code=401): if user is not the creator owner of the model version.
     """
     try:
-        db_deployment = controller.create_deployment(db, current_user, deployment_base)
+        db_deployment = controller.create_deployment(
+            db, current_user, deployment_base
+        )
 
         deployment = Deployment.from_orm(db_deployment)
         return deployment
@@ -120,7 +123,8 @@ def create_deployment(
 
     except ModelVersionNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Model version not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Model version not found",
         ) from e
 
     except NotCreatorOwner as e:
@@ -156,7 +160,8 @@ async def update_deployment(
         return deployment
     except DeploymentNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment not found",
         ) from e
 
     except NotCreatorOwner as e:
@@ -193,11 +198,14 @@ async def delete_deployment(
         HTTPException(status_code=401): if user is not the creator owner of the deployment.
     """
     try:
-        deployment = await controller.delete_deployment(db, current_user, deployment_id)
+        deployment = await controller.delete_deployment(
+            db, current_user, deployment_id
+        )
         return deployment
     except DeploymentNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment not found",
         ) from e
     except NotCreatorOwner as e:
         raise HTTPException(
@@ -232,11 +240,14 @@ def create_permission(
         HTTPException(status_code=404): if user is not the creator owner of the deployment.
     """
     try:
-        deployment = controller.create_permission(db, current_user, permission_input)
+        deployment = controller.create_permission(
+            db, current_user, permission_input
+        )
         return deployment
     except DeploymentNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment not found",
         ) from e
     except NotCreatorOwner as e:
         raise HTTPException(
@@ -274,7 +285,8 @@ def delete_permission(
         return deployment
     except DeploymentNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment not found",
         ) from e
     except NotCreatorOwner as e:
         raise HTTPException(
@@ -312,12 +324,14 @@ def get_public_deployment(
         return deployment
     except DeploymentNotFound:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Deployment not found."
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deployment not found.",
         )
 
     except PermissionError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Deployment is not public."
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Deployment is not public.",
         )
 
 

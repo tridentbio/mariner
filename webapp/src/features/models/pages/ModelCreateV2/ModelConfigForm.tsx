@@ -45,9 +45,6 @@ const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
         <Controller
           control={control}
           name="name"
-          rules={{
-            required: { value: true, message: 'Model name field is required' },
-          }}
           render={({ field, fieldState }) => (
             <ModelAutoComplete
               data-testid="model-name"
@@ -96,9 +93,6 @@ const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
       <Controller
         control={control}
         name="config.name"
-        rules={{
-          required: { value: true, message: 'Model version name is required' },
-        }}
         render={({ field, fieldState }) => (
           <TextField
             data-testid="version-name"

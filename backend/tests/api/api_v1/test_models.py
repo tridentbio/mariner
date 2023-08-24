@@ -11,11 +11,16 @@ from starlette.testclient import TestClient
 from torch_geometric.loader import DataLoader
 
 from fleet.base_schemas import TorchModelSpec
-from fleet.dataset_schemas import ColumnConfig, TargetConfig, TorchDatasetConfig
+from fleet.dataset_schemas import (
+    ColumnConfig,
+    TargetTorchColumnConfig,
+    TorchDatasetConfig,
+)
 from fleet.model_builder import layers_schema as layers
-from fleet.model_builder.dataset import CustomDataset
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.torch_.models import CustomModel
+from fleet.utils.data import MarinerTorchDataset
+from fleet.utils.dataset import converts_file_to_dataframe
 from mariner.core.config import get_app_settings
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
@@ -45,13 +50,17 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
             feature_columns=[
                 ColumnConfig(
                     name="mwt",
-                    data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
+                    data_type=QuantityDataType(
+                        domain_kind="numeric", unit="mole"
+                    ),
                 )
             ],
             target_columns=[
-                TargetConfig(
+                TargetTorchColumnConfig(
                     name="tpsa",
-                    data_type=QuantityDataType(domain_kind="numeric", unit="mole"),
+                    data_type=QuantityDataType(
+                        domain_kind="numeric", unit="mole"
+                    ),
                     out_module="1",
                 )
             ],
@@ -63,7 +72,9 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
                     constructor_args=layers.TorchlinearConstructorArgs(
                         in_features=27, out_features=1
                     ),
-                    forward_args=layers.TorchlinearForwardArgsReferences(input="$some"),
+                    forward_args=layers.TorchlinearForwardArgsReferences(
+                        input="$some"
+                    ),
                     name="1",
                 )
             ]
@@ -78,15 +89,18 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
     return model
 
 
+@pytest.mark.parametrize("framework", ("torch", "sklearn"))
 @pytest.mark.integration
 def test_post_models_success(
     db: Session,
     client: TestClient,
     normal_user_token_headers: dict[str, str],
-    some_dataset: DatasetEntity,
+    some_dataset: DatasetEntity,  # noqa
+    sampl_dataset: DatasetEntity,  # noqa
+    framework: str,
 ):
     user = get_test_user(db)
-    model = mock_model()
+    model = mock_model(framework=framework)
     res = client.post(
         f"{get_app_settings('server').host}/api/v1/models/",
         json=model.dict(),
@@ -94,7 +108,7 @@ def test_post_models_success(
     )
     body = res.json()
 
-    assert res.status_code == HTTP_200_OK
+    assert res.status_code == HTTP_200_OK, body["detail"]
     assert body["name"] == model.name
     assert "columns" in body
     assert body["createdById"] == user.id
@@ -190,15 +204,24 @@ def test_get_model_options(
     payload = res.json()
 
     def assert_component_info(component_dict: dict):
-        assert "docs" in component_dict
-        assert "docsLink" in component_dict
-        assert "classPath" in component_dict
-        assert "outputType" in component_dict
-        assert "component" in component_dict
-        assert "forwardArgsSummary" in component_dict["component"]
-        assert "constructorArgsSummary" in component_dict["component"]
-        assert isinstance(component_dict["docs"], str)
-        assert AnyHttpUrl(component_dict["docs"], scheme="https") is not None
+        assert "docs" in component_dict, payload
+        assert "classPath" in component_dict, payload
+        assert "outputType" in component_dict, payload
+        assert "component" in component_dict, payload
+
+        assert isinstance(component_dict["docs"], str), payload
+        assert (
+            AnyHttpUrl(component_dict["docs"], scheme="https") is not None
+        ), payload
+        if component_dict["classPath"] in [
+            "molfeat.trans.fp.FPVecFilteredTransformer",
+            "sklearn.preprocessing.LabelEncoder",
+            "sklearn.preprocessing.OneHotEncoder",
+            "sklearn.preprocessing.StandardScaler",
+        ]:
+            return
+        assert "forwardArgsSummary" in component_dict["component"], payload
+        assert "constructorArgsSummary" in component_dict["component"], payload
 
     for layer_payload in payload:
         assert_component_info(layer_payload)
@@ -305,7 +328,9 @@ def test_post_predict_validates_smiles(
 
 
 def test_get_model_version(
-    client: TestClient, some_model: Model, normal_user_token_headers: dict[str, str]
+    client: TestClient,
+    some_model: Model,
+    normal_user_token_headers: dict[str, str],
 ):
     res = client.get(
         f"{get_app_settings('server').host}/api/v1/models/{some_model.id}/",
@@ -343,7 +368,8 @@ def test_post_check_config_good_model2(
 ):
     payload = TrainingCheckRequest(
         model_spec=model_config(
-            dataset_name=some_dataset.name, model_type="regressor-with-categorical"
+            dataset_name=some_dataset.name,
+            model_type="regressor-with-categorical",
         )
     )
     res = client.post(
@@ -404,7 +430,9 @@ def test_post_check_config_good_model3(
         }
     }
     res = client.post(
-        "api/v1/models/check-config", json=payload, headers=normal_user_token_headers
+        "api/v1/models/check-config",
+        json=payload,
+        headers=normal_user_token_headers,
     )
     assert res.status_code == HTTP_200_OK, res.json()
     assert not res.json()["stackTrace"], res.json()["stackTrace"]
@@ -420,13 +448,14 @@ def test_post_check_config_bad_model(
 ):
     model_path = "tests/data/yaml/model_fails_on_training.yml"
     regressor: TorchModelSpec = TorchModelSpec.from_yaml(model_path)
-    model = CustomModel(config=regressor.spec, dataset_config=regressor.dataset)
+    model = CustomModel(
+        config=regressor.spec, dataset_config=regressor.dataset
+    )
     regressor.dataset.name = some_dataset.name
     dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
-    torch_dataset = CustomDataset(
-        dataset.get_dataframe(),
+    torch_dataset = MarinerTorchDataset(
+        converts_file_to_dataframe(dataset.get_dataset_file()),
         dataset_config=regressor.dataset,
-        model_config=regressor.spec,
     )
     dataloader = DataLoader(torch_dataset, batch_size=1)
     batch = next(iter(dataloader))

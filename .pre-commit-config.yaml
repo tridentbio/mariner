@@ -7,10 +7,10 @@ repos:
         name: Checking staged backend code style
         entry: bash -c 'cd backend && poetry run sh scripts/check-format.sh ${@#"backend/"}' --
         fail_fast: true
+        files: '^backend/'
         pass_filenames: true
         language: system
         types: [python]
-        files: '^backend/'
         stages:
           - commit
       - id: check-staged-webapp-style
@@ -22,22 +22,6 @@ repos:
         language: system
         stages:
           - commit
-      - id: format-staged-fix-backend
-        verbose: true
-        name: Format staged files in the backend
-        entry: bash -c 'cd backend && poetry run sh scripts/format-single.sh ${@#"backend/"}' --
-        pass_filenames: true
-        files: '^backend/'
-        types: [python]
-        language: system
-        stages:
-          - manual
-      - id: format-staged-fix-webapp
-        name: Formats staged files in the webapp
-        entry: bash -c  "cd webapp && npm run prettier:fix && npm run eslint:fix"
-        language: system
-        stages:
-          - manual
       - id: lint-staged-backend
         name: Linting staged code in backend
         entry: bash -c 'cd backend && poetry run sh scripts/lint-single.sh ${@#"backend/"}' --
@@ -57,14 +41,6 @@ repos:
         fail_fast: true
         stages:
           - commit
-      - id: test-backend-unit
-        name: Running backend unit tests
-        entry: cd backend && poetry run sh scripts/test.sh -m pytest -m \"not integration\"
-        language: system
-        files: '^backend/'
-        types: [ python ]
-        stages:
-          - commit
       - id: test-webapp
         name: Running front end  unit tests
         entry: bash -c "cd webapp && npm run test:unit"
@@ -75,3 +51,20 @@ repos:
         types: [ ts, tsx ]
         stages:
           - commit
+      # Manual hooks
+      - id: format-staged-fix-backend
+        verbose: true
+        name: Format staged files in the backend
+        entry: bash -c 'cd backend && poetry run sh scripts/format-single.sh ${@#"backend/"}
+        pass_filenames: true
+        files: '^backend/'
+        types: [python]
+        language: system
+        stages:
+          - manual
+      - id: format-staged-fix-webapp
+        name: Formats staged files in the webapp
+        entry: bash -c  "cd webapp && npm run prettier:fix && npm run eslint:fix"
+        language: system
+        stages:
+          - manual

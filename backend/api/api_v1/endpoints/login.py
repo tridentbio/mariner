@@ -17,7 +17,8 @@ router = APIRouter()
 
 @router.post("/login/access-token", response_model=Token)
 def login_access_token(
-    db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
+    db: Session = Depends(deps.get_db),
+    form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> Any:
     """
     OAuth2 compatible token login, get an access token for future requests
@@ -30,6 +31,8 @@ def login_access_token(
         )
         return token
     except UserNotFound:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        raise HTTPException(
+            status_code=400, detail="Incorrect email or password"
+        )
     except UserNotActive:
         raise HTTPException(status_code=400, detail="Inactive user")

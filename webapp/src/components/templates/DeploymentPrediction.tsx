@@ -7,6 +7,11 @@ import api from '@app/api';
 import { useNotifications } from '@app/notifications';
 import { Text } from '@components/molecules/Text';
 import { InferenceOutput } from '@components/organisms/InferenceOutput';
+import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
+import {
+  ColumnConfig,
+  ColumnConfigWithPreprocessing,
+} from '@app/rtk/generated/models';
 
 const getPredictionPrivate = async (
   deployment: Deployment,
@@ -51,7 +56,9 @@ export const DeploymentPrediction = ({
     ? getPredictionPublic
     : getPredictionPrivate;
 
-  const inferenceColumns = useMemo(
+  const inferenceColumns:
+    | (ColumnConfig | ColumnConfigWithPreprocessing)[]
+    | undefined = useMemo(
     () => deployment.modelVersion?.config.dataset?.featureColumns,
     [deployment.id]
   );
@@ -64,7 +71,7 @@ export const DeploymentPrediction = ({
   const [inputValues, setInputValues] = useState<{
     [key: string]: string | number;
   }>(
-    inferenceColumns?.reduce(
+    inferenceColumns?.reduce<{ [key: string]: string | number }>(
       (acc, column) => ({ ...acc, [column.name]: '' }),
       {}
     )
@@ -127,7 +134,7 @@ export const DeploymentPrediction = ({
       {outputValues && (
         <InferenceOutput
           outputValues={outputValues}
-          targetColumns={targetColumns}
+          targetColumns={targetColumns as APITargetConfig[]}
         />
       )}
     </Box>

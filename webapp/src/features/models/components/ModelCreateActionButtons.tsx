@@ -1,7 +1,7 @@
 import { Button, Container } from '@mui/material';
 import { ModelConfig } from 'app/types/domain/models';
 import React from 'react';
-import { Edge, Node, useEdges, useNodes } from 'react-flow-renderer';
+import { Edge, Node, useEdges, useNodes } from 'reactflow';
 
 type ModelCreateActionButtonsProps = {
   steps: ('Dataset' | 'ModelArch')[];

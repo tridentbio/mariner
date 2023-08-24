@@ -20,13 +20,6 @@ from pydantic import (
 )
 
 
-class Settings(BaseSettings):
-    """Models the environment variables used around the application."""
-
-    GITHUB_CLIENT_ID: Union[None, str] = None
-    GITHUB_CLIENT_SECRET: Union[None, str] = None
-
-
 class ServerSettings(BaseModel):
     """
     Configures server parameters.
@@ -114,7 +107,9 @@ class SecretEnv(BaseSettings):
         """
         if values.get("aws_mode") == "local":
             if not values.get("aws_access_key_id"):
-                raise ValueError("aws_access_key_id must be set if aws_mode is local")
+                raise ValueError(
+                    "aws_access_key_id must be set if aws_mode is local"
+                )
             if not values.get("aws_secret_access_key"):
                 raise ValueError(
                     "aws_secret_access_key must be set if aws_mode is local"
@@ -154,12 +149,18 @@ class Package(BaseModel):
     authors: list[str]
 
 
-class QA_Test_Settings(BaseModel):  # pylint: disable=C0103
+class QA_Test_Settings(BaseSettings):  # pylint: disable=C0103
     """
     Configures the QA test parameters.
+
+    Attributes:
+        email_test_user: The email of the user to use for testing.
+        refresh_datasets: Whether to reupload datasets from tests/data/csv to
+            aws.
     """
 
     email_test_user: str = "test@domain.com"
+    refresh_datasets: bool = False
 
 
 class SettingsV2:
@@ -184,7 +185,8 @@ class SettingsV2:
         # load other attributes from conf.toml
         self.server = ServerSettings(
             host=AnyHttpUrl(
-                os.getenv("SERVER_HOST", "http://localhost:8000"), scheme="https"
+                os.getenv("SERVER_HOST", "http://localhost:8000"),
+                scheme="https",
             ),
             cors=[
                 AnyHttpUrl(url, scheme="https")
@@ -196,8 +198,12 @@ class SettingsV2:
         )
         self.test = QA_Test_Settings()
 
+        self.tenant = TenantSettings(name=os.getenv("TENANT_NAME", "default"))
+
         # Get environment variables starting with AUTH
-        auth_env = {k[6:]: v for k, v in os.environ.items() if k.startswith("OAUTH")}
+        auth_env = {
+            k[6:]: v for k, v in os.environ.items() if k.startswith("OAUTH")
+        }
 
         # Get array of providers
         providers = list(set([k.split("_")[0] for k in auth_env.keys()]))
@@ -234,11 +240,13 @@ class SettingsV2:
                     client_id=auth_env[f"{provider}_CLIENT_ID"],
                     client_secret=auth_env[f"{provider}_CLIENT_SECRET"],
                     name=auth_env[f"{provider}_NAME"],
-                    authorization_url=auth_env[f"{provider}_AUTHORIZATION_URL"],
+                    authorization_url=auth_env[
+                        f"{provider}_AUTHORIZATION_URL"
+                    ],
                     allowed_emails=split_if_string(
                         auth_env.get(f"{provider}_ALLOWED_EMAILS", None)
                     ),
-                    scope=auth_env.get(f"{provider}_SCOPE", None),
+                    scope=auth_env.get(f"{provider}_SCOPE", ""),
                     logo_url=auth_env.get(f"{provider}_LOGO_URL", None),
                     jwks_url=auth_env.get(f"{provider}_JWKS_URL", None),
                     token_url=auth_env.get(f"{provider}_TOKEN_URL", None),
@@ -257,53 +265,51 @@ def _load_settings() -> SettingsV2:
 
 
 @overload
-def get_app_settings(
-    name: Union[str, None] = None, use_cache: bool = False
-) -> SettingsV2:
+def get_app_settings(name: Literal["server"]) -> ServerSettings:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["server"], use_cache=False) -> ServerSettings:
+def get_app_settings(name: Literal["webapp"]) -> WebappSettings:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["webapp"], use_cache=False) -> WebappSettings:
+def get_app_settings(name: Literal["auth"]) -> AuthSettingsDict:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["auth"], use_cache=False) -> AuthSettingsDict:
+def get_app_settings(name: Literal["secrets"]) -> SecretEnv:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["secrets"], use_cache=False) -> SecretEnv:
+def get_app_settings(name: Literal["services"]) -> ServicesEnv:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["services"], use_cache=False) -> ServicesEnv:
+def get_app_settings(name: Literal["package"]) -> Package:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["package"], use_cache=False) -> Package:
+def get_app_settings(name: Literal["test"]) -> QA_Test_Settings:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["test"], use_cache=False) -> QA_Test_Settings:
+def get_app_settings(name: Literal["tenant"]) -> TenantSettings:
     ...
 
 
 @overload
-def get_app_settings(name: Literal["tenant"], use_cache=False) -> TenantSettings:
+def get_app_settings(name: None = None) -> SettingsV2:
     ...
 
 
-def get_app_settings(name: Union[str, None] = None, use_cache=True):
+def get_app_settings(name: Union[str, None] = None, use_cache: bool = True):
     """
     Get the application settings.
 

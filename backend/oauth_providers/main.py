@@ -28,7 +28,9 @@ def get_user_data(provider: str, **kwargs) -> UserData:
     """
     if provider == "github":
         github_user = github.exchange_code(**kwargs)
-        return UserData(email=github_user.email, avatar_url=github_user.avatar_url)
+        return UserData(
+            email=github_user.email, avatar_url=github_user.avatar_url
+        )
     elif provider == "genentech":
         client = genentech.GenentechClient(
             genentech.ClientOptions(
