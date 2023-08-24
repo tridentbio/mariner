@@ -120,6 +120,11 @@ def fit(
     dataset = _get_dataframe(dataset, dataset_uri)
     assert isinstance(dataset, DataFrame), "Dataset must be DataFrame"
 
+    logger = MarinerLogger(
+        experiment_id=experiment_id,
+        experiment_name=experiment_name,
+        user_id=user_id,
+    )
     with mlflow.start_run(
         nested=True, experiment_id=mlflow_experiment_id
     ) as run:
@@ -139,11 +144,6 @@ def fit(
                 and experiment_name is not None
                 and user_id is not None
             ):
-                logger = MarinerLogger(
-                    experiment_id=experiment_id,
-                    experiment_name=experiment_name,
-                    user_id=user_id,
-                )
                 loggers.append(logger)
             else:
                 LOG.warning(
@@ -164,12 +164,24 @@ def fit(
 
         elif isinstance(spec, SklearnModelSpec):
             functions = SciKitFunctions(spec, dataset)
-            functions.train()
+            train_metrics = functions.train()
+            # Turn NaN values into strings
+            train_metrics = {
+                k: v if not np.isnan(v) else "NaN"
+                for k, v in train_metrics.items()
+            }
             mlflow_model_version = functions.log_models(
                 mlflow_model_name=mlflow_model_name,
                 run_id=run.info.run_id,
             )
-            functions.val()
+            logger.send({"metrics": train_metrics}, "metrics")
+            val_metrics = functions.val()
+            # Turn NaN values into strings
+            val_metrics = {
+                k: v if not np.isnan(v) else "NaN"
+                for k, v in val_metrics.items()
+            }
+            logger.send({"metrics": val_metrics}, "metrics")
         else:
             raise ValueError("Can't find functions for spec")
 

@@ -125,7 +125,7 @@ async def post_update_metrics(
             epoch=data["epoch"],
         )
     elif msgtype == "metrics":
-        history = data["history"]
+        history = data.get("history", None)
         metrics = data["metrics"]
         experiments_ctl.log_metrics(
             db=db,

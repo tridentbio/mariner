@@ -15,6 +15,7 @@ from mariner.schemas.api import OrderByClause, OrderByQuery
 from mariner.schemas.experiment_schemas import (
     Experiment,
     ListExperimentsQuery,
+    SklearnTrainingRequest,
     TorchTrainingRequest,
 )
 from mariner.schemas.model_schemas import Model
@@ -73,6 +74,67 @@ async def test_get_experiments_ordered_by_createdAt_desceding(
         assert (
             next.created_at < current.created_at
         ), "createdAt descending order is not respected"
+
+
+@pytest.mark.asyncio
+@pytest.mark.long
+@pytest.mark.integration
+async def test_create_model_training_sklearn(
+    db: Session, some_sklearn_model_integration: Model
+):
+    user = get_test_user(db)
+    version = some_sklearn_model_integration.versions[-1]
+    target_column = version.config.dataset.target_columns[0]
+    request = SklearnTrainingRequest(
+        model_version_id=version.id,
+        name=random_lower_string(),
+    )
+    exp = await experiments_ctl.create_model_training(db, user, request)
+    assert exp.model_version_id == version.id
+    assert exp.model_version.name == version.name
+    task = get_exp_manager().get_task(exp.id)
+    assert task
+
+    # Assertions before task completion
+    db_exp = Experiment.from_orm(
+        db.query(ExperimentEntity)
+        .filter(ExperimentEntity.id == exp.id)
+        .first()
+    )
+    assert db_exp.model_version_id == exp.model_version_id
+    assert db_exp.created_by_id == user.id
+
+    # Await for task
+    await task
+
+    db.commit()
+    # Assertions over task outcome
+    db_exp = (
+        db.query(ExperimentEntity)
+        .filter(ExperimentEntity.id == exp.id)
+        .first()
+    )
+    db_exp = Experiment.from_orm(db_exp)
+    assert db_exp.train_metrics
+    assert db_exp.stage == "SUCCESS"
+    collected_regression_metrics = [
+        f"train/mse/{target_column.name}",
+        f"train/mae/{target_column.name}",
+        f"train/ev/{target_column.name}",
+        f"train/mape/{target_column.name}",
+        f"train/R2/{target_column.name}",
+        f"train/pearson/{target_column.name}",
+    ]
+    client = MlflowClient()
+    experiment = client.get_experiment(db_exp.mlflow_id)
+    runs = client.search_runs([experiment.experiment_id])
+    assert len(runs) == 1
+    run = runs[0]
+    for metric_key in collected_regression_metrics:
+        metric = client.get_metric_history(
+            run_id=run.info.run_id, key=metric_key
+        )
+        assert metric
 
 
 @pytest.mark.asyncio
