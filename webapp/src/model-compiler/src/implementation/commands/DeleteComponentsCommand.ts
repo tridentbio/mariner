@@ -2,7 +2,7 @@ import {
   FeaturizersType,
   LayersType,
   ModelSchema,
-} from '../../interfaces/model-editor';
+} from '../../interfaces/torch-model-editor';
 import Command from './Command';
 
 export type DeleteCommandArgs = {

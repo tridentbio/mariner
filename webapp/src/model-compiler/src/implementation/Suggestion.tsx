@@ -1,4 +1,4 @@
-import { ModelSchema } from '../interfaces/model-editor';
+import { ModelSchema } from '../interfaces/torch-model-editor';
 import Command from './commands/Command';
 import EditComponentsCommand from './commands/EditComponentsCommand';
 import SchemaContext from './SchemaContext';

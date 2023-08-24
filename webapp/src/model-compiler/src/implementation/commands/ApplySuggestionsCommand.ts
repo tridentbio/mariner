@@ -1,7 +1,7 @@
 import {
   ModelSchema,
   NodePositionTypesMap,
-} from '../../interfaces/model-editor';
+} from '../../interfaces/torch-model-editor';
 import Suggestion from '../Suggestion';
 import AddComponentCommand from './AddComponentCommand';
 import Command from './Command';

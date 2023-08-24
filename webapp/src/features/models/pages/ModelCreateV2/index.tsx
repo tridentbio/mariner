@@ -13,8 +13,8 @@ import { useNotifications } from 'app/notifications';
 import * as modelsApi from 'app/rtk/generated/models';
 import StackTrace from 'components/organisms/StackTrace';
 import Content from 'components/templates/AppLayout/Content';
-import ModelEditor from 'components/templates/ModelEditorV2';
-import { ModelEditorContextProvider } from 'hooks/useModelEditor';
+import TorchModelEditor from 'components/templates/TorchModelEditorV2';
+import { TorchModelEditorContextProvider } from 'hooks/useTorchModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import { MouseEvent, useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'reactflow';
@@ -345,8 +345,8 @@ const ModelCreateV2 = () => {
           <div>
             {selectedFramework == 'torch' ? (
               <ReactFlowProvider>
-                <ModelEditorContextProvider>
-                  <ModelEditor
+                <TorchModelEditorContextProvider>
+                  <TorchModelEditor
                     value={extendSpecWithTargetForwardArgs(
                       config as modelsApi.TorchModelSpec
                     )}
@@ -357,7 +357,7 @@ const ModelCreateV2 = () => {
                       );
                     }}
                   />
-                </ModelEditorContextProvider>
+                </TorchModelEditorContextProvider>
               </ReactFlowProvider>
             ) : (
               <Box style={{ height: '45vh' }}>

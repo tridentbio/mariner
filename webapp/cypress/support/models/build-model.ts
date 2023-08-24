@@ -4,7 +4,7 @@ import { ColumnConfig, DatasetConfig, ModelCreate, SklearnModelSchema, TorchMode
 import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import { getColumnConfigTestId, getStepValueLabelData } from '@components/organisms/ModelBuilder/utils';
 import { DeepPartial } from '@reduxjs/toolkit';
-import { NodeType } from 'model-compiler/src/interfaces/model-editor';
+import { NodeType } from '@model-compiler/src/interfaces/torch-model-editor';
 import {
   extendSpecWithTargetForwardArgs,
   iterateTopologically,

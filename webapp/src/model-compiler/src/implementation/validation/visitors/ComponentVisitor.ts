@@ -17,7 +17,7 @@ import {
   RNAFeaturizer,
   Sigmoid,
   TransformerEncoderLayer,
-} from '../../../interfaces/model-editor';
+} from '../../../interfaces/torch-model-editor';
 import TransversalInfo from '../TransversalInfo';
 
 type VisitorInput<T extends {}> = {
