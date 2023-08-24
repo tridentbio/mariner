@@ -133,7 +133,7 @@ const Table = <R extends { [key: string]: any }>({
         }}
       >
         <TableHead>
-          {!!filterableColumns.length && (
+          {(!!filterableColumns.length || !!state.sortModel) && (
             <TableRow>
               <TableCell sx={{ padding: '1px' }} colSpan={24}>
                 <Filters
@@ -229,5 +229,6 @@ const Table = <R extends { [key: string]: any }>({
 };
 
 export type { Column };
+export type { TableProps };
 
 export default Table;
