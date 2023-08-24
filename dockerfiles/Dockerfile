@@ -21,7 +21,7 @@ ENV PATH="${PATH}:${POETRY_VENV}/bin"
 RUN poetry config virtualenvs.create false
 
 RUN apt-get update
-RUN apt-get install libpq-dev gcc less curl unzip -y
+RUN apt-get install libpq-dev gcc less curl unzip libxrender1 -y
 
 RUN poetry install --no-root --no-cache --without dev && poetry cache clear --no-interaction --all pypi
 
