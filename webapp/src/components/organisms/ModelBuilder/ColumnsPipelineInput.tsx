@@ -3,7 +3,7 @@ import { DataTypeGuard } from '@app/types/domain/datasets';
 import { Text } from '@components/molecules/Text';
 import ColumnConfigurationAccordion from '@features/models/components/ColumnConfigurationView/ColumnConfigAccordion';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
-import { Button, IconButton } from '@mui/material';
+import { Button, Chip, Divider, IconButton } from '@mui/material';
 import { useEffect } from 'react';
 import {
   Controller,
@@ -22,6 +22,7 @@ import {
   getColumnConfigTestId,
   getStepSelectError,
 } from './utils';
+import useModelBuilder from './hooks/useModelBuilder';
 
 export interface ColumnsPipelineInputProps {
   column: {
@@ -36,6 +37,7 @@ export interface ColumnsPipelineInputProps {
 export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
   const { featurizerOptions, transformOptions, column } = props;
   const { control, trigger } = useFormContext<ModelCreate>();
+  const { editable, defaultExpanded } = useModelBuilder();
 
   //? Being used as a single item array on featurizers <PreprocessingStepSelect /> list
   const featurizersOptionsField = useFieldArray({
@@ -93,18 +95,19 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
         testId={getColumnConfigTestId(column.config)}
         dataType={column.config.dataType}
         name={column.config.name}
+        defaultExpanded={defaultExpanded}
       >
         {!DataTypeGuard.isNumericalOrQuantity(column.config.dataType) &&
           featurizersOptionsField.fields.map((step, stepIndex) => (
             <>
-              <Text
-                sx={{ width: '100%' }}
-                data-testid={`${getColumnConfigTestId(
-                  column.config
-                )}-featurizer-label`}
-              >
-                Featurizers:
-              </Text>
+              <Divider textAlign="center" sx={{ marginBottom: 2 }}>
+                <Chip
+                  label="Featurizers"
+                  data-testid={`${getColumnConfigTestId(
+                    column.config
+                  )}-featurizer-label`}
+                />
+              </Divider>
               <Controller
                 key={step.id}
                 control={control}
@@ -114,7 +117,12 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
                     testId={`${getColumnConfigTestId(
                       column.config
                     )}-featurizer-${stepIndex}`}
-                    sx={{ mb: 3 }}
+                    sx={{
+                      mb: 3,
+                      borderRadius: 2,
+                      border: 'none',
+                      boxShadow: '0px 0px 1px',
+                    }}
                     options={featurizerOptions}
                     getError={getStepSelectError(
                       () => error as StepFormFieldError | undefined
@@ -129,7 +137,9 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
             </>
           ))}
 
-        <Text sx={{ width: '100%' }}>Transforms:</Text>
+        <Divider textAlign="center" sx={{ marginBottom: 2 }}>
+          <Chip label="Transforms" />
+        </Divider>
         {transformsOptionsField.fields.map((step, stepIndex) => (
           <Controller
             key={step.id}
@@ -150,24 +160,28 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
                   onChanges={(updatedStep) => onStepSelect(field, updatedStep)}
                   value={field.value || null}
                   extra={
-                    <IconButton
-                      onClick={() => deleteColumnTransform(stepIndex)}
-                    >
-                      <DeleteOutline />
-                    </IconButton>
+                    editable ? (
+                      <IconButton
+                        onClick={() => deleteColumnTransform(stepIndex)}
+                      >
+                        <DeleteOutline />
+                      </IconButton>
+                    ) : null
                   }
                 />
               );
             }}
           />
         ))}
-        <Button
-          variant="contained"
-          sx={{ mt: 1 }}
-          onClick={() => addTransform()}
-        >
-          ADD
-        </Button>
+        {editable && (
+          <Button
+            variant="contained"
+            sx={{ mt: 1 }}
+            onClick={() => addTransform()}
+          >
+            ADD
+          </Button>
+        )}
       </ColumnConfigurationAccordion>
     </>
   );

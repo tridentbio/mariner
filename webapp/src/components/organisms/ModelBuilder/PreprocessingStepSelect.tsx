@@ -10,7 +10,7 @@ import {
   SxProps,
   Theme,
 } from '@mui/material';
-import React, { FocusEventHandler, ReactNode, useMemo } from 'react';
+import React, { FocusEventHandler, ReactNode, useEffect, useMemo } from 'react';
 import ConstructorArgInput, {
   ConstructorArgInputProps,
 } from './ConstructorArgInput';
@@ -20,6 +20,7 @@ import {
   StepValue,
 } from './types';
 import { getStepValueLabelData } from './utils';
+import useModelBuilder from './hooks/useModelBuilder';
 
 export type PreprocessingStepSelectGetErrorFn = (
   field: 'type' | 'constructorArgs',
@@ -43,8 +44,13 @@ export interface PreprocessingStepSelectProps {
 // todo: Rename to ComponentSelect or ComponentConfig
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
   const [expanded, setExpanded] = React.useState(false);
+  const { editable, defaultExpanded } = useModelBuilder();
 
   const stepSelected = props.value;
+
+  useEffect(() => {
+    setExpanded(defaultExpanded);
+  }, []);
 
   const getStepOption = (type: GenericPreprocessingStep['type']) => {
     return props.options.find((option) => option.type === type);
@@ -102,6 +108,8 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
             props.onChanges &&
             props.onChanges(newValue ? formatStepOption(newValue) : null)
           }
+          disabled={!editable}
+          sx={{ pointerEvents: editable ? 'auto' : 'none' }}
         />
         {showActions && (
           <AccordionActions>

@@ -9,6 +9,7 @@ import { Provider } from 'react-redux';
 import { theme } from 'theme';
 import DataPreprocessingInput from './DataPreprocessingInput';
 import { SimpleColumnConfig } from './types';
+import { ModelBuilderContextProvider } from './hooks/useModelBuilder';
 
 export default {
   title: 'components/DataPreprocessingInputt',
@@ -17,7 +18,9 @@ export default {
     (Story: StoryFn) => (
       <Provider store={store}>
         <ThemeProvider theme={theme}>
-          <Story />
+          <ModelBuilderContextProvider>
+            <Story />
+          </ModelBuilderContextProvider>
         </ThemeProvider>
       </Provider>
     ),

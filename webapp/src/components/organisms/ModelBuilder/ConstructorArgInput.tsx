@@ -9,6 +9,7 @@ import {
   Switch,
 } from '@mui/material';
 import { TypeIdentifier } from '@hooks/useModelOptions';
+import useModelBuilder from './hooks/useModelBuilder';
 
 interface ArgOption {
   key: string;
@@ -47,6 +48,8 @@ const ConstructorArgInput = ({
   const formControlStyle = { minWidth: 200 };
   const inputId = `arg-option-${label}`;
   const variant = 'standard';
+  const { editable } = useModelBuilder();
+
   if (arg.options && arg.options.length) {
     return (
       <FormControl error={error} sx={formControlStyle}>
@@ -64,6 +67,7 @@ const ConstructorArgInput = ({
           }}
           defaultValue={arg.default || null}
           onChange={(event) => onChange(event.target.value)}
+          disabled={!editable}
         >
           {arg.options.map((option) => (
             <MenuItem
@@ -92,6 +96,7 @@ const ConstructorArgInput = ({
               defaultValue={arg.default || null}
               checked={value}
               onChange={(event) => onChange(event.target.checked)}
+              disabled={!editable}
             />
           }
           label={label}
@@ -114,6 +119,7 @@ const ConstructorArgInput = ({
           id={inputId}
           defaultValue={arg.default || null}
           onChange={(event) => onChange(event.target.value)}
+          disabled={!editable}
         />
 
         <FormHelperText>{helperText}</FormHelperText>
@@ -133,6 +139,7 @@ const ConstructorArgInput = ({
           type="number"
           defaultValue={arg.default || null}
           onChange={(event) => onChange(event.target.value)}
+          disabled={!editable}
         />
 
         <FormHelperText>{helperText}</FormHelperText>

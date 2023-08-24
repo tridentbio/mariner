@@ -10,9 +10,23 @@ import {
   StepValue,
 } from './types';
 import { ComponentOption } from '@app/rtk/generated/models';
+import styled from 'styled-components';
 export interface DataPreprocessingInputProps {
   value?: DatasetConfigPreprocessing;
 }
+
+const AccordionContainer = styled.div`
+  & > .MuiAccordion-root:first-of-type {
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+  }
+
+  & > .MuiAccordion-root:last-of-type {
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+  }
+`;
+
 const DataPreprocessingInput = ({ value }: DataPreprocessingInputProps) => {
   const options = useModelOptions();
   const { featureColumns, targetColumns } = value || {
@@ -99,18 +113,20 @@ const DataPreprocessingInput = ({ value }: DataPreprocessingInputProps) => {
     <>
       <Box sx={{ mb: 2, mt: 3 }}>
         <Text variant="subtitle1">Feature Columns:</Text>
-        {featureColumns.map((column, index) => (
-          <ColumnsPipelineInput
-            key={index}
-            column={{
-              config: column,
-              index,
-              type: 'featureColumns',
-            }}
-            featurizerOptions={filterColumnFeaturizersOptions(column)}
-            transformOptions={transformOptions}
-          />
-        ))}
+        <AccordionContainer>
+          {featureColumns.map((column, index) => (
+            <ColumnsPipelineInput
+              key={index}
+              column={{
+                config: column,
+                index,
+                type: 'featureColumns',
+              }}
+              featurizerOptions={filterColumnFeaturizersOptions(column)}
+              transformOptions={transformOptions}
+            />
+          ))}
+        </AccordionContainer>
       </Box>
 
       <Box>

@@ -7,6 +7,7 @@ interface ColumnConfigurationAccordionProps {
   textProps?: Record<string, any>;
   children: React.ReactNode;
   testId?: string;
+  defaultExpanded?: boolean;
 }
 
 const ColumnConfigurationAccordion = ({
@@ -15,12 +16,19 @@ const ColumnConfigurationAccordion = ({
   textProps = {},
   children,
   testId,
+  defaultExpanded,
 }: ColumnConfigurationAccordionProps) => {
   return (
     <CustomAccordion
       testId={testId}
       title={<DataTypeChip prefix={name} {...dataType} />}
       textProps={textProps}
+      defaultExpanded={defaultExpanded}
+      sx={{
+        padding: 0.5,
+        boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.1)',
+        // borderRadius: 3,
+      }}
     >
       {children}
     </CustomAccordion>

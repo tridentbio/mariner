@@ -32,6 +32,7 @@ export default function ComboBox<T>(props: ComboBoxProps<T>) {
           label={props.label}
           error={props.error}
           helperText={props.helperText}
+          disabled={props.disabled}
         />
       )}
     />

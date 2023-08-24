@@ -5,7 +5,17 @@ import ModelEditor from 'components/templates/ModelEditorV2';
 import { modelsApi } from 'app/rtk/models';
 import { ModelEditorContextProvider } from 'hooks/useModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
-import { TorchModelSpec } from '@app/rtk/generated/models';
+import {
+  ModelCreate,
+  SklearnModelSchema,
+  TorchModelSpec,
+} from '@app/rtk/generated/models';
+import DataPreprocessingInput from '@components/organisms/ModelBuilder/DataPreprocessingInput';
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
+import { FormProvider, useForm } from 'react-hook-form';
+import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
+import { useEffect } from 'react';
+import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
 
 interface ModelVersionDetailsProps {
   modelName?: string;
@@ -19,6 +29,18 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
   const modelVersion = model?.versions?.find(
     (modelVersion) => modelVersion.id === props.modelVersionId
   );
+  const sklearnFormMethods = useForm<ModelCreate>();
+
+  useEffect(() => {
+    if (modelVersion) {
+      sklearnFormMethods.reset({
+        config: {
+          dataset: modelVersion.config.dataset,
+          spec: modelVersion.config.spec as SklearnModelSchema,
+        },
+      });
+    }
+  }, [modelVersion]);
 
   if (!model) {
     return <NotFound>Model {`"${props.modelName}"`} not found</NotFound>;
@@ -28,6 +50,24 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
         Version {`"${props.version}"`} not found for model{' '}
         {`"${props.modelName}"`}
       </NotFound>
+    );
+  }
+
+  if (modelVersion.config.framework == 'sklearn') {
+    return (
+      <FormProvider {...sklearnFormMethods}>
+        <ModelBuilderContextProvider editable={false} defaultExpanded={true}>
+          <DataPreprocessingInput
+            value={{
+              featureColumns: modelVersion.config.dataset
+                .featureColumns as SimpleColumnConfig[],
+              targetColumns: modelVersion.config.dataset
+                .targetColumns as SimpleColumnConfig[],
+            }}
+          />
+          <SklearnModelInput />
+        </ModelBuilderContextProvider>
+      </FormProvider>
     );
   }
 

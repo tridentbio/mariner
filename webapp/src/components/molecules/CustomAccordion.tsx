@@ -13,15 +13,21 @@ export const CustomAccordion = ({
   textProps,
   sx,
   testId,
+  defaultExpanded,
 }: {
   children: React.ReactNode;
   title: string | React.ReactNode;
   textProps?: Record<string, any>;
   sx?: SxProps;
   testId?: string;
+  defaultExpanded?: boolean;
 }) => {
   return (
-    <Accordion sx={sx} data-testid={`${testId}-accordion`}>
+    <Accordion
+      sx={sx}
+      data-testid={`${testId}-accordion`}
+      defaultExpanded={defaultExpanded}
+    >
       <AccordionSummary expandIcon={<GridExpandMoreIcon />}>
         <Typography sx={textProps || {}}>{title}</Typography>
       </AccordionSummary>
