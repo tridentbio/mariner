@@ -174,14 +174,14 @@ def fit(
                 mlflow_model_name=mlflow_model_name,
                 run_id=run.info.run_id,
             )
-            logger.send({"metrics": train_metrics}, "metrics")
             val_metrics = functions.val()
             # Turn NaN values into strings
             val_metrics = {
                 k: v if not np.isnan(v) else "NaN"
                 for k, v in val_metrics.items()
             }
-            logger.send({"metrics": val_metrics}, "metrics")
+            metrics = {"metrics": train_metrics | val_metrics}
+            logger.send(metrics, "metrics")
         else:
             raise ValueError("Can't find functions for spec")
 

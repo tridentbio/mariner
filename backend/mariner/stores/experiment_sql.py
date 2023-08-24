@@ -38,10 +38,10 @@ class ExperimentUpdateRepo(pydantic.BaseModel):
     stage: Optional[
         Literal["NOT RUNNING", "STARTED", "RUNNING", "ERROR", "SUCCESS"]
     ] = None
-    train_metrics: Optional[Dict[str, float]] = None
+    train_metrics: Optional[Dict[str, Union[float, str]]] = None
+    val_metrics: Optional[Dict[str, Union[float, str]]] = None
+    test_metrics: Optional[Dict[str, Union[float, str]]] = None
     hyperparams: Optional[Dict[str, Any]] = None
-    val_metrics: Optional[Dict[str, float]] = None
-    test_metrics: Optional[Dict[str, float]] = None
     history: Optional[Dict[str, List[float]]] = None
     epochs: Optional[int] = None
     stack_trace: Optional[str] = None

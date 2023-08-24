@@ -297,7 +297,6 @@ def log_metrics(
     experiment_id: int,
     metrics: dict[str, float],
     history: Union[dict[str, list[float]], None] = None,
-    stage: Literal["train", "val", "test"] = "train",
 ) -> None:
     """Saves the metrics reported of a modelversion being trained to the database
 
@@ -319,9 +318,24 @@ def log_metrics(
         raise ExperimentNotFound()
 
     update_obj = ExperimentUpdateRepo(history=history)
-    if stage == "train":
-        update_obj.train_metrics = metrics
-
+    train_metrics, val_metrics, test_metrics = (
+        experiment_db.train_metrics or {},
+        experiment_db.val_metrics or {},
+        experiment_db.test_metrics or {},
+    )
+    for key, value in metrics.items():
+        if key.startswith("train/"):
+            train_metrics[key] = value
+        elif key.startswith("val/"):
+            val_metrics[key] = value
+        elif key.startswith("test/"):
+            test_metrics[key] = value
+    if train_metrics:
+        update_obj.train_metrics = train_metrics
+    if val_metrics:
+        update_obj.val_metrics = val_metrics
+    if test_metrics:
+        update_obj.test_metrics = test_metrics
     experiment_store.update(db, db_obj=experiment_db, obj_in=update_obj)
 
     model = experiment_db.model_version.model

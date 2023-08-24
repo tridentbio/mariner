@@ -115,22 +115,39 @@ async def test_create_model_training_sklearn(
         .first()
     )
     db_exp = Experiment.from_orm(db_exp)
-    assert db_exp.train_metrics
     assert db_exp.stage == "SUCCESS"
-    collected_regression_metrics = [
-        f"train/mse/{target_column.name}",
-        f"train/mae/{target_column.name}",
-        f"train/ev/{target_column.name}",
-        f"train/mape/{target_column.name}",
-        f"train/R2/{target_column.name}",
-        f"train/pearson/{target_column.name}",
-    ]
+    metrics = ["mse", "mae", "ev", "mape", "R2", "pearson"]
+    expected_train_metrics = {
+        f"train/{metric}/{target_column.name}" for metric in metrics
+    }
+    expected_val_metrics = {
+        f"val/{metric}/{target_column.name}" for metric in metrics
+    }
+    assert isinstance(
+        db_exp.train_metrics, dict
+    ), "train metrics are not collected"
+    assert (
+        set(db_exp.train_metrics.keys()) == expected_train_metrics
+    ), f"train metrics missing {expected_train_metrics - set(db_exp.train_metrics.keys())}"
+    assert isinstance(
+        db_exp.val_metrics, dict
+    ), "val metrics are not collected"
+    assert (
+        set(db_exp.val_metrics.keys()) == expected_val_metrics
+    ), f"val metrics missing {expected_val_metrics - set(db_exp.val_metrics.keys())}"
     client = MlflowClient()
+    assert db_exp.mlflow_id, "missing mlflow_id in experiment"
     experiment = client.get_experiment(db_exp.mlflow_id)
     runs = client.search_runs([experiment.experiment_id])
     assert len(runs) == 1
     run = runs[0]
-    for metric_key in collected_regression_metrics:
+    for metric_key in expected_train_metrics:
+        metric = client.get_metric_history(
+            run_id=run.info.run_id, key=metric_key
+        )
+        assert metric
+
+    for metric_key in expected_val_metrics:
         metric = client.get_metric_history(
             run_id=run.info.run_id, key=metric_key
         )
