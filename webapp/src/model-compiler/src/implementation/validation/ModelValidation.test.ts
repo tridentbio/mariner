@@ -5,7 +5,7 @@ import {
   Linear,
   MolFeaturizer,
   NodeRelativePosition,
-} from 'model-compiler/src/interfaces/model-editor';
+} from '@model-compiler/src/interfaces/torch-model-editor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import {
   BrokenSchemas,

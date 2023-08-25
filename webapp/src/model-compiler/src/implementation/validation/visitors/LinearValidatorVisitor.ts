@@ -1,4 +1,4 @@
-import { Linear } from '../../../interfaces/model-editor';
+import { Linear } from '../../../interfaces/torch-model-editor';
 import { unwrapDollar } from '../../../utils';
 import EditComponentsCommand, {
   makeComponentEdit,

@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-import { ModelSchema } from 'model-compiler/src/interfaces/model-editor';
+import { ModelSchema } from '@model-compiler/src/interfaces/torch-model-editor';
 import { iterateTopologically } from 'model-compiler/src/utils';
 import { substrAfterLast } from '@utils';
 import {

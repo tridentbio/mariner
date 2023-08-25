@@ -1,9 +1,9 @@
 import { FormLabel } from '@mui/material';
 import NotFound from 'components/atoms/NotFound';
 import { ReactFlowProvider } from 'reactflow';
-import ModelEditor from 'components/templates/ModelEditorV2';
+import TorchModelEditor from 'components/templates/TorchModelEditorV2';
 import { modelsApi } from 'app/rtk/models';
-import { ModelEditorContextProvider } from 'hooks/useModelEditor';
+import { TorchModelEditorContextProvider } from 'hooks/useTorchModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import { TorchModelSpec } from '@app/rtk/generated/models';
 
@@ -35,16 +35,16 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
     <>
       <FormLabel>Model:</FormLabel>
       <ReactFlowProvider>
-        <ModelEditorContextProvider>
+        <TorchModelEditorContextProvider>
           {modelVersion.config && (
-            <ModelEditor // TODO: change to component that supports all frameworks (update ModelEditor to TorchModelEditor)
+            <TorchModelEditor // TODO: change to component that supports all frameworks (update TorchModelEditor to TorchTorchModelEditor)
               value={extendSpecWithTargetForwardArgs(
                 modelVersion.config as TorchModelSpec
               )}
               editable={false}
             />
           )}
-        </ModelEditorContextProvider>
+        </TorchModelEditorContextProvider>
       </ReactFlowProvider>
     </>
   );

@@ -1,4 +1,4 @@
-import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
+import { APITargetConfig } from '@model-compiler/src/interfaces/torch-model-editor';
 import { BaseTrainingRequest } from 'app/types/domain/experiments';
 import { MetricMode } from 'app/types/domain/experiments';
 import React from 'react';

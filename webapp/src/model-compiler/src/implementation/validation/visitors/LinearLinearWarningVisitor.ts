@@ -1,4 +1,4 @@
-import { LayersType } from '@model-compiler/src/interfaces/model-editor';
+import { LayersType } from '@model-compiler/src/interfaces/torch-model-editor';
 import ComponentVisitor from './ComponentVisitor';
 import { getDependents } from '../../modelSchemaQuery';
 import Suggestion from '../../Suggestion';

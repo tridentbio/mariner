@@ -6,7 +6,7 @@ import {
   ModelSchema,
   TransformsType,
   NodePositionTypes,
-} from '../../interfaces/model-editor';
+} from '../../interfaces/torch-model-editor';
 import { wrapForwardArgs } from '../../utils';
 import Command from './Command';
 
