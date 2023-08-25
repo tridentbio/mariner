@@ -1,21 +1,25 @@
-import { FormLabel } from '@mui/material';
-import NotFound from 'components/atoms/NotFound';
-import { ReactFlowProvider } from 'reactflow';
-import ModelEditor from 'components/templates/ModelEditorV2';
+import { ModelCreate, TorchModelSpec } from '@app/rtk/generated/models';
+import { Text } from '@components/molecules/Text';
+import DataPreprocessingInput from '@components/organisms/ModelBuilder/DataPreprocessingInput';
+import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
+import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
+import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
+import {
+  Container,
+  FormLabel,
+  Step,
+  StepContent,
+  StepLabel,
+  Stepper,
+} from '@mui/material';
 import { modelsApi } from 'app/rtk/models';
+import NotFound from 'components/atoms/NotFound';
+import ModelEditor from 'components/templates/ModelEditorV2';
 import { ModelEditorContextProvider } from 'hooks/useModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
-import {
-  ModelCreate,
-  SklearnModelSchema,
-  TorchModelSpec,
-} from '@app/rtk/generated/models';
-import DataPreprocessingInput from '@components/organisms/ModelBuilder/DataPreprocessingInput';
-import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
-import { FormProvider, useForm } from 'react-hook-form';
-import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
 import { useEffect } from 'react';
-import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
+import { FormProvider, useForm } from 'react-hook-form';
+import { ReactFlowProvider } from 'reactflow';
 
 interface ModelVersionDetailsProps {
   modelName?: string;
@@ -26,19 +30,24 @@ interface ModelVersionDetailsProps {
 
 const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
   const model = modelsApi.useGetModelByIdQuery(props.modelId).data;
+  const sklearnFormMethods = useForm<ModelCreate>();
+
   const modelVersion = model?.versions?.find(
     (modelVersion) => modelVersion.id === props.modelVersionId
   );
-  const sklearnFormMethods = useForm<ModelCreate>();
 
   useEffect(() => {
-    if (modelVersion) {
-      sklearnFormMethods.reset({
-        config: {
-          dataset: modelVersion.config.dataset,
-          spec: modelVersion.config.spec as SklearnModelSchema,
-        },
-      });
+    if (modelVersion?.config) {
+      sklearnFormMethods.setValue(
+        'config',
+        {
+          dataset: modelVersion?.config.dataset,
+          spec: modelVersion?.config.spec,
+          framework: 'sklearn',
+          name: '',
+        } as ModelCreate['config'] & { framework: 'sklearn' },
+        { shouldValidate: true }
+      );
     }
   }, [modelVersion]);
 
@@ -53,19 +62,55 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
     );
   }
 
+  const isSklearnFormFilled =
+    Object.keys(sklearnFormMethods.watch() || {}).length > 0;
+
   if (modelVersion.config.framework == 'sklearn') {
+    if (!isSklearnFormFilled) return null;
+
     return (
       <FormProvider {...sklearnFormMethods}>
         <ModelBuilderContextProvider editable={false} defaultExpanded={true}>
-          <DataPreprocessingInput
-            value={{
-              featureColumns: modelVersion.config.dataset
-                .featureColumns as SimpleColumnConfig[],
-              targetColumns: modelVersion.config.dataset
-                .targetColumns as SimpleColumnConfig[],
-            }}
-          />
-          <SklearnModelInput />
+          <Container>
+            <Stepper orientation="vertical">
+              <Step active>
+                <StepContent>
+                  <StepLabel>
+                    <Text variant="subtitle1">Feature columns</Text>
+                  </StepLabel>
+                  <DataPreprocessingInput
+                    value={
+                      modelVersion.config.dataset
+                        .featureColumns as SimpleColumnConfig[]
+                    }
+                    type="featureColumns"
+                  />
+                </StepContent>
+              </Step>
+              <Step active>
+                <StepContent>
+                  <StepLabel>
+                    <Text variant="subtitle1">Target columns</Text>
+                  </StepLabel>
+                  <DataPreprocessingInput
+                    value={
+                      modelVersion.config.dataset
+                        .targetColumns as SimpleColumnConfig[]
+                    }
+                    type="targetColumns"
+                  />
+                </StepContent>
+              </Step>
+              <Step active>
+                <StepContent>
+                  <StepLabel>
+                    <Text variant="subtitle1">Model</Text>
+                  </StepLabel>
+                  <SklearnModelInput />
+                </StepContent>
+              </Step>
+            </Stepper>
+          </Container>
         </ModelBuilderContextProvider>
       </FormProvider>
     );

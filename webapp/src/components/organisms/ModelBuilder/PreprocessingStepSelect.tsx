@@ -4,23 +4,22 @@ import {
   Accordion,
   AccordionActions,
   AccordionDetails,
+  AccordionProps,
   AccordionSummary,
   Box,
   IconButton,
-  SxProps,
-  Theme,
 } from '@mui/material';
 import React, { FocusEventHandler, ReactNode, useEffect, useMemo } from 'react';
 import ConstructorArgInput, {
   ConstructorArgInputProps,
 } from './ConstructorArgInput';
+import useModelBuilder from './hooks/useModelBuilder';
 import {
   GenericPreprocessingStep,
   PreprocessingStep,
   StepValue,
 } from './types';
 import { getStepValueLabelData } from './utils';
-import useModelBuilder from './hooks/useModelBuilder';
 
 export type PreprocessingStepSelectGetErrorFn = (
   field: 'type' | 'constructorArgs',
@@ -38,7 +37,7 @@ export interface PreprocessingStepSelectProps {
   options: StepValue[];
   extra?: ReactNode;
   label?: string;
-  sx?: SxProps<Theme>;
+  sx?: AccordionProps['sx'];
   testId?: string;
 }
 // todo: Rename to ComponentSelect or ComponentConfig
@@ -78,7 +77,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
 
   const selectedStepOption = useMemo(() => {
     return stepSelected ? getStepOption(stepSelected?.type) : undefined;
-  }, [stepSelected?.type]);
+  }, [stepSelected, props.options]);
 
   const showActions =
     (stepSelected?.constructorArgs &&
@@ -86,7 +85,12 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
     props.extra;
 
   return (
-    <Accordion expanded={expanded} sx={props.sx} data-testid={props.testId}>
+    <Accordion
+      disableGutters
+      expanded={expanded}
+      sx={props.sx}
+      data-testid={props.testId}
+    >
       <AccordionSummary>
         <ComboBox
           className="step-select"

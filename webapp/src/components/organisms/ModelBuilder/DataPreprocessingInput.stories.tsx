@@ -10,6 +10,7 @@ import { theme } from 'theme';
 import DataPreprocessingInput from './DataPreprocessingInput';
 import { SimpleColumnConfig } from './types';
 import { ModelBuilderContextProvider } from './hooks/useModelBuilder';
+import { Container } from '@mui/material';
 
 export default {
   title: 'components/DataPreprocessingInputt',
@@ -19,7 +20,9 @@ export default {
       <Provider store={store}>
         <ThemeProvider theme={theme}>
           <ModelBuilderContextProvider>
-            <Story />
+            <Container>
+              <Story />
+            </Container>
           </ModelBuilderContextProvider>
         </ThemeProvider>
       </Provider>
@@ -94,14 +97,18 @@ export const SimpleAPI: StoryObj = {
       <>
         <FormProvider {...methods}>
           <DataPreprocessingInput
-            value={{
-              featureColumns:
-                (value?.config?.dataset
-                  ?.featureColumns as SimpleColumnConfig[]) || [],
-              targetColumns:
-                (value?.config?.dataset
-                  ?.targetColumns as SimpleColumnConfig[]) || [],
-            }}
+            value={
+              (value?.config?.dataset
+                ?.featureColumns as SimpleColumnConfig[]) || []
+            }
+            type="featureColumns"
+          />
+          <DataPreprocessingInput
+            value={
+              (value?.config?.dataset?.targetColumns as SimpleColumnConfig[]) ||
+              []
+            }
+            type="targetColumns"
           />
         </FormProvider>
       </>

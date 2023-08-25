@@ -1,38 +1,21 @@
-import { Text } from '@components/molecules/Text';
+import { ComponentOption } from '@app/rtk/generated/models';
 import useModelOptions, {
   toConstructorArgsConfig,
 } from '@hooks/useModelOptions';
-import { Box } from '@mui/material';
 import ColumnsPipelineInput from './ColumnsPipelineInput';
-import {
-  DatasetConfigPreprocessing,
-  SimpleColumnConfig,
-  StepValue,
-} from './types';
-import { ComponentOption } from '@app/rtk/generated/models';
-import styled from 'styled-components';
+import { SimpleColumnConfig, StepValue } from './types';
+import { Box } from '@mui/material';
 export interface DataPreprocessingInputProps {
-  value?: DatasetConfigPreprocessing;
+  value?: SimpleColumnConfig[];
+  type: 'featureColumns' | 'targetColumns';
 }
 
-const AccordionContainer = styled.div`
-  & > .MuiAccordion-root:first-of-type {
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-  }
-
-  & > .MuiAccordion-root:last-of-type {
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-  }
-`;
-
-const DataPreprocessingInput = ({ value }: DataPreprocessingInputProps) => {
+const DataPreprocessingInput = ({
+  value,
+  type,
+}: DataPreprocessingInputProps) => {
   const options = useModelOptions();
-  const { featureColumns, targetColumns } = value || {
-    featureColumns: [],
-    targetColumns: [],
-  };
+  const columns = value || [];
 
   const applyCompatibilityAttributeMock = (
     opt: ComponentOption
@@ -110,41 +93,20 @@ const DataPreprocessingInput = ({ value }: DataPreprocessingInputProps) => {
   };
 
   return (
-    <>
-      <Box sx={{ mb: 2, mt: 3 }}>
-        <Text variant="subtitle1">Feature Columns:</Text>
-        <AccordionContainer>
-          {featureColumns.map((column, index) => (
-            <ColumnsPipelineInput
-              key={index}
-              column={{
-                config: column,
-                index,
-                type: 'featureColumns',
-              }}
-              featurizerOptions={filterColumnFeaturizersOptions(column)}
-              transformOptions={transformOptions}
-            />
-          ))}
-        </AccordionContainer>
-      </Box>
-
-      <Box>
-        <Text variant="subtitle1">Target Columns:</Text>
-        {targetColumns.map((column, index) => (
-          <ColumnsPipelineInput
-            key={index}
-            column={{
-              config: column,
-              index,
-              type: 'targetColumns',
-            }}
-            featurizerOptions={filterColumnFeaturizersOptions(column)}
-            transformOptions={transformOptions}
-          />
-        ))}
-      </Box>
-    </>
+    <Box>
+      {columns.map((column, index) => (
+        <ColumnsPipelineInput
+          key={index}
+          column={{
+            config: column,
+            index,
+            type,
+          }}
+          featurizerOptions={filterColumnFeaturizersOptions(column)}
+          transformOptions={transformOptions}
+        />
+      ))}
+    </Box>
   );
 };
 
