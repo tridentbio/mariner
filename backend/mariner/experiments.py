@@ -191,6 +191,7 @@ async def create_model_training(
         db,
         obj_in=ExperimentCreateRepo(
             experiment_name=training_request.name,
+            epochs=training_request.config.epochs,
             created_by_id=user.id,
             model_version_id=training_request.model_version_id,
             hyperparams=hyperparams,
