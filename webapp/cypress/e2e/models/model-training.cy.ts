@@ -21,8 +21,8 @@ describe('Model Training Page', () => {
       cy.contains('button', 'Metrics', {timeout: 3000}).should('exist').click()
       cy.get('#model-version-select').click().get('li[role="option"]').contains(experiment.modelVersion.name).click()
       cy.get('[data-testid="experiment-select"] div').click().get('li[role="option"]').contains(experiment.experimentName).click()
-      cy.get('table').contains('Train')
-      cy.get('table').contains('Validation')
+      cy.get('table').contains('Train').should('exist')
+      cy.get('table').contains('Validation').should('exist')
     });
     // TODO: Asserts the progress bar fills
     // TODO: Asserts loss goes down
