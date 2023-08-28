@@ -127,7 +127,7 @@ test-integration: start-backend ## Runs unit tests
 
 .PHONY: test-e2e
 test-e2e: build start create-admin create-test-user## Runs test target
-	$(DOCKER_COMPOSE) up e2e
+	$(DOCKER_COMPOSE) run --entrypoint sh e2e -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
 
 
 .PHONY: pre-commit
