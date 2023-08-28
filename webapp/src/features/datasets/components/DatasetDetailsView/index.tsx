@@ -13,8 +13,8 @@ import { DatasetErrorsView } from './DatasetErrorsView';
 import { lazy } from 'react';
 import DataSummary from 'features/models/components/ModelVersionInferenceView/DataSummary';
 
-const ModelEditorMarkdown = lazy(
-  () => import('utils/codeSplittingAux/ModelEditorMarkdown')
+const TorchModelEditorMarkdown = lazy(
+  () => import('utils/codeSplittingAux/TorchModelEditorMarkdown')
 );
 interface DatasetDetailsProps {
   id: string;
@@ -144,7 +144,7 @@ const DatasetDetailsView = (props: DatasetDetailsProps) => {
         Dataset Overview
       </LargerBoldText>
       <div id="dataset-description">
-        <ModelEditorMarkdown
+        <TorchModelEditorMarkdown
           source={dataset.description}
           warpperElement={{
             'data-color-mode': 'light',

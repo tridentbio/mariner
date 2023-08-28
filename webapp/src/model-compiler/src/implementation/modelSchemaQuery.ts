@@ -5,7 +5,7 @@ import {
   ModelSchema,
   NodeType,
   EPythonClasses,
-} from '../interfaces/model-editor';
+} from '../interfaces/torch-model-editor';
 import { isArray, unwrapDollar } from '../utils';
 
 const len = (t: { length?: number } | undefined) => t?.length || 0;

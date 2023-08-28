@@ -1,4 +1,4 @@
-import { ComponentType, NodeType } from '../../interfaces/model-editor';
+import { ComponentType, NodeType } from '../../interfaces/torch-model-editor';
 import TransversalInfo from './TransversalInfo';
 import ComponentVisitor from './visitors/ComponentVisitor';
 

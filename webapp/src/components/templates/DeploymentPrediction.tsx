@@ -7,7 +7,7 @@ import api from '@app/api';
 import { useNotifications } from '@app/notifications';
 import { Text } from '@components/molecules/Text';
 import { InferenceOutput } from '@components/organisms/InferenceOutput';
-import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
+import { APITargetConfig } from '@model-compiler/src/interfaces/torch-model-editor';
 import {
   ColumnConfig,
   ColumnConfigWithPreprocessing,

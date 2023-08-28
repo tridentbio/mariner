@@ -1,4 +1,4 @@
-import { GcnConv } from 'model-compiler/src/interfaces/model-editor';
+import { GcnConv } from '@model-compiler/src/interfaces/torch-model-editor';
 import { unwrapDollar } from '../../../utils';
 import Suggestion from '../../Suggestion';
 import EditComponentsCommand, {

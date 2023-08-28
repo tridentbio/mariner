@@ -1,6 +1,6 @@
 import { ModelVersion } from '@app/rtk/generated/models';
 import { BaseTrainingRequest } from '@app/types/domain/experiments';
-import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
+import { APITargetConfig } from '@model-compiler/src/interfaces/torch-model-editor';
 import { Button, TextField, Typography } from '@mui/material';
 import { Box, SystemStyleObject } from '@mui/system';
 import { deepClone } from '@utils';

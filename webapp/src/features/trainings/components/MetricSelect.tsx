@@ -20,7 +20,7 @@ import { BaseTrainingRequest } from '@app/types/domain/experiments';
 import { defaultModeIsMax } from 'utils';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ModelVersionType } from 'app/types/domain/models';
-import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
+import { APITargetConfig } from '@model-compiler/src/interfaces/torch-model-editor';
 
 type MetricSelectProps = {
   field: ControllerRenderProps<BaseTrainingRequest, any>;

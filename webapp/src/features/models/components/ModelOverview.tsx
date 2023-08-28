@@ -9,8 +9,8 @@ import { lazy } from 'react';
 import { findColumnMetadata } from 'utils';
 import ModelVersions from './ModelVersions';
 
-const ModelEditorMarkdown = lazy(
-  () => import('utils/codeSplittingAux/ModelEditorMarkdown')
+const TorchModelEditorMarkdown = lazy(
+  () => import('utils/codeSplittingAux/TorchModelEditorMarkdown')
 );
 
 export interface ModelOverviewProps {
@@ -58,7 +58,7 @@ const ModelOverview = ({ model }: ModelOverviewProps) => {
       {model.description && (
         <>
           <FormLabel>Description</FormLabel>
-          <ModelEditorMarkdown
+          <TorchModelEditorMarkdown
             source={model.description}
             warpperElement={{
               'data-color-mode': 'light',

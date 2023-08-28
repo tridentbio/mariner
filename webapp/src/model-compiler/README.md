@@ -6,7 +6,7 @@ This package aims to provide model building and make suggestions for the archite
 - [x] Generate LayerType and FeaturizerType types using open api code generation.
     - First download the openapi.json schema from API.
     - Second, run `npx openapi-typescript ./openapi.json --output ./schema.ts`
-- [ ] Implement the ModelEditor interface
+- [ ] Implement the TorchModelEditor interface
     - [x] addComponent
     - [x] editComponent
     - [x] deleteComponent
