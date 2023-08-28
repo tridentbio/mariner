@@ -1,22 +1,42 @@
+import { ModelCreate } from '@app/rtk/generated/models';
 import { store } from '@app/store';
-import useModelOptions, {
-  toConstructorArgsConfig,
-} from '@hooks/useModelOptions';
+import { schema } from '@features/models/pages/ModelCreateV2';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Container, ThemeProvider } from '@mui/material';
 import { StoryFn, StoryObj } from '@storybook/react';
-import { useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
-import PreprocessingStepSelect from './PreprocessingStepSelect';
+import { theme } from 'theme';
 import SklearnModelInput from './SklearnModelInput';
+import { ModelBuilderContextProvider } from './hooks/useModelBuilder';
 
 export default {
   title: 'components/SklearnModelInput',
   component: SklearnModelInput,
   decorators: [
-    (Story: StoryFn) => (
-      <Provider store={store}>
-        <Story />
-      </Provider>
-    ),
+    (Story: StoryFn) => {
+      const methods = useForm<ModelCreate>({
+        defaultValues: Story.args?.value,
+        mode: 'all',
+        criteriaMode: 'all',
+        reValidateMode: 'onChange',
+        resolver: yupResolver(schema),
+      });
+
+      return (
+        <Provider store={store}>
+          <ThemeProvider theme={theme}>
+            <ModelBuilderContextProvider>
+              <FormProvider {...methods}>
+                <Container>
+                  <Story />
+                </Container>
+              </FormProvider>
+            </ModelBuilderContextProvider>
+          </ThemeProvider>
+        </Provider>
+      );
+    },
   ],
   args: {},
 };
@@ -24,12 +44,6 @@ export default {
 export const Simple: StoryObj = {
   args: {},
   render: (args) => {
-    const [value, setValue] = useState(undefined);
-    return (
-      <div style={{ height: 'fit-content' }}>
-        <SklearnModelInput />
-        <pre>{JSON.stringify(value, null, 2)}</pre>
-      </div>
-    );
+    return <SklearnModelInput />;
   },
 };

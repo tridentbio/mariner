@@ -13,20 +13,32 @@ import { ModelBuilderContextProvider } from './hooks/useModelBuilder';
 import { Container } from '@mui/material';
 
 export default {
-  title: 'components/DataPreprocessingInputt',
+  title: 'components/DataPreprocessingInput',
   component: DataPreprocessingInput,
   decorators: [
-    (Story: StoryFn) => (
-      <Provider store={store}>
-        <ThemeProvider theme={theme}>
-          <ModelBuilderContextProvider>
-            <Container>
-              <Story />
-            </Container>
-          </ModelBuilderContextProvider>
-        </ThemeProvider>
-      </Provider>
-    ),
+    (Story: StoryFn) => {
+      const methods = useForm<ModelCreate>({
+        defaultValues: Story.args?.value,
+        mode: 'all',
+        criteriaMode: 'all',
+        reValidateMode: 'onChange',
+        resolver: yupResolver(schema),
+      });
+
+      return (
+        <Provider store={store}>
+          <ThemeProvider theme={theme}>
+            <ModelBuilderContextProvider>
+              <FormProvider {...methods}>
+                <Container>
+                  <Story />
+                </Container>
+              </FormProvider>
+            </ModelBuilderContextProvider>
+          </ThemeProvider>
+        </Provider>
+      );
+    },
   ],
   args: {
     value: {
@@ -83,35 +95,28 @@ export default {
   },
 };
 
-export const SimpleAPI: StoryObj = {
+export const FeatureColumns: StoryObj = {
   render: ({ value }: { value?: ModelCreate }) => {
-    const methods = useForm<ModelCreate>({
-      defaultValues: value,
-      mode: 'all',
-      criteriaMode: 'all',
-      reValidateMode: 'onChange',
-      resolver: yupResolver(schema),
-    });
-
     return (
-      <>
-        <FormProvider {...methods}>
-          <DataPreprocessingInput
-            value={
-              (value?.config?.dataset
-                ?.featureColumns as SimpleColumnConfig[]) || []
-            }
-            type="featureColumns"
-          />
-          <DataPreprocessingInput
-            value={
-              (value?.config?.dataset?.targetColumns as SimpleColumnConfig[]) ||
-              []
-            }
-            type="targetColumns"
-          />
-        </FormProvider>
-      </>
+      <DataPreprocessingInput
+        value={
+          (value?.config?.dataset?.featureColumns as SimpleColumnConfig[]) || []
+        }
+        type="featureColumns"
+      />
+    );
+  },
+};
+
+export const TargetColumns: StoryObj = {
+  render: ({ value }: { value?: ModelCreate }) => {
+    return (
+      <DataPreprocessingInput
+        value={
+          (value?.config?.dataset?.targetColumns as SimpleColumnConfig[]) || []
+        }
+        type="targetColumns"
+      />
     );
   },
 };

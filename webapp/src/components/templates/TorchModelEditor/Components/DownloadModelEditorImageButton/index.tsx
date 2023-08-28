@@ -10,7 +10,9 @@ type DownloadButtonProps = {
   onClick?: (e: MouseEvent) => void;
 };
 
-const DownloadTorchModelEditorImageButton: React.FC<DownloadButtonProps> = () => {
+const DownloadTorchModelEditorImageButton: React.FC<
+  DownloadButtonProps
+> = () => {
   const reactFlowInstance = useReactFlow();
   const exportModelToImage = useCallback(
     async (reactFlowInstance: ReactFlowInstance) => {

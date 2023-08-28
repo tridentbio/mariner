@@ -2,9 +2,9 @@ import { ComponentOption } from '@app/rtk/generated/models';
 import useModelOptions, {
   toConstructorArgsConfig,
 } from '@hooks/useModelOptions';
+import { Box } from '@mui/material';
 import ColumnsPipelineInput from './ColumnsPipelineInput';
 import { SimpleColumnConfig, StepValue } from './types';
-import { Box } from '@mui/material';
 export interface DataPreprocessingInputProps {
   value?: SimpleColumnConfig[];
   type: 'featureColumns' | 'targetColumns';

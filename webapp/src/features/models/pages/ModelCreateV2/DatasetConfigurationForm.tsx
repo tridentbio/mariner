@@ -2,7 +2,6 @@ import { ModelCreate } from '@app/rtk/generated/models';
 import { Section } from '@components/molecules/Section';
 import { Text } from '@components/molecules/Text';
 import DataPreprocessingInput from '@components/organisms/ModelBuilder/DataPreprocessingInput';
-import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
 import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import { Box, Step, StepContent, StepLabel, Stepper } from '@mui/material';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -47,12 +46,6 @@ export const DatasetConfigurationForm = () => {
                   />
                 </StepContent>
               </Step>
-              {/*  <Step active>
-              <StepContent>
-                <StepLabel><Text variant="subtitle1">Model</Text></StepLabel>
-                <SklearnModelInput />
-              </StepContent>
-            </Step> */}
             </Stepper>
           )}
         />

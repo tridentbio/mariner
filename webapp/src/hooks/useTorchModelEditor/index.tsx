@@ -365,13 +365,12 @@ export const TorchModelEditorContextProvider = ({
     return schema;
   };
 
-  const deleteComponentAndApply: ITorchModelEditorContext['deleteComponents'] = (
-    args: DeleteCommandArgs
-  ) => {
-    const schema = deleteComponents(args);
-    updateNodesAndEdges(schema);
-    return schema;
-  };
+  const deleteComponentAndApply: ITorchModelEditorContext['deleteComponents'] =
+    (args: DeleteCommandArgs) => {
+      const schema = deleteComponents(args);
+      updateNodesAndEdges(schema);
+      return schema;
+    };
 
   const applySuggestionsWithPositions = (args: ApplySuggestionsCommandArgs) => {
     const { schema, updatedNodePositions } = applySuggestions(args);

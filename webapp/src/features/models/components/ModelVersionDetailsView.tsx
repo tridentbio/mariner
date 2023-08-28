@@ -20,6 +20,7 @@ import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { ReactFlowProvider } from 'reactflow';
+import { CheckCircle } from '@mui/icons-material';
 
 interface ModelVersionDetailsProps {
   modelName?: string;
@@ -71,11 +72,11 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
     return (
       <FormProvider {...sklearnFormMethods}>
         <ModelBuilderContextProvider editable={false} defaultExpanded={true}>
-          <Container>
+          <Container sx={{ pt: 3 }}>
             <Stepper orientation="vertical">
               <Step active>
                 <StepContent>
-                  <StepLabel>
+                  <StepLabel StepIconComponent={CheckCircle}>
                     <Text variant="subtitle1">Feature columns</Text>
                   </StepLabel>
                   <DataPreprocessingInput
@@ -89,7 +90,7 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
               </Step>
               <Step active>
                 <StepContent>
-                  <StepLabel>
+                  <StepLabel StepIconComponent={CheckCircle}>
                     <Text variant="subtitle1">Target columns</Text>
                   </StepLabel>
                   <DataPreprocessingInput
@@ -103,7 +104,7 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
               </Step>
               <Step active>
                 <StepContent>
-                  <StepLabel>
+                  <StepLabel StepIconComponent={CheckCircle}>
                     <Text variant="subtitle1">Model</Text>
                   </StepLabel>
                   <SklearnModelInput />

@@ -56,7 +56,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
   };
 
   const formatStepOption = (step: StepValue) => {
-    let value = step;
+    let value = Object.assign({}, step);
 
     if (step.constructorArgs) {
       value.constructorArgs = Object.keys(step.constructorArgs).reduce<{
