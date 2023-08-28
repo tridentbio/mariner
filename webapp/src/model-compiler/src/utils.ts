@@ -9,7 +9,7 @@ import {
   FleetModelSpec,
   ModelSchema,
   NodeType,
-} from './interfaces/model-editor';
+} from './interfaces/torch-model-editor';
 
 type ForwardArgs = {
   [key: string]: string | string[];

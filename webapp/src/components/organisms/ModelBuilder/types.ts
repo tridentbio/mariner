@@ -3,7 +3,7 @@ import { ScikitType, TypeIdentifier } from '@hooks/useModelOptions';
 import {
   FeaturizersType,
   TransformsType,
-} from '@model-compiler/src/interfaces/model-editor';
+} from '@model-compiler/src/interfaces/torch-model-editor';
 
 export type PreprocessingStep = FeaturizersType | TransformsType | ScikitType;
 

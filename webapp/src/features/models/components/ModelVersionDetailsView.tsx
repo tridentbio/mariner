@@ -14,8 +14,8 @@ import {
 } from '@mui/material';
 import { modelsApi } from 'app/rtk/models';
 import NotFound from 'components/atoms/NotFound';
-import ModelEditor from 'components/templates/ModelEditorV2';
-import { ModelEditorContextProvider } from 'hooks/useModelEditor';
+import TorchModelEditor from 'components/templates/TorchModelEditorV2';
+import { TorchModelEditorContextProvider } from 'hooks/useTorchModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -120,16 +120,16 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
     <>
       <FormLabel>Model:</FormLabel>
       <ReactFlowProvider>
-        <ModelEditorContextProvider>
+        <TorchModelEditorContextProvider>
           {modelVersion.config && (
-            <ModelEditor // TODO: change to component that supports all frameworks (update ModelEditor to TorchModelEditor)
+            <TorchModelEditor // TODO: change to component that supports all frameworks (update TorchModelEditor to TorchTorchModelEditor)
               value={extendSpecWithTargetForwardArgs(
                 modelVersion.config as TorchModelSpec
               )}
               editable={false}
             />
           )}
-        </ModelEditorContextProvider>
+        </TorchModelEditorContextProvider>
       </ReactFlowProvider>
     </>
   );

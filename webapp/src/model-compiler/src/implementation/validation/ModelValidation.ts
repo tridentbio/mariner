@@ -2,7 +2,7 @@ import {
   ComponentType,
   ModelSchema,
   NodeType,
-} from '../../interfaces/model-editor';
+} from '../../interfaces/torch-model-editor';
 import { iterateTopologically } from '../../utils';
 import Acceptor from './Acceptor';
 import ModelValidator from './ModelValidator';

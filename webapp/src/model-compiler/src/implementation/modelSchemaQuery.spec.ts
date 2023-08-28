@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { getRegressorModelSchema } from '../../../../tests/fixtures/model-schemas';
-import { ModelSchema } from '../interfaces/model-editor';
+import { ModelSchema } from '../interfaces/torch-model-editor';
 import { getDependencies, getDependents } from './modelSchemaQuery';
 
 describe('modelSchemaQuery', () => {

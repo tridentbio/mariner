@@ -18,7 +18,7 @@ import {
   RadioButtonCheckedOutlined,
   RadioButtonUncheckedOutlined,
 } from '@mui/icons-material';
-import { APITargetConfig } from '@model-compiler/src/interfaces/model-editor';
+import { APITargetConfig } from '@model-compiler/src/interfaces/torch-model-editor';
 import { BaseTrainingRequest } from '@app/types/domain/experiments';
 
 interface AdvancedOptionsProps {
