@@ -55,7 +55,7 @@ export const createIrisDatasetFormData = (name?: string): DatasetFormData => {
   return {
     name: name || randomLowerCase(8),
     description: randomLowerCase(24),
-    file: '/csv/iris.csv',
+    file: 'iris.csv',
     split: '60-20-20',
     splitType: 'Random',
     splitColumn: 'species',

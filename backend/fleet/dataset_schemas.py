@@ -111,8 +111,8 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
     strategy: Literal["forwardArgs"] = "forwardArgs"
     target_columns: List[ColumnConfig]
     feature_columns: List[ColumnConfig]
-    featurizers: List[FeaturizersType] = Field(default_factory=lambda: list())
-    transforms: List[TransformerType] = Field(default_factory=lambda: list())
+    featurizers: List[FeaturizersType] = Field(default_factory=list)
+    transforms: List[TransformerType] = Field(default_factory=list)
 
     @property
     def columns(self):
@@ -495,7 +495,8 @@ class DatasetConfigBuilder:
 
 
 def is_regression_column(
-    dataset_config: Union[DatasetConfig, TorchDatasetConfig], column_name: str
+    dataset_config: Union[DatasetConfig, TorchDatasetConfig],
+    column_name: str = None,
 ) -> bool:
     """Checks if a model trained on ``dataset_config`` predicting values
     for ``column_name`` should be a regressor.
@@ -513,6 +514,10 @@ def is_regression_column(
     Raises:
         ValueError: If the dataset_config is not a supported type.
     """
+    if not column_name:
+        if len(dataset_config.target_columns) != 1:
+            raise IndexError("column_name is required")
+        column_name = dataset_config.target_columns[0].name
     if isinstance(dataset_config, TorchDatasetConfig):
         return is_regression(dataset_config.get_column(column_name))  # type: ignore
     elif isinstance(dataset_config, DatasetConfig):

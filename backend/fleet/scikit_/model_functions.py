@@ -10,6 +10,7 @@ import sklearn.base
 
 import fleet.mlflow
 from fleet.base_schemas import BaseModelFunctions
+from fleet.dataset_schemas import is_regression_column
 from fleet.metrics import Metrics
 from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.utils import get_references_dict
@@ -50,7 +51,23 @@ class SciKitFunctions(BaseModelFunctions):
         self.spec = spec
         self.dataset = dataset
         self.data = {}
-        self.metrics = Metrics(model_type="regression", return_type="float")
+        assert isinstance(
+            spec.dataset, data.DatasetConfig
+        ), "dataset must be converted to DatasetConfig previously"
+        model_type = (
+            "regression"
+            if is_regression_column(spec.dataset)
+            else "multiclass"
+        )
+        num_classes = None
+        if model_type == "multiclass":
+            num_classes = len(spec.dataset.target_columns[0].data_type.classes)
+
+        self.metrics = Metrics(
+            model_type=model_type,
+            num_classes=num_classes,
+            return_type="float",
+        )
         self.model = model
         assert len(spec.dataset.target_columns) == 1, (
             "sklearn models only support one target column, "

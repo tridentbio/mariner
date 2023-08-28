@@ -5,18 +5,25 @@ import { trainModel } from '../../support/training/create';
 
 describe('Model Training Page', () => {
   let modelName: string | null = null;
-
+  let modelId: number | null = null
   beforeEach(() => {
     cy.loginSuper();
     cy.setupSomeModel().then((deployment) => {
       modelName = deployment.name;
+      if ('id' in deployment)
+        modelId = deployment.id
     });
   });
   it('Creates training succesfully', () => {
-    trainModel(modelName!).then((experimentName) => {
-      assert.isNotNull(experimentName);
+    trainModel(modelName!).then((experiment: any) => {
+      assert.isNotNull(experiment);
+      // Assert metrics are found in metrics table
+      cy.contains('button', 'Metrics', {timeout: 3000}).should('exist').click()
+      cy.get('#model-version-select').click().get('li[role="option"]').contains(experiment.modelVersion.name).click()
+      cy.get('[data-testid="experiment-select"] div').click().get('li[role="option"]').contains(experiment.experimentName).click()
+      cy.get('table').contains('Train').should('exist')
+      cy.get('table').contains('Validation').should('exist')
     });
-
     // TODO: Asserts the progress bar fills
     // TODO: Asserts loss goes down
   });

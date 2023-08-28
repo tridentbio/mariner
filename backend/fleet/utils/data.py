@@ -650,9 +650,6 @@ class PreprocessingPipeline:
         return np.concatenate(out_features, axis=-1)
 
     def _concat_targets(self, data):
-        print("concating targets")
-        print(self.target_leaves)
-        print(data.keys())
         out_targets = [
             data[out_target_key] for out_target_key in self.target_leaves
         ]

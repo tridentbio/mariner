@@ -59,7 +59,7 @@ class MarinerLogger(Logger):
         self.send(params, "hyperparams")
 
     @rank_zero_only
-    def log_metrics(self, metrics, step):
+    def log_metrics(self, metrics, step=None):
         """Send metrics
 
         Args:
@@ -98,22 +98,24 @@ class MarinerLogger(Logger):
                 headers={
                     "Authorization": f"Bearer {get_app_settings('secrets').application_secret}"
                 },
+                timeout=120,
             )
             if res.status_code != 200:
                 LOG.warning(
                     "POST %s failed with status %s\n%r",
                     f"{get_app_settings('server').host}/api/v1/experiments/epoch_metrics",
                     res.status_code,
-                    res.json(),
+                    res.text,
                 )
 
             self.last_sent_at = time.time()
 
         except (requests.ConnectionError, requests.ConnectTimeout):
             LOG.error(
-                f"Failed metrics to {get_app_settings('server').host}/api/v1/experiments"
+                "Failed metrics to %s /api/v1/experiments"
                 '/epoch_metrics. Make sure the env var "SERVER_HOST" is populated in '
-                "the ray services, and that it points to the mariner backend"
+                "the ray services, and that it points to the mariner backend",
+                get_app_settings("server").host,
             )
         except Exception as exp:
             LOG.error("Failed to send data from custom logger")

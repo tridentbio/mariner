@@ -296,6 +296,40 @@ def some_model_integration(
     teardown_create_model(db, model)
 
 
+@pytest.fixture(scope="module")
+def some_sklearn_model_integration(
+    db: Session,
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+):
+    """Model fixture
+
+    Creates a fixture model using running services. Fails
+    if mlflow, ray or database services are down
+
+    Args:
+        db: database connection
+        client: fastapi http client
+        normal_user_token_headers: authenticated headers
+        some_dataset: dataset to be used on model
+    """
+    user_id = get_test_user(db).id
+    dataset = setup_create_dataset_db2(
+        db,
+        user_id,
+        csv_path="HIV.csv",
+    )
+    model = setup_create_model(
+        client,
+        normal_user_token_headers,
+        dataset_name=dataset.name,
+        model_type="classifier",
+        framework="sklearn",
+    )
+    yield model
+    teardown_create_model(db, model)
+
+
 @pytest_asyncio.fixture(scope="function")
 async def some_trained_model(
     db: Session,
