@@ -24,6 +24,7 @@ import * as yup from 'yup';
 import { DatasetConfigurationForm } from './DatasetConfigurationForm';
 import ModelConfigForm from './ModelConfigForm';
 import { ModelSetup } from './ModelSetup';
+import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
 
 type ModelCreationStep = {
   title: string;
@@ -381,51 +382,53 @@ const ModelCreateV2 = () => {
   return (
     <Content>
       <FormProvider {...methods}>
-        <form style={{ position: 'relative', overflowX: 'hidden' }}>
-          <Stepper
-            orientation={'horizontal'}
-            activeStep={activeStep}
-            sx={{ mb: 5, mt: 2 }}
-          >
-            {steps.map(({ title }) => (
-              <Step key={title}>
-                <StepLabel>{title}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-          {steps[activeStep].content}
-          <Box key="footer" sx={{ mt: 2, ml: 3 }}>
-            {activeStep !== 0 && (
-              <Button
-                onClick={handlePrevious}
-                variant="contained"
-                sx={{ mr: 3 }}
-                data-testid="previous"
-                disabled={checkingModel || creatingModel}
-              >
-                PREVIOUS
-              </Button>
-            )}
-            {activeStep !== steps.length - 1 && (
-              <Button
-                data-testid="next"
-                onClick={handleNext}
-                variant="contained"
-              >
-                NEXT
-              </Button>
-            )}
-            {activeStep === steps.length - 1 && (
-              <LoadingButton
-                loading={checkingModel || creatingModel}
-                variant="contained"
-                onClick={handleModelCreate}
-              >
-                <span>CREATE</span>
-              </LoadingButton>
-            )}
-          </Box>
-        </form>
+        <ModelBuilderContextProvider>
+          <form style={{ position: 'relative', overflowX: 'hidden' }}>
+            <Stepper
+              orientation={'horizontal'}
+              activeStep={activeStep}
+              sx={{ mb: 5, mt: 2 }}
+            >
+              {steps.map(({ title }) => (
+                <Step key={title}>
+                  <StepLabel>{title}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+            {steps[activeStep].content}
+            <Box key="footer" sx={{ mt: 2, ml: 3 }}>
+              {activeStep !== 0 && (
+                <Button
+                  onClick={handlePrevious}
+                  variant="contained"
+                  sx={{ mr: 3 }}
+                  data-testid="previous"
+                  disabled={checkingModel || creatingModel}
+                >
+                  PREVIOUS
+                </Button>
+              )}
+              {activeStep !== steps.length - 1 && (
+                <Button
+                  data-testid="next"
+                  onClick={handleNext}
+                  variant="contained"
+                >
+                  NEXT
+                </Button>
+              )}
+              {activeStep === steps.length - 1 && (
+                <LoadingButton
+                  loading={checkingModel || creatingModel}
+                  variant="contained"
+                  onClick={handleModelCreate}
+                >
+                  <span>CREATE</span>
+                </LoadingButton>
+              )}
+            </Box>
+          </form>
+        </ModelBuilderContextProvider>
       </FormProvider>
     </Content>
   );

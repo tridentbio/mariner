@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import PreprocessingStepSelect from './PreprocessingStepSelect';
 import { StepFormFieldError, getStepSelectError } from './utils';
+import { CustomAccordionStylish } from '@components/molecules/CustomAccordion';
 
 export default function SklearnModelInput() {
   const { getScikitOptions } = useModelOptions();
@@ -21,29 +22,36 @@ export default function SklearnModelInput() {
     <Controller
       control={control}
       name="config.spec"
-      render={({ field, fieldState: { error } }) => (
-        <PreprocessingStepSelect
-          label="Sklearn Model"
-          testId="sklearn-model-select"
-          options={options}
-          getError={getStepSelectError(
-            //@ts-ignore
-            () => error?.model as StepFormFieldError | undefined
-          )}
-          value={
-            field.value ? (field.value as SklearnModelSchema).model : undefined
-          }
-          onChanges={(value) => {
-            field.onChange({
-              model: {
-                ...value,
-              } as SklearnModelSchema['model'],
-            });
-            trigger(field.name);
-          }}
-          onBlur={field.onBlur}
-        />
-      )}
+      render={({ field, fieldState: { error } }) => {
+        return (
+          <CustomAccordionStylish>
+            <PreprocessingStepSelect
+              label="Sklearn Model"
+              testId="sklearn-model-select"
+              options={options}
+              getError={getStepSelectError(
+                //@ts-ignore
+                () => error?.model as StepFormFieldError | undefined
+              )}
+              value={
+                field.value
+                  ? (field.value as SklearnModelSchema).model
+                  : undefined
+              }
+              onChanges={(value) => {
+                field.onChange({
+                  model: {
+                    ...value,
+                  } as SklearnModelSchema['model'],
+                });
+                trigger(field.name);
+              }}
+              onBlur={field.onBlur}
+              sx={{ boxShadow: 'none' }}
+            />
+          </CustomAccordionStylish>
+        );
+      }}
     />
   );
 }

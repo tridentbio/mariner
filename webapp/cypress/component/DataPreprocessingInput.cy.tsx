@@ -1,6 +1,7 @@
 import { ModelCreate } from "@app/rtk/generated/models"
 import { store } from "@app/store"
 import DataPreprocessingInput from "@components/organisms/ModelBuilder/DataPreprocessingInput"
+import { ModelBuilderContextProvider } from "@components/organisms/ModelBuilder/hooks/useModelBuilder"
 import { SimpleColumnConfig, StepValue } from "@components/organisms/ModelBuilder/types"
 import { getColumnConfigTestId, getStepValueLabelData } from "@components/organisms/ModelBuilder/utils"
 import { schema } from '@features/models/pages/ModelCreateV2'
@@ -76,14 +77,16 @@ describe('DataPreprocessingInput.cy.tsx', () => {
       <Provider store={store}>
         <ThemeProvider theme={theme}>
           <FormProvider {...methods}>
-            <DataPreprocessingInput
-              value={{
-                featureColumns: value?.config?.dataset
-                  ?.featureColumns as SimpleColumnConfig[] || [],
-                targetColumns: value?.config?.dataset
-                    ?.targetColumns as SimpleColumnConfig[] || [],
-              }}
-            />
+            <ModelBuilderContextProvider>
+              <DataPreprocessingInput
+                value={value?.config?.dataset?.featureColumns as SimpleColumnConfig[] || []}
+                type="featureColumns"
+              />
+              <DataPreprocessingInput
+                value={value?.config?.dataset?.targetColumns as SimpleColumnConfig[] || []}
+                type="targetColumns"
+              />
+            </ModelBuilderContextProvider>
           </FormProvider>
         </ThemeProvider>
       </Provider>

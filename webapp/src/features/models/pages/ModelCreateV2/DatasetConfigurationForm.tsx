@@ -1,8 +1,9 @@
 import { ModelCreate } from '@app/rtk/generated/models';
 import { Section } from '@components/molecules/Section';
+import { Text } from '@components/molecules/Text';
 import DataPreprocessingInput from '@components/organisms/ModelBuilder/DataPreprocessingInput';
 import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
-import { Box } from '@mui/material';
+import { Box, Step, StepContent, StepLabel, Stepper } from '@mui/material';
 import { Controller, useFormContext } from 'react-hook-form';
 
 export type GenericTransform = {
@@ -22,14 +23,30 @@ export const DatasetConfigurationForm = () => {
           control={control}
           name="config.dataset"
           render={({ field }) => (
-            <DataPreprocessingInput
-              value={{
-                featureColumns: field.value
-                  .featureColumns as SimpleColumnConfig[],
-                targetColumns: field.value
-                  .targetColumns as SimpleColumnConfig[],
-              }}
-            />
+            <Stepper orientation="vertical">
+              <Step active>
+                <StepContent>
+                  <StepLabel>
+                    <Text variant="subtitle1">Feature columns</Text>
+                  </StepLabel>
+                  <DataPreprocessingInput
+                    value={field.value.featureColumns as SimpleColumnConfig[]}
+                    type="featureColumns"
+                  />
+                </StepContent>
+              </Step>
+              <Step active>
+                <StepContent>
+                  <StepLabel>
+                    <Text variant="subtitle1">Target columns</Text>
+                  </StepLabel>
+                  <DataPreprocessingInput
+                    value={field.value.targetColumns as SimpleColumnConfig[]}
+                    type="targetColumns"
+                  />
+                </StepContent>
+              </Step>
+            </Stepper>
           )}
         />
       </Section>

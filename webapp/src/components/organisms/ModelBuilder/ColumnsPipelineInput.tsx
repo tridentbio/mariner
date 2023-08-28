@@ -1,9 +1,9 @@
 import { ModelCreate } from '@app/rtk/generated/models';
 import { DataTypeGuard } from '@app/types/domain/datasets';
-import { Text } from '@components/molecules/Text';
+import { CustomAccordionStylish } from '@components/molecules/CustomAccordion';
 import ColumnConfigurationAccordion from '@features/models/components/ColumnConfigurationView/ColumnConfigAccordion';
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
-import { Button, IconButton } from '@mui/material';
+import { Box, Button, Chip, Divider, IconButton } from '@mui/material';
 import { useEffect } from 'react';
 import {
   Controller,
@@ -12,6 +12,7 @@ import {
   useFormContext,
 } from 'react-hook-form';
 import PreprocessingStepSelect from './PreprocessingStepSelect';
+import useModelBuilder from './hooks/useModelBuilder';
 import {
   GenericPreprocessingStep,
   SimpleColumnConfig,
@@ -36,6 +37,7 @@ export interface ColumnsPipelineInputProps {
 export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
   const { featurizerOptions, transformOptions, column } = props;
   const { control, trigger } = useFormContext<ModelCreate>();
+  const { editable, defaultExpanded } = useModelBuilder();
 
   //? Being used as a single item array on featurizers <PreprocessingStepSelect /> list
   const featurizersOptionsField = useFieldArray({
@@ -81,7 +83,8 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
   useEffect(() => {
     if (
       !featurizersOptionsField.fields.length &&
-      !DataTypeGuard.isNumericalOrQuantity(column.config.dataType)
+      !DataTypeGuard.isNumericalOrQuantity(column.config.dataType) &&
+      editable
     )
       addFeaturizer();
   }, []);
@@ -93,18 +96,19 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
         testId={getColumnConfigTestId(column.config)}
         dataType={column.config.dataType}
         name={column.config.name}
+        defaultExpanded={defaultExpanded}
       >
         {!DataTypeGuard.isNumericalOrQuantity(column.config.dataType) &&
           featurizersOptionsField.fields.map((step, stepIndex) => (
             <>
-              <Text
-                sx={{ width: '100%' }}
-                data-testid={`${getColumnConfigTestId(
-                  column.config
-                )}-featurizer-label`}
-              >
-                Featurizers:
-              </Text>
+              <Divider textAlign="center" sx={{ marginBottom: 2 }}>
+                <Chip
+                  label="Featurizers"
+                  data-testid={`${getColumnConfigTestId(
+                    column.config
+                  )}-featurizer-label`}
+                />
+              </Divider>
               <Controller
                 key={step.id}
                 control={control}
@@ -114,7 +118,18 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
                     testId={`${getColumnConfigTestId(
                       column.config
                     )}-featurizer-${stepIndex}`}
-                    sx={{ mb: 3 }}
+                    sx={{
+                      mb: 3,
+                      border: 'none',
+                      boxShadow: 'none',
+                      '& .MuiAccordionSummary-root': {
+                        padding: 0,
+                        borderRadius: 2,
+                        'MuiAccordionSummary-content': {
+                          margin: 0,
+                        },
+                      },
+                    }}
                     options={featurizerOptions}
                     getError={getStepSelectError(
                       () => error as StepFormFieldError | undefined
@@ -129,45 +144,58 @@ export default function ColumnsPipelineInput(props: ColumnsPipelineInputProps) {
             </>
           ))}
 
-        <Text sx={{ width: '100%' }}>Transforms:</Text>
-        {transformsOptionsField.fields.map((step, stepIndex) => (
-          <Controller
-            key={step.id}
-            control={control}
-            name={`config.dataset.${column.type}.${column.index}.transforms.${stepIndex}`}
-            render={({ field, fieldState: { error } }) => {
-              return (
-                <PreprocessingStepSelect
-                  testId={`${getColumnConfigTestId(
-                    column.config
-                  )}-transform-${stepIndex}`}
-                  options={transformOptions}
-                  getError={getStepSelectError(
-                    () => error as StepFormFieldError | undefined
-                  )}
-                  helperText={error?.message}
-                  onBlur={field.onBlur}
-                  onChanges={(updatedStep) => onStepSelect(field, updatedStep)}
-                  value={field.value || null}
-                  extra={
-                    <IconButton
-                      onClick={() => deleteColumnTransform(stepIndex)}
-                    >
-                      <DeleteOutline />
-                    </IconButton>
-                  }
-                />
-              );
-            }}
-          />
-        ))}
-        <Button
-          variant="contained"
-          sx={{ mt: 1 }}
-          onClick={() => addTransform()}
-        >
-          ADD
-        </Button>
+        <Divider textAlign="center" sx={{ marginBottom: 2 }}>
+          <Chip label="Transforms" />
+        </Divider>
+        <Box>
+          {transformsOptionsField.fields.map((step, stepIndex) => (
+            <Controller
+              key={step.id}
+              control={control}
+              name={`config.dataset.${column.type}.${column.index}.transforms.${stepIndex}`}
+              render={({ field, fieldState: { error } }) => {
+                return (
+                  <CustomAccordionStylish>
+                    <PreprocessingStepSelect
+                      testId={`${getColumnConfigTestId(
+                        column.config
+                      )}-transform-${stepIndex}`}
+                      options={transformOptions}
+                      getError={getStepSelectError(
+                        () => error as StepFormFieldError | undefined
+                      )}
+                      helperText={error?.message}
+                      onBlur={field.onBlur}
+                      onChanges={(updatedStep) =>
+                        onStepSelect(field, updatedStep)
+                      }
+                      value={field.value || null}
+                      extra={
+                        editable ? (
+                          <IconButton
+                            onClick={() => deleteColumnTransform(stepIndex)}
+                          >
+                            <DeleteOutline />
+                          </IconButton>
+                        ) : null
+                      }
+                      sx={{ boxShadow: 'none' }}
+                    />
+                  </CustomAccordionStylish>
+                );
+              }}
+            />
+          ))}
+        </Box>
+        {editable && (
+          <Button
+            variant="contained"
+            sx={{ mt: 2 }}
+            onClick={() => addTransform()}
+          >
+            ADD
+          </Button>
+        )}
       </ColumnConfigurationAccordion>
     </>
   );
