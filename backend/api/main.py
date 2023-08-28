@@ -12,7 +12,7 @@ if __name__ == "__main__":
     url = urllib.parse.urlparse(get_app_settings("server").host)
     uvicorn.run(
         "api.fastapi_app:app",
-        host=url.hostname or "0.0.0.0",
+        host="0.0.0.0",
         port=url.port or 80,
         reload=bool(os.getenv("RESTART")),
     )

@@ -1,7 +1,7 @@
 import { DeploymentWithTrainingData } from '@app/rtk/generated/deployments';
 import { Section } from '@components/molecules/Section';
 import { Box, SxProps } from '@mui/material';
-import ModelEditorMarkdown from '@utils/codeSplittingAux/ModelEditorMarkdown';
+import TorchModelEditorMarkdown from '@utils/codeSplittingAux/TorchModelEditorMarkdown';
 import { DeploymentPrediction } from '@components/templates/DeploymentPrediction';
 import DataSummary, {
   DataSummaryProps,
@@ -26,7 +26,7 @@ export const DeploymentInferenceScreen = ({
   <>
     <Section title="README">
       <Box sx={readmeSx}>
-        <ModelEditorMarkdown
+        <TorchModelEditorMarkdown
           source={deployment.readme}
           warpperElement={{
             'data-color-mode': 'light',

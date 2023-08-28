@@ -7,7 +7,7 @@ import {
   FeaturizersType,
   LayersType,
   TransformsType,
-} from '@model-compiler/src/interfaces/model-editor';
+} from '@model-compiler/src/interfaces/torch-model-editor';
 import { ArrayElement } from '@utils';
 import { useMemo } from 'react';
 

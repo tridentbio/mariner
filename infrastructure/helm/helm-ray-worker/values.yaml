@@ -94,11 +94,11 @@ istio_url: ray-worker.dev.trident.bio
 
 resources:
   limits:
-    cpu: 200m
-    memory: 1024Mi
+    cpu: 4
+    memory: 8Gi
   requests:
-    cpu: 100m
-    memory: 512Mi
+    cpu: 0.2
+    memory: 4Gi
 
 autoscaling:
   enabled: false

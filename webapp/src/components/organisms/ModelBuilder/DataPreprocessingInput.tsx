@@ -76,18 +76,23 @@ const DataPreprocessingInput = ({ value }: DataPreprocessingInputProps) => {
       .filter((featurizer) => {
         let valid: boolean = true;
 
-        if (!featurizer.compatibleWith) return true;
+        if (column.dataType.domainKind == 'smiles') {
+          valid =
+            featurizer.classPath == 'molfeat.trans.fp.FPVecFilteredTransformer';
+        } else {
+          if (!featurizer.compatibleWith) return true;
 
-        if (featurizer.compatibleWith.domains) {
-          valid =
-            valid &&
-            featurizer.compatibleWith.domains?.includes(
-              column.dataType.domainKind
-            );
-        }
-        if (featurizer.compatibleWith.framework) {
-          valid =
-            valid && featurizer.compatibleWith.framework?.includes('sklearn');
+          if (featurizer.compatibleWith.domains) {
+            valid =
+              valid &&
+              featurizer.compatibleWith.domains?.includes(
+                column.dataType.domainKind
+              );
+          }
+          if (featurizer.compatibleWith.framework) {
+            valid =
+              valid && featurizer.compatibleWith.framework?.includes('sklearn');
+          }
         }
 
         return valid;

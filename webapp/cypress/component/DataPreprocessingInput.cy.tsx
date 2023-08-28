@@ -125,6 +125,8 @@ describe('DataPreprocessingInput.cy.tsx', () => {
 
               //? Validate featurizer valid options being listed
               cy.get('li[role="option"]').should('contain.text', stepLabelData?.class)
+              
+              if(colDomainType == 'smiles') cy.get('ul[role="listbox"]').find('li').should('have.length', 1)
 
               //? Validate featurizer invalid options not being listed
               Object.entries(FEATURIZERS_DICTIONARY).forEach(([domainType, featurizers]) => {

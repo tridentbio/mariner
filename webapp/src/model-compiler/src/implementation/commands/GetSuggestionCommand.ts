@@ -1,4 +1,4 @@
-import { ModelSchema } from '../../interfaces/model-editor';
+import { ModelSchema } from '../../interfaces/torch-model-editor';
 import ModelValidation from '../validation/ModelValidation';
 import ModelValidator from '../validation/ModelValidator';
 import TransversalInfo from '../validation/TransversalInfo';

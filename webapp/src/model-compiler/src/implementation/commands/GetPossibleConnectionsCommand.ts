@@ -1,5 +1,5 @@
 import { TorchModelSpec } from '@app/rtk/generated/models';
-import { NodeType } from 'model-compiler/src/interfaces/model-editor';
+import { NodeType } from '@model-compiler/src/interfaces/torch-model-editor';
 import {
   extendSpecWithTargetForwardArgs,
   unwrapDollar,

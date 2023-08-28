@@ -8,7 +8,7 @@ import {
   NodePositionTypes,
   NodeType,
   Output,
-} from '../../interfaces/model-editor';
+} from '../../interfaces/torch-model-editor';
 import Command from './Command';
 
 const isForwardArgList = (
