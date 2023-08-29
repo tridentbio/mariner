@@ -1,13 +1,12 @@
-import { useState, useMemo, DragEvent } from 'react';
 import { RemoveSharp, TurnLeft } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
 import { Box } from '@mui/system';
-import { Text } from 'components/molecules/Text';
-import { ArrayElement, substrAfterLast } from 'utils';
-import { useGetModelOptionsQuery } from 'app/rtk/generated/models';
-import DocsModel from 'components/templates/TorchModelEditor/Components/DocsModel/DocsModel';
 import * as modelsApi from 'app/rtk/generated/models';
-import { ModelSchema } from '@model-compiler/src/interfaces/torch-model-editor';
+import { useGetModelOptionsQuery } from 'app/rtk/generated/models';
+import { Text } from 'components/molecules/Text';
+import DocsModel from 'components/templates/TorchModelEditor/Components/DocsModel/DocsModel';
+import { DragEvent, useMemo, useState } from 'react';
+import { substrAfterLast } from 'utils';
 
 export type HandleProtoDragStartParams = {
   event: DragEvent<HTMLDivElement>;
@@ -43,10 +42,15 @@ const OptionsSidebarV2 = ({
     setIsModelOptionsOpened((value) => !value);
   };
 
+  const IGNORED_LIBS = ['sklearn'];
+
   const modelsByLib = useMemo(() => {
     return (
       modelOptions?.reduce((acc, model) => {
         const lib = model.classPath.split('.')[0];
+
+        if (IGNORED_LIBS.includes(lib)) return acc;
+
         if (!acc[lib]) {
           acc[lib] = [];
         }
