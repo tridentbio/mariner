@@ -32,21 +32,6 @@ export const deploymentsApi = generatedDeploymentsApi
           { type: 'deployments', id: arg },
         ],
       }),
-      updateDeployment: builder.mutation<Deployment, DeploymentUpdateRequest>({
-        query: ({ deploymentId, ...params }) => ({
-          url: `/api/v1/deployments/${deploymentId}`,
-          body: params,
-          method: 'PUT',
-        }),
-        invalidatesTags: ['deployments'],
-      }),
-      deleteDeployment: builder.mutation<void, number>({
-        query: (deploymentId) => ({
-          url: `/api/v1/deployments/${deploymentId}`,
-          method: 'DELETE',
-        }),
-        invalidatesTags: ['deployments'],
-      }),
       startDeployment: builder.mutation<Deployment, number>({
         query: (deploymentId) => ({
           url: `/api/v1/deployments/${deploymentId}/start`,
