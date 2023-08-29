@@ -64,7 +64,9 @@ spec:
           livenessProbe:
             exec:
               command:
-              - ls
+              - /bin/sh
+              - -c
+              - /app/scripts/ray-head-probe.sh
             failureThreshold: 10
             initialDelaySeconds: 180
             periodSeconds: 10
@@ -73,7 +75,9 @@ spec:
           readinessProbe:
             exec:
               command:
-              - ls
+              - /bin/sh
+              - -c
+              - /app/scripts/ray-head-probe.sh
             failureThreshold: 10
             initialDelaySeconds: 180
             periodSeconds: 10
