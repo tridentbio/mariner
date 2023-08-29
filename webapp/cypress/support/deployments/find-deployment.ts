@@ -6,10 +6,10 @@ export const goToSpecificDeployment = (
 ) => {
   cy.intercept({
     method: 'GET',
-    url: `${API_BASE_URL}/api/v1/deployments/?page=0*`,
+    url: `${API_BASE_URL}/api/v1/deployments/`,
   }).as('getDeployments');
   cy.visit('/deployments');
-  cy.wait('@getDeployments').wait(300);
+  cy.wait('@getDeployments')
 
   cy.contains('button', tab, { timeout: 10000 })
     .click({ force: true })
