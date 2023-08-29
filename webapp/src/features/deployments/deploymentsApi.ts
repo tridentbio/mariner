@@ -1,10 +1,10 @@
 // TODO: move to app/rtk
 
 import { Paginated } from 'app/api';
-import { api } from 'app/rtk/api';
 import {
   Deployment,
   DeploymentWithTrainingData,
+  generatedDeploymentsApi,
 } from 'app/rtk/generated/deployments';
 import {
   DeploymentCreateRequest,
@@ -14,7 +14,7 @@ import {
 
 export const addTagTypes = ['deployments'];
 
-export const deploymentsApi = api
+export const deploymentsApi = generatedDeploymentsApi
   .enhanceEndpoints({ addTagTypes })
   .injectEndpoints({
     overrideExisting: true,
@@ -31,12 +31,6 @@ export const deploymentsApi = api
         providesTags: (_result, _error, arg) => [
           { type: 'deployments', id: arg },
         ],
-      }),
-      createDeployment: builder.mutation<Deployment, DeploymentCreateRequest>({
-        query: (params) => {
-          return { url: `/api/v1/deployments/`, body: params, method: 'POST' };
-        },
-        invalidatesTags: ['deployments'],
       }),
       updateDeployment: builder.mutation<Deployment, DeploymentUpdateRequest>({
         query: ({ deploymentId, ...params }) => ({
