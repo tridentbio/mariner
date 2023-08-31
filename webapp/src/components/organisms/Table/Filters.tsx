@@ -12,6 +12,7 @@ import {
   Link,
   TextField,
 } from '@mui/material';
+import { FormatListBulleted } from '@mui/icons-material';
 import { Box } from '@mui/system';
 import React, { useState } from 'react';
 import { title } from 'utils';
@@ -26,6 +27,7 @@ import {
   State,
 } from 'components/templates/Table/types';
 import { usePopoverState } from 'hooks/usePopoverState';
+import { ColumnPicker } from './ColumnPicker';
 
 export interface FilterProps {
   filterLinkOperatorOptions: ('and' | 'or')[];
@@ -47,6 +49,7 @@ const Filters = ({
 }: FilterProps) => {
   const addFilterPopover = usePopoverState();
   const columnFilterPopover = usePopoverState();
+  const columnPickerPopover = usePopoverState();
   const [selectedColumn, setSelectedColumn] = useState<Column<any, any>>();
   const [linkOperator, setLinkOperator] = useState<'and' | 'or'>('and');
 
@@ -165,6 +168,17 @@ const Filters = ({
         )}
       </Popover>
 
+      <ColumnPicker
+        open={columnPickerPopover.open}
+        anchorEl={columnPickerPopover.anchorEl}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        height={480}
+        onClose={columnPickerPopover.handleClose}
+      />
+
       <Box sx={{ width: '100%' }}>
         {filterItems?.map((item, index) => {
           const column = columns.find((col) => col?.field === item.columnName);
@@ -227,6 +241,18 @@ const Filters = ({
           variant="text"
         >
           Add Filter
+        </Button>
+
+        <Button
+          startIcon={<FormatListBulleted />}
+          sx={{
+            borderRadius: 2,
+            paddingX: 2,
+          }}
+          color="info"
+          onClick={columnPickerPopover.handleClickOpenPopover}
+        >
+          Columns
         </Button>
 
         {filterItems?.length > 0 && (
