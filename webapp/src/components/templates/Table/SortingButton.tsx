@@ -1,18 +1,20 @@
 import { ArrowDownward, ArrowUpward, MoreVert } from '@mui/icons-material';
-import { IconButton, MenuItem, MenuList, Popover } from '@mui/material';
-import React from 'react';
+import { Box, IconButton, MenuItem, MenuList, Popover } from '@mui/material';
+import React, { MouseEvent } from 'react';
 import { Column, SortModel, State } from './types';
 
 type SortingButtonProps = {
   col: Column<any, any>;
   sortState: SortModel[];
   setState: React.Dispatch<React.SetStateAction<State>>;
+  beforeOpen?: (e: MouseEvent) => void;
 };
 
 const SortingButton: React.FC<SortingButtonProps> = ({
   col,
   sortState,
   setState,
+  beforeOpen,
 }) => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
@@ -53,7 +55,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     setState((prev) => ({ ...prev, sortModel: newSortState }));
   };
   return (
-    <>
+    <Box onMouseDown={beforeOpen}>
       <IconButton
         sx={{
           color: 'gray',
@@ -63,7 +65,6 @@ const SortingButton: React.FC<SortingButtonProps> = ({
       >
         <MoreVert />
       </IconButton>
-
       <Popover
         anchorOrigin={{
           vertical: 'center',
@@ -96,7 +97,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
           </MenuItem>
         </MenuList>
       </Popover>
-    </>
+    </Box>
   );
 };
 

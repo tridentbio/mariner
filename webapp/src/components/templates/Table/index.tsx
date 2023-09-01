@@ -1,25 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
+  Box,
   Table as MuiTable,
-  TableRow,
+  Skeleton,
   TableBody,
   TableCell,
-  TableHead,
-  Box,
   TableFooter,
+  TableHead,
   TablePagination,
   TablePaginationProps,
-  Skeleton,
+  TableRow,
 } from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
 
-import { Column, State, TableProps } from './types';
-import FilterIndicator from './FilterIndicator';
-import SortingIndicator from './SortingIndicator';
 import NoData from 'components/atoms/NoData';
-import { range } from 'utils';
 import Filters from 'components/organisms/Table/Filters';
-import { colTitle, columnId, isColumnSortable } from './common';
+import { range } from 'utils';
+import FilterIndicator from './FilterIndicator';
 import SortingButton from './SortingButton';
+import SortingIndicator from './SortingIndicator';
+import { colTitle, columnId, isColumnSortable } from './common';
+import { Column, State, TableProps } from './types';
+import { SortableRow } from '@components/organisms/Table/SortableRow';
+import { DraggableCell } from '@components/organisms/Table/DraggableCell';
 
 const isKeyOf = <O,>(
   key: string | number | symbol | null,
@@ -44,6 +46,9 @@ const Table = <R extends { [key: string]: any }>({
   rowCellStyle,
   extraTableStyle,
 }: TableProps<R>) => {
+  const [ordenedColumns, setOrdenedColumns] =
+    useState<Column<any, any>[]>(columns);
+
   const [state, setState] = useState<State>({
     filterModel: filterModel || { items: [] },
     sortModel: sortModel || [],
@@ -54,8 +59,8 @@ const Table = <R extends { [key: string]: any }>({
     state.filterModel.items.some((item) => item.columnName === col.field);
 
   const filterableColumns = useMemo(
-    () => columns.filter((col) => !!col.filterSchema),
-    [columns]
+    () => ordenedColumns.filter((col) => !!col.filterSchema),
+    [ordenedColumns]
   );
 
   const handlePageChange: TablePaginationProps['onPageChange'] = (
@@ -141,19 +146,23 @@ const Table = <R extends { [key: string]: any }>({
                   filterItems={state.filterModel.items || []}
                   filterLinkOperatorOptions={filterLinkOperatorOptions || []}
                   detailed={detailed}
-                  columns={columns}
+                  columns={ordenedColumns}
                   filterableColumns={filterableColumns}
                   setState={setState}
                 />
               </TableCell>
             </TableRow>
           )}
-          <TableRow>
-            {columns.map((col, index) => {
+          <SortableRow
+            columns={ordenedColumns}
+            onDropped={(columns) => setOrdenedColumns(columns)}
+          >
+            {ordenedColumns.map((col, index) => {
               const columnSort = getColumnSorting(col);
+
               // ! Big problems with filters and sort on table, the current implementation generate multiples popovers controlled by the same state and pointing to the same anchor, so they overlap each other being possible to access only the last popover, need to refactor table component
               return (
-                <TableCell key={index} sx={col.customSx || {}}>
+                <DraggableCell key={index} col={col} id={index.toString()}>
                   <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
                     {colTitle(col)}
                     {isColumnInFilters(col) && (
@@ -163,21 +172,23 @@ const Table = <R extends { [key: string]: any }>({
 
                     {isColumnSortable(col) && (
                       <SortingButton
+                        //? prevents the cell to drag when clicking on the button
+                        beforeOpen={(e) => e.stopPropagation()}
                         col={col}
                         sortState={state.sortModel}
                         setState={setState}
                       />
                     )}
                   </Box>
-                </TableCell>
+                </DraggableCell>
               );
             })}
-          </TableRow>
+          </SortableRow>
         </TableHead>
         <TableBody>
           {rows.map((row) => (
             <TableRow key={rowKey(row)}>
-              {columns.map((col, colidx) => (
+              {ordenedColumns.map((col, colidx) => (
                 <TableCell
                   aria-labelledby={
                     typeof col.title === 'string'
@@ -194,7 +205,7 @@ const Table = <R extends { [key: string]: any }>({
           ))}
           {!rows.length && !loading && (
             <TableRow>
-              <TableCell colSpan={columns.length}>
+              <TableCell colSpan={ordenedColumns.length}>
                 {noData || <NoData />}
               </TableCell>
             </TableRow>
@@ -202,7 +213,7 @@ const Table = <R extends { [key: string]: any }>({
           {loading &&
             range(0, 3).map((idx) => (
               <TableRow key={`skel-row-${idx}`}>
-                {columns.map((col, idx) => (
+                {ordenedColumns.map((col, idx) => (
                   <TableCell key={`ske-${idx}`}>
                     {col.skeletonProps && <Skeleton {...col.skeletonProps} />}
                   </TableCell>
@@ -228,7 +239,6 @@ const Table = <R extends { [key: string]: any }>({
   );
 };
 
-export type { Column };
-export type { TableProps };
+export type { Column, TableProps };
 
 export default Table;

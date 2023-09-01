@@ -15,6 +15,7 @@ export type Column<
   skeletonProps?: SkeletonProps;
   customSx?: SxProps;
   bold?: boolean;
+  disableDraggable?: boolean;
   filterSchema?: {
     byValue?: boolean;
     byLessThan?: boolean;

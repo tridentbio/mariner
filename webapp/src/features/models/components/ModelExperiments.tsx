@@ -243,6 +243,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       name: 'Actions',
       title: 'Actions',
       customSx: tableActionsSx,
+      disableDraggable: true,
       render: (row: Experiment) => (
         <TableActionsWrapper>
           <Button
