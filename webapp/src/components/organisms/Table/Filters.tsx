@@ -1,6 +1,10 @@
 import {
+  Add,
   CalendarViewDayOutlined,
+  ExpandMore,
+  FormatListBulleted,
   NumbersOutlined,
+  RemoveCircle,
   ShortTextOutlined,
 } from '@mui/icons-material';
 import {
@@ -9,14 +13,9 @@ import {
   MenuItem,
   MenuList,
   Popover,
-  Link,
   TextField,
 } from '@mui/material';
-import { FormatListBulleted } from '@mui/icons-material';
 import { Box } from '@mui/system';
-import React, { useState } from 'react';
-import { title } from 'utils';
-import ChipFilterContain from './ChipFilterContain';
 import ColumnFiltersInput from 'components/templates/Table/ColumnFiltersInput';
 import { colTitle } from 'components/templates/Table/common';
 import {
@@ -27,6 +26,9 @@ import {
   State,
 } from 'components/templates/Table/types';
 import { usePopoverState } from 'hooks/usePopoverState';
+import React, { useState } from 'react';
+import { title } from 'utils';
+import ChipFilterContain from './ChipFilterContain';
 import { ColumnPicker } from './ColumnPicker';
 
 export interface FilterProps {
@@ -38,6 +40,12 @@ export interface FilterProps {
   filterableColumns: Column<any, any>[];
   setState: React.Dispatch<React.SetStateAction<State>>;
 }
+
+/* const StyledHeaderOptionButton = styled(Button)(({ theme }) => ({
+  bborderRadius: 2,
+  paddingX: 3,
+})); */
+
 const Filters = ({
   filterLinkOperatorOptions,
   columns,
@@ -217,7 +225,7 @@ const Filters = ({
                   },
                 }))
               }
-              sx={{ mb: 1, mr: 1 }}
+              sx={{ mr: 1 }}
               key={
                 item.columnName +
                 item.operatorValue +
@@ -231,12 +239,11 @@ const Filters = ({
           );
         })}
         <Button
+          startIcon={<Add />}
           onClick={addFilterPopover.handleClickOpenPopover}
           sx={{
-            padding: 1,
-            textTransform: 'none',
-            color: detailed ? 'primary.main' : 'rgba(0,0,0,0)',
-            transition: 'color 0.5s',
+            borderRadius: 2,
+            paddingX: 3,
           }}
           variant="text"
         >
@@ -245,11 +252,12 @@ const Filters = ({
 
         <Button
           startIcon={<FormatListBulleted />}
+          endIcon={<ExpandMore />}
           sx={{
             borderRadius: 2,
-            paddingX: 2,
+            paddingX: 3,
           }}
-          color="info"
+          color="primary"
           onClick={columnPickerPopover.handleClickOpenPopover}
         >
           Columns
@@ -257,11 +265,11 @@ const Filters = ({
 
         {filterItems?.length > 0 && (
           <Button
+            startIcon={<RemoveCircle />}
+            size="small"
             sx={{
-              padding: 1,
-              textTransform: 'none',
-              color: detailed ? 'primary.main' : 'rgba(0,0,0,0)',
-              transition: 'color 0.5s',
+              borderRadius: 2,
+              paddingX: 3,
             }}
             variant="text"
             onClick={() =>
@@ -272,7 +280,13 @@ const Filters = ({
           </Button>
         )}
       </Box>
-      <Box sx={{ width: '100%' }}>
+
+      <Box
+        sx={{
+          width: '100%',
+          paddingTop: sortItems.length ? 1 : 0,
+        }}
+      >
         {sortItems.map((item: SortModel, index) => {
           const column = columns.find((col) => col.field === item.field);
           if (!column) return null;
@@ -286,7 +300,7 @@ const Filters = ({
                   ),
                 }))
               }
-              sx={{ mb: 1, mr: 1 }}
+              sx={{ mr: 1, py: 1, fontSize: 14 }}
               key={column.name + String(item.sort)}
               label={`${column.name} ${item.sort.toUpperCase()}`}
             />
@@ -294,12 +308,14 @@ const Filters = ({
         })}
 
         {sortItems.length > 0 && (
-          <Link
-            sx={{ cursor: 'pointer' }}
+          <Chip
+            sx={{ fontSize: 15 }}
+            label="Clear all sortings"
+            icon={<RemoveCircle fontSize="small" />}
             onClick={() => setState((prev) => ({ ...prev, sortModel: [] }))}
-          >
-            Clear all sortings
-          </Link>
+            color="primary"
+            variant="outlined"
+          />
         )}
       </Box>
     </>

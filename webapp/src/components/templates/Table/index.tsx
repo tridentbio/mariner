@@ -140,7 +140,7 @@ const Table = <R extends { [key: string]: any }>({
         <TableHead>
           {(!!filterableColumns.length || !!state.sortModel) && (
             <TableRow>
-              <TableCell sx={{ padding: '1px' }} colSpan={24}>
+              <TableCell sx={{ padding: 1 }} colSpan={24}>
                 <Filters
                   sortItems={state.sortModel}
                   filterItems={state.filterModel.items || []}
