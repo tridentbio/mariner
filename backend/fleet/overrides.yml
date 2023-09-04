@@ -7,8 +7,12 @@ overrides:
     constructorArgs:
       activation:
         options:
-          - relu
-          - sigmoid
+          - key: relu
+            label: relu
+            latex: ...
+          - key: sigmoid
+            label: sigmoid
+            latex: ...
         default: relu
 
   - classPath: torch.nn.Embedding
