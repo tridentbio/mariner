@@ -48,6 +48,7 @@ export default function SklearnModelInput() {
               }}
               onBlur={field.onBlur}
               sx={{ boxShadow: 'none' }}
+              expandOnSelect
             />
           </CustomAccordionStylish>
         );
