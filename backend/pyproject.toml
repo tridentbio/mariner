@@ -12,7 +12,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
 uvicorn = "^0.16.0"
-fastapi = "0.86.0"
+fastapi = "0.103.1"
 python-multipart = "^0.0.5"
 email-validator = "^1.0.5"
 passlib = {extras = ["bcrypt"], version = "^1.7.2"}
@@ -25,31 +25,28 @@ uuid = "^1.30"
 pandas = "^1.4.2"
 humps = "^0.2.2"
 PyYAML = "^6.0"
-torchsummary = "^1.5.1"
 mlflow = {version = "2.2.2", extras = ["extras"]}
 networkx = "^2.8.4"
 rdkit = "^2022.3.3"
-Jinja2 = "3.1.2"
 emails = "^0.6"
 websockets = "^10.3"
-torch = {extras = ["cpu"], version = "==2.0.0"}
-Pint = "0.19.1"
+Pint = "^0.19.1"
 wonderwords = "^2.2.0"
 fastapi-utils = "^0.2.1"
 Sphinx = "^5.3.0"
-torchmetrics = "^0.11.4"
 biopython = "^1.80"
 numba = "^0.56.4"
 lightning = "^2.0.0"
-s3fs = "^2023.3.0"
-boto3 = "1.24.59"
+boto3 = "^1.24.59"
 ray = {version = "2.4.0", extras = ["default"]}
 scikit-learn = "^1.2.2"
 molfeat = "^0.8.9"
-toml = "^0.10.2"
 psycopg2 = "^2.9.6"
 
 [tool.poetry.group.dev.dependencies]
+Jinja2 = "3.1.2"
+s3fs = "^2023.3.0"
+httpx = "^0.24.1"
 click = "8.0.4"
 pre-commit = "^2.20.0"
 mypy = "^0.971"
@@ -88,10 +85,7 @@ requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
 [tool.poetry.scripts]
-install_deps_cpu = "deps:install_deps_cpu"
-install_deps_cu101 = "deps:install_deps_cu101"
-install_deps_cu102 = "deps:install_deps_cu102"
-install_deps_cu110 = "deps:install_deps_cu110"
+install_deps = "deps:install_deps"
 
 [flake8]
 max-line-length = 88

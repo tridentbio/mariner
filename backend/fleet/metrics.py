@@ -69,7 +69,7 @@ class Metrics:
                 "num_labels": self.num_labels,
             }
             metric_names = [
-                ("accuracy", metrics.Accuracy(**kwargs, mdmc_reduce="global")),
+                ("accuracy", metrics.Accuracy(**kwargs)),
                 ("precision", metrics.Precision(**kwargs)),
                 ("recall", metrics.Recall(**kwargs)),
                 ("f1", metrics.F1Score(**kwargs)),

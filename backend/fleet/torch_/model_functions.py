@@ -145,6 +145,7 @@ class TorchFunctions(BaseModelFunctions):
             callbacks=callbacks,
             default_root_dir=getenv("LIGHTNING_LOGS_DIR") or "lightning_logs/",
             logger=self.loggers,
+            accelerator="gpu" if params.use_gpu else "cpu",
         )
 
         trainer.fit(self.model, datamodule)
