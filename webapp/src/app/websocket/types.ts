@@ -1,6 +1,6 @@
 import { matchPath } from 'react-router-dom';
 import { DeploymentStatus } from '@app/rtk/generated/deployments';
-import { TOKEN } from 'app/local-storage';
+import { ELocalStorage } from 'app/local-storage';
 import { Dataset } from 'app/types/domain/datasets';
 import { isDev } from 'utils';
 
@@ -80,7 +80,7 @@ export class SocketMessageHandler {
     try {
       access_token = JSON.parse(token)?.access_token;
     } catch (err) {
-      localStorage.removeItem(TOKEN);
+      localStorage.removeItem(ELocalStorage.TOKEN);
     } finally {
       if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
         this.socket = new WebSocket(`${this.address}?token=${access_token}`);
@@ -103,7 +103,7 @@ export class SocketMessageHandler {
       this.connectAnonymous(publicDeploymentToken);
     }
 
-    const authToken = localStorage.getItem(TOKEN);
+    const authToken = localStorage.getItem(ELocalStorage.TOKEN);
     if (authToken) return this.connectAuthenticated(authToken);
   };
   disconnect = () => {

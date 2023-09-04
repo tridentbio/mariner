@@ -144,6 +144,8 @@ const MetricsTable = ({
       sortModel={sortModel}
       columns={columns}
       rows={sortRows(rows, sortModel)}
+      tableId="model-metrics"
+      usePreferences
     />
   );
 };

@@ -77,4 +77,12 @@ export interface TableProps<R extends { [key: string]: any }> {
   rowAlign?: 'center' | 'start';
   rowCellStyle?: SystemStyleObject;
   extraTableStyle?: CSSProperties;
+  usePreferences?: boolean;
+  tableId?: string;
+}
+
+export interface TablePreferences {
+  columns: {
+    field: string;
+  }[];
 }

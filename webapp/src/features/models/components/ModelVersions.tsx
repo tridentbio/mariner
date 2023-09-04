@@ -127,6 +127,8 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
         rowKey={(row) => row.id}
         columns={columns}
         rows={filteredVersions}
+        tableId="model-versions"
+        usePreferences
       />
     </Box>
   );

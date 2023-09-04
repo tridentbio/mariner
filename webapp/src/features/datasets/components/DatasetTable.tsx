@@ -184,6 +184,8 @@ const DatasetTable = (props: DatasetTableProps) => {
           rowsPerPage: filters?.perPage || 25,
           page: filters?.page || 0,
         }}
+        tableId="datasets-list"
+        usePreferences
       />
     </div>
   );

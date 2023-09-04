@@ -293,6 +293,8 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
           page: queryParams.page || 0,
           rowsPerPage: queryParams.perPage || 10,
         }}
+        tableId="model-experiments"
+        usePreferences
       />
     </div>
   );

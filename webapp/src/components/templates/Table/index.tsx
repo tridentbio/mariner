@@ -12,6 +12,11 @@ import {
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 
+import { useAppSelector } from '@app/hooks';
+import { DraggableCell } from '@components/organisms/Table/DraggableCell';
+import { SortableRow } from '@components/organisms/Table/SortableRow';
+import { setPreference } from '@features/users/usersSlice';
+import { useAppDispatch } from '@hooks';
 import NoData from 'components/atoms/NoData';
 import Filters from 'components/organisms/Table/Filters';
 import { range } from 'utils';
@@ -20,8 +25,6 @@ import SortingButton from './SortingButton';
 import SortingIndicator from './SortingIndicator';
 import { colTitle, columnId, isColumnSortable } from './common';
 import { Column, State, TableProps } from './types';
-import { SortableRow } from '@components/organisms/Table/SortableRow';
-import { DraggableCell } from '@components/organisms/Table/DraggableCell';
 
 const isKeyOf = <O,>(
   key: string | number | symbol | null,
@@ -45,7 +48,12 @@ const Table = <R extends { [key: string]: any }>({
   rowAlign,
   rowCellStyle,
   extraTableStyle,
+  usePreferences,
+  tableId,
 }: TableProps<R>) => {
+  const preferences = useAppSelector((state) => state.users.preferences);
+  const dispatch = useAppDispatch();
+
   const [ordenedColumns, setOrdenedColumns] =
     useState<Column<any, any>[]>(columns);
 
@@ -125,6 +133,48 @@ const Table = <R extends { [key: string]: any }>({
     }
   }, [stateDependency]);
 
+  useEffect(() => {
+    if (!usePreferences || !tableId) return;
+
+    preferences.tables && onLoadedPreferences();
+  }, [preferences.tables]);
+
+  const onLoadedPreferences = () => {
+    if (preferences.tables && tableId && preferences.tables[tableId]) {
+      const tablePreferences = preferences.tables;
+
+      if (tablePreferences) {
+        const newColumns: Column<any, any>[] = [];
+
+        tablePreferences[tableId]?.columns.forEach((col) => {
+          const column = columns.find((column) => column.field === col.field);
+
+          if (column) {
+            newColumns.push(column);
+          }
+          return col;
+        });
+
+        setOrdenedColumns(newColumns);
+      }
+    }
+  };
+
+  const onDroppedColumn = (columns: Column<any, any>[]) => {
+    setOrdenedColumns(columns);
+
+    if (usePreferences && tableId) {
+      dispatch(
+        setPreference({
+          path: `tables.${tableId}`,
+          data: {
+            columns: columns.map((col) => ({ field: col.field })),
+          },
+        })
+      );
+    }
+  };
+
   return (
     <div
       onMouseOver={() => setDetailed(true)}
@@ -153,10 +203,7 @@ const Table = <R extends { [key: string]: any }>({
               </TableCell>
             </TableRow>
           )}
-          <SortableRow
-            columns={ordenedColumns}
-            onDropped={(columns) => setOrdenedColumns(columns)}
-          >
+          <SortableRow columns={ordenedColumns} onDropped={onDroppedColumn}>
             {ordenedColumns.map((col, index) => {
               const columnSort = getColumnSorting(col);
 

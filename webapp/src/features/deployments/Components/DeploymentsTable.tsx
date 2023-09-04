@@ -238,6 +238,8 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         }}
         columns={columns}
         extraTableStyle={{ marginBottom: 0 }}
+        tableId="deployments-list"
+        usePreferences
       />
     </div>
   );

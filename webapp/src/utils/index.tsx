@@ -230,3 +230,53 @@ export const reprDataType = (dataType: ColumnConfig['dataType']) => {
   else if (DataTypeGuard.isProtein(dataType)) return `Protein`;
   return `(${dataType.domainKind})`;
 };
+
+/**
+ * Update value in structure by its path
+ * @param path E.g. 'tables.table-name.columns.0'
+ */
+export const updateStructureByPath = (
+  path: string,
+  structure: object | Array<any>,
+  value: any
+): void => {
+  let pathArray = path.split('.');
+
+  const setStructure = (
+    structure: object | Array<any>,
+    path: string,
+    value: any
+  ) => {
+    (structure[path as keyof typeof structure] as any) = value;
+  };
+
+  const getStructure = (structure: object | Array<any>, path: string) =>
+    structure[path as keyof typeof structure];
+
+  for (let i = 0; i < pathArray.length; i++) {
+    const currentPath = pathArray[i];
+    let currentStructure: any =
+      structure[currentPath as keyof typeof structure];
+    const isEndPath = !pathArray.length;
+
+    if (!currentStructure && !isEndPath) {
+      setStructure(structure, currentPath, {});
+      currentStructure = getStructure(structure, currentPath);
+    }
+
+    if (currentStructure) {
+      if (isEndPath) setStructure(structure, currentPath, value);
+      else pathArray.shift();
+
+      if (pathArray.length) {
+        return updateStructureByPath(
+          pathArray.join('.'),
+          currentStructure,
+          value
+        );
+      } else {
+        setStructure(structure, currentPath, value);
+      }
+    }
+  }
+};

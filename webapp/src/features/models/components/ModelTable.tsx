@@ -108,6 +108,8 @@ const ModelTable = (props: IModelTable) => {
           rowsPerPage: originalArgs?.perPage || 0,
         }}
         columns={columns}
+        tableId="models-list"
+        usePreferences
       />
     </div>
   );
