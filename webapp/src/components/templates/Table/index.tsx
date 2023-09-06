@@ -9,8 +9,9 @@ import {
   TablePagination,
   TablePaginationProps,
   TableRow,
+  Typography,
 } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAppSelector } from '@app/hooks';
 import { DraggableCell } from '@components/organisms/Table/DraggableCell';
@@ -52,20 +53,13 @@ const Table = <R extends { [key: string]: any }>({
   tableId,
 }: TableProps<R>) => {
   const preferences = useAppSelector((state) => state.users.preferences);
+  const preferencesLoaded = useRef<boolean>(false);
   const dispatch = useAppDispatch();
 
   const [allColumns, setAllColumns] = useState<Column<any, any>[]>(columns);
 
-  const columnsSortMatcher = (a: Column<any, any>, b: Column<any, any>) => {
-    if (a.position === undefined || b.position === undefined) return 0;
-
-    if (a.position > b.position) return 1;
-    if (a.position < b.position) return -1;
-    return 0;
-  };
-
   const displayedColumns = useMemo<Column<any, any>[]>(() => {
-    return allColumns.sort(columnsSortMatcher).filter((col) => !col.hidden);
+    return allColumns.filter((col) => !col.hidden);
   }, [allColumns]);
 
   const filterableColumns = useMemo(
@@ -145,7 +139,7 @@ const Table = <R extends { [key: string]: any }>({
   }, [stateDependency]);
 
   useEffect(() => {
-    if (!usePreferences || !tableId) return;
+    if (!usePreferences || !tableId || preferencesLoaded.current) return;
 
     preferences.tables && onLoadedPreferences();
   }, [preferences.tables]);
@@ -155,54 +149,50 @@ const Table = <R extends { [key: string]: any }>({
       const tablePreferences = preferences.tables;
 
       if (tablePreferences) {
-        //? Apply hidden col attributes
-        const updatedColumns: Column<any, any>[] = allColumns.map((col) => {
-          const foundPreferenceColRefIdx = tablePreferences[
-            tableId
-          ]?.columns.findIndex((c) => c.field === col.field);
+        sortColumnPositions(
+          tablePreferences[tableId]?.columns.map((col) => col.field) || []
+        );
 
-          col.hidden = foundPreferenceColRefIdx == -1;
-
-          if (foundPreferenceColRefIdx !== -1) {
-            col.position = foundPreferenceColRefIdx;
-          }
-
-          return col;
-        });
-
-        setAllColumns(updatedColumns);
+        preferencesLoaded.current = true;
       }
     }
   };
 
-  const onDroppedColumn = (reordenedDisplayedCols: Column<any, any>[]) => {
-    //? Reorder columns
-    const updatedColumns = allColumns.map((col, index) => {
-      const foundColIdx = reordenedDisplayedCols.findIndex(
-        (displayedCol) => displayedCol.field === col.field
-      );
-
-      if (foundColIdx !== -1)
-        return {
-          ...reordenedDisplayedCols[foundColIdx],
-          position: foundColIdx,
-        };
-
-      return { ...col, position: undefined };
-    }, []);
-
-    setAllColumns(updatedColumns);
-
+  const updateTablePreferences = (data: any) => {
     if (usePreferences && tableId) {
       dispatch(
         setPreference({
           path: `tables.${tableId}`,
-          data: {
-            columns: reordenedDisplayedCols.map((col) => ({ field: col.field })),
-          },
+          data,
         })
       );
     }
+  };
+
+  const sortColumnPositions = (sortedAndDisplayedColIds: string[]) => {
+    if (!sortedAndDisplayedColIds.length) return;
+
+    const colsToDisplay: Column<any, any>[] = [];
+
+    sortedAndDisplayedColIds.forEach((sortedColId) => {
+      const foundCol = allColumns.find((col) => sortedColId === col.field);
+
+      if (foundCol) colsToDisplay.push({ ...foundCol, hidden: false });
+    });
+
+    const hiddenCols: Column<any, any>[] = allColumns
+      .filter((col) => !colsToDisplay.some((c) => c.field == col.field))
+      .map((col) => ({ ...col, hidden: true }));
+
+    setAllColumns([...colsToDisplay, ...hiddenCols]);
+  };
+
+  const onDroppedColumn = (sortedAndDisplayedCols: Column<any, any>[]) => {
+    sortColumnPositions(sortedAndDisplayedCols.map((col) => col.field));
+
+    updateTablePreferences({
+      columns: sortedAndDisplayedCols.map((col) => ({ field: col.field })),
+    });
   };
 
   const handleSelectedColumns: FilterProps['onSelectedColumns'] = (
@@ -216,19 +206,11 @@ const Table = <R extends { [key: string]: any }>({
       });
     });
 
-    if (preferences?.tables && tableId && preferences.tables[tableId]) {
-      dispatch(
-        setPreference({
-          path: `tables.${tableId}`,
-          data: {
-            columns: allColumns
-              .filter((col) => selectedColumnsIdList.includes(col.field))
-              .sort(columnsSortMatcher)
-              .map((col) => ({ field: col.field })),
-          },
-        })
-      );
-    }
+    updateTablePreferences({
+      columns: allColumns
+        .filter((col) => selectedColumnsIdList.includes(col.field))
+        .map((col) => ({ field: col.field })),
+    });
   };
 
   return (
@@ -264,15 +246,23 @@ const Table = <R extends { [key: string]: any }>({
             {displayedColumns.map((col, index) => {
               const columnSort = getColumnSorting(col);
 
-              // ! Big problems with filters and sort on table, the current implementation generate multiples popovers controlled by the same state and pointing to the same anchor, so they overlap each other being possible to access only the last popover, need to refactor table component
               return (
                 <DraggableCell key={index} col={col} id={index.toString()}>
                   <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                    {colTitle(col)}
+                    <Typography sx={{ mr: 0.7 }} variant="subtitle2">
+                      {colTitle(col)}
+                    </Typography>
+
                     {isColumnInFilters(col) && (
                       <FilterIndicator active={true} />
                     )}
-                    {columnSort && <SortingIndicator sort={columnSort.sort} />}
+                    {columnSort && (
+                      <SortingIndicator
+                        sort={columnSort.sort}
+                        sx={{ padding: 0.5 }}
+                        size="small"
+                      />
+                    )}
 
                     {isColumnSortable(col) && (
                       <SortingButton

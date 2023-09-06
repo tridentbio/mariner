@@ -9,7 +9,7 @@ interface FilterIndicatorProps {
 const FilterIndicator = (props: FilterIndicatorProps) => {
   return (
     <IconButton onClick={props.onClick} disabled={!props.onClick}>
-      <FilterAltRounded />
+      <FilterAltRounded sx={{ fontSize: '1rem' }} />
     </IconButton>
   );
 };

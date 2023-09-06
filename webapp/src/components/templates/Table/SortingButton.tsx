@@ -1,20 +1,34 @@
 import { ArrowDownward, ArrowUpward, MoreVert } from '@mui/icons-material';
-import { Box, IconButton, MenuItem, MenuList, Popover } from '@mui/material';
+import {
+  Box,
+  IconButton,
+  IconButtonProps,
+  MenuItem,
+  MenuList,
+  Popover,
+  styled,
+} from '@mui/material';
 import React, { MouseEvent } from 'react';
 import { Column, SortModel, State } from './types';
 
-type SortingButtonProps = {
+interface SortingButtonProps extends Pick<IconButtonProps, 'sx' | 'size'> {
   col: Column<any, any>;
   sortState: SortModel[];
   setState: React.Dispatch<React.SetStateAction<State>>;
   beforeOpen?: (e: MouseEvent) => void;
-};
+}
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  fontSize: '1rem',
+}));
 
 const SortingButton: React.FC<SortingButtonProps> = ({
   col,
   sortState,
   setState,
   beforeOpen,
+  sx,
+  size = 'small',
 }) => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
@@ -58,12 +72,14 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     <Box onMouseDown={beforeOpen}>
       <IconButton
         sx={{
+          ...(sx || {}),
           color: 'gray',
           transition: 'color 0.5s',
+          padding: 0.5,
         }}
         onClick={handleClick}
       >
-        <MoreVert />
+        <MoreVert fontSize={size} />
       </IconButton>
       <Popover
         anchorOrigin={{
@@ -73,28 +89,31 @@ const SortingButton: React.FC<SortingButtonProps> = ({
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
+        sx={{
+          fontSize: '0.8rem',
+        }}
       >
         <MenuList>
-          <MenuItem
+          <StyledMenuItem
             selected={isSelectedSorting(col, 'asc')}
             onClick={() => {
               handleSelectSort(col, 'asc');
               handleClose();
             }}
           >
-            <ArrowUpward />
+            <ArrowUpward fontSize={size} sx={{ mr: 0.5 }} />
             Sort Asc
-          </MenuItem>
-          <MenuItem
+          </StyledMenuItem>
+          <StyledMenuItem
             selected={isSelectedSorting(col, 'desc')}
             onClick={() => {
               handleSelectSort(col, 'desc');
               handleClose();
             }}
           >
-            <ArrowDownward />
+            <ArrowDownward fontSize={size} sx={{ mr: 0.5 }} />
             Sort Desc
-          </MenuItem>
+          </StyledMenuItem>
         </MenuList>
       </Popover>
     </Box>

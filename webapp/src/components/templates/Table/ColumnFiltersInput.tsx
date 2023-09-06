@@ -70,7 +70,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
       {col.filterSchema?.byValue && (
         <FilterInput
           onDone={() => {
-            onAddFilter(col.name, 'eq', filterEq);
+            onAddFilter(col.field, 'eq', filterEq);
           }}
           label="Equals"
           value={filterEq}
@@ -80,7 +80,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
       {col.filterSchema?.byLessThan && (
         <FilterInput
           onDone={() => {
-            onAddFilter(col.name, 'lt', filterLt);
+            onAddFilter(col.field, 'lt', filterLt);
           }}
           label="Less Than"
           value={filterLt.toString()}
@@ -92,7 +92,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
           value={filterGt.toString()}
           onChange={(event) => setFilterGt(parseInt(event.target.value))}
           onDone={() => {
-            onAddFilter(col.name, 'gt', filterGt);
+            onAddFilter(col.field, 'gt', filterGt);
             setFilterGt(0);
           }}
           label="Greater Than"
@@ -101,7 +101,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
       {byContainsIsBoolean && (
         <FilterInput
           onDone={() => {
-            onAddFilter(col.name, 'ct', filterContains);
+            onAddFilter(col.field, 'ct', filterContains);
             setFilterContains('');
           }}
           label="Contains"
@@ -120,6 +120,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
             getOptionLabel={col.filterSchema?.byContains!.getLabel}
             options={col.filterSchema?.byContains!.options || []}
             renderInput={(input) => <TextField {...input} variant="standard" />}
+            disableCloseOnSelect
           />
 
           <IconButton

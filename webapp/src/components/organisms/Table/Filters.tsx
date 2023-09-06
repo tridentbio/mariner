@@ -1,23 +1,11 @@
 import {
   Add,
-  CalendarViewDayOutlined,
   ExpandMore,
   FormatListBulleted,
-  NumbersOutlined,
   RemoveCircle,
-  ShortTextOutlined,
 } from '@mui/icons-material';
-import {
-  Button,
-  Chip,
-  MenuItem,
-  MenuList,
-  Popover,
-  TextField,
-} from '@mui/material';
+import { Button, Chip } from '@mui/material';
 import { Box } from '@mui/system';
-import ColumnFiltersInput from 'components/templates/Table/ColumnFiltersInput';
-import { colTitle } from 'components/templates/Table/common';
 import {
   Column,
   FilterItem,
@@ -26,10 +14,10 @@ import {
   State,
 } from 'components/templates/Table/types';
 import { usePopoverState } from 'hooks/usePopoverState';
-import React, { useMemo, useState } from 'react';
-import { title } from 'utils';
+import React, { useMemo } from 'react';
 import ChipFilterContain from './ChipFilterContain';
 import { ColumnPicker } from './ColumnPicker';
+import { OperatorsFilterMenu } from './OperatorsFilterMenu';
 
 export interface FilterProps {
   filterLinkOperatorOptions: ('and' | 'or')[];
@@ -58,23 +46,7 @@ const Filters = ({
   onSelectedColumns,
 }: FilterProps) => {
   const addFilterPopover = usePopoverState();
-  const columnFilterPopover = usePopoverState();
   const columnPickerPopover = usePopoverState();
-  const [selectedColumn, setSelectedColumn] = useState<Column<any, any>>();
-  const [linkOperator, setLinkOperator] = useState<'and' | 'or'>('and');
-
-  const colIcon = ({ type }: Column<any, any>) => {
-    if (!type) return <ShortTextOutlined />;
-    const colIconMap = {
-      date: <CalendarViewDayOutlined />,
-      number: <NumbersOutlined />,
-      text: <ShortTextOutlined />,
-    };
-    return colIconMap[type] || <ShortTextOutlined />;
-  };
-
-  const singleFilterLinkOption =
-    !filterLinkOperatorOptions || filterLinkOperatorOptions.length === 1;
 
   const operationTitle = (op: OperatorValue) => {
     const operationMap = {
@@ -85,44 +57,6 @@ const Filters = ({
       inc: 'includes',
     };
     return operationMap[op as keyof typeof operationMap];
-  };
-
-  const onOpenColumnFilterMenu = (
-    event: React.MouseEvent<any>,
-    columnField: Column<any, any>['field']
-  ) => {
-    const column = columns.find((item) => item.field === columnField);
-    if (!column) return;
-    setSelectedColumn(column);
-    columnFilterPopover.setAnchorEl(event.currentTarget);
-  };
-
-  const onAddFilter = (
-    columnField: string,
-    operatorValue: OperatorValue,
-    value: any
-  ) => {
-    setState((prev) => ({
-      ...prev,
-      filterModel: {
-        items: [
-          ...prev.filterModel.items,
-          {
-            columnName: columnField,
-            operatorValue,
-            value,
-          },
-        ],
-        linkOperator: 'and',
-      },
-    }));
-  };
-
-  const onFilterLinkChange = (newLink: 'and' | 'or') => {
-    setState((prev) => ({
-      ...prev,
-      filterModel: { ...prev.filterModel, linkOperator: newLink },
-    }));
   };
 
   const columnsTreeView = useMemo<TreeNode[]>(() => {
@@ -145,57 +79,6 @@ const Filters = ({
 
   return (
     <>
-      <Popover
-        anchorOrigin={{
-          vertical: 'center',
-          horizontal: 'right',
-        }}
-        open={addFilterPopover.open}
-        anchorEl={addFilterPopover.anchorEl}
-        onClose={addFilterPopover.handleClose}
-      >
-        <Box sx={{ padding: 1 }}>
-          <TextField
-            select
-            variant="standard"
-            sx={{ width: '100%' }}
-            value={linkOperator}
-            disabled={singleFilterLinkOption}
-            onChange={(event) =>
-              onFilterLinkChange(event.target.value as 'and' | 'or')
-            }
-          >
-            {(filterLinkOperatorOptions || ['and']).map((op) => (
-              <MenuItem key={op} value={op}>
-                {title(op)}
-              </MenuItem>
-            ))}
-          </TextField>
-          <MenuList>
-            {filterableColumns.map((col) => (
-              <MenuItem
-                onClick={(event) => onOpenColumnFilterMenu(event, col.field)}
-                key={col.field as string}
-              >
-                <Box sx={{ display: 'inline-flex' }}>
-                  {colTitle(col, colIcon(col))}
-                </Box>
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Box>
-      </Popover>
-      <Popover
-        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
-        open={columnFilterPopover.open}
-        anchorEl={columnFilterPopover.anchorEl}
-        onClose={columnFilterPopover.handleClose}
-      >
-        {selectedColumn && (
-          <ColumnFiltersInput col={selectedColumn} onAddFilter={onAddFilter} />
-        )}
-      </Popover>
-
       <ColumnPicker
         popoverProps={{
           anchorEl: columnPickerPopover.anchorEl,
@@ -215,67 +98,30 @@ const Filters = ({
       />
 
       <Box sx={{ width: '100%' }}>
-        {filterItems?.map((item, index) => {
-          const column = columns.find((col) => col?.field === item.columnName);
-          if (!column) return;
-          return item.operatorValue === 'ct' ? (
-            <ChipFilterContain
-              onDelete={() =>
-                setState((prev) => ({
-                  ...prev,
-                  filterModel: {
-                    items: filterItems.filter(
-                      (_, itemIndex) => itemIndex !== index
-                    ),
-                  },
-                }))
-              }
-              key={
-                item.columnName +
-                item.operatorValue +
-                String(item.value) +
-                String(item.id)
-              }
-              filterItem={item}
-              column={column}
-              generateOperationTitle={operationTitle}
+        {filterLinkOperatorOptions?.length ? (
+          <>
+            <OperatorsFilterMenu
+              open={addFilterPopover.open}
+              anchorEl={addFilterPopover.anchorEl}
+              onClose={addFilterPopover.handleClose}
+              columns={columns}
+              filterLinkOperatorOptions={filterLinkOperatorOptions}
+              filterableColumns={filterableColumns}
+              setState={setState}
             />
-          ) : (
-            <Chip
-              onDelete={() =>
-                setState((prev) => ({
-                  ...prev,
-                  filterModel: {
-                    items: filterItems.filter(
-                      (_, itemIndex) => itemIndex !== index
-                    ),
-                  },
-                }))
-              }
-              sx={{ mr: 1 }}
-              key={
-                item.columnName +
-                item.operatorValue +
-                String(item.value) +
-                String(item.id)
-              }
-              label={`"${item.columnName}" ${operationTitle(
-                item.operatorValue
-              )} ${item.value}`}
-            />
-          );
-        })}
-        <Button
-          startIcon={<Add />}
-          onClick={addFilterPopover.handleClickOpenPopover}
-          sx={{
-            borderRadius: 2,
-            paddingX: 3,
-          }}
-          variant="text"
-        >
-          Add Filter
-        </Button>
+            <Button
+              startIcon={<Add />}
+              onClick={addFilterPopover.handleClickOpenPopover}
+              sx={{
+                borderRadius: 2,
+                paddingX: 3,
+              }}
+              variant="text"
+            >
+              Add Filter
+            </Button>
+          </>
+        ) : null}
 
         <Button
           startIcon={<FormatListBulleted />}
@@ -307,6 +153,63 @@ const Filters = ({
           </Button>
         )}
       </Box>
+
+      {filterItems?.length > 0 ? (
+        <Box pt={0.8}>
+          {filterItems.map((item, index) => {
+            const column = columns.find(
+              (col) => col?.field === item.columnName
+            );
+            if (!column) return;
+            return item.operatorValue === 'ct' ? (
+              <ChipFilterContain
+                onDelete={() =>
+                  setState((prev) => ({
+                    ...prev,
+                    filterModel: {
+                      items: filterItems.filter(
+                        (_, itemIndex) => itemIndex !== index
+                      ),
+                    },
+                  }))
+                }
+                key={
+                  item.columnName +
+                  item.operatorValue +
+                  String(item.value) +
+                  String(item.id)
+                }
+                filterItem={item}
+                column={column}
+                generateOperationTitle={operationTitle}
+              />
+            ) : (
+              <Chip
+                onDelete={() =>
+                  setState((prev) => ({
+                    ...prev,
+                    filterModel: {
+                      items: filterItems.filter(
+                        (_, itemIndex) => itemIndex !== index
+                      ),
+                    },
+                  }))
+                }
+                sx={{ mr: 1 }}
+                key={
+                  item.columnName +
+                  item.operatorValue +
+                  String(item.value) +
+                  String(item.id)
+                }
+                label={`"${item.columnName}" ${operationTitle(
+                  item.operatorValue
+                )} ${item.value}`}
+              />
+            );
+          })}
+        </Box>
+      ) : null}
 
       <Box
         sx={{
