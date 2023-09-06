@@ -18,7 +18,7 @@ import { SortableRow } from '@components/organisms/Table/SortableRow';
 import { setPreference } from '@features/users/usersSlice';
 import { useAppDispatch } from '@hooks';
 import NoData from 'components/atoms/NoData';
-import Filters from 'components/organisms/Table/Filters';
+import Filters, { FilterProps } from 'components/organisms/Table/Filters';
 import { range } from 'utils';
 import FilterIndicator from './FilterIndicator';
 import SortingButton from './SortingButton';
@@ -54,8 +54,24 @@ const Table = <R extends { [key: string]: any }>({
   const preferences = useAppSelector((state) => state.users.preferences);
   const dispatch = useAppDispatch();
 
-  const [ordenedColumns, setOrdenedColumns] =
-    useState<Column<any, any>[]>(columns);
+  const [allColumns, setAllColumns] = useState<Column<any, any>[]>(columns);
+
+  const columnsSortMatcher = (a: Column<any, any>, b: Column<any, any>) => {
+    if (a.position === undefined || b.position === undefined) return 0;
+
+    if (a.position > b.position) return 1;
+    if (a.position < b.position) return -1;
+    return 0;
+  };
+
+  const displayedColumns = useMemo<Column<any, any>[]>(() => {
+    return allColumns.sort(columnsSortMatcher).filter((col) => !col.hidden);
+  }, [allColumns]);
+
+  const filterableColumns = useMemo(
+    () => displayedColumns.filter((col) => !!col.filterSchema),
+    [displayedColumns]
+  );
 
   const [state, setState] = useState<State>({
     filterModel: filterModel || { items: [] },
@@ -65,11 +81,6 @@ const Table = <R extends { [key: string]: any }>({
 
   const isColumnInFilters = (col: Column<any, any>) =>
     state.filterModel.items.some((item) => item.columnName === col.field);
-
-  const filterableColumns = useMemo(
-    () => ordenedColumns.filter((col) => !!col.filterSchema),
-    [ordenedColumns]
-  );
 
   const handlePageChange: TablePaginationProps['onPageChange'] = (
     _event,
@@ -144,31 +155,76 @@ const Table = <R extends { [key: string]: any }>({
       const tablePreferences = preferences.tables;
 
       if (tablePreferences) {
-        const newColumns: Column<any, any>[] = [];
+        //? Apply hidden col attributes
+        const updatedColumns: Column<any, any>[] = allColumns.map((col) => {
+          const foundPreferenceColRefIdx = tablePreferences[
+            tableId
+          ]?.columns.findIndex((c) => c.field === col.field);
 
-        tablePreferences[tableId]?.columns.forEach((col) => {
-          const column = columns.find((column) => column.field === col.field);
+          col.hidden = foundPreferenceColRefIdx == -1;
 
-          if (column) {
-            newColumns.push(column);
+          if (foundPreferenceColRefIdx !== -1) {
+            col.position = foundPreferenceColRefIdx;
           }
+
           return col;
         });
 
-        setOrdenedColumns(newColumns);
+        setAllColumns(updatedColumns);
       }
     }
   };
 
-  const onDroppedColumn = (columns: Column<any, any>[]) => {
-    setOrdenedColumns(columns);
+  const onDroppedColumn = (reordenedDisplayedCols: Column<any, any>[]) => {
+    //? Reorder columns
+    const updatedColumns = allColumns.map((col, index) => {
+      const foundColIdx = reordenedDisplayedCols.findIndex(
+        (displayedCol) => displayedCol.field === col.field
+      );
+
+      if (foundColIdx !== -1)
+        return {
+          ...reordenedDisplayedCols[foundColIdx],
+          position: foundColIdx,
+        };
+
+      return { ...col, position: undefined };
+    }, []);
+
+    setAllColumns(updatedColumns);
 
     if (usePreferences && tableId) {
       dispatch(
         setPreference({
           path: `tables.${tableId}`,
           data: {
-            columns: columns.map((col) => ({ field: col.field })),
+            columns: reordenedDisplayedCols.map((col) => ({ field: col.field })),
+          },
+        })
+      );
+    }
+  };
+
+  const handleSelectedColumns: FilterProps['onSelectedColumns'] = (
+    selectedColumnsIdList
+  ) => {
+    setAllColumns((prev) => {
+      return prev.map((col) => {
+        col.hidden = !selectedColumnsIdList.includes(col.field as string);
+
+        return col;
+      });
+    });
+
+    if (preferences?.tables && tableId && preferences.tables[tableId]) {
+      dispatch(
+        setPreference({
+          path: `tables.${tableId}`,
+          data: {
+            columns: allColumns
+              .filter((col) => selectedColumnsIdList.includes(col.field))
+              .sort(columnsSortMatcher)
+              .map((col) => ({ field: col.field })),
           },
         })
       );
@@ -196,15 +252,16 @@ const Table = <R extends { [key: string]: any }>({
                   filterItems={state.filterModel.items || []}
                   filterLinkOperatorOptions={filterLinkOperatorOptions || []}
                   detailed={detailed}
-                  columns={ordenedColumns}
+                  columns={allColumns}
                   filterableColumns={filterableColumns}
+                  onSelectedColumns={handleSelectedColumns}
                   setState={setState}
                 />
               </TableCell>
             </TableRow>
           )}
-          <SortableRow columns={ordenedColumns} onDropped={onDroppedColumn}>
-            {ordenedColumns.map((col, index) => {
+          <SortableRow columns={displayedColumns} onDropped={onDroppedColumn}>
+            {displayedColumns.map((col, index) => {
               const columnSort = getColumnSorting(col);
 
               // ! Big problems with filters and sort on table, the current implementation generate multiples popovers controlled by the same state and pointing to the same anchor, so they overlap each other being possible to access only the last popover, need to refactor table component
@@ -235,7 +292,7 @@ const Table = <R extends { [key: string]: any }>({
         <TableBody>
           {rows.map((row) => (
             <TableRow key={rowKey(row)}>
-              {ordenedColumns.map((col, colidx) => (
+              {displayedColumns.map((col, colidx) => (
                 <TableCell
                   aria-labelledby={
                     typeof col.title === 'string'
@@ -252,7 +309,7 @@ const Table = <R extends { [key: string]: any }>({
           ))}
           {!rows.length && !loading && (
             <TableRow>
-              <TableCell colSpan={ordenedColumns.length}>
+              <TableCell colSpan={displayedColumns.length}>
                 {noData || <NoData />}
               </TableCell>
             </TableRow>
@@ -260,7 +317,7 @@ const Table = <R extends { [key: string]: any }>({
           {loading &&
             range(0, 3).map((idx) => (
               <TableRow key={`skel-row-${idx}`}>
-                {ordenedColumns.map((col, idx) => (
+                {displayedColumns.map((col, idx) => (
                   <TableCell key={`ske-${idx}`}>
                     {col.skeletonProps && <Skeleton {...col.skeletonProps} />}
                   </TableCell>

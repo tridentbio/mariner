@@ -6,9 +6,10 @@ import {
 } from '@mui/lab';
 import { isArray } from '@utils';
 import { useSelectedNodes } from './hooks/useSelectedNodes';
+import { useEffect } from 'react';
 
 export interface TreeViewProps
-  extends Omit<MultiSelectTreeViewProps, 'selected' | 'children'> {
+  extends Omit<MultiSelectTreeViewProps, 'selected' | 'children' | 'onSelect'> {
   treeView: TreeNode[];
   filteredTreeView?: TreeNode[];
   renderTreeItemLabel: (
@@ -18,6 +19,9 @@ export interface TreeViewProps
       'selectedNodes' | 'handleNodeSelect'
     >
   ) => JSX.Element;
+  /** node ID list */
+  onSelect?: (selectedNodes: string[]) => void;
+  defaultSelectedNodes?: string[];
 }
 
 export const TreeView = ({
@@ -27,9 +31,15 @@ export const TreeView = ({
   onNodeToggle,
   sx,
   renderTreeItemLabel,
+  onSelect,
+  defaultSelectedNodes,
 }: TreeViewProps) => {
   const { selectedNodes, handleNodeSelect, handleExpandClick } =
-    useSelectedNodes({ treeView });
+    useSelectedNodes({ treeView, defaultSelectedNodes });
+
+  useEffect(() => {
+    onSelect && onSelect(selectedNodes);
+  }, [selectedNodes]);
 
   const renderTree = (node: TreeNode) => {
     return (

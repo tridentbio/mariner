@@ -26,7 +26,7 @@ import {
   State,
 } from 'components/templates/Table/types';
 import { usePopoverState } from 'hooks/usePopoverState';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { title } from 'utils';
 import ChipFilterContain from './ChipFilterContain';
 import { ColumnPicker } from './ColumnPicker';
@@ -38,6 +38,7 @@ export interface FilterProps {
   detailed?: boolean;
   sortItems: SortModel[];
   filterableColumns: Column<any, any>[];
+  onSelectedColumns?: (columnsIdList: string[]) => void;
   setState: React.Dispatch<React.SetStateAction<State>>;
 }
 
@@ -54,6 +55,7 @@ const Filters = ({
   sortItems,
   filterableColumns,
   setState,
+  onSelectedColumns,
 }: FilterProps) => {
   const addFilterPopover = usePopoverState();
   const columnFilterPopover = usePopoverState();
@@ -123,6 +125,24 @@ const Filters = ({
     }));
   };
 
+  const columnsTreeView = useMemo<TreeNode[]>(() => {
+    return [
+      {
+        id: 'menu',
+        name: 'Columns',
+        children: columns.map((column) => ({
+          id: column.field as string,
+          name: column.name,
+          parent: 'menu',
+        })),
+      },
+    ];
+  }, [columns]);
+
+  const defaultSelectedColumns = columns
+    .filter((col) => !col.hidden)
+    .map((col) => col.field as string);
+
   return (
     <>
       <Popover
@@ -177,14 +197,21 @@ const Filters = ({
       </Popover>
 
       <ColumnPicker
-        open={columnPickerPopover.open}
-        anchorEl={columnPickerPopover.anchorEl}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
+        popoverProps={{
+          anchorEl: columnPickerPopover.anchorEl,
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'left',
+          },
+          onClose: columnPickerPopover.handleClose,
         }}
+        open={columnPickerPopover.open}
+        treeView={columnsTreeView}
         height={480}
-        onClose={columnPickerPopover.handleClose}
+        onChange={(displayedColumns) => {
+          onSelectedColumns && onSelectedColumns(displayedColumns);
+        }}
+        defaultSelectedColumns={defaultSelectedColumns}
       />
 
       <Box sx={{ width: '100%' }}>

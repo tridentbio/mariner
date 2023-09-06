@@ -26,11 +26,14 @@ export const storageSchemas: {
 
             const tablePreferencesSchema = notEmptyObject()
               .shape({
-                columns: yup.array().of(
-                  yup.object({
-                    field: yup.string().nullable(),
-                  })
-                ),
+                columns: yup
+                  .array()
+                  .of(
+                    yup.object({
+                      field: yup.string().nullable(),
+                    })
+                  )
+                  .min(1),
               })
               .required();
 

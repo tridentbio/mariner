@@ -7,7 +7,7 @@ export const useTreeFilters = ({ treeView }: { treeView: TreeNode[] }) => {
     return node.name.toLowerCase().indexOf(filterText.toLowerCase()) !== -1;
   };
 
-  const findNode = (
+  const nodeExistsInHierarchy = (
     node: TreeNode,
     filter: string,
     matcher: (filter: string, node: TreeNode) => boolean
@@ -17,7 +17,9 @@ export const useTreeFilters = ({ treeView }: { treeView: TreeNode[] }) => {
       !!(
         node.children && //? or i have decendents and one of them match
         node.children.length &&
-        node.children.some((child) => findNode(child, filter, matcher))
+        node.children.some((child) =>
+          nodeExistsInHierarchy(child, filter, matcher)
+        )
       )
     );
   };
@@ -32,7 +34,7 @@ export const useTreeFilters = ({ treeView }: { treeView: TreeNode[] }) => {
 
     //? If not then only keep the ones that match or have matching descendants
     const filtered = node.children
-      .filter((child) => findNode(child, filter, matcher))
+      .filter((child) => nodeExistsInHierarchy(child, filter, matcher))
       .map((child) => filterTreeChildrenByName(child, filter, matcher));
 
     return Object.assign({}, node, { children: filtered });
@@ -50,7 +52,7 @@ export const useTreeFilters = ({ treeView }: { treeView: TreeNode[] }) => {
     }
 
     const childrenWithMatches = (node.children || []).filter((child) =>
-      findNode(child, filter, matcher)
+      nodeExistsInHierarchy(child, filter, matcher)
     );
 
     const shouldExpand = childrenWithMatches.length > 0;
@@ -84,29 +86,6 @@ export const useTreeFilters = ({ treeView }: { treeView: TreeNode[] }) => {
     }
 
     return store;
-  };
-
-  /**
-   * Find tree item with recursive approach
-   */
-  const searchTree = (node: TreeNode, nodeId: string): TreeNode | null => {
-    if (node.id === nodeId) return node;
-
-    if (node.children != null) {
-      let foundNode: TreeNode | null = null;
-
-      for (
-        let index = 0;
-        foundNode == null && index < node.children.length;
-        index++
-      ) {
-        foundNode = searchTree(node.children[index], nodeId);
-      }
-
-      return foundNode;
-    }
-
-    return null;
   };
 
   const onColumnFilterChange = (
@@ -152,5 +131,6 @@ export const useTreeFilters = ({ treeView }: { treeView: TreeNode[] }) => {
     onColumnFilterChange,
     getTreesToExpandIdList,
     resetFilters,
+    nodeExistsInHierarchy,
   };
 };

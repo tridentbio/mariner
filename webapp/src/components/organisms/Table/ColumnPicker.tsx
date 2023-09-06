@@ -10,14 +10,18 @@ import { useEffect, useState } from 'react';
 import { TreeView, TreeViewProps } from '../TreeView';
 import { useTreeFilters } from '../TreeView/hooks/useTreeFilters';
 
-interface ColumnPickerProps extends PopoverProps {
+interface ColumnPickerProps {
   open: boolean;
   /** in pixels */
   height?: number;
+  treeView: TreeNode[];
+  onChange?: (selectedColumns: string[]) => void;
+  defaultSelectedColumns?: string[];
+  popoverProps?: Omit<PopoverProps, 'onChange' | 'open'>;
 }
 
 export const ColumnPicker = (props: ColumnPickerProps) => {
-  const [data, setData] = useState<TreeNode[]>([
+  /*   const [data, setData] = useState<TreeNode[]>([
     {
       id: '1',
       name: 'Parent 1',
@@ -124,13 +128,15 @@ export const ColumnPicker = (props: ColumnPickerProps) => {
         },
       ],
     },
-  ]);
+  ]); */
+  const [data, setData] = useState<TreeNode[]>(props.treeView);
   const [expandedTrees, setExpandedTrees] = useState<string[]>([]);
   const {
     filteredNodes,
     getTreesToExpandIdList,
     onColumnFilterChange,
     resetFilters,
+    nodeExistsInHierarchy,
   } = useTreeFilters({ treeView: data });
 
   const expandAll = () => {
@@ -156,14 +162,30 @@ export const ColumnPicker = (props: ColumnPickerProps) => {
   const onPopoverClose: PopoverProps['onClose'] = (event, reason) => {
     resetFilters();
 
-    props.onClose && props.onClose(event, reason);
+    props.popoverProps?.onClose && props.popoverProps.onClose(event, reason);
+  };
+
+  const handleNodesSelect: TreeViewProps['onSelect'] = (selectedNodes) => {
+    //? Discard nodes that are not related directly to the column (e.g. nodes with children/expansible)
+    const columnNodes = selectedNodes.filter((nodeId) => {
+      return props.treeView.some((node) => {
+        return nodeExistsInHierarchy(
+          node,
+          nodeId,
+          (filter, n) => n.id === filter && !n.children
+        );
+      });
+    });
+
+    props.onChange && props.onChange(columnNodes);
   };
 
   return (
     <Popover
-      {...props}
+      {...props.popoverProps}
+      open={props.open}
       sx={{
-        ...props.sx,
+        ...props.popoverProps?.sx,
         '& .MuiPopover-paper': {
           borderRadius: 2,
         },
@@ -196,6 +218,8 @@ export const ColumnPicker = (props: ColumnPickerProps) => {
           filteredTreeView={filteredNodes}
           expanded={expandedTrees}
           multiSelect
+          onSelect={handleNodesSelect}
+          defaultSelectedNodes={props.defaultSelectedColumns}
           onNodeToggle={handleToggle}
           sx={{
             overflowY: 'scroll',

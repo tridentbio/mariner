@@ -33,6 +33,8 @@ export type Column<
    */
   type?: 'date' | 'number' | 'text';
   sortable?: boolean;
+  hidden?: boolean;
+  position?: number;
 };
 
 export type OperatorValue = 'eq' | 'lt' | 'gt' | 'ct' | 'inc';
