@@ -41,6 +41,3 @@ COPY ./scripts /app/scripts
 
 CMD [ "sh", "/app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]
 
-HEALTHCHECK --retries=10\
-    CMD curl -f http://localhost:8000/health || exit 1
-
