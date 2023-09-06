@@ -48,7 +48,14 @@ def make_torch_index_uri(platform: str):
 
 
 def install_deps(platform=PLATFORM, torch_version=TORCH_VERSION):
-    pip_install_command = ["poetry", "run", "pip", "install"]
+    pip_install_command = [
+        "poetry",
+        "run",
+        "pip",
+        "install",
+        "--timeout",
+        "120",
+    ]
     deps = ["torch-scatter", "torch-sparse", "torch-geometric"]
 
     torch_install_exit = subprocess.call(

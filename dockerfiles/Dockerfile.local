@@ -1,5 +1,8 @@
 FROM python:3.10
 
+ENV PLATFORM=cpu
+ENV TORCH_VERSION=2.0.1
+
 WORKDIR /app/
 
 # Install Poetry
