@@ -59,7 +59,7 @@ const Table = <R extends { [key: string]: any }>({
   const [allColumns, setAllColumns] = useState<Column<any, any>[]>(columns);
 
   const displayedColumns = useMemo<Column<any, any>[]>(() => {
-    return allColumns.filter((col) => !col.hidden);
+    return allColumns.filter((col) => !col.hidden || col.fixed);
   }, [allColumns]);
 
   const filterableColumns = useMemo(
@@ -232,7 +232,7 @@ const Table = <R extends { [key: string]: any }>({
                 <Filters
                   sortItems={state.sortModel}
                   filterItems={state.filterModel.items || []}
-                  filterLinkOperatorOptions={filterLinkOperatorOptions || []}
+                  filterLinkOperatorOptions={filterLinkOperatorOptions}
                   detailed={detailed}
                   columns={allColumns}
                   filterableColumns={filterableColumns}

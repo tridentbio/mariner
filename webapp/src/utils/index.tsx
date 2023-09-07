@@ -1,10 +1,10 @@
 import { ColumnConfig } from '@app/rtk/generated/models';
 import api from 'app/api';
 import { ColumnMeta, DataTypeGuard } from 'app/types/domain/datasets';
-import { Model, ModelVersionType } from 'app/types/domain/models';
 import { range } from './arrays';
 
 export type ArrayElement<T> = T extends Array<infer C> ? C : never;
+export type NonUndefined<T> = T extends undefined ? never : T;
 
 export const isDev = () => {
   return import.meta.env.NODE_ENV === 'development';

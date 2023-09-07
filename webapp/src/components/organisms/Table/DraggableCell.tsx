@@ -19,7 +19,7 @@ export const DraggableCell = ({
     transition,
     setNodeRef,
     isDragging,
-  } = useSortable({ id: id, disabled: col.disableDraggable });
+  } = useSortable({ id: id, disabled: col.fixed });
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -30,12 +30,8 @@ export const DraggableCell = ({
     <TableCell
       sx={{
         ...(col.customSx || {}),
-        cursor: col.disableDraggable
-          ? 'initial'
-          : isDragging
-          ? 'grabbing'
-          : 'grab',
-        ...(isDragging && !col.disableDraggable
+        cursor: col.fixed ? 'initial' : isDragging ? 'grabbing' : 'grab',
+        ...(isDragging && !col.fixed
           ? {
               backgroundColor: '#e0e0e03d',
               borderRadius: '7px',

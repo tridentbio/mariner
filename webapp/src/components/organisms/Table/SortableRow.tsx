@@ -49,7 +49,7 @@ export const SortableRow = ({
     if (over && active.id !== over.id) {
       const columnOverRef = columns[Number(over.id)];
 
-      if (columnOverRef.disableDraggable) return;
+      if (columnOverRef.fixed) return;
 
       const reordeneredColumns = reorder(Number(active.id), Number(over.id));
 

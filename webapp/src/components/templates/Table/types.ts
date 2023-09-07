@@ -15,7 +15,6 @@ export type Column<
   skeletonProps?: SkeletonProps;
   customSx?: SxProps;
   bold?: boolean;
-  disableDraggable?: boolean;
   filterSchema?: {
     byValue?: boolean;
     byLessThan?: boolean;
@@ -34,6 +33,7 @@ export type Column<
   type?: 'date' | 'number' | 'text';
   sortable?: boolean;
   hidden?: boolean;
+  fixed?: boolean;
 };
 
 export type OperatorValue = 'eq' | 'lt' | 'gt' | 'ct' | 'inc';

@@ -17,9 +17,10 @@ import {
   Popover,
   Popper,
   TextField,
+  styled,
 } from '@mui/material';
-import { useState } from 'react';
-import { title } from 'utils';
+import { useMemo, useState } from 'react';
+import { NonUndefined, title } from 'utils';
 import { FilterProps } from './Filters';
 
 interface OperatorsFilterMenuProps
@@ -32,6 +33,15 @@ interface OperatorsFilterMenuProps
   onClose?: () => void;
 }
 
+const StyledMenuBox = styled(Box)(({ theme }) => ({
+  '.MuiTypography-root, .MuiSelect-select, .MuiFormLabel-root, .MuiMenuItem-root':
+    {
+      fontSize: theme.typography.body2.fontSize,
+    },
+}));
+
+type OperatorOptions = NonUndefined<FilterProps['filterLinkOperatorOptions']>;
+
 export const OperatorsFilterMenu = ({
   open,
   anchorEl,
@@ -41,11 +51,20 @@ export const OperatorsFilterMenu = ({
   filterableColumns,
   setState,
 }: OperatorsFilterMenuProps) => {
+  const DEFAULT_OPERATOR = 'and';
+
+  const operatorOptions = useMemo<OperatorOptions>(() => {
+    if (!filterLinkOperatorOptions) return [DEFAULT_OPERATOR];
+    return filterLinkOperatorOptions;
+  }, [filterLinkOperatorOptions]);
+
   const columnFilterPopper = usePopoverState();
   const [selectedColumn, setSelectedColumn] = useState<Column<any, any>>();
-  const [linkOperator, setLinkOperator] =
-    useState<FilterProps['filterLinkOperatorOptions'][0]>('and');
+  const [linkOperator, setLinkOperator] = useState<OperatorOptions[0]>(
+    operatorOptions[0]
+  );
 
+  //? ref being used as a state to trigger rerender and avoid the select input dropdown being placed incorrectly on DOM
   const [columnFilterBoxRef, setColumnFilterBoxRef] = useState<HTMLElement>();
 
   const colIcon = ({ type }: Column<any, any>) => {
@@ -57,9 +76,6 @@ export const OperatorsFilterMenu = ({
     };
     return colIconMap[type] || <ShortTextOutlined />;
   };
-
-  const singleFilterLinkOption =
-    !filterLinkOperatorOptions || filterLinkOperatorOptions.length === 1;
 
   const onOpenColumnFilterMenu = (
     event: React.MouseEvent<any>,
@@ -135,7 +151,7 @@ export const OperatorsFilterMenu = ({
         sx: { overflow: 'initial' },
       }}
     >
-      <Box
+      <StyledMenuBox
         sx={{ padding: 2 }}
         ref={(e: HTMLElement | null) => {
           e && setColumnFilterBoxRef(e);
@@ -146,7 +162,7 @@ export const OperatorsFilterMenu = ({
           variant="standard"
           sx={{ width: '100%' }}
           value={linkOperator}
-          disabled={singleFilterLinkOption}
+          disabled={operatorOptions.length === 1}
           onChange={(event) =>
             onFilterLinkChange(event.target.value as 'and' | 'or')
           }
@@ -156,7 +172,7 @@ export const OperatorsFilterMenu = ({
             },
           }}
         >
-          {(filterLinkOperatorOptions || ['and']).map((op) => (
+          {operatorOptions.map((op) => (
             <MenuItem key={op} value={op}>
               {title(op)}
             </MenuItem>
@@ -169,14 +185,14 @@ export const OperatorsFilterMenu = ({
                 onClick={(event) => onOpenColumnFilterMenu(event, col.field)}
                 key={col.field as string}
               >
-                <Box sx={{ display: 'inline-flex' }}>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
                   {colTitle(col, colIcon(col))}
                 </Box>
               </MenuItem>
             ))}
           </MenuList>
         ) : null}
-      </Box>
+      </StyledMenuBox>
 
       {columnFilterBoxRef ? (
         <Popper

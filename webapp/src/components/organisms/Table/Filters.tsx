@@ -20,7 +20,7 @@ import { ColumnPicker } from './ColumnPicker';
 import { OperatorsFilterMenu } from './OperatorsFilterMenu';
 
 export interface FilterProps {
-  filterLinkOperatorOptions: ('and' | 'or')[];
+  filterLinkOperatorOptions?: ('and' | 'or')[];
   filterItems: FilterItem[];
   columns: Column<any, any>[];
   detailed?: boolean;
@@ -63,12 +63,20 @@ const Filters = ({
     return [
       {
         id: 'menu',
-        name: 'Columns',
-        children: columns.map((column) => ({
-          id: column.field as string,
-          name: column.name,
-          parent: 'menu',
-        })),
+        name: 'Test',
+        children: [
+          {
+            id: 'menu-2',
+            name: 'Test 2',
+            children: columns
+              .filter((col) => !col.fixed)
+              .map((column) => ({
+                id: column.field as string,
+                name: column.name,
+                parent: 'menu',
+              })),
+          },
+        ],
       },
     ];
   }, [columns]);
@@ -98,7 +106,7 @@ const Filters = ({
       />
 
       <Box sx={{ width: '100%' }}>
-        {filterLinkOperatorOptions?.length ? (
+        {filterableColumns?.length ? (
           <>
             <OperatorsFilterMenu
               open={addFilterPopover.open}
