@@ -1,10 +1,11 @@
-FROM python:3.10
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
 ENV PLATFORM=cu118
 ENV TORCH_VERSION=2.0.1
 
+
 RUN apt-get update
-RUN apt-get install libpq-dev gcc less curl unzip libxrender1 libsm-dev libxext-dev -y
+RUN apt-get install libpq-dev gcc less curl unzip libxrender1 libsm-dev libxext-dev curl -y
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | \
     POETRY_HOME=/opt/poetry python3 && \

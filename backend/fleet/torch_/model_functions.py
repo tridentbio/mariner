@@ -55,6 +55,7 @@ class TorchFunctions(BaseModelFunctions):
         spec: TorchModelSpec,
         dataset: DataFrame = None,
         model: CustomModel = None,
+        use_gpu: bool = False,
         preprocessing_pipeline: Union[None, "PreprocessingPipeline"] = None,
     ):
         """
@@ -67,7 +68,7 @@ class TorchFunctions(BaseModelFunctions):
             self.model = model
         else:
             self.model = CustomModel(
-                config=spec.spec, dataset_config=spec.dataset
+                config=spec.spec, dataset_config=spec.dataset, use_gpu=use_gpu
             )
 
         if preprocessing_pipeline:

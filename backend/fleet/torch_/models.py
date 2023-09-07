@@ -72,6 +72,7 @@ class CustomModel(pl.LightningModule):
         self,
         config: Union[TorchModelSchema, str],
         dataset_config: "TorchDatasetConfig",
+        use_gpu=False,
     ):
         super().__init__()
         if isinstance(config, str):
@@ -116,7 +117,9 @@ class CustomModel(pl.LightningModule):
 
             # Set up metrics for training and validation
             if target_column.column_type == "regression":
-                self.metrics_dict[target_column.name] = Metrics("regression")
+                self.metrics_dict[target_column.name] = Metrics(
+                    "regression", use_gpu=use_gpu
+                )
             else:
                 self.metrics_dict[target_column.name] = Metrics(
                     "multilabel" if is_multilabel else "multiclass",
@@ -124,6 +127,7 @@ class CustomModel(pl.LightningModule):
                     num_labels=len(dataset_config.target_columns)
                     if is_multilabel
                     else None,
+                    use_gpu=use_gpu,
                 )
 
     def set_optimizer(self, optimizer: Optimizer):

@@ -39,6 +39,7 @@ class Metrics:
         num_classes: Optional[int] = None,
         num_labels: Optional[int] = None,
         return_type: Literal["numpy", "tensor", "float"] = "tensor",
+        use_gpu=False,
     ):
         """Creates the metric with the used metrics.
 
@@ -76,7 +77,10 @@ class Metrics:
             ]
 
         for metric_name, metric in metric_names:
-            self.metrics[metric_name] = metric
+            if use_gpu:
+                self.metrics[metric_name] = metric.cuda()
+            else:
+                self.metrics[metric_name] = metric
 
     def get_metrics(
         self,
