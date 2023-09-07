@@ -183,7 +183,7 @@ export const OperatorsFilterMenu = ({
             {filterableColumns.map((col) => (
               <MenuItem
                 onClick={(event) => onOpenColumnFilterMenu(event, col.field)}
-                key={col.field as string}
+                key={col.name as string}
               >
                 <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
                   {colTitle(col, colIcon(col))}

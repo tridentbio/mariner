@@ -1,9 +1,13 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { authApi } from 'app/rtk/auth';
-import { ELocalStorage, storageSchemas } from '../../app/local-storage';
-import * as usersApi from './usersAPI';
 import { TablePreferences } from '@components/templates/Table/types';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { updateStructureByPath } from '@utils';
+import { authApi } from 'app/rtk/auth';
+import {
+  ELocalStorage,
+  fetchLocalStorage,
+  storageSchemas,
+} from '../../app/local-storage';
+import * as usersApi from './usersAPI';
 
 type Status = 'loading' | 'idle' | 'rejected';
 export interface UsersState {
@@ -46,6 +50,7 @@ export const usersSlice = createSlice({
   reducers: {
     logout: (state) => {
       state.loggedIn = null;
+      state.preferences = {};
       localStorage.setItem(ELocalStorage.TOKEN, '');
     },
     setPreference: (
@@ -59,21 +64,37 @@ export const usersSlice = createSlice({
       }
     ) => {
       try {
-        const valid = storageSchemas[ELocalStorage.PREFERENCES]?.validate(
-          action.payload.data
-        );
-        if (!valid) throw new Error();
+        if (!state.loggedIn) return;
+
+        let usersPreferences = fetchLocalStorage<{
+          [userId: string | number]: UsersState['preferences'];
+        }>(ELocalStorage.PREFERENCES);
+
+        if (usersPreferences == null)
+          usersPreferences = { [state.loggedIn.id]: {} };
+        else if (!usersPreferences[state.loggedIn.id])
+          usersPreferences[state.loggedIn.id] = {};
+
+        const currentUserPreferences = usersPreferences[state.loggedIn.id];
 
         updateStructureByPath(
           action.payload.path,
-          state.preferences,
+          currentUserPreferences,
           action.payload.data
         );
 
+        storageSchemas[ELocalStorage.PREFERENCES]?.validate({
+          [state.loggedIn?.id]: currentUserPreferences,
+        });
+
+        usersPreferences[state.loggedIn.id] = currentUserPreferences;
+
         localStorage.setItem(
           ELocalStorage.PREFERENCES,
-          JSON.stringify(state.preferences)
+          JSON.stringify(usersPreferences)
         );
+
+        state.preferences = currentUserPreferences;
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Invalid user preferences', error);
@@ -81,19 +102,17 @@ export const usersSlice = createSlice({
     },
     loadPreferences: (state) => {
       try {
-        const preferences = localStorage.getItem(ELocalStorage.PREFERENCES);
+        if (!state.loggedIn) return;
 
-        if (preferences) {
-          const parsedPreferences = JSON.parse(preferences);
-          const valid =
-            storageSchemas[ELocalStorage.PREFERENCES]?.validate(
-              parsedPreferences
-            );
+        const usersPreferences = fetchLocalStorage<{
+          [userId: string | number]: UsersState['preferences'];
+        }>(ELocalStorage.PREFERENCES);
 
-          if (!valid) throw new Error();
+        if (!usersPreferences) return;
 
-          state.preferences = JSON.parse(preferences);
-        }
+        const currentUserPreferences = usersPreferences[state.loggedIn.id];
+
+        state.preferences = currentUserPreferences ?? {};
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Invalid user preferences', error);

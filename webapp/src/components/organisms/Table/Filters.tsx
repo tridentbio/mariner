@@ -71,7 +71,7 @@ const Filters = ({
             children: columns
               .filter((col) => !col.fixed)
               .map((column) => ({
-                id: column.field as string,
+                id: column.name as string,
                 name: column.name,
                 parent: 'menu',
               })),
@@ -83,7 +83,7 @@ const Filters = ({
 
   const defaultSelectedColumns = columns
     .filter((col) => !col.hidden)
-    .map((col) => col.field as string);
+    .map((col) => col.name as string);
 
   return (
     <>

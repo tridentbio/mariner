@@ -84,6 +84,6 @@ export interface TableProps<R extends { [key: string]: any }> {
 
 export interface TablePreferences {
   columns: {
-    field: string;
+    name: string;
   }[];
 }

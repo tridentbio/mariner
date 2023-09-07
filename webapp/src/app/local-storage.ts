@@ -1,3 +1,4 @@
+import { TablePreferences } from '@components/templates/Table/types';
 import * as yup from 'yup';
 
 export enum ELocalStorage {
@@ -20,32 +21,90 @@ export const storageSchemas: {
         });
 
       return yup
-        .object({
-          tables: yup.lazy((value) => {
-            if (!value) return yup.mixed();
+        .lazy(
+          (usersDict: {
+            [userId: string | number]: { [preference: string]: any };
+          }) => {
+            if (!usersDict)
+              throw new yup.ValidationError(
+                'User preference schema must not be empty'
+              );
 
-            const tablePreferencesSchema = notEmptyObject()
-              .shape({
-                columns: yup
-                  .array()
-                  .of(
-                    yup.object({
-                      field: yup.string().nullable(),
+            const userPreferenceSchema: { [preference: string]: any } = {};
+
+            Object.entries(usersDict).forEach(([userId, preferenceData]) => {
+              userPreferenceSchema[userId] = yup.object({
+                tables: ((): yup.ObjectSchema<any> => {
+                  if (!preferenceData?.tables)
+                    throw new yup.ValidationError(
+                      'Table preference schema must not be empty'
+                    );
+
+                  const tablePreferencesSchema = notEmptyObject()
+                    .shape({
+                      columns: yup
+                        .array()
+                        .of(
+                          yup
+                            .object()
+                            .shape({
+                              name: yup.string().nullable(),
+                            })
+                            .required()
+                        )
+                        .min(1),
                     })
-                  )
-                  .min(1),
-              })
-              .required();
+                    .noUnknown();
 
-            const tables = Object.keys(value).reduce((acc, tableId) => {
-              acc[tableId] = tablePreferencesSchema;
-              return acc;
-            }, {} as { [key: string]: any });
+                  const tablesPreferencesSchema = Object.keys(
+                    preferenceData.tables as {
+                      [tableId: string]: TablePreferences;
+                    }
+                  ).reduce<{ [tableId: string]: yup.ObjectSchema<any> }>(
+                    (acc, tableId) => {
+                      acc[tableId] = tablePreferencesSchema;
+                      return acc;
+                    },
+                    {}
+                  );
 
-            return notEmptyObject().shape(tables);
-          }),
-        })
+                  return notEmptyObject().shape(tablesPreferencesSchema);
+                })(),
+              });
+            });
+
+            return notEmptyObject().shape(userPreferenceSchema).noUnknown();
+          }
+        )
         .validateSync(value);
     },
   },
+};
+
+export const fetchLocalStorage = <T extends object>(key: ELocalStorage) => {
+  try {
+    const data = localStorage.getItem(key);
+
+    if (data) {
+      const parsedPreferences: T = JSON.parse(data);
+
+      try {
+        storageSchemas[key] && storageSchemas[key]?.validate(parsedPreferences);
+      } catch (error: any) {
+        throw new yup.ValidationError(error);
+      }
+
+      return parsedPreferences;
+    }
+
+    return null;
+  } catch (error) {
+    error instanceof yup.ValidationError
+      ? // eslint-disable-next-line no-console
+        console.error('Storage data has a invalid schema', error)
+      : // eslint-disable-next-line no-console
+        console.error(error);
+
+    return null;
+  }
 };

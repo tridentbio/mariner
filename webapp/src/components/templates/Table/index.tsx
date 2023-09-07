@@ -150,7 +150,7 @@ const Table = <R extends { [key: string]: any }>({
 
       if (tablePreferences) {
         sortColumnPositions(
-          tablePreferences[tableId]?.columns.map((col) => col.field) || []
+          tablePreferences[tableId]?.columns.map((col) => col.name) || []
         );
 
         preferencesLoaded.current = true;
@@ -175,23 +175,23 @@ const Table = <R extends { [key: string]: any }>({
     const colsToDisplay: Column<any, any>[] = [];
 
     sortedAndDisplayedColIds.forEach((sortedColId) => {
-      const foundCol = allColumns.find((col) => sortedColId === col.field);
+      const foundCol = allColumns.find((col) => sortedColId === col.name);
 
       if (foundCol) colsToDisplay.push({ ...foundCol, hidden: false });
     });
 
     const hiddenCols: Column<any, any>[] = allColumns
-      .filter((col) => !colsToDisplay.some((c) => c.field == col.field))
+      .filter((col) => !colsToDisplay.some((c) => c.name == col.name))
       .map((col) => ({ ...col, hidden: true }));
 
     setAllColumns([...colsToDisplay, ...hiddenCols]);
   };
 
   const onDroppedColumn = (sortedAndDisplayedCols: Column<any, any>[]) => {
-    sortColumnPositions(sortedAndDisplayedCols.map((col) => col.field));
+    sortColumnPositions(sortedAndDisplayedCols.map((col) => col.name));
 
     updateTablePreferences({
-      columns: sortedAndDisplayedCols.map((col) => ({ field: col.field })),
+      columns: sortedAndDisplayedCols.map((col) => ({ name: col.name })),
     });
   };
 
@@ -200,7 +200,7 @@ const Table = <R extends { [key: string]: any }>({
   ) => {
     setAllColumns((prev) => {
       return prev.map((col) => {
-        col.hidden = !selectedColumnsIdList.includes(col.field as string);
+        col.hidden = !selectedColumnsIdList.includes(col.name as string);
 
         return col;
       });
@@ -208,8 +208,8 @@ const Table = <R extends { [key: string]: any }>({
 
     updateTablePreferences({
       columns: allColumns
-        .filter((col) => selectedColumnsIdList.includes(col.field))
-        .map((col) => ({ field: col.field })),
+        .filter((col) => selectedColumnsIdList.includes(col.name))
+        .map((col) => ({ name: col.name })),
     });
   };
 
