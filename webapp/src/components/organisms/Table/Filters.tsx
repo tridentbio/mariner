@@ -14,7 +14,7 @@ import {
   State,
 } from 'components/templates/Table/types';
 import { usePopoverState } from 'hooks/usePopoverState';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import ChipFilterContain from './ChipFilterContain';
 import { ColumnPicker } from './ColumnPicker';
 import { OperatorsFilterMenu } from './OperatorsFilterMenu';
@@ -23,7 +23,6 @@ export interface FilterProps {
   filterLinkOperatorOptions?: ('and' | 'or')[];
   filterItems: FilterItem[];
   columns: Column<any, any>[];
-  detailed?: boolean;
   sortItems: SortModel[];
   filterableColumns: Column<any, any>[];
   onSelectedColumns?: (columnsIdList: string[]) => void;
@@ -39,7 +38,6 @@ const Filters = ({
   filterLinkOperatorOptions,
   columns,
   filterItems,
-  detailed,
   sortItems,
   filterableColumns,
   setState,
@@ -85,6 +83,8 @@ const Filters = ({
     .filter((col) => !col.hidden)
     .map((col) => col.name as string);
 
+  const displayedColumns = useRef<Column<any, any>[]>(columns);
+
   return (
     <>
       <ColumnPicker
@@ -99,8 +99,12 @@ const Filters = ({
         open={columnPickerPopover.open}
         treeView={columnsTreeView}
         height={480}
-        onChange={(displayedColumns) => {
-          onSelectedColumns && onSelectedColumns(displayedColumns);
+        onChange={(selectedColumns) => {
+          displayedColumns.current = columns.filter((col) =>
+            selectedColumns.includes(col.name)
+          );
+
+          onSelectedColumns && onSelectedColumns(selectedColumns);
         }}
         defaultSelectedColumns={defaultSelectedColumns}
       />
@@ -165,10 +169,11 @@ const Filters = ({
       {filterItems?.length > 0 ? (
         <Box pt={0.8}>
           {filterItems.map((item, index) => {
-            const column = columns.find(
+            const column = displayedColumns.current.find(
               (col) => col?.field === item.columnName
             );
             if (!column) return;
+
             return item.operatorValue === 'ct' ? (
               <ChipFilterContain
                 onDelete={() =>
@@ -181,12 +186,7 @@ const Filters = ({
                     },
                   }))
                 }
-                key={
-                  item.columnName +
-                  item.operatorValue +
-                  String(item.value) +
-                  String(item.id)
-                }
+                key={index}
                 filterItem={item}
                 column={column}
                 generateOperationTitle={operationTitle}
@@ -204,12 +204,7 @@ const Filters = ({
                   }))
                 }
                 sx={{ mr: 1 }}
-                key={
-                  item.columnName +
-                  item.operatorValue +
-                  String(item.value) +
-                  String(item.id)
-                }
+                key={index}
                 label={`"${item.columnName}" ${operationTitle(
                   item.operatorValue
                 )} ${item.value}`}
@@ -226,7 +221,9 @@ const Filters = ({
         }}
       >
         {sortItems.map((item: SortModel, index) => {
-          const column = columns.find((col) => col.field === item.field);
+          const column = displayedColumns.current.find(
+            (col) => col.field === item.field
+          );
           if (!column) return null;
           return (
             <Chip

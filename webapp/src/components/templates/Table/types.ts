@@ -4,11 +4,12 @@ import { SxProps, SystemStyleObject } from '@mui/system';
 import { ReactNode } from 'react';
 
 export type Column<
-  R,
+  R extends object,
   K extends keyof R | null = null,
-  O extends { key: string } = any
+  O extends { key: string } = any,
+  D extends object = { [key: string]: any }
 > = {
-  render?: (row: R, value: any) => ReactNode;
+  render?: (row: R, value: any, dependencies: D) => ReactNode;
   field?: K;
   name: string;
   title?: ReactNode;
@@ -17,6 +18,7 @@ export type Column<
   bold?: boolean;
   filterSchema?: {
     byValue?: boolean;
+    byIncludes?: boolean;
     byLessThan?: boolean;
     byGreaterThan?: boolean;
     byContains?: {
@@ -24,7 +26,6 @@ export type Column<
       optionKey: (opt: O) => string | number;
       getLabel: (opt: O) => string;
     };
-    // byContaining?: boolean
   };
   /**
    * Defines style and filtering inputs for the column
@@ -64,10 +65,8 @@ export type State = {
 };
 
 export interface TableProps<R extends { [key: string]: any }> {
-  filterModel?: FilterModel;
   filterLinkOperatorOptions?: ('and' | 'or')[];
   sortingMode?: 'client' | 'server';
-  sortModel?: SortModel[];
   columns: Column<R, keyof R | null>[];
   rows: R[];
   rowKey: (row: R) => string | number;
@@ -80,6 +79,7 @@ export interface TableProps<R extends { [key: string]: any }> {
   extraTableStyle?: CSSProperties;
   usePreferences?: boolean;
   tableId?: string;
+  dependencies?: { [key: string]: any };
 }
 
 export interface TablePreferences {

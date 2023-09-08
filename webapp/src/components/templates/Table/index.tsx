@@ -7,7 +7,6 @@ import {
   TableFooter,
   TableHead,
   TablePagination,
-  TablePaginationProps,
   TableRow,
   Typography,
 } from '@mui/material';
@@ -26,6 +25,7 @@ import SortingButton from './SortingButton';
 import SortingIndicator from './SortingIndicator';
 import { colTitle, columnId, isColumnSortable } from './common';
 import { Column, State, TableProps } from './types';
+import useTableFilters from '@components/organisms/Table/hooks/useTableFilters';
 
 const isKeyOf = <O,>(
   key: string | number | symbol | null,
@@ -39,9 +39,7 @@ const Table = <R extends { [key: string]: any }>({
   columns,
   rows,
   rowKey,
-  filterModel,
   filterLinkOperatorOptions,
-  sortModel,
   pagination,
   onStateChange,
   noData,
@@ -51,6 +49,7 @@ const Table = <R extends { [key: string]: any }>({
   extraTableStyle,
   usePreferences,
   tableId,
+  dependencies,
 }: TableProps<R>) => {
   const preferences = useAppSelector((state) => state.users.preferences);
   const preferencesLoaded = useRef<boolean>(false);
@@ -62,81 +61,46 @@ const Table = <R extends { [key: string]: any }>({
     return allColumns.filter((col) => !col.hidden || col.fixed);
   }, [allColumns]);
 
-  const filterableColumns = useMemo(
-    () => displayedColumns.filter((col) => !!col.filterSchema),
-    [displayedColumns]
-  );
-
-  const [state, setState] = useState<State>({
-    filterModel: filterModel || { items: [] },
-    sortModel: sortModel || [],
-    paginationModel: pagination,
+  const {
+    filterableColumns,
+    filters,
+    filteredRows,
+    setFilters,
+    handlePageChange,
+    handleRowsPerPageChange,
+    getColumnState,
+  } = useTableFilters({
+    columns: allColumns,
+    rows,
+    pagination,
   });
-
-  const isColumnInFilters = (col: Column<any, any>) =>
-    state.filterModel.items.some((item) => item.columnName === col.field);
-
-  const handlePageChange: TablePaginationProps['onPageChange'] = (
-    _event,
-    newPage
-  ) => {
-    if (!state.paginationModel) {
-      return;
-    }
-    const newState: State = {
-      ...state,
-      paginationModel: { ...state.paginationModel, page: newPage },
-    };
-    setState(newState);
-  };
-  const handleRowsPerPageChange: TablePaginationProps['onRowsPerPageChange'] = (
-    _event
-  ) => {
-    if (!state.paginationModel) {
-      return;
-    }
-    const newRowsPerPage = parseInt(_event.target.value);
-    const newState: State = {
-      ...state,
-      paginationModel: {
-        ...(state.paginationModel || { page: 0 }),
-        rowsPerPage: newRowsPerPage,
-      },
-    };
-
-    setState(newState);
-  };
-
-  const getColumnSorting = (col: Column<any, any>) =>
-    state.sortModel.find((item) => item.field === col.field);
 
   const renderCol = (row: any, { render, field }: Column<any, any>) => {
     if (isKeyOf(field, row)) {
-      return render ? render(row, row[field]) : row[field];
+      return render ? render(row, row[field], dependencies || {}) : row[field];
     } else if (render) {
-      return render(row, null);
+      return render(row, null, dependencies || {});
     } else {
       throw new Error(`Should have valid field or render. Either "${field}"\n
       is not a key of row, or there is no render`);
     }
   };
 
-  if (!rowCellStyle) rowCellStyle = {};
-  if (rowAlign === 'center') {
-    rowCellStyle = {
-      textAlign: 'center',
-      verticalAlign: 'middle',
-    };
-  }
+  const cellStyle = useMemo<TableProps<R>['rowCellStyle']>(() => {
+    if (!rowCellStyle) return {};
+    if (rowAlign === 'center') {
+      return {
+        textAlign: 'center',
+        verticalAlign: 'middle',
+      };
+    }
+  }, [rowCellStyle]);
 
-  const [detailed, setDetailed] = useState(false);
-
-  const stateDependency = JSON.stringify(state);
   useEffect(() => {
     if (onStateChange) {
-      onStateChange(state);
+      onStateChange(filters);
     }
-  }, [stateDependency]);
+  }, [filters]);
 
   useEffect(() => {
     if (!usePreferences || !tableId || preferencesLoaded.current) return;
@@ -214,122 +178,114 @@ const Table = <R extends { [key: string]: any }>({
   };
 
   return (
-    <div
-      onMouseOver={() => setDetailed(true)}
-      onMouseLeave={() => setDetailed(false)}
+    <MuiTable
+      sx={{
+        border: '1px solid rgb(224, 224, 224)',
+        mb: 6,
+        ...extraTableStyle,
+      }}
     >
-      <MuiTable
-        sx={{
-          border: '1px solid rgb(224, 224, 224)',
-          mb: 6,
-          ...extraTableStyle,
-        }}
-      >
-        <TableHead>
-          {(!!filterableColumns.length || !!state.sortModel) && (
-            <TableRow>
-              <TableCell sx={{ padding: 1 }} colSpan={24}>
-                <Filters
-                  sortItems={state.sortModel}
-                  filterItems={state.filterModel.items || []}
-                  filterLinkOperatorOptions={filterLinkOperatorOptions}
-                  detailed={detailed}
-                  columns={allColumns}
-                  filterableColumns={filterableColumns}
-                  onSelectedColumns={handleSelectedColumns}
-                  setState={setState}
-                />
+      <TableHead>
+        {(!!filterableColumns.length || !!filters.sortModel) && (
+          <TableRow>
+            <TableCell sx={{ padding: 1 }} colSpan={24}>
+              <Filters
+                sortItems={filters.sortModel}
+                filterItems={filters.filterModel.items || []}
+                filterLinkOperatorOptions={filterLinkOperatorOptions}
+                columns={allColumns}
+                filterableColumns={filterableColumns}
+                onSelectedColumns={handleSelectedColumns}
+                setState={setFilters}
+              />
+            </TableCell>
+          </TableRow>
+        )}
+        <SortableRow columns={displayedColumns} onDropped={onDroppedColumn}>
+          {displayedColumns.map((col, index) => {
+            const { filters: colFilters, sort } = getColumnState(col);
+
+            return (
+              <DraggableCell key={index} col={col} id={index.toString()}>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                  <Typography sx={{ mr: 0.7 }} variant="subtitle2">
+                    {colTitle(col)}
+                  </Typography>
+
+                  {colFilters && <FilterIndicator />}
+                  {sort && (
+                    <SortingIndicator
+                      sort={sort.sort}
+                      sx={{ padding: 0.5 }}
+                      size="small"
+                    />
+                  )}
+
+                  {isColumnSortable(col) && (
+                    <SortingButton
+                      //? prevents the cell to drag when clicking on the button
+                      beforeOpen={(e) => e.stopPropagation()}
+                      col={col}
+                      sortState={filters.sortModel}
+                      setState={setFilters}
+                    />
+                  )}
+                </Box>
+              </DraggableCell>
+            );
+          })}
+        </SortableRow>
+      </TableHead>
+      <TableBody>
+        {filteredRows.map((row) => (
+          <TableRow key={rowKey(row)}>
+            {displayedColumns.map((col, colidx) => (
+              <TableCell
+                aria-labelledby={
+                  typeof col.title === 'string'
+                    ? columnId(col.title)
+                    : undefined
+                }
+                sx={{ ...cellStyle, ...(col.customSx || {}) }}
+                key={`${rowKey(row)}-${colidx}`}
+              >
+                {renderCol(row, col)}
               </TableCell>
-            </TableRow>
-          )}
-          <SortableRow columns={displayedColumns} onDropped={onDroppedColumn}>
-            {displayedColumns.map((col, index) => {
-              const columnSort = getColumnSorting(col);
-
-              return (
-                <DraggableCell key={index} col={col} id={index.toString()}>
-                  <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                    <Typography sx={{ mr: 0.7 }} variant="subtitle2">
-                      {colTitle(col)}
-                    </Typography>
-
-                    {isColumnInFilters(col) && (
-                      <FilterIndicator active={true} />
-                    )}
-                    {columnSort && (
-                      <SortingIndicator
-                        sort={columnSort.sort}
-                        sx={{ padding: 0.5 }}
-                        size="small"
-                      />
-                    )}
-
-                    {isColumnSortable(col) && (
-                      <SortingButton
-                        //? prevents the cell to drag when clicking on the button
-                        beforeOpen={(e) => e.stopPropagation()}
-                        col={col}
-                        sortState={state.sortModel}
-                        setState={setState}
-                      />
-                    )}
-                  </Box>
-                </DraggableCell>
-              );
-            })}
-          </SortableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={rowKey(row)}>
-              {displayedColumns.map((col, colidx) => (
-                <TableCell
-                  aria-labelledby={
-                    typeof col.title === 'string'
-                      ? columnId(col.title)
-                      : undefined
-                  }
-                  sx={{ ...rowCellStyle, ...(col.customSx || {}) }}
-                  key={`${rowKey(row)}-${colidx}`}
-                >
-                  {renderCol(row, col)}
+            ))}
+          </TableRow>
+        ))}
+        {!filteredRows.length && !loading && (
+          <TableRow>
+            <TableCell colSpan={displayedColumns.length}>
+              {noData || <NoData />}
+            </TableCell>
+          </TableRow>
+        )}
+        {loading &&
+          range(0, 3).map((idx) => (
+            <TableRow key={`skel-row-${idx}`}>
+              {displayedColumns.map((col, idx) => (
+                <TableCell key={`ske-${idx}`}>
+                  {col.skeletonProps && <Skeleton {...col.skeletonProps} />}
                 </TableCell>
               ))}
             </TableRow>
           ))}
-          {!rows.length && !loading && (
-            <TableRow>
-              <TableCell colSpan={displayedColumns.length}>
-                {noData || <NoData />}
-              </TableCell>
-            </TableRow>
+      </TableBody>
+      <TableFooter>
+        <TableRow>
+          {!!pagination && (
+            <TablePagination
+              count={pagination.total}
+              page={pagination.page}
+              onPageChange={handlePageChange}
+              rowsPerPage={pagination.rowsPerPage}
+              onRowsPerPageChange={handleRowsPerPageChange}
+            />
           )}
-          {loading &&
-            range(0, 3).map((idx) => (
-              <TableRow key={`skel-row-${idx}`}>
-                {displayedColumns.map((col, idx) => (
-                  <TableCell key={`ske-${idx}`}>
-                    {col.skeletonProps && <Skeleton {...col.skeletonProps} />}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            {!!pagination && (
-              <TablePagination
-                count={pagination.total}
-                page={pagination.page}
-                onPageChange={handlePageChange}
-                rowsPerPage={pagination.rowsPerPage}
-                onRowsPerPageChange={handleRowsPerPageChange}
-              />
-            )}
-          </TableRow>
-        </TableFooter>
-      </MuiTable>
-    </div>
+        </TableRow>
+      </TableFooter>
+    </MuiTable>
   );
 };
 

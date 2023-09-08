@@ -58,7 +58,7 @@ const DatasetTable = (props: DatasetTableProps) => {
       ),
       title: 'Name',
       filterSchema: {
-        byValue: true,
+        byIncludes: true,
       },
       name: 'Name',
     },
@@ -140,7 +140,7 @@ const DatasetTable = (props: DatasetTableProps) => {
   const handleTableStateChange = (state: State) => {
     const pFilters: Partial<typeof filters> = {};
     const searchByFilter = state.filterModel.items.find(
-      (item) => item.columnName === 'Name' && item.operatorValue === 'eq'
+      (item) => item.columnName === 'Name' && item.operatorValue === 'inc'
     );
 
     if (searchByFilter) {

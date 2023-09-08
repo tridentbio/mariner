@@ -141,6 +141,7 @@ const MetricsTable = ({
       }}
       rowKey={(row) => row.key}
       sortingMode="client"
+      //TODO: NEED TO REFACTORY THIS
       sortModel={sortModel}
       columns={columns}
       rows={sortRows(rows, sortModel)}

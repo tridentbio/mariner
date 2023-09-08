@@ -1,4 +1,4 @@
-import { FilterAltOffRounded, FilterAltRounded } from '@mui/icons-material';
+import { FilterAltRounded } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
 import { MouseEventHandler } from 'react';
 

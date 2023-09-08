@@ -56,11 +56,8 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
   const [filterEq, setFilterEq] = useState('');
   const [filterLt, setFilterLt] = useState(0);
   const [filterGt, setFilterGt] = useState(0);
-  const [filterContains, setFilterContains] = useState('');
+  const [filterIncludes, setFilterIncludes] = useState('');
   const [containsValue, setContainsValue] = useState<any[]>([]);
-
-  const byContainsIsBoolean = (col.filterSchema?.byContains as any) === true;
-  const byContainsIsObject = !!col.filterSchema?.byContains?.options;
 
   return (
     <Box
@@ -75,6 +72,16 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
           label="Equals"
           value={filterEq}
           onChange={(event) => setFilterEq(event.target.value)}
+        />
+      )}
+      {col.filterSchema?.byIncludes && (
+        <FilterInput
+          onDone={() => {
+            onAddFilter(col.field, 'inc', filterIncludes);
+          }}
+          label="Includes"
+          value={filterIncludes}
+          onChange={(event) => setFilterIncludes(event.target.value)}
         />
       )}
       {col.filterSchema?.byLessThan && (
@@ -98,19 +105,8 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
           label="Greater Than"
         />
       )}
-      {byContainsIsBoolean && (
-        <FilterInput
-          onDone={() => {
-            onAddFilter(col.field, 'ct', filterContains);
-            setFilterContains('');
-          }}
-          label="Contains"
-          value={filterContains}
-          onChange={(event) => setFilterContains(event.target.value)}
-        />
-      )}
 
-      {byContainsIsObject && (
+      {col.filterSchema?.byContains && (
         <Box {...inputContainerStyle}>
           <Autocomplete
             multiple
