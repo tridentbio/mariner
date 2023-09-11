@@ -21,115 +21,6 @@ interface ColumnPickerProps {
 }
 
 export const ColumnPicker = (props: ColumnPickerProps) => {
-  /*   const [data, setData] = useState<TreeNode[]>([
-    {
-      id: '1',
-      name: 'Parent 1',
-      children: [
-        {
-          id: '2',
-          name: 'Child 1',
-          parent: '1',
-          children: [
-            {
-              id: '5',
-              name: 'Grandchild 1',
-              parent: '2',
-              children: [
-                {
-                  id: '9',
-                  name: 'Great-grandchild 1',
-                  parent: '5',
-                },
-                {
-                  id: '10',
-                  name: 'Great-grandchild 2',
-                  parent: '5',
-                },
-              ],
-            },
-            {
-              id: '6',
-              name: 'Grandchild 2',
-              parent: '2',
-              children: [
-                {
-                  id: '11',
-                  name: 'Great-grandchild 3',
-                  parent: '6',
-                },
-                {
-                  id: '12',
-                  name: 'Great-grandchild 4',
-                  parent: '6',
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: '3',
-          name: 'Child 2',
-          parent: '1',
-          children: [
-            {
-              id: '7',
-              name: 'Grandchild x',
-              parent: '3',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: '4',
-      name: 'Parent 2',
-      children: [
-        {
-          id: '8',
-          name: 'Child 3',
-          parent: '4',
-          children: [
-            {
-              id: '13',
-              name: 'Grandchild 4',
-              parent: '8',
-              children: [
-                {
-                  id: '14',
-                  name: 'Great-grandchild 5',
-                  parent: '13',
-                },
-                {
-                  id: '15',
-                  name: 'Great-grandchild 6',
-                  parent: '13',
-                },
-              ],
-            },
-            {
-              id: '16',
-              name: 'Grandchild 5',
-              parent: '8',
-              children: [
-                {
-                  id: '17',
-                  name: 'Great-grandchild 7',
-                  parent: '16',
-                },
-                {
-                  id: '18',
-                  name: 'Great-grandchild y',
-                  parent: '16',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ]); */
-  const [data, setData] = useState<TreeNode[]>(props.treeView);
   const [expandedTrees, setExpandedTrees] = useState<string[]>([]);
   const {
     filteredNodes,
@@ -137,10 +28,10 @@ export const ColumnPicker = (props: ColumnPickerProps) => {
     onColumnFilterChange,
     resetFilters,
     nodeExistsInHierarchy,
-  } = useTreeFilters({ treeView: data });
+  } = useTreeFilters({ treeView: props.treeView });
 
   const expandAll = () => {
-    const nodesToExpandIdList = data
+    const nodesToExpandIdList = props.treeView
       .map((node) => {
         let nodeStore: string[] = [node.id];
 
@@ -214,7 +105,7 @@ export const ColumnPicker = (props: ColumnPickerProps) => {
           />
         </Box>
         <TreeView
-          treeView={data}
+          treeView={props.treeView}
           filteredTreeView={filteredNodes}
           expanded={expandedTrees}
           multiSelect
@@ -226,18 +117,25 @@ export const ColumnPicker = (props: ColumnPickerProps) => {
             padding: 1,
             height: props.height ? props.height - 100 : 300,
           }}
-          renderTreeItemLabel={(node, params) => (
-            <>
-              <Checkbox
-                checked={params.selectedNodes.indexOf(node.id) !== -1}
-                tabIndex={-1}
-                disableRipple
-                size="small"
-                onClick={(event) => params.handleNodeSelect(event, node.id)}
-              />
-              <Typography variant="caption">{node.name}</Typography>
-            </>
-          )}
+          renderTreeItemLabel={(node, params) => {
+            const isCurrentNodeChecked =
+              params.selectedNodes.indexOf(node.id) !== -1;
+            const isOnlyOneChecked = params.selectedNodes.length == 1;
+
+            return (
+              <>
+                <Checkbox
+                  checked={isCurrentNodeChecked}
+                  tabIndex={-1}
+                  disableRipple
+                  size="small"
+                  disabled={isOnlyOneChecked && isCurrentNodeChecked}
+                  onClick={(event) => params.handleNodeSelect(event, node.id)}
+                />
+                <Typography variant="caption">{node.name}</Typography>
+              </>
+            );
+          }}
         />
       </Box>
     </Popover>

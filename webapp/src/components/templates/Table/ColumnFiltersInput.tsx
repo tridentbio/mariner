@@ -36,6 +36,9 @@ const FilterInput = ({
       label={label}
       value={value}
       onChange={onChange}
+      onKeyDown={(e) => {
+        e.key === 'Enter' && onDone();
+      }}
     ></TextField>
     <IconButton
       onClick={onDone}

@@ -1,3 +1,4 @@
+import { TableFilterContext } from '@components/organisms/Table/hooks/useTableFilters';
 import { ArrowDownward, ArrowUpward, MoreVert } from '@mui/icons-material';
 import {
   Box,
@@ -8,13 +9,11 @@ import {
   Popover,
   styled,
 } from '@mui/material';
-import React, { MouseEvent } from 'react';
-import { Column, SortModel, State } from './types';
+import React, { MouseEvent, useContext } from 'react';
+import { Column } from './types';
 
 interface SortingButtonProps extends Pick<IconButtonProps, 'sx' | 'size'> {
   col: Column<any, any>;
-  sortState: SortModel[];
-  setState: React.Dispatch<React.SetStateAction<State>>;
   beforeOpen?: (e: MouseEvent) => void;
 }
 
@@ -24,8 +23,6 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
 
 const SortingButton: React.FC<SortingButtonProps> = ({
   col,
-  sortState,
-  setState,
   beforeOpen,
   sx,
   size = 'small',
@@ -33,6 +30,11 @@ const SortingButton: React.FC<SortingButtonProps> = ({
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
+
+  const {
+    filters: { sortModel },
+    setFilters,
+  } = useContext(TableFilterContext);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -46,7 +48,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     col: Column<any, any>,
     ordering: 'asc' | 'desc'
   ): boolean => {
-    return sortState.some(
+    return sortModel.some(
       (item) => item.field === col.field && ordering === item.sort
     );
   };
@@ -56,7 +58,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     ordering: 'asc' | 'desc'
   ) => {
     let alreadySortedByThisField = false;
-    const newSortState = sortState.map((item) => {
+    const newSortState = sortModel.map((item) => {
       if (item.field === col.field) {
         alreadySortedByThisField = true;
         item.sort = ordering;
@@ -66,7 +68,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     if (!alreadySortedByThisField) {
       newSortState.push({ field: col.field, sort: ordering });
     }
-    setState((prev) => ({ ...prev, sortModel: newSortState }));
+    setFilters((prev) => ({ ...prev, sortModel: newSortState }));
   };
   return (
     <Box onMouseDown={beforeOpen}>

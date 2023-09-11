@@ -8,43 +8,37 @@ import { Button, Chip } from '@mui/material';
 import { Box } from '@mui/system';
 import {
   Column,
-  FilterItem,
   OperatorValue,
   SortModel,
-  State,
 } from 'components/templates/Table/types';
 import { usePopoverState } from 'hooks/usePopoverState';
-import React, { useMemo, useRef } from 'react';
+import { useContext, useRef } from 'react';
 import ChipFilterContain from './ChipFilterContain';
 import { ColumnPicker } from './ColumnPicker';
 import { OperatorsFilterMenu } from './OperatorsFilterMenu';
+import { TableFilterContext } from './hooks/useTableFilters';
 
 export interface FilterProps {
   filterLinkOperatorOptions?: ('and' | 'or')[];
-  filterItems: FilterItem[];
   columns: Column<any, any>[];
-  sortItems: SortModel[];
-  filterableColumns: Column<any, any>[];
   onSelectedColumns?: (columnsIdList: string[]) => void;
-  setState: React.Dispatch<React.SetStateAction<State>>;
+  treeView?: TreeNode[];
 }
-
-/* const StyledHeaderOptionButton = styled(Button)(({ theme }) => ({
-  bborderRadius: 2,
-  paddingX: 3,
-})); */
 
 const Filters = ({
   filterLinkOperatorOptions,
   columns,
-  filterItems,
-  sortItems,
-  filterableColumns,
-  setState,
   onSelectedColumns,
+  treeView,
 }: FilterProps) => {
   const addFilterPopover = usePopoverState();
   const columnPickerPopover = usePopoverState();
+
+  const {
+    filters: { filterModel, sortModel },
+    setFilters,
+    filterableColumns,
+  } = useContext(TableFilterContext);
 
   const operationTitle = (op: OperatorValue) => {
     const operationMap = {
@@ -57,33 +51,21 @@ const Filters = ({
     return operationMap[op as keyof typeof operationMap];
   };
 
-  const columnsTreeView = useMemo<TreeNode[]>(() => {
-    return [
-      {
-        id: 'menu',
-        name: 'Test',
-        children: [
-          {
-            id: 'menu-2',
-            name: 'Test 2',
-            children: columns
-              .filter((col) => !col.fixed)
-              .map((column) => ({
-                id: column.name as string,
-                name: column.name,
-                parent: 'menu',
-              })),
-          },
-        ],
-      },
-    ];
-  }, [columns]);
+  const displayedColumns = useRef<Column<any, any>[]>(columns);
+
+  const isPickableColumn = (column: Column<any, any>) =>
+    !column.hidden && !column.fixed;
+
+  const defaultTreeView = useRef(
+    columns.filter(isPickableColumn).map((column) => ({
+      id: column.name as string,
+      name: column.name,
+    }))
+  );
 
   const defaultSelectedColumns = columns
-    .filter((col) => !col.hidden)
+    .filter(isPickableColumn)
     .map((col) => col.name as string);
-
-  const displayedColumns = useRef<Column<any, any>[]>(columns);
 
   return (
     <>
@@ -97,7 +79,7 @@ const Filters = ({
           onClose: columnPickerPopover.handleClose,
         }}
         open={columnPickerPopover.open}
-        treeView={columnsTreeView}
+        treeView={treeView || defaultTreeView.current}
         height={480}
         onChange={(selectedColumns) => {
           displayedColumns.current = columns.filter((col) =>
@@ -109,149 +91,155 @@ const Filters = ({
         defaultSelectedColumns={defaultSelectedColumns}
       />
 
-      <Box sx={{ width: '100%' }}>
-        {filterableColumns?.length ? (
-          <>
-            <OperatorsFilterMenu
-              open={addFilterPopover.open}
-              anchorEl={addFilterPopover.anchorEl}
-              onClose={addFilterPopover.handleClose}
-              columns={columns}
-              filterLinkOperatorOptions={filterLinkOperatorOptions}
-              filterableColumns={filterableColumns}
-              setState={setState}
-            />
+      <Box
+        sx={{
+          width: 'fit-content',
+          position: 'sticky',
+          left: 0,
+        }}
+      >
+        <Box>
+          {filterableColumns?.length ? (
+            <>
+              <OperatorsFilterMenu
+                open={addFilterPopover.open}
+                anchorEl={addFilterPopover.anchorEl}
+                onClose={addFilterPopover.handleClose}
+                columns={columns}
+                filterLinkOperatorOptions={filterLinkOperatorOptions}
+              />
+              <Button
+                startIcon={<Add />}
+                onClick={addFilterPopover.handleClickOpenPopover}
+                sx={{
+                  borderRadius: 2,
+                  paddingX: 3,
+                }}
+                variant="text"
+              >
+                Add Filter
+              </Button>
+            </>
+          ) : null}
+
+          <Button
+            startIcon={<FormatListBulleted />}
+            endIcon={<ExpandMore />}
+            sx={{
+              borderRadius: 2,
+              paddingX: 3,
+            }}
+            color="primary"
+            onClick={columnPickerPopover.handleClickOpenPopover}
+          >
+            Columns
+          </Button>
+
+          {filterModel.items?.length > 0 && (
             <Button
-              startIcon={<Add />}
-              onClick={addFilterPopover.handleClickOpenPopover}
+              startIcon={<RemoveCircle />}
+              size="small"
               sx={{
                 borderRadius: 2,
                 paddingX: 3,
               }}
               variant="text"
+              onClick={() =>
+                setFilters((prev) => ({ ...prev, filterModel: { items: [] } }))
+              }
             >
-              Add Filter
+              Clear all filters
             </Button>
-          </>
+          )}
+        </Box>
+
+        {filterModel.items?.length > 0 ? (
+          <Box pt={0.8}>
+            {filterModel.items.map((item, index) => {
+              const column = displayedColumns.current.find(
+                (col) => col?.field === item.columnName
+              );
+              if (!column) return;
+
+              return item.operatorValue === 'ct' ? (
+                <ChipFilterContain
+                  onDelete={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      filterModel: {
+                        items: filterModel.items.filter(
+                          (_, itemIndex) => itemIndex !== index
+                        ),
+                      },
+                    }))
+                  }
+                  key={index}
+                  filterItem={item}
+                  column={column}
+                  generateOperationTitle={operationTitle}
+                />
+              ) : (
+                <Chip
+                  onDelete={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      filterModel: {
+                        items: filterModel.items.filter(
+                          (_, itemIndex) => itemIndex !== index
+                        ),
+                      },
+                    }))
+                  }
+                  sx={{ mr: 1 }}
+                  key={index}
+                  label={`"${item.columnName}" ${operationTitle(
+                    item.operatorValue
+                  )} ${item.value}`}
+                />
+              );
+            })}
+          </Box>
         ) : null}
 
-        <Button
-          startIcon={<FormatListBulleted />}
-          endIcon={<ExpandMore />}
+        <Box
           sx={{
-            borderRadius: 2,
-            paddingX: 3,
+            width: '100%',
+            paddingTop: sortModel.length ? 1 : 0,
           }}
-          color="primary"
-          onClick={columnPickerPopover.handleClickOpenPopover}
         >
-          Columns
-        </Button>
-
-        {filterItems?.length > 0 && (
-          <Button
-            startIcon={<RemoveCircle />}
-            size="small"
-            sx={{
-              borderRadius: 2,
-              paddingX: 3,
-            }}
-            variant="text"
-            onClick={() =>
-              setState((prev) => ({ ...prev, filterModel: { items: [] } }))
-            }
-          >
-            Clear all filters
-          </Button>
-        )}
-      </Box>
-
-      {filterItems?.length > 0 ? (
-        <Box pt={0.8}>
-          {filterItems.map((item, index) => {
+          {sortModel.map((item: SortModel, index) => {
             const column = displayedColumns.current.find(
-              (col) => col?.field === item.columnName
+              (col) => col.field === item.field
             );
-            if (!column) return;
-
-            return item.operatorValue === 'ct' ? (
-              <ChipFilterContain
-                onDelete={() =>
-                  setState((prev) => ({
-                    ...prev,
-                    filterModel: {
-                      items: filterItems.filter(
-                        (_, itemIndex) => itemIndex !== index
-                      ),
-                    },
-                  }))
-                }
-                key={index}
-                filterItem={item}
-                column={column}
-                generateOperationTitle={operationTitle}
-              />
-            ) : (
+            if (!column) return null;
+            return (
               <Chip
-                onDelete={() =>
-                  setState((prev) => ({
+                onDelete={(_e) =>
+                  setFilters((prev) => ({
                     ...prev,
-                    filterModel: {
-                      items: filterItems.filter(
-                        (_, itemIndex) => itemIndex !== index
-                      ),
-                    },
+                    sortModel: prev.sortModel.filter(
+                      (sorted) => sorted.field !== item.field
+                    ),
                   }))
                 }
-                sx={{ mr: 1 }}
-                key={index}
-                label={`"${item.columnName}" ${operationTitle(
-                  item.operatorValue
-                )} ${item.value}`}
+                sx={{ mr: 1, py: 1, fontSize: 14 }}
+                key={column.name + String(item.sort)}
+                label={`${column.name} ${item.sort.toUpperCase()}`}
               />
             );
           })}
-        </Box>
-      ) : null}
 
-      <Box
-        sx={{
-          width: '100%',
-          paddingTop: sortItems.length ? 1 : 0,
-        }}
-      >
-        {sortItems.map((item: SortModel, index) => {
-          const column = displayedColumns.current.find(
-            (col) => col.field === item.field
-          );
-          if (!column) return null;
-          return (
+          {sortModel.length > 0 && (
             <Chip
-              onDelete={(_e) =>
-                setState((prev) => ({
-                  ...prev,
-                  sortModel: prev.sortModel.filter(
-                    (sorted) => sorted.field !== item.field
-                  ),
-                }))
-              }
-              sx={{ mr: 1, py: 1, fontSize: 14 }}
-              key={column.name + String(item.sort)}
-              label={`${column.name} ${item.sort.toUpperCase()}`}
+              sx={{ fontSize: 15 }}
+              label="Clear all sortings"
+              icon={<RemoveCircle fontSize="small" />}
+              onClick={() => setFilters((prev) => ({ ...prev, sortModel: [] }))}
+              color="primary"
+              variant="outlined"
             />
-          );
-        })}
-
-        {sortItems.length > 0 && (
-          <Chip
-            sx={{ fontSize: 15 }}
-            label="Clear all sortings"
-            icon={<RemoveCircle fontSize="small" />}
-            onClick={() => setState((prev) => ({ ...prev, sortModel: [] }))}
-            color="primary"
-            variant="outlined"
-          />
-        )}
+          )}
+        </Box>
       </Box>
     </>
   );

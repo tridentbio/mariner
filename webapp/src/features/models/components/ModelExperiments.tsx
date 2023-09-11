@@ -58,28 +58,17 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
 
   const handleTableStateChange = (state: State) => {
     const newQueryParams: QueryParams = {};
+
     if (state.paginationModel) {
       const { page, rowsPerPage: perPage } = state.paginationModel;
-      newQueryParams.page = page;
-      newQueryParams.perPage = perPage;
-    }
-    newQueryParams.stage = state.filterModel.items?.find(
-      (current) => current.columnName === 'stage'
-    )?.value;
 
-    if (state.sortModel.length) {
-      newQueryParams.orderBy = state.sortModel.reduce((acc, item, index) => {
-        const signal = item.sort === 'asc' ? '+' : '-';
-        if (!index) {
-          return `${signal}${item.field}`;
-        }
-        acc + `,${signal}${item.field}`;
-        return acc;
-      }, '');
-    } else {
-      newQueryParams.orderBy = queryParamsInitialState.orderBy;
+      if (page !== queryParams.page || perPage !== queryParams.perPage) {
+        newQueryParams.page = page;
+        newQueryParams.perPage = perPage;
+
+        setQueryParams((prev) => ({ ...prev, ...newQueryParams }));
+      }
     }
-    setQueryParams((prev) => ({ ...prev, ...newQueryParams }));
   };
 
   const columns: Column<Experiment, keyof Experiment>[] = [

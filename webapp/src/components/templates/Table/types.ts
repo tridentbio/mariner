@@ -10,6 +10,7 @@ export type Column<
   D extends object = { [key: string]: any }
 > = {
   render?: (row: R, value: any, dependencies: D) => ReactNode;
+  valueGetter?: (row: R, dependencies: D) => any;
   field?: K;
   name: string;
   title?: ReactNode;
@@ -21,11 +22,7 @@ export type Column<
     byIncludes?: boolean;
     byLessThan?: boolean;
     byGreaterThan?: boolean;
-    byContains?: {
-      options: O[];
-      optionKey: (opt: O) => string | number;
-      getLabel: (opt: O) => string;
-    };
+    byContains?: ContainsFilterSchema<O>;
   };
   /**
    * Defines style and filtering inputs for the column
@@ -35,6 +32,12 @@ export type Column<
   sortable?: boolean;
   hidden?: boolean;
   fixed?: boolean;
+};
+
+export type ContainsFilterSchema<O> = {
+  options: O[];
+  optionKey: (opt: O) => string | number;
+  getLabel: (opt: O) => string;
 };
 
 export type OperatorValue = 'eq' | 'lt' | 'gt' | 'ct' | 'inc';
@@ -66,7 +69,6 @@ export type State = {
 
 export interface TableProps<R extends { [key: string]: any }> {
   filterLinkOperatorOptions?: ('and' | 'or')[];
-  sortingMode?: 'client' | 'server';
   columns: Column<R, keyof R | null>[];
   rows: R[];
   rowKey: (row: R) => string | number;
@@ -80,6 +82,7 @@ export interface TableProps<R extends { [key: string]: any }> {
   usePreferences?: boolean;
   tableId?: string;
   dependencies?: { [key: string]: any };
+  columnTree?: TreeNode[];
 }
 
 export interface TablePreferences {

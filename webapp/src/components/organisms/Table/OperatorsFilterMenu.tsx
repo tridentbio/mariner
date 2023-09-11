@@ -19,15 +19,13 @@ import {
   TextField,
   styled,
 } from '@mui/material';
-import { useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { NonUndefined, title } from 'utils';
 import { FilterProps } from './Filters';
+import { TableFilterContext } from './hooks/useTableFilters';
 
 interface OperatorsFilterMenuProps
-  extends Pick<
-    FilterProps,
-    'filterLinkOperatorOptions' | 'columns' | 'filterableColumns' | 'setState'
-  > {
+  extends Pick<FilterProps, 'filterLinkOperatorOptions' | 'columns'> {
   open: boolean;
   anchorEl: HTMLElement | null;
   onClose?: () => void;
@@ -48,10 +46,10 @@ export const OperatorsFilterMenu = ({
   onClose,
   filterLinkOperatorOptions,
   columns,
-  filterableColumns,
-  setState,
 }: OperatorsFilterMenuProps) => {
   const DEFAULT_OPERATOR = 'and';
+
+  const { setFilters, filterableColumns } = useContext(TableFilterContext);
 
   const operatorOptions = useMemo<OperatorOptions>(() => {
     if (!filterLinkOperatorOptions) return [DEFAULT_OPERATOR];
@@ -96,7 +94,7 @@ export const OperatorsFilterMenu = ({
     operatorValue: OperatorValue,
     value: any
   ) => {
-    setState((prev) => ({
+    setFilters((prev) => ({
       ...prev,
       filterModel: {
         items: [
@@ -117,7 +115,7 @@ export const OperatorsFilterMenu = ({
   const onFilterLinkChange = (newLink: 'and' | 'or') => {
     setLinkOperator(newLink);
 
-    setState((prev) => ({
+    setFilters((prev) => ({
       ...prev,
       filterModel: { ...prev.filterModel, linkOperator: newLink },
     }));

@@ -3,7 +3,7 @@ import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import DownloadIcon from '@mui/icons-material/Download';
 import { downloadDataset } from '../datasetSlice';
 import { useAppSelector } from 'app/hooks';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Table from 'components/templates/Table';
 import { Column, State } from 'components/templates/Table/types';
 import AppLink from 'components/atoms/AppLink';
@@ -24,6 +24,9 @@ const DatasetTable = (props: DatasetTableProps) => {
   const { datasets, total, filters } = useAppSelector(
     (state) => state.datasets
   );
+
+  const [pFilters, setPFilters] = useState<Partial<typeof filters>>(filters);
+
   const [fetchDatasets, { isLoading }] = datasetsApi.useLazyGetDatasetsQuery();
 
   useEffect(() => {
@@ -138,56 +141,42 @@ const DatasetTable = (props: DatasetTableProps) => {
   ];
 
   const handleTableStateChange = (state: State) => {
-    const pFilters: Partial<typeof filters> = {};
-    const searchByFilter = state.filterModel.items.find(
-      (item) => item.columnName === 'Name' && item.operatorValue === 'inc'
-    );
+    if (state.paginationModel) {
+      const { page, rowsPerPage: perPage } = state.paginationModel;
 
-    if (searchByFilter) {
-      pFilters.searchByName = searchByFilter.value;
+      if (page !== pFilters.page || perPage !== pFilters.perPage) {
+        pFilters.page = page;
+        pFilters.perPage = perPage;
+
+        const newFilters: Parameters<typeof fetchDatasets>[0] = {
+          page: state.paginationModel?.page || 0,
+          perPage: state.paginationModel?.rowsPerPage || filters.perPage,
+          ...pFilters,
+        };
+
+        setPFilters(pFilters);
+
+        fetchDatasets(newFilters);
+      }
     }
-    const rowsSort = state.sortModel.find((item) => item.field === 'rows');
-    const colsSort = state.sortModel.find((item) => item.field === 'columns');
-    const createdAtSort = state.sortModel.find(
-      (item) => item.field === 'createdAt'
-    );
-
-    if (rowsSort) pFilters.sortByRows = rowsSort.sort;
-    if (colsSort) pFilters.sortByCols = colsSort.sort;
-    if (createdAtSort) pFilters.sortByCreatedAt = createdAtSort.sort;
-    const newFilters: Parameters<typeof fetchDatasets>[0] = {
-      page: state.paginationModel?.page || 0,
-      perPage: state.paginationModel?.rowsPerPage || filters.perPage,
-      ...pFilters,
-    };
-
-    fetchDatasets(newFilters);
   };
 
   return (
-    <div
-      style={{
-        overflowX: 'scroll',
-        width: '100%',
-        overflowY: 'clip',
+    <Table<Dataset>
+      loading={isLoading}
+      onStateChange={handleTableStateChange}
+      rows={datasets}
+      columns={columns}
+      filterLinkOperatorOptions={['or', 'and']}
+      rowKey={(row) => row.id}
+      pagination={{
+        total: total,
+        rowsPerPage: filters?.perPage || 25,
+        page: filters?.page || 0,
       }}
-    >
-      <Table<Dataset>
-        loading={isLoading}
-        onStateChange={handleTableStateChange}
-        rows={datasets}
-        columns={columns}
-        filterLinkOperatorOptions={['or', 'and']}
-        rowKey={(row) => row.id}
-        pagination={{
-          total: total,
-          rowsPerPage: filters?.perPage || 25,
-          page: filters?.page || 0,
-        }}
-        tableId="datasets-list"
-        usePreferences
-      />
-    </div>
+      tableId="datasets-list"
+      usePreferences
+    />
   );
 };
 

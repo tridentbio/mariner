@@ -212,7 +212,7 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
     });
 
   return (
-    <div style={{ width: '100%', overflowX: 'auto', display: 'block' }}>
+    <>
       {fixedTab === undefined && (
         <Tabs value={option} onChange={(_, v) => setOption(v)}>
           {TabOptions.map((tab, index) => (
@@ -241,7 +241,7 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         tableId="deployments-list"
         usePreferences
       />
-    </div>
+    </>
   );
 };
 

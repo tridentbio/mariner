@@ -79,6 +79,27 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
           getLabel: (option) => option.label,
         },
       },
+      valueGetter: (
+        model,
+        { experimentsByVersion }
+      ): Experiment['stage'] | undefined => {
+        if (!experimentsByVersion) return undefined;
+
+        const modelVersionExperiments = experimentsByVersion[model.id];
+
+        if (!modelVersionExperiments) return 'NOT RUNNING';
+
+        const { successful, failed, running, notstarted } = sampleExperiment(
+          modelVersionExperiments
+        );
+
+        if (successful) return 'SUCCESS';
+        else if (running) return 'RUNNING';
+        else if (failed) return 'ERROR';
+        else if (notstarted) return 'NOT RUNNING';
+
+        return undefined;
+      },
     },
     {
       title: 'Created At',
@@ -88,66 +109,9 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
     },
   ];
 
-  const makeFilterFunctionFromFilters =
-    (filterModel: FilterModel) => (experiment: ModelVersion) => {
-      type FilterRoutine = {
-        [colField in Column<any, any>['field']]: (
-          experiment: ModelVersion,
-          op: OperatorValue,
-          value: any
-        ) => boolean;
-      };
-
-      const filterRoutines: FilterRoutine = {
-        id: (experiment, op, value) => {
-          if (op === 'ct') {
-            if (!experimentsByVersion) return false;
-
-            const experiments = experimentsByVersion[experiment.id];
-
-            if (!experiments) return false;
-
-            const { successful, failed, running, notstarted } =
-              sampleExperiment(experiments);
-
-            const result = value.some(
-              (stage: Experiment['stage']) =>
-                (stage === 'RUNNING' && !!running) ||
-                (stage === 'NOT RUNNING' && !!notstarted) ||
-                (stage === 'SUCCESS' && !!successful) ||
-                (stage === 'ERROR' && !!failed)
-            );
-
-            return result;
-          }
-
-          return true;
-        },
-      };
-
-      const result = filterModel.items.reduce((acc, item) => {
-        if (filterRoutines[item.columnName])
-          acc = filterRoutines[item.columnName](
-            experiment,
-            item.operatorValue,
-            item.value
-          );
-
-        return acc;
-      }, true);
-
-      return result;
-    };
-  const handleFilterChange = (filterModel: FilterModel) => {
-    setFilteredVersions(
-      versions.filter(makeFilterFunctionFromFilters(filterModel))
-    );
-  };
-
   return (
     <Box>
       <Table
-        onStateChange={(state) => handleFilterChange(state.filterModel)}
         filterLinkOperatorOptions={['or']}
         rowKey={(row) => row.id}
         //TODO: Use TS to implement a way to the table component to accept column dependency types and pass it to the render function

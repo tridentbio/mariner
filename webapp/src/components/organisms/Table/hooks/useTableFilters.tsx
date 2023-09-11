@@ -1,48 +1,20 @@
 import { Column, TableProps } from '@components/templates/Table';
 import { State } from '@components/templates/Table/types';
 import { TablePaginationProps } from '@mui/material';
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { deepClone } from '@utils';
+import { createContext, useMemo, useState } from 'react';
+import { filterRows } from './filterValidation';
 
-interface TableContextProps {
-  editable: boolean;
-  setEditable: React.Dispatch<React.SetStateAction<boolean>>;
-  defaultExpanded: boolean;
-}
-
-// @ts-ignore
-/* const TableContext = createContext<TableContextProps>({});
-
-export const TableContextProvider = () => {
-  const [isEditable, setIsEditable] = useState<boolean>(editable);
-
-  return (
-    <TableContext.Provider
-      value={{
-        editable: isEditable,
-        setEditable: setIsEditable,
-        defaultExpanded,
-      }}
-    >
-      {children}
-    </TableContext.Provider>
-  );
-};
- */
-const useTableFilters = <R extends { [key: string]: any }>({
+export const useTableFilters = <R extends { [key: string]: any }>({
   columns,
   rows,
   pagination,
+  dependencies = {},
 }: {
   columns: Column<any, any>[];
   rows: TableProps<R>['rows'];
   pagination: TableProps<R>['pagination'];
+  dependencies: TableProps<R>['dependencies'];
 }) => {
   const [filters, setFilters] = useState<State>({
     filterModel: { items: [] },
@@ -55,7 +27,28 @@ const useTableFilters = <R extends { [key: string]: any }>({
     [columns]
   );
 
-  const filteredRows = useMemo(() => rows, [rows]);
+  const filteredRows = useMemo(() => {
+    let data = deepClone(
+      filterRows(filters.filterModel, columns, rows, dependencies)
+    ) as R[];
+
+    if (filters.sortModel.length) {
+      data = sortRows(data);
+    }
+
+    return data;
+  }, [rows, filters.filterModel, filters.sortModel]);
+
+  const sortRows = (rowsList: R[]) => {
+    return rowsList.sort((a, b) => {
+      for (let sort of filters.sortModel) {
+        if (a[sort.field] > b[sort.field]) return sort.sort == 'asc' ? 1 : -1;
+        if (a[sort.field] < b[sort.field]) return sort.sort == 'asc' ? -1 : 1;
+      }
+
+      return 0;
+    });
+  };
 
   const handlePageChange: TablePaginationProps['onPageChange'] = (
     _event,
@@ -106,8 +99,6 @@ const useTableFilters = <R extends { [key: string]: any }>({
     };
   };
 
-  useEffect(() => {}, [filters]);
-
   return {
     filterableColumns,
     filteredRows,
@@ -119,4 +110,11 @@ const useTableFilters = <R extends { [key: string]: any }>({
   };
 };
 
-export default useTableFilters;
+export interface TableFiltersContextProps {
+  filters: State;
+  setFilters: ReturnType<typeof useTableFilters>['setFilters'];
+  filterableColumns: ReturnType<typeof useTableFilters>['filterableColumns'];
+}
+
+//@ts-ignore
+export const TableFilterContext = createContext<TableFiltersContextProps>({});

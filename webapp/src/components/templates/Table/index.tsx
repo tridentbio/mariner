@@ -10,11 +10,16 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAppSelector } from '@app/hooks';
 import { DraggableCell } from '@components/organisms/Table/DraggableCell';
 import { SortableRow } from '@components/organisms/Table/SortableRow';
+import {
+  TableFilterContext,
+  TableFiltersContextProps,
+  useTableFilters,
+} from '@components/organisms/Table/hooks/useTableFilters';
 import { setPreference } from '@features/users/usersSlice';
 import { useAppDispatch } from '@hooks';
 import NoData from 'components/atoms/NoData';
@@ -24,8 +29,7 @@ import FilterIndicator from './FilterIndicator';
 import SortingButton from './SortingButton';
 import SortingIndicator from './SortingIndicator';
 import { colTitle, columnId, isColumnSortable } from './common';
-import { Column, State, TableProps } from './types';
-import useTableFilters from '@components/organisms/Table/hooks/useTableFilters';
+import { Column, TableProps } from './types';
 
 const isKeyOf = <O,>(
   key: string | number | symbol | null,
@@ -33,6 +37,28 @@ const isKeyOf = <O,>(
 ): key is keyof O => {
   if (!key) return false;
   return key in obj;
+};
+
+const TableFiltersContextProvider = ({
+  children,
+  filterableColumns,
+  filters,
+  setFilters,
+}: TableFiltersContextProps & { children: ReactNode }) => {
+  const params = useMemo<TableFiltersContextProps>(
+    () => ({
+      filters,
+      setFilters,
+      filterableColumns,
+    }),
+    [setFilters, filters]
+  );
+
+  return (
+    <TableFilterContext.Provider value={params}>
+      {children}
+    </TableFilterContext.Provider>
+  );
 };
 
 const Table = <R extends { [key: string]: any }>({
@@ -49,7 +75,8 @@ const Table = <R extends { [key: string]: any }>({
   extraTableStyle,
   usePreferences,
   tableId,
-  dependencies,
+  dependencies = {},
+  columnTree,
 }: TableProps<R>) => {
   const preferences = useAppSelector((state) => state.users.preferences);
   const preferencesLoaded = useRef<boolean>(false);
@@ -73,13 +100,14 @@ const Table = <R extends { [key: string]: any }>({
     columns: allColumns,
     rows,
     pagination,
+    dependencies,
   });
 
   const renderCol = (row: any, { render, field }: Column<any, any>) => {
     if (isKeyOf(field, row)) {
-      return render ? render(row, row[field], dependencies || {}) : row[field];
+      return render ? render(row, row[field], dependencies) : row[field];
     } else if (render) {
-      return render(row, null, dependencies || {});
+      return render(row, null, dependencies);
     } else {
       throw new Error(`Should have valid field or render. Either "${field}"\n
       is not a key of row, or there is no render`);
@@ -178,114 +206,123 @@ const Table = <R extends { [key: string]: any }>({
   };
 
   return (
-    <MuiTable
+    <Box
       sx={{
-        border: '1px solid rgb(224, 224, 224)',
-        mb: 6,
-        ...extraTableStyle,
+        width: '100%',
+        overflowX: 'auto',
+        display: 'block',
       }}
     >
-      <TableHead>
-        {(!!filterableColumns.length || !!filters.sortModel) && (
-          <TableRow>
-            <TableCell sx={{ padding: 1 }} colSpan={24}>
-              <Filters
-                sortItems={filters.sortModel}
-                filterItems={filters.filterModel.items || []}
-                filterLinkOperatorOptions={filterLinkOperatorOptions}
-                columns={allColumns}
-                filterableColumns={filterableColumns}
-                onSelectedColumns={handleSelectedColumns}
-                setState={setFilters}
-              />
-            </TableCell>
-          </TableRow>
-        )}
-        <SortableRow columns={displayedColumns} onDropped={onDroppedColumn}>
-          {displayedColumns.map((col, index) => {
-            const { filters: colFilters, sort } = getColumnState(col);
+      <MuiTable
+        sx={{
+          border: '1px solid rgb(224, 224, 224)',
+          mb: 6,
+          ...extraTableStyle,
+        }}
+      >
+        <TableFiltersContextProvider
+          filterableColumns={filterableColumns}
+          filters={filters}
+          setFilters={setFilters}
+        >
+          <TableHead>
+            {(!!filterableColumns.length || !!filters.sortModel) && (
+              <TableRow>
+                <TableCell sx={{ padding: 1 }} colSpan={24}>
+                  <Filters
+                    filterLinkOperatorOptions={filterLinkOperatorOptions}
+                    columns={allColumns}
+                    onSelectedColumns={handleSelectedColumns}
+                    treeView={columnTree}
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+            <SortableRow columns={displayedColumns} onDropped={onDroppedColumn}>
+              {displayedColumns.map((col, index) => {
+                const { filters: colFilters, sort } = getColumnState(col);
 
-            return (
-              <DraggableCell key={index} col={col} id={index.toString()}>
-                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                  <Typography sx={{ mr: 0.7 }} variant="subtitle2">
-                    {colTitle(col)}
-                  </Typography>
+                return (
+                  <DraggableCell key={index} col={col} id={index.toString()}>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                      <Typography sx={{ mr: 0.7 }} variant="subtitle2">
+                        {colTitle(col)}
+                      </Typography>
 
-                  {colFilters && <FilterIndicator />}
-                  {sort && (
-                    <SortingIndicator
-                      sort={sort.sort}
-                      sx={{ padding: 0.5 }}
-                      size="small"
-                    />
-                  )}
+                      {colFilters.length ? <FilterIndicator /> : null}
+                      {sort && (
+                        <SortingIndicator
+                          sort={sort.sort}
+                          sx={{ padding: 0.5 }}
+                          size="small"
+                        />
+                      )}
 
-                  {isColumnSortable(col) && (
-                    <SortingButton
-                      //? prevents the cell to drag when clicking on the button
-                      beforeOpen={(e) => e.stopPropagation()}
-                      col={col}
-                      sortState={filters.sortModel}
-                      setState={setFilters}
-                    />
-                  )}
-                </Box>
-              </DraggableCell>
-            );
-          })}
-        </SortableRow>
-      </TableHead>
-      <TableBody>
-        {filteredRows.map((row) => (
-          <TableRow key={rowKey(row)}>
-            {displayedColumns.map((col, colidx) => (
-              <TableCell
-                aria-labelledby={
-                  typeof col.title === 'string'
-                    ? columnId(col.title)
-                    : undefined
-                }
-                sx={{ ...cellStyle, ...(col.customSx || {}) }}
-                key={`${rowKey(row)}-${colidx}`}
-              >
-                {renderCol(row, col)}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
-        {!filteredRows.length && !loading && (
-          <TableRow>
-            <TableCell colSpan={displayedColumns.length}>
-              {noData || <NoData />}
-            </TableCell>
-          </TableRow>
-        )}
-        {loading &&
-          range(0, 3).map((idx) => (
-            <TableRow key={`skel-row-${idx}`}>
-              {displayedColumns.map((col, idx) => (
-                <TableCell key={`ske-${idx}`}>
-                  {col.skeletonProps && <Skeleton {...col.skeletonProps} />}
+                      {isColumnSortable(col) && (
+                        <SortingButton
+                          //? prevents the cell to drag when clicking on the button
+                          beforeOpen={(e) => e.stopPropagation()}
+                          col={col}
+                        />
+                      )}
+                    </Box>
+                  </DraggableCell>
+                );
+              })}
+            </SortableRow>
+          </TableHead>
+        </TableFiltersContextProvider>
+        <TableBody>
+          {filteredRows.map((row) => (
+            <TableRow key={rowKey(row)}>
+              {displayedColumns.map((col, colidx) => (
+                <TableCell
+                  aria-labelledby={
+                    typeof col.title === 'string'
+                      ? columnId(col.title)
+                      : undefined
+                  }
+                  sx={{ ...cellStyle, ...(col.customSx || {}) }}
+                  key={`${rowKey(row)}-${colidx}`}
+                >
+                  {renderCol(row, col)}
                 </TableCell>
               ))}
             </TableRow>
           ))}
-      </TableBody>
-      <TableFooter>
-        <TableRow>
-          {!!pagination && (
-            <TablePagination
-              count={pagination.total}
-              page={pagination.page}
-              onPageChange={handlePageChange}
-              rowsPerPage={pagination.rowsPerPage}
-              onRowsPerPageChange={handleRowsPerPageChange}
-            />
+          {!filteredRows.length && !loading && (
+            <TableRow>
+              <TableCell colSpan={displayedColumns.length}>
+                {noData || <NoData />}
+              </TableCell>
+            </TableRow>
           )}
-        </TableRow>
-      </TableFooter>
-    </MuiTable>
+          {loading &&
+            range(0, 3).map((idx) => (
+              <TableRow key={`skel-row-${idx}`}>
+                {displayedColumns.map((col, idx) => (
+                  <TableCell key={`ske-${idx}`}>
+                    {col.skeletonProps && <Skeleton {...col.skeletonProps} />}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            {!!pagination && (
+              <TablePagination
+                count={pagination.total}
+                page={pagination.page}
+                onPageChange={handlePageChange}
+                rowsPerPage={pagination.rowsPerPage}
+                onRowsPerPageChange={handleRowsPerPageChange}
+              />
+            )}
+          </TableRow>
+        </TableFooter>
+      </MuiTable>
+    </Box>
   );
 };
 
