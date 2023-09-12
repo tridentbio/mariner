@@ -187,15 +187,21 @@ async def create_model_training(
         if training_request.framework == "torch"
         else {}
     )
+
+    experiment_payload = {
+        "experiment_name": training_request.name,
+        "created_by_id": user.id,
+        "model_version_id": training_request.model_version_id,
+        "hyperparams": hyperparams,
+        "stage": "RUNNING"
+    }
+
+    if training_request.framework == "torch":
+        experiment_payload["epochs"] = training_request.config.epochs
+
     experiment = experiment_store.create(
         db,
-        obj_in=ExperimentCreateRepo(
-            experiment_name=training_request.name,
-            created_by_id=user.id,
-            model_version_id=training_request.model_version_id,
-            hyperparams=hyperparams,
-            stage="RUNNING",
-        ),
+        obj_in=ExperimentCreateRepo(**experiment_payload),
     )
 
     training_actor = TrainingActor.remote(  # type: ignore

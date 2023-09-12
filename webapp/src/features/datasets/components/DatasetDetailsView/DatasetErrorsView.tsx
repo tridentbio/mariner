@@ -64,9 +64,9 @@ export const DatasetErrorsView = (props: DatasetErrorsProps) => {
         message="Failed to parse dataset (sample)"
         stackTrace={
           parseMessages(
-            props.errors.columns,
-            props.errors.rows,
-            props.errors.logs
+            props.errors.columns || [],
+            props.errors.rows || [],
+            props.errors.log || []
           ) as string
         }
       />

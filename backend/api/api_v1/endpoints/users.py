@@ -18,7 +18,7 @@ router = APIRouter()
 @router.get(
     "/",
     response_model=List[schemas.User],
-    dependencies=[Depends(deps.get_current_active_superuser)],
+    dependencies=[Depends(deps.get_current_active_user)],
 )
 def read_users(
     skip: int = 0,

@@ -407,7 +407,7 @@ async def make_prediction_public(
 
     for column, result in prediction.items():
         assert isinstance(result, list), "Result must be a list"
-        serialized_result = result.tolist()
+        serialized_result = result
         prediction[column] = (
             serialized_result
             if isinstance(serialized_result, list)
