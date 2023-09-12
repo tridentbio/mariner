@@ -39,6 +39,7 @@ export interface PreprocessingStepSelectProps {
   label?: string;
   sx?: AccordionProps['sx'];
   testId?: string;
+  expandOnSelect?: boolean;
 }
 // todo: Rename to ComponentSelect or ComponentConfig
 const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
@@ -89,6 +90,7 @@ const PreprocessingStepSelect = (props: PreprocessingStepSelectProps) => {
 
   useEffect(() => {
     if (!hasConstructorArgs) setExpanded(false);
+    else if (props.expandOnSelect) setExpanded(true);
   }, [stepSelected?.constructorArgs]);
 
   return (
