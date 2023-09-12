@@ -175,7 +175,12 @@ const ModelVersionInferenceView = ({
             <DataSummary
               columnsData={dataset.stats}
               // TODO: check what is the deal of this props on DataSummary
-              inferenceValue={modelOutputs ? 0 : undefined}
+              inferenceValue={
+                modelOutputs && targetColumns[0].name in modelOutputs
+                  ? // @ts-ignore
+                    modelOutputs[targetColumns[0].name]
+                  : undefined
+              }
               inferenceColumn={targetColumns[0].name}
             />
           </Section>

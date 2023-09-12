@@ -66,7 +66,7 @@ export const DatasetErrorsView = (props: DatasetErrorsProps) => {
           parseMessages(
             props.errors.columns || [],
             props.errors.rows || [],
-            props.errors.log || []
+            props.errors.logs || []
           ) as string
         }
       />
