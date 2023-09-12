@@ -27,6 +27,17 @@ export const useTableFilters = <R extends { [key: string]: any }>({
     [columns]
   );
 
+  const sortRows = (rowsList: R[]) => {
+    return rowsList.sort((a, b) => {
+      for (let sort of filters.sortModel) {
+        if (a[sort.field] > b[sort.field]) return sort.sort == 'asc' ? 1 : -1;
+        if (a[sort.field] < b[sort.field]) return sort.sort == 'asc' ? -1 : 1;
+      }
+
+      return 0;
+    });
+  };
+
   const filteredRows = useMemo(() => {
     let data = deepClone(
       filterRows(filters.filterModel, columns, rows, dependencies)
@@ -38,17 +49,6 @@ export const useTableFilters = <R extends { [key: string]: any }>({
 
     return data;
   }, [rows, filters.filterModel, filters.sortModel]);
-
-  const sortRows = (rowsList: R[]) => {
-    return rowsList.sort((a, b) => {
-      for (let sort of filters.sortModel) {
-        if (a[sort.field] > b[sort.field]) return sort.sort == 'asc' ? 1 : -1;
-        if (a[sort.field] < b[sort.field]) return sort.sort == 'asc' ? -1 : 1;
-      }
-
-      return 0;
-    });
-  };
 
   const handlePageChange: TablePaginationProps['onPageChange'] = (
     _event,
