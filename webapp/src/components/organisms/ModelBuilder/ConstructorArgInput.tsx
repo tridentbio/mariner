@@ -138,7 +138,12 @@ const ConstructorArgInput = ({
           id={inputId}
           type="number"
           defaultValue={arg.default || null}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) =>
+            event.target.value === ''
+              ? onChange(null)
+              : onChange(parseFloat(event.target.value))
+          }
+          value={value}
           disabled={!editable}
         />
 

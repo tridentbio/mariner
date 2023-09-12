@@ -27,7 +27,7 @@ Todo:
     is not used in the elsewhere code and is confusing.
 """
 
-from typing import Annotated, Dict, List, Literal, Union, get_args
+from typing import Annotated, Any, Dict, List, Literal, Union, get_args
 
 from humps import camel
 from pydantic import BaseModel, Field
@@ -68,12 +68,17 @@ class CreateFromType(CamelCaseModel):
     """
 
     type: str
-    constructor_args: Union[None, BaseModel] = None
+    constructor_args: Union[BaseModel, dict[str, Any], None] = None
 
     def create(self):
         """Creates an instance of the class from the class path and constructor_args."""
+        print(self.constructor_args)
         class_ = get_class_from_path_string(self.type)
-        if self.constructor_args:
+        if self.constructor_args and isinstance(self.constructor_args, dict):
+            return class_(**self.constructor_args)  # pylint: disable=E1134
+        elif self.constructor_args and isinstance(
+            self.constructor_args, BaseModel
+        ):
             return class_(**self.constructor_args.dict())
         return class_()
 
