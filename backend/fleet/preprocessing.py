@@ -72,7 +72,6 @@ class CreateFromType(CamelCaseModel):
 
     def create(self):
         """Creates an instance of the class from the class path and constructor_args."""
-        print(self.constructor_args)
         class_ = get_class_from_path_string(self.type)
         if self.constructor_args and isinstance(self.constructor_args, dict):
             return class_(**self.constructor_args)  # pylint: disable=E1134
