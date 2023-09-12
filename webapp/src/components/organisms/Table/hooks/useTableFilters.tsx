@@ -30,8 +30,14 @@ export const useTableFilters = <R extends { [key: string]: any }>({
   const sortRows = (rowsList: R[]) => {
     return rowsList.sort((a, b) => {
       for (let sort of filters.sortModel) {
-        if (a[sort.field] > b[sort.field]) return sort.sort == 'asc' ? 1 : -1;
-        if (a[sort.field] < b[sort.field]) return sort.sort == 'asc' ? -1 : 1;
+        const columnRef = columns.find((col) => col.field === sort.field);
+        const aValue =
+          columnRef?.valueGetter?.(a, dependencies) || a[sort.field];
+        const bValue =
+          columnRef?.valueGetter?.(b, dependencies) || b[sort.field];
+
+        if (aValue > bValue) return sort.sort == 'asc' ? 1 : -1;
+        if (aValue < bValue) return sort.sort == 'asc' ? -1 : 1;
       }
 
       return 0;
@@ -79,15 +85,6 @@ export const useTableFilters = <R extends { [key: string]: any }>({
         total: prev.paginationModel?.total || 0,
       },
     }));
-    /* const newState: State = {
-      ...filters,
-      paginationModel: {
-        ...(filters.paginationModel || { page: 0 }),
-        rowsPerPage: newRowsPerPage,
-      },
-    };
-
-    setFilters(newState); */
   };
 
   const getColumnState = (col: Column<any, any>) => {

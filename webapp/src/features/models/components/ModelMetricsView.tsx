@@ -52,49 +52,43 @@ type MetricEntry = {
   value: string | number;
   stage: 'val' | 'train' | 'test';
 };
-const getMetricStage = (key: string) => {
-  const firstSlashIndex = key.indexOf('/');
-  return key.substring(0, firstSlashIndex) as 'val' | 'train' | 'test';
-};
-const getMetric = (key: string) => {
-  const firstSlashIndex = key.indexOf('/');
-  const secondSlashIndex = key.indexOf('/', firstSlashIndex + 1);
-  return key.substring(firstSlashIndex + 1, secondSlashIndex);
-};
-const sortRows = <K extends object>(
-  rows: K[],
-  sortModel: TableProps<K>['sortModel']
-) => {
-  return rows.sort((a, b) => {
-    const order = 0;
-    for (const sortItem of sortModel || []) {
-      const { sort, field } = sortItem;
-      // @ts-ignore
-      const aValue = a[field];
-      // @ts-ignore
-      const bValue = b[field];
-      if (aValue === bValue) continue;
-      if (sort === 'asc') {
-        if (aValue > bValue) return 1;
-        else return -1;
-      } else {
-        if (aValue > bValue) return -1;
-        else return 1;
-      }
-    }
-    return order;
-  });
-};
+
 const MetricsTable = ({
   trainMetrics,
   valMetrics,
   testMetrics,
 }: MetricsTableProps) => {
   const { data: metrics } = useGetExperimentsMetricsQuery();
+
+  const getMetricStage = (key: string) => {
+    const firstSlashIndex = key.indexOf('/');
+    return key.substring(0, firstSlashIndex) as 'val' | 'train' | 'test';
+  };
+
+  const getMetric = (key: string) => {
+    const firstSlashIndex = key.indexOf('/');
+    const secondSlashIndex = key.indexOf('/', firstSlashIndex + 1);
+    return key.substring(firstSlashIndex + 1, secondSlashIndex);
+  };
+
   const rows: MetricEntry[] = Object.entries(trainMetrics || {})
     .concat(Object.entries(valMetrics || {}))
     .concat(Object.entries(testMetrics || {}))
     .map(([key, value]) => ({ key, value, stage: getMetricStage(key) }));
+
+  const formatMetricLabel = (metricKey: string) => {
+    const metric = getMetric(metricKey);
+    if (!metrics) return metric;
+    else {
+      const metricEntry = metrics.find((m) => m.key === metric);
+      const label =
+        metricEntry?.texLabel?.replace('^2', '²') ||
+        metricEntry?.label ||
+        metric;
+      return label;
+    }
+  };
+
   const columns: Column<MetricEntry, keyof MetricEntry>[] = [
     {
       title: 'Stage',
@@ -111,18 +105,8 @@ const MetricsTable = ({
       title: 'Metric Key',
       name: 'key',
       field: 'key',
-      render: (_, metricKey) => {
-        const metric = getMetric(metricKey);
-        if (!metrics) return metric;
-        else {
-          const metricEntry = metrics.find((m) => m.key === metric);
-          const label =
-            metricEntry?.texLabel?.replace('^2', '²') ||
-            metricEntry?.label ||
-            metric;
-          return label;
-        }
-      },
+      render: (_, metricKey) => formatMetricLabel(metricKey),
+      valueGetter: (row) => formatMetricLabel(row.key),
       sortable: true,
     },
     {
@@ -133,17 +117,11 @@ const MetricsTable = ({
       sortable: true,
     },
   ];
-  const [sortModel, setSortModel] = useState<TableProps<any>['sortModel']>([]);
   return (
     <Table<MetricEntry>
-      onStateChange={({ sortModel }) => {
-        setSortModel(sortModel);
-      }}
       rowKey={(row) => row.key}
-      //TODO: NEED TO REFACTORY THIS
-      sortModel={sortModel}
       columns={columns}
-      rows={sortRows(rows, sortModel)}
+      rows={rows}
       tableId="model-metrics"
       usePreferences
     />
