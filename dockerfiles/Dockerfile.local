@@ -1,6 +1,7 @@
 FROM python:3.10
 
-ENV PLATFORM=cu117
+# Must not be changed unless installing GPU version of PyTorch
+ENV PLATFORM=cpu
 ENV TORCH_VERSION=2.0.1
 
 WORKDIR /app/
@@ -22,9 +23,10 @@ COPY ./pyproject.toml ./poetry.lock /app/
 #     --mount=type=cache,target=/root/.cache/pypoetry/artifacts \
 #     poetry install --no-root
 
-COPY ./deps.py /app/deps.py
-
 RUN poetry install --no-root
+
+COPY ./deps.py /app/deps.py
+RUN python -m deps
 
 COPY ./mariner /app/mariner
 COPY ./cli /app/cli
@@ -33,15 +35,11 @@ COPY ./fleet /app/fleet
 COPY ./oauth_providers /app/oauth_providers
 COPY ./tests /app/tests
 
-RUN poetry install
-
-RUN python -m deps
-
 COPY ./alembic.ini ./pylintrc ./pytest.ini /app/
 COPY ./scripts /app/scripts
 
-RUN python -m deps
 
+RUN poetry install --only-root
 
 CMD [ "sh", "/app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]
 

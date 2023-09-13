@@ -227,7 +227,7 @@ class TorchFunctions(BaseModelFunctions):
 
         result: dict = self.model.predict_step(X)
         result = {
-            key: value.detach().numpy().tolist()
+            key: value.detach().cpu().numpy().tolist()
             for key, value in result.items()
         }
         prediction: Dict[str, List[float]] = {}
