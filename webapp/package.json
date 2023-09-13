@@ -61,6 +61,7 @@
     "yup": "^0.32.11"
   },
   "devDependencies": {
+    "@4tw/cypress-drag-drop": "^2.2.4",
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-react": "^7.18.6",
     "@babel/preset-typescript": "^7.18.6",

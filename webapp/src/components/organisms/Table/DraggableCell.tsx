@@ -28,6 +28,8 @@ export const DraggableCell = ({
 
   return (
     <TableCell
+      data-testcellname={col.name}
+      data-testid={`draggable-cell-${id}`}
       sx={{
         ...(col.customSx || {}),
         cursor: col.fixed ? 'initial' : isDragging ? 'grabbing' : 'grab',

@@ -1,5 +1,5 @@
 import { useGetExperimentsMetricsQuery } from '@app/rtk/generated/experiments';
-import Table, { Column, TableProps } from '@components/templates/Table';
+import Table, { Column } from '@components/templates/Table';
 import { Box, Divider, SxProps } from '@mui/material';
 import {
   Experiment,

@@ -180,6 +180,7 @@ export const OperatorsFilterMenu = ({
           <MenuList sx={{ pb: 0 }}>
             {filterableColumns.map((col) => (
               <MenuItem
+                data-testid={`add-filter-${col.name}-option`}
                 onClick={(event) => onOpenColumnFilterMenu(event, col.field)}
                 key={col.name as string}
               >

@@ -24,14 +24,17 @@ const FilterInput = ({
   onChange,
   onDone,
   label,
+  colName,
 }: {
   value: string;
   onChange: React.ChangeEventHandler<HTMLInputElement>;
   onDone: () => any;
   label: string;
+  colName?: string;
 }) => (
   <Box {...inputContainerStyle}>
     <TextField
+      data-testid={`filter-${colName}`}
       variant="standard"
       label={label}
       value={value}
@@ -41,6 +44,7 @@ const FilterInput = ({
       }}
     ></TextField>
     <IconButton
+      data-testid={`add-filter-${colName}-btn`}
       onClick={onDone}
       sx={{
         width: 'fit-content',
@@ -69,6 +73,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
     >
       {col.filterSchema?.byValue && (
         <FilterInput
+          colName={col.name}
           onDone={() => {
             onAddFilter(col.field, 'eq', filterEq);
           }}
@@ -79,6 +84,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
       )}
       {col.filterSchema?.byIncludes && (
         <FilterInput
+          colName={col.name}
           onDone={() => {
             onAddFilter(col.field, 'inc', filterIncludes);
           }}
@@ -89,6 +95,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
       )}
       {col.filterSchema?.byLessThan && (
         <FilterInput
+          colName={col.name}
           onDone={() => {
             onAddFilter(col.field, 'lt', filterLt);
           }}
@@ -99,6 +106,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
       )}
       {col.filterSchema?.byGreaterThan && (
         <FilterInput
+          colName={col.name}
           value={filterGt.toString()}
           onChange={(event) => setFilterGt(parseInt(event.target.value))}
           onDone={() => {
@@ -112,6 +120,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
       {col.filterSchema?.byContains && (
         <Box {...inputContainerStyle}>
           <Autocomplete
+            data-testid={`filter-${col.name}`}
             multiple
             sx={{ minWidth: 200, maxWidth: 300 }}
             value={containsValue}
@@ -123,6 +132,7 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
           />
 
           <IconButton
+            data-testid={`add-filter-${col.name}-btn`}
             onClick={() =>
               onAddFilter(
                 col.field,

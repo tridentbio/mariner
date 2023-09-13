@@ -274,7 +274,7 @@ const Table = <R extends { [key: string]: any }>({
         </TableFiltersContextProvider>
         <TableBody>
           {filteredRows.map((row) => (
-            <TableRow key={rowKey(row)}>
+            <TableRow key={rowKey(row)} data-test-row-id={rowKey(row)}>
               {displayedColumns.map((col, colidx) => (
                 <TableCell
                   aria-labelledby={

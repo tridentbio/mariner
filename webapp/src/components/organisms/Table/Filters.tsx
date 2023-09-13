@@ -109,6 +109,7 @@ const Filters = ({
                 filterLinkOperatorOptions={filterLinkOperatorOptions}
               />
               <Button
+                data-testid="add-filter-btn"
                 startIcon={<Add />}
                 onClick={addFilterPopover.handleClickOpenPopover}
                 sx={{
@@ -123,6 +124,7 @@ const Filters = ({
           ) : null}
 
           <Button
+            data-testid="column-picker-btn"
             startIcon={<FormatListBulleted />}
             endIcon={<ExpandMore />}
             sx={{
@@ -137,6 +139,7 @@ const Filters = ({
 
           {filterModel.items?.length > 0 && (
             <Button
+              data-testid="clear-all-filters-btn"
               startIcon={<RemoveCircle />}
               size="small"
               sx={{
@@ -180,6 +183,8 @@ const Filters = ({
                 />
               ) : (
                 <Chip
+                  sx={{ mr: 1, py: 1, fontSize: 14 }}
+                  data-testid={`chip-filter-${column.name}`}
                   onDelete={() =>
                     setFilters((prev) => ({
                       ...prev,
@@ -190,7 +195,6 @@ const Filters = ({
                       },
                     }))
                   }
-                  sx={{ mr: 1 }}
                   key={index}
                   label={`"${item.columnName}" ${operationTitle(
                     item.operatorValue
@@ -214,6 +218,7 @@ const Filters = ({
             if (!column) return null;
             return (
               <Chip
+                data-testid={`chip-sort-${column.name}`}
                 onDelete={(_e) =>
                   setFilters((prev) => ({
                     ...prev,

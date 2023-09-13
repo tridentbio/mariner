@@ -71,7 +71,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     setFilters((prev) => ({ ...prev, sortModel: newSortState }));
   };
   return (
-    <Box onMouseDown={beforeOpen}>
+    <Box data-testid={`sorting-button-${col.name}`} onMouseDown={beforeOpen}>
       <IconButton
         sx={{
           ...(sx || {}),
@@ -97,6 +97,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
       >
         <MenuList>
           <StyledMenuItem
+            data-testid={`sort-asc-${col.name}`}
             selected={isSelectedSorting(col, 'asc')}
             onClick={() => {
               handleSelectSort(col, 'asc');
@@ -107,6 +108,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
             Sort Asc
           </StyledMenuItem>
           <StyledMenuItem
+            data-testid={`sort-desc-${col.name}`}
             selected={isSelectedSorting(col, 'desc')}
             onClick={() => {
               handleSelectSort(col, 'desc');
