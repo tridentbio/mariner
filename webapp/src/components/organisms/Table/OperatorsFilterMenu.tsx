@@ -1,7 +1,7 @@
 import { Column } from '@components/templates/Table';
 import ColumnFiltersInput from '@components/templates/Table/ColumnFiltersInput';
 import { colTitle } from '@components/templates/Table/common';
-import { OperatorValue } from '@components/templates/Table/types';
+import { FilterItem, OperatorValue } from '@components/templates/Table/types';
 import { usePopoverState } from '@hooks';
 import {
   CalendarViewDayOutlined,
@@ -20,9 +20,9 @@ import {
   styled,
 } from '@mui/material';
 import { useContext, useMemo, useState } from 'react';
-import { NonUndefined, title } from 'utils';
+import { NonUndefined, title, uniqBy } from 'utils';
 import { FilterProps } from './Filters';
-import { TableFilterContext } from './hooks/useTableFilters';
+import { TableFilterContext } from './hooks/filters/useTableFilters';
 
 interface OperatorsFilterMenuProps
   extends Pick<FilterProps, 'filterLinkOperatorOptions' | 'columns'> {
@@ -47,20 +47,19 @@ export const OperatorsFilterMenu = ({
   filterLinkOperatorOptions,
   columns,
 }: OperatorsFilterMenuProps) => {
-  const DEFAULT_OPERATOR = 'and';
-
-  const { setFilters, filterableColumns } = useContext(TableFilterContext);
+  const {
+    setFilters,
+    filterableColumns,
+    filters: { filterModel },
+  } = useContext(TableFilterContext);
 
   const operatorOptions = useMemo<OperatorOptions>(() => {
-    if (!filterLinkOperatorOptions) return [DEFAULT_OPERATOR];
+    if (!filterLinkOperatorOptions) return [filterModel.linkOperator];
     return filterLinkOperatorOptions;
   }, [filterLinkOperatorOptions]);
 
   const columnFilterPopper = usePopoverState();
   const [selectedColumn, setSelectedColumn] = useState<Column<any, any>>();
-  const [linkOperator, setLinkOperator] = useState<OperatorOptions[0]>(
-    operatorOptions[0]
-  );
 
   //? ref being used as a state to trigger rerender and avoid the select input dropdown being placed incorrectly on DOM
   const [columnFilterBoxRef, setColumnFilterBoxRef] = useState<HTMLElement>();
@@ -94,27 +93,36 @@ export const OperatorsFilterMenu = ({
     operatorValue: OperatorValue,
     value: any
   ) => {
-    setFilters((prev) => ({
-      ...prev,
-      filterModel: {
-        items: [
-          ...prev.filterModel.items,
-          {
-            columnName: columnField,
-            operatorValue,
-            value,
-          },
-        ],
-        linkOperator: 'and',
-      },
-    }));
+    setFilters((prev) => {
+      if (operatorValue === 'ct') {
+        let filterItem = prev.filterModel.items.find(
+          (item) => item.columnName == columnField
+        );
+
+        if (filterItem?.value) {
+          //? Add new elements and remove duplicated ones
+          filterItem.value = uniqBy(
+            (filterItem?.value as string[]).concat(value as string[]),
+            (item) => item
+          );
+
+          return { ...prev };
+        }
+      }
+
+      prev.filterModel.items.push({
+        columnName: columnField,
+        operatorValue,
+        value,
+      });
+
+      return { ...prev };
+    });
 
     columnFilterPopper.handleClose();
   };
 
   const onFilterLinkChange = (newLink: 'and' | 'or') => {
-    setLinkOperator(newLink);
-
     setFilters((prev) => ({
       ...prev,
       filterModel: { ...prev.filterModel, linkOperator: newLink },
@@ -159,7 +167,7 @@ export const OperatorsFilterMenu = ({
           select
           variant="standard"
           sx={{ width: '100%' }}
-          value={linkOperator}
+          value={filterModel.linkOperator}
           disabled={operatorOptions.length === 1}
           onChange={(event) =>
             onFilterLinkChange(event.target.value as 'and' | 'or')

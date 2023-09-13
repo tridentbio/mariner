@@ -1,3 +1,5 @@
+import { FilterModel } from '@components/templates/Table/types';
+
 export interface FilterStrategy<T> {
   validate(value: T): boolean;
 }
@@ -29,13 +31,19 @@ export class IncludesFilterStrategy implements FilterStrategy<string> {
 export class ColumnFilterManager<T> {
   private strategies: FilterStrategy<T>[] = [];
 
+  constructor(private linkOperator: FilterModel['linkOperator'] = 'and') {}
+
   addStrategy(strategy: FilterStrategy<T>): void {
     this.strategies.push(strategy);
   }
 
   validate(value: any): boolean {
+    const defaultValidState = this.linkOperator == 'and' ? true : false;
+
     return this.strategies.reduce<boolean>((acc, strategy) => {
-      return acc && strategy.validate(value);
-    }, true);
+      return this.linkOperator == 'and'
+        ? acc && strategy.validate(value)
+        : acc || strategy.validate(value);
+    }, defaultValidState);
   }
 }

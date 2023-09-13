@@ -50,7 +50,7 @@ export type FilterItem = {
 };
 export type FilterModel = {
   items: FilterItem[];
-  linkOperator?: 'and' | 'or';
+  linkOperator: 'and' | 'or';
 };
 
 export type SortModel = { field: string; sort: 'asc' | 'desc' };

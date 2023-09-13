@@ -1,4 +1,4 @@
-import { TableFilterContext } from '@components/organisms/Table/hooks/useTableFilters';
+import { TableFilterContext } from '@components/organisms/Table/hooks/filters/useTableFilters';
 import { ArrowDownward, ArrowUpward, MoreVert } from '@mui/icons-material';
 import {
   Box,

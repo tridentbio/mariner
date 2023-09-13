@@ -1,7 +1,7 @@
 import { Column, TableProps } from '@components/templates/Table';
 import { State } from '@components/templates/Table/types';
 import { TablePaginationProps } from '@mui/material';
-import { deepClone } from '@utils';
+import { NonUndefined, deepClone } from '@utils';
 import { createContext, useMemo, useState } from 'react';
 import { filterRows } from './filterValidation';
 
@@ -10,14 +10,16 @@ export const useTableFilters = <R extends { [key: string]: any }>({
   rows,
   pagination,
   dependencies = {},
+  linkOperator = 'and',
 }: {
   columns: Column<any, any>[];
   rows: TableProps<R>['rows'];
   pagination: TableProps<R>['pagination'];
   dependencies: TableProps<R>['dependencies'];
+  linkOperator?: NonUndefined<TableProps<R>['filterLinkOperatorOptions']>[0];
 }) => {
   const [filters, setFilters] = useState<State>({
-    filterModel: { items: [] },
+    filterModel: { items: [], linkOperator },
     sortModel: [],
     paginationModel: pagination,
   });
@@ -54,7 +56,7 @@ export const useTableFilters = <R extends { [key: string]: any }>({
     }
 
     return data;
-  }, [rows, filters.filterModel, filters.sortModel]);
+  }, [rows, filters]);
 
   const handlePageChange: TablePaginationProps['onPageChange'] = (
     _event,

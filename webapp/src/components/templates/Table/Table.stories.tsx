@@ -4,10 +4,8 @@ import { StoryFn, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { theme } from 'theme';
 import Table, { Column } from '.';
-import {
-  columns,
-  rows,
-} from '../../../../tests/fixtures/table/experimentsDataMock';
+import { rows } from '../../../../tests/fixtures/table/rowsMock';
+import { columns } from '../../../../tests/fixtures/table/columnsMock';
 
 export default {
   title: 'components/Table',

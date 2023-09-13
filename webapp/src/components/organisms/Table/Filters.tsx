@@ -4,10 +4,11 @@ import {
   FormatListBulleted,
   RemoveCircle,
 } from '@mui/icons-material';
-import { Button, Chip } from '@mui/material';
+import { Button, Chip, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import {
   Column,
+  FilterItem,
   OperatorValue,
   SortModel,
 } from 'components/templates/Table/types';
@@ -16,7 +17,7 @@ import { useContext, useRef } from 'react';
 import ChipFilterContain from './ChipFilterContain';
 import { ColumnPicker } from './ColumnPicker';
 import { OperatorsFilterMenu } from './OperatorsFilterMenu';
-import { TableFilterContext } from './hooks/useTableFilters';
+import { TableFilterContext } from './hooks/filters/useTableFilters';
 
 export interface FilterProps {
   filterLinkOperatorOptions?: ('and' | 'or')[];
@@ -66,6 +67,22 @@ const Filters = ({
   const defaultSelectedColumns = columns
     .filter(isPickableColumn)
     .map((col) => col.name as string);
+
+  const updateFilterModelItems = (filterItems: FilterItem[]) => {
+    setFilters((prev) => ({
+      ...prev,
+      filterModel: {
+        items: filterItems,
+        linkOperator: prev.filterModel.linkOperator,
+      },
+    }));
+  };
+
+  const FiltersChainDividerLabel = (
+    <Typography variant="overline" sx={{ pr: 1 }} fontSize={13}>
+      {filterModel.linkOperator.toUpperCase()}
+    </Typography>
+  );
 
   return (
     <>
@@ -147,9 +164,7 @@ const Filters = ({
                 paddingX: 3,
               }}
               variant="text"
-              onClick={() =>
-                setFilters((prev) => ({ ...prev, filterModel: { items: [] } }))
-              }
+              onClick={() => updateFilterModelItems([])}
             >
               Clear all filters
             </Button>
@@ -165,41 +180,41 @@ const Filters = ({
               if (!column) return;
 
               return item.operatorValue === 'ct' ? (
-                <ChipFilterContain
-                  onDelete={() =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      filterModel: {
-                        items: filterModel.items.filter(
+                <>
+                  {index != 0 ? FiltersChainDividerLabel : null}
+                  <ChipFilterContain
+                    onDelete={() =>
+                      updateFilterModelItems(
+                        filterModel.items.filter(
                           (_, itemIndex) => itemIndex !== index
-                        ),
-                      },
-                    }))
-                  }
-                  key={index}
-                  filterItem={item}
-                  column={column}
-                  generateOperationTitle={operationTitle}
-                />
+                        )
+                      )
+                    }
+                    key={index}
+                    filterItem={item}
+                    column={column}
+                    generateOperationTitle={operationTitle}
+                  />
+                </>
               ) : (
-                <Chip
-                  sx={{ mr: 1, py: 1, fontSize: 14 }}
-                  data-testid={`chip-filter-${column.name}`}
-                  onDelete={() =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      filterModel: {
-                        items: filterModel.items.filter(
+                <>
+                  {index != 0 ? FiltersChainDividerLabel : null}
+                  <Chip
+                    sx={{ mr: 1, py: 1, fontSize: 14 }}
+                    data-testid={`chip-filter-${column.name}`}
+                    onDelete={() =>
+                      updateFilterModelItems(
+                        filterModel.items.filter(
                           (_, itemIndex) => itemIndex !== index
-                        ),
-                      },
-                    }))
-                  }
-                  key={index}
-                  label={`"${item.columnName}" ${operationTitle(
-                    item.operatorValue
-                  )} ${item.value}`}
-                />
+                        )
+                      )
+                    }
+                    key={index}
+                    label={`"${item.columnName}" ${operationTitle(
+                      item.operatorValue
+                    )} ${item.value}`}
+                  />
+                </>
               );
             })}
           </Box>

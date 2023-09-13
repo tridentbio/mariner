@@ -5,7 +5,8 @@ import { Column, State } from "@components/templates/Table/types";
 import { ThemeProvider } from "@mui/material";
 import { Provider } from "react-redux";
 import { theme } from "theme";
-import { columns, rows } from '../../tests/fixtures/table/experimentsDataMock';
+import { rows } from '../../tests/fixtures/table/rowsMock';
+import { columns } from '../../tests/fixtures/table/columnsMock';
 import { NonUndefined } from "@utils";
 
 describe('DataPreprocessingInput.cy.tsx', () => {

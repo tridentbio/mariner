@@ -19,7 +19,7 @@ import {
   TableFilterContext,
   TableFiltersContextProps,
   useTableFilters,
-} from '@components/organisms/Table/hooks/useTableFilters';
+} from '@components/organisms/Table/hooks/filters/useTableFilters';
 import { setPreference } from '@features/users/usersSlice';
 import { useAppDispatch } from '@hooks';
 import NoData from 'components/atoms/NoData';
