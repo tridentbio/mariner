@@ -20,8 +20,18 @@
 // require('./commands')
 
 import { mount } from 'cypress/react'
+import '@4tw/cypress-drag-drop'
+import { fakeApi } from 'mock/msw/server'
 
 Cypress.Commands.add('mount', mount)
+
+before(() => fakeApi.start({  onUnhandledRequest: 'bypass' }))
+
+  //? Reset handlers so that each test could alter them
+  //? without affecting other, unrelated tests.
+  afterEach(() => fakeApi.resetHandlers())
+
+  after(() => fakeApi.stop())
 
 // Example use:
 // cy.mount(<MyComponent />)

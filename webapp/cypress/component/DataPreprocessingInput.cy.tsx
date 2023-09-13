@@ -10,6 +10,7 @@ import { ThemeProvider } from "@mui/system"
 import { FormProvider, NonUndefined, useForm } from "react-hook-form"
 import { Provider } from "react-redux"
 import { theme } from "theme"
+import { fakeApi } from '../../src/mock/msw/server'
 
 describe('DataPreprocessingInput.cy.tsx', () => {
   const value = {
@@ -102,6 +103,14 @@ describe('DataPreprocessingInput.cy.tsx', () => {
     protein: ['fleet.model_builder.featurizers.ProteinSequenceFeaturizer'],
     smiles: ['molfeat.trans.fp.FPVecFilteredTransformer'],
   }
+
+  // before(() => fakeApi.start({  onUnhandledRequest: 'bypass' }))
+
+  // //? Reset handlers so that each test could alter them
+  // //? without affecting other, unrelated tests.
+  // afterEach(() => fakeApi.resetHandlers())
+
+  // after(() => fakeApi.stop())
 
   it('should filter compatible featurizers on preprocessing step select input', () => {
     cy.mount(<MountedComponent />)

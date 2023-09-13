@@ -130,6 +130,11 @@ test-e2e: build start create-admin create-test-user## Runs test target
 	$(DOCKER_COMPOSE) run --entrypoint sh e2e -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
 
 
+.PHONY: component-test
+component-test: # Runs cypress component tests isolated
+	$(DOCKER_COMPOSE) run --entrypoint sh component-test -c "npm install && npx cypress install && npx cypress run --config-file /component-test/cypress.config.js --component"
+
+
 .PHONY: pre-commit
 pre-commit:  ## Runs pre-commit hooks (formatting, linting and unit testing)
 	pre-commit

@@ -185,6 +185,16 @@ services:
       - ./webapp:/e2e:z
       - ./backend/tests/data:/e2e/cypress/fixtures/data:z
 
+  component-test:
+    image: cypress/included:12.6.0
+    working_dir: /component-test
+    command: sh -c "npm install && npx cypress install && npx cypress run --config-file /component-test/cypress.config.js --component"
+    network_mode: host
+    entrypoint: []
+    volumes:
+      - ./webapp:/component-test:z
+      - ./backend/tests/data:/component-test/cypress/fixtures/data:z
+
 volumes:
   app-db-data:
   app-mlflow-data:
