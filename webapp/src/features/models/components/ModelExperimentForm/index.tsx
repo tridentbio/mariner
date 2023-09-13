@@ -1,7 +1,13 @@
 import { ModelVersion } from '@app/rtk/generated/models';
 import { BaseTrainingRequest } from '@app/types/domain/experiments';
 import { APITargetConfig } from '@model-compiler/src/interfaces/torch-model-editor';
-import { Button, TextField, Typography } from '@mui/material';
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { Box, SystemStyleObject } from '@mui/system';
 import { deepClone } from '@utils';
 import { useNotifications } from 'app/notifications';
@@ -233,6 +239,23 @@ const ModelExperimentForm = ({
                       helperText={error?.message}
                     />
                   )}
+                />
+                <FormControlLabel
+                  control={
+                    <Controller
+                      control={control}
+                      defaultValue={false}
+                      name="config.useGpu"
+                      render={({ field }) => (
+                        <Checkbox
+                          {...field}
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      )}
+                    />
+                  }
+                  label="Use GPU?"
                 />
               </Box>
               <Typography sx={{ mb: 1 }}>Checkpointing Options</Typography>

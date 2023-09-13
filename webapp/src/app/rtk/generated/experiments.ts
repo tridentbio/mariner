@@ -6,6 +6,17 @@ const injectedRtkApi = api
   })
   .injectEndpoints({
     endpoints: (build) => ({
+      postExperiments: build.mutation<
+        PostExperimentsApiResponse,
+        PostExperimentsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/experiments/`,
+          method: 'POST',
+          body: queryArg.body,
+        }),
+        invalidatesTags: ['experiments'],
+      }),
       getExperiments: build.query<
         GetExperimentsApiResponse,
         GetExperimentsApiArg
@@ -22,17 +33,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['experiments'],
-      }),
-      postExperiments: build.mutation<
-        PostExperimentsApiResponse,
-        PostExperimentsApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/api/v1/experiments/`,
-          method: 'POST',
-          body: queryArg.body,
-        }),
-        invalidatesTags: ['experiments'],
       }),
       getExperimentsRunningHistory: build.query<
         GetExperimentsRunningHistoryApiResponse,
@@ -76,6 +76,11 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as enhancedApi };
+export type PostExperimentsApiResponse =
+  /** status 200 Successful Response */ Experiment;
+export type PostExperimentsApiArg = {
+  body: TorchTrainingRequest | SklearnTrainingRequest;
+};
 export type GetExperimentsApiResponse =
   /** status 200 Successful Response */ PaginatedExperiment;
 export type GetExperimentsApiArg = {
@@ -86,11 +91,6 @@ export type GetExperimentsApiArg = {
   perPage?: number;
   /** Describes how the query is to be sorted */
   orderBy?: string;
-};
-export type PostExperimentsApiResponse =
-  /** status 200 Successful Response */ Experiment;
-export type PostExperimentsApiArg = {
-  body: TorchTrainingRequest | SklearnTrainingRequest;
 };
 export type GetExperimentsRunningHistoryApiResponse =
   /** status 200 Successful Response */ RunningHistory[];
@@ -734,10 +734,6 @@ export type Experiment = {
   };
   stackTrace?: string;
 };
-export type PaginatedExperiment = {
-  data: Experiment[];
-  total: number;
-};
 export type ValidationError = {
   loc: (string | number)[];
   msg: string;
@@ -787,6 +783,7 @@ export type TorchTrainingConfig = {
         classPath: 'torch.optim.SGD';
       } & SgdOptimizer);
   earlyStoppingConfig?: EarlyStoppingConfig;
+  useGpu?: boolean;
 };
 export type TorchTrainingRequest = {
   name: string;
@@ -799,6 +796,10 @@ export type SklearnTrainingRequest = {
   modelVersionId: number;
   framework?: 'sklearn';
   config?: object;
+};
+export type PaginatedExperiment = {
+  data: Experiment[];
+  total: number;
 };
 export type RunningHistory = {
   experimentId: number;
@@ -831,9 +832,9 @@ export type SgdParamsSchema = {
   momentum?: InputDescription;
 };
 export const {
+  usePostExperimentsMutation,
   useGetExperimentsQuery,
   useLazyGetExperimentsQuery,
-  usePostExperimentsMutation,
   useGetExperimentsRunningHistoryQuery,
   useLazyGetExperimentsRunningHistoryQuery,
   useGetExperimentsMetricsQuery,
