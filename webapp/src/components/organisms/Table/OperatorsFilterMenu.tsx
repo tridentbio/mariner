@@ -94,14 +94,17 @@ export const OperatorsFilterMenu = ({
     value: any
   ) => {
     setFilters((prev) => {
-      if(operatorValue === 'ct') {
+      if (operatorValue === 'ct') {
         let filterItem = prev.filterModel.items.find(
           (item) => item.columnName == columnField
-        )
-  
+        );
+
         if (filterItem?.value) {
           //? Add new elements and remove duplicated ones
-          filterItem.value = uniqBy((filterItem?.value as string[]).concat(value as string[]), (item) => item);
+          filterItem.value = uniqBy(
+            (filterItem?.value as string[]).concat(value as string[]),
+            (item) => item
+          );
 
           return { ...prev };
         }
