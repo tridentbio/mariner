@@ -8,11 +8,15 @@ import { theme } from "theme";
 import { rows } from '../../tests/fixtures/table/rowsMock';
 import { columns } from '../../tests/fixtures/table/columnsMock';
 import { NonUndefined } from "@utils";
+import { mockLogin } from "@features/users/usersSlice";
 
-describe('DataPreprocessingInput.cy.tsx', () => {
+describe('Table.cy.tsx', () => {
   let state: State
 
   const MountedComponent = () => {
+    //? Mock user to handle user preferences tests
+    store.dispatch(mockLogin())
+
     return (
       <Provider store={store}>
         <ThemeProvider theme={theme}>
@@ -21,6 +25,8 @@ describe('DataPreprocessingInput.cy.tsx', () => {
             rows={rows as Experiment[]}
             rowKey={row => row.id}
             onStateChange={newState => state = newState}
+            tableId="test-table"
+            usePreferences
           />
         </ThemeProvider>
       </Provider>
@@ -36,10 +42,12 @@ describe('DataPreprocessingInput.cy.tsx', () => {
       cy.get('li[role="treeitem"]').contains(column.name).parent().find('input[type="checkbox"]')[check ? 'check' : 'uncheck']()
     })
 
-    closePopover()
+    return closePopover()
   }
 
-  it('should reorder the columns', () => {
+  const getTablePreferences = () => store.getState().users.preferences.tables?.['test-table']
+
+  it('should reorder the columns and persist the preferences', () => {
     cy.mount(<MountedComponent />)
 
     columns.forEach((column, index) => {
@@ -61,6 +69,21 @@ describe('DataPreprocessingInput.cy.tsx', () => {
           expect(column.name).to.be.equal(newColNameOrder[oldColumnIndex])
         }
       })
+
+      //? Assert that the preferences are being persisted
+      const preferenceColumns = getTablePreferences()?.columns
+
+      expect(preferenceColumns).to.not.be.undefined
+
+      if(preferenceColumns) {
+        const preferenceColumnsNameList = preferenceColumns.map(column => column.name)
+
+        expect(preferenceColumnsNameList.length).to.be.equal(newColNameOrder.length)
+
+        preferenceColumnsNameList.forEach((colName, index) => {
+          expect(colName).to.be.equal(newColNameOrder[index])
+        })
+      }
     })
   })
 
@@ -104,22 +127,53 @@ describe('DataPreprocessingInput.cy.tsx', () => {
     })
   })
 
-  it('should hide and show columns by the column picker', () => {
+  it('should hide/show columns by the column picker and persist the preferences', async () => {
     cy.mount(<MountedComponent />)
 
-    const someNonFixedColumns = columns.filter(column => !column.fixed).slice(0, 3)
+    const nonFixedColumns = columns.filter(column => !column.fixed)
+    const columnsToToggle = nonFixedColumns.slice(0, 3)
 
-    toggleDisplayedColumns(someNonFixedColumns, {check: false})
-
-    someNonFixedColumns.forEach(column => {
-      cy.get(`[data-testcellname="${column.name}"]`).should('not.exist')
-    })
-
-    toggleDisplayedColumns(someNonFixedColumns, {check: true})
-
-    someNonFixedColumns.forEach(column => {
-      cy.get(`[data-testcellname="${column.name}"]`).should('exist')
-    })
+    toggleDisplayedColumns(columnsToToggle, {check: false})
+      .then(() => {
+        columnsToToggle.map(column => {
+          cy.get(`[data-testcellname="${column.name}"]`).should('not.exist')
+        })
+    
+        //? Assert that the preferences are being persisted
+        cy.get('[data-testcellname]')
+          .then((colElements) => {
+            expect(colElements.length).to.be.equal(columns.length - columnsToToggle.length)
+    
+            let preferenceColumns = getTablePreferences()?.columns
+    
+            debugger
+            expect(preferenceColumns).to.not.be.undefined
+            expect(preferenceColumns?.length).to.be.equal(nonFixedColumns.length - columnsToToggle.length)
+          }).then(() => {
+            toggleDisplayedColumns(columnsToToggle, {check: true})
+              .then(() => {
+                columnsToToggle.map(column => {
+                  cy.get(`[data-testcellname="${column.name}"]`).should('exist')
+                })
+        
+                cy.get('[data-testcellname]').then((colElements) => {
+                  expect(colElements.length).to.be.equal(columns.length)
+        
+                  let preferenceColumns = getTablePreferences()?.columns
+        
+                  expect(preferenceColumns).to.not.be.undefined
+                  expect(preferenceColumns?.length).to.be.equal(nonFixedColumns.length)
+          
+                  if(preferenceColumns) {
+                    const preferenceColumnsNameList = preferenceColumns.map(column => column.name)
+                    const nonFixedColumnsNameList = nonFixedColumns.map(column => column.name)
+          
+                    expect(preferenceColumnsNameList).to.have.members(nonFixedColumnsNameList)
+                  }
+                })
+              })
+          })
+      })
   })
 
   it('should filter the rows by the filter input', () => {

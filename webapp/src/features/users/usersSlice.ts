@@ -118,6 +118,18 @@ export const usersSlice = createSlice({
         console.error('Invalid user preferences', error);
       }
     },
+    mockLogin: (state) => {
+      state = {
+        ...state,
+        loggedIn: {
+          email: 'mock@email.com',
+          full_name: 'Mock User',
+          id: 1,
+        },
+      };
+
+      return state;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -150,6 +162,7 @@ export const usersSlice = createSlice({
   },
 });
 
-export const { logout, setPreference, loadPreferences } = usersSlice.actions;
+export const { logout, setPreference, loadPreferences, mockLogin } =
+  usersSlice.actions;
 
 export default usersSlice.reducer;
