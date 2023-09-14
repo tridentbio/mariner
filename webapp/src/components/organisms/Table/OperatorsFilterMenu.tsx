@@ -22,7 +22,7 @@ import {
 import { useContext, useMemo, useState } from 'react';
 import { NonUndefined, title, uniqBy } from 'utils';
 import { FilterProps } from './Filters';
-import { TableFilterContext } from './hooks/filters/useTableFilters';
+import { TableStateContext } from './hooks/useTableState';
 
 interface OperatorsFilterMenuProps
   extends Pick<FilterProps, 'filterLinkOperatorOptions' | 'columns'> {
@@ -51,7 +51,7 @@ export const OperatorsFilterMenu = ({
     setFilters,
     filterableColumns,
     filters: { filterModel },
-  } = useContext(TableFilterContext);
+  } = useContext(TableStateContext);
 
   const operatorOptions = useMemo<OperatorOptions>(() => {
     if (!filterLinkOperatorOptions) return [filterModel.linkOperator];

@@ -248,6 +248,31 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
     },
   ];
 
+  const columnsTreeView: TreeNode[] = [
+    {
+      id: 'attributes',
+      name: 'Attributes',
+      children: columns
+        .filter((col) => col.field != 'trainMetrics' && !col.fixed)
+        .map((col) => ({
+          id: col.name,
+          name: col.name,
+          parent: 'attributes',
+        })),
+    },
+    {
+      id: 'metrics',
+      name: 'Metrics',
+      children: columns
+        .filter((col) => col.field === 'trainMetrics' && !col.fixed)
+        .map((col) => ({
+          id: col.name,
+          name: col.name,
+          parent: 'metrics',
+        })),
+    },
+  ];
+
   const detailedExperiment = useMemo(
     () =>
       experiments.find((exp: Experiment) => exp?.id === experimentDetailedId),
@@ -284,6 +309,8 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
         }}
         tableId="model-experiments"
         usePreferences
+        columnTree={columnsTreeView}
+        defaultSelectedNodes={['attributes', 'metrics']}
       />
     </div>
   );

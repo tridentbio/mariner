@@ -17,7 +17,7 @@ import { useContext, useRef } from 'react';
 import ChipFilterContain from './ChipFilterContain';
 import { ColumnPicker } from './ColumnPicker';
 import { OperatorsFilterMenu } from './OperatorsFilterMenu';
-import { TableFilterContext } from './hooks/filters/useTableFilters';
+import { TableStateContext } from './hooks/useTableState';
 
 export interface FilterProps {
   filterLinkOperatorOptions?: ('and' | 'or')[];
@@ -39,7 +39,11 @@ const Filters = ({
     filters: { filterModel, sortModel },
     setFilters,
     filterableColumns,
-  } = useContext(TableFilterContext);
+    defaultTreeView,
+    defaultCheckedColumns,
+  } = useContext(TableStateContext);
+
+  const displayedColumns = useRef<Column<any, any>[]>(columns);
 
   const operationTitle = (op: OperatorValue) => {
     const operationMap = {
@@ -51,22 +55,6 @@ const Filters = ({
     };
     return operationMap[op as keyof typeof operationMap];
   };
-
-  const displayedColumns = useRef<Column<any, any>[]>(columns);
-
-  const isPickableColumn = (column: Column<any, any>) =>
-    !column.hidden && !column.fixed;
-
-  const defaultTreeView = useRef(
-    columns.filter(isPickableColumn).map((column) => ({
-      id: column.name as string,
-      name: column.name,
-    }))
-  );
-
-  const defaultSelectedColumns = columns
-    .filter(isPickableColumn)
-    .map((col) => col.name as string);
 
   const updateFilterModelItems = (filterItems: FilterItem[]) => {
     setFilters((prev) => ({
@@ -96,7 +84,7 @@ const Filters = ({
           onClose: columnPickerPopover.handleClose,
         }}
         open={columnPickerPopover.open}
-        treeView={treeView || defaultTreeView.current}
+        treeView={treeView || defaultTreeView}
         height={480}
         onChange={(selectedColumns) => {
           displayedColumns.current = columns.filter((col) =>
@@ -105,7 +93,7 @@ const Filters = ({
 
           onSelectedColumns && onSelectedColumns(selectedColumns);
         }}
-        defaultSelectedColumns={defaultSelectedColumns}
+        defaultSelectedColumns={defaultCheckedColumns}
       />
 
       <Box
@@ -210,7 +198,7 @@ const Filters = ({
                       )
                     }
                     key={index}
-                    label={`"${item.columnName}" ${operationTitle(
+                    label={`"${column.name}" ${operationTitle(
                       item.operatorValue
                     )} ${item.value}`}
                   />

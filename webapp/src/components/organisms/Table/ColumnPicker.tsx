@@ -22,6 +22,7 @@ interface ColumnPickerProps {
 
 export const ColumnPicker = (props: ColumnPickerProps) => {
   const [expandedTrees, setExpandedTrees] = useState<string[]>([]);
+
   const {
     filteredNodes,
     getTreesToExpandIdList,

@@ -191,6 +191,7 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
       name: 'Action',
       field: 'Actions',
       title: 'Actions',
+      fixed: true,
       customSx: tableActionsSx,
       render: (row) => (
         <TableActionsWrapper>

@@ -137,6 +137,7 @@ const DatasetTable = (props: DatasetTableProps) => {
         </TableActionsWrapper>
       ),
       name: 'Actions',
+      fixed: true,
     },
   ];
 

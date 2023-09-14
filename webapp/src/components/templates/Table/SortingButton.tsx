@@ -1,4 +1,4 @@
-import { TableFilterContext } from '@components/organisms/Table/hooks/filters/useTableFilters';
+import { TableStateContext } from '@components/organisms/Table/hooks/useTableState';
 import { ArrowDownward, ArrowUpward, MoreVert } from '@mui/icons-material';
 import {
   Box,
@@ -34,7 +34,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
   const {
     filters: { sortModel },
     setFilters,
-  } = useContext(TableFilterContext);
+  } = useContext(TableStateContext);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);

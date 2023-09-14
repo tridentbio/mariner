@@ -1,22 +1,26 @@
 import { Column, TableProps } from '@components/templates/Table';
-import { State } from '@components/templates/Table/types';
+import { State, TablePreferences } from '@components/templates/Table/types';
 import { TablePaginationProps } from '@mui/material';
 import { NonUndefined, deepClone } from '@utils';
-import { createContext, useMemo, useState } from 'react';
-import { filterRows } from './filterValidation';
+import { createContext, useMemo, useRef, useState } from 'react';
+import { filterRows } from './filters/filterValidation';
 
-export const useTableFilters = <R extends { [key: string]: any }>({
+export const useTableState = <R extends { [key: string]: any }>({
   columns,
   rows,
   pagination,
   dependencies = {},
   linkOperator = 'and',
+  defaultSelectedNodes,
+  tablePreferences,
 }: {
   columns: Column<any, any>[];
   rows: TableProps<R>['rows'];
   pagination: TableProps<R>['pagination'];
   dependencies: TableProps<R>['dependencies'];
   linkOperator?: NonUndefined<TableProps<R>['filterLinkOperatorOptions']>[0];
+  defaultSelectedNodes?: Column<any, any>['name'][];
+  tablePreferences?: TablePreferences;
 }) => {
   const [filters, setFilters] = useState<State>({
     filterModel: { items: [], linkOperator },
@@ -98,6 +102,27 @@ export const useTableFilters = <R extends { [key: string]: any }>({
     };
   };
 
+  const isPickableColumn = (column: Column<any, any>) =>
+    !column.hidden && !column.fixed;
+
+  const defaultCheckedColumns = useMemo(() => {
+    if (tablePreferences) {
+      return tablePreferences.columns.map((col) => col.name as string);
+    }
+
+    return (
+      defaultSelectedNodes ||
+      columns.filter(isPickableColumn).map((col) => col.name as string)
+    );
+  }, [/* defaultSelectedNodes,  */ tablePreferences]);
+
+  const defaultTreeView = useRef(
+    columns.filter(isPickableColumn).map((column) => ({
+      id: column.name as string,
+      name: column.name,
+    }))
+  );
+
   return {
     filterableColumns,
     filteredRows,
@@ -106,14 +131,12 @@ export const useTableFilters = <R extends { [key: string]: any }>({
     handlePageChange,
     handleRowsPerPageChange,
     getColumnState,
+    defaultTreeView: defaultTreeView.current,
+    defaultCheckedColumns,
   };
 };
 
-export interface TableFiltersContextProps {
-  filters: State;
-  setFilters: ReturnType<typeof useTableFilters>['setFilters'];
-  filterableColumns: ReturnType<typeof useTableFilters>['filterableColumns'];
-}
+export type TableStateContextProps = ReturnType<typeof useTableState>;
 
 //@ts-ignore
-export const TableFilterContext = createContext<TableFiltersContextProps>({});
+export const TableStateContext = createContext<TableStateContextProps>({});

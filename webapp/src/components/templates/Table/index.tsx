@@ -16,10 +16,10 @@ import { useAppSelector } from '@app/hooks';
 import { DraggableCell } from '@components/organisms/Table/DraggableCell';
 import { SortableRow } from '@components/organisms/Table/SortableRow';
 import {
-  TableFilterContext,
-  TableFiltersContextProps,
-  useTableFilters,
-} from '@components/organisms/Table/hooks/filters/useTableFilters';
+  TableStateContext,
+  TableStateContextProps,
+  useTableState,
+} from '@components/organisms/Table/hooks/useTableState';
 import { setPreference } from '@features/users/usersSlice';
 import { useAppDispatch } from '@hooks';
 import NoData from 'components/atoms/NoData';
@@ -39,25 +39,17 @@ const isKeyOf = <O,>(
   return key in obj;
 };
 
-const TableFiltersContextProvider = ({
+const TableStateContextProvider = ({
   children,
-  filterableColumns,
-  filters,
-  setFilters,
-}: TableFiltersContextProps & { children: ReactNode }) => {
-  const params = useMemo<TableFiltersContextProps>(
-    () => ({
-      filters,
-      setFilters,
-      filterableColumns,
-    }),
-    [setFilters, filters]
-  );
-
+  value,
+}: {
+  children: ReactNode;
+  value: TableStateContextProps;
+}) => {
   return (
-    <TableFilterContext.Provider value={params}>
+    <TableStateContext.Provider value={value}>
       {children}
-    </TableFilterContext.Provider>
+    </TableStateContext.Provider>
   );
 };
 
@@ -77,6 +69,7 @@ const Table = <R extends { [key: string]: any }>({
   tableId,
   dependencies = {},
   columnTree,
+  defaultSelectedNodes,
 }: TableProps<R>) => {
   const preferences = useAppSelector((state) => state.users.preferences);
   const preferencesLoaded = useRef<boolean>(false);
@@ -88,20 +81,23 @@ const Table = <R extends { [key: string]: any }>({
     return allColumns.filter((col) => !col.hidden || col.fixed);
   }, [allColumns]);
 
-  const {
-    filterableColumns,
-    filters,
-    filteredRows,
-    setFilters,
-    handlePageChange,
-    handleRowsPerPageChange,
-    getColumnState,
-  } = useTableFilters({
+  const tableState = useTableState({
     columns: allColumns,
     rows,
     pagination,
     dependencies,
+    tablePreferences: tableId ? preferences?.tables?.[tableId] : undefined,
+    defaultSelectedNodes,
   });
+
+  const {
+    filterableColumns,
+    filters,
+    filteredRows,
+    handlePageChange,
+    handleRowsPerPageChange,
+    getColumnState,
+  } = tableState;
 
   const renderCol = (row: any, { render, field }: Column<any, any>) => {
     if (isKeyOf(field, row)) {
@@ -220,11 +216,7 @@ const Table = <R extends { [key: string]: any }>({
           ...extraTableStyle,
         }}
       >
-        <TableFiltersContextProvider
-          filterableColumns={filterableColumns}
-          filters={filters}
-          setFilters={setFilters}
-        >
+        <TableStateContextProvider value={tableState}>
           <TableHead>
             {(!!filterableColumns.length || !!filters.sortModel) && (
               <TableRow>
@@ -271,7 +263,7 @@ const Table = <R extends { [key: string]: any }>({
               })}
             </SortableRow>
           </TableHead>
-        </TableFiltersContextProvider>
+        </TableStateContextProvider>
         <TableBody>
           {filteredRows.map((row) => (
             <TableRow key={rowKey(row)} data-test-row-id={rowKey(row)}>

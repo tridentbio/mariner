@@ -83,6 +83,7 @@ export interface TableProps<R extends { [key: string]: any }> {
   tableId?: string;
   dependencies?: { [key: string]: any };
   columnTree?: TreeNode[];
+  defaultSelectedNodes?: Column<any, any>['name'][];
 }
 
 export interface TablePreferences {

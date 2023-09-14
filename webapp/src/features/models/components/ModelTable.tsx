@@ -81,6 +81,7 @@ const ModelTable = (props: IModelTable) => {
       name: 'Action',
       field: null,
       title: 'Actions',
+      fixed: true,
       customSx: tableActionsSx,
       render: (row) => (
         <TableActionsWrapper>
