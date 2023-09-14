@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // ***********************************************************
 // This example support/component.js is processed and
 // loaded automatically before your test files.
@@ -20,18 +21,28 @@
 // require('./commands')
 
 import { mount } from 'cypress/react'
-import '@4tw/cypress-drag-drop'
-import { fakeApi } from 'mock/msw/server'
+import { fakeApi } from '../../src/mock/msw/server'
+import { rest } from 'msw'
 
 Cypress.Commands.add('mount', mount)
 
-before(() => fakeApi.start({  onUnhandledRequest: 'bypass' }))
+declare global {
+  interface Window {
+    msw?: {
+      fakeApi: typeof fakeApi
+      rest: typeof rest
+    }
+  }
+}
 
-  //? Reset handlers so that each test could alter them
-  //? without affecting other, unrelated tests.
-  afterEach(() => fakeApi.resetHandlers())
+Cypress.on('test:before:run:async', async () => {
+  if(window.msw) {
+    console.log('MSW is already running.')
+  } else {
+    console.log('MSW has not been started. Starting now.')
 
-  after(() => fakeApi.stop())
+    window.msw = { fakeApi, rest }
 
-// Example use:
-// cy.mount(<MyComponent />)
+    await fakeApi.start();
+  }
+});

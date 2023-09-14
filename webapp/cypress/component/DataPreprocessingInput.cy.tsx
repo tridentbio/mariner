@@ -104,14 +104,6 @@ describe('DataPreprocessingInput.cy.tsx', () => {
     smiles: ['molfeat.trans.fp.FPVecFilteredTransformer'],
   }
 
-  // before(() => fakeApi.start({  onUnhandledRequest: 'bypass' }))
-
-  // //? Reset handlers so that each test could alter them
-  // //? without affecting other, unrelated tests.
-  // afterEach(() => fakeApi.resetHandlers())
-
-  // after(() => fakeApi.stop())
-
   it('should filter compatible featurizers on preprocessing step select input', () => {
     cy.mount(<MountedComponent />)
 
