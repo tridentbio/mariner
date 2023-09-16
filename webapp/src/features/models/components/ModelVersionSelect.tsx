@@ -62,7 +62,11 @@ const ModelVersionSelect = ({
         onChange(option || undefined);
       }}
       renderOption={(params, option) => (
-        <MenuItem {...params} key={option.name}>
+        <MenuItem
+          {...params}
+          key={option.name}
+          data-testframework={option.config.framework}
+        >
           {option.name}
           <Chip sx={{ ml: 'auto' }} label={option.config.framework} />
         </MenuItem>

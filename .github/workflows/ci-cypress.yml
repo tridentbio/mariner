@@ -1,4 +1,4 @@
-name: End to End Tests CI
+name: Component & Tests CI
 on:
   push:
     branches: [ "develop", "releases/**" ]
@@ -15,9 +15,16 @@ env:
     COMPOSE_HTTP_TIMEOUT: 600
     DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
 jobs:
-  tests-e2e:
+  tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: E2E tests
-      run: make test-e2e DOCKER_COMPOSE="$DOCKER_COMPOSE"
+    - name: Build webapp
+      run: make build-webapp DOCKER_COMPOSE="$DOCKER_COMPOSE"
+    # - name: Component tests
+    #   run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
+    - name: E2E test
+      # Runs even if previous steps failed (can be cancelled manually)
+      if: '!cancelled()' 
+      run: make e2e-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
+      

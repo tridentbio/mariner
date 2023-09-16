@@ -56,9 +56,19 @@ else
 endif
 
 
+.PHONY: build-webapp
+build-webapp:                  ## Builds needed local images to run application.
+	$(DOCKER_COMPOSE) build webapp
+
 .PHONY: build
 build:                  ## Builds needed local images to run application.
 	$(DOCKER_COMPOSE) build --parallel backend webapp
+	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
+
+
+.PHONY: build-backend
+build-backend:
+	$(DOCKER_COMPOSE) build backend
 	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
 
 
@@ -125,15 +135,14 @@ test-integration: start-backend ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 
-.PHONY: test-e2e
-test-e2e: build start create-admin create-test-user## Runs test target
-	$(DOCKER_COMPOSE) run --entrypoint sh e2e -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
+.PHONY: e2e-test
+e2e-test: start #build-backend start create-admin create-test-user ## Runs test target
+	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --browser electron"
 
 
 .PHONY: component-test
 component-test: # Runs cypress component tests isolated
-	$(DOCKER_COMPOSE) run --entrypoint sh component-test -c "npm install && npx cypress install && npx cypress run --config-file /component-test/cypress.config.js --component"
-
+	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --component"
 
 .PHONY: pre-commit
 pre-commit:  ## Runs pre-commit hooks (formatting, linting and unit testing)

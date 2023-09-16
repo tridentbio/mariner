@@ -331,8 +331,6 @@ const buildSklearnPreprocessingForm = (
     .click();
 
   if('constructorArgs' in modelSchema.model && modelSchema.model.constructorArgs) {
-    cy.get(`[data-testid="sklearn-model-select-action-btn"]`).click()
-    
     const args: {[key: string]: any} = modelSchema.model.constructorArgs || {}
     buildStepConstructorArgs(`sklearn-model-select`, args)
   }

@@ -10,7 +10,6 @@ import { ThemeProvider } from "@mui/system"
 import { FormProvider, NonUndefined, useForm } from "react-hook-form"
 import { Provider } from "react-redux"
 import { theme } from "theme"
-import { fakeApi } from '../../src/mock/msw/server'
 
 describe('DataPreprocessingInput.cy.tsx', () => {
   const value = {
@@ -106,6 +105,8 @@ describe('DataPreprocessingInput.cy.tsx', () => {
 
   it('should filter compatible featurizers on preprocessing step select input', () => {
     cy.mount(<MountedComponent />)
+    
+    expect(true).to.be.equal(false)
 
     const cols = (value?.config?.dataset?.featureColumns as SimpleColumnConfig[])
       .concat(value?.config?.dataset?.targetColumns as SimpleColumnConfig[])
