@@ -87,7 +87,7 @@
     "cypress": "^12.14.0",
     "cypress-file-upload": "^5.0.8",
     "cypress-plugin-tab": "^1.0.5",
-    "cypress-vite": "^1.4.0",
+    "cypress-vite": "^1.4.2",
     "emitter": "^0.0.5",
     "enforce-branch-name": "^1.1.2",
     "eslint": "^8.15.0",
