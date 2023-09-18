@@ -109,6 +109,6 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}, fram
       checkTrainFinishes(experimentName).then((trained) =>
         assert.isTrue(trained)
       );
-      return cy.wrap(response?.body);
+      cy.wrap(response?.body);
     });
 };

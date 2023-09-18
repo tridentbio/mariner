@@ -4,6 +4,8 @@ import { DatasetFormData } from '../../support/dataset/create';
 import { fillDatasetCols, fillModelDescriptionStepForm } from '../../support/models/build-model';
 import { getColumnConfigTestId } from '@components/organisms/ModelBuilder/utils';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 describe('DatasetConfigForm', () => {
   let irisDatasetFixture: DatasetFormData | null = null;
 
@@ -79,12 +81,23 @@ describe('DatasetConfigForm', () => {
 
     cy.get('button').contains('NEXT').click();
 
-    cy.get('#dataset-select')
+    const select = cy.get('#dataset-select')
+
+    cy.intercept({
+      method: 'GET',
+      url: `${API_BASE_URL}/api/v1/datasets/?*`,
+    }).as('getDatasets');
+
+    select
       .click()
       .type(testModel.config?.dataset?.name || '')
-      .get('li[role="option"]')
-      .first()
-      .click();
+
+    cy.wait('@getDatasets').then(({ response }) => {
+      select
+        .get('li[role="option"]')
+        .first()
+        .click();
+    })
   });
 
   it('should not include target columns on the feature columns list', () => {

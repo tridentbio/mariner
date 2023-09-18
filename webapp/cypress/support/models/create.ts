@@ -163,9 +163,9 @@ export const setupSomeModel = (): Cypress.Chainable<ReturnType<typeof modelFormD
     cy.setupIrisDatset().then((fixture) => {
       const formData = modelFormData(fixture.name);
       if (exists)
-        return cy.wrap(formData)
+        cy.wrap(formData)
       else {
-        return cy.wrap(createModelDirectly(formData))
+        cy.wrap(createModelDirectly(formData))
       }
     });
   });

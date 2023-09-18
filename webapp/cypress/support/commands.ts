@@ -28,11 +28,12 @@ Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
 
 Cypress.Commands.add('loginTest', (timeout: number = 15000) => {
   cy.clearAllCookies();
-  cy.visit('/login');
-  cy.get('#username-input', { timeout }).type(TEST_USER);
-  cy.get('#password-input').type('123456');
-  cy.get('button[type="submit"]').click();
-  cy.url().should('eq', Cypress.config('baseUrl'));
+  cy.visit('/login').then(() => {
+    cy.get('#username-input', { timeout }).type(TEST_USER);
+    cy.get('#password-input').type('123456');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('eq', Cypress.config('baseUrl'));
+  });
 });
 
 export const addDescription = (
