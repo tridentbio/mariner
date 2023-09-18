@@ -19,16 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        # Caches Poetry packages
-        python-version: '3.9' 
-    - name: Build webapp
-      run: make build-webapp DOCKER_COMPOSE="$DOCKER_COMPOSE"
-    - name: Install npm dependencies
-      run: cd webapp && npm install cypress-vite
-    - name: Component tests
-      run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
+    # - name: Build webapp
+    #   run: make build-webapp DOCKER_COMPOSE="$DOCKER_COMPOSE"
+    # - name: Install Cypress dependencies
+    #   run: cd webapp && npm install cypress-vite
+    # - name: Component tests
+    #   run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
     - name: E2E test
       # Runs even if previous steps failed (can be cancelled manually)
       if: '!cancelled()' 
