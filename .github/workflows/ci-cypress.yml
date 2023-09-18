@@ -22,7 +22,8 @@ jobs:
     # - name: Build webapp
     #   run: make build-webapp DOCKER_COMPOSE="$DOCKER_COMPOSE"
     - name: Install Cypress dependencies
-      run: npm install cypress-vite -g
+      # run: npm install cypress-vite -g
+      run: cd webapp && npm install cypress-vite
     - name: Component tests
       run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
     - name: E2E test
