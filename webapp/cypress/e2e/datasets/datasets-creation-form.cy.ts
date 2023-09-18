@@ -1,13 +1,15 @@
 import { zincDatasetFixture } from '../../support/dataset/examples';
 import TestUtils from '../../support/TestUtils';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 describe('/datasets/new - Dataset form', () => {
   beforeEach(() => {
     cy.loginSuper();
     cy.visit('/datasets');
     cy.intercept({
       method: 'GET',
-      url: '/api/v1/datasets/?*',
+      url: `${API_BASE_URL}/api/v1/datasets/?*`,
     }).as('getDatasets');
     cy.wait('@getDatasets').then(({ response }) => {
       expect(response?.statusCode).to.eq(200);
@@ -30,7 +32,7 @@ describe('/datasets/new - Dataset form', () => {
 
     cy.intercept({
       method: 'POST',
-      url: '/api/v1/datasets/csv-metadata',
+      url: `${API_BASE_URL}/api/v1/datasets/csv-metadata`,
     }).as('getCsvData');
     cy.get('#dataset-upload').attachFile(zincDatasetFixture.file).wait(2000);
 

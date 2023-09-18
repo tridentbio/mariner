@@ -106,6 +106,7 @@ describe('DataPreprocessingInput.cy.tsx', () => {
   it('should filter compatible featurizers on preprocessing step select input', () => {
     cy.mount(<MountedComponent />)
     
+    //! Just for CI testing purposes (need to be removed later)
     expect(true).to.be.equal(false)
 
     const cols = (value?.config?.dataset?.featureColumns as SimpleColumnConfig[])

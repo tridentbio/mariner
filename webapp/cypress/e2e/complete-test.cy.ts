@@ -9,13 +9,6 @@ import { trainModel } from '../support/training/create';
 
 const SCHEMA_PATH = Cypress.env('SCHEMA_PATH');
 
-describe('sadfasd', () => {
-  it('asdfsdf', () => {
-    // expect('sdfasdf').to.be.equal(`SCHEMA_PATH ${SCHEMA_PATH}`)
-    expect('sdfasdf').to.be.equal(Cypress.env('API_BASE_URL'))
-  })
-})
-
 describe.skip('Complete test from dataset creation to inference', () => {
   before(() => {
     cy.loginSuper();

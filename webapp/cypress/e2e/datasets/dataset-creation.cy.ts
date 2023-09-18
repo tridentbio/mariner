@@ -1,5 +1,7 @@
 import { createRandomDatasetFormData } from '../../support/dataset/examples';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 describe('/datasets/new - Dataset creation page', () => {
   beforeEach(() => {
     cy.loginSuper(15000);
@@ -7,7 +9,7 @@ describe('/datasets/new - Dataset creation page', () => {
 
     cy.intercept({
       method: 'GET',
-      url: '/api/v1/datasets/?*',
+      url: `${API_BASE_URL}/api/v1/datasets/?*`,
     }).as('getDatasets');
     cy.wait('@getDatasets').then(({ response }) => {
       expect(response?.statusCode).to.eq(200);

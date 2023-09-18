@@ -136,8 +136,8 @@ test-integration: start-backend ## Runs unit tests
 
 
 .PHONY: e2e-test
-e2e-test: start #build-backend start create-admin create-test-user ## Runs test target
-	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --browser electron"
+e2e-test: build-backend start create-admin create-test-user ## Runs test target
+	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --browser chrome"
 
 
 .PHONY: component-test

@@ -5,8 +5,7 @@ module.exports = defineConfig({
   env: {
     TEST_USER: 'test@domain.com',
     SCHEMA_PATH: `${__dirname}/../backend/tests/data`,
-    API_BASE_URL: 'http://localhost',
-    // baseUrl: 'http://localhost:3000/',
+    API_BASE_URL: 'http://localhost:8000', 
   },
 
   e2e: {

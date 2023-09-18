@@ -178,13 +178,11 @@ services:
     environment:
       # Override the env variables from cypress.config.js
       - CYPRESS_SCHEMA_PATH=/e2e/cypress/fixtures/data
-      - CYPRESS_API_BASE_URL=http://0.0.0.0
-      # - CYPRESS_baseUrl=http://localhost:3000/
     network_mode: host
     volumes:
       - ./webapp:/e2e:z
       - ./backend/tests/data:/e2e/cypress/fixtures/data:z
-
+      
 volumes:
   app-db-data:
   app-mlflow-data:
