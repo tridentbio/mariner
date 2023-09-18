@@ -21,10 +21,10 @@ jobs:
     - uses: actions/checkout@v3
     # - name: Build webapp
     #   run: make build-webapp DOCKER_COMPOSE="$DOCKER_COMPOSE"
-    # - name: Install Cypress dependencies
-    #   run: cd webapp && npm install cypress-vite
-    # - name: Component tests
-    #   run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
+    - name: Install Cypress dependencies
+      run: npm install cypress-vite -g
+    - name: Component tests
+      run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
     - name: E2E test
       # Runs even if previous steps failed (can be cancelled manually)
       if: '!cancelled()' 
