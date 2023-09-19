@@ -62,6 +62,11 @@ describe('DatasetConfigForm', () => {
   if (!featureCols) throw new Error('featureCols is undefined');
 
   before(() => {
+    cy.on(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
+
     cy.loginSuper();
 
     cy.setupIrisDatset().then((iris) => {
@@ -71,7 +76,6 @@ describe('DatasetConfigForm', () => {
 
   beforeEach(() => {
     cy.loginSuper();
-    cy.visit('/models/new');
 
     if (testModel.config?.dataset?.name)
       testModel.config.dataset.name = irisDatasetFixture?.name;

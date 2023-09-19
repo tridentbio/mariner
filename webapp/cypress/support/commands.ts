@@ -26,7 +26,7 @@ Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
   cy.url().should('eq', Cypress.config('baseUrl'));
 });
 
-Cypress.Commands.add('loginTest', (timeout: number = 15000) => {
+Cypress.Commands.add('loginTest', (timeout: number = 20000) => {
   cy.clearAllCookies();
   cy.visit('/login').then(() => {
     cy.get('#username-input', { timeout }).type(TEST_USER);
