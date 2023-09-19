@@ -225,7 +225,14 @@ class TorchFunctions(BaseModelFunctions):
         dataloader = DataLoader(dataset, batch_size=len(input_))
         X = next(iter(dataloader))
 
-        result: dict = self.model.predict_step(X)
+        trainer=Trainer(
+            accelerator="cpu"
+        )
+        result: dict = trainer.predict(
+            model=self.model,
+            dataloaders=dataloader
+        )[0]
+
         result = {
             key: value.detach().cpu().numpy().tolist()
             for key, value in result.items()

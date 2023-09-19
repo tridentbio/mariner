@@ -204,7 +204,7 @@ async def create_model_training(
         obj_in=ExperimentCreateRepo(**experiment_payload),
     )
 
-    training_actor = TrainingActor.remote(  # type: ignore
+    training_actor = TrainingActor.options(num_gpus=1 if training_request.use_gpu else 0).remote(  # type: ignore
         experiment=Experiment.from_orm(experiment),
         request=training_request,
         user_id=user.id,
