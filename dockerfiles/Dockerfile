@@ -1,11 +1,14 @@
 FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
+# Must not be changed unless installing GPU version of PyTorch
 ENV PLATFORM=cu118
 ENV TORCH_VERSION=2.0.1
 
+WORKDIR /app/
 
 RUN apt-get update
 RUN apt-get install libpq-dev gcc less curl unzip libxrender1 libsm-dev libxext-dev curl -y
+
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | \
     POETRY_HOME=/opt/poetry python3 && \
@@ -13,32 +16,30 @@ RUN curl -sSL https://install.python-poetry.org | \
     ln -s /opt/poetry/bin/poetry && \
     poetry config virtualenvs.create false
 
-
-WORKDIR /app/
 # Copy dependency related files
 COPY ./pyproject.toml ./poetry.lock /app/
 # RUN --mount=type=cache,target=/root/.cache/pypoetry/cache \
 #     --mount=type=cache,target=/root/.cache/pypoetry/artifacts \
 #     poetry install --no-root
 
-COPY ./deps.py /app/deps.py
+RUN poetry install --no-root
 
-RUN poetry install --no-root --no-cache --without dev
+COPY ./deps.py /app/deps.py
 RUN python -m deps
-RUN poetry cache clear --no-interaction --all pypi
 
 COPY ./mariner /app/mariner
 COPY ./cli /app/cli
 COPY ./api /app/api
 COPY ./fleet /app/fleet
 COPY ./oauth_providers /app/oauth_providers
-
-RUN poetry install
-
-RUN python -m deps
+COPY ./tests /app/tests
 
 COPY ./alembic.ini ./pylintrc ./pytest.ini /app/
 COPY ./scripts /app/scripts
+
+
+RUN poetry install --only-root
+RUN poetry cache clear --no-interaction --all pypi
 
 CMD [ "sh", "/app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]
 
