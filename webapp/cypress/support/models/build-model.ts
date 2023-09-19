@@ -133,26 +133,33 @@ const connect = (sourceHandleId: string, targetHandleId: string) => {
 export const fillModelDescriptionStepForm = (
   modelCreate: DeepPartial<ModelCreate>
 ) => {
+  cy.intercept({
+    method: 'GET',
+    url: `${API_BASE_URL}/api/v1/models/*`,
+  }).as('getModels');
+  
   cy.visit('/models/new');
 
-  // Fill model name
-  cy.get('[data-testid="model-name"] input', {timeout: 10000})
-    .clear()
-    .type(modelCreate.name || randomName())
-    .type('{enter}');
-
-  // Fill model description
-  cy.get('[data-testid="model-description"] input')
-    .clear()
-    .type(modelCreate.modelDescription || randomName());
-  // Fill model version name
-  cy.get('[data-testid="version-name"] input')
-    .clear()
-    .type(modelCreate?.config?.name || randomName());
-  // Fill model version description
-  cy.get('[data-testid="version-description"] textarea')
-    .clear()
-    .type(modelCreate.modelVersionDescription || randomName());
+  cy.wait('@getModels').then(({ response }) => {
+    // Fill model name
+    cy.get('[data-testid="model-name"] input', {timeout: 10000})
+      .clear()
+      .type(modelCreate.name || randomName())
+      .type('{enter}');
+  
+    // Fill model description
+    cy.get('[data-testid="model-description"] input')
+      .clear()
+      .type(modelCreate.modelDescription || randomName());
+    // Fill model version name
+    cy.get('[data-testid="version-name"] input')
+      .clear()
+      .type(modelCreate?.config?.name || randomName());
+    // Fill model version description
+    cy.get('[data-testid="version-description"] textarea')
+      .clear()
+      .type(modelCreate.modelVersionDescription || randomName());
+  })
 };
 
 export const fillDatasetCols = (cols: (ColumnConfig | SimpleColumnConfig)[], colInputSelector: string) => {
