@@ -46,7 +46,9 @@ def get_model_by_uri(model_uri: str, map_location=None) -> CustomModel:
     Returns:
         torch instance of the model.
     """
-    mlflowmodel = mlflow.pytorch.load_model(model_uri, map_location=map_location)
+    mlflowmodel = mlflow.pytorch.load_model(
+        model_uri, map_location=map_location
+    )
     return mlflowmodel
 
 

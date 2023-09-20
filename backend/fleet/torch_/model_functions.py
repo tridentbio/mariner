@@ -12,7 +12,6 @@ from lightning.pytorch.loggers import Logger
 from mlflow import MlflowClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
-from torch import Tensor
 from torch_geometric.loader import DataLoader
 from typing_extensions import override
 
@@ -223,14 +222,11 @@ class TorchFunctions(BaseModelFunctions):
             preprocessing_pipeline=self.preprocessing_pipeline,
         )
         dataloader = DataLoader(dataset, batch_size=len(input_))
-        X = next(iter(dataloader))
+        next(iter(dataloader))
 
-        trainer=Trainer(
-            accelerator="cpu"
-        )
+        trainer = Trainer(accelerator="cpu")
         result: dict = trainer.predict(
-            model=self.model,
-            dataloaders=dataloader
+            model=self.model, dataloaders=dataloader
         )[0]
 
         result = {

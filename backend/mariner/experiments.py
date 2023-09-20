@@ -193,7 +193,7 @@ async def create_model_training(
         "created_by_id": user.id,
         "model_version_id": training_request.model_version_id,
         "hyperparams": hyperparams,
-        "stage": "RUNNING"
+        "stage": "RUNNING",
     }
 
     if training_request.framework == "torch":

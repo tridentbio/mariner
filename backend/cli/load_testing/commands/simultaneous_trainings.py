@@ -18,7 +18,9 @@ import yaml
 logging.basicConfig()
 LOG = logging.getLogger("cli").getChild(__name__)
 
-EXPERIMENT_TIMEOUT = timedelta(minutes=int(os.getenv("EXPERIMENT_TIMEOUT", 120)))
+EXPERIMENT_TIMEOUT = timedelta(
+    minutes=int(os.getenv("EXPERIMENT_TIMEOUT", 120))
+)
 DATASET_PROCESSING_TIMEOUT = timedelta(
     minutes=int(os.getenv("DATASET_PROCESSING_TIMEOUT", 10))
 )
@@ -289,7 +291,7 @@ def load_test_number_of_simulteneous_trainings(
 @click.option(
     "--max-trainings",
     type=int,
-    default=2**12,
+    default=2 ** 12,
     help="Maximum number of trainings to perform.",
 )
 @click.option(
@@ -323,7 +325,7 @@ def load_test_trainings(
     ctx: click.Context,
     model_config: IO,
     dataset_csv: IO,
-    max_trainings: int = 2**12,
+    max_trainings: int = 2 ** 12,
     timeout: int = 60 * 60 * 2,
     max_failed_trainings_rate=0.1,
 ):

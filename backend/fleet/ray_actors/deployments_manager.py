@@ -91,7 +91,7 @@ class SingleModelDeploymentControl:
         if self.deployment.model_version.config.framework == "torch":
             model = mlflowapi.get_model_by_uri(
                 self.deployment.model_version.get_mlflow_uri(),
-                map_location='cpu'
+                map_location="cpu",
             )
             self.functions = TorchFunctions(
                 spec=self.deployment.model_version.config, model=model
