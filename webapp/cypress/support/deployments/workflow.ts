@@ -35,6 +35,7 @@ export const startDeployment = (deploymentName: string) => {
   cy.wait('@startDeploymentAction').then(() => {
     waitUntilDeploymentStatus(deploymentName, 'active');
   })
+  
 };
 
 export const stopDeployment = (deploymentName: string) => {
