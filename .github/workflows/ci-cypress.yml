@@ -25,4 +25,15 @@ jobs:
       # Runs even if previous steps failed (can be cancelled manually)
       if: '!cancelled()' 
       run: make e2e-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
-      
+    - name: Dump docker logs on failure
+      if: failure()
+      uses: jwalton/gh-docker-logs@v2
+      with:
+        images: 'backend'
+    - uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: e2e-cypress-videos
+        path: ../../webapp/cypress/videos
+        if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
+        retention-days: 2
