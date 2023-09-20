@@ -64,7 +64,7 @@ services:
     restart: unless-stopped
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
+      dockerfile: ../dockerfiles/Dockerfile.cpu
     healthcheck:
       retries: 10
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -83,7 +83,7 @@ services:
       - mlflowdb
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
+      dockerfile: ../dockerfiles/Dockerfile.cpu
     env_file:
       - backend/.env.secret
     healthcheck:
@@ -102,7 +102,7 @@ services:
   ray-head:
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
+      dockerfile: ../dockerfiles/Dockerfile.cpu
     shm_size: '4.91gb'
     env_file:
       - backend/.env
@@ -125,7 +125,7 @@ services:
   ray-worker:
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
+      dockerfile: ../dockerfiles/Dockerfile.cpu
     shm_size: '4.91gb'
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000

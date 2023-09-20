@@ -1,0 +1,16 @@
+services:
+  backend:
+    runtime: nvidia
+    build:
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.gpu
+  ray-head:
+    runtime: nvidia
+    build:
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.gpu
+  ray-worker:
+    runtime: nvidia
+    build:
+      context: ./backend
+      dockerfile: ../dockerfiles/Dockerfile.gpu
