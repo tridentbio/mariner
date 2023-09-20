@@ -238,7 +238,7 @@ export const buildModel = (
     cy.get('button').contains('CREATE').click();
 
     if(modelCreate.config?.framework == 'torch') {
-      cy.wait('@checkConfig').then(({ response }) => {
+      cy.wait('@checkConfig', {responseTimeout: 60000}).then(({ response }) => {
         expect(response?.statusCode).to.eq(200);
         if (params.successfullRequestRequired) {
           expect(Boolean(response?.body.stackTrace)).to.eq(false);

@@ -25,9 +25,16 @@ export const startDeployment = (deploymentName: string) => {
     assert.notEqual(s, 'active', 'Deployment is already active');
   });
 
+  cy.intercept({
+    method: 'PUT',
+    url: `${API_BASE_URL}/api/v1/deployments/*`,
+  }).as('startDeploymentAction');
+
   cy.runAction(deploymentName, 1);
 
-  waitUntilDeploymentStatus(deploymentName, 'active');
+  cy.wait('@startDeploymentAction').then(() => {
+    waitUntilDeploymentStatus(deploymentName, 'active');
+  })
 };
 
 export const stopDeployment = (deploymentName: string) => {
@@ -36,7 +43,7 @@ export const stopDeployment = (deploymentName: string) => {
   });
 
   cy.runAction(deploymentName, 1);
-
+  
   waitUntilDeploymentStatus(deploymentName, 'idle');
 };
 
