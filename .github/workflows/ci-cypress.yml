@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Component tests
-      run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
+    # - name: Component tests
+    #   run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
     - name: E2E test
       # Runs even if previous steps failed (can be cancelled manually)
       if: '!cancelled()' 

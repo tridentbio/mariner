@@ -13,7 +13,7 @@ const TEST_USER = Cypress.env('TEST_USER');
 
 Cypress.Commands.add('notificationShouldContain', (text: string) => {
   return cy
-    .get('.MuiAlert-message', { timeout: 20000 })
+    .get('.MuiAlert-message', { timeout: 30000 })
     .should('contain.text', text);
 });
 

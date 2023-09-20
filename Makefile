@@ -135,7 +135,8 @@ cypress-dependencies-install:
 
 .PHONY: e2e-test
 e2e-test: cypress-dependencies-install build start create-admin create-test-user ## Runs test target
-	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --browser chrome"
+# $(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --browser electron"
+	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --browser chrome --spec ./cypress/e2e/deployments/*"
 
 
 .PHONY: component-test

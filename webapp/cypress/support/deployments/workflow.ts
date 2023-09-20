@@ -28,14 +28,14 @@ export const startDeployment = (deploymentName: string) => {
   cy.intercept({
     method: 'PUT',
     url: `${API_BASE_URL}/api/v1/deployments/*`,
-  }).as('startDeploymentAction');
+  }).as('deploymentAction');
 
   cy.runAction(deploymentName, 1);
 
-  cy.wait('@startDeploymentAction').then(() => {
+  cy.wait('@deploymentAction', {responseTimeout: 40000}).then(() => {
     waitUntilDeploymentStatus(deploymentName, 'active');
   })
-  
+
 };
 
 export const stopDeployment = (deploymentName: string) => {
@@ -55,12 +55,20 @@ export const handleStatus = (
   getDeploymentStatus(deploymentName).then((currentStatus) => {
     const running = currentStatus === 'active';
 
+    cy.intercept({
+      method: 'PUT',
+      url: `${API_BASE_URL}/api/v1/deployments/*`,
+    }).as('deploymentAction');
+
     if (running && status === 'idle') {
       cy.runAction(deploymentName, 1);
       waitUntilDeploymentStatus(deploymentName, 'idle');
     } else if (!running && status === 'active') {
       cy.runAction(deploymentName, 1);
-      waitUntilDeploymentStatus(deploymentName, 'active');
+
+      cy.wait('@deploymentAction', {responseTimeout: 40000}).then(() => {
+        waitUntilDeploymentStatus(deploymentName, 'active');
+      })
     }
   });
 

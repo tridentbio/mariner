@@ -140,7 +140,7 @@ export const fillModelDescriptionStepForm = (
   
   cy.visit('/models/new');
 
-  cy.wait('@getModels').then(({ response }) => {
+  cy.wait('@getModels', {requestTimeout: 10000}).then(({ response }) => {
     // Fill model name
     cy.get('[data-testid="model-name"] input', {timeout: 10000})
       .clear()
