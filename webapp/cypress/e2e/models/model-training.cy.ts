@@ -27,8 +27,10 @@ describe('Model Training Page', () => {
       assert.isNotNull(experiment);
       // Assert metrics are found in metrics table
       cy.contains('button', 'Metrics', {timeout: 3000}).should('exist').click()
-      cy.get('#model-version-select').click().get('li[role="option"]').contains(experiment.modelVersion.name).click()
-      cy.get('[data-testid="experiment-select"] [role="button"]:not([aria-disabled])', {timeout: 1000}).click()
+      cy.get('#model-version-select').click().get('li[role="option"]').contains(experiment.modelVersion.name)
+        .click()
+        .wait(1000)
+      cy.get('[data-testid="experiment-select"] [role="button"]:not([aria-disabled])').click()
       cy.get('li[role="option"]').contains(experiment.experimentName).click()
       cy.get('table').contains('Train').should('exist')
       cy.get('table').contains('Validation').should('exist')

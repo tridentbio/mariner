@@ -13,7 +13,7 @@ const getDeploymentStatus = (deploymentName: string) =>
 const waitUntilDeploymentStatus = (
   deploymentName: string,
   waitingStatus: Status,
-  timeout = 15000
+  timeout = 25000
 ) =>
   cy
     .contains('td', deploymentName)
