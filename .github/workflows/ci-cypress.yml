@@ -33,7 +33,7 @@ jobs:
       - name: Save build folder
         uses: actions/upload-artifact@v3
         with:
-          name: build
+          name: webapp-build
           if-no-files-found: error
           path: webapp/build
 
@@ -50,14 +50,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build
-          # path: build
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:
           working-directory: webapp
           component: true
           browser: chrome
-          install-command:
+          # install-command:
       - uses: actions/upload-artifact@v3
         if: failure()
         with:
@@ -73,10 +72,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Download the frontend build folder
+      - name: Download the webapp build
         uses: actions/download-artifact@v3
         with:
-          name: build
+          name: webapp-build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Build and push backend
         uses: docker/bake-action@v3
