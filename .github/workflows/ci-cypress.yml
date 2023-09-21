@@ -14,35 +14,120 @@ env:
     AWS_DATASETS: dev-mariner-datasets
     COMPOSE_HTTP_TIMEOUT: 600
     DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose.cicd.yml"
+    CYPRESS_SCHEMA_PATH: backend/tests/data
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Component tests
-      run: make component-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
-    - name: E2E test
-      # Runs even if previous steps failed (can be cancelled manually)
-      if: '!cancelled()' 
-      run: make e2e-test DOCKER_COMPOSE="$DOCKER_COMPOSE"
-    - name: Collect backend container logs on failure
-      if: failure()
-      uses: jwalton/gh-docker-logs@v2
-      with:
-        # Backend image
-        images: 'image:latest'
-        dest: .github/logs
-    - uses: actions/upload-artifact@v3
-      if: failure()
-      with:
-        name: Backend logs
-        path: .github/logs
-        retention-days: 2
-    - uses: actions/upload-artifact@v3
-      if: failure()
-      with:
-        name: e2e-cypress-videos
-        path: webapp/cypress/videos
-        if-no-files-found: warn # 'warn' or 'ignore' are also available, defaults to `warn`
-        retention-days: 2
+      - name: asdf
+        working-directory: webapp
+        run: npm run build
+
+  cypress-install:
+    runs-on: ubuntu-latest
+    container:
+      image: cypress/included:12.6.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cypress install
+        uses: cypress-io/github-action@v5
+        with:
+          working-directory: webapp
+          # Disable running of tests within install job
+          runTests: false
+        #   build: npm run build
+      - name: Save build folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-webapp
+          if-no-files-found: error
+          path: build-webapp
+
+  backend-install:
+    runs-on: ubuntu-22.04
+    needs: cypress-install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Build backend
+        run: make build-backend DOCKER_COMPOSE="$DOCKER_COMPOSE"
+
+      - name: Start backend
+        run: make start DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="db mlflowdb mlflow ray-head ray-worker backend"
+
+  component-tests:
+    runs-on: ubuntu-22.04
+    needs: cypress-install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download the build folder
+        uses: actions/download-artifact@v3
+        with:
+          name: webapp-build-webapp
+          path: build-webapp
+
+      - name: Cypress run
+        uses: cypress-io/github-action@v5
+        with:
+          working-directory: webapp
+          component: true
+          browser: chrome
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: component-cypress-videos
+          path: webapp/cypress/videos
+          if-no-files-found: warn
+          retention-days: 2
+
+  e2e-tests:
+    runs-on: ubuntu-22.04
+    needs: 
+      - cypress-install
+      - backend-install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download the build folder
+        uses: actions/download-artifact@v3
+        with:
+          name: build-webapp
+
+      - name: Cypress run
+        uses: cypress-io/github-action@v5
+        with:
+          working-directory: webapp
+          browser: chrome
+          start: npm start
+          spec: |
+            cypress/e2e/deployments/*
+          wait-on: 'http://localhost:3000, http://localhost:8000/health'
+
+      - name: Collect backend container logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2
+        with:
+          images: 'image:latest' # Backend image
+          dest: .github/artifacts/backend-logs
+      - uses: actions/upload-artifact@v3
+        name: Upload backend logs
+        if: failure()
+        with:
+          name: backend-logs
+          path: .github/artifacts/backend-logs
+          retention-days: 2
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: e2e-cypress-videos
+          path: webapp/cypress/videos
+          if-no-files-found: warn
+          retention-days: 2
         
