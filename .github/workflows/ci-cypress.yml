@@ -1,11 +1,11 @@
 name: Component & Tests CI
 on:
+  workflow_dispatch: {}
   push:
     branches: [ "develop", "releases/**" ]
   pull_request:
     # Only when PRs are targeting develop or releases/** branches
     branches: [ develop, releases/** ]
-  workflow_dispatch:
 env:
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -17,20 +17,19 @@ env:
     CYPRESS_SCHEMA_PATH: backend/tests/data
 jobs:
   cypress-install:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: cypress/included:12.6.0
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
       - name: Cypress install
         uses: cypress-io/github-action@v5
         with:
           working-directory: webapp
           # Disable running of tests within install job
           runTests: false
-        #   build: npm run build
+          build: npm run build
       - name: Save build folder
         uses: actions/upload-artifact@v3
         with:
@@ -38,40 +37,34 @@ jobs:
           if-no-files-found: error
           path: build-webapp
 
-          
   backend-install:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     needs: cypress-install
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
       - name: Build backend
         run: make build-backend DOCKER_COMPOSE="$DOCKER_COMPOSE"
-
       - name: Start backend
         run: make start DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="db mlflowdb mlflow ray-head ray-worker backend"
 
   component-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     needs: cypress-install
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
       - name: Download the build folder
         uses: actions/download-artifact@v3
         with:
           name: webapp-build-webapp
           path: build-webapp
-
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:
           working-directory: webapp
           component: true
           browser: chrome
-
       - uses: actions/upload-artifact@v3
         if: failure()
         with:
@@ -81,19 +74,17 @@ jobs:
           retention-days: 2
 
   e2e-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     needs: 
       - cypress-install
       - backend-install
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
       - name: Download the build folder
         uses: actions/download-artifact@v3
         with:
           name: build-webapp
-
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:
@@ -103,7 +94,6 @@ jobs:
           spec: |
             cypress/e2e/deployments/*
           wait-on: 'http://localhost:3000, http://localhost:8000/health'
-
       - name: Collect backend container logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
