@@ -40,5 +40,6 @@ COPY ./scripts /app/scripts
 
 RUN poetry install --only-root
 
-CMD [ "sh", "/app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]
-
+COPY ./entrypoints/ /app/entrypoints
+RUN chmod +x /app/entrypoints/*
+CMD ["sh"]
