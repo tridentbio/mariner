@@ -21,14 +21,9 @@ const ChipFilterContain: React.FC<ChipFilterContainProps> = ({
 }) => {
   return (
     <Chip
+      data-testid={`chip-filter-${column.name}`}
       onDelete={onDelete}
-      sx={{ mb: 1, mr: 1 }}
-      key={
-        filterItem.columnName +
-        filterItem.operatorValue +
-        String(filterItem.value) +
-        String(filterItem.id)
-      }
+      sx={{ mr: 1, py: 1, fontSize: 14 }}
       label={`${column?.name || filterItem.columnName} ${generateOperationTitle(
         filterItem.operatorValue
       )} ${filterItem.value

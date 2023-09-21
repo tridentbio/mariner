@@ -1,6 +1,12 @@
+import { TablePreferences } from '@components/templates/Table/types';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { updateStructureByPath } from '@utils';
 import { authApi } from 'app/rtk/auth';
-import { TOKEN } from '../../app/local-storage';
+import {
+  ELocalStorage,
+  fetchLocalStorage,
+  storageSchemas,
+} from '../../app/local-storage';
 import * as usersApi from './usersAPI';
 
 type Status = 'loading' | 'idle' | 'rejected';
@@ -8,12 +14,18 @@ export interface UsersState {
   loggedIn: usersApi.User | null;
   fetchMeStatus: Status;
   loginStatus: Status;
+  preferences: {
+    tables?: {
+      [tableId: string]: TablePreferences;
+    };
+  };
 }
 
 const initialState: UsersState = {
   loggedIn: null,
   fetchMeStatus: 'idle',
   loginStatus: 'idle',
+  preferences: {},
 };
 
 export const fetchMe = createAsyncThunk('users/fetchMe', async () => {
@@ -26,7 +38,8 @@ export const login = createAsyncThunk(
   'users/login',
   async (payload: { username: string; password: string }) => {
     const response = await usersApi.login(payload.username, payload.password);
-    localStorage.setItem(TOKEN, JSON.stringify(response));
+    localStorage.setItem(ELocalStorage.TOKEN, JSON.stringify(response));
+
     return response;
   }
 );
@@ -37,7 +50,85 @@ export const usersSlice = createSlice({
   reducers: {
     logout: (state) => {
       state.loggedIn = null;
-      localStorage.setItem(TOKEN, '');
+      state.preferences = {};
+      localStorage.setItem(ELocalStorage.TOKEN, '');
+    },
+    setPreference: (
+      state,
+      action: {
+        type: string;
+        payload: {
+          path: string;
+          data: { [key: string]: any };
+        };
+      }
+    ) => {
+      try {
+        if (!state.loggedIn) return;
+
+        let usersPreferences = fetchLocalStorage<{
+          [userId: string | number]: UsersState['preferences'];
+        }>(ELocalStorage.PREFERENCES);
+
+        if (usersPreferences == null)
+          usersPreferences = { [state.loggedIn.id]: {} };
+        else if (!usersPreferences[state.loggedIn.id])
+          usersPreferences[state.loggedIn.id] = {};
+
+        const currentUserPreferences = usersPreferences[state.loggedIn.id];
+
+        updateStructureByPath(
+          action.payload.path,
+          currentUserPreferences,
+          action.payload.data
+        );
+
+        storageSchemas[ELocalStorage.PREFERENCES]?.validate({
+          [state.loggedIn?.id]: currentUserPreferences,
+        });
+
+        usersPreferences[state.loggedIn.id] = currentUserPreferences;
+
+        localStorage.setItem(
+          ELocalStorage.PREFERENCES,
+          JSON.stringify(usersPreferences)
+        );
+
+        state.preferences = currentUserPreferences;
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Invalid user preferences', error);
+      }
+    },
+    loadPreferences: (state) => {
+      try {
+        if (!state.loggedIn) return;
+
+        const usersPreferences = fetchLocalStorage<{
+          [userId: string | number]: UsersState['preferences'];
+        }>(ELocalStorage.PREFERENCES);
+
+        if (!usersPreferences) return;
+
+        const currentUserPreferences = usersPreferences[state.loggedIn.id];
+
+        state.preferences = currentUserPreferences ?? {};
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Invalid user preferences', error);
+      }
+    },
+    mockLogin: (state) => {
+      state = {
+        ...state,
+        loggedIn: {
+          email: 'mock@email.com',
+          full_name: 'Mock User',
+          id: 1,
+        },
+      };
+
+      return state;
     },
   },
   extraReducers: (builder) => {
@@ -62,12 +153,16 @@ export const usersSlice = createSlice({
     builder.addMatcher(
       authApi.endpoints.login.matchFulfilled,
       (state, action) => {
-        localStorage.setItem(TOKEN, JSON.stringify(action.payload));
+        localStorage.setItem(
+          ELocalStorage.TOKEN,
+          JSON.stringify(action.payload)
+        );
       }
     );
   },
 });
 
-export const { logout } = usersSlice.actions;
+export const { logout, setPreference, loadPreferences, mockLogin } =
+  usersSlice.actions;
 
 export default usersSlice.reducer;

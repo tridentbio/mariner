@@ -58,28 +58,17 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
 
   const handleTableStateChange = (state: State) => {
     const newQueryParams: QueryParams = {};
+
     if (state.paginationModel) {
       const { page, rowsPerPage: perPage } = state.paginationModel;
-      newQueryParams.page = page;
-      newQueryParams.perPage = perPage;
-    }
-    newQueryParams.stage = state.filterModel.items?.find(
-      (current) => current.columnName === 'stage'
-    )?.value;
 
-    if (state.sortModel.length) {
-      newQueryParams.orderBy = state.sortModel.reduce((acc, item, index) => {
-        const signal = item.sort === 'asc' ? '+' : '-';
-        if (!index) {
-          return `${signal}${item.field}`;
-        }
-        acc + `,${signal}${item.field}`;
-        return acc;
-      }, '');
-    } else {
-      newQueryParams.orderBy = queryParamsInitialState.orderBy;
+      if (page !== queryParams.page || perPage !== queryParams.perPage) {
+        newQueryParams.page = page;
+        newQueryParams.perPage = perPage;
+
+        setQueryParams((prev) => ({ ...prev, ...newQueryParams }));
+      }
     }
-    setQueryParams((prev) => ({ ...prev, ...newQueryParams }));
   };
 
   const columns: Column<Experiment, keyof Experiment>[] = [
@@ -243,6 +232,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       name: 'Actions',
       title: 'Actions',
       customSx: tableActionsSx,
+      fixed: true,
       render: (row: Experiment) => (
         <TableActionsWrapper>
           <Button
@@ -255,6 +245,31 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
           </Button>
         </TableActionsWrapper>
       ),
+    },
+  ];
+
+  const columnsTreeView: TreeNode[] = [
+    {
+      id: 'attributes',
+      name: 'Attributes',
+      children: columns
+        .filter((col) => col.field != 'trainMetrics' && !col.fixed)
+        .map((col) => ({
+          id: col.name,
+          name: col.name,
+          parent: 'attributes',
+        })),
+    },
+    {
+      id: 'metrics',
+      name: 'Metrics',
+      children: columns
+        .filter((col) => col.field === 'trainMetrics' && !col.fixed)
+        .map((col) => ({
+          id: col.name,
+          name: col.name,
+          parent: 'metrics',
+        })),
     },
   ];
 
@@ -292,6 +307,10 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
           page: queryParams.page || 0,
           rowsPerPage: queryParams.perPage || 10,
         }}
+        tableId="model-experiments"
+        usePreferences
+        columnTree={columnsTreeView}
+        defaultSelectedNodes={['attributes', 'metrics']}
       />
     </div>
   );

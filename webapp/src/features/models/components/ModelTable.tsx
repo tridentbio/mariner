@@ -81,6 +81,7 @@ const ModelTable = (props: IModelTable) => {
       name: 'Action',
       field: null,
       title: 'Actions',
+      fixed: true,
       customSx: tableActionsSx,
       render: (row) => (
         <TableActionsWrapper>
@@ -108,6 +109,8 @@ const ModelTable = (props: IModelTable) => {
           rowsPerPage: originalArgs?.perPage || 0,
         }}
         columns={columns}
+        tableId="models-list"
+        usePreferences
       />
     </div>
   );

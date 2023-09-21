@@ -191,6 +191,7 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
       name: 'Action',
       field: 'Actions',
       title: 'Actions',
+      fixed: true,
       customSx: tableActionsSx,
       render: (row) => (
         <TableActionsWrapper>
@@ -212,7 +213,7 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
     });
 
   return (
-    <div style={{ width: '100%', overflowX: 'auto', display: 'block' }}>
+    <>
       {fixedTab === undefined && (
         <Tabs value={option} onChange={(_, v) => setOption(v)}>
           {TabOptions.map((tab, index) => (
@@ -238,8 +239,10 @@ const DeploymentsTable: React.FC<DeploymentsTableProps> = ({
         }}
         columns={columns}
         extraTableStyle={{ marginBottom: 0 }}
+        tableId="deployments-list"
+        usePreferences
       />
-    </div>
+    </>
   );
 };
 

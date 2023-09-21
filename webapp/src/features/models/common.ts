@@ -17,12 +17,14 @@ export const sampleExperiment = (
     notstarted: false,
   };
   return trainings.reduce((acc, current) => {
-    return {
+    acc = {
       successful: current.stage === 'SUCCESS' || acc.successful,
       running: current.stage === 'RUNNING' || acc.running,
       notstarted: current.stage === 'NOT RUNNING' || acc.notstarted,
       failed: current.stage === 'ERROR' || acc.failed,
     };
+
+    return acc;
   }, initialState as SampleExperimentReturn);
 };
 

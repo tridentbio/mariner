@@ -12,7 +12,7 @@ import { LargerBoldText } from 'components/molecules/Text';
 import { isApiError, messageApiError } from 'app/rtk/api';
 import { authApi } from 'app/rtk/auth';
 import { Box } from '@mui/system';
-import { TOKEN } from 'app/local-storage';
+import { ELocalStorage } from 'app/local-storage';
 import GithubButton from 'components/molecules/GithubButton';
 import Logo from 'components/atoms/Logo';
 import { useNotifications } from 'app/notifications';
@@ -60,7 +60,7 @@ const AuthenticationPage = function () {
   useEffect(() => {
     if (tk) {
       localStorage.setItem(
-        TOKEN,
+        ELocalStorage.PREFERENCES,
         JSON.stringify({ access_token: tk, token_type: 'bearer' })
       );
       navigate(afterLogin, { replace: true });

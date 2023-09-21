@@ -24,20 +24,27 @@ const FilterInput = ({
   onChange,
   onDone,
   label,
+  colName,
 }: {
   value: string;
   onChange: React.ChangeEventHandler<HTMLInputElement>;
   onDone: () => any;
   label: string;
+  colName?: string;
 }) => (
   <Box {...inputContainerStyle}>
     <TextField
+      data-testid={`filter-${colName}`}
       variant="standard"
       label={label}
       value={value}
       onChange={onChange}
+      onKeyDown={(e) => {
+        e.key === 'Enter' && onDone();
+      }}
     ></TextField>
     <IconButton
+      data-testid={`add-filter-${colName}-btn`}
       onClick={onDone}
       sx={{
         width: 'fit-content',
@@ -56,11 +63,8 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
   const [filterEq, setFilterEq] = useState('');
   const [filterLt, setFilterLt] = useState(0);
   const [filterGt, setFilterGt] = useState(0);
-  const [filterContains, setFilterContains] = useState('');
+  const [filterIncludes, setFilterIncludes] = useState('');
   const [containsValue, setContainsValue] = useState<any[]>([]);
-
-  const byContainsIsBoolean = (col.filterSchema?.byContains as any) === true;
-  const byContainsIsObject = !!col.filterSchema?.byContains?.options;
 
   return (
     <Box
@@ -69,18 +73,31 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
     >
       {col.filterSchema?.byValue && (
         <FilterInput
+          colName={col.name}
           onDone={() => {
-            onAddFilter(col.name, 'eq', filterEq);
+            onAddFilter(col.field, 'eq', filterEq);
           }}
           label="Equals"
           value={filterEq}
           onChange={(event) => setFilterEq(event.target.value)}
         />
       )}
+      {col.filterSchema?.byIncludes && (
+        <FilterInput
+          colName={col.name}
+          onDone={() => {
+            onAddFilter(col.field, 'inc', filterIncludes);
+          }}
+          label="Includes"
+          value={filterIncludes}
+          onChange={(event) => setFilterIncludes(event.target.value)}
+        />
+      )}
       {col.filterSchema?.byLessThan && (
         <FilterInput
+          colName={col.name}
           onDone={() => {
-            onAddFilter(col.name, 'lt', filterLt);
+            onAddFilter(col.field, 'lt', filterLt);
           }}
           label="Less Than"
           value={filterLt.toString()}
@@ -89,30 +106,21 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
       )}
       {col.filterSchema?.byGreaterThan && (
         <FilterInput
+          colName={col.name}
           value={filterGt.toString()}
           onChange={(event) => setFilterGt(parseInt(event.target.value))}
           onDone={() => {
-            onAddFilter(col.name, 'gt', filterGt);
+            onAddFilter(col.field, 'gt', filterGt);
             setFilterGt(0);
           }}
           label="Greater Than"
         />
       )}
-      {byContainsIsBoolean && (
-        <FilterInput
-          onDone={() => {
-            onAddFilter(col.name, 'ct', filterContains);
-            setFilterContains('');
-          }}
-          label="Contains"
-          value={filterContains}
-          onChange={(event) => setFilterContains(event.target.value)}
-        />
-      )}
 
-      {byContainsIsObject && (
+      {col.filterSchema?.byContains && (
         <Box {...inputContainerStyle}>
           <Autocomplete
+            data-testid={`filter-${col.name}`}
             multiple
             sx={{ minWidth: 200, maxWidth: 300 }}
             value={containsValue}
@@ -120,9 +128,11 @@ const ColumnFiltersInput = ({ col, onAddFilter }: ColumnFiltersInputProps) => {
             getOptionLabel={col.filterSchema?.byContains!.getLabel}
             options={col.filterSchema?.byContains!.options || []}
             renderInput={(input) => <TextField {...input} variant="standard" />}
+            disableCloseOnSelect
           />
 
           <IconButton
+            data-testid={`add-filter-${col.name}-btn`}
             onClick={() =>
               onAddFilter(
                 col.field,

@@ -20,6 +20,7 @@
 // require('./commands')
 
 import { mount } from 'cypress/react'
+import '@4tw/cypress-drag-drop'
 
 Cypress.Commands.add('mount', mount)
 

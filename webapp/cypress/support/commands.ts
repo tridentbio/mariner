@@ -5,9 +5,9 @@ import 'cypress-file-upload';
 import './dataset';
 import './models';
 import './deployments';
-import { drag, move } from './dragdrop';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
 import { mount } from 'cypress/react';
+import '@4tw/cypress-drag-drop'
 
 const TEST_USER = Cypress.env('TEST_USER');
 
@@ -76,26 +76,6 @@ Cypress.Commands.add('deleteZINCDataset', () => {
   deleteDatasetIfAlreadyExists('Some dataset');
 });
 
-Cypress.Commands.add(
-  'drag',
-  {
-    prevSubject: 'element',
-  },
-  (draggedElement, dropSelector, dropX = 0, dropY = 0) => {
-    drag(draggedElement, dropSelector, dropX, dropY);
-  }
-);
-
-Cypress.Commands.add(
-  'move',
-  {
-    prevSubject: 'element',
-  },
-  (draggedJquery, dropSelector, dropX = 0, dropY = 0) => {
-    move(draggedJquery, dropSelector, dropX, dropY);
-  }
-);
-
 Cypress.Commands.add('getWithoutThrow', (selector: string) => {
   cy.get('body').then(($body) => {
     if ($body.find(selector).length) {
@@ -124,16 +104,6 @@ declare global {
       createZINCDataset(): Chainable<void>;
       deleteZINCDataset(): Chainable<void>;
       notificationShouldContain(text: string): Chainable<JQuery<HTMLElement>>;
-      move(
-        dropSelector: string,
-        x: number,
-        y: number
-      ): Chainable<JQuery<HTMLElement>>;
-      drag(
-        dropSelector: string,
-        x: number,
-        y: number
-      ): Chainable<JQuery<HTMLElement>>;
       getWithoutThrow(selector: string): Chainable<JQuery<HTMLElement>>;
       getCurrentAuthString(): Chainable<string>;
       mount: typeof mount;

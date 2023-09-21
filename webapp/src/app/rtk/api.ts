@@ -4,7 +4,7 @@ import {
   fetchBaseQuery,
   FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react';
-import { TOKEN } from '../local-storage';
+import { ELocalStorage } from '../local-storage';
 
 export const isFetchBaseQueryError = (
   error: SerializedError | unknown | FetchBaseQueryError | undefined
@@ -41,7 +41,7 @@ export const isApiError = (error: any): error is ApiError => {
 const baseQuery = fetchBaseQuery({
   baseUrl: `${import.meta.env.VITE_API_BASE_URL}`,
   prepareHeaders: (headers) => {
-    const storage = localStorage.getItem(TOKEN);
+    const storage = localStorage.getItem(ELocalStorage.TOKEN);
     if (storage) {
       const token = JSON.parse(storage).access_token;
       if (token) {

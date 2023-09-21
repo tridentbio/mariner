@@ -4,11 +4,13 @@ import { SxProps, SystemStyleObject } from '@mui/system';
 import { ReactNode } from 'react';
 
 export type Column<
-  R,
+  R extends object,
   K extends keyof R | null = null,
-  O extends { key: string } = any
+  O extends { key: string } = any,
+  D extends object = { [key: string]: any }
 > = {
-  render?: (row: R, value: any) => ReactNode;
+  render?: (row: R, value: any, dependencies: D) => ReactNode;
+  valueGetter?: (row: R, dependencies: D) => any;
   field?: K;
   name: string;
   title?: ReactNode;
@@ -17,14 +19,10 @@ export type Column<
   bold?: boolean;
   filterSchema?: {
     byValue?: boolean;
+    byIncludes?: boolean;
     byLessThan?: boolean;
     byGreaterThan?: boolean;
-    byContains?: {
-      options: O[];
-      optionKey: (opt: O) => string | number;
-      getLabel: (opt: O) => string;
-    };
-    // byContaining?: boolean
+    byContains?: ContainsFilterSchema<O>;
   };
   /**
    * Defines style and filtering inputs for the column
@@ -32,6 +30,14 @@ export type Column<
    */
   type?: 'date' | 'number' | 'text';
   sortable?: boolean;
+  hidden?: boolean;
+  fixed?: boolean;
+};
+
+export type ContainsFilterSchema<O> = {
+  options: O[];
+  optionKey: (opt: O) => string | number;
+  getLabel: (opt: O) => string;
 };
 
 export type OperatorValue = 'eq' | 'lt' | 'gt' | 'ct' | 'inc';
@@ -44,7 +50,7 @@ export type FilterItem = {
 };
 export type FilterModel = {
   items: FilterItem[];
-  linkOperator?: 'and' | 'or';
+  linkOperator: 'and' | 'or';
 };
 
 export type SortModel = { field: string; sort: 'asc' | 'desc' };
@@ -62,10 +68,7 @@ export type State = {
 };
 
 export interface TableProps<R extends { [key: string]: any }> {
-  filterModel?: FilterModel;
   filterLinkOperatorOptions?: ('and' | 'or')[];
-  sortingMode?: 'client' | 'server';
-  sortModel?: SortModel[];
   columns: Column<R, keyof R | null>[];
   rows: R[];
   rowKey: (row: R) => string | number;
@@ -76,4 +79,15 @@ export interface TableProps<R extends { [key: string]: any }> {
   rowAlign?: 'center' | 'start';
   rowCellStyle?: SystemStyleObject;
   extraTableStyle?: CSSProperties;
+  usePreferences?: boolean;
+  tableId?: string;
+  dependencies?: { [key: string]: any };
+  columnTree?: TreeNode[];
+  defaultSelectedNodes?: Column<any, any>['name'][];
+}
+
+export interface TablePreferences {
+  columns: {
+    name: string;
+  }[];
 }

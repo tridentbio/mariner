@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { TOKEN } from '../../app/local-storage';
-import { fetchMe } from '../../features/users/usersSlice';
+import { ELocalStorage } from '../../app/local-storage';
+import { fetchMe, loadPreferences } from '../../features/users/usersSlice';
 import { CircularProgress } from '@mui/material';
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = (props) => {
@@ -10,7 +10,7 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = (props) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem(TOKEN);
+  const token = localStorage.getItem(ELocalStorage.TOKEN);
 
   const goLogin = () =>
     navigate('/login', { replace: true, state: { from: location } });
@@ -26,6 +26,8 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = (props) => {
       fetchUser().then((user) => !user && goLogin());
     } else if (!token) {
       goLogin();
+    } else {
+      dispatch(loadPreferences());
     }
   }, [loggedIn, fetchMeStatus, token]);
   if (!token) {
