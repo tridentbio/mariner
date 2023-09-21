@@ -96,7 +96,7 @@ jobs:
           targets: backend
 
       - name: Start backend
-        run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml
+        run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml run backend
 
       - name: Cypress run
         uses: cypress-io/github-action@v5
