@@ -77,7 +77,7 @@ start-backend:         ## Builds and starts backend
 
 .PHONY: start-backend-local
 start-backend-local:        ## Runs backend locally
-	$(DOCKER_COMPOSE) up --wait db
+	$(DOCKER_COMPOSE) up --wait db mlflow ray-head mlflow
 	cd backend &&\
 		RESTART=true poetry run dotenv run python -m api.main
 

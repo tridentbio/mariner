@@ -12,7 +12,6 @@ from lightning.pytorch.loggers import Logger
 from mlflow import MlflowClient
 from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
-from torch import Tensor
 from torch_geometric.loader import DataLoader
 from typing_extensions import override
 
@@ -55,6 +54,7 @@ class TorchFunctions(BaseModelFunctions):
         spec: TorchModelSpec,
         dataset: DataFrame = None,
         model: CustomModel = None,
+        use_gpu: bool = False,
         preprocessing_pipeline: Union[None, "PreprocessingPipeline"] = None,
     ):
         """
@@ -67,7 +67,7 @@ class TorchFunctions(BaseModelFunctions):
             self.model = model
         else:
             self.model = CustomModel(
-                config=spec.spec, dataset_config=spec.dataset
+                config=spec.spec, dataset_config=spec.dataset, use_gpu=use_gpu
             )
 
         if preprocessing_pipeline:
@@ -145,6 +145,7 @@ class TorchFunctions(BaseModelFunctions):
             callbacks=callbacks,
             default_root_dir=getenv("LIGHTNING_LOGS_DIR") or "lightning_logs/",
             logger=self.loggers,
+            accelerator="gpu" if params.use_gpu else "cpu",
         )
 
         trainer.fit(self.model, datamodule)
@@ -221,11 +222,15 @@ class TorchFunctions(BaseModelFunctions):
             preprocessing_pipeline=self.preprocessing_pipeline,
         )
         dataloader = DataLoader(dataset, batch_size=len(input_))
-        X = next(iter(dataloader))
+        next(iter(dataloader))
 
-        result: dict = self.model.predict_step(X)
+        trainer = Trainer(accelerator="cpu")
+        result: dict = trainer.predict(
+            model=self.model, dataloaders=dataloader
+        )[0]
+
         result = {
-            key: value.detach().numpy().tolist()
+            key: value.detach().cpu().numpy().tolist()
             for key, value in result.items()
         }
         prediction: Dict[str, List[float]] = {}

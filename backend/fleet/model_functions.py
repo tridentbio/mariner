@@ -129,9 +129,11 @@ def fit(
         nested=True, experiment_id=mlflow_experiment_id
     ) as run:
         if isinstance(spec, TorchModelSpec):
+            assert isinstance(
+                train_config, TorchTrainingConfig
+            ), f"train_config should be TorchTrainingConfig but is {train_config.__class__}"
             functions = TorchFunctions(
-                spec=spec,
-                dataset=dataset,
+                spec=spec, dataset=dataset, use_gpu=train_config.use_gpu
             )
             loggers: List[Logger] = [
                 MLFlowLogger(
@@ -151,9 +153,6 @@ def fit(
                 )
 
             functions.loggers = loggers
-            assert isinstance(
-                train_config, TorchTrainingConfig
-            ), f"train_config should be TorchTrainingConfig but is {train_config.__class__}"
             functions.train(
                 params=train_config,
                 datamodule_args=datamodule_args if datamodule_args else {},

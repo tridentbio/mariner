@@ -144,6 +144,13 @@ def handle_training_complete(task: Task, experiment_id: int):
         )
 
 
+def get_ray_options(training_request: TrainingRequest):
+    """Extracts the options of a ray task from the training request"""
+    if training_request.framework == 'torch':
+        return { 'num_gpus': 1 if training_request.config.use_gpu else 0}
+    else:
+        return {}
+
 async def create_model_training(
     db: Session, user: UserEntity, training_request: TrainingRequest
 ) -> Experiment:
@@ -193,7 +200,7 @@ async def create_model_training(
         "created_by_id": user.id,
         "model_version_id": training_request.model_version_id,
         "hyperparams": hyperparams,
-        "stage": "RUNNING"
+        "stage": "RUNNING",
     }
 
     if training_request.framework == "torch":
@@ -204,7 +211,7 @@ async def create_model_training(
         obj_in=ExperimentCreateRepo(**experiment_payload),
     )
 
-    training_actor = TrainingActor.remote(  # type: ignore
+    training_actor = TrainingActor.options(**get_ray_options(training_request)).remote(  # type: ignore
         experiment=Experiment.from_orm(experiment),
         request=training_request,
         user_id=user.id,

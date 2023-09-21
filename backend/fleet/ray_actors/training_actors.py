@@ -16,7 +16,7 @@ from mariner.schemas.experiment_schemas import Experiment, TorchTrainingRequest
 from mariner.schemas.model_schemas import ModelVersion
 
 
-@ray.remote
+@ray.remote(num_gpus=1)
 class TrainingActor:
     """Runs training with needed mlflow and custom logging"""
 

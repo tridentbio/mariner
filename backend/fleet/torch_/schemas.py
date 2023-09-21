@@ -50,3 +50,4 @@ class TorchTrainingConfig(CamelCaseModel):
     checkpoint_config: Optional[MonitoringConfig] = None
     optimizer: optimizers.Optimizer = optimizers.AdamOptimizer()
     early_stopping_config: Optional[EarlyStoppingConfig] = None
+    use_gpu: bool = False

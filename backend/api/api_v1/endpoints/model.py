@@ -1,9 +1,8 @@
 """
 Handlers for api/v1/models* endpoints
 """
-from typing import Annotated, Any, Dict, List, Optional, Union
+from typing import Annotated, Any, Dict, List
 
-import torch
 from fastapi import Body
 from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends

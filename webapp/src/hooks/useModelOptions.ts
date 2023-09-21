@@ -97,6 +97,7 @@ export const toConstructorArgsConfig = (
         // @ts-ignore
         constructorArgs[key].options = value;
       } else {
+        /* eslint-disable no-console */
         console.warn(`Key ${key} not found in constructorArgs`);
       }
     }

@@ -59,10 +59,10 @@ jobs:
     steps:
     # Checks into commit of the event
     - uses: actions/checkout@v3
-    # Sets up python3.9
+    # Sets up python3.10
     - uses: actions/setup-python@v4
       with:
-        python-version: "3.9"
+        python-version: "3.10"
     # Sets cache to virtual environment
     - name: Cache Dependencies
       id: venv-cache

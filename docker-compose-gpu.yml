@@ -6,6 +6,7 @@ services:
       context: ./webapp
     ports: 
       - 3000:3000
+
   mlflowdb:
     image: postgres:12
     volumes:
@@ -26,6 +27,7 @@ services:
       retries: 15
     networks:
       - ray_net
+
   db:
     image: postgres:12
     volumes:
@@ -46,11 +48,11 @@ services:
       - "5432:5432"
     networks:
       - ray_net
+
   backend:
     image: 'image:latest'
     ports:
       - 80:80
-      - 8888:8888
       - 8000:8000
     env_file:
       - backend/.env
@@ -62,21 +64,22 @@ services:
       - POSTGRES_URI=postgresql://postgres:123456@db:5432/app
       - RAY_ADDRESS=ray://ray-head:10001
     restart: unless-stopped
+    depends_on:
+      - db
+      - mlflow
+      - ray-worker
+      - ray-head
+    runtime: nvidia
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.cpu
+      dockerfile: ../dockerfiles/Dockerfile.gpu
     healthcheck:
       retries: 10
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-
+      # test: ["CMD","ray", "status", "--address", "ray-head:6379"]
     networks:
       - ray_net
     command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
-    volumes:
-      - ./backend:/app:z
-      - ./source:/source:z
-      - ./build:/build:z
-
 
   mlflow:
     depends_on:
@@ -100,9 +103,10 @@ services:
       - ray_net
 
   ray-head:
+    runtime: nvidia
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.cpu
+      dockerfile: ../dockerfiles/Dockerfile.gpu
     shm_size: '4.91gb'
     env_file:
       - backend/.env
@@ -115,7 +119,7 @@ services:
       - "8265:8265"
       - "10001:10001"
     # Docs on ray cli: https://docs.ray.io/en/latest/cluster/cli.html
-    command: ray start --head --port=6379 --block --dashboard-host 0.0.0.0
+    command: ray start --num-gpus=1 --head  --port=6379 --block --dashboard-host 0.0.0.0
     healthcheck:
       retries: 10
       test: ["CMD", "ray", "status", '--address', "localhost:6379"]
@@ -123,9 +127,10 @@ services:
       - ray_net
 
   ray-worker:
+    runtime: nvidia
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.cpu
+      dockerfile: ../dockerfiles/Dockerfile.gpu
     shm_size: '4.91gb'
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
@@ -135,13 +140,12 @@ services:
       - backend/.env.secret
     depends_on: 
       - ray-head
-    command: ray start --address=ray-head:6379 --num-cpus=8 --block
+    command: ray start --address=ray-head:6379 --num-gpus=1 --num-cpus=8 --block
     healthcheck:
       retries: 10
       test: ["CMD", "ray", "status", '--address', "ray-head:6379"]
     networks:
       - ray_net
-
   grafana:
     image: grafana/grafana:9.3.1
     container_name: grafana
@@ -200,4 +204,3 @@ networks:
       driver: default
       config:
         - subnet: 172.63.0.0/16
-
