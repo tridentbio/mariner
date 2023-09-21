@@ -16,13 +16,6 @@ env:
     DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose.cicd.yml"
     CYPRESS_SCHEMA_PATH: backend/tests/data
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: asdf
-        working-directory: webapp
-        run: npm run build
-
   cypress-install:
     runs-on: ubuntu-latest
     container:
