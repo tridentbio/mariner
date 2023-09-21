@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { makeHttpError, Status as HTTPStatus } from 'utils/http';
-import { TOKEN } from './local-storage';
+import { ELocalStorage } from './local-storage';
 
 export type Status = 'idle' | 'loading' | 'failed';
 
@@ -21,7 +21,7 @@ api.interceptors.response.use(async (res) => {
 });
 
 api.interceptors.request.use((config) => {
-  const storage = localStorage.getItem(TOKEN);
+  const storage = localStorage.getItem(ELocalStorage.TOKEN);
 
   if (storage) {
     const token = JSON.parse(storage).access_token;

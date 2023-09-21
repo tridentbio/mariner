@@ -76,6 +76,8 @@ const TraininingListing = () => {
           page: queryParams.page || 0,
           rowsPerPage: queryParams.perPage || 10,
         }}
+        tableId="trainings-list"
+        usePreferences
       />
     </Content>
   );

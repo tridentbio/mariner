@@ -14,7 +14,7 @@ def test_hash_md5(tmp_path: Path) -> None:
     file1.write_bytes(b"foo")
     file2.write_bytes(b"foo")
     with open(file1, "rb") as file3:
-        uploadfile = UploadFile("file3", file3)
+        uploadfile = UploadFile(file3, filename="file3")
         assert hash_md5(data=b"foo") == hash_md5(file=file1)
         assert hash_md5(file=uploadfile) == hash_md5(file=file1)
         assert hash_md5(file=file1) == hash_md5(file=file1)

@@ -1,12 +1,14 @@
 export const uniqBy = <T>(value: T[], get: (t: T) => string | number) => {
   const result: T[] = [];
-  const memo = {};
+  const memo: { [key: string]: boolean } = {};
 
   for (const v of value) {
-    const k = get(v);
+    const key = get(v);
 
-    if (k in memo) continue;
-    result.push(v);
+    if (key !== undefined && key !== null && !(key in memo)) {
+      memo[key] = true;
+      result.push(v);
+    }
   }
 
   return result;

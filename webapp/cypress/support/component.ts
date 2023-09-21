@@ -23,6 +23,7 @@
 import { mount } from 'cypress/react'
 import { fakeApi } from '../../src/mock/msw/server'
 import { rest } from 'msw'
+import '@4tw/cypress-drag-drop'
 
 Cypress.Commands.add('mount', mount)
 

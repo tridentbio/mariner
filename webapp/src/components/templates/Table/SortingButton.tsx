@@ -1,22 +1,40 @@
+import { TableStateContext } from '@components/organisms/Table/hooks/useTableState';
 import { ArrowDownward, ArrowUpward, MoreVert } from '@mui/icons-material';
-import { IconButton, MenuItem, MenuList, Popover } from '@mui/material';
-import React from 'react';
-import { Column, SortModel, State } from './types';
+import {
+  Box,
+  IconButton,
+  IconButtonProps,
+  MenuItem,
+  MenuList,
+  Popover,
+  styled,
+} from '@mui/material';
+import React, { MouseEvent, useContext } from 'react';
+import { Column } from './types';
 
-type SortingButtonProps = {
+interface SortingButtonProps extends Pick<IconButtonProps, 'sx' | 'size'> {
   col: Column<any, any>;
-  sortState: SortModel[];
-  setState: React.Dispatch<React.SetStateAction<State>>;
-};
+  beforeOpen?: (e: MouseEvent) => void;
+}
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  fontSize: '1rem',
+}));
 
 const SortingButton: React.FC<SortingButtonProps> = ({
   col,
-  sortState,
-  setState,
+  beforeOpen,
+  sx,
+  size = 'small',
 }) => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
+
+  const {
+    filters: { sortModel },
+    setFilters,
+  } = useContext(TableStateContext);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -30,7 +48,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     col: Column<any, any>,
     ordering: 'asc' | 'desc'
   ): boolean => {
-    return sortState.some(
+    return sortModel.some(
       (item) => item.field === col.field && ordering === item.sort
     );
   };
@@ -40,7 +58,7 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     ordering: 'asc' | 'desc'
   ) => {
     let alreadySortedByThisField = false;
-    const newSortState = sortState.map((item) => {
+    const newSortState = sortModel.map((item) => {
       if (item.field === col.field) {
         alreadySortedByThisField = true;
         item.sort = ordering;
@@ -50,20 +68,21 @@ const SortingButton: React.FC<SortingButtonProps> = ({
     if (!alreadySortedByThisField) {
       newSortState.push({ field: col.field, sort: ordering });
     }
-    setState((prev) => ({ ...prev, sortModel: newSortState }));
+    setFilters((prev) => ({ ...prev, sortModel: newSortState }));
   };
   return (
-    <>
+    <Box data-testid={`sorting-button-${col.name}`} onMouseDown={beforeOpen}>
       <IconButton
         sx={{
+          ...(sx || {}),
           color: 'gray',
           transition: 'color 0.5s',
+          padding: 0.5,
         }}
         onClick={handleClick}
       >
-        <MoreVert />
+        <MoreVert fontSize={size} />
       </IconButton>
-
       <Popover
         anchorOrigin={{
           vertical: 'center',
@@ -72,31 +91,36 @@ const SortingButton: React.FC<SortingButtonProps> = ({
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
+        sx={{
+          fontSize: '0.8rem',
+        }}
       >
         <MenuList>
-          <MenuItem
+          <StyledMenuItem
+            data-testid={`sort-asc-${col.name}`}
             selected={isSelectedSorting(col, 'asc')}
             onClick={() => {
               handleSelectSort(col, 'asc');
               handleClose();
             }}
           >
-            <ArrowUpward />
+            <ArrowUpward fontSize={size} sx={{ mr: 0.5 }} />
             Sort Asc
-          </MenuItem>
-          <MenuItem
+          </StyledMenuItem>
+          <StyledMenuItem
+            data-testid={`sort-desc-${col.name}`}
             selected={isSelectedSorting(col, 'desc')}
             onClick={() => {
               handleSelectSort(col, 'desc');
               handleClose();
             }}
           >
-            <ArrowDownward />
+            <ArrowDownward fontSize={size} sx={{ mr: 0.5 }} />
             Sort Desc
-          </MenuItem>
+          </StyledMenuItem>
         </MenuList>
       </Popover>
-    </>
+    </Box>
   );
 };
 

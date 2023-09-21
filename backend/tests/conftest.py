@@ -24,7 +24,6 @@ from mariner.entities import User
 from mariner.entities.event import EventReadEntity
 from mariner.schemas.deployment_schemas import Deployment
 from mariner.schemas.experiment_schemas import (
-    BaseTrainingRequest,
     Experiment,
     TorchTrainingRequest,
 )

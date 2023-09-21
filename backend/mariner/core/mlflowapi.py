@@ -37,7 +37,7 @@ def create_registered_model(
     return registered_model
 
 
-def get_model_by_uri(model_uri: str) -> CustomModel:
+def get_model_by_uri(model_uri: str, map_location=None) -> CustomModel:
     """The uri specifying the model.
 
     Args:
@@ -46,7 +46,9 @@ def get_model_by_uri(model_uri: str) -> CustomModel:
     Returns:
         torch instance of the model.
     """
-    mlflowmodel = mlflow.pytorch.load_model(model_uri)
+    mlflowmodel = mlflow.pytorch.load_model(
+        model_uri, map_location=map_location
+    )
     return mlflowmodel
 
 

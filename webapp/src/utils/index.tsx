@@ -1,10 +1,10 @@
 import { ColumnConfig } from '@app/rtk/generated/models';
 import api from 'app/api';
 import { ColumnMeta, DataTypeGuard } from 'app/types/domain/datasets';
-import { Model, ModelVersionType } from 'app/types/domain/models';
 import { range } from './arrays';
 
 export type ArrayElement<T> = T extends Array<infer C> ? C : never;
+export type NonUndefined<T> = T extends undefined ? never : T;
 
 export const isDev = () => {
   return import.meta.env.NODE_ENV === 'development';
@@ -229,4 +229,54 @@ export const reprDataType = (dataType: ColumnConfig['dataType']) => {
   else if (DataTypeGuard.isRna(dataType)) return `RNA`;
   else if (DataTypeGuard.isProtein(dataType)) return `Protein`;
   return `(${dataType.domainKind})`;
+};
+
+/**
+ * Update value in structure by its path
+ * @param path E.g. 'tables.table-name.columns.0'
+ */
+export const updateStructureByPath = (
+  path: string,
+  structure: object | Array<any>,
+  value: any
+): void => {
+  let pathArray = path.split('.');
+
+  const setStructure = (
+    structure: object | Array<any>,
+    path: string,
+    value: any
+  ) => {
+    (structure[path as keyof typeof structure] as any) = value;
+  };
+
+  const getStructure = (structure: object | Array<any>, path: string) =>
+    structure[path as keyof typeof structure];
+
+  for (let i = 0; i < pathArray.length; i++) {
+    const currentPath = pathArray[i];
+    let currentStructure: any =
+      structure[currentPath as keyof typeof structure];
+    const isEndPath = !pathArray.length;
+
+    if (!currentStructure && !isEndPath) {
+      setStructure(structure, currentPath, {});
+      currentStructure = getStructure(structure, currentPath);
+    }
+
+    if (currentStructure) {
+      if (isEndPath) setStructure(structure, currentPath, value);
+      else pathArray.shift();
+
+      if (pathArray.length) {
+        return updateStructureByPath(
+          pathArray.join('.'),
+          currentStructure,
+          value
+        );
+      } else {
+        setStructure(structure, currentPath, value);
+      }
+    }
+  }
 };

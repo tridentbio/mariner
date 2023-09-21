@@ -16,6 +16,8 @@ module.exports = defineConfig({
   },
 
   component: {
+    viewportHeight: 800,
+    viewportWidth: 1200,
     devServer: {
       framework: "react",
       bundler: "vite",

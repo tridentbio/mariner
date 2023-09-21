@@ -1,67 +1,49 @@
 import {
-  CalendarViewDayOutlined,
-  NumbersOutlined,
-  ShortTextOutlined,
+  Add,
+  ExpandMore,
+  FormatListBulleted,
+  RemoveCircle,
 } from '@mui/icons-material';
-import {
-  Button,
-  Chip,
-  MenuItem,
-  MenuList,
-  Popover,
-  Link,
-  TextField,
-} from '@mui/material';
+import { Button, Chip, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useState } from 'react';
-import { title } from 'utils';
-import ChipFilterContain from './ChipFilterContain';
-import ColumnFiltersInput from 'components/templates/Table/ColumnFiltersInput';
-import { colTitle } from 'components/templates/Table/common';
 import {
   Column,
   FilterItem,
   OperatorValue,
   SortModel,
-  State,
 } from 'components/templates/Table/types';
 import { usePopoverState } from 'hooks/usePopoverState';
+import { useContext, useRef } from 'react';
+import ChipFilterContain from './ChipFilterContain';
+import { ColumnPicker } from './ColumnPicker';
+import { OperatorsFilterMenu } from './OperatorsFilterMenu';
+import { TableStateContext } from './hooks/useTableState';
 
 export interface FilterProps {
-  filterLinkOperatorOptions: ('and' | 'or')[];
-  filterItems: FilterItem[];
+  filterLinkOperatorOptions?: ('and' | 'or')[];
   columns: Column<any, any>[];
-  detailed?: boolean;
-  sortItems: SortModel[];
-  filterableColumns: Column<any, any>[];
-  setState: React.Dispatch<React.SetStateAction<State>>;
+  onSelectedColumns?: (columnsIdList: string[]) => void;
+  treeView?: TreeNode[];
 }
+
 const Filters = ({
   filterLinkOperatorOptions,
   columns,
-  filterItems,
-  detailed,
-  sortItems,
-  filterableColumns,
-  setState,
+  onSelectedColumns,
+  treeView,
 }: FilterProps) => {
   const addFilterPopover = usePopoverState();
-  const columnFilterPopover = usePopoverState();
-  const [selectedColumn, setSelectedColumn] = useState<Column<any, any>>();
-  const [linkOperator, setLinkOperator] = useState<'and' | 'or'>('and');
+  const columnPickerPopover = usePopoverState();
 
-  const colIcon = ({ type }: Column<any, any>) => {
-    if (!type) return <ShortTextOutlined />;
-    const colIconMap = {
-      date: <CalendarViewDayOutlined />,
-      number: <NumbersOutlined />,
-      text: <ShortTextOutlined />,
-    };
-    return colIconMap[type] || <ShortTextOutlined />;
-  };
+  const {
+    filters: { filterModel, sortModel },
+    setFilters,
+    filterableColumns,
+    defaultTreeView,
+    defaultCheckedColumns,
+  } = useContext(TableStateContext);
 
-  const singleFilterLinkOption =
-    !filterLinkOperatorOptions || filterLinkOperatorOptions.length === 1;
+  const displayedColumns = useRef<Column<any, any>[]>(columns);
 
   const operationTitle = (op: OperatorValue) => {
     const operationMap = {
@@ -74,207 +56,198 @@ const Filters = ({
     return operationMap[op as keyof typeof operationMap];
   };
 
-  const onOpenColumnFilterMenu = (
-    event: React.MouseEvent<any>,
-    columnField: Column<any, any>['field']
-  ) => {
-    const column = columns.find((item) => item.field === columnField);
-    if (!column) return;
-    setSelectedColumn(column);
-    columnFilterPopover.setAnchorEl(event.currentTarget);
-  };
-
-  const onAddFilter = (
-    columnField: string,
-    operatorValue: OperatorValue,
-    value: any
-  ) => {
-    setState((prev) => ({
+  const updateFilterModelItems = (filterItems: FilterItem[]) => {
+    setFilters((prev) => ({
       ...prev,
       filterModel: {
-        items: [
-          ...prev.filterModel.items,
-          {
-            columnName: columnField,
-            operatorValue,
-            value,
-          },
-        ],
-        linkOperator: 'and',
+        items: filterItems,
+        linkOperator: prev.filterModel.linkOperator,
       },
     }));
   };
 
-  const onFilterLinkChange = (newLink: 'and' | 'or') => {
-    setState((prev) => ({
-      ...prev,
-      filterModel: { ...prev.filterModel, linkOperator: newLink },
-    }));
-  };
+  const FiltersChainDividerLabel = (
+    <Typography variant="overline" sx={{ pr: 1 }} fontSize={13}>
+      {filterModel.linkOperator.toUpperCase()}
+    </Typography>
+  );
 
   return (
     <>
-      <Popover
-        anchorOrigin={{
-          vertical: 'center',
-          horizontal: 'right',
+      <ColumnPicker
+        popoverProps={{
+          anchorEl: columnPickerPopover.anchorEl,
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'left',
+          },
+          onClose: columnPickerPopover.handleClose,
         }}
-        open={addFilterPopover.open}
-        anchorEl={addFilterPopover.anchorEl}
-        onClose={addFilterPopover.handleClose}
+        open={columnPickerPopover.open}
+        treeView={treeView || defaultTreeView}
+        height={480}
+        onChange={(selectedColumns) => {
+          displayedColumns.current = columns.filter((col) =>
+            selectedColumns.includes(col.name)
+          );
+
+          onSelectedColumns && onSelectedColumns(selectedColumns);
+        }}
+        defaultSelectedColumns={defaultCheckedColumns}
+      />
+
+      <Box
+        sx={{
+          width: 'fit-content',
+          position: 'sticky',
+          left: 0,
+        }}
       >
-        <Box sx={{ padding: 1 }}>
-          <TextField
-            select
-            variant="standard"
-            sx={{ width: '100%' }}
-            value={linkOperator}
-            disabled={singleFilterLinkOption}
-            onChange={(event) =>
-              onFilterLinkChange(event.target.value as 'and' | 'or')
-            }
-          >
-            {(filterLinkOperatorOptions || ['and']).map((op) => (
-              <MenuItem key={op} value={op}>
-                {title(op)}
-              </MenuItem>
-            ))}
-          </TextField>
-          <MenuList>
-            {filterableColumns.map((col) => (
-              <MenuItem
-                onClick={(event) => onOpenColumnFilterMenu(event, col.field)}
-                key={col.field as string}
+        <Box>
+          {filterableColumns?.length ? (
+            <>
+              <OperatorsFilterMenu
+                open={addFilterPopover.open}
+                anchorEl={addFilterPopover.anchorEl}
+                onClose={addFilterPopover.handleClose}
+                columns={columns}
+                filterLinkOperatorOptions={filterLinkOperatorOptions}
+              />
+              <Button
+                data-testid="add-filter-btn"
+                startIcon={<Add />}
+                onClick={addFilterPopover.handleClickOpenPopover}
+                sx={{
+                  borderRadius: 2,
+                  paddingX: 3,
+                }}
+                variant="text"
               >
-                <Box sx={{ display: 'inline-flex' }}>
-                  {colTitle(col, colIcon(col))}
-                </Box>
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Box>
-      </Popover>
-      <Popover
-        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
-        open={columnFilterPopover.open}
-        anchorEl={columnFilterPopover.anchorEl}
-        onClose={columnFilterPopover.handleClose}
-      >
-        {selectedColumn && (
-          <ColumnFiltersInput col={selectedColumn} onAddFilter={onAddFilter} />
-        )}
-      </Popover>
+                Add Filter
+              </Button>
+            </>
+          ) : null}
 
-      <Box sx={{ width: '100%' }}>
-        {filterItems?.map((item, index) => {
-          const column = columns.find((col) => col?.field === item.columnName);
-          if (!column) return;
-          return item.operatorValue === 'ct' ? (
-            <ChipFilterContain
-              onDelete={() =>
-                setState((prev) => ({
-                  ...prev,
-                  filterModel: {
-                    items: filterItems.filter(
-                      (_, itemIndex) => itemIndex !== index
-                    ),
-                  },
-                }))
-              }
-              key={
-                item.columnName +
-                item.operatorValue +
-                String(item.value) +
-                String(item.id)
-              }
-              filterItem={item}
-              column={column}
-              generateOperationTitle={operationTitle}
-            />
-          ) : (
-            <Chip
-              onDelete={() =>
-                setState((prev) => ({
-                  ...prev,
-                  filterModel: {
-                    items: filterItems.filter(
-                      (_, itemIndex) => itemIndex !== index
-                    ),
-                  },
-                }))
-              }
-              sx={{ mb: 1, mr: 1 }}
-              key={
-                item.columnName +
-                item.operatorValue +
-                String(item.value) +
-                String(item.id)
-              }
-              label={`"${item.columnName}" ${operationTitle(
-                item.operatorValue
-              )} ${item.value}`}
-            />
-          );
-        })}
-        <Button
-          onClick={addFilterPopover.handleClickOpenPopover}
-          sx={{
-            padding: 1,
-            textTransform: 'none',
-            color: detailed ? 'primary.main' : 'rgba(0,0,0,0)',
-            transition: 'color 0.5s',
-          }}
-          variant="text"
-        >
-          Add Filter
-        </Button>
-
-        {filterItems?.length > 0 && (
           <Button
+            data-testid="column-picker-btn"
+            startIcon={<FormatListBulleted />}
+            endIcon={<ExpandMore />}
             sx={{
-              padding: 1,
-              textTransform: 'none',
-              color: detailed ? 'primary.main' : 'rgba(0,0,0,0)',
-              transition: 'color 0.5s',
+              borderRadius: 2,
+              paddingX: 3,
             }}
-            variant="text"
-            onClick={() =>
-              setState((prev) => ({ ...prev, filterModel: { items: [] } }))
-            }
+            color="primary"
+            onClick={columnPickerPopover.handleClickOpenPopover}
           >
-            Clear all filters
+            Columns
           </Button>
-        )}
-      </Box>
-      <Box sx={{ width: '100%' }}>
-        {sortItems.map((item: SortModel, index) => {
-          const column = columns.find((col) => col.field === item.field);
-          if (!column) return null;
-          return (
-            <Chip
-              onDelete={(_e) =>
-                setState((prev) => ({
-                  ...prev,
-                  sortModel: prev.sortModel.filter(
-                    (sorted) => sorted.field !== item.field
-                  ),
-                }))
-              }
-              sx={{ mb: 1, mr: 1 }}
-              key={column.name + String(item.sort)}
-              label={`${column.name} ${item.sort.toUpperCase()}`}
-            />
-          );
-        })}
 
-        {sortItems.length > 0 && (
-          <Link
-            sx={{ cursor: 'pointer' }}
-            onClick={() => setState((prev) => ({ ...prev, sortModel: [] }))}
-          >
-            Clear all sortings
-          </Link>
-        )}
+          {filterModel.items?.length > 0 && (
+            <Button
+              data-testid="clear-all-filters-btn"
+              startIcon={<RemoveCircle />}
+              size="small"
+              sx={{
+                borderRadius: 2,
+                paddingX: 3,
+              }}
+              variant="text"
+              onClick={() => updateFilterModelItems([])}
+            >
+              Clear all filters
+            </Button>
+          )}
+        </Box>
+
+        {filterModel.items?.length > 0 ? (
+          <Box pt={0.8}>
+            {filterModel.items.map((item, index) => {
+              const column = displayedColumns.current.find(
+                (col) => col?.field === item.columnName
+              );
+              if (!column) return;
+
+              return item.operatorValue === 'ct' ? (
+                <>
+                  {index != 0 ? FiltersChainDividerLabel : null}
+                  <ChipFilterContain
+                    onDelete={() =>
+                      updateFilterModelItems(
+                        filterModel.items.filter(
+                          (_, itemIndex) => itemIndex !== index
+                        )
+                      )
+                    }
+                    key={index}
+                    filterItem={item}
+                    column={column}
+                    generateOperationTitle={operationTitle}
+                  />
+                </>
+              ) : (
+                <>
+                  {index != 0 ? FiltersChainDividerLabel : null}
+                  <Chip
+                    sx={{ mr: 1, py: 1, fontSize: 14 }}
+                    data-testid={`chip-filter-${column.name}`}
+                    onDelete={() =>
+                      updateFilterModelItems(
+                        filterModel.items.filter(
+                          (_, itemIndex) => itemIndex !== index
+                        )
+                      )
+                    }
+                    key={index}
+                    label={`"${column.name}" ${operationTitle(
+                      item.operatorValue
+                    )} ${item.value}`}
+                  />
+                </>
+              );
+            })}
+          </Box>
+        ) : null}
+
+        <Box
+          sx={{
+            width: '100%',
+            paddingTop: sortModel.length ? 1 : 0,
+          }}
+        >
+          {sortModel.map((item: SortModel, index) => {
+            const column = displayedColumns.current.find(
+              (col) => col.field === item.field
+            );
+            if (!column) return null;
+            return (
+              <Chip
+                data-testid={`chip-sort-${column.name}`}
+                onDelete={(_e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    sortModel: prev.sortModel.filter(
+                      (sorted) => sorted.field !== item.field
+                    ),
+                  }))
+                }
+                sx={{ mr: 1, py: 1, fontSize: 14 }}
+                key={column.name + String(item.sort)}
+                label={`${column.name} ${item.sort.toUpperCase()}`}
+              />
+            );
+          })}
+
+          {sortModel.length > 0 && (
+            <Chip
+              sx={{ fontSize: 15 }}
+              label="Clear all sortings"
+              icon={<RemoveCircle fontSize="small" />}
+              onClick={() => setFilters((prev) => ({ ...prev, sortModel: [] }))}
+              color="primary"
+              variant="outlined"
+            />
+          )}
+        </Box>
       </Box>
     </>
   );

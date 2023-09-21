@@ -1,6 +1,13 @@
-FROM python:3.9
+FROM python:3.10
+
+# Must not be changed unless installing GPU version of PyTorch
+ENV PLATFORM=cpu
+ENV TORCH_VERSION=2.0.1
 
 WORKDIR /app/
+
+RUN apt-get update
+RUN apt-get install libpq-dev gcc less curl unzip libxrender1 libsm-dev libxext-dev curl -y
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | \
@@ -14,6 +21,7 @@ COPY ./pyproject.toml ./poetry.lock /app/
 # RUN --mount=type=cache,target=/root/.cache/pypoetry/cache \
 #     --mount=type=cache,target=/root/.cache/pypoetry/artifacts \
 #     poetry install --no-root
+
 RUN poetry install --no-root
 
 COPY ./deps.py /app/deps.py
@@ -26,10 +34,11 @@ COPY ./fleet /app/fleet
 COPY ./oauth_providers /app/oauth_providers
 COPY ./tests /app/tests
 
-RUN poetry install
-
 COPY ./alembic.ini ./pylintrc ./pytest.ini /app/
 COPY ./scripts /app/scripts
+
+
+RUN poetry install --only-root
 
 CMD [ "sh", "/app/scripts/prestart.sh", "&&", "poetry run python -m api.main"]
 

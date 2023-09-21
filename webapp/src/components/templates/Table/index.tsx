@@ -1,25 +1,35 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
+  Box,
   Table as MuiTable,
-  TableRow,
+  Skeleton,
   TableBody,
   TableCell,
-  TableHead,
-  Box,
   TableFooter,
+  TableHead,
   TablePagination,
-  TablePaginationProps,
-  Skeleton,
+  TableRow,
+  Typography,
 } from '@mui/material';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Column, State, TableProps } from './types';
-import FilterIndicator from './FilterIndicator';
-import SortingIndicator from './SortingIndicator';
+import { useAppSelector } from '@app/hooks';
+import { DraggableCell } from '@components/organisms/Table/DraggableCell';
+import { SortableRow } from '@components/organisms/Table/SortableRow';
+import {
+  TableStateContext,
+  TableStateContextProps,
+  useTableState,
+} from '@components/organisms/Table/hooks/useTableState';
+import { setPreference } from '@features/users/usersSlice';
+import { useAppDispatch } from '@hooks';
 import NoData from 'components/atoms/NoData';
+import Filters, { FilterProps } from 'components/organisms/Table/Filters';
 import { range } from 'utils';
-import Filters from 'components/organisms/Table/Filters';
-import { colTitle, columnId, isColumnSortable } from './common';
+import FilterIndicator from './FilterIndicator';
 import SortingButton from './SortingButton';
+import SortingIndicator from './SortingIndicator';
+import { colTitle, columnId, isColumnSortable } from './common';
+import { Column, TableProps } from './types';
 
 const isKeyOf = <O,>(
   key: string | number | symbol | null,
@@ -29,13 +39,25 @@ const isKeyOf = <O,>(
   return key in obj;
 };
 
+const TableStateContextProvider = ({
+  children,
+  value,
+}: {
+  children: ReactNode;
+  value: TableStateContextProps;
+}) => {
+  return (
+    <TableStateContext.Provider value={value}>
+      {children}
+    </TableStateContext.Provider>
+  );
+};
+
 const Table = <R extends { [key: string]: any }>({
   columns,
   rows,
   rowKey,
-  filterModel,
   filterLinkOperatorOptions,
-  sortModel,
   pagination,
   onStateChange,
   noData,
@@ -43,87 +65,149 @@ const Table = <R extends { [key: string]: any }>({
   rowAlign,
   rowCellStyle,
   extraTableStyle,
+  usePreferences,
+  tableId,
+  dependencies = {},
+  columnTree,
+  defaultSelectedNodes,
 }: TableProps<R>) => {
-  const [state, setState] = useState<State>({
-    filterModel: filterModel || { items: [] },
-    sortModel: sortModel || [],
-    paginationModel: pagination,
+  const preferences = useAppSelector((state) => state.users.preferences);
+  const preferencesLoaded = useRef<boolean>(false);
+  const dispatch = useAppDispatch();
+
+  const [allColumns, setAllColumns] = useState<Column<any, any>[]>(columns);
+
+  const displayedColumns = useMemo<Column<any, any>[]>(() => {
+    return allColumns.filter((col) => !col.hidden || col.fixed);
+  }, [allColumns]);
+
+  const tableState = useTableState({
+    columns: allColumns,
+    rows,
+    pagination,
+    dependencies,
+    tablePreferences: tableId ? preferences?.tables?.[tableId] : undefined,
+    defaultSelectedNodes,
   });
 
-  const isColumnInFilters = (col: Column<any, any>) =>
-    state.filterModel.items.some((item) => item.columnName === col.field);
-
-  const filterableColumns = useMemo(
-    () => columns.filter((col) => !!col.filterSchema),
-    [columns]
-  );
-
-  const handlePageChange: TablePaginationProps['onPageChange'] = (
-    _event,
-    newPage
-  ) => {
-    if (!state.paginationModel) {
-      return;
-    }
-    const newState: State = {
-      ...state,
-      paginationModel: { ...state.paginationModel, page: newPage },
-    };
-    setState(newState);
-  };
-  const handleRowsPerPageChange: TablePaginationProps['onRowsPerPageChange'] = (
-    _event
-  ) => {
-    if (!state.paginationModel) {
-      return;
-    }
-    const newRowsPerPage = parseInt(_event.target.value);
-    const newState: State = {
-      ...state,
-      paginationModel: {
-        ...(state.paginationModel || { page: 0 }),
-        rowsPerPage: newRowsPerPage,
-      },
-    };
-
-    setState(newState);
-  };
-
-  const getColumnSorting = (col: Column<any, any>) =>
-    state.sortModel.find((item) => item.field === col.field);
+  const {
+    filterableColumns,
+    filters,
+    filteredRows,
+    handlePageChange,
+    handleRowsPerPageChange,
+    getColumnState,
+  } = tableState;
 
   const renderCol = (row: any, { render, field }: Column<any, any>) => {
     if (isKeyOf(field, row)) {
-      return render ? render(row, row[field]) : row[field];
+      return render ? render(row, row[field], dependencies) : row[field];
     } else if (render) {
-      return render(row, null);
+      return render(row, null, dependencies);
     } else {
       throw new Error(`Should have valid field or render. Either "${field}"\n
       is not a key of row, or there is no render`);
     }
   };
 
-  if (!rowCellStyle) rowCellStyle = {};
-  if (rowAlign === 'center') {
-    rowCellStyle = {
-      textAlign: 'center',
-      verticalAlign: 'middle',
-    };
-  }
+  const cellStyle = useMemo<TableProps<R>['rowCellStyle']>(() => {
+    if (!rowCellStyle) return {};
+    if (rowAlign === 'center') {
+      return {
+        textAlign: 'center',
+        verticalAlign: 'middle',
+      };
+    }
+  }, [rowCellStyle]);
 
-  const [detailed, setDetailed] = useState(false);
-
-  const stateDependency = JSON.stringify(state);
   useEffect(() => {
     if (onStateChange) {
-      onStateChange(state);
+      onStateChange(filters);
     }
-  }, [stateDependency]);
+  }, [filters]);
+
+  useEffect(() => {
+    if (!usePreferences || !tableId || preferencesLoaded.current) return;
+
+    preferences.tables && onLoadedPreferences();
+  }, [preferences.tables]);
+
+  const onLoadedPreferences = () => {
+    if (preferences.tables && tableId && preferences.tables[tableId]) {
+      const tablePreferences = preferences.tables;
+
+      if (tablePreferences) {
+        sortColumnPositions(
+          tablePreferences[tableId]?.columns.map((col) => col.name) || []
+        );
+
+        preferencesLoaded.current = true;
+      }
+    }
+  };
+
+  const updateTablePreferences = (data: any) => {
+    if (usePreferences && tableId) {
+      dispatch(
+        setPreference({
+          path: `tables.${tableId}`,
+          data,
+        })
+      );
+    }
+  };
+
+  const sortColumnPositions = (sortedAndDisplayedColIds: string[]) => {
+    if (!sortedAndDisplayedColIds.length) return;
+
+    const colsToDisplay: Column<any, any>[] = [];
+
+    sortedAndDisplayedColIds.forEach((sortedColId) => {
+      const foundCol = allColumns.find((col) => sortedColId === col.name);
+
+      if (foundCol) colsToDisplay.push({ ...foundCol, hidden: false });
+    });
+
+    const hiddenCols: Column<any, any>[] = allColumns
+      .filter((col) => !colsToDisplay.some((c) => c.name == col.name))
+      .map((col) => ({ ...col, hidden: true }));
+
+    setAllColumns([...colsToDisplay, ...hiddenCols]);
+  };
+
+  const onDroppedColumn = (sortedAndDisplayedCols: Column<any, any>[]) => {
+    sortColumnPositions(sortedAndDisplayedCols.map((col) => col.name));
+
+    updateTablePreferences({
+      columns: sortedAndDisplayedCols.map((col) => ({ name: col.name })),
+    });
+  };
+
+  const handleSelectedColumns: FilterProps['onSelectedColumns'] = (
+    selectedColumnsIdList
+  ) => {
+    setAllColumns((prev) => {
+      return prev.map((col) => {
+        col.hidden = !selectedColumnsIdList.includes(col.name as string);
+
+        return col;
+      });
+    });
+
+    updateTablePreferences({
+      columns: allColumns
+        .filter((col) => selectedColumnsIdList.includes(col.name))
+        .map((col) => ({ name: col.name })),
+    });
+  };
 
   return (
-    <div
-      onMouseOver={() => setDetailed(true)}
-      onMouseLeave={() => setDetailed(false)}
+    <Box
+      sx={{
+        width: '100%',
+        overflowX: 'auto',
+        display: 'block',
+      }}
     >
       <MuiTable
         sx={{
@@ -132,59 +216,65 @@ const Table = <R extends { [key: string]: any }>({
           ...extraTableStyle,
         }}
       >
-        <TableHead>
-          {(!!filterableColumns.length || !!state.sortModel) && (
-            <TableRow>
-              <TableCell sx={{ padding: '1px' }} colSpan={24}>
-                <Filters
-                  sortItems={state.sortModel}
-                  filterItems={state.filterModel.items || []}
-                  filterLinkOperatorOptions={filterLinkOperatorOptions || []}
-                  detailed={detailed}
-                  columns={columns}
-                  filterableColumns={filterableColumns}
-                  setState={setState}
-                />
-              </TableCell>
-            </TableRow>
-          )}
-          <TableRow>
-            {columns.map((col, index) => {
-              const columnSort = getColumnSorting(col);
-              // ! Big problems with filters and sort on table, the current implementation generate multiples popovers controlled by the same state and pointing to the same anchor, so they overlap each other being possible to access only the last popover, need to refactor table component
-              return (
-                <TableCell key={index} sx={col.customSx || {}}>
-                  <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                    {colTitle(col)}
-                    {isColumnInFilters(col) && (
-                      <FilterIndicator active={true} />
-                    )}
-                    {columnSort && <SortingIndicator sort={columnSort.sort} />}
-
-                    {isColumnSortable(col) && (
-                      <SortingButton
-                        col={col}
-                        sortState={state.sortModel}
-                        setState={setState}
-                      />
-                    )}
-                  </Box>
+        <TableStateContextProvider value={tableState}>
+          <TableHead>
+            {(!!filterableColumns.length || !!filters.sortModel) && (
+              <TableRow>
+                <TableCell sx={{ padding: 1 }} colSpan={24}>
+                  <Filters
+                    filterLinkOperatorOptions={filterLinkOperatorOptions}
+                    columns={allColumns}
+                    onSelectedColumns={handleSelectedColumns}
+                    treeView={columnTree}
+                  />
                 </TableCell>
-              );
-            })}
-          </TableRow>
-        </TableHead>
+              </TableRow>
+            )}
+            <SortableRow columns={displayedColumns} onDropped={onDroppedColumn}>
+              {displayedColumns.map((col, index) => {
+                const { filters: colFilters, sort } = getColumnState(col);
+
+                return (
+                  <DraggableCell key={index} col={col} id={index.toString()}>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                      <Typography sx={{ mr: 0.7 }} variant="subtitle2">
+                        {colTitle(col)}
+                      </Typography>
+
+                      {colFilters.length ? <FilterIndicator /> : null}
+                      {sort && (
+                        <SortingIndicator
+                          sort={sort.sort}
+                          sx={{ padding: 0.5 }}
+                          size="small"
+                        />
+                      )}
+
+                      {isColumnSortable(col) && (
+                        <SortingButton
+                          //? prevents the cell to drag when clicking on the button
+                          beforeOpen={(e) => e.stopPropagation()}
+                          col={col}
+                        />
+                      )}
+                    </Box>
+                  </DraggableCell>
+                );
+              })}
+            </SortableRow>
+          </TableHead>
+        </TableStateContextProvider>
         <TableBody>
-          {rows.map((row) => (
-            <TableRow key={rowKey(row)}>
-              {columns.map((col, colidx) => (
+          {filteredRows.map((row) => (
+            <TableRow key={rowKey(row)} data-test-row-id={rowKey(row)}>
+              {displayedColumns.map((col, colidx) => (
                 <TableCell
                   aria-labelledby={
                     typeof col.title === 'string'
                       ? columnId(col.title)
                       : undefined
                   }
-                  sx={{ ...rowCellStyle, ...(col.customSx || {}) }}
+                  sx={{ ...cellStyle, ...(col.customSx || {}) }}
                   key={`${rowKey(row)}-${colidx}`}
                 >
                   {renderCol(row, col)}
@@ -192,9 +282,9 @@ const Table = <R extends { [key: string]: any }>({
               ))}
             </TableRow>
           ))}
-          {!rows.length && !loading && (
+          {!filteredRows.length && !loading && (
             <TableRow>
-              <TableCell colSpan={columns.length}>
+              <TableCell colSpan={displayedColumns.length}>
                 {noData || <NoData />}
               </TableCell>
             </TableRow>
@@ -202,7 +292,7 @@ const Table = <R extends { [key: string]: any }>({
           {loading &&
             range(0, 3).map((idx) => (
               <TableRow key={`skel-row-${idx}`}>
-                {columns.map((col, idx) => (
+                {displayedColumns.map((col, idx) => (
                   <TableCell key={`ske-${idx}`}>
                     {col.skeletonProps && <Skeleton {...col.skeletonProps} />}
                   </TableCell>
@@ -224,11 +314,10 @@ const Table = <R extends { [key: string]: any }>({
           </TableRow>
         </TableFooter>
       </MuiTable>
-    </div>
+    </Box>
   );
 };
 
-export type { Column };
-export type { TableProps };
+export type { Column, TableProps };
 
 export default Table;

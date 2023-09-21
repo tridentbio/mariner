@@ -55,23 +55,20 @@ services:
     env_file:
       - backend/.env
       - backend/.env.secret
-
     environment:
       - RESTART=true
       - SERVER_HOST=http://0.0.0.0:8000
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - POSTGRES_URI=postgresql://postgres:123456@db:5432/app
       - RAY_ADDRESS=ray://ray-head:10001
-    healthcheck:
-      test: curl -f http://localhost:8000/health
-      interval: 5s
-      timeout: 15s
-      retries: 15
-
     restart: unless-stopped
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
+      dockerfile: ../dockerfiles/Dockerfile.cpu
+    healthcheck:
+      retries: 10
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+
     networks:
       - ray_net
     command: bash -c 'sh /app/scripts/prestart.sh && python -m api.main'
@@ -86,7 +83,7 @@ services:
       - mlflowdb
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
+      dockerfile: ../dockerfiles/Dockerfile.cpu
     env_file:
       - backend/.env.secret
     healthcheck:
@@ -105,7 +102,7 @@ services:
   ray-head:
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
+      dockerfile: ../dockerfiles/Dockerfile.cpu
     shm_size: '4.91gb'
     env_file:
       - backend/.env
@@ -119,13 +116,16 @@ services:
       - "10001:10001"
     # Docs on ray cli: https://docs.ray.io/en/latest/cluster/cli.html
     command: ray start --head --port=6379 --block --dashboard-host 0.0.0.0
+    healthcheck:
+      retries: 10
+      test: ["CMD", "ray", "status", '--address', "localhost:6379"]
     networks:
       - ray_net
 
   ray-worker:
     build:
       context: ./backend
-      dockerfile: ../dockerfiles/Dockerfile.local
+      dockerfile: ../dockerfiles/Dockerfile.cpu
     shm_size: '4.91gb'
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
@@ -136,6 +136,9 @@ services:
     depends_on: 
       - ray-head
     command: ray start --address=ray-head:6379 --num-cpus=8 --block
+    healthcheck:
+      retries: 10
+      test: ["CMD", "ray", "status", '--address', "ray-head:6379"]
     networks:
       - ray_net
 
