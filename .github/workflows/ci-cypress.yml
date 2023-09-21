@@ -17,7 +17,7 @@ env:
     CYPRESS_SCHEMA_PATH: backend/tests/data
 jobs:
   cypress-install:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container:
       image: cypress/included:12.6.0
     steps:
@@ -36,9 +36,8 @@ jobs:
           name: build-webapp
           if-no-files-found: error
           path: build-webapp
-
   backend-install:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: cypress-install
     steps:
       - name: Checkout
@@ -47,9 +46,8 @@ jobs:
         run: make build-backend DOCKER_COMPOSE="$DOCKER_COMPOSE"
       - name: Start backend
         run: make start DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="db mlflowdb mlflow ray-head ray-worker backend"
-
   component-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: cypress-install
     steps:
       - name: Checkout
@@ -57,7 +55,7 @@ jobs:
       - name: Download the build folder
         uses: actions/download-artifact@v3
         with:
-          name: webapp-build-webapp
+          name: build-webapp
           path: build-webapp
       - name: Cypress run
         uses: cypress-io/github-action@v5
@@ -72,9 +70,8 @@ jobs:
           path: webapp/cypress/videos
           if-no-files-found: warn
           retention-days: 2
-
   e2e-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: 
       - cypress-install
       - backend-install
