@@ -96,7 +96,9 @@ jobs:
           targets: backend
 
       - name: Start backend
-        run: make start DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="db mlflowdb mlflow ray-head ray-worker backend"
+        # run: make start DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="db mlflowdb mlflow ray-head ray-worker backend"
+        run: docker compose run backend
+
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:
