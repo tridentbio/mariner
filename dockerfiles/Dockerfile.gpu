@@ -1,7 +1,7 @@
 FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
 # Must not be changed unless installing GPU version of PyTorch
-ENV PLATFORM=cu118
+ENV PLATFORM=cu117
 ENV TORCH_VERSION=2.0.1
 
 WORKDIR /app/
