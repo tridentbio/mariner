@@ -1,30 +1,27 @@
+"""
+configures Sphinx documentation
+"""
 import os
 import logging
 import sys
+import dotenv
 
-mariner_path = os.path.abspath("../mariner")
-fleet_path = os.path.abspath("../fleet")
-api_path = os.path.abspath("../api")
+dotenv.load_dotenv("../backend/.env")
+dotenv.load_dotenv("../backend/.env.secret", override=True)
+
+mariner_path = os.path.abspath("../backend/mariner")
+fleet_path = os.path.abspath("../backend/fleet")
+api_path = os.path.abspath("../backend/api")
 
 logging.basicConfig(level=logging.INFO)
 
-logging.info("Adding packages to sys.path")
-logging.info(f"Mariner path: {mariner_path}")
-logging.info(f"Fleet path: {fleet_path}")
-logging.info(f"Api path: {api_path}")
-
-
-sys.path.insert(0, mariner_path)
-sys.path.insert(0, fleet_path)
-sys.path.insert(0, api_path)
-
-# Checks if importing added paths works:
 try:
     import mariner
     import fleet
     import api
 except ImportError:
     logging.error("Failed to import packages")
+    logging.error("Make sure to run with backend's virtualenv activated")
     sys.exit(1)
 
 
