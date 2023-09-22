@@ -81,22 +81,22 @@ jobs:
       # - name: Set up Docker Buildx
       #   uses: docker/setup-buildx-action@v2
 
-      # - name: Build and cache backend
-      #   uses: docker/bake-action@v3
-      #   with:
-      #     push: false
-      #     load: true
-      #     # gha = Github Actions cache type
-      #     # service_name.attr=value
-      #     set: |
-      #       backend.cache-from=type=gha
-      #       backend.cache-to=type=gha
-      #     #TODO REMOVE WEBAPP CONTAINER REFERENCE FROM COMPOSE FILE
-      #     files: docker-compose.yml, docker-compose.cicd.yml
-      #     targets: backend
+      - name: Build and cache backend
+        uses: docker/bake-action@v3
+        with:
+          push: false
+          load: true
+          # gha = Github Actions cache type
+          # service_name.attr=value
+          set: |
+            backend.cache-from=type=gha
+            backend.cache-to=type=gha
+          #TODO REMOVE WEBAPP CONTAINER REFERENCE FROM COMPOSE FILE
+          files: docker-compose.yml, docker-compose.cicd.yml
+          targets: backend
 
-      # - name: Start backend
-      #   run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml up backend --detach
+      - name: Start backend
+        run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml up backend --detach
 
       - name: Cypress run
         uses: cypress-io/github-action@v5.8.4
