@@ -48,11 +48,12 @@ jobs:
     - name: Bump pyproject version
       run: |
         cd backend && \
-        poetry version ${{ steps.release.outputs.version }} && \
-        git add pyproject.toml &&\
-        git commit -m 'Release ${{ steps.release.outputs.tag_name }}' &&\
-        git push
-
+        poetry version ${{ steps.release.outputs.version }}
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        # Optional. Commit message for the created commit.
+        # Defaults to "Apply automatic changes"
+        commit_message: Release ${{ steps.release.outputs.version }}
     #Setup AWS Credentials using github secrets
     - name: Build - Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
