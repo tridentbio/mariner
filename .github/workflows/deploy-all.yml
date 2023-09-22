@@ -10,7 +10,7 @@ jobs:
   #This step builds and pushes the template image that will be used in all deployments.
   docker_image:
     name: docker_image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       # Give the default GITHUB_TOKEN write permission to commit and push the changed files back to the repository.
       contents: write
@@ -20,10 +20,9 @@ jobs:
     steps:
     #Checkout branch
     - name: Build - Git Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: ${{ github.event.inputs.branch }}
-        persist-credentials: false
     # Creates a new release
     - id: release
       uses: rymndhng/release-on-push-action@master
