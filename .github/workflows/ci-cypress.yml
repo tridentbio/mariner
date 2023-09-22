@@ -125,6 +125,7 @@ jobs:
           wait-on: 'http://localhost:8000/health'
       #* DEBUG
       - name: Debug
+        if: failure()
         run: |
           curl --connect-timeout 3 http://localhost:3000
           curl --connect-timeout 3 http://localhost:3000/login
