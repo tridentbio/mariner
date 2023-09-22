@@ -3,9 +3,15 @@ on:
   workflow_dispatch: {}
   push:
     branches: [ "develop", "releases/**" ]
+    # paths:
+    #   - backend/**/*
+    #   - webapp/**/*
   pull_request:
     # Only when PRs are targeting develop or releases/** branches
     branches: [ develop, releases/** ]
+    # paths:
+    #   - backend/**/*
+    #   - webapp/**/*
 env:
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

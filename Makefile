@@ -188,4 +188,5 @@ live-docs:  ## Runs the documentation server.
 live-docs-local:  ## Runs the documentation server.
 	cd backend&&\
 		poetry run \
+		dotenv -f .env.secret -f .env run \
 		sphinx-autobuild --port 8000 --open-browser -a --watch . $(SPHINX_OPTS) ../docs/source ../build
