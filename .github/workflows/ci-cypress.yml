@@ -107,7 +107,7 @@ jobs:
       - shell: bash
         run: |
           ls
-          ls/webapp
+          ls /webapp
           pwd
 
       - name: Start backend
