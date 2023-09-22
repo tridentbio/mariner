@@ -65,7 +65,7 @@ jobs:
   #         path: webapp/cypress/videos
   #         if-no-files-found: warn
   #         retention-days: 2
-  e2e-tests:
+  backend-build:
     runs-on: ubuntu-latest
     # needs: 
     #   - cypress-install
@@ -114,6 +114,15 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: backend-build
+    steps:
       - name: Start backend and Cypress runner
         run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml up backend cypress --detach
 
@@ -148,8 +157,3 @@ jobs:
           path: webapp/cypress/videos
           if-no-files-found: warn
           retention-days: 2
-
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
