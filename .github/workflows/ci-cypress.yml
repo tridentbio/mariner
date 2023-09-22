@@ -101,11 +101,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: webapp-build-ci
-          path: webapp/
+          path: webapp/build/
+          
       #* DEBUG
       - shell: bash
         run: |
           ls
+          echo "---------"
           ls webapp/
           pwd
 
@@ -129,7 +131,6 @@ jobs:
         run: |
           curl --connect-timeout 3 http://localhost:3000
           curl --connect-timeout 3 http://localhost:3000/login
-          curl --connect-timeout 3 http://127.0.0.1:3000/
           ls
           echo "---------"
           ls webapp/

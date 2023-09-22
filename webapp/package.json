@@ -7,7 +7,7 @@
     "build": "tsc --p tsconfig.prod.json && vite build",
     "serve": "vite preview",
     "build:ci": "tsc --p tsconfig.prod.json && vite build --mode ci",
-    "serve:ci": "vite preview webapp-build-ci/ --port 3000 --mode ci --debug",
+    "serve:ci": "vite preview --port 3000 --mode ci --debug",
     "generate:rtkapi": "npx @rtk-query/codegen-openapi openapi-config.ts",
     "test:unit": "jest",
     "eject": "react-scripts eject",
