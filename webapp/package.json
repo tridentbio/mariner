@@ -6,7 +6,7 @@
     "start": "vite",
     "build": "tsc --p tsconfig.prod.json && vite build",
     "serve": "vite preview",
-    "serve:e2e": "vite preview --port 3000",
+    "serve:e2e": "vite preview --port 3000 --debug",
     "generate:rtkapi": "npx @rtk-query/codegen-openapi openapi-config.ts",
     "test:unit": "jest",
     "eject": "react-scripts eject",
