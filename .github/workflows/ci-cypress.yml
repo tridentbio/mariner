@@ -103,10 +103,11 @@ jobs:
         with:
           working-directory: webapp
           browser: chrome
-          start: npm run serve
+          start: npm run serve:e2e
           spec: |
             cypress/e2e/deployments/*
-          wait-on: 'http://localhost:4173, http://localhost:8000/health'
+          # wait-on: 'npx wait-on --timeout 60000 tcp:3000, http://localhost:8000/health'
+          wait-on: 'http://localhost:8000/health'
       - name: Collect backend container logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2

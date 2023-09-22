@@ -19,8 +19,8 @@ services:
       - POSTGRES_URI=postgresql://postgres:123456@db:5432/app
       # Make sure the attribute value is equal to the VITE_API_BASE_URL in the frontend
       - SERVER_HOST=http://backend:8000
-      - SERVER_CORS=http://localhost:4173,http://localhost:4200,http://ray:10001,http://ray-worker:10001
-      - WEBAPP_URL=http://localhost:4173
+      - SERVER_CORS=http://localhost:3000,http://localhost:4200,http://ray:10001,http://ray-worker:10001
+      - WEBAPP_URL=http://localhost:3000
       - RAY_ADDRESS=ray://ray-head:10001
       - AUTHENTICATION_SECRET_KEY=secret
       - DEPLOYMENT_URL_SIGNATURE_SECRET_KEY=secret
