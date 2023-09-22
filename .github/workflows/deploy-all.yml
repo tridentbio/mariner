@@ -25,8 +25,7 @@ jobs:
     - id: release
       uses: rymndhng/release-on-push-action@master
       with:
-        bump_version_scheme: minor
-        tag_prefix: v
+        bump_version_scheme: patch
     - name: Check Output Parameters
       run: |
         echo "Got tag name ${{ steps.release.outputs.tag_name }}"
@@ -46,7 +45,9 @@ jobs:
       run: |
         cd backend && \
         poetry version ${{ steps.release.outputs.version }} && \
-        git add pyproject.toml
+        git add pyproject.toml &&\
+        git commit -m 'Release ${{ steps.release.outputs.tag_name }}' &&\
+        git push
 
     #Setup AWS Credentials using github secrets
     - name: Build - Configure AWS credentials
