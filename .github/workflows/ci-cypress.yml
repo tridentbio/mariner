@@ -32,12 +32,12 @@ jobs:
         working-directory: webapp
         run: |
           npm ci
-          npm run build
+          npm run build:ci
       
       - name: Save build folder
         uses: actions/upload-artifact@v3
         with:
-          name: webapp-build
+          name: webapp-build-ci
           if-no-files-found: error
           path: webapp/build
           retention-days: 2
@@ -100,7 +100,7 @@ jobs:
       - name: Download the webapp build
         uses: actions/download-artifact@v3
         with:
-          name: webapp-build
+          name: webapp-build-ci
           path: webapp/
       #* DEBUG
       - shell: bash
@@ -117,7 +117,7 @@ jobs:
         with:
           working-directory: webapp
           browser: chrome
-          start: npm run serve:e2e
+          start: npm run serve:ci
           spec: |
             cypress/e2e/deployments/*
           install-command: npm install vite
@@ -130,6 +130,10 @@ jobs:
           curl --connect-timeout 3 http://localhost:3000
           curl --connect-timeout 3 http://localhost:3000/login
           curl --connect-timeout 3 http://127.0.0.1:3000/
+          ls
+          echo "---------"
+          ls webapp/
+          echo "------"
           ls webapp/build
       - name: Collect backend container logs on failure
         if: failure()
