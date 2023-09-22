@@ -118,7 +118,7 @@ jobs:
           start: npm run serve:e2e
           spec: |
             cypress/e2e/deployments/*
-          install-command: echo "Skipping install (already built webapp)"
+          install-command: npm install vite
           wait-on: 'npx wait-on --timeout 60000 tcp:3000, http://localhost:8000/health'
       - name: Collect backend container logs on failure
         if: failure()
