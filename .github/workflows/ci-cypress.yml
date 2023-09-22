@@ -103,7 +103,7 @@ jobs:
         with:
           working-directory: webapp
           browser: chrome
-          start: docker compose run --entrypoint sh cypress -c "npm run serve:e2e"
+          start: docker compose up cypress --detach
           spec: |
             cypress/e2e/deployments/*
           # wait-on: 'npx wait-on --timeout 60000 tcp:3000, http://localhost:8000/health'
