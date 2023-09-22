@@ -41,6 +41,10 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
+        # Publish to a branch in current repo using GITHUB_TOKEN and other default settings.
+    - uses: oleksiyrudenko/gha-git-credentials@v2-latest
+      with:
+        token: '${{ secrets.GITHUB_TOKEN }}'
     - name: Bump pyproject version
       run: |
         cd backend && \
