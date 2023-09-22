@@ -102,17 +102,10 @@ jobs:
         with:
           name: webapp-build-ci
           path: webapp/build/
-          
-      #* DEBUG
-      - shell: bash
-        run: |
-          ls
-          echo "---------"
-          ls webapp/
-          pwd
 
       - name: Start backend
-        run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml up backend --detach
+        # run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml up backend --detach
+        run: make e2e-test DOCKER_COMPOSE="$DOCKER_COMPOSE" CORE_SERVICES="backend ray-head ray-worker mlflow mlflowdb db"
 
       - name: Cypress run
         uses: cypress-io/github-action@v5.8.4
@@ -123,8 +116,8 @@ jobs:
           spec: |
             cypress/e2e/deployments/*
           install-command: npm install vite
-          # wait-on: 'npx wait-on --timeout 15000 tcp:3000, http://localhost:8000/health'
-          wait-on: 'http://localhost:8000/health'
+          wait-on: 'http://localhost:3000/login, http://localhost:8000/health'
+          wait-on-timeout: 30 # seconds
       #* DEBUG
       - name: Debug
         if: failure()

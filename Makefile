@@ -21,9 +21,6 @@ ARGS =
 BACKEND_DEPENDENCY_FILES = backend/pyproject.toml backend/poetry.lock
 WEBAPP_DEPENDENCY_FILES = webapp/package.json webapp/package-lock.json
 
-# NPM packages required to run Cypress with React/Vite by its container (cypress/included)
-CYPRESS_NPM_DEPENDENCIES = cypress-vite
-
 
 ##@ Dependencies
 
@@ -134,20 +131,9 @@ test-integration: start-backend ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 
-.PHONY: cypress-dependencies-install
-cypress-dependencies-install:
-	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "npm install $(CYPRESS_NPM_DEPENDENCIES)"
-
-
 .PHONY: e2e-test
-e2e-test: cypress-dependencies-install build start create-admin create-test-user ## Runs test target
-# $(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --browser electron"
-	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --browser chrome --spec ./cypress/e2e/deployments/*"
+e2e-test: start create-admin create-test-user
 
-
-.PHONY: component-test
-component-test: cypress-dependencies-install ## Runs cypress component tests isolated
-	$(DOCKER_COMPOSE) run --entrypoint sh cypress -c "cypress run --config-file /e2e/cypress.config.js --component --browser chrome"
 
 .PHONY: pre-commit
 pre-commit:  ## Runs pre-commit hooks (formatting, linting and unit testing)
