@@ -95,15 +95,15 @@ jobs:
           files: docker-compose.yml, docker-compose.cicd.yml
           targets: backend
 
-      - name: Start backend
-        run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml up backend --detach
+      - name: Start backend and Cypress runner
+        run: docker compose -f docker-compose.yml -f docker-compose.cicd.yml up backend cypress --detach
 
       - name: Cypress run
         uses: cypress-io/github-action@v5.8.4
         with:
           working-directory: webapp
           browser: chrome
-          start: docker compose up cypress --detach
+          # start: docker compose up cypress --detach
           spec: |
             cypress/e2e/deployments/*
           # wait-on: 'npx wait-on --timeout 60000 tcp:3000, http://localhost:8000/health'
@@ -115,7 +115,7 @@ jobs:
           images: 'image:latest' # Backend image
           dest: .github/artifacts/backend-logs
       - uses: actions/upload-artifact@v3
-        name: Upload backend logs
+        name: Upload backend error logs
         if: failure()
         with:
           name: backend-logs
