@@ -13,11 +13,13 @@ module.exports = defineConfig({
     setupNodeEvents(on) {
       on("file:preprocessor", vitePreprocessor());
     },
+    video: true,
   },
 
   component: {
     viewportHeight: 800,
     viewportWidth: 1200,
+    video: true,
     devServer: {
       framework: "react",
       bundler: "vite",
