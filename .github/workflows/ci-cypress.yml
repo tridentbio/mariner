@@ -30,7 +30,9 @@ jobs:
 
       - name: Build webapp
         working-directory: webapp
-        run: npm run build
+        run: |
+          npm ci
+          npm run build
       
       - name: Save build folder
         uses: actions/upload-artifact@v3
