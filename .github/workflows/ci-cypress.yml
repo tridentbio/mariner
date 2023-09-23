@@ -41,26 +41,26 @@ jobs:
           path: webapp/build
           retention-days: 2
 
-  # component-tests:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  component-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  #     - name: Cypress run
-  #       uses: cypress-io/github-action@v5
-  #       with:
-  #         working-directory: webapp
-  #         component: true
-  #         browser: chrome
-  #     - uses: actions/upload-artifact@v3
-  #       name: Upload Cypress videos on failure
-  #       if: failure()
-  #       with:
-  #         name: component-cypress-videos
-  #         path: webapp/cypress/videos
-  #         if-no-files-found: warn
-  #         retention-days: 2
+      - name: Cypress run
+        uses: cypress-io/github-action@v5
+        with:
+          working-directory: webapp
+          component: true
+          browser: chrome
+      - uses: actions/upload-artifact@v3
+        name: Upload Cypress videos on failure
+        if: failure()
+        with:
+          name: component-cypress-videos
+          path: webapp/cypress/videos
+          if-no-files-found: warn
+          retention-days: 2
 
   # backend-build:
   #   runs-on: ubuntu-latest
@@ -111,22 +111,11 @@ jobs:
           working-directory: webapp
           browser: chrome
           start: npm run serve:ci
-          # spec: |
-          #   cypress/e2e/deployments/*
+          spec: |
+            cypress/e2e/models/*
           install-command: npm install vite
           wait-on: 'http://localhost:3000/login, http://localhost:8000/health'
           wait-on-timeout: 30 # seconds
-      #* DEBUG
-      - name: Debug
-        if: failure()
-        run: |
-          curl --connect-timeout 3 http://localhost:3000
-          curl --connect-timeout 3 http://localhost:3000/login
-          ls
-          echo "---------"
-          ls webapp/
-          echo "------"
-          ls webapp/build
       - name: Collect backend container logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
