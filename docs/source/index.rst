@@ -2,7 +2,6 @@
 Mariner
 =======
 
-
 Welcome to Mariner's documentation! Here you'll find information on the internals
 of the software behind Mariner.
 
@@ -11,6 +10,8 @@ of the software behind Mariner.
    :caption: Contents:
 
    Getting Started <getting_started>
+   Contributing <contributing>
+   Configuration <configuration>
    Overview <overview>
    Reference <mainmodules>
 

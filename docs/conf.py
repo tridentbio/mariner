@@ -50,6 +50,7 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx_toolbox.confval",
     "sphinx_copybutton",
+    "sphinx_mdinclude",
 ]
 
 copybutton_exclude = ".linenos, .gp, .go"
