@@ -6,7 +6,6 @@ import { theme } from 'theme';
 import { getDataset } from '../../../../../tests/fixtures/datasets';
 import DataSummary from './DataSummary';
 
-console.log(getDataset());
 export default {
   title: 'components/DataSummary',
   component: DataSummary,
@@ -24,8 +23,10 @@ export default {
   args: {
     value: {
       titlePrefix: 'Data Summary',
-      inferenceValue: 0.5,
-      infereceColumn: 'y',
+      inference: [
+        { columnName: 'mwt', value: 500 },
+        { columnName: 'tpsa', value: 500 },
+      ],
       columnsData: getDataset().stats,
     },
   },
