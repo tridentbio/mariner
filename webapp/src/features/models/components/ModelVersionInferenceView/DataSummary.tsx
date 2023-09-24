@@ -20,9 +20,9 @@ export interface DataSummaryProps {
   };
   titlePrefix?: string;
   inference?: {
-    columnName: string
-    value: number
-  }[]
+    columnName: string;
+    value: number;
+  }[];
 }
 
 type PlotTitles = {
@@ -77,69 +77,69 @@ const Plots = (props: {
                 encoding: { x: { title: props.col }, y: { title: 'Count' } },
                 layer: hasLabel
                   ? [
-                    {
-                      mark: { type: 'bar', color: '#384E77' },
-                      encoding: {
-                        x: { field: 'label', type: 'nominal' },
-                        y: { field: 'count', type: 'quantitative' },
+                      {
+                        mark: { type: 'bar', color: '#384E77' },
+                        encoding: {
+                          x: { field: 'label', type: 'nominal' },
+                          y: { field: 'count', type: 'quantitative' },
+                        },
                       },
-                    },
-                  ]
+                    ]
                   : [
-                    {
-                      mark: { type: 'bar', color: '#384E77' },
-                      encoding: {
-                        x: { bin: { binned: true }, field: 'bin_start' },
-                        x2: { field: 'bin_end' },
-                        y: { field: 'count', type: 'quantitative' },
-                      },
-                    },
-                    {
-                      mark: {
-                        type: 'rule',
-                        color: 'black',
-                        strokeWidth: 3,
-                        strokeDash: [5, 3],
-                      },
-                      encoding: {
-                        x: {
-                          field: 'bin_end',
-                          aggregate: 'max',
+                      {
+                        mark: { type: 'bar', color: '#384E77' },
+                        encoding: {
+                          x: { bin: { binned: true }, field: 'bin_start' },
+                          x2: { field: 'bin_end' },
+                          y: { field: 'count', type: 'quantitative' },
                         },
                       },
-                    },
-                    {
-                      mark: {
-                        type: 'rule',
-                        color: 'black',
-                        strokeWidth: 3,
+                      {
+                        mark: {
+                          type: 'rule',
+                          color: 'black',
+                          strokeWidth: 3,
+                          strokeDash: [5, 3],
+                        },
+                        encoding: {
+                          x: {
+                            field: 'bin_end',
+                            aggregate: 'max',
+                          },
+                        },
+                      },
+                      {
+                        mark: {
+                          type: 'rule',
+                          color: 'black',
+                          strokeWidth: 3,
 
-                        strokeDash: [5, 3],
-                      },
-                      encoding: {
-                        x: {
-                          field: 'bin_start',
-                          aggregate: 'min',
+                          strokeDash: [5, 3],
+                        },
+                        encoding: {
+                          x: {
+                            field: 'bin_start',
+                            aggregate: 'min',
+                          },
                         },
                       },
-                    },
-                    ...(props.inferenceValue != undefined
-                      ? [
-                        {
-                          mark: {
-                            type: 'rule' as const,
-                            strokeWidth: 5,
-                            color: '#E6F9AF',
-                          },
-                          encoding: {
-                            x: {
-                              datum: props.inferenceValue,
+                      ...(props.inferenceValue != undefined
+                        ? [
+                            {
+                              mark: {
+                                type: 'rule' as const,
+                                strokeWidth: 5,
+                                color: '#E6F9AF',
+                              },
+                              encoding: {
+                                x: {
+                                  datum: props.inferenceValue,
+                                },
+                              },
                             },
-                          },
-                        },
-                      ]
-                      : []),
-                  ],
+                          ]
+                        : []),
+                    ],
               }}
             />
           );
@@ -186,26 +186,31 @@ const DataSummary = (props: DataSummaryProps) => {
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
         {keys(props.columnsData[split]).map((col, index) => {
           const thing: Plot = { ...props.columnsData[split][col] };
-          const inferenceObject = (props.inference || []).
-            find(({ columnName }) => columnName === col);
-          const inferenceValue = inferenceObject ? extractVal(inferenceObject.value) : undefined
+          const inferenceObject = (props.inference || []).find(
+            ({ columnName }) => columnName === col
+          );
+          const inferenceValue = inferenceObject
+            ? extractVal(inferenceObject.value)
+            : undefined;
           const titles = {
             hist: props.titlePrefix
-              ? `${props.titlePrefix} ${title} ${datasetsGraphTitlesMapper[
-              col as keyof typeof datasetsGraphTitlesMapper
-              ] || col
-              }`
-              : `${title} ${datasetsGraphTitlesMapper[
-              col as keyof typeof datasetsGraphTitlesMapper
-              ] || col
-              }`,
+              ? `${props.titlePrefix} ${title} ${
+                  datasetsGraphTitlesMapper[
+                    col as keyof typeof datasetsGraphTitlesMapper
+                  ] || col
+                }`
+              : `${title} ${
+                  datasetsGraphTitlesMapper[
+                    col as keyof typeof datasetsGraphTitlesMapper
+                  ] || col
+                }`,
           };
           return isFlatPlot(thing) ? (
             <Plots
               key={String(col) + index}
               col={
                 datasetsGraphTitlesMapper[
-                col as keyof typeof datasetsGraphTitlesMapper
+                  col as keyof typeof datasetsGraphTitlesMapper
                 ] || (col as string)
               }
               titles={titles}
@@ -214,12 +219,15 @@ const DataSummary = (props: DataSummaryProps) => {
             />
           ) : (
             keys(thing).map((tKey, index) => {
-              const inferenceObject = (props.inference || []).
-                find(({ columnName }) => columnName === tKey);
-              const inferenceValue = inferenceObject ? extractVal(inferenceObject.value) : undefined
+              const inferenceObject = (props.inference || []).find(
+                ({ columnName }) => columnName === tKey
+              );
+              const inferenceValue = inferenceObject
+                ? extractVal(inferenceObject.value)
+                : undefined;
               const xAxisName =
                 datasetsGraphTitlesMapper[
-                tKey as keyof typeof datasetsGraphTitlesMapper
+                  tKey as keyof typeof datasetsGraphTitlesMapper
                 ];
 
               if (tKey === 'has_chiral_centers') {
@@ -245,10 +253,11 @@ const DataSummary = (props: DataSummaryProps) => {
                   key={`${col}-${String(tKey)}` + index}
                   titles={{
                     ...titles,
-                    hist: `${titles.hist}'s "${datasetsGraphTitlesMapper[
-                      tKey as keyof typeof datasetsGraphTitlesMapper
-                    ]
-                      }"`,
+                    hist: `${titles.hist}'s "${
+                      datasetsGraphTitlesMapper[
+                        tKey as keyof typeof datasetsGraphTitlesMapper
+                      ]
+                    }"`,
                   }}
                   plots={thing[tKey]}
                   inferenceValue={inferenceValue}
