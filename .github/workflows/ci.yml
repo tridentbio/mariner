@@ -24,20 +24,10 @@ on:
     types: [opened, synchronize, closed]
     paths: [backend/**/*.py]
 
-  # Runs manually
-  workflow_dispatch:
-    inputs:
-      save_src:
-        type: boolean
-        description: Saves the branch scoring results in the repo cache
 jobs:
   # Checks: pylint score, unit test cov regression
-  install-and-checks:
-    env:
-      COVERAGES_PATH: '~/.cache/cov'
-    # Service containers to run with `install-and-checks`
+  backend-sca:
     services:
-      # Label used to access the service container
       db:
         # Docker Hub image
         image: postgres
@@ -63,7 +53,6 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: "3.10"
-    # Sets cache to virtual environment
     - name: Cache Dependencies
       id: venv-cache
       uses: actions/cache@v3
@@ -73,29 +62,8 @@ jobs:
         key: poetry-cache-${{ runner.os }}-${{ hashFiles('**/poetry.lock', 'deps.py') }}
         # Fallbacks to latest dependencies or default branch (develop) one
         restore-keys: poetry-cache-${{ runner.os }}
-
-    # Restores cache with known target branch scores
-    # Configures post step to resave-cache
-    - name: Cache Score results
-      id: score-cache
-      uses: actions/cache@v3
-      with:
-        # This will be the paths for the pylint stats
-        # We only cache common target branches results
-        # and ignore other stats that are saved as a side effect
-        path: |
-          ~/.cache/pylint/develop**
-          ~/.cache/pylint/releases**
-          ~/.cache/cov/develop**
-          ~/.cache/cov/releases**
-          ~/.cache/doccov/develop**
-          ~/.cache/doccov/releases**
-        # Using run_id to update cache even when it hits
-        key: pylint-cache-${{ runner.os }}-${{ github.run_id }}
-        restore-keys: pylint-cache-${{ runner.os }}
-
+          #
     # Installs poetry and configures to use virtualenv
-    # created in cwd()/.venv
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
       if: steps.venv-cache.outputs.cache-hit != true
@@ -104,75 +72,27 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
-
-    # Installs all packages and it's dependencies
     - name: Install project
       working-directory: backend
       run: |
         poetry -v --no-ansi --no-interaction install
         poetry run python deps.py
       if: steps.venv-cache.outputs.cache-hit != true
-
-    # Pylint score check
-
-    # develop branch. If inputs.save_src is true, save branch result
-    # to cache.
-    # Only saves if branch is develop or releases/**
-    - name: Update branch pylint score (workflow_dispatch)
-      working-directory: backend
-      if: github.event_name == 'workflow_dispatch'
+    - name: Register pylint problem matcher # Allows annotation in PRs
       run: |
-        . .venv/bin/activate
-        BASE_REF_LINT_DATA="${GITHUB_REF#refs/heads/}"
-        python scripts/pylint_packages.py $BASE_REF_LINT_DATA develop ${{ github.event.inputs.save_src && ' --save-src' }}
-
-    # On PRs, compare score to targeting branch
-    - name: Check PR lint score improve (pull_request)
-      working-directory: backend
-      if: github.event_name == 'pull_request'
-      run: |
-        . .venv/bin/activate
-        python scripts/pylint_packages.py ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.merged && '--save-new-target' || '' }}
-
-    # Unit test coverage check
-
+        echo "::add-matcher::.github/workflows/matchers/pylint.json"
     - name: Run unit tests and get coverage
       working-directory: backend
       run: |
         . .venv/bin/activate
-        [ $BASE_REF_COVERAGE_JSON == 'false.json' ] && BASE_REF_COVERAGE_JSON=$(echo -n "${GITHUB_REF#refs/heads/}.json")
-        [ -f $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON ] && PREVIOUS_COVERAGE=$(cat $COVERAGES_PATH/$BASE_REF_COVERAGE_JSON | jq .totals.percent_covered)
-        [ -z "$PREVIOUS_COVERAGE" ] && FAIL_UNDER='' || FAIL_UNDER=$( printf '--fail-under %s' $PREVIOUS_COVERAGE)
-        [ ${{ github.event_name == 'pull_request' && github.event.pull_request.merged || github.event.inputs.save_src || false }} ] && JSON_OUT=$COVERAGES_PATH/$BASE_REF_COVERAGE_JSON || JSON_OUT=''
-
-
         bash scripts/prestart.sh # Runs migrations
-        bash scripts/test.sh $FAIL_UNDER -m pytest -m 'not integration' --tb=line -q
-
-        [ -n $JSON_OUT ] && echo Saved test coverage cache at $JSON_OUT
-
-    ## Docstring coverage check
-
-    - name: Get docstring coverage and save as new docstring target (pull_request merged)
+        coverage run -m pytest -m 'not integration'
+        coverage report
+    - name: Backend static code analysis on changed files
       working-directory: backend
-      if: github.event_name == 'pull_request' && github.event.pull_request.merged
       run: |
         . .venv/bin/activate
-        BASE_COV_PATH=~/.cov/doccov/${{ github.event.pull_request.base.ref }}
-        COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH && echo "Saved docstr coverage at $BASE_COV_PATH"
+        pylint --output-format="colorized" --extension-pkg-whitelist='pydantic' ${{ env.CHANGED_FILES }}
+        isort -c --diff --check-only ${{ env.CHANGED_FILES }}
+        black --check ${{ env.CHANGED_FILES }}
 
-    - name: Get docstring coverage and save as new docstring target (workflow dispatch)
-      working-directory: backend
-      if: github.event_name == 'workflow_dispatch' && github.event.inputs.save_src
-      run: |
-        . .venv/bin/activate
-        BASE_COV_PATH=~/.cov/doccov/$(echo -n "${GITHUB_REF#refs/heads/}.json")
-        COV=$(bash scripts/doc-coverage.sh) && echo $COV > $BASE_COV_PATH && echo "Saved docstr coverage at $BASE_COV_PATH"
-
-    - name: Get docstring coverage
-      working-directory: backend
-      if: github.event.inputs.save_src != true || github.event.pull_request.merged != true
-      run: |
-        . .venv/bin/activate
-        BASE_COV_PATH=~/.cov/doccov/$(echo -n "${GITHUB_REF#refs/heads/}.json")
-        BASE_COV_PATH=$BASE_COV_PATH bash scripts/doc-coverage.sh
