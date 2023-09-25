@@ -19,8 +19,10 @@ export interface DataSummaryProps {
     full: APIDataSummary;
   };
   titlePrefix?: string;
-  inferenceValue?: number;
-  inferenceColumn?: string;
+  inference?: {
+    columnName: string;
+    value: number;
+  }[];
 }
 
 type PlotTitles = {
@@ -184,6 +186,12 @@ const DataSummary = (props: DataSummaryProps) => {
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
         {keys(props.columnsData[split]).map((col, index) => {
           const thing: Plot = { ...props.columnsData[split][col] };
+          const inferenceObject = (props.inference || []).find(
+            ({ columnName }) => columnName === col
+          );
+          const inferenceValue = inferenceObject
+            ? extractVal(inferenceObject.value)
+            : undefined;
           const titles = {
             hist: props.titlePrefix
               ? `${props.titlePrefix} ${title} ${
@@ -207,15 +215,16 @@ const DataSummary = (props: DataSummaryProps) => {
               }
               titles={titles}
               plots={thing}
-              inferenceValue={
-                props.inferenceColumn === col &&
-                props.inferenceValue != undefined
-                  ? extractVal(props.inferenceValue)
-                  : undefined
-              }
+              inferenceValue={inferenceValue}
             />
           ) : (
             keys(thing).map((tKey, index) => {
+              const inferenceObject = (props.inference || []).find(
+                ({ columnName }) => columnName === tKey
+              );
+              const inferenceValue = inferenceObject
+                ? extractVal(inferenceObject.value)
+                : undefined;
               const xAxisName =
                 datasetsGraphTitlesMapper[
                   tKey as keyof typeof datasetsGraphTitlesMapper
@@ -251,12 +260,7 @@ const DataSummary = (props: DataSummaryProps) => {
                     }"`,
                   }}
                   plots={thing[tKey]}
-                  inferenceValue={
-                    props.inferenceColumn === tKey &&
-                    props.inferenceValue != undefined
-                      ? extractVal(props.inferenceValue)
-                      : undefined
-                  }
+                  inferenceValue={inferenceValue}
                 />
               );
             })

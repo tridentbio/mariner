@@ -12,15 +12,15 @@ jobs:
     name: docker_image
     runs-on: ubuntu-latest
     permissions:
-      # Give the default GITHUB_TOKEN write permission to commit and push the changed files back to the repository.
       contents: write
+      pull-requests: read
     env:
       ECR_REPOSITORY: mariner-template-dev
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     #Checkout branch
     - name: Build - Git Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs.branch }}
     # Creates a new release
@@ -43,19 +43,19 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
-        # Publish to a branch in current repo using GITHUB_TOKEN and other default settings.
-    - uses: oleksiyrudenko/gha-git-credentials@v2-latest
-      with:
-        token: '${{ secrets.GITHUB_TOKEN }}'
     - name: Bump pyproject version
       run: |
         cd backend && \
         poetry version ${{ steps.release.outputs.version }}
-    - uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        # Optional. Commit message for the created commit.
-        # Defaults to "Apply automatic changes"
-        commit_message: Release ${{ steps.release.outputs.version }}
+
+    - name: Commit Release
+      run: |
+        date > generated.txt
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add .
+        git commit -m "Release ${{ steps.release.outputs.version }}"
+        git push
     #Setup AWS Credentials using github secrets
     - name: Build - Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1

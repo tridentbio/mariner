@@ -47,7 +47,7 @@ services:
     networks:
       - ray_net
   backend:
-    image: 'image:latest'
+    image: 'mariner-backend:latest'
     ports:
       - 80:80
       - 8888:8888
