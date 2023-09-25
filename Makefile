@@ -176,3 +176,15 @@ live-docs-local:  ## Runs the documentation server.
 		poetry run \
 		dotenv -f .env.secret -f .env run \
 		sphinx-autobuild --port 8000 --open-browser -a --watch . $(SPHINX_OPTS) ../docs/source ../build
+
+
+
+.PHONY: jupyter
+jupyter:  ## Starts jupyter on the backend container
+	docker run -p 8888:8888 -v ./backend:/app:z --entrypoint bash -i --tty  --network host --env-file backend/.env mariner-backend
+
+
+
+
+
+

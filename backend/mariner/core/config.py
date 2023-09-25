@@ -8,6 +8,7 @@ Sometimes cause the application to fail when missing an ENV VAR
 
 import functools
 import os
+from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Union, overload
 
 import toml
@@ -18,6 +19,8 @@ from pydantic import (
     PostgresDsn,
     root_validator,
 )
+
+PYPROJECT_PATH = Path(__file__).parent / ".." / ".." / "pyproject.toml"
 
 
 class ServerSettings(BaseModel):
@@ -177,7 +180,7 @@ class SettingsV2:
     package: Package
     test: QA_Test_Settings
 
-    def __init__(self, pyproject_path="pyproject.toml"):
+    def __init__(self, pyproject_path=PYPROJECT_PATH):
         # load attributes from env
         self.secrets = SecretEnv()  # type: ignore
         self.services = ServicesEnv()  # type: ignore

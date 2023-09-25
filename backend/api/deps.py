@@ -4,7 +4,7 @@ Utility FastAPI dependencies
 Useful for intercept requests before controller handlers, .e.g. performing
 authentication
 """
-from typing import Union
+from typing import Optional, Union
 
 from fastapi import Header, WebSocket, status
 from fastapi.exceptions import HTTPException
@@ -35,6 +35,31 @@ def get_db():
     db.close()
 
 
+def get_user_from_token(db: Session, token: str) -> Optional[User]:
+    """Gets the user from a authentication token.
+
+    Args:
+        db: Connection to the database.
+        token: String with authentication.
+
+    Returns:
+        The same input user if he is authenticated.
+
+    Raises:
+        JWTError: when the token is invalid.
+        ValidationError: when the token is invalid.
+        ExpiredSignatureError: when the token is expired.
+    """
+    payload = jwt.decode(
+        token,
+        get_app_settings("secrets").authentication_secret_key,
+        algorithms=[security.ALGORITHM],
+    )
+    token_data = TokenPayload(**payload)
+    user = user_store.get(db, id=token_data.sub)
+    return user
+
+
 def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
 ) -> User:
@@ -51,18 +76,12 @@ def get_current_user(
         HTTPException: 400 when user is not active.
     """
     try:
-        payload = jwt.decode(
-            token,
-            get_app_settings("secrets").authentication_secret_key,
-            algorithms=[security.ALGORITHM],
-        )
-        token_data = TokenPayload(**payload)
+        user = get_user_from_token(db, token)
     except (JWTError, ValidationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         ) from exc
-    user = user_store.get(db, id=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
