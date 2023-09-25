@@ -14,7 +14,7 @@ module.exports = defineConfig({
       on("file:preprocessor", vitePreprocessor());
     },
     video: true,
-    videoCompression: 40,
+    videoCompression: 32,
   },
 
   component: {
