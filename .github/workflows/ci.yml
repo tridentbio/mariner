@@ -88,6 +88,10 @@ jobs:
         bash scripts/prestart.sh # Runs migrations
         coverage run -m pytest -m 'not integration'
         coverage report
+    - name: Get changed python files between base and head
+      run: |
+        echo "CHANGED_FILES=$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep \.py))" >> $GITHUB_ENV
+          
     - name: Backend static code analysis on changed files
       working-directory: backend
       run: |
