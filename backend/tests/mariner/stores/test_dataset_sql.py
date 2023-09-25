@@ -8,7 +8,9 @@ from tests.utils.utils import random_lower_string
 
 class TestDatasetCRUD:
     def test_get_by_name(self, db: Session, some_dataset: Dataset):
-        dataset = dataset_store.get_by_name(db, some_dataset.name)
+        dataset = dataset_store.get_by_name(
+            db, some_dataset.name, user_id=some_dataset.created_by_id
+        )
         assert dataset.id == some_dataset.id
 
     def test_update(self, db: Session, some_dataset: Dataset):

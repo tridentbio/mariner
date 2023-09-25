@@ -42,7 +42,7 @@ LOG.setLevel(logging.INFO)
 
 
 async def check_model_step_exception(
-    db: Session, config: TrainingCheckRequest
+    db: Session, config: TrainingCheckRequest, user: UserEntity
 ) -> TrainingCheckResponse:
     """Checks the steps of a pytorch lightning model built from config.
 
@@ -57,7 +57,9 @@ async def check_model_step_exception(
         An object either with the stack trace or the model output.
     """
     try:
-        dataset = dataset_store.get_by_name(db, config.model_spec.dataset.name)
+        dataset = dataset_store.get_by_name(
+            db, config.model_spec.dataset.name, user_id=user.id
+        )
         actor = ModelCheckActor.remote()
         output = await actor.check_model_steps.remote(
             dataset=dataset, config=config.model_spec
@@ -81,7 +83,9 @@ def create_model(
     Triggers the creation of a RegisteredModel and a ModelVersion
     in MLFlow API's
     """
-    dataset = dataset_store.get_by_name(db, model_create.config.dataset.name)
+    dataset = dataset_store.get_by_name(
+        db, model_create.config.dataset.name, user_id=user.id
+    )
     if not dataset:
         raise DatasetNotFound(
             f"Dataset {model_create.config.dataset.name} not found"

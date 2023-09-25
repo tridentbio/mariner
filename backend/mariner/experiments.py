@@ -146,10 +146,13 @@ def handle_training_complete(task: Task, experiment_id: int):
 
 def get_ray_options(training_request: TrainingRequest):
     """Extracts the options of a ray task from the training request"""
-    if training_request.framework == 'torch':
-        return { 'num_gpus': 1 if training_request.config.use_gpu else 0}
+    if training_request.framework == "torch":
+        return {"num_gpus": 1 if training_request.config.use_gpu else 0}
     else:
-        return {}
+        return {
+            "num_gpus": 0,
+        }
+
 
 async def create_model_training(
     db: Session, user: UserEntity, training_request: TrainingRequest
@@ -178,7 +181,7 @@ async def create_model_training(
 
     model_version_parsed = ModelVersion.from_orm(model_version)
     dataset = dataset_store.get_by_name(
-        db, model_version_parsed.config.dataset.name
+        db, model_version_parsed.config.dataset.name, user_id=user.id
     )
     assert (
         dataset
