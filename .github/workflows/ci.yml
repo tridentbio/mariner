@@ -91,9 +91,9 @@ jobs:
         CHANGED_FILES: ${{ steps.get_changed.outputs.CHANGED_FILES }}
       run: |
         . .venv/bin/activate
-        pylint --output-format="colorized" --extension-pkg-whitelist='pydantic' ${{ env.CHANGED_FILES }}
-        isort -c --diff --check-only ${{ env.CHANGED_FILES }}
-        black --check ${{ env.CHANGED_FILES }}
+        pylint --output-format="colorized" --extension-pkg-whitelist='pydantic' $CHANGED_FILES
+        isort -c --diff --check-only $CHANGED_FILES
+        black --check $CHANGED_FILES
     - name: Run unit tests and get coverage
       working-directory: backend
       run: |
