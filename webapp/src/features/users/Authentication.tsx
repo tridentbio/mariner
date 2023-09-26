@@ -60,7 +60,7 @@ const AuthenticationPage = function () {
   useEffect(() => {
     if (tk) {
       localStorage.setItem(
-        ELocalStorage.PREFERENCES,
+        ELocalStorage.TOKEN,
         JSON.stringify({ access_token: tk, token_type: 'bearer' })
       );
       navigate(afterLogin, { replace: true });
