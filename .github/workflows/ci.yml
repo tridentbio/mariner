@@ -51,14 +51,15 @@ jobs:
     - uses: actions/checkout@v3
     - name: Get changed python files between base and head
       id: get_changed
-      run: >
-        echo "CHANGED_FILES=$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep \.py))" >> $GITHUB_OUTPUT
+      run: |
+        echo "CHANGED_FILES=$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep -E '^.*.py$'))" >> $GITHUB_OUTPUT
     # Sets up python3.10
     - uses: actions/setup-python@v4
       with:
         python-version: "3.10"
     - name: Cache Dependencies
-      id: venv-cache
+      id: venv-
+
       uses: actions/cache@v3
       with:
         path: backend/.venv
@@ -82,9 +83,6 @@ jobs:
         poetry -v --no-ansi --no-interaction install
         poetry run python deps.py
       if: steps.venv-cache.outputs.cache-hit != true
-    - name: Register pylint problem matcher # Allows annotation in PRs
-      run: |
-        echo "::add-matcher::.github/workflows/matchers/pylint.json"
     - name: Backend static code analysis on changed files
       working-directory: backend
       env:
@@ -94,6 +92,9 @@ jobs:
         pylint --output-format="colorized" --extension-pkg-whitelist='pydantic' $CHANGED_FILES
         isort -c --diff --check-only $CHANGED_FILES
         black --check $CHANGED_FILES
+    - name: Register pylint problem matcher # Allows annotation in PRs
+      run: |
+        echo "::add-matcher::.github/workflows/matchers/pylint.json"
     - name: Run unit tests and get coverage
       working-directory: backend
       run: |
