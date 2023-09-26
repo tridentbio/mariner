@@ -26,7 +26,7 @@ on:
 
 jobs:
   # Checks: pylint score, unit test cov regression
-  backend-sca:
+  backend_sca:
     services:
       db:
         # Docker Hub image
@@ -49,6 +49,10 @@ jobs:
     steps:
     # Checks into commit of the event
     - uses: actions/checkout@v3
+    - name: Get changed python files between base and head
+      id: get_changed
+      run: >
+        echo "CHANGED_FILES=$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep \.py))" >> $GITHUB_OUTPUT
     # Sets up python3.10
     - uses: actions/setup-python@v4
       with:
@@ -81,6 +85,15 @@ jobs:
     - name: Register pylint problem matcher # Allows annotation in PRs
       run: |
         echo "::add-matcher::.github/workflows/matchers/pylint.json"
+    - name: Backend static code analysis on changed files
+      working-directory: backend
+      env:
+        CHANGED_FILES: ${{ steps.get_changed.outputs.CHANGED_FILES }}
+      run: |
+        . .venv/bin/activate
+        pylint --output-format="colorized" --extension-pkg-whitelist='pydantic' ${{ env.CHANGED_FILES }}
+        isort -c --diff --check-only ${{ env.CHANGED_FILES }}
+        black --check ${{ env.CHANGED_FILES }}
     - name: Run unit tests and get coverage
       working-directory: backend
       run: |
@@ -88,15 +101,4 @@ jobs:
         bash scripts/prestart.sh # Runs migrations
         coverage run -m pytest -m 'not integration'
         coverage report
-    - name: Get changed python files between base and head
-      run: |
-        echo "CHANGED_FILES=$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep \.py))" >> $GITHUB_ENV
-          
-    - name: Backend static code analysis on changed files
-      working-directory: backend
-      run: |
-        . .venv/bin/activate
-        pylint --output-format="colorized" --extension-pkg-whitelist='pydantic' ${{ env.CHANGED_FILES }}
-        isort -c --diff --check-only ${{ env.CHANGED_FILES }}
-        black --check ${{ env.CHANGED_FILES }}
 
