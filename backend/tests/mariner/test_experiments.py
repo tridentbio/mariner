@@ -169,12 +169,11 @@ async def test_create_model_training(
         config=TorchTrainingConfig(
             epochs=1,
             checkpoint_config=MonitoringConfig(
-                mode="min",
                 metric_key=f"val/mse/{target_column.name}",
             ),
             optimizer=AdamOptimizer(),
             early_stopping_config=EarlyStoppingConfig(
-                metric_key=f"val/mse/{target_column.name}", mode="min"
+                metric_key=f"val/mse/{target_column.name}"
             ),
         ),
     )
@@ -251,11 +250,10 @@ async def test_experiment_has_stacktrace_when_training_fails(
             epochs=1,
             optimizer=AdamOptimizer(),
             checkpoint_config=MonitoringConfig(
-                mode="min",
                 metric_key=f"val/mse/{target_column.name}",
             ),
             early_stopping_config=EarlyStoppingConfig(
-                metric_key=f"val/mse/{target_column.name}", mode="min"
+                metric_key=f"val/mse/{target_column.name}"
             ),
         ),
     )
