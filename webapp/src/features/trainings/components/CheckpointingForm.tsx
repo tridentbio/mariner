@@ -8,7 +8,7 @@ import MetricSelect from './MetricSelect';
 const CheckpointingForm: React.FC<{ targetColumns: APITargetConfig[] }> = ({
   targetColumns,
 }) => {
-  const { control, } = useFormContext<BaseTrainingRequest>();
+  const { control } = useFormContext<BaseTrainingRequest>();
   return (
     <>
       <Controller

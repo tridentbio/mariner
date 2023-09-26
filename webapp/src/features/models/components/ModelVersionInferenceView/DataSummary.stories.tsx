@@ -34,7 +34,7 @@ export default {
 
 export const A: StoryObj<{ value: DataSummaryProps }> = {
   render: (args: { value: DataSummaryProps }) => {
-    const { value } = args
+    const { value } = args;
     return <DataSummary {...value} />;
   },
 };
