@@ -54,6 +54,10 @@ jobs:
     - name: Get changed python files between base and head
       id: get_changed
       run: |
+        # List filenames with differences between the base and head commits of the PR
+        # Filter those ending with .py
+        # Remove prefix backend/ from the files
+        # Join outputs with a space
         CHANGED_FILES=$(git diff --name-only  ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -E '^.*.py$' | xargs -I {} bash -c 'FILE={}; PREFIX="backend/"; echo "${FILE#"$PREFIX"}"' | paste -sd ' ')
         echo "CHANGED_FILES=$CHANGED_FILES"
         echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_OUTPUT
