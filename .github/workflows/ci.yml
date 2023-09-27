@@ -54,8 +54,9 @@ jobs:
     - name: Get changed python files between base and head
       id: get_changed
       run: |
-        echo "CHANGED_FILES='$(echo $(git diff --name-only HEAD~30..HEAD -- | grep -E '^.*.py$'))'"
-        echo "CHANGED_FILES='$(echo $(git diff --name-only HEAD~30..HEAD -- | grep -E '^.*.py$'))'" >> $GITHUB_OUTPUT
+        CHANGED_FILES=$(git diff --name-only  ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -E '^.*.py$' | xargs -I {} bash -c 'FILE={}; PREFIX="backend/"; echo "${FILE#"$PREFIX"}"' | paste -sd ' ')
+        echo "CHANGED_FILES=$CHANGED_FILES"
+        echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_OUTPUT
     # Sets up python3.10
     - uses: actions/setup-python@v4
       with:
