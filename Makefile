@@ -62,6 +62,12 @@ build:                  ## Builds needed local images to run application.
 	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
 
 
+.PHONY: build-backend
+build-backend:
+	$(DOCKER_COMPOSE) build backend
+	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
+
+
 .PHONY: create-admin
 create-admin:           ## Creates default "admin@mariner.trident.bio" with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
@@ -77,9 +83,10 @@ start-backend:         ## Builds and starts backend
 
 .PHONY: start-backend-local
 start-backend-local:        ## Runs backend locally
-	$(DOCKER_COMPOSE) up --wait db mlflow ray-head mlflow
+	$(DOCKER_COMPOSE) up --wait db mlflowdb
 	cd backend &&\
-		RESTART=true poetry run dotenv run python -m api.main
+		export FILE=$(mktemp); cat .env .env.secret > $FILE && \
+		RESTART=true poetry run dotenv -f $FILE run python -m api.main
 
 
 .PHONY: start

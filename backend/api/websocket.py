@@ -55,7 +55,12 @@ class BaseConnection:
 
     async def send_message(self, message: WebSocketMessage):
         """Sends a message to all active connections."""
+        LOG.warning(msg='SEND MESSAGE')
+        LOG.warning(self.sessions.keys())
+        LOG.warning(self.sessions.values())
         for session in self.sessions.values():
+            LOG.warning(session.application_state)
+            LOG.warning(WebSocketState.CONNECTED)
             if session.application_state == WebSocketState.CONNECTED:
                 await session.send_text(message.json(by_alias=True))
 
@@ -166,7 +171,10 @@ class ConnectionManager:
             user_id (int): id from user to send the message
             message (WebSocketMessage): message to be sent
         """
+        LOG.warning(msg='MESSAGE')
         if user_id not in self.active_connections:
+            LOG.warning(msg=f'%s {user_id} MESSAGE NOT SENT')
+            LOG.warning(self.active_connections.keys())
             return
 
         await self.active_connections[user_id].send_message(message)
