@@ -48,12 +48,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     # Checks into commit of the event
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Get changed python files between base and head
       id: get_changed
       run: |
-        echo "CHANGED_FILES='$(echo $(git diff --name-only 512cc725bea1015e69b8bd5041f52ae7d2b8110d..91232a774d3c65cfdcd350a5635dc61ba61c2073 -- | grep -E '^.*.py$'))'"
-        echo "CHANGED_FILES='$(echo $(git diff --name-only 512cc725bea1015e69b8bd5041f52ae7d2b8110d..91232a774d3c65cfdcd350a5635dc61ba61c2073 -- | grep -E '^.*.py$'))'" >> $GITHUB_OUTPUT
+        echo "CHANGED_FILES='$(echo $(git diff --name-only HEAD~30..HEAD -- | grep -E '^.*.py$'))'"
+        echo "CHANGED_FILES='$(echo $(git diff --name-only HEAD~30..HEAD -- | grep -E '^.*.py$'))'" >> $GITHUB_OUTPUT
     # Sets up python3.10
     - uses: actions/setup-python@v4
       with:
@@ -76,7 +78,7 @@ jobs:
         version: 1.3.2
         virtualenvs-create: true
         virtualenvs-in-project: true
-        installer-parallel: tru
+        installer-parallel: true
     - name: Install project
       working-directory: backend
       run: |
