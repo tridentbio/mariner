@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mariner"
-version = "v0.1.6"
+version = "v0.1.7"
 description = "MLOps tools for biochem scientists"
 authors = ["Tyler Shimko <tyler@trident.bio>"]
 packages = [
