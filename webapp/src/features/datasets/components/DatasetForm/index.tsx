@@ -144,7 +144,7 @@ const DatasetForm = ({ initialValues, ...props }: DatasetFormProps) => {
             dataType: col.dtype,
             description: '',
           })),
-      });
+      }, {keepErrors: true, keepDirty: true});
     } catch (err) {
       setMessage({ type: 'error', message: 'Failed to get csv columns' });
     }
