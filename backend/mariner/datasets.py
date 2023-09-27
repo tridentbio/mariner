@@ -60,6 +60,7 @@ def get_my_datasets(
     """
     query.created_by_id = current_user.id
     datasets, total = dataset_store.get_many_paginated(db, query)
+    datasets = Dataset.from_orm_array(datasets)
     return datasets, total
 
 
