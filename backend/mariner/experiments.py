@@ -113,8 +113,6 @@ def handle_training_complete(task: Task, experiment_id: int):
             )
             return
         result: Result = task.result()
-        LOG.warning(msg="LOGGING")
-        LOG.warning(msg="UPDATE MODEL VERSION")
         model_store.update_model_version(
             db,
             version_id=experiment.model_version_id,
@@ -122,8 +120,6 @@ def handle_training_complete(task: Task, experiment_id: int):
                 mlflow_version=result.mlflow_model_version.version
             ),
         )
-        LOG.warning(msg="LOGGING")
-        LOG.warning(msg="CHANGE STATUS")
         experiment_store.update(
             db,
             obj_in=ExperimentUpdateRepo(
