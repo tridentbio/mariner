@@ -15,7 +15,11 @@ from starlette.responses import ContentStream
 from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet.file_utils import is_compressed
 from fleet.ray_actors.dataset_transforms import DatasetTransforms
-from mariner.core.aws import create_s3_client, download_s3, upload_s3_compressed
+from mariner.core.aws import (
+    create_s3_client,
+    download_s3,
+    upload_s3_compressed,
+)
 from mariner.core.config import get_app_settings
 from mariner.entities.dataset import Dataset as DatasetEntity
 from mariner.entities.user import User
@@ -418,7 +422,7 @@ async def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
     Returns:
         List[ColumnsMeta]: list of metadata for each column in the csv file
     """
-    dataset_actor = DatasetTransforms.remote()
+    dataset_actor = DatasetTransforms.remote()  # type: ignore pylint: disable=no-member
     chunk_size = get_app_settings("server").application_chunk_size
     for chunk in iter(lambda: csv_file.file.read(chunk_size), b""):
         await dataset_actor.write_dataset_buffer.remote(chunk)
