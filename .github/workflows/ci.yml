@@ -66,7 +66,7 @@ jobs:
       with:
         python-version: "3.10"
     - name: Cache Dependencies
-      id: venv-
+      id: venv-cache
 
       uses: actions/cache@v3
       with:
@@ -107,6 +107,7 @@ jobs:
         isort -c --diff --check-only $CHANGED_FILES
         black --check $CHANGED_FILES
     - name: Run unit tests and get coverage
+      if: failure()
       working-directory: backend
       run: |
         . .venv/bin/activate
