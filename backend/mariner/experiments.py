@@ -50,9 +50,6 @@ from mariner.tasks import ExperimentView, get_exp_manager
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
 
-logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
 
 async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
     """Transforms the ray into a coroutine
@@ -113,8 +110,6 @@ def handle_training_complete(task: Task, experiment_id: int):
             )
             return
         result: Result = task.result()
-        LOG.warning(msg='LOGGING')
-        LOG.warning(msg='UPDATE MODEL VERSION')
         model_store.update_model_version(
             db,
             version_id=experiment.model_version_id,
@@ -122,8 +117,6 @@ def handle_training_complete(task: Task, experiment_id: int):
                 mlflow_version=result.mlflow_model_version.version
             ),
         )
-        LOG.warning(msg='LOGGING')
-        LOG.warning(msg='CHANGE STATUS')
         experiment_store.update(
             db,
             obj_in=ExperimentUpdateRepo(
