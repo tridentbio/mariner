@@ -182,9 +182,7 @@ services:
       # Override the env variables from cypress.config.js
       - CYPRESS_SCHEMA_PATH=/e2e/cypress/fixtures/data
     network_mode: host
-    command: sh -c "npm run serve:e2e"
-    entrypoint: []
-    # depends_on: [ backend, webapp ]
+    depends_on: [ backend, webapp ]
     volumes:
       - ./webapp:/e2e:z
       - ./backend/tests/data:/e2e/cypress/fixtures/data:z

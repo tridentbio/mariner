@@ -3,15 +3,15 @@ on:
   workflow_dispatch: {}
   push:
     branches: [ "develop", "releases/**" ]
-    # paths:
-    #   - backend/**/*
-    #   - webapp/**/*
+    paths:
+      - backend/**/*
+      - webapp/**/*
   pull_request:
     # Only when PRs are targeting develop or releases/** branches
     branches: [ develop, releases/** ]
-    # paths:
-    #   - backend/**/*
-    #   - webapp/**/*
+    paths:
+      - backend/**/*
+      - webapp/**/*
 env:
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -111,8 +111,6 @@ jobs:
           working-directory: webapp
           browser: chrome
           start: npm run serve:ci
-          # spec: |
-            # cypress/e2e/deployments/deployment-workflow.cy.ts
           install-command: npm install vite
           wait-on: 'http://localhost:3000/login, http://localhost:8000/health'
           wait-on-timeout: 30 # seconds
