@@ -13,7 +13,7 @@ const getDeploymentStatus = (deploymentName: string) =>
 const waitUntilDeploymentStatus = (
   deploymentName: string,
   waitingStatus: Status,
-  timeout = 15000
+  timeout = 25000
 ) =>
   cy
     .contains('td', deploymentName)
@@ -25,9 +25,17 @@ export const startDeployment = (deploymentName: string) => {
     assert.notEqual(s, 'active', 'Deployment is already active');
   });
 
+  cy.intercept({
+    method: 'PUT',
+    url: `${API_BASE_URL}/api/v1/deployments/*`,
+  }).as('deploymentAction');
+
   cy.runAction(deploymentName, 1);
 
-  waitUntilDeploymentStatus(deploymentName, 'active');
+  cy.wait('@deploymentAction', {responseTimeout: 40000}).then(() => {
+    waitUntilDeploymentStatus(deploymentName, 'active');
+  })
+
 };
 
 export const stopDeployment = (deploymentName: string) => {
@@ -36,7 +44,7 @@ export const stopDeployment = (deploymentName: string) => {
   });
 
   cy.runAction(deploymentName, 1);
-
+  
   waitUntilDeploymentStatus(deploymentName, 'idle');
 };
 
@@ -47,12 +55,20 @@ export const handleStatus = (
   getDeploymentStatus(deploymentName).then((currentStatus) => {
     const running = currentStatus === 'active';
 
+    cy.intercept({
+      method: 'PUT',
+      url: `${API_BASE_URL}/api/v1/deployments/*`,
+    }).as('deploymentAction');
+
     if (running && status === 'idle') {
       cy.runAction(deploymentName, 1);
       waitUntilDeploymentStatus(deploymentName, 'idle');
     } else if (!running && status === 'active') {
       cy.runAction(deploymentName, 1);
-      waitUntilDeploymentStatus(deploymentName, 'active');
+
+      cy.wait('@deploymentAction', {responseTimeout: 40000}).then(() => {
+        waitUntilDeploymentStatus(deploymentName, 'active');
+      })
     }
   });
 

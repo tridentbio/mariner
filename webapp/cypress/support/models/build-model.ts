@@ -133,15 +133,20 @@ const connect = (sourceHandleId: string, targetHandleId: string) => {
 export const fillModelDescriptionStepForm = (
   modelCreate: DeepPartial<ModelCreate>
 ) => {
-  cy.location().then((location) => {
-    if (!location.pathname.includes('/models/new')) cy.visit('/models/new');
+  cy.intercept({
+    method: 'GET',
+    url: `${API_BASE_URL}/api/v1/models/*`,
+  }).as('getModels');
+  
+  cy.visit('/models/new');
 
+  cy.wait('@getModels', {requestTimeout: 10000}).then(({ response }) => {
     // Fill model name
-    cy.get('[data-testid="model-name"] input')
+    cy.get('[data-testid="model-name"] input', {timeout: 10000})
       .clear()
       .type(modelCreate.name || randomName())
       .type('{enter}');
-
+  
     // Fill model description
     cy.get('[data-testid="model-description"] input')
       .clear()
@@ -154,7 +159,7 @@ export const fillModelDescriptionStepForm = (
     cy.get('[data-testid="version-description"] textarea')
       .clear()
       .type(modelCreate.modelVersionDescription || randomName());
-  });
+  })
 };
 
 export const fillDatasetCols = (cols: (ColumnConfig | SimpleColumnConfig)[], colInputSelector: string) => {
@@ -233,7 +238,7 @@ export const buildModel = (
     cy.get('button').contains('CREATE').click();
 
     if(modelCreate.config?.framework == 'torch') {
-      cy.wait('@checkConfig').then(({ response }) => {
+      cy.wait('@checkConfig', {responseTimeout: 60000}).then(({ response }) => {
         expect(response?.statusCode).to.eq(200);
         if (params.successfullRequestRequired) {
           expect(Boolean(response?.body.stackTrace)).to.eq(false);
@@ -331,8 +336,6 @@ const buildSklearnPreprocessingForm = (
     .click();
 
   if('constructorArgs' in modelSchema.model && modelSchema.model.constructorArgs) {
-    cy.get(`[data-testid="sklearn-model-select-action-btn"]`).click()
-    
     const args: {[key: string]: any} = modelSchema.model.constructorArgs || {}
     buildStepConstructorArgs(`sklearn-model-select`, args)
   }

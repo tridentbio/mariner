@@ -139,7 +139,6 @@ async def post_update_metrics(
             metrics=metrics,
             experiment_name=experiment_name,
             user_id=user_id,
-            stage="SUCCESS",
         )
     elif msgtype == "hyperparams":
         # Don't need to save the config argument of the CustomModel again

@@ -146,7 +146,6 @@ describe('Table.cy.tsx', () => {
     
             let preferenceColumns = getTablePreferences()?.columns
     
-            debugger
             expect(preferenceColumns).to.not.be.undefined
             expect(preferenceColumns?.length).to.be.equal(nonFixedColumns.length - columnsToToggle.length)
           }).then(() => {
@@ -178,6 +177,8 @@ describe('Table.cy.tsx', () => {
 
   it('should filter the rows by the filter input', () => {
     cy.mount(<MountedComponent />)
+
+    cy.wait(100)
 
     cy.get('[data-testid="add-filter-btn"]').click()
 

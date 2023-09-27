@@ -4,6 +4,8 @@ import { DatasetFormData } from '../../support/dataset/create';
 import { fillDatasetCols, fillModelDescriptionStepForm } from '../../support/models/build-model';
 import { getColumnConfigTestId } from '@components/organisms/ModelBuilder/utils';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 describe('DatasetConfigForm', () => {
   let irisDatasetFixture: DatasetFormData | null = null;
 
@@ -60,6 +62,11 @@ describe('DatasetConfigForm', () => {
   if (!featureCols) throw new Error('featureCols is undefined');
 
   before(() => {
+    cy.on(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
+
     cy.loginSuper();
 
     cy.setupIrisDatset().then((iris) => {
@@ -69,7 +76,6 @@ describe('DatasetConfigForm', () => {
 
   beforeEach(() => {
     cy.loginSuper();
-    cy.visit('/models/new');
 
     if (testModel.config?.dataset?.name)
       testModel.config.dataset.name = irisDatasetFixture?.name;
@@ -79,12 +85,23 @@ describe('DatasetConfigForm', () => {
 
     cy.get('button').contains('NEXT').click();
 
-    cy.get('#dataset-select')
+    const select = cy.get('#dataset-select')
+
+    cy.intercept({
+      method: 'GET',
+      url: `${API_BASE_URL}/api/v1/datasets/?*`,
+    }).as('getDatasets');
+
+    select
       .click()
       .type(testModel.config?.dataset?.name || '')
-      .get('li[role="option"]')
-      .first()
-      .click();
+
+    cy.wait('@getDatasets').then(({ response }) => {
+      select
+        .get('li[role="option"]')
+        .first()
+        .click();
+    })
   });
 
   it('should not include target columns on the feature columns list', () => {

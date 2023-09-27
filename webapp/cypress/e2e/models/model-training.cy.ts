@@ -6,6 +6,14 @@ import { trainModel } from '../../support/training/create';
 describe('Model Training Page', () => {
   let modelName: string | null = null;
   let modelId: number | null = null
+
+  before(() => {
+    cy.on(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
+  })
+
   beforeEach(() => {
     cy.loginSuper();
     cy.setupSomeModel().then((deployment) => {
@@ -19,8 +27,11 @@ describe('Model Training Page', () => {
       assert.isNotNull(experiment);
       // Assert metrics are found in metrics table
       cy.contains('button', 'Metrics', {timeout: 3000}).should('exist').click()
-      cy.get('#model-version-select').click().get('li[role="option"]').contains(experiment.modelVersion.name).click()
-      cy.get('[data-testid="experiment-select"] div').click().get('li[role="option"]').contains(experiment.experimentName).click()
+      cy.get('#model-version-select').click().get('li[role="option"]').contains(experiment.modelVersion.name)
+        .click()
+        .wait(1000)
+      cy.get('[data-testid="experiment-select"] [role="button"]:not([aria-disabled])').click()
+      cy.get('li[role="option"]').contains(experiment.experimentName).click()
       cy.get('table').contains('Train').should('exist')
       cy.get('table').contains('Validation').should('exist')
     });

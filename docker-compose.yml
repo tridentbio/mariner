@@ -175,19 +175,18 @@ services:
     ports:
       - 9090:9090
 
-  e2e:
+  cypress:
     image: cypress/included:12.6.0
     working_dir: /e2e
     environment:
-      - CYPRESS_baseUrl=http://localhost:3000/
-    command: sh -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
-    entrypoint: []
+      # Override the env variables from cypress.config.js
+      - CYPRESS_SCHEMA_PATH=/e2e/cypress/fixtures/data
     network_mode: host
     depends_on: [ backend, webapp ]
     volumes:
       - ./webapp:/e2e:z
       - ./backend/tests/data:/e2e/cypress/fixtures/data:z
-
+      
 volumes:
   app-db-data:
   app-mlflow-data:

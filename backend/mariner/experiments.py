@@ -50,7 +50,6 @@ from mariner.tasks import ExperimentView, get_exp_manager
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
 
-
 async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
     """Transforms the ray into a coroutine
     Args:

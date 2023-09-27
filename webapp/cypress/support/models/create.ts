@@ -165,7 +165,7 @@ export const setupSomeModel = (): Cypress.Chainable<ReturnType<typeof modelFormD
       if (exists)
         return cy.wrap(formData)
       else {
-        return cy.wrap(createModelDirectly(formData))
+        return createModelDirectly(formData)
       }
     });
   });

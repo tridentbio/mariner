@@ -1,10 +1,11 @@
-import { DataTypeDomainKind } from 'app/types/domain/datasets';
-import { EClassPaths } from 'app/types/domain/modelOptions';
 import {
   EDeploymnetStatuses,
   ERateLimitUnits,
   EShareStrategies,
-} from '../types';
+} from '@features/deployments/types';
+import { DataTypeDomainKind } from 'app/types/domain/datasets';
+import { EClassPaths } from 'app/types/domain/modelOptions';
+
 const modelVersionData = {
   id: 1,
   modelId: 1,
@@ -189,7 +190,7 @@ const modelVersionData = {
   updatedAt: new Date('2022-10-21T14:51:10.259278').toString(),
 };
 
-export const getDeploymentsData = [
+export const deploymentsData = [
   {
     id: 1,
     name: 'Deployment Name',

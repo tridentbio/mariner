@@ -10,7 +10,7 @@ import {
   setCurrentDeployment,
 } from '../deploymentsSlice';
 import ConfirmationDialog from 'components/templates/ConfirmationDialog';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as deploymentsApi from 'app/rtk/generated/deployments';
 interface ModelDeploymentsProps {
   model: Model;
@@ -24,9 +24,17 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
     state.deployments.current,
     state.deployments.deployments,
   ]);
+  
+  //? Avoids React to undetected recent hook values when `handleClickDelete` callback is called
+  const deploymentsRef = useRef(deployments);
+
+  useEffect(() => {
+    deploymentsRef.current = deployments;
+  }, [deployments])
+
   const dispatch = useAppDispatch();
   const handleClickDelete = (id: number) => {
-    const deployment = deployments.find((item) => item.id === id);
+    const deployment = deploymentsRef.current.find((item) => item.id === id);
     if (!deployment) return;
     dispatch(setCurrentDeployment(deployment));
     setShowDeleteConfirmation(true);
@@ -72,7 +80,8 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
           Deploy Model
         </Button>
         <DeploymentsTable
-          {...{ toggleModal, handleClickDelete }}
+          toggleModal={toggleModal}
+          handleClickDelete={handleClickDelete}
           fixedTab={3}
         />
       </Box>

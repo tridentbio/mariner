@@ -29,7 +29,7 @@ const checkTrainFinishes = (
         .then(() => checkTrainFinishes(experimentName, timeout - 1000));
   });
 
-export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
+export const trainModel = (modelName?: string, config: TrainingConfig = {}, framework: 'torch' | 'sklearn' = 'torch') => {
   config = { ...defaultTrainingConfig, ...config };
   cy.once('uncaught:exception', () => false);
   // Visits models listing page
@@ -75,28 +75,31 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
 
   cy.contains('div', 'Experiment Name').find('input').type(randomLowerCase(8));
   cy.contains('div', 'Model Version').find('input').click();
-  cy.get('li[role="option"]').first().click();
-  cy.contains('div', 'Learning Rate')
-    .find('input')
-    .clear()
-    .type(config.learningRate?.toString()!);
-  cy.contains('div', 'Batch Size')
-    .find('input')
-    .clear()
-    .type(config.batchSize?.toString()!);
-  cy.contains('div', 'Epochs')
-    .find('input')
-    .clear()
-    .type(config.epochs?.toString()!);
-  cy.contains('div', 'Target Column').click();
-  cy.get('li[role="option"]').first().click();
-  cy.contains('div', 'Metric to monitor').click();
-  cy.get('li[role="option"]').first().click();
+  cy.get('li[role="option"]').get(`[data-testframework="${framework}"]`).first().click();
+
+  if(framework === 'torch') {
+    cy.contains('div', 'Learning Rate')
+      .find('input')
+      .clear()
+      .type(config.learningRate?.toString()!);
+    cy.contains('div', 'Batch Size')
+      .find('input')
+      .clear()
+      .type(config.batchSize?.toString()!);
+    cy.contains('div', 'Epochs')
+      .find('input')
+      .clear()
+      .type(config.epochs?.toString()!);
+    cy.contains('div', 'Target Column').click();
+    cy.get('li[role="option"]').first().click();
+    cy.contains('div', 'Metric to monitor').click();
+    cy.get('li[role="option"]').first().click();
+  }
   // Selects CREATE EXPERIMENT
   cy.get('button').contains('CREATE').click();
   // Assert API call is successfull
   return cy
-    .wait('@createExperiment', { timeout: 10000 })
+    .wait('@createExperiment', { timeout: 15000 })
     .then(({ response }) => {
       expect(response?.statusCode).to.eq(200);
       return cy.wrap(response);
@@ -106,6 +109,6 @@ export const trainModel = (modelName?: string, config: TrainingConfig = {}) => {
       checkTrainFinishes(experimentName).then((trained) =>
         assert.isTrue(trained)
       );
-      return cy.wrap(response?.body);
+      cy.wrap(response?.body);
     });
 };

@@ -125,9 +125,8 @@ test-integration: start-backend ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 
-.PHONY: test-e2e
-test-e2e: build start create-admin create-test-user## Runs test target
-	$(DOCKER_COMPOSE) run --entrypoint sh e2e -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
+.PHONY: e2e-test
+e2e-test: start create-admin create-test-user
 
 
 .PHONY: pre-commit

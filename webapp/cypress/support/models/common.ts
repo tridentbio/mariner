@@ -20,30 +20,7 @@ export const flowDropSelector =
 
 const dragComponent = (component: string, x: number, y: number): void => {
   const sourceSelector = 'div[draggable="true"]';
-  cy.get(sourceSelector).contains(component).drag(flowDropSelector, x, y);
-};
-const generatePositions = (
-  n: number,
-  xOffset: number,
-  yOffset: number,
-  maxWidth: number
-): { x: number; y: number }[] => {
-  let yidx = 0;
-  let xidx = 0;
-  const positions: { x: number; y: number }[] = [];
-  for (let i = 0; i < n; i++) {
-    positions.push({
-      x: xidx * xOffset + 150,
-      y: (yidx + 1) * yOffset,
-    });
-    if (xidx * xOffset >= maxWidth) {
-      xidx = 0;
-      yidx += 1;
-    } else {
-      xidx += 1;
-    }
-  }
-  return positions;
+  cy.get(sourceSelector).contains(component).customDrag(flowDropSelector, x, y);
 };
 
 /**
@@ -59,22 +36,17 @@ const generatePositions = (
 export const dragComponentsAndMapConfig = (
   config: ModelSchema
 ): ModelSchema => {
-  const layers = config.spec.layers || [];
-  const featurizers = config.dataset.featurizers || [];
-  const total = (layers?.length || 0) + (featurizers?.length || 0);
-  const xoffset = 150;
-  const yoffset = 50;
-  const maxwidth = 700;
-  const positions = generatePositions(total, xoffset, yoffset, maxwidth);
   let i = 0;
   const newLayers: ModelSchema['spec']['layers'] = [];
   const newFeaturizers: ModelSchema['dataset']['featurizers'] = [];
+
+  cy.get('[data-testid="openOptionsSidebarButton"]').click();
+  
   iterateTopologically(config, (node, type) => {
     cy.log('Dragging component', node, type);
     if (['input', 'output'].includes(type)) return;
-    const position = positions[i];
     const componentName = substrAfterLast(node.type || '', '.');
-    dragComponent(componentName, position.x, position.y);
+      dragComponent(componentName, 150, 100);
     if (type === 'layer') {
       //@ts-ignore
       const layer = {
@@ -94,6 +66,9 @@ export const dragComponentsAndMapConfig = (
     }
     i += 1;
   });
+
+  cy.get('[data-testid="RemoveSharpIcon"]').click();
+
   const newSchema = {
     ...config,
     dataset: {
@@ -105,22 +80,6 @@ export const dragComponentsAndMapConfig = (
     },
   };
   return newSchema;
-};
-export const dragComponents = (componentNames: string[]) => {
-  cy.get('[data-testid="TurnLeftIcon"]').click();
-  const xoffset = 150;
-  const yoffset = 80;
-  const maxwidth = 150;
-  const positions = generatePositions(
-    componentNames.length,
-    xoffset,
-    yoffset,
-    maxwidth
-  );
-  componentNames.forEach((component, i) => {
-    const { x, y } = positions[i];
-    dragComponent(component, x, y);
-  });
 };
 
 export const fillDatasetInfo = ({
