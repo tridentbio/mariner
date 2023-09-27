@@ -12,14 +12,10 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 from starlette.responses import ContentStream
 
-from api.websocket import WebSocketMessage, get_websockets_manager
+from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet.file_utils import is_compressed
 from fleet.ray_actors.dataset_transforms import DatasetTransforms
-from mariner.core.aws import (
-    create_s3_client,
-    download_s3,
-    upload_s3_compressed,
-)
+from mariner.core.aws import create_s3_client, download_s3, upload_s3_compressed
 from mariner.core.config import get_app_settings
 from mariner.entities.dataset import Dataset as DatasetEntity
 from mariner.entities.user import User
@@ -116,9 +112,9 @@ async def process_dataset(
 
         # Send the file to the ray actor by chunks
         chunk_size = get_app_settings("server").application_chunk_size
-        dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))
+        dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))  # type: ignore pylint: disable=no-member
         for chunk in iter(lambda: file.read(chunk_size), b""):
-            await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
+            await dataset_ray_transformer.write_dataset_buffer.remote(chunk)  # type: ignore pylint: disable=no-member
         await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
 
         (
@@ -265,7 +261,7 @@ def start_process(
         asyncio.ensure_future(
             get_websockets_manager().send_message_to_user(
                 user_id=dataset.created_by_id,
-                message=WebSocketMessage(
+                message=WebSocketResponse(
                     data=task.result(), type="dataset-process-finish"
                 ),
             )
