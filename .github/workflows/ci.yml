@@ -52,7 +52,7 @@ jobs:
     - name: Get changed python files between base and head
       id: get_changed
       run: |
-        echo "CHANGED_FILES=$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep -E '^.*.py$'))" >> $GITHUB_OUTPUT
+        echo "CHANGED_FILES='$(echo $(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- | grep -E '^.*.py$'))'" >> $GITHUB_OUTPUT
     # Sets up python3.10
     - uses: actions/setup-python@v4
       with:
