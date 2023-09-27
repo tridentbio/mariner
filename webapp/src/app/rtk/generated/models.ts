@@ -447,7 +447,7 @@ export type ColumnConfig = {
 export type BaseModel = {};
 export type OneHotEncoderConfig = {
   type?: 'sklearn.preprocessing.OneHotEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -457,7 +457,7 @@ export type OneHotEncoderConfig = {
 };
 export type LabelEncoderConfig = {
   type?: 'sklearn.preprocessing.LabelEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -543,7 +543,7 @@ export type StandardScalerConfig = {
 };
 export type NpConcatenateConfig = {
   type?: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -645,7 +645,7 @@ export type DatasetConfig = {
 };
 export type CreateFromType = {
   type: string;
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
 };
 export type ColumnConfigWithPreprocessing = {
   name: string;
@@ -861,11 +861,11 @@ export type ComponentOption = {
   docs?: string;
   outputType?: string;
   defaultArgs?: object;
-  //? Declared manually for mocked version
-  compatibleWith?: {
-    domains?: ColumnConfig['dataType']['domainKind'][];
-    framework?: ('torch' | 'sklearn')[];
-  };
+    //? Declared manually for mocked version
+    compatibleWith?: {
+      domains?: ColumnConfig['dataType']['domainKind'][];
+      framework?: ('torch' | 'sklearn')[];
+    };
 };
 export type GetNameSuggestionResponse = {
   name: string;
