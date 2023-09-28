@@ -17,7 +17,7 @@ from mariner.schemas.api import ApiBaseModel
 LOG = logging.getLogger(__name__)
 
 
-class WebSocketMessage(ApiBaseModel):
+class WebSocketResponse(ApiBaseModel):
     """
     Base class for messages exchanged with client
     """
@@ -53,14 +53,9 @@ class BaseConnection:
             for session in self.sessions.values()
         )
 
-    async def send_message(self, message: WebSocketMessage):
+    async def send_message(self, message: WebSocketResponse):
         """Sends a message to all active connections."""
-        LOG.warning(msg='SEND MESSAGE')
-        LOG.warning(self.sessions.keys())
-        LOG.warning(self.sessions.values())
         for session in self.sessions.values():
-            LOG.warning(session.application_state)
-            LOG.warning(WebSocketState.CONNECTED)
             if session.application_state == WebSocketState.CONNECTED:
                 await session.send_text(message.json(by_alias=True))
 
@@ -161,7 +156,7 @@ class ConnectionManager:
                     self.active_connections.pop(connection_id)
 
     async def send_message_to_user(
-        self, user_id: int, message: WebSocketMessage
+        self, user_id: int, message: WebSocketResponse
     ):
         """Sends a message to a specific user
 
@@ -171,15 +166,14 @@ class ConnectionManager:
             user_id (int): id from user to send the message
             message (WebSocketMessage): message to be sent
         """
-        LOG.warning(msg='MESSAGE')
         if user_id not in self.active_connections:
-            LOG.warning(msg=f'%s {user_id} MESSAGE NOT SENT')
-            LOG.warning(self.active_connections.keys())
             return
 
         await self.active_connections[user_id].send_message(message)
 
-    async def broadcast(self, message: WebSocketMessage, public: bool = False):
+    async def broadcast(
+        self, message: WebSocketResponse, public: bool = False
+    ):
         """Sends message to all active connections.
 
         Args:
@@ -227,7 +221,11 @@ async def websocket_endpoint(
     session_id = await manager.connect(user.id, websocket)
     while websocket.application_state == WebSocketState.CONNECTED:
         try:
-            await websocket.receive_text()  # continuously wait for a message
+            text = (
+                await websocket.receive_text()
+            )  # continuously wait for a message
+            LOG.warning("[WEBSOCKET]: %s", text)
+
         except (WebSocketDisconnect, AssertionError):
             break
 

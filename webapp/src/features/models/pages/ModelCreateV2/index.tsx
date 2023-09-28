@@ -163,7 +163,7 @@ const ModelCreateV2 = () => {
             },
           });
           if ('error' in result || result.data.stackTrace)
-            return notifyError('Error creating dataset');
+            return notifyError('Error creating model');
         }
         return createModel({
           modelCreate,
@@ -174,7 +174,7 @@ const ModelCreateV2 = () => {
         });
       },
       (errors) => {
-        notifyError('Error creating dataset');
+        notifyError('Error creating model');
       }
     )();
   };

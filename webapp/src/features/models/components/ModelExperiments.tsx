@@ -173,7 +173,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       },
     },
     {
-      field: 'trainMetrics' as const,
+      field: 'valMetrics' as const,
       name: 'Validation Loss',
       title: (
         <Box
@@ -187,7 +187,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
           <Typography>Validation Loss</Typography>
         </Box>
       ),
-      render: (_row: Experiment, value: Experiment['trainMetrics']) => (
+      render: (_row: Experiment, value: Experiment['valMetrics']) => (
         <Justify position="end">
           {(() => {
             if (!value || !_row) return '-';
