@@ -1,9 +1,9 @@
-import ReadMoreIcon from '@mui/icons-material/ReadMore';
+import {ReadMore, Cancel} from '@mui/icons-material';
 import Table, { Column } from 'components/templates/Table';
 import { Model } from 'app/types/domain/models';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { dateRender } from 'components/atoms/Table/render';
-import { Button, LinearProgress, Tooltip, Typography } from '@mui/material';
+import { Button, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
 import Modal from 'components/templates/Modal';
 import StackTrace from 'components/organisms/StackTrace';
 import {
@@ -22,6 +22,7 @@ import {
   TableActionsWrapper,
   tableActionsSx,
 } from '@components/atoms/TableActions';
+import ConfirmationDialog from '@components/templates/ConfirmationDialog';
 
 interface ModelExperimentsProps {
   model: Model;
@@ -52,9 +53,23 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
     };
   }, [paginatedExperiments]);
   const experiments = useAppSelector((state) => state.models.experiments);
-  const [experimentDetailedId, setExperimentDetailedId] = useState<
-    number | undefined
-  >();
+
+  const selectedExperimentId = useRef<number | undefined>();
+
+  const showExperimentDetails = useRef<boolean>();
+
+  const [trainingCanceling, setTrainingCanceling] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [cancelTraining] = experimentsApi.useCancelTrainingMutation()
+
+  const handleCancelTraining = () => {
+    setTrainingCanceling(true);
+
+    cancelTraining(selectedExperimentId.current as number)
+      .finally(() => {
+        setTrainingCanceling(false);
+      })
+  }
 
   const handleTableStateChange = (state: State) => {
     const newQueryParams: QueryParams = {};
@@ -233,18 +248,31 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       title: 'Actions',
       customSx: tableActionsSx,
       fixed: true,
-      render: (row: Experiment) => (
-        <TableActionsWrapper>
-          <Button
-            onClick={() => setExperimentDetailedId(row.id)}
-            variant="text"
-            color="primary"
-            disabled={!row.stackTrace}
-          >
-            <ReadMoreIcon />
-          </Button>
-        </TableActionsWrapper>
-      ),
+      render: (row: Experiment, value, { trainingCanceling }) => {
+        return (
+          <TableActionsWrapper>
+            <Button
+              onClick={() => selectedExperimentId.current = row.id}
+              variant="text"
+              color="primary"
+              disabled={!row.stackTrace}
+            >
+              <ReadMore />
+            </Button>
+            <Tooltip title="Cancel training" placement="top">
+              <IconButton
+                onClick={() => {
+                  selectedExperimentId.current = row.id
+                  setShowCancelConfirmation(true)
+                }}
+                disabled={trainingCanceling}
+              >
+                <Cancel />
+              </IconButton>
+            </Tooltip>
+          </TableActionsWrapper>
+        )
+      },
     },
   ];
 
@@ -275,8 +303,8 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
 
   const detailedExperiment = useMemo(
     () =>
-      experiments.find((exp: Experiment) => exp?.id === experimentDetailedId),
-    [experimentDetailedId]
+      experiments.find((exp: Experiment) => exp?.id === selectedExperimentId.current),
+    [selectedExperimentId.current]
   );
   const dispatch = useDispatch();
   useEffect(() => {
@@ -287,8 +315,8 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
   return (
     <div style={{ marginTop: 15 }}>
       <Modal
-        open={experimentDetailedId !== undefined}
-        onClose={() => setExperimentDetailedId(undefined)}
+        open={showExperimentDetails.current !== undefined}
+        onClose={() => showExperimentDetails.current = undefined}
         title="Failed experiment error"
       >
         <StackTrace
@@ -296,6 +324,16 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
           message="Exception during model training"
         />
       </Modal>
+      <ConfirmationDialog
+        title="Confirm training cancelation"
+        text={'Are you sure to cancel this training? '}
+        alertText="Be aware that won't be possible to recover it."
+        onResult={result => {
+          if(result == 'confirmed') handleCancelTraining()
+        }}
+        open={showCancelConfirmation}
+        setOpen={setShowCancelConfirmation}
+      />
       <Table<Experiment>
         onStateChange={handleTableStateChange}
         rows={storeExperiments}
@@ -311,6 +349,9 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
         usePreferences
         columnTree={columnsTreeView}
         defaultSelectedNodes={['attributes', 'metrics']}
+        dependencies={{
+          trainingCanceling,
+        }}
       />
     </div>
   );
