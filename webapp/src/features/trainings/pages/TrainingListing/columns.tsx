@@ -13,6 +13,51 @@ import { dateRender } from 'components/atoms/Table/render';
 import TrainingStatusChip from 'features/models/components/TrainingStatusChip';
 import { Link } from 'react-router-dom';
 
+const makeMetric = (
+  title: string,
+  field: 'trainMetrics' | 'valMetrics' | 'testMetrics'
+): Column<Experiment, keyof Experiment> => ({
+  field,
+  name: 'Train Loss',
+  title: (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <Typography>{title}</Typography>
+    </Box>
+  ),
+  render: (_row: Experiment, value: Experiment[typeof field]) => {
+    const targetColumns = _row.modelVersion.config.dataset.targetColumns;
+    const targetColumn = targetColumns[0];
+    const dataset = field.replace('Metrics', '');
+    const lossKey = `${dataset}/loss/${targetColumn.name}`;
+    let loss = '';
+    if ('lossFn' in targetColumn && targetColumn.lossFn) {
+      // @ts-ignore
+      loss = targetColumn.lossFn.replace('torch.nn.', '').replace('Loss', '');
+    }
+    let text = '';
+    if (value && lossKey in value) text = value[lossKey].toFixed(2);
+    return (
+      <Justify position="start">
+        {text}
+        {'\n'}({loss})
+      </Justify>
+    );
+  },
+  skeletonProps: {
+    variant: 'text',
+    width: 30,
+  },
+  customSx: {
+    textAlign: 'center',
+  },
+});
+
 export const trainingListingColumns: Column<Experiment, keyof Experiment>[] = [
   {
     title: 'Experiment Name',
@@ -36,26 +81,6 @@ export const trainingListingColumns: Column<Experiment, keyof Experiment>[] = [
         <Typography>{row.modelVersion?.config?.dataset.name}</Typography>
       </Justify>
       // </Link>
-    ),
-    skeletonProps: {
-      variant: 'text',
-      width: 30,
-    },
-    customSx: {
-      textAlign: 'center',
-    },
-  },
-  {
-    field: 'model',
-    title: 'Model',
-    name: 'Model',
-    render: (row: Experiment) => (
-      // !Ask backend for model info at experiments
-      <Justify position="start">
-        <Link to={`/models/${row.modelId}`}>
-          <Typography>{row.model?.name}</Typography>
-        </Link>
-      </Justify>
     ),
     skeletonProps: {
       variant: 'text',
@@ -104,41 +129,8 @@ export const trainingListingColumns: Column<Experiment, keyof Experiment>[] = [
       textAlign: 'center',
     },
   },
-  {
-    field: 'trainMetrics' as const,
-    name: 'Train Loss',
-    title: (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Typography>Train Loss</Typography>
-        <Typography variant="body2">(MSE)</Typography>
-      </Box>
-    ),
-    render: (_row: Experiment, value: Experiment['trainMetrics']) => (
-      <Justify position="start">
-        {(() => {
-          if (!value) return '-';
-          else if ('train_loss' in value) {
-            return value['train_loss'].toFixed(2);
-          } else if ('trainLoss' in value) {
-            return value['train_loss'].toFixed(2);
-          }
-        })()}
-      </Justify>
-    ),
-    skeletonProps: {
-      variant: 'text',
-      width: 30,
-    },
-    customSx: {
-      textAlign: 'center',
-    },
-  },
+  makeMetric('Train Loss', 'trainMetrics'),
+  makeMetric('Validation Loss', 'valMetrics'),
   {
     name: 'Created At',
     field: 'createdAt' as const,

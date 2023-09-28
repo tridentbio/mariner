@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 
 from sqlalchemy.orm.session import Session
 
-from api.websocket import WebSocketMessage, get_websockets_manager
+from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet.ray_actors.deployments_manager import get_deployments_manager
 from mariner.core.security import (
     decode_deployment_url_token,
@@ -32,8 +32,8 @@ from mariner.schemas.deployment_schemas import (
     PermissionCreateRepo,
     PredictionCreateRepo,
 )
-from mariner.stores.deployment_sql import deployment_store
 from mariner.stores.dataset_sql import dataset_store
+from mariner.stores.deployment_sql import deployment_store
 from mariner.tasks import TaskView, get_manager
 
 
@@ -438,7 +438,7 @@ def notify_users_about_status_update(deployment: Deployment):
     manager = get_manager("deployment")
     task = asyncio.ensure_future(
         get_websockets_manager().broadcast(
-            WebSocketMessage(
+            WebSocketResponse(
                 type="update-deployment",
                 data={
                     "deploymentId": deployment.id,

@@ -14,6 +14,7 @@ import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { useNotifications } from 'app/notifications';
 import { updateDataset } from 'features/datasets/datasetSlice';
 import { updateDeploymentStatus } from '@features/deployments/deploymentsSlice';
+import { useAppSelector } from '@hooks';
 
 const WebSocketContext = createContext<{
   socketHandler: SocketMessageHandler | null;
@@ -26,6 +27,10 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
 ) => {
   const socketHandlerRef = useRef<SocketMessageHandler>(messageHandler);
   const dispatch = useAppDispatch();
+  const { loggedIn, loginStatus } = useAppSelector((state) => ({
+    loggedIn: state.users.loggedIn,
+    loginStatus: state.users.loginStatus,
+  }));
 
   const [fetchDatasetById] = datasetsApi.useLazyGetMyDatasetQuery();
   const [fetchDeploymentById] = deploymentsApi.useLazyGetDeploymentQuery();
@@ -67,21 +72,20 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
   );
 
   useEffect(() => {
+    if (loginStatus === 'loading') return;
+
     let socketHandler = socketHandlerRef.current;
-    if (socketHandler.isDisconnected()) socketHandler.connect();
-
-    if (socketHandler.connectionType === 'authenticated') {
+    socketHandler.connect();
+    socketHandler = applyAnonymousCallbacks(socketHandler);
+    if (loginStatus === 'idle' && loggedIn) {
       socketHandler = applyAuthenticatedCallbacks(socketHandler);
-    } else if (socketHandler.connectionType === 'anonymous') {
-      socketHandler = applyAnonymousCallbacks(socketHandler);
     }
-
     socketHandlerRef.current = socketHandler;
 
     return () => {
       socketHandler.disconnect();
     };
-  }, []);
+  }, [loggedIn, loginStatus]);
 
   return (
     <WebSocketContext.Provider value={{ socketHandler: messageHandler }}>
