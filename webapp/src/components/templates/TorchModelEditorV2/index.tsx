@@ -299,6 +299,14 @@ const TorchModelEditor = ({
             onConnectEnd={() => {
               clearPositionOrdering();
             }}
+            onNodeClick={(event, clickedNode) => {
+              setNodes(prev => (
+                prev.map(node => ({
+                  ...node,
+                  selected: node.id === clickedNode.id
+                }))
+              ))
+            }}
             onConnectStart={(event, connectionParams) => {
               if (!schema) return;
               if (!connectionParams.handleType) {
