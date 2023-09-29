@@ -8,37 +8,36 @@ import {
   DialogTitle,
   Divider,
 } from '@mui/material';
-import { useAppDispatch } from 'app/hooks';
-import { cleanCurrentDeployment } from 'features/deployments/deploymentsSlice';
 import React from 'react';
+
+type ResultTypes = 'closed' | 'canceled' | 'confirmed';
 
 type ConfirmationDialogProps = {
   title: string;
   text: string;
   alertText?: string;
   open: boolean;
+  onResult: (result: ResultTypes) => void;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  handleClickConfirm: (any?: any) => void;
 };
 
 const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   open,
   setOpen,
   title,
-  handleClickConfirm,
   text,
   alertText,
+  onResult
 }) => {
-  const dispatch = useAppDispatch();
-  const handleCancel = () => {
+  const dispatchResult = (result: ResultTypes) => {
     setOpen(false);
-    dispatch(cleanCurrentDeployment());
-  };
+    onResult(result);
+  }
 
   return (
     <Dialog
       open={open}
-      onClose={handleCancel}
+      onClose={() => dispatchResult('closed')}
       aria-labelledby="confirmation-dialog-title"
       aria-describedby="confirmation-dialog-description"
     >
@@ -55,13 +54,13 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       </DialogContent>
       <Divider />
       <DialogActions>
-        <Button variant="contained" onClick={handleCancel}>
+        <Button variant="contained" onClick={() => dispatchResult('canceled')}>
           Cancel
         </Button>
         <Button
           variant="contained"
           color="warning"
-          onClick={handleClickConfirm}
+          onClick={() => dispatchResult('confirmed')}
           autoFocus
         >
           Confirm
