@@ -17,7 +17,7 @@ from mariner.schemas.api import ApiBaseModel
 LOG = logging.getLogger(__name__)
 
 
-class WebSocketMessage(ApiBaseModel):
+class WebSocketResponse(ApiBaseModel):
     """
     Base class for messages exchanged with client
     """
@@ -53,7 +53,7 @@ class BaseConnection:
             for session in self.sessions.values()
         )
 
-    async def send_message(self, message: WebSocketMessage):
+    async def send_message(self, message: WebSocketResponse):
         """Sends a message to all active connections."""
         for session in self.sessions.values():
             if session.application_state == WebSocketState.CONNECTED:
@@ -156,7 +156,7 @@ class ConnectionManager:
                     self.active_connections.pop(connection_id)
 
     async def send_message_to_user(
-        self, user_id: int, message: WebSocketMessage
+        self, user_id: int, message: WebSocketResponse
     ):
         """Sends a message to a specific user
 
@@ -171,7 +171,9 @@ class ConnectionManager:
 
         await self.active_connections[user_id].send_message(message)
 
-    async def broadcast(self, message: WebSocketMessage, public: bool = False):
+    async def broadcast(
+        self, message: WebSocketResponse, public: bool = False
+    ):
         """Sends message to all active connections.
 
         Args:
@@ -219,7 +221,11 @@ async def websocket_endpoint(
     session_id = await manager.connect(user.id, websocket)
     while websocket.application_state == WebSocketState.CONNECTED:
         try:
-            await websocket.receive_text()  # continuously wait for a message
+            text = (
+                await websocket.receive_text()
+            )  # continuously wait for a message
+            LOG.warning("[WEBSOCKET]: %s", text)
+
         except (WebSocketDisconnect, AssertionError):
             break
 

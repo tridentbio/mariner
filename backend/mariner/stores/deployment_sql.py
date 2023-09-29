@@ -16,7 +16,6 @@ from mariner.entities.deployment import (
 from mariner.entities.user import User
 from mariner.exceptions import ModelVersionNotFound, NotCreatorOwner
 from mariner.schemas.api import utc_datetime
-from mariner.schemas.dataset_schemas import DatasetSummary
 from mariner.schemas.deployment_schemas import Deployment as DeploymentSchema
 from mariner.schemas.deployment_schemas import (
     DeploymentCreateRepo,
@@ -27,7 +26,6 @@ from mariner.schemas.deployment_schemas import (
     PredictionCreateRepo,
 )
 from mariner.stores.base_sql import CRUDBase
-from mariner.stores.dataset_sql import dataset_store
 
 from .model_sql import model_store
 
@@ -342,26 +340,6 @@ class CRUDDeployment(
         prediction = db.add(Predictions(**prediction_to_track))
         db.commit()
         return prediction
-
-    def get_training_data(
-        self, db: Session, deployment: DeploymentSchema
-    ) -> DatasetSummary:
-        """Get the training data for a deployment
-
-        Args:
-            db: database session
-            deployment: deployment to get the training data from
-
-        Returns:
-            DatasetSummary: dataset summary from dataset used on model training
-        """
-        dataset_name = deployment.model_version.config.dataset.name
-
-        dataset = dataset_store.get_by_name(db, dataset_name)
-
-        dataset_summary = DatasetSummary(**dataset.stats)
-
-        return dataset_summary
 
 
 deployment_store = CRUDDeployment(Deployment)

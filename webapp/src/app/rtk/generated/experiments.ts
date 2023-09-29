@@ -349,7 +349,7 @@ export type ColumnConfig = {
 export type BaseModel = {};
 export type OneHotEncoderConfig = {
   type?: 'sklearn.preprocessing.OneHotEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -359,7 +359,7 @@ export type OneHotEncoderConfig = {
 };
 export type LabelEncoderConfig = {
   type?: 'sklearn.preprocessing.LabelEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -445,7 +445,7 @@ export type StandardScalerConfig = {
 };
 export type NpConcatenateConfig = {
   type?: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -547,7 +547,7 @@ export type DatasetConfig = {
 };
 export type CreateFromType = {
   type: string;
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
 };
 export type ColumnConfigWithPreprocessing = {
   name: string;
@@ -744,7 +744,6 @@ export type HttpValidationError = {
 };
 export type MonitoringConfig = {
   metricKey: string;
-  mode: string;
 };
 export type AdamParams = {
   lr?: number;
@@ -766,7 +765,6 @@ export type SgdOptimizer = {
 };
 export type EarlyStoppingConfig = {
   metricKey: string;
-  mode: string;
   minDelta?: number;
   patience?: number;
   checkFinite?: boolean;

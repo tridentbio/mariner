@@ -235,12 +235,15 @@ def delete_model(
 @router.post(
     "/check-config",
     response_model=TrainingCheckResponse,
-    dependencies=[Depends(deps.get_current_active_user)],
 )
 async def post_model_check_config(
-    model_config: TrainingCheckRequest, db: Session = Depends(deps.get_db)
+    model_config: TrainingCheckRequest,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """Checks if the torch model config in the request body doesn't raise
     any errors."""
-    result = await controller.check_model_step_exception(db, model_config)
+    result = await controller.check_model_step_exception(
+        db, model_config, user=current_user
+    )
     return result

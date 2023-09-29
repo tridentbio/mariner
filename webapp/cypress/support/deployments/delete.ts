@@ -9,7 +9,7 @@ export const deleteDeployment = (modelName: string, deploymentName: string) => {
     url: `${API_BASE_URL}/api/v1/deployments/*`,
   }).as('deleteDeployment');
   cy.contains('button', 'Confirm').click().wait(300);
-  cy.wait('@deleteDeployment').then((interception) => {
+  cy.wait('@deleteDeployment', {responseTimeout: 40000}).then((interception) => {
     assert.equal(interception.response?.statusCode, 200);
   });
 };

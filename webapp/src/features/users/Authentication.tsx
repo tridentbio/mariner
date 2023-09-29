@@ -58,15 +58,6 @@ const AuthenticationPage = function () {
   const afterLogin =
     (location?.state as { from?: Location })?.from?.pathname || '/';
   useEffect(() => {
-    if (tk) {
-      localStorage.setItem(
-        ELocalStorage.PREFERENCES,
-        JSON.stringify({ access_token: tk, token_type: 'bearer' })
-      );
-      navigate(afterLogin, { replace: true });
-    }
-  }, [tk]);
-  useEffect(() => {
     getProviders().then(setProviders);
   }, []);
   useEffect(() => {
@@ -82,6 +73,17 @@ const AuthenticationPage = function () {
       password: formValues.password,
     });
   };
+
+  useEffect(() => {
+    if (tk) {
+      localStorage.setItem(
+        ELocalStorage.TOKEN,
+        JSON.stringify({ access_token: tk, token_type: 'bearer' })
+      );
+      navigate(afterLogin, { replace: true });
+    }
+  }, [tk]);
+
   useEffect(() => {
     if (isSuccess) {
       navigate(afterLogin, { replace: true });

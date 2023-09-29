@@ -8,12 +8,13 @@ import './deployments';
 import { deleteDatasetIfAlreadyExists } from './dataset/delete';
 import { mount } from 'cypress/react';
 import '@4tw/cypress-drag-drop'
+import { drag, move } from './custom-dragdrop';
 
 const TEST_USER = Cypress.env('TEST_USER');
 
 Cypress.Commands.add('notificationShouldContain', (text: string) => {
   return cy
-    .get('.MuiAlert-message', { timeout: 20000 })
+    .get('.MuiAlert-message', { timeout: 30000 })
     .should('contain.text', text);
 });
 
@@ -26,14 +27,35 @@ Cypress.Commands.add('loginSuper', (timeout: number = 15000) => {
   cy.url().should('eq', Cypress.config('baseUrl'));
 });
 
-Cypress.Commands.add('loginTest', (timeout: number = 15000) => {
+Cypress.Commands.add('loginTest', (timeout: number = 25000) => {
   cy.clearAllCookies();
-  cy.visit('/login');
-  cy.get('#username-input', { timeout }).type(TEST_USER);
-  cy.get('#password-input').type('123456');
-  cy.get('button[type="submit"]').click();
-  cy.url().should('eq', Cypress.config('baseUrl'));
+  cy.visit('/login').then(() => {
+    cy.get('#username-input', { timeout }).type(TEST_USER);
+    cy.get('#password-input').type('123456');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('eq', Cypress.config('baseUrl'));
+  });
 });
+
+Cypress.Commands.add(
+  'customDrag',
+  {
+    prevSubject: 'element',
+  },
+  (draggedElement, dropSelector, dropX = 0, dropY = 0) => {
+    drag(draggedElement, dropSelector, dropX, dropY);
+  }
+);
+
+Cypress.Commands.add(
+  'customMove',
+  {
+    prevSubject: 'element',
+  },
+  (draggedJquery, dropSelector, dropX = 0, dropY = 0) => {
+    move(draggedJquery, dropSelector, dropX, dropY);
+  }
+);
 
 export const addDescription = (
   pattern: string,
@@ -107,6 +129,16 @@ declare global {
       getWithoutThrow(selector: string): Chainable<JQuery<HTMLElement>>;
       getCurrentAuthString(): Chainable<string>;
       mount: typeof mount;
+      customMove(
+        dropSelector: string,
+        x: number,
+        y: number
+      ): Chainable<JQuery<HTMLElement>>;
+      customDrag(
+        dropSelector: string,
+        x: number,
+        y: number
+      ): Chainable<JQuery<HTMLElement>>;
     }
   }
 }

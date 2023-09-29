@@ -20,7 +20,7 @@ env:
     DEPLOYMENT_URL_SIGNATURE_SECRET_KEY: secret
     COMPOSE_HTTP_TIMEOUT: 600
     COMPOSE_USER: 1000:1000
-    DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose-cicd.yml"
+    DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose.cicd.yml"
 jobs:
   tests-backend-integration:
     runs-on: ubuntu-latest

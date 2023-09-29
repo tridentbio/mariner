@@ -238,7 +238,7 @@ def setup_create_dataset_db2(
         except IntegrityError:
             db.rollback()
             dataset = dataset_sql.dataset_store.get_by_name(
-                db, create_obj.name
+                db, create_obj.name, user_id=owner_id
             )
 
     return dataset
