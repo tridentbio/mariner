@@ -33,6 +33,7 @@ export default {
 };
 
 export const A: StoryObj = {
+  // @ts-ignore
   render: ({ value }: { value: any }) => {
     return <DataSummary {...value} />;
   },
