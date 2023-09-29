@@ -19,7 +19,7 @@ Cypress.Commands.add('notificationShouldContain', (text: string) => {
     .should('contain.text', text);
 });
 
-Cypress.Commands.add('loginSuper', (role = 'admin', timeout: number = 15000) => {
+Cypress.Commands.add('loginUser', (role = 'admin', timeout: number = 15000) => {
   const loginData = (() => {
     switch(role) {
       case 'test': return {username: TEST_USER.username, password: TEST_USER.password}
@@ -127,7 +127,7 @@ Cypress.Commands.add('getCurrentAuthString', () =>
 declare global {
   namespace Cypress {
     interface Chainable {
-      loginSuper(role?: 'admin' | 'test', timeout?: number): Chainable<void>;
+      loginUser(role?: 'admin' | 'test', timeout?: number): Chainable<void>;
       createZINCDataset(): Chainable<void>;
       deleteZINCDataset(): Chainable<void>;
       notificationShouldContain(text: string): Chainable<JQuery<HTMLElement>>;
