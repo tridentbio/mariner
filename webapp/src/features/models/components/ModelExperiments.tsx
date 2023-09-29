@@ -339,9 +339,11 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
         />
       </Modal>
       <ConfirmationDialog
-        title="Confirm training cancelation"
+        title="Confirm training cancellation"
         text={'Are you sure to cancel this training? '}
-        alertText="Be aware that won't be possible to recover it."
+        alertText="You will not be able to recover this training once it is cancelled."
+        confirmText="Yes, cancel it"
+        cancelText="No, dismiss"
         onResult={(result) => {
           if (result == 'confirmed') {
             if (typeof confirmExperimentCancelling !== 'number') {

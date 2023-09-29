@@ -18,19 +18,20 @@ type ConfirmationDialogProps = {
   alertText?: string;
   open: boolean;
   onResult: (result: ResultTypes) => void;
-  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+  confirmText?: string;
+  cancelText?: string;
 };
 
 const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   open,
-  setOpen,
   title,
   text,
   alertText,
   onResult,
+  confirmText,
+  cancelText,
 }) => {
   const dispatchResult = (result: ResultTypes) => {
-    setOpen && setOpen(false);
     onResult(result);
   };
 
@@ -55,7 +56,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       <Divider />
       <DialogActions>
         <Button variant="contained" onClick={() => dispatchResult('canceled')}>
-          Cancel
+          {cancelText || 'Cancel'}
         </Button>
         <Button
           variant="contained"
@@ -63,7 +64,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           onClick={() => dispatchResult('confirmed')}
           autoFocus
         >
-          Confirm
+          {confirmText || 'Confirm'}
         </Button>
       </DialogActions>
     </Dialog>
