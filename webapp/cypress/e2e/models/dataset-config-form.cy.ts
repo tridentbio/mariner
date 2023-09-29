@@ -81,6 +81,7 @@ describe('DatasetConfigForm', () => {
       testModel.config.dataset.name = irisDatasetFixture?.name;
     else (testModel.config as modelsApi.TorchModelSpec).dataset.name = 'Iris';
 
+    // @ts-ignore
     fillModelDescriptionStepForm(testModel);
 
     cy.get('button').contains('NEXT').click();

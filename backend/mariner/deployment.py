@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 
 from sqlalchemy.orm.session import Session
 
-from api.websocket import WebSocketMessage, get_websockets_manager
+from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet.ray_actors.deployments_manager import get_deployments_manager
 from mariner.core.security import (
     decode_deployment_url_token,
@@ -20,6 +20,7 @@ from mariner.exceptions import (
     NotCreatorOwner,
     PredictionLimitReached,
 )
+from mariner.schemas.dataset_schemas import DatasetSummary
 from mariner.schemas.deployment_schemas import (
     Deployment,
     DeploymentBase,
@@ -31,6 +32,7 @@ from mariner.schemas.deployment_schemas import (
     PermissionCreateRepo,
     PredictionCreateRepo,
 )
+from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.deployment_sql import deployment_store
 from mariner.tasks import TaskView, get_manager
 
@@ -76,12 +78,15 @@ def get_deployment(
     )
     if not deployment:
         raise DeploymentNotFound()
+    created_by_id = deployment.model_version.model.created_by_id
     deployment = DeploymentWithTrainingData.from_orm(deployment)
+    dataset_name = deployment.model_version.config.dataset.name
 
     if deployment.show_training_data:
-        deployment.dataset_summary = deployment_store.get_training_data(
-            db, deployment
+        dataset = dataset_store.get_by_name(
+            db, dataset_name, user_id=created_by_id
         )
+        deployment.training_data = DatasetSummary.parse_obj(dataset.stats)
 
     return deployment
 
@@ -304,17 +309,21 @@ def get_public_deployment(db: Session, token: str):
     deployment = deployment_store.get(db, payload.sub)
     if not deployment:
         raise DeploymentNotFound()
-
     elif not deployment.share_strategy == ShareStrategy.PUBLIC:
         raise PermissionError()
 
+    created_by_id = deployment.model_version.model.created_by_id
     deployment = DeploymentWithTrainingData.from_orm(deployment)
+    dataset_name = deployment.model_version.config.dataset.name
 
     if deployment.show_training_data:
-        deployment.dataset_summary = deployment_store.get_training_data(
-            db, deployment
+        dataset = dataset_store.get_by_name(
+            db, dataset_name, user_id=created_by_id
         )
-
+        if dataset:
+            deployment.dataset_summary = DatasetSummary.parse_obj(
+                dataset.stats
+            )
     return deployment
 
 
@@ -429,7 +438,7 @@ def notify_users_about_status_update(deployment: Deployment):
     manager = get_manager("deployment")
     task = asyncio.ensure_future(
         get_websockets_manager().broadcast(
-            WebSocketMessage(
+            WebSocketResponse(
                 type="update-deployment",
                 data={
                     "deploymentId": deployment.id,

@@ -18,7 +18,7 @@ from typing_extensions import override
 import fleet.mlflow
 from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
 from fleet.torch_.models import CustomModel
-from fleet.torch_.schemas import TorchTrainingConfig
+from fleet.torch_.schemas import TorchTrainingConfig, get_metric_mode
 from fleet.utils.data import (
     DataModule,
     MarinerTorchDataset,
@@ -122,7 +122,7 @@ class TorchFunctions(BaseModelFunctions):
         else:
             self.checkpoint_callback = ModelCheckpoint(
                 monitor=params.checkpoint_config.metric_key,
-                mode=params.checkpoint_config.mode,
+                mode=get_metric_mode(params.checkpoint_config.metric_key),
                 save_last=True,
             )
             callbacks.append(self.checkpoint_callback)
@@ -131,7 +131,9 @@ class TorchFunctions(BaseModelFunctions):
             callbacks.append(
                 EarlyStopping(
                     monitor=params.early_stopping_config.metric_key,
-                    mode=params.early_stopping_config.mode,
+                    mode=get_metric_mode(
+                        params.early_stopping_config.metric_key
+                    ),
                     min_delta=params.early_stopping_config.min_delta,
                     patience=params.early_stopping_config.patience,
                     check_finite=params.early_stopping_config.check_finite,

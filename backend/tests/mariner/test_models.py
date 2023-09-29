@@ -49,8 +49,9 @@ async def test_check_forward_exception_good_regressor(
     regressor = model_config(
         model_type="regressor", dataset_name=some_dataset.name
     )
+    user = get_test_user(db)
     check = await model_ctl.check_model_step_exception(
-        db, TrainingCheckRequest(model_spec=regressor)
+        db, TrainingCheckRequest(model_spec=regressor), user=user
     )
     assert regressor.dataset.target_columns[0].loss_fn
     assert check.stack_trace is None, check.stack_trace

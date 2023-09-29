@@ -452,7 +452,10 @@ def test_post_check_config_bad_model(
         config=regressor.spec, dataset_config=regressor.dataset
     )
     regressor.dataset.name = some_dataset.name
-    dataset = dataset_sql.dataset_store.get_by_name(db, regressor.dataset.name)
+    user = get_test_user(db)
+    dataset = dataset_sql.dataset_store.get_by_name(
+        db, regressor.dataset.name, user_id=user.id
+    )
     torch_dataset = MarinerTorchDataset(
         converts_file_to_dataframe(dataset.get_dataset_file()),
         dataset_config=regressor.dataset,

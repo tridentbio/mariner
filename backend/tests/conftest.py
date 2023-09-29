@@ -23,10 +23,7 @@ from mariner.entities import Model as ModelEntity
 from mariner.entities import User
 from mariner.entities.event import EventReadEntity
 from mariner.schemas.deployment_schemas import Deployment
-from mariner.schemas.experiment_schemas import (
-    Experiment,
-    TorchTrainingRequest,
-)
+from mariner.schemas.experiment_schemas import Experiment, TorchTrainingRequest
 from mariner.schemas.model_schemas import Model
 from mariner.schemas.token import TokenPayload
 from mariner.stores.experiment_sql import experiment_store
@@ -352,11 +349,10 @@ async def some_trained_model(
             epochs=1,
             optimizer=AdamOptimizer(),
             checkpoint_config=MonitoringConfig(
-                mode="min",
                 metric_key=f"val/mse/{target_column.name}",
             ),
             early_stopping_config=EarlyStoppingConfig(
-                metric_key=f"val/mse/{target_column.name}", mode="min"
+                metric_key=f"val/mse/{target_column.name}"
             ),
         ),
     )
