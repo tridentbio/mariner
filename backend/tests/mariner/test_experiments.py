@@ -1,4 +1,5 @@
 import pytest
+import ray
 from mlflow.tracking.client import MlflowClient
 from mockito import patch
 from sqlalchemy.orm.session import Session
@@ -331,6 +332,5 @@ async def test_cancel_training(db: Session, some_model_integration: Model):
 
     time.sleep(5)
     experiments_ctl.cancel_training(user, exp.id)
-
-    # Await for task
-    await task
+    with pytest.raises(ray.exceptions.RayActorError):
+        await task
