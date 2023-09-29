@@ -55,8 +55,11 @@ LOG.setLevel(logging.INFO)
 _task_control: Union[TaskControl, None] = None
 
 
-def get_task_control() -> TaskControl:
-    global _task_control
+def _get_task_control() -> TaskControl:
+    """
+    Returns the singleton task control object.
+    """
+    global _task_control  # pylint: disable=global-statement
     if not _task_control:
         _task_control = TaskControl()
     return _task_control
@@ -102,9 +105,16 @@ def handle_training_complete(task: Task, experiment_id: int):
     """
     with SessionLocal() as db:
         experiment = experiment_store.get(db, experiment_id)
+        task_ctl = _get_task_control()
         assert experiment
         exception = task.exception()
         done = task.done()
+
+        for id_, (_, task_metadata) in task_ctl.items():
+            if task_metadata.get("experiment_id") == experiment_id:
+                task_ctl.kill_and_remove(id_)
+                break
+
         if not done:
             raise RuntimeError("Task is not done")
         if exception:
@@ -263,7 +273,7 @@ async def create_model_training(
             "split_type": dataset.split_type,
         },
     )
-    get_task_control().add_task(
+    _get_task_control().add_task(
         training_actor,
         {
             "experiment_id": experiment.id,
@@ -291,18 +301,15 @@ def cancel_training(user: UserEntity, experiment_id: int):
         user: user that originated request.
         experiment_id: id of the experiment to be cancelled.
     """
-    task_ctl = get_task_control()
-    ids, tasks = task_ctl.get_tasks(
+    task_ctl = _get_task_control()
+    ids, _ = task_ctl.get_tasks(
         metadata={
             "experiment_id": experiment_id,
             "created_by_id": user.id,
         }
     )
-    for task in tasks:
-        ray.kill(task)
-
     for id_ in ids:
-        task_ctl.remove_task(id_)
+        task_ctl.kill_and_remove(id_)
 
 
 def get_experiments(
