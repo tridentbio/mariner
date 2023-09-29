@@ -12,7 +12,7 @@ import ray
 from sqlalchemy.orm.session import Session
 
 import mariner.events as events_ctl
-from api.websocket import WebSocketMessage, get_websockets_manager
+from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet.model_builder.optimizers import (
     AdamParamsSchema,
     OptimizerSchema,
@@ -122,7 +122,7 @@ def handle_training_complete(task: Task, experiment_id: int):
             asyncio.ensure_future(
                 get_websockets_manager().send_message_to_user(  # noqa
                     user_id=experiment.created_by_id,
-                    message=WebSocketMessage(
+                    message=WebSocketResponse(
                         type="update-running-metrics",
                         data=UpdateRunningData(
                             experiment_id=experiment_id,
@@ -156,7 +156,7 @@ def handle_training_complete(task: Task, experiment_id: int):
         asyncio.ensure_future(
             get_websockets_manager().send_message_to_user(
                 user_id=experiment.created_by_id,
-                message=WebSocketMessage(
+                message=WebSocketResponse(
                     type="update-running-metrics",
                     data=UpdateRunningData(
                         experiment_id=experiment_id,
@@ -241,7 +241,7 @@ async def create_model_training(
         obj_in=ExperimentCreateRepo(**experiment_payload),
     )
 
-    training_actor = TrainingActor.options(**get_ray_options(training_request)).remote(  # type: ignore
+    training_actor = TrainingActor.options(**get_ray_options(training_request)).remote(  # type: ignore pylint: disable=no-member
         experiment=Experiment.from_orm(experiment),
         request=training_request,
         user_id=user.id,
@@ -249,7 +249,7 @@ async def create_model_training(
     )
 
     dataset_uri = f"s3://{Bucket.Datasets.value}/{dataset.data_url}"
-    training_ref = training_actor.fit.remote(
+    training_ref = training_actor.fit.remote(  # type: ignore
         experiment_id=experiment.id,
         experiment_name=experiment.experiment_name,
         user_id=user.id,
@@ -515,7 +515,7 @@ async def send_ws_epoch_update(
         running_history[metric_name].append(metric_value)
     await get_websockets_manager().send_message_to_user(
         user_id,
-        WebSocketMessage(
+        WebSocketResponse(
             type="update-running-metrics",
             data=UpdateRunningData(
                 experiment_id=experiment_id,

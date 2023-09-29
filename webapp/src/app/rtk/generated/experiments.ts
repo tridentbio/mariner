@@ -744,7 +744,6 @@ export type HttpValidationError = {
 };
 export type MonitoringConfig = {
   metricKey: string;
-  mode: string;
 };
 export type AdamParams = {
   lr?: number;
@@ -766,7 +765,6 @@ export type SgdOptimizer = {
 };
 export type EarlyStoppingConfig = {
   metricKey: string;
-  mode: string;
   minDelta?: number;
   patience?: number;
   checkFinite?: boolean;

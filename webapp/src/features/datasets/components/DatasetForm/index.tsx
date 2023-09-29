@@ -135,16 +135,19 @@ const DatasetForm = ({ initialValues, ...props }: DatasetFormProps) => {
       });
 
       setColumnsMeta(data);
-      reset({
-        ...getValues(),
-        columnsMetadata: data
-          .filter((col) => col.dtype)
-          .map((col) => ({
-            pattern: `${col.name}`,
-            dataType: col.dtype,
-            description: '',
-          })),
-      }, {keepErrors: true, keepDirty: true});
+      reset(
+        {
+          ...getValues(),
+          columnsMetadata: data
+            .filter((col) => col.dtype)
+            .map((col) => ({
+              pattern: `${col.name}`,
+              dataType: col.dtype,
+              description: '',
+            })),
+        },
+        { keepErrors: true, keepDirty: true }
+      );
     } catch (err) {
       setMessage({ type: 'error', message: 'Failed to get csv columns' });
     }

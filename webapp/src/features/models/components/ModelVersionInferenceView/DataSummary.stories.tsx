@@ -4,7 +4,7 @@ import { StoryFn, StoryObj } from '@storybook/react';
 import { Provider } from 'react-redux';
 import { theme } from 'theme';
 import { getDataset } from '../../../../../tests/fixtures/datasets';
-import DataSummary from './DataSummary';
+import DataSummary, { DataSummaryProps } from './DataSummary';
 
 export default {
   title: 'components/DataSummary',
@@ -32,9 +32,9 @@ export default {
   },
 };
 
-export const A: StoryObj = {
-  // @ts-ignore
-  render: ({ value }: { value: any }) => {
+export const A: StoryObj<{ value: DataSummaryProps }> = {
+  render: (args: { value: DataSummaryProps }) => {
+    const { value } = args;
     return <DataSummary {...value} />;
   },
 };

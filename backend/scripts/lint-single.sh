@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-pylint --extension-pkg-whitelist='pydantic' $@
+pylint $@
 PYLINT_RESULT=$?
 
 

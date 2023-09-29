@@ -25,7 +25,7 @@ const ConstructorArgsInputs = ({
   editable,
   ...props
 }: ConstructorArgsInputsProps) => {
-  const { options, editComponent, schema, suggestionsByNode } =
+  const { options, editComponent, schema, suggestionsByNode, setNodes } =
     useTorchModelEditor();
 
   if (!options) return null;
@@ -44,6 +44,14 @@ const ConstructorArgsInputs = ({
           options,
         }),
       });
+
+      //? Persist selected node overlay
+      setNodes(prev => (
+        prev.map(node => ({
+          ...node,
+          selected: node.id === props.data.name ? true : node.selected
+        }))
+      ))
     }
   };
 

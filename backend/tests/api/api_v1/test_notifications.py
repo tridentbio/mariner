@@ -37,10 +37,10 @@ async def experiments_fixture(db: Session, some_model: Model):
                     epochs=1,
                     optimizer=AdamOptimizer(),
                     checkpoint_config=MonitoringConfig(
-                        metric_key=f"val/mse/{target_column.name}", mode="min"
+                        metric_key=f"val/mse/{target_column.name}"
                     ),
                     early_stopping_config=EarlyStoppingConfig(
-                        metric_key=f"val/mse/{target_column.name}", mode="min"
+                        metric_key=f"val/mse/{target_column.name}"
                     ),
                 ),
             ),
@@ -108,7 +108,6 @@ async def experiment_fixture(
         config=TorchTrainingConfig(
             epochs=1,
             checkpoint_config=MonitoringConfig(
-                mode="min",
                 metric_key=f"val/mse/{target_column.name}",
             ),
             optimizer=AdamOptimizer(),

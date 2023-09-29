@@ -166,7 +166,6 @@ test_cases = [
             epochs=4,
             batch_size=32,
             checkpoint_config=MonitoringConfig(
-                mode="min",
                 metric_key=f"val/mse/{targets_head(spec).name}"
                 if is_regression(targets_head(spec))
                 else f"val/precision/{targets_head(spec).name}",
