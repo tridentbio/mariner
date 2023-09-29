@@ -65,9 +65,9 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
         text={'Are you sure to delete this deployment? '}
         alertText="Be aware that won't be possible to recover it."
         open={showDeleteConfirmation}
-        onResult={result => {
+        onResult={(result) => {
           if (result === 'confirmed') confirmDelete();
-          setShowDeleteConfirmation(false)
+          setShowDeleteConfirmation(false);
         }}
       />
       <Box sx={{ ml: 'auto', mr: 'auto' }}>

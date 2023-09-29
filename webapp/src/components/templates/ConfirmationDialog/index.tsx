@@ -27,12 +27,12 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   title,
   text,
   alertText,
-  onResult
+  onResult,
 }) => {
   const dispatchResult = (result: ResultTypes) => {
     setOpen && setOpen(false);
     onResult(result);
-  }
+  };
 
   return (
     <Dialog
