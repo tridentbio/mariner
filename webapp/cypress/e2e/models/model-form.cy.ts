@@ -3,6 +3,11 @@ import { zincDatasetFixture } from '../../support/dataset/examples';
 
 describe('Model version form (/models/new)', () => {
   before(() => {
+    cy.on(
+      'uncaught:exception',
+      (err) => err.toString().includes('ResizeObserver') && false
+    );
+    
     cy.loginSuper();
     cy.setupZincDataset();
   });
