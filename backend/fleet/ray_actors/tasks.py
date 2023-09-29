@@ -103,7 +103,11 @@ class TaskControl:
             id_: The object id of the task to be returned.
         """
         if id_ in self._tasks:
-            ray.kill(self._tasks[id_])
+            obj = self._tasks[id_]
+            if isinstance(obj, ray.ObjectRef):
+                ray.cancel(obj)
+            else:  # assume the object is an actor
+                ray.kill(obj)
             del self._tasks[id_]
             del self._tasks_metadata[id_]
 
@@ -116,25 +120,3 @@ class TaskControl:
         """
         for id_, task in self._tasks.items():
             yield id_, (task, self._tasks_metadata[id_])
-
-    def __keys__(self):
-        return self._tasks.keys()
-
-    def __values__(self):
-        for id_, task in self._tasks.items():
-            yield id_, (task, self._tasks_metadata[id_])
-
-    def __getitem__(self, key: str):
-        return (self._tasks[key], self._tasks_metadata[key])
-
-    def __setitem__(self, key: str, value: tuple[Any, dict]):
-        self._tasks[key] = value[0]
-        self._tasks_metadata[key] = value[1]
-
-    def __delitem__(self, key: str):
-        del self._tasks[key]
-        del self._tasks_metadata[key]
-
-    def __iter__(self):
-        for id_, task in self._tasks.items():
-            yield (task, self._tasks_metadata[id_])
