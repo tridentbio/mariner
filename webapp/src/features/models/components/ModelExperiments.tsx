@@ -3,7 +3,13 @@ import Table, { Column } from 'components/templates/Table';
 import { Model } from 'app/types/domain/models';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dateRender } from 'components/atoms/Table/render';
-import { Button, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
+import {
+  Button,
+  IconButton,
+  LinearProgress,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import Modal from 'components/templates/Modal';
 import StackTrace from 'components/organisms/StackTrace';
 import {
@@ -54,19 +60,21 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
   }, [paginatedExperiments]);
   const experiments = useAppSelector((state) => state.models.experiments);
 
-  const [selectedExperimentId, setSelectedExperimentId] = useState<number | undefined>()
+  const [selectedExperimentId, setSelectedExperimentId] = useState<
+    number | undefined
+  >();
 
   const [trainingCanceling, setTrainingCanceling] = useState(false);
-  const [confirmExperimentCancelling, setConfirmExperimentCancelling] = useState<number | undefined>();
-  const [cancelTraining] = experimentsApi.useCancelTrainingMutation()
+  const [confirmExperimentCancelling, setConfirmExperimentCancelling] =
+    useState<number | undefined>();
+  const [cancelTraining] = experimentsApi.useCancelTrainingMutation();
 
   const handleCancelTraining = (experimentId: number) => {
     setTrainingCanceling(true);
-    cancelTraining(experimentId)
-      .finally(() => {
-        setTrainingCanceling(false);
-      })
-  }
+    cancelTraining(experimentId).finally(() => {
+      setTrainingCanceling(false);
+    });
+  };
 
   const handleTableStateChange = (state: State) => {
     const newQueryParams: QueryParams = {};
@@ -250,7 +258,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
           <TableActionsWrapper>
             <Button
               onClick={() => {
-                setSelectedExperimentId(row.id)
+                setSelectedExperimentId(row.id);
               }}
               variant="text"
               color="primary"
@@ -258,18 +266,20 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
             >
               <ReadMore />
             </Button>
-            {row.stage === 'RUNNING' && <Tooltip title="Cancel training" placement="top">
-              <IconButton
-                onClick={() => {
-                  setConfirmExperimentCancelling(row.id)
-                }}
-                disabled={trainingCanceling}
-              >
-                <Cancel />
-              </IconButton>
-            </Tooltip>}
+            {row.stage === 'RUNNING' && (
+              <Tooltip title="Cancel training" placement="top">
+                <IconButton
+                  onClick={() => {
+                    setConfirmExperimentCancelling(row.id);
+                  }}
+                  disabled={trainingCanceling}
+                >
+                  <Cancel />
+                </IconButton>
+              </Tooltip>
+            )}
           </TableActionsWrapper>
-        )
+        );
       },
     },
   ];
@@ -301,7 +311,11 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
 
   const detailedExperiment = useMemo(
     () =>
-      selectedExperimentId === undefined ? undefined : experiments.find((exp: Experiment) => exp?.id === selectedExperimentId),
+      selectedExperimentId === undefined
+        ? undefined
+        : experiments.find(
+            (exp: Experiment) => exp?.id === selectedExperimentId
+          ),
     [selectedExperimentId]
   );
   const dispatch = useDispatch();
@@ -315,7 +329,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       <Modal
         open={selectedExperimentId !== undefined}
         onClose={() => {
-          setSelectedExperimentId(undefined)
+          setSelectedExperimentId(undefined);
         }}
         title="Failed experiment error"
       >
@@ -328,15 +342,18 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
         title="Confirm training cancelation"
         text={'Are you sure to cancel this training? '}
         alertText="Be aware that won't be possible to recover it."
-        onResult={result => {
+        onResult={(result) => {
           if (result == 'confirmed') {
             if (typeof confirmExperimentCancelling !== 'number') {
-              console.error('[ModelExperiments.tsx] Unexpected state: confirmExperimentCancelling is not a number')
+              // eslint-disable-next-line no-console
+              console.error(
+                '[ModelExperiments.tsx] Unexpected state: confirmExperimentCancelling is not a number'
+              );
             } else {
-              handleCancelTraining(confirmExperimentCancelling)
+              handleCancelTraining(confirmExperimentCancelling);
             }
           }
-          setConfirmExperimentCancelling(undefined)
+          setConfirmExperimentCancelling(undefined);
         }}
         open={confirmExperimentCancelling !== undefined}
       />

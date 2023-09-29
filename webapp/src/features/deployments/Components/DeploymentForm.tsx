@@ -109,7 +109,7 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
         alertText="Be aware that you will be responsible for usage charges incurred."
         onResult={(result) => {
           if (result === 'confirmed') confirmPublicDeployment();
-          setShowConfirmation(false)
+          setShowConfirmation(false);
         }}
         open={showConfirmation}
       />

@@ -53,7 +53,7 @@ const CustomInputField: React.FC<TextFieldProps & CustomInputFieldProps> = ({
         style: { color },
         //? Avoid dragging when input is focused (causing continuous increment/decrement when using input stepper)
         className: 'nodrag',
-        ...(props.inputProps || {})
+        ...(props.inputProps || {}),
       }}
     />
     //TODO: Fix bug with leading 0 that never goes away, probably a MUI bug
