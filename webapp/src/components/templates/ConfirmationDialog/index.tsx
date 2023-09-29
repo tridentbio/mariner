@@ -18,7 +18,7 @@ type ConfirmationDialogProps = {
   alertText?: string;
   open: boolean;
   onResult: (result: ResultTypes) => void;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
@@ -30,7 +30,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onResult
 }) => {
   const dispatchResult = (result: ResultTypes) => {
-    setOpen(false);
+    setOpen && setOpen(false);
     onResult(result);
   }
 

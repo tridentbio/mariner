@@ -32,9 +32,9 @@ export default {
   },
 };
 
-export const A: StoryObj<{ value: DataSummaryProps }> = {
-  render: (args: { value: DataSummaryProps }) => {
-    const { value } = args;
+export const A: StoryObj = {
+  // @ts-ignore
+  render: ({ value }: { value: any }) => {
     return <DataSummary {...value} />;
   },
 };

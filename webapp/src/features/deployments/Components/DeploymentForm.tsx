@@ -109,9 +109,9 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
         alertText="Be aware that you will be responsible for usage charges incurred."
         onResult={(result) => {
           if (result === 'confirmed') confirmPublicDeployment();
+          setShowConfirmation(false)
         }}
         open={showConfirmation}
-        setOpen={setShowConfirmation}
       />
       <form onSubmit={handleSubmit(onSubmit)}>
         <Box data-color-mode="light">
