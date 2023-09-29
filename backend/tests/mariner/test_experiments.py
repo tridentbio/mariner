@@ -289,3 +289,48 @@ async def test_experiment_has_stacktrace_when_training_fails(
         assert db_exp.stack_trace
         assert len(db_exp.stack_trace) > 0
         assert db_exp.stage == "ERROR"
+
+
+@pytest.mark.asyncio
+@pytest.mark.long
+@pytest.mark.integration
+async def test_cancel_training(db: Session, some_model_integration: Model):
+    user = get_test_user(db)
+    version = some_model_integration.versions[-1]
+    target_column = version.config.dataset.target_columns[0]
+    request = TorchTrainingRequest.create(
+        model_version_id=version.id,
+        name=random_lower_string(),
+        config=TorchTrainingConfig(
+            epochs=100000,
+            checkpoint_config=MonitoringConfig(
+                mode="min",
+                metric_key=f"val/mse/{target_column.name}",
+            ),
+            optimizer=AdamOptimizer(),
+        ),
+    )
+    exp = await experiments_ctl.create_model_training(db, user, request)
+    assert exp.model_version_id == version.id
+    assert exp.model_version.name == version.name
+    task = get_exp_manager().get_task(exp.id)
+    assert task
+
+    # Assertions before task completion
+    db_exp = Experiment.from_orm(
+        db.query(ExperimentEntity)
+        .filter(ExperimentEntity.id == exp.id)
+        .first()
+    )
+    assert db_exp.model_version_id == exp.model_version_id
+    assert db_exp.created_by_id == user.id
+    assert db_exp.hyperparams["epochs"] == request.config.epochs
+
+    # Cancel task
+    import time
+
+    time.sleep(5)
+    experiments_ctl.cancel_training(user, exp.id)
+
+    # Await for task
+    await task
