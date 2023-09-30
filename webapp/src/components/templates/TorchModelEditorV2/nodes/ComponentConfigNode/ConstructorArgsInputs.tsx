@@ -46,12 +46,12 @@ const ConstructorArgsInputs = ({
       });
 
       //? Persist selected node overlay
-      setNodes(prev => (
-        prev.map(node => ({
+      setNodes((prev) =>
+        prev.map((node) => ({
           ...node,
-          selected: node.id === props.data.name ? true : node.selected
+          selected: node.id === props.data.name ? true : node.selected,
         }))
-      ))
+      );
     }
   };
 

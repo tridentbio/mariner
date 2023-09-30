@@ -6,7 +6,7 @@ import {
   useEffect,
   useCallback,
 } from 'react';
-import { messageHandler, SocketMessageHandler } from 'app/websocket/types';
+import { messageHandler, SocketMessageHandler } from '@app/websocket/handler';
 import { useAppDispatch } from 'app/hooks';
 import { updateExperiment } from 'features/models/modelSlice';
 import * as datasetsApi from 'app/rtk/generated/datasets';

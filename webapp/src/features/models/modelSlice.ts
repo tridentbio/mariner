@@ -7,7 +7,7 @@ import {
   ModelOptions,
 } from 'app/types/domain/modelOptions';
 import * as expsApi from 'features/models/experimentsApi';
-import { UpdateExperiment } from 'app/websocket/types';
+import { UpdateExperiment } from '@app/websocket/handler';
 import { modelsApi } from 'app/rtk/models';
 import { Experiment, TrainingStage } from 'app/types/domain/experiments';
 import { experimentsApi } from 'app/rtk/experiments';

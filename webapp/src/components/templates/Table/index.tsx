@@ -207,15 +207,11 @@ const Table = <R extends { [key: string]: any }>({
         width: '100%',
         overflowX: 'auto',
         display: 'block',
+        border: '1px solid rgb(224, 224, 224)',
+        borderRadius: 2,
       }}
     >
-      <MuiTable
-        sx={{
-          border: '1px solid rgb(224, 224, 224)',
-          mb: 6,
-          ...extraTableStyle,
-        }}
-      >
+      <MuiTable sx={extraTableStyle}>
         <TableStateContextProvider value={tableState}>
           <TableHead>
             {(!!filterableColumns.length || !!filters.sortModel) && (
@@ -304,6 +300,7 @@ const Table = <R extends { [key: string]: any }>({
           <TableRow>
             {!!pagination && (
               <TablePagination
+                sx={{ borderBottom: 'none' }}
                 count={pagination.total}
                 page={pagination.page}
                 onPageChange={handlePageChange}

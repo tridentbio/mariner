@@ -1,11 +1,10 @@
-import { api } from './api';
+import { Paginated } from 'app/api';
 import {
   Experiment,
   ExperimentHistory,
-  NewTraining,
   FetchExperimentsQuery,
+  NewTraining,
 } from 'app/types/domain/experiments';
-import { Paginated } from 'app/api';
 import { enhancedApi } from './generated/experiments';
 export const experimentsApi = enhancedApi
   .enhanceEndpoints({ addTagTypes: ['experiments'] })
@@ -31,8 +30,15 @@ export const experimentsApi = enhancedApi
           { type: 'experiments', ...args },
         ],
       }),
-      getRunninngExperiments: builder.query<ExperimentHistory[], void>({
+      getRunningExperiments: builder.query<ExperimentHistory[], void>({
         query: () => 'api/v1/experiments/running-history',
+      }),
+      cancelTraining: builder.mutation<void, number>({
+        query: (id) => ({
+          url: `api/v1/experiments/${id}/cancel`,
+          method: 'PUT',
+        }),
+        invalidatesTags: ['experiments'],
       }),
     }),
   });

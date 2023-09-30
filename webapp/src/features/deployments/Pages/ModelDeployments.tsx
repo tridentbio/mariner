@@ -64,9 +64,11 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
         title="Confirm delete deployment"
         text={'Are you sure to delete this deployment? '}
         alertText="Be aware that won't be possible to recover it."
-        handleClickConfirm={confirmDelete}
         open={showDeleteConfirmation}
-        setOpen={setShowDeleteConfirmation}
+        onResult={(result) => {
+          if (result === 'confirmed') confirmDelete();
+          setShowDeleteConfirmation(false);
+        }}
       />
       <Box sx={{ ml: 'auto', mr: 'auto' }}>
         <Button

@@ -209,3 +209,11 @@ def get_experiments_metrics_for_model_version(
     return experiments_ctl.get_experiments_metrics_for_model_version(
         db=db, model_version_id=model_version_id, user=current_user
     )
+
+
+@router.put("/{experiment_id}/cancel", response_model=None)
+def cancel_experiment(
+    experiment_id: int,
+    user: User = Depends(deps.get_current_active_user),
+):
+    return experiments_ctl.cancel_training(user, experiment_id)
