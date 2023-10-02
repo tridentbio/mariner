@@ -47,8 +47,6 @@ const getGoodDistance = (nodesNumber: number) => {
   else return 1;
 };
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 const SideBar = memo(
   ({ editable }: { editable: boolean }) => (
     <OptionsSidebarV2
@@ -104,6 +102,7 @@ const TorchModelEditor = ({
     fitView,
     onNodesChange,
     onEdgesChange,
+    nodesInitialized,
   } = useTorchModelEditor();
   const [fullScreen, setFullScreen] = useState(false);
   const [connectingNode, setConnectingNode] = useState<
@@ -137,42 +136,37 @@ const TorchModelEditor = ({
     [editable]
   );
 
+  const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (value) {
       setSchema(value);
     }
   }, []);
 
-  const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
-  const [firstRenderWithElements, setFirstRenderWithElements] = useState(false);
+  useEffect(() => {
+    fitView();
+  }, [nodesInitialized]);
+
   useEffect(() => {
     if (!reactFlowWrapper.current) return;
     const [nodes, edges] = schemaToEditorGraph(value);
+
     if (editable) {
       setNodes(nodes.reverse());
       setEdges(edges);
       getSuggestions({ schema: value });
       applyDagreLayout('TB', getGoodDistance(nodes.length));
     } else {
-      setNodes(nodes);
-      setEdges(edges);
-      getSuggestions({ schema: value });
-      applyDagreLayout('TB', 3, edges);
+      //? Avoids <ComponentConfigNode /> edges unrender when the data for the node handles creation are not loaded yet
+      if (options) {
+        setNodes(nodes);
+        setEdges(edges);
+        getSuggestions({ schema: value });
+        applyDagreLayout('TB', 3, edges);
+      }
     }
-  }, []);
-
-  // Fit view when started
-  // Needs a delay and hook update to works
-  const temporalyFixScreen = useCallback(async () => {
-    await sleep(50);
-    setFirstRenderWithElements(true);
-  }, []);
-  useEffect(() => {
-    temporalyFixScreen();
-  }, [nodes.length > 0]);
-  useEffect(() => {
-    fitView();
-  }, [firstRenderWithElements]);
+  }, [options]);
 
   useEffect(() => {
     onChange && schema && onChange(schema);
@@ -265,6 +259,7 @@ const TorchModelEditor = ({
       data,
     });
   };
+
   useLayoutEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
     return () => {
@@ -300,12 +295,12 @@ const TorchModelEditor = ({
               clearPositionOrdering();
             }}
             onNodeClick={(event, clickedNode) => {
-              setNodes(prev => (
-                prev.map(node => ({
+              setNodes((prev) =>
+                prev.map((node) => ({
                   ...node,
-                  selected: node.id === clickedNode.id
+                  selected: node.id === clickedNode.id,
                 }))
-              ))
+              );
             }}
             onConnectStart={(event, connectionParams) => {
               if (!schema) return;

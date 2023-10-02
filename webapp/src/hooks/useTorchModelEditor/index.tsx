@@ -21,6 +21,7 @@ import {
   useNodesState,
   useEdgesState,
   useStore,
+  useNodesInitialized,
 } from 'reactflow';
 import { ArrayElement, isArray, Required } from 'utils';
 import { ITorchModelEditorContext, MarinerNode } from './types';
@@ -62,6 +63,7 @@ export const TorchModelEditorContextProvider = ({
     Record<string, boolean>
   >({});
   const { data: modelOptions } = useGetModelOptionsQuery();
+  const nodesInitialized = useNodesInitialized();
 
   const optionsByLib: ITorchModelEditorContext['optionsByLib'] = useMemo(() => {
     return (
@@ -525,6 +527,7 @@ export const TorchModelEditorContextProvider = ({
         clearPositionOrdering,
         onNodesChange,
         onEdgesChange,
+        nodesInitialized,
       }}
     >
       {children}

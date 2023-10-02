@@ -1,6 +1,6 @@
 import { useState, MouseEvent, ReactElement } from 'react';
 import IconButton from 'components/atoms/IconButton';
-import { Menu, MenuItem, Tooltip } from '@mui/material';
+import { Box, Menu, MenuItem, Tooltip } from '@mui/material';
 import { MoreVertRounded } from '@mui/icons-material';
 interface Option {
   icon: ReactElement;
@@ -56,7 +56,9 @@ const NodeHeader = (props: NodeHeaderProps) => {
             key={opt.key}
             onClick={opt.onClick}
           >
-            <Tooltip title={opt.tip}>{opt.icon}</Tooltip>
+            <Tooltip title={opt.tip}>
+              <Box>{opt.icon}</Box>
+            </Tooltip>
           </MenuItem>
         ))}
       </Menu>
