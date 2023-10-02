@@ -2,6 +2,7 @@ import { useState, MouseEvent, ReactElement } from 'react';
 import IconButton from 'components/atoms/IconButton';
 import { Box, Menu, MenuItem, Tooltip } from '@mui/material';
 import { MoreVertRounded } from '@mui/icons-material';
+import { useFullScreen } from '@components/organisms/FullScreenWrapper';
 interface Option {
   icon: ReactElement;
   tip: string;
@@ -14,12 +15,16 @@ export interface NodeHeaderProps {
 const NodeHeader = (props: NodeHeaderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const fullScreen = useFullScreen();
+
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
   const handleClose = () => {
     setAnchorEl(null);
   };
+
   return (
     <div onMouseLeave={handleClose}>
       <IconButton
@@ -32,6 +37,7 @@ const NodeHeader = (props: NodeHeaderProps) => {
         <MoreVertRounded />
       </IconButton>
       <Menu
+        container={fullScreen.node.current}
         id="basic-menu"
         anchorEl={anchorEl}
         open={open}
