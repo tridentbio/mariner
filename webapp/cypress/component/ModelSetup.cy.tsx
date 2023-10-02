@@ -1,14 +1,18 @@
-import * as modelsApi from 'app/rtk/generated/models';
-import { DeepPartial } from 'react-hook-form';
-import { DatasetFormData } from '../../support/dataset/create';
-import { fillDatasetCols, fillModelDescriptionStepForm } from '../../support/models/build-model';
+import { store } from '@app/store';
+import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
 import { getColumnConfigTestId } from '@components/organisms/ModelBuilder/utils';
+import { schema } from '@features/models/pages/ModelCreateV2';
+import { ModelSetup } from '@features/models/pages/ModelCreateV2/ModelSetup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ThemeProvider } from '@mui/material';
+import * as modelsApi from 'app/rtk/generated/models';
+import { DeepPartial, FormProvider, useForm } from 'react-hook-form';
+import { Provider } from 'react-redux';
+import { BrowserRouter } from 'react-router-dom';
+import { theme } from 'theme';
+import { fillDatasetCols } from '../support/models/build-model';
 
-const API_BASE_URL = Cypress.env('API_BASE_URL');
-
-describe('DatasetConfigForm', () => {
-  let irisDatasetFixture: DatasetFormData | null = null;
-
+describe('ModelSetup.cy.tsx', () => {
   const testModel: DeepPartial<modelsApi.ModelCreate> = {
     name: 'test_model',
     modelDescription: 'test model description',
@@ -16,6 +20,7 @@ describe('DatasetConfigForm', () => {
     config: {
       name: 'Version name test',
       dataset: {
+        name: 'IRIS_DATASET_NAME',
         targetColumns: [
           {
             name: 'sepal_length',
@@ -55,6 +60,29 @@ describe('DatasetConfigForm', () => {
     },
   };
 
+  const MountedComponent = () => {
+    const methods = useForm<modelsApi.ModelCreate>({
+      mode: 'all',
+      reValidateMode: 'onBlur',
+      defaultValues: testModel,
+      resolver: yupResolver(schema),
+    });
+
+    return (
+      <BrowserRouter>
+        <Provider store={store}>
+          <ThemeProvider theme={theme}>
+            <FormProvider {...methods}>
+              <ModelBuilderContextProvider>
+                <ModelSetup control={methods.control} />
+              </ModelBuilderContextProvider>
+            </FormProvider>
+          </ThemeProvider>
+        </Provider>
+      </BrowserRouter>
+    );
+  }
+
   const targetCols = testModel.config?.dataset?.targetColumns;
   const featureCols = testModel.config?.dataset?.featureColumns;
 
@@ -66,44 +94,18 @@ describe('DatasetConfigForm', () => {
       'uncaught:exception',
       (err) => err.toString().includes('ResizeObserver') && false
     );
-
-    cy.loginSuper();
-
-    cy.setupIrisDatset().then((iris) => {
-      irisDatasetFixture = iris;
-    });
   });
 
   beforeEach(() => {
-    cy.loginSuper();
+    cy.mount(<MountedComponent />);
 
-    if (testModel.config?.dataset?.name)
-      testModel.config.dataset.name = irisDatasetFixture?.name;
-    else (testModel.config as modelsApi.TorchModelSpec).dataset.name = 'Iris';
-
-    // @ts-ignore
-    fillModelDescriptionStepForm(testModel);
-
-    cy.get('button').contains('NEXT').click();
-
-    const select = cy.get('#dataset-select')
-
-    cy.intercept({
-      method: 'GET',
-      url: `${API_BASE_URL}/api/v1/datasets/?*`,
-    }).as('getDatasets');
-
-    select
+    cy.get('#dataset-select')
       .click()
       .type(testModel.config?.dataset?.name || '')
-
-    cy.wait('@getDatasets').then(({ response }) => {
-      select
-        .get('li[role="option"]')
-        .first()
-        .click();
-    })
-  });
+      .get('li[role="option"]')
+      .first()
+      .click();
+  })
 
   it('should not include target columns on the feature columns list', () => {
     fillDatasetCols(targetCols as modelsApi.ColumnConfig[], '#target-col');
