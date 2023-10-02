@@ -107,9 +107,11 @@ const DeploymentForm: React.FC<DeploymentFormProps> = ({
         title="Confirm public deployment"
         text={'Are you sure to make this deployment public? '}
         alertText="Be aware that you will be responsible for usage charges incurred."
-        handleClickConfirm={confirmPublicDeployment}
+        onResult={(result) => {
+          if (result === 'confirmed') confirmPublicDeployment();
+          setShowConfirmation(false);
+        }}
         open={showConfirmation}
-        setOpen={setShowConfirmation}
       />
       <form onSubmit={handleSubmit(onSubmit)}>
         <Box data-color-mode="light">

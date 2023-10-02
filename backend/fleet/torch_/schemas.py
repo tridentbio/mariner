@@ -25,7 +25,7 @@ def get_metric_mode(metric_key: str):
     metric_modes = {
         "mse": "min",
         "mae": "min",
-        "ev": "min",
+        "ev": "max",
         "mape": "min",
         "R2": "max",
         "pearson": "max",

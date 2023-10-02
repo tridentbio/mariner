@@ -19,6 +19,7 @@ from fleet.model_builder.optimizers import (
     SGDParamsSchema,
 )
 from fleet.model_functions import Result
+from fleet.ray_actors.tasks import TaskControl
 from fleet.ray_actors.training_actors import TrainingActor
 from mariner.core.aws import Bucket
 from mariner.core.config import get_app_settings
@@ -50,13 +51,43 @@ from mariner.tasks import ExperimentView, get_exp_manager
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
 
+# singleton with ray task control
+_task_control: Union[TaskControl, None] = None
+
+
+def _get_task_control() -> TaskControl:
+    """
+    Returns the singleton task control object.
+    """
+    global _task_control  # pylint: disable=global-statement
+    if not _task_control:
+        _task_control = TaskControl()
+    return _task_control
+
+
 async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
     """Transforms the ray into a coroutine
     Args:
         ref: ray ObjectRef
     """
-    result = await ref
-    return result
+    try:
+        result = await ref
+        return result
+    except ray.exceptions.RayActorError as exc:
+        # Actor killed, or other
+        # LOG.error("RayActorError")
+        # LOG.exception(exc)
+        raise exc
+    except ray.exceptions.TaskCancelledError as exc:
+        # LOG.warning("TASK CANCELLED!!!")
+        raise exc
+    except ray.exceptions.RaySystemError as exc:
+        # LOG.error("RaySystemError")
+        # LOG.exception(exc)
+        raise exc
+    except Exception as exc:
+        # LOG.warning("TASK FAILED ", exc)
+        raise exc
 
 
 def handle_training_complete(task: Task, experiment_id: int):
@@ -74,9 +105,16 @@ def handle_training_complete(task: Task, experiment_id: int):
     """
     with SessionLocal() as db:
         experiment = experiment_store.get(db, experiment_id)
+        task_ctl = _get_task_control()
         assert experiment
         exception = task.exception()
         done = task.done()
+
+        for id_, (_, task_metadata) in task_ctl.items():
+            if task_metadata.get("experiment_id") == experiment_id:
+                task_ctl.kill_and_remove(id_)
+                break
+
         if not done:
             raise RuntimeError("Task is not done")
         if exception:
@@ -235,6 +273,13 @@ async def create_model_training(
             "split_type": dataset.split_type,
         },
     )
+    _get_task_control().add_task(
+        training_actor,
+        {
+            "experiment_id": experiment.id,
+            "created_by_id": experiment.created_by_id,
+        },
+    )
     get_exp_manager().add_experiment(
         ExperimentView(
             experiment_id=experiment.id,
@@ -246,6 +291,25 @@ async def create_model_training(
         handle_training_complete,
     )
     return Experiment.from_orm(experiment)
+
+
+def cancel_training(user: UserEntity, experiment_id: int):
+    """
+    Cancels a training.
+
+    Args:
+        user: user that originated request.
+        experiment_id: id of the experiment to be cancelled.
+    """
+    task_ctl = _get_task_control()
+    ids, _ = task_ctl.get_tasks(
+        metadata={
+            "experiment_id": experiment_id,
+            "created_by_id": user.id,
+        }
+    )
+    for id_ in ids:
+        task_ctl.kill_and_remove(id_)
 
 
 def get_experiments(
@@ -539,6 +603,8 @@ def get_experiments_metrics_for_model_version(
     Returns:
         List[Experiment]
     """
-    return experiment_store.get_experiments_metrics_for_model_version(
-        db, model_version_id, user.id
+    return Experiment.from_orm_array(
+        experiment_store.get_experiments_metrics_for_model_version(
+            db, model_version_id, user.id
+        )
     )
