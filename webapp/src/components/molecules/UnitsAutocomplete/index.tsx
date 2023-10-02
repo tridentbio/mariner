@@ -1,10 +1,5 @@
 import { VirtualizedAutocomplete } from '@components/atoms/VirtualizedAutocomplete';
-import {
-  Chip,
-  CircularProgress,
-  MenuItem,
-  TextField
-} from '@mui/material';
+import { Chip, CircularProgress, MenuItem, TextField } from '@mui/material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { useNotifications } from 'app/notifications';
 import { Unit, isUnitValid } from 'features/units/unitsAPI';
@@ -60,29 +55,30 @@ const UnitAutocomplete = ({
       .finally(() => setCheckLoading(false));
   }, 500);
 
-  const optionsWithValue = useMemo(
-    () => {
-      if(!!value?.name && !options.some(opt => opt.name === value.name))
-        return [{ name: value?.name, type: 'raw' }, ...options]
+  const optionsWithValue = useMemo(() => {
+    if (!!value?.name && !options.some((opt) => opt.name === value.name))
+      return [{ name: value?.name, type: 'raw' }, ...options];
 
-      return options
-    }, [options, value]);
+    return options;
+  }, [options, value]);
 
   const filterOptions = (options: UnitOption[], inputValue: string) => {
     options = options
       .sort((a, b) => a.name.localeCompare(b.name))
-      .filter(opt =>
-        opt.type === 'raw' ||
-        opt.name.toLowerCase().includes(inputValue.toLowerCase())
+      .filter(
+        (opt) =>
+          opt.type === 'raw' ||
+          opt.name.toLowerCase().includes(inputValue.toLowerCase())
       );
 
-    const invalidOption = !!inputValue && !options.some((opt) => opt.name == inputValue)
+    const invalidOption =
+      !!inputValue && !options.some((opt) => opt.name == inputValue);
 
-    if(invalidOption)
-      options.unshift({ name: inputValue, type: 'raw' as const })
-    
-    return options
-  }
+    if (invalidOption)
+      options.unshift({ name: inputValue, type: 'raw' as const });
+
+    return options;
+  };
 
   return (
     <VirtualizedAutocomplete
@@ -97,7 +93,9 @@ const UnitAutocomplete = ({
           {...params}
         />
       )}
-      filterOptions={(options, state) => filterOptions(options, state.inputValue)}
+      filterOptions={(options, state) =>
+        filterOptions(options, state.inputValue)
+      }
       renderOption={(props, option) => {
         return (
           <MenuItem {...props}>
