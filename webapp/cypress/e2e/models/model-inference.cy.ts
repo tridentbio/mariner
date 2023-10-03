@@ -11,7 +11,6 @@ describe('/models/:modelId/inference', () => {
   })
 
   beforeEach(() => {
-    cy.loginSuper();
     cy.setupSomeModel().then((deployment) => {
       modelName = deployment.name;
     });

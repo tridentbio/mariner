@@ -4,8 +4,11 @@ import TestUtils from '../../support/TestUtils';
 const API_BASE_URL = Cypress.env('API_BASE_URL');
 
 describe('/datasets/new - Dataset form', () => {
+  before(() => {
+    cy.loginUser();
+  })
+
   beforeEach(() => {
-    cy.loginSuper();
     cy.visit('/datasets');
     cy.intercept({
       method: 'GET',

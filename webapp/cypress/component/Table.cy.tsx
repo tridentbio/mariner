@@ -127,7 +127,7 @@ describe('Table.cy.tsx', () => {
     })
   })
 
-  it('should hide/show columns by the column picker and persist the preferences', async () => {
+  it('should hide/show columns by the column picker and persist the preferences', () => {
     cy.mount(<MountedComponent />)
 
     const nonFixedColumns = columns.filter(column => !column.fixed)
@@ -187,10 +187,10 @@ describe('Table.cy.tsx', () => {
     //? Apply a filter to the filterable columns
     filterableColumns.forEach(column => {
       const filterTypes = column.filterSchema
-      ? (Object.keys(column.filterSchema) as
-          | (keyof NonUndefined<(typeof column)['filterSchema']>)[]
-          | null)
-      : null;
+        ? (Object.keys(column.filterSchema) as
+            | (keyof NonUndefined<(typeof column)['filterSchema']>)[]
+            | null)
+        : null;
 
       cy.get(`[data-testid="add-filter-${column.name}-option"]`).click()
 

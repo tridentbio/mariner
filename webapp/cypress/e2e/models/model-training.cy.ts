@@ -12,10 +12,11 @@ describe('Model Training Page', () => {
       'uncaught:exception',
       (err) => err.toString().includes('ResizeObserver') && false
     );
+
+    cy.loginUser();
   })
 
   beforeEach(() => {
-    cy.loginSuper();
     cy.setupSomeModel().then((deployment) => {
       modelName = deployment.name;
       if ('id' in deployment)

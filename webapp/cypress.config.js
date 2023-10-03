@@ -3,7 +3,14 @@ const { defineConfig } = require("cypress");
 
 module.exports = defineConfig({
   env: {
-    TEST_USER: 'test@domain.com',
+    TEST_USER: {
+      username: 'test@domain.com',
+      password: '123456'
+    },
+    ADMIN_USER: {
+      username: 'admin@mariner.trident.bio',
+      password: '123456',
+    },
     SCHEMA_PATH: `${__dirname}/../backend/tests/data`,
     API_BASE_URL: 'http://localhost:8000', 
   },
@@ -15,6 +22,8 @@ module.exports = defineConfig({
     },
     video: true,
     videoCompression: 32,
+    /** Keeps user login session across each test */
+    testIsolation: false
   },
 
   component: {

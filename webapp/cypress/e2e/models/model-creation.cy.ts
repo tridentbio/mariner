@@ -12,7 +12,7 @@ describe('/models/new - Model creation page', () => {
       (err) => err.toString().includes('ResizeObserver') && false
     );
 
-    cy.loginSuper();
+    cy.loginUser();
 
     cy.setupIrisDatset().then((iris) => {
       irisDatasetFixture = iris;
@@ -24,7 +24,6 @@ describe('/models/new - Model creation page', () => {
   });
 
   beforeEach(() => {
-    cy.loginSuper();
     cy.visit('/models/new');
   });
 

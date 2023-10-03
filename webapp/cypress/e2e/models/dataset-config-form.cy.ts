@@ -67,7 +67,7 @@ describe('DatasetConfigForm', () => {
       (err) => err.toString().includes('ResizeObserver') && false
     );
 
-    cy.loginSuper();
+    cy.loginUser();
 
     cy.setupIrisDatset().then((iris) => {
       irisDatasetFixture = iris;
@@ -75,8 +75,6 @@ describe('DatasetConfigForm', () => {
   });
 
   beforeEach(() => {
-    cy.loginSuper();
-
     if (testModel.config?.dataset?.name)
       testModel.config.dataset.name = irisDatasetFixture?.name;
     else (testModel.config as modelsApi.TorchModelSpec).dataset.name = 'Iris';

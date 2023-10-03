@@ -3,7 +3,7 @@ import { zincDatasetFixture } from '../../support/dataset/examples';
 
 describe('Model version form (/models/new)', () => {
   before(() => {
-    cy.loginSuper();
+    cy.loginUser();
     cy.setupZincDataset();
   });
 
@@ -66,7 +66,6 @@ describe('Model version form (/models/new)', () => {
   };
 
   beforeEach(() => {
-    cy.loginSuper();
     visitPage();
   });
 

@@ -19,7 +19,7 @@ describe('/models/new - Suggestions', () => {
       (err) => err.toString().includes('ResizeObserver') && false
     );
 
-    cy.loginSuper();
+    cy.loginUser();
 
     cy.setupZincDataset().then((zinc) => {
       zincDatasetFixture = zinc;
@@ -27,7 +27,6 @@ describe('/models/new - Suggestions', () => {
   });
 
   beforeEach(() => {
-    cy.loginSuper();
     cy.visit('/models/new');
   });
 

@@ -3,8 +3,11 @@ import { createRandomDatasetFormData } from '../../support/dataset/examples';
 const API_BASE_URL = Cypress.env('API_BASE_URL');
 
 describe('/datasets/new - Dataset creation page', () => {
+  before(() => {
+    cy.loginUser('admin', 15000);
+  })
+
   beforeEach(() => {
-    cy.loginSuper(15000);
     cy.visit('/datasets');
 
     cy.intercept({
