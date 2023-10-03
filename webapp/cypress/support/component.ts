@@ -27,6 +27,12 @@ import '@4tw/cypress-drag-drop'
 
 Cypress.Commands.add('mount', mount)
 
+Cypress.Commands.add('notificationShouldContain', (text: string) => {
+  return cy
+    .get('.MuiAlert-message', { timeout: 30000 })
+    .should('contain.text', text);
+});
+
 declare global {
   interface Window {
     msw?: {
