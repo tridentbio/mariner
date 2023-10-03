@@ -1,9 +1,13 @@
-import { Button } from '@mui/material';
-import { FullScreen, useFullScreenHandle } from 'react-full-screen';
-import styled from 'styled-components';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
-import { ReactNode, useEffect, useState } from 'react';
+import { Button } from '@mui/material';
+import { ReactNode, createContext, useContext, useEffect } from 'react';
+import {
+  FullScreen,
+  FullScreenHandle,
+  useFullScreenHandle,
+} from 'react-full-screen';
+import styled from 'styled-components';
 
 const FullScreenContainer = styled.div`
   position: relative;
@@ -35,6 +39,9 @@ type FullScreenWapperProps = {
   setFullScreen: (value: boolean) => void;
 };
 
+// @ts-ignore
+const FullScreenContext = createContext<FullScreenHandle>({});
+
 const FullScreenWrapper = ({
   children,
   fullScreen,
@@ -51,20 +58,28 @@ const FullScreenWrapper = ({
   }, [fullScreen]);
 
   return (
-    <FullScreenContainer fullScreen={fullScreen}>
-      <FullScreen handle={fullScreenHandle}>
-        <>
-          <Button
-            onClick={() => setFullScreen(!fullScreen)}
-            className="full-screen-button"
-          >
-            {fullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-          </Button>
-          {children}
-        </>
-      </FullScreen>
-    </FullScreenContainer>
+    <FullScreenContext.Provider value={fullScreenHandle}>
+      <FullScreenContainer fullScreen={fullScreen}>
+        <FullScreen handle={fullScreenHandle}>
+          <>
+            <Button
+              onClick={() => setFullScreen(!fullScreen)}
+              className="full-screen-button"
+            >
+              {fullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+            </Button>
+            {children}
+          </>
+        </FullScreen>
+      </FullScreenContainer>
+    </FullScreenContext.Provider>
   );
 };
 
 export default FullScreenWrapper;
+
+export const useFullScreen = () => {
+  const value = useContext(FullScreenContext);
+
+  return value;
+};

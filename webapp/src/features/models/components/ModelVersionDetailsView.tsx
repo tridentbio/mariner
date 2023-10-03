@@ -1,4 +1,8 @@
-import { ModelCreate, TorchModelSpec } from '@app/rtk/generated/models';
+import {
+  ModelCreate,
+  TorchModelSchema,
+  TorchModelSpec,
+} from '@app/rtk/generated/models';
 import { Text } from '@components/molecules/Text';
 import DataPreprocessingInput from '@components/organisms/ModelBuilder/DataPreprocessingInput';
 import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
@@ -17,10 +21,11 @@ import NotFound from 'components/atoms/NotFound';
 import TorchModelEditor from 'components/templates/TorchModelEditorV2';
 import { TorchModelEditorContextProvider } from 'hooks/useTorchModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { ReactFlowProvider } from 'reactflow';
 import { CheckCircle } from '@mui/icons-material';
+import { ModelSchema } from '@model-compiler/src/interfaces/torch-model-editor';
 
 interface ModelVersionDetailsProps {
   modelName?: string;
@@ -32,6 +37,7 @@ interface ModelVersionDetailsProps {
 const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
   const model = modelsApi.useGetModelByIdQuery(props.modelId).data;
   const sklearnFormMethods = useForm<ModelCreate>();
+  const [torchExtendedSpec, setTorchExtendedSpec] = useState<ModelSchema>();
 
   const modelVersion = model?.versions?.find(
     (modelVersion) => modelVersion.id === props.modelVersionId
@@ -39,16 +45,28 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
 
   useEffect(() => {
     if (modelVersion?.config) {
-      sklearnFormMethods.setValue(
-        'config',
-        {
-          dataset: modelVersion?.config.dataset,
-          spec: modelVersion?.config.spec,
-          framework: 'sklearn',
-          name: '',
-        } as ModelCreate['config'] & { framework: 'sklearn' },
-        { shouldValidate: true }
-      );
+      switch (modelVersion.config.framework) {
+        case 'sklearn': {
+          sklearnFormMethods.setValue(
+            'config',
+            {
+              dataset: modelVersion?.config.dataset,
+              spec: modelVersion?.config.spec,
+              framework: 'sklearn',
+              name: '',
+            } as ModelCreate['config'] & { framework: 'sklearn' },
+            { shouldValidate: true }
+          );
+          break;
+        }
+        default: {
+          setTorchExtendedSpec(
+            extendSpecWithTargetForwardArgs(
+              modelVersion.config as TorchModelSpec
+            )
+          );
+        }
+      }
     }
   }, [modelVersion]);
 
@@ -117,19 +135,17 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
     );
   }
 
+  if (!torchExtendedSpec) return null;
+
   return (
     <>
       <FormLabel>Model:</FormLabel>
       <ReactFlowProvider>
         <TorchModelEditorContextProvider>
-          {modelVersion.config && (
-            <TorchModelEditor // TODO: change to component that supports all frameworks (update TorchModelEditor to TorchTorchModelEditor)
-              value={extendSpecWithTargetForwardArgs(
-                modelVersion.config as TorchModelSpec
-              )}
-              editable={false}
-            />
-          )}
+          <TorchModelEditor
+            value={torchExtendedSpec as ModelSchema}
+            editable={false}
+          />
         </TorchModelEditorContextProvider>
       </ReactFlowProvider>
     </>
