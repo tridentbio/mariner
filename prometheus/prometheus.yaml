@@ -1,10 +1,7 @@
 global:
   scrape_interval: 15s  # Por padrão, o alvo será 'raspado' a cada 15 segundos
-
 scrape_configs:
-
   - job_name: 'prometheus'
-
     # Esse valor irá sobreescrever o valor padrão global para esse alvo
     scrape_interval: 5s
 
@@ -14,9 +11,14 @@ scrape_configs:
         labels:
           alias: prometheus-local
 
-  - job_name: node_exporter
-    scrape_interval: 5s
+  - job_name: mariner-backend_exporter
+    scrape_interval: 10s
     static_configs:
-      - targets: ['IP-SERVIDOR:9100']
+      - targets: ['backend:8000']
         labels:
-          alias: webserver
+          group: core
+  # Scrape from each ray node as defined in the service_discovery.json provided by ray.
+  - job_name: 'ray'
+    file_sd_configs:
+      - files:
+        - '/prometheus/ray-configs/prom_metrics_service_discovery.json'
