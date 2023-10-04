@@ -22,3 +22,6 @@ Create a local user to interact with the app (if OAUTH environment variables wer
 Finally, access <http://localhost:3000>, login to use the app.
 
 
+## Making code contributions:
+
+See [the Contributing page](./CONTRIBUTING.md).

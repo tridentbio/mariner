@@ -2,12 +2,14 @@
 
 To contribute to the project, you might need extra requirements:
 
-- [GNU Make](https://www.gnu.org/software/make/) for helper scripts
-- [Python 3.9](https://www.python.org/downloads/) for backend and ML
+- [GNU Make](https://www.gnu.org/software/make/) for helper scripts.
+- [Python 3.9](https://www.python.org/downloads/) for backend and ML.
 - [Poetry](https://python-poetry.org/) for Python package and environment management.
-- [Node 16](https://nodejs.org/en/download) for webapplication
+- [Node 16](https://nodejs.org/en/download) for web application.
 
-Once all requirements are installed, have a look in the commands provided by `make`
+Once all requirements are installed, have a look in the commands provided by `make`.
+It is recommended to start the core services (ray cluster, backend, mlflow and databases)
+on docker and run the webapplication locally.
 
 We have a series of git hooks to keep up with the code standards defined for the project.
 To have them working in your machine run:
@@ -19,7 +21,9 @@ make pre-commit-install
 
 ## Running the code in docker-compose
 
-- Start the stack with Docker Compose (only needed to apply the changes of configuration files, code changes are captured by a volume defined in the [override file](./docker-compose.override.yml)
+- Start the stack with Docker Compose (only needed to apply the changes of configuration files, code changes are captured by a volume defined in the [override file](./docker-compose.override.yml).
+
+This command also starts the [monitoring services](./CONTRIBUTING.md#monitoring).
 
 ```bash
 docker compose up -d
@@ -181,13 +185,24 @@ make publish
 
 When you just want to test the application, i.e. you don't want to make changes to it, it's
 recommended to run the project without src code volumes created by default with our docker-compose
-files. To do that, you must run all make commands like following:
+files. To do that, you must run all make commands like following. :
 
 ```console
 make build DOCKER_COMPOSE="docker-compose.yml"
+make start-backend DOCKER_COMPOSE="docker-compose.yml"
 ```
 
 Causing only the docker-compose.yml file to have affect, and therefore ignoring the volumes created in docker-compose.override.yml
+
+## Monitoring and Observability
+
+We have a `grafana` and `prometheus` services defined in `docker-compose.yml` that must be up to monitor the application.
+Specifically, we monitor ray using their exported dashboards through a volume on ray-head `/tmp/ray/metrics/`
+as documented [here](https://docs.ray.io/en/latest/ray-observability/ray-metrics.html).
+
+The grafana credentials is `admin` and `123456` when running it thorugh docker compose.
+
+Other metrics are yet to be exposed to prometheus so they can be visualized in grafana.
 
 ## Troubleshooting
 
