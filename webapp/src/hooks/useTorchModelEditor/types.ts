@@ -175,4 +175,6 @@ export interface ITorchModelEditorContext
 
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
+
+  nodesInitialized: boolean;
 }

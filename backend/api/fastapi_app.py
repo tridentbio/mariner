@@ -1,6 +1,8 @@
 """
 Assembles the fastapi app instance
 """
+import logging
+
 from fastapi.applications import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -16,6 +18,12 @@ from mariner.core.config import get_app_settings
 app = FastAPI(
     title=get_app_settings("package").name,
     openapi_url="/api/v1/openapi.json",
+)
+
+
+## Filters the healthcheck from logs
+logging.getLogger("uvicorn.access").addFilter(
+    lambda record: record.args[2] != "/health"
 )
 
 

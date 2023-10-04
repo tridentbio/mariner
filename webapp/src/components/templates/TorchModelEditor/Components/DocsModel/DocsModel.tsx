@@ -46,12 +46,14 @@ const DocsModel: React.FC<DocsModelProps> = ({
   return (
     <>
       <Tooltip title={'Documentation'}>
-        <IconButton onClick={handleClick} className="nodrag">
-          <InfoRounded
-            sx={{ color: theme.palette?.primary.light }}
-            {...commonIconProps}
-          />
-        </IconButton>
+        <Box className="nodrag">
+          <IconButton onClick={handleClick}>
+            <InfoRounded
+              sx={{ color: theme.palette?.primary.light }}
+              {...commonIconProps}
+            />
+          </IconButton>
+        </Box>
       </Tooltip>
       <Popover
         className="Popover"

@@ -5,7 +5,7 @@ import CustomAutoLayoutButton from '../CustomAutoLayoutButton';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import useTorchModelEditor from 'hooks/useTorchModelEditor';
-import { Tooltip } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 
 type TorchModelEditorControlsProps = {
   spacementMultiplierState: [
@@ -25,7 +25,7 @@ const TorchModelEditorControls: React.FC<TorchModelEditorControlsProps> = ({
   contentEditable = true,
 }) => {
   const { expandNodes, contractNodes } = useTorchModelEditor();
-  const [allNodesExpanded, setAllNodesExpanded] = useState(true);
+  const [allNodesExpanded, setAllNodesExpanded] = useState(false);
   const [slidersState, setSlidersState] = useState({
     horizontal: false,
     vertical: false,
@@ -72,18 +72,21 @@ const TorchModelEditorControls: React.FC<TorchModelEditorControlsProps> = ({
         }
         placement="right"
       >
-        <ControlButton
-          about={
-            allNodesExpanded ? 'Close all components' : 'Open all components'
-          }
-          onClick={() => {
-            if (allNodesExpanded) contractNodes();
-            else expandNodes();
-            setAllNodesExpanded((val) => !val);
-          }}
-        >
-          {allNodesExpanded ? <CloseFullscreenIcon /> : <OpenInFullIcon />}
-        </ControlButton>
+        <Box>
+          {/* <- Avoids invalid ref warnings  */}
+          <ControlButton
+            about={
+              allNodesExpanded ? 'Close all components' : 'Open all components'
+            }
+            onClick={() => {
+              if (allNodesExpanded) contractNodes();
+              else expandNodes();
+              setAllNodesExpanded((val) => !val);
+            }}
+          >
+            {allNodesExpanded ? <CloseFullscreenIcon /> : <OpenInFullIcon />}
+          </ControlButton>
+        </Box>
       </Tooltip>
     </Controls>
   );

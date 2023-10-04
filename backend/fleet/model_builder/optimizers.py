@@ -12,12 +12,18 @@ from fleet.model_builder.utils import CamelCaseModel
 class AdamParams(BaseModel):
     """
     Arguments of the Adam torch optimizer
+
+    Args:
+        lr: learning rate
+        beta1: beta1
+        beta2: beta2
+        eps: epsilon
     """
 
-    lr: Union[float, None] = None
-    beta1: Union[float, None] = None
-    beta2: Union[float, None] = None
-    eps: Union[float, None] = None
+    lr: Union[float, None] = 1e-3
+    beta1: Union[float, None] = 0.9
+    beta2: Union[float, None] = 0.999
+    eps: Union[float, None] = 1e-8
 
 
 class InputDescription(CamelCaseModel):
