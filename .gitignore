@@ -1,3 +1,4 @@
+./ray-configs/
 .mypy_cache
 htmlcov
 __pycache__/
