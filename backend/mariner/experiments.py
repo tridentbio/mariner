@@ -106,7 +106,7 @@ def handle_training_complete(task: Task, experiment_id: int):
     with SessionLocal() as db:
         experiment = experiment_store.get(db, experiment_id)
         task_ctl = _get_task_control()
-        assert experiment
+        assert experiment, "Experiment not found"
         exception = task.exception()
         done = task.done()
 
@@ -247,9 +247,10 @@ async def create_model_training(
     if training_request.framework == "torch":
         experiment_payload["epochs"] = training_request.config.epochs
 
+    obj_in = ExperimentCreateRepo(**experiment_payload)
     experiment = experiment_store.create(
         db,
-        obj_in=ExperimentCreateRepo(**experiment_payload),
+        obj_in=obj_in,
     )
 
     training_actor = TrainingActor.options(**get_ray_options(training_request)).remote(  # type: ignore pylint: disable=no-member
@@ -450,6 +451,9 @@ def log_hyperparams(
     experiment_db = experiment_store.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
+    for key, value in experiment_db.hyperparams.items():
+        if key not in hyperparams:
+            hyperparams[key] = value
     update_obj = ExperimentUpdateRepo(hyperparams=hyperparams)
     experiment_store.update(db, db_obj=experiment_db, obj_in=update_obj)
 
