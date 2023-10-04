@@ -11,6 +11,8 @@ DOCKER_COMPOSE = docker compose -f docker-compose.yml -f docker-compose.override
 # the main services needed to interact with the application
 CORE_SERVICES = db mlflowdb mlflow ray-head ray-worker backend webapp
 
+MONITORING_SERVICES = grafana prometheus
+
 # a variable to control what services are passed as input to some commands
 SERVICES = all
 
@@ -58,7 +60,7 @@ endif
 
 .PHONY: build
 build:                  ## Builds needed local images to run application.
-	$(DOCKER_COMPOSE) build --parallel backend webapp
+	$(DOCKER_COMPOSE) build --parallel backend webapp && \
 	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
 
 
@@ -80,6 +82,11 @@ create-test-user:       ## Creates default user (from `email_test_user` attribut
 start-backend:         ## Builds and starts backend
 	$(DOCKER_COMPOSE) build backend
 	$(DOCKER_COMPOSE) up --wait backend
+
+.PHONE: start-monitoring
+start-monitoring: build
+	$(DOCKER_COMPOSE) up --wait backend ray-head ray-worker db mlflowdb mlflow
+	$(DOCKER_COMPOSE up --wait $(MONITORING_SERVICES)
 
 .PHONY: start-backend-local
 start-backend-local:        ## Runs backend locally
