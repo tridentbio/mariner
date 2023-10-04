@@ -1,11 +1,6 @@
 name: Component & Tests CI
 on:
   workflow_dispatch: {}
-  push:
-    branches: [ "develop", "releases/**" ]
-    paths:
-      - backend/**/*
-      - webapp/**/*
   pull_request:
     # Only when PRs are targeting develop or releases/** branches
     branches: [ develop, releases/** ]

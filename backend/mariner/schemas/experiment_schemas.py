@@ -1,7 +1,7 @@
 """
 Experiment related DTOs
 """
-from typing import Annotated, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from fastapi import Depends, Query
 from pydantic import Field
@@ -91,7 +91,7 @@ class Experiment(ApiBaseModel):
     mlflow_id: Optional[str] = None
     stage: ExperimentStage
     created_by: Optional[User] = None
-    hyperparams: Optional[Dict[str, Union[float, None]]] = None
+    hyperparams: Optional[Dict[str, Any]] = None
     epochs: Optional[int] = None
     train_metrics: Optional[Dict[str, float]] = None
     val_metrics: Optional[Dict[str, float]] = None

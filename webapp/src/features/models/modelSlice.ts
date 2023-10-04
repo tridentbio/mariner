@@ -68,12 +68,11 @@ export const modelSlice = createSlice({
         if (exp.id === action.payload.experimentId) {
           if (!exp.trainMetrics) exp.trainMetrics = {};
           if (action.payload.metrics) {
-            Object.entries(action.payload.metrics).forEach(([key, value]) => {
-              // @ts-ignore
-              exp.trainMetrics[key] = value;
-            });
+            exp.trainMetrics = { ...action.payload.metrics };
+            exp.valMetrics = { ...action.payload.metrics };
           }
-          if (exp.epochs) exp.progress = action.payload.epoch / exp.epochs;
+          if (exp.epochs)
+            exp.progress = (action.payload.epoch || 0) / exp.epochs;
           if (action.payload.stage) {
             if (action.payload.stage !== 'RUNNING') exp.progress = 1;
             exp.stage = action.payload.stage as TrainingStage;

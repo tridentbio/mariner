@@ -112,7 +112,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       render: (row: Experiment) => (
         <Justify position="center">
           {row.stage === 'RUNNING' ? (
-            !row.progress ? (
+            row.progress !== 0 && !row.progress ? (
               <Tooltip title="Preparing to start">
                 <CircularProgress size={30} />
               </Tooltip>
