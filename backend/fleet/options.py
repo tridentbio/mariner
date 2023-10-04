@@ -17,7 +17,7 @@ from fleet.model_builder import generate
 from fleet.model_builder.utils import get_class_from_path_string
 from fleet.yaml_model import YAML_Model
 
-LOG = logging.getLogger("fleet").getChild(__name__)
+LOG = logging.getLogger(__name__)
 
 
 def _get_documentation_link(class_path: str) -> Union[str, None]:
@@ -356,8 +356,8 @@ class ComponentOption(BaseModel):
             - set(config_ctr_args_parameters)
         )
         if keys_not_in_config:
-            LOG.info(
-                f"Some keys are in ctr args summary but not in config for class %s\n%r",
+            LOG.debug(
+                "Some keys are in ctr args summary but not in config for class %r : %r",
                 class_path,
                 keys_not_in_config,
             )
