@@ -3,11 +3,7 @@
     "disable_existing_loggers": false,
     "formatters": {
         "simple": {
-            "format": "%(levelname)s %(asctime)s %(name)s %(filename)s:%(lineno)d - %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S"
-        },
-        "complete": {
-            "format": "%(levelname)s %(asctime)s %(name)s - %(message)s",
+            "format": "%(asctime)s\t%(levelname)s %(filename)s:%(lineno)d - [%(name)s] %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S"
         }
     },
@@ -27,7 +23,7 @@
     },
     "root": {
         "level": "INFO",
-        "format": "complete",
+        "format": "simple",
         "handlers": [
             "stderr",
             "stdout"
@@ -43,7 +39,7 @@
     },
     "pytorch_lightning": {
       "level": "ERROR",
-      "format": "complete",
+      "format": "simple",
       "handlers": [
         "stderr",
         "stdout"
