@@ -38,7 +38,6 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
 
   const applyAuthenticatedCallbacks = useCallback(
     (socketHandler: SocketMessageHandler) => {
-      console.warn('APPLYING AUTH CALLBACKS')
       socketHandler.on('update-running-metrics', (event) => {
         dispatch(updateExperiment(event.data));
       });
@@ -84,6 +83,7 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
       if ([WebSocket.OPEN, WebSocket.CONNECTING, WebSocket.CLOSING].includes(socketHandlerRef.current.socket.readyState)) {
         // console.log('Ready State', socketHandlerRef.current?.socket?.readyState)
         // console.log('Socket already connected (or connecting/closing), skipping reconnection')
+        return
       } else {
         socketHandlerRef.current.connect()
         applyAnonymousCallbacks(socketHandlerRef.current);
