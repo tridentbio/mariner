@@ -176,63 +176,63 @@ describe('Table.cy.tsx', () => {
   })
 
   it('should filter the rows by the filter input', () => {
-    cy.mount(<MountedComponent />)
-
-    cy.wait(100)
-
-    cy.get('[data-testid="add-filter-btn"]').click()
-
-    const filterableColumns = columns.filter(column => !!column.filterSchema)
-
-    //? Apply a filter to the filterable columns
-    filterableColumns.forEach(column => {
-      const filterTypes = column.filterSchema
-      ? (Object.keys(column.filterSchema) as
-          | (keyof NonUndefined<(typeof column)['filterSchema']>)[]
-          | null)
-      : null;
-
-      cy.get(`[data-testid="add-filter-${column.name}-option"]`).click()
-
-      filterTypes?.forEach(filterType => {
-        const filter = cy.get(`[data-testid="filter-${column.name}"]`)
-
-        switch(filterType) {
-          case 'byContains':
-            filter.click().get('li[role="option"]').first().click();
-            break;
-          default:
-            filter.get('input[type="text"]').type('1');
-            break
-        }
-      })
-      
-      cy.get(`[data-testid="add-filter-${column.name}-btn"]`).click()
-      cy.get(`[data-testid="chip-filter-${column.name}"]`).should('exist')
-    })
-
-    closePopover()
-
-    const clearAllFiltersBtn = cy.get('[data-testid="clear-all-filters-btn"]')
-
-    //? Validate filters
-    cy.get('[data-test-row-id]').then((rowElements) => {
-      expect(rowElements.length).to.not.be.equal(rows.length)
-
-      clearAllFiltersBtn.should('exist')
-
-      state.filterModel?.items?.forEach?.((filterItem, index) => {
-        const foundColumn = columns.find(column => column.field === filterItem.columnName)
+    cy.mount(<MountedComponent />).then(() => {
+      cy.wait(100)
+  
+      cy.get('[data-testid="add-filter-btn"]').click()
+  
+      const filterableColumns = columns.filter(column => !!column.filterSchema)
+  
+      //? Apply a filter to the filterable columns
+      filterableColumns.forEach(column => {
+        const filterTypes = column.filterSchema
+        ? (Object.keys(column.filterSchema) as
+            | (keyof NonUndefined<(typeof column)['filterSchema']>)[]
+            | null)
+        : null;
+  
+        cy.get(`[data-testid="add-filter-${column.name}-option"]`).click()
+  
+        filterTypes?.forEach(filterType => {
+          cy.get(`[data-testid="filter-${column.name}"]`).as('filter')
+  
+          switch(filterType) {
+            case 'byContains':
+              cy.get('@filter').click().get('li[role="option"]').first().click();
+              break;
+            default:
+              cy.get('@filter').get('input[type="text"]').type('1');
+              break
+          }
+        })
         
-        expect(foundColumn).not.to.be.undefined
+        cy.get(`[data-testid="add-filter-${column.name}-btn"]`).click()
+        cy.get(`[data-testid="chip-filter-${column.name}"]`).should('exist')
       })
-    })
-
-    //? Test filters clear
-    clearAllFiltersBtn.click()
-
-    cy.get('[data-test-row-id]').then((rowElements) => {
-      expect(rowElements.length).to.be.equal(rows.length)
+  
+      closePopover()
+  
+      cy.get('[data-testid="clear-all-filters-btn"]').as('clearAllFiltersBtn')
+  
+      //? Validate filters
+      cy.get('[data-test-row-id]').then((rowElements) => {
+        expect(rowElements.length).to.not.be.equal(rows.length)
+  
+        cy.get('@clearAllFiltersBtn').should('exist')
+  
+        state.filterModel?.items?.forEach?.((filterItem, index) => {
+          const foundColumn = columns.find(column => column.field === filterItem.columnName)
+          
+          expect(foundColumn).not.to.be.undefined
+        })
+      })
+  
+      //? Test filters clear
+      cy.get('@clearAllFiltersBtn').click()
+  
+      cy.get('[data-test-row-id]').then((rowElements) => {
+        expect(rowElements.length).to.be.equal(rows.length)
+      })
     })
   })
 })
