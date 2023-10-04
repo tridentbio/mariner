@@ -71,30 +71,34 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!socketHandlerRef.current) return
+      if (!socketHandlerRef.current) return;
       if (!socketHandlerRef.current.socket) {
-        socketHandlerRef.current.connect()
+        socketHandlerRef.current.connect();
         applyAnonymousCallbacks(socketHandlerRef.current);
         if (loginStatus === 'idle' && loggedIn) {
           applyAuthenticatedCallbacks(socketHandlerRef.current);
         }
-        return
+        return;
       }
-      if ([WebSocket.OPEN, WebSocket.CONNECTING, WebSocket.CLOSING].includes(socketHandlerRef.current.socket.readyState)) {
+      if (
+        [WebSocket.OPEN, WebSocket.CONNECTING, WebSocket.CLOSING].includes(
+          socketHandlerRef.current.socket.readyState
+        )
+      ) {
         // console.log('Ready State', socketHandlerRef.current?.socket?.readyState)
         // console.log('Socket already connected (or connecting/closing), skipping reconnection')
-        return
+        return;
       } else {
-        socketHandlerRef.current.connect()
+        socketHandlerRef.current.connect();
         applyAnonymousCallbacks(socketHandlerRef.current);
         if (loginStatus === 'idle' && loggedIn) {
           applyAuthenticatedCallbacks(socketHandlerRef.current);
         }
       }
-    }, 1000)
+    }, 1000);
     return () => {
-      clearInterval(interval)
-    }
+      clearInterval(interval);
+    };
   }, [loggedIn, loginStatus]);
 
   return (
