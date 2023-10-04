@@ -12,9 +12,32 @@ from fleet.model_builder.utils import CamelCaseModel
 LOG = logging.getLogger(__name__)
 
 
+def extract_metric_key(metric: str):
+    """
+    Extracts the metric key from the metric string.
+
+    Args:
+        metric: The metric string.
+
+    Example:
+        >>> extract_metric_key("val/accuracy/petal_length")
+        "accuracy"
+
+    Returns:
+        The metric key.
+    """
+    parts = metric.split("/")
+    if len(parts) > 1:
+        return parts[1]
+    return parts[0]
+
+
 def get_metric_mode(metric_key: str):
     """
     Returns the correct mode some metric.
+
+    Works for both just the metric key, e.g. accuracy, f1, etc
+    and stage/metric/column, e.g. val/f1/column-name
 
     Args:
         metric_key: The key of the metric to be monitored.
@@ -34,6 +57,8 @@ def get_metric_mode(metric_key: str):
         "recall": "max",
         "f1": "max",
     }
+
+    metric_key = extract_metric_key(metric_key)
     if metric_key not in metric_modes:
         LOG.warning(
             "Metric %s not found in metric_modes, defaulting to min",
