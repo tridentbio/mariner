@@ -7,15 +7,40 @@ services:
   backend:
     # Basic services to run the backend. Placing it here so main docker-compose
     # can be used along with multiple file applications
+    volumes:
+      - ./backend:/app:z
+      - ./source:/source:z
+      - ./build:/build:z
+    deploy:
+      resources:
+        limits:
+          memory: 4 Gib
+        reservations:
+          memory: 2 Gib
     depends_on:
       - db
+      - ray-head
       - mlflow
-      - ray-worker
+      - mlflowdb
     environment:
       - JUPYTER=jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
   ray-head:
+    deploy:
+      resources:
+        limits:
+          memory: 4 Gib
+        reservations:
+          memory: 2 Gib
     volumes:
       - ./backend:/app:z
+      - ./ray-configs/:/tmp/ray
+      - ./ray-configs/metrics:/tmp/ray/session_latest/metrics
   ray-worker:
+    deploy:
+      resources:
+        limits:
+          memory: 4 Gib
+        reservations:
+          memory: 2 Gib
     volumes:
       - ./backend:/app:z
