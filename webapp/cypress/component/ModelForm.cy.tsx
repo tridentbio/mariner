@@ -1,16 +1,10 @@
-import { NotificationContextProvider } from '@app/notifications';
-import { store } from '@app/store';
 import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
 import { getColumnConfigTestId } from '@components/organisms/ModelBuilder/utils';
-import Notifications from '@components/organisms/Notifications';
 import ModelCreateV2, { schema } from '@features/models/pages/ModelCreateV2';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { ThemeProvider } from '@mui/material';
 import * as modelsApi from 'app/rtk/generated/models';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
-import { theme } from 'theme';
+import { DefaultProviders } from '../support/DefaultProviders';
 import TestUtils from '../support/TestUtils';
 import { fillDatasetCols } from '../support/models/build-model';
 
@@ -70,20 +64,13 @@ describe('ModelCreateV2.cy.tsx', () => {
     });
 
     return (
-      <BrowserRouter>
-        <Provider store={store}>
-          <ThemeProvider theme={theme}>
-            <NotificationContextProvider>
-              <Notifications />
-              <FormProvider {...methods}>
-                <ModelBuilderContextProvider>
-                  <ModelCreateV2 />
-                </ModelBuilderContextProvider>
-              </FormProvider>
-            </NotificationContextProvider>
-          </ThemeProvider>
-        </Provider>
-      </BrowserRouter>
+      <DefaultProviders>
+        <FormProvider {...methods}>
+          <ModelBuilderContextProvider>
+            <ModelCreateV2 />
+          </ModelBuilderContextProvider>
+        </FormProvider>
+      </DefaultProviders>
     );
   }
 
