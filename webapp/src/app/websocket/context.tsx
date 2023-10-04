@@ -38,6 +38,7 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
 
   const applyAuthenticatedCallbacks = useCallback(
     (socketHandler: SocketMessageHandler) => {
+      console.warn('APPLYING AUTH CALLBACKS')
       socketHandler.on('update-running-metrics', (event) => {
         dispatch(updateExperiment(event.data));
       });
@@ -55,7 +56,6 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
         fetchDeploymentById({ deploymentId: updatedData.deploymentId }, false);
         dispatch(updateDeploymentStatus(updatedData));
       });
-      return socketHandler;
     },
     []
   );
@@ -66,25 +66,35 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
         const updatedData = event.data;
         dispatch(updateDeploymentStatus(updatedData));
       });
-      return socketHandler;
     },
     []
   );
 
   useEffect(() => {
-    if (loginStatus === 'loading') return;
-
-    let socketHandler = socketHandlerRef.current;
-    socketHandler.connect();
-    socketHandler = applyAnonymousCallbacks(socketHandler);
-    if (loginStatus === 'idle' && loggedIn) {
-      socketHandler = applyAuthenticatedCallbacks(socketHandler);
-    }
-    socketHandlerRef.current = socketHandler;
-
+    const interval = setInterval(() => {
+      if (!socketHandlerRef.current) return
+      if (!socketHandlerRef.current.socket) {
+        socketHandlerRef.current.connect()
+        applyAnonymousCallbacks(socketHandlerRef.current);
+        if (loginStatus === 'idle' && loggedIn) {
+          applyAuthenticatedCallbacks(socketHandlerRef.current);
+        }
+        return
+      }
+      if ([WebSocket.OPEN, WebSocket.CONNECTING, WebSocket.CLOSING].includes(socketHandlerRef.current.socket.readyState)) {
+        // console.log('Ready State', socketHandlerRef.current?.socket?.readyState)
+        // console.log('Socket already connected (or connecting/closing), skipping reconnection')
+      } else {
+        socketHandlerRef.current.connect()
+        applyAnonymousCallbacks(socketHandlerRef.current);
+        if (loginStatus === 'idle' && loggedIn) {
+          applyAuthenticatedCallbacks(socketHandlerRef.current);
+        }
+      }
+    }, 1000)
     return () => {
-      socketHandler.disconnect();
-    };
+      clearInterval(interval)
+    }
   }, [loggedIn, loginStatus]);
 
   return (
