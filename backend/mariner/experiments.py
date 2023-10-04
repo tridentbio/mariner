@@ -230,6 +230,7 @@ async def create_model_training(
         {
             "learning_rate": training_request.config.optimizer.params.lr,
             "epochs": training_request.config.epochs,
+            "config": training_request.config.dict(),
         }
         if training_request.framework == "torch"
         else {}
