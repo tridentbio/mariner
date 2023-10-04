@@ -5,7 +5,6 @@ import logging
 import os
 import urllib.parse
 
-import ray
 import uvicorn
 
 from mariner.core.config import get_app_settings
@@ -17,7 +16,6 @@ if __name__ == "__main__":
     host = "0.0.0.0"
     port = url.port or 80
     LOG.warning("Started uvicorn app at %s:%d", host, port)
-    ray.init(address="auto", allow_multiple=True)
     uvicorn.run(
         "api.fastapi_app:app",
         host=host,
