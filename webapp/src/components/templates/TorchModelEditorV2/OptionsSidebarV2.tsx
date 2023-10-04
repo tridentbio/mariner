@@ -86,6 +86,7 @@ const OptionsSidebarV2 = ({
           position: 'absolute',
           top,
           p: 2,
+          pr: 0,
           width: 400,
           height: 'calc(100% - 32px)',
           right: sidebarStyleRight,
@@ -97,7 +98,6 @@ const OptionsSidebarV2 = ({
           backgroundColor: 'white',
           display: 'flex',
           flexDirection: 'column',
-          overflowY: 'scroll',
         }}
       >
         <Box
@@ -113,10 +113,11 @@ const OptionsSidebarV2 = ({
           <Text>You can drag these nodes to the editor</Text>
         </Box>
 
-        <div
-          style={{
+        <Box
+          sx={{
             display: 'flex',
             flexDirection: 'column',
+            overflowY: 'scroll',
           }}
         >
           {Object.entries(modelsByLib).map(([lib, models], _index) => (
@@ -165,7 +166,7 @@ const OptionsSidebarV2 = ({
               </Box>
             </Box>
           ))}
-        </div>
+        </Box>
       </Box>
     </>
   );

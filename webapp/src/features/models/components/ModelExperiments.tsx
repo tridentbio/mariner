@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { dateRender } from 'components/atoms/Table/render';
 import {
   Button,
+  CircularProgress,
   IconButton,
   LinearProgress,
   Tooltip,
@@ -111,13 +112,19 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       render: (row: Experiment) => (
         <Justify position="center">
           {row.stage === 'RUNNING' ? (
-            <Tooltip title={`${((row.progress || 0) * 100).toFixed(2)}%`}>
-              <LinearProgress
-                sx={{ minWidth: 100 }}
-                variant="determinate"
-                value={(row.progress || 0) * 100}
-              />
-            </Tooltip>
+            !row.progress ? (
+              <Tooltip title="Preparing to start">
+                <CircularProgress size={30} />
+              </Tooltip>
+            ) : (
+              <Tooltip title={`${((row.progress || 0) * 100).toFixed(2)}%`}>
+                <LinearProgress
+                  sx={{ minWidth: 100 }}
+                  variant="determinate"
+                  value={(row.progress || 0) * 100}
+                />
+              </Tooltip>
+            )
           ) : (
             <TrainingStatusChip trainings={[row]} />
           )}

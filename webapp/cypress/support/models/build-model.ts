@@ -163,13 +163,16 @@ export const fillModelDescriptionStepForm = (
 };
 
 export const fillDatasetCols = (cols: (ColumnConfig | SimpleColumnConfig)[], colInputSelector: string) => {
+  cy.get(colInputSelector).click();
+
   cols.map(col => {
     const colId = getColumnConfigTestId(col! as (ColumnConfig | SimpleColumnConfig))
-  
-    cy.get(colInputSelector).click();
+    
     cy.get(`li[data-testid="${colId}"`)
       .click();
   })
+
+  cy.get(colInputSelector).parent().find('[data-testid="ArrowDropDownIcon"]').click();
 }
 
 export const buildModel = (
@@ -407,8 +410,7 @@ const buildFlowSchema = (
 
   cy.get('div[aria-label="Apply auto vertical layout"] button').click();
   cy.get('button[title="fit view"]').click();
-  cy.get('button[aria-label="Close all components"]').click();
-  cy.get('button[aria-label="Open all components"]').click();
+  cy.get('div[aria-label="Open all components"]').click();
 
   cy.then(() =>
     iterateTopologically(config, (node, type) => {

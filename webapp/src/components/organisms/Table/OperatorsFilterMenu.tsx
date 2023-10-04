@@ -19,7 +19,7 @@ import {
   TextField,
   styled,
 } from '@mui/material';
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { NonUndefined, title, uniqBy } from 'utils';
 import { FilterProps } from './Filters';
 import { TableStateContext } from './hooks/useTableState';
@@ -57,6 +57,11 @@ export const OperatorsFilterMenu = ({
     if (!filterLinkOperatorOptions) return [filterModel.linkOperator];
     return filterLinkOperatorOptions;
   }, [filterLinkOperatorOptions]);
+
+  const selectedFilterModel = useMemo<OperatorOptions[number]>(() => {
+    if (operatorOptions.length == 1) return operatorOptions[0];
+    else return filterModel.linkOperator;
+  }, [operatorOptions, filterModel.linkOperator]);
 
   const columnFilterPopper = usePopoverState();
   const [selectedColumn, setSelectedColumn] = useState<Column<any, any>>();
@@ -167,7 +172,7 @@ export const OperatorsFilterMenu = ({
           select
           variant="standard"
           sx={{ width: '100%' }}
-          value={filterModel.linkOperator}
+          value={selectedFilterModel}
           disabled={operatorOptions.length === 1}
           onChange={(event) =>
             onFilterLinkChange(event.target.value as 'and' | 'or')
