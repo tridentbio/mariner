@@ -27,7 +27,10 @@ const isForwardArgList = (
     const forwardArgType = argsSummary[forwardArg];
     return forwardArgType.toLowerCase().includes('list');
   }
-  throw `${component} not found in options dict! This is a temporary error.`;
+  // eslint-disable-next-line no-console
+  console.error(
+    `${component} not found in options dict! This is a temporary error.`
+  );
   return false;
 };
 
@@ -152,7 +155,7 @@ export const makeComponentEdit = <T extends NodeType>(params: {
     const { targetNodeForwardArg, elementValue } = removeConnection;
     if (
       elementValue &&
-      isForwardArgList(newComponent.type, targetNodeForwardArg)
+      isForwardArgList(newComponent.type, targetNodeForwardArg, options)
     ) {
       // @ts-ignore
       const fArgs = newComponent.forwardArgs as Concat['forwardArgs'];
