@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.prepare-cypress-runners.outputs.matrix) }}
     needs:
       # - backend-build
       - prepare-cypress-runners
