@@ -73,6 +73,9 @@ ingress:
     meta.helm.sh/release-name: 'mariner-backend'
     meta.helm.sh/release-namespace: 'mariner'
     nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
   hosts:
   - host: mariner.dev-devsvc.roche.com
   tls:
