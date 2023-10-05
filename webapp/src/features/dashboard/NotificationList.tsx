@@ -1,6 +1,12 @@
 import { RemoveRedEyeOutlined } from '@mui/icons-material';
-import { IconButton, Link, MenuItem, Tooltip, Typography } from '@mui/material';
-import { Box } from '@mui/system';
+import {
+  Button,
+  IconButton,
+  Link,
+  List,
+  ListItem,
+  Tooltip,
+} from '@mui/material';
 import { useAppDispatch } from 'app/hooks';
 import {
   MarinerEvent,
@@ -34,13 +40,28 @@ const NotificationList = ({
   return (
     <>
       {notifications.map((notification, i) => (
-        <div key={i}>
+        <List
+          key={i}
+          sx={{
+            mt: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+            borderRadius: '10px',
+            display: notification.events.length > 0 ? 'block' : 'none',
+            '& *': {
+              fontSize: '1rem',
+            },
+          }}
+        >
           {notification.events.map((event, j) => {
             const item = renderEvent(event);
+
             const itemWithLink = event.url ? (
               <Link
                 component="a"
-                style={{ textDecoration: 'none', width: '100%' }}
+                sx={{
+                  textDecoration: 'none',
+                  width: '100%',
+                }}
                 href={event.url}
                 key={event.url}
                 onClick={(event_) => {
@@ -53,44 +74,50 @@ const NotificationList = ({
             ) : (
               item
             );
+
             return (
-              <Box
+              <ListItem
                 key={j}
                 sx={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  flexDirection: 'row',
                 }}
               >
                 {itemWithLink}
                 <Tooltip title="Mark it as viewed">
-                  <div>
-                    <IconButton
-                      color="primary"
-                      onClick={(event_) => {
-                        handleMarkAsView(event.id);
-                        event_.stopPropagation();
-                      }}
-                    >
-                      <RemoveRedEyeOutlined />
-                    </IconButton>
-                  </div>
+                  <IconButton
+                    color="primary"
+                    onClick={(event_) => {
+                      handleMarkAsView(event.id);
+                      event_.stopPropagation();
+                    }}
+                  >
+                    <RemoveRedEyeOutlined />
+                  </IconButton>
                 </Tooltip>
-              </Box>
+              </ListItem>
             );
           })}
           {notification.events.length > 0 && (
-            <MenuItem
+            <ListItem
               onClick={(event) => {
                 event.stopPropagation();
                 handleMarkAllAsView(notification.source);
               }}
-              sx={{ marginLeft: 'auto', marginRight: 0, color: 'primary' }}
+              sx={{ color: 'primary' }}
             >
-              <Typography variant="body2">Mark all as read</Typography>
-            </MenuItem>
+              <Button
+                size="small"
+                sx={{
+                  borderRadius: 2,
+                  paddingX: 2,
+                }}
+              >
+                Mark all as read
+              </Button>
+            </ListItem>
           )}
-        </div>
+        </List>
       ))}
     </>
   );
