@@ -1,5 +1,6 @@
 import vitePreprocessor from "cypress-vite"
 import { defineConfig } from "cypress"
+import cypressSplit from 'cypress-split'
 import fs from 'fs'
 
 const preventSuccessfullTestsVideoGeneration = (spec: Cypress.Spec, results: CypressCommandLine.RunResult) => {
@@ -33,12 +34,17 @@ export default defineConfig({
     viewportHeight: 768,
     viewportWidth: 1366,
     baseUrl: "http://localhost:3000/",
-    setupNodeEvents(on) {
+    setupNodeEvents(on, config) {
       on("file:preprocessor", vitePreprocessor());
       on(
         'after:spec',
         preventSuccessfullTestsVideoGeneration
-      )
+      );
+      
+      cypressSplit(on, config)
+
+      //! IMPORTANT: return the config object (cypress split)
+      return config
     },
     video: true,
     videoCompression: 32,
