@@ -110,6 +110,7 @@ jobs:
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     needs:
       # - backend-build
+      - prepare
       - generate-webapp-build
     steps:
       - name: Checkout
