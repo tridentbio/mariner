@@ -25,6 +25,7 @@ from mariner.core.config import get_app_settings
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
+from mariner.schemas.dataset_schemas import Dataset as DatasetSchema
 from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import (
     Model,
@@ -453,8 +454,10 @@ def test_post_check_config_bad_model(
     )
     regressor.dataset.name = some_dataset.name
     user = get_test_user(db)
-    dataset = dataset_sql.dataset_store.get_by_name(
-        db, regressor.dataset.name, user_id=user.id
+    dataset = DatasetSchema.from_orm(
+        dataset_sql.dataset_store.get_by_name(
+            db, regressor.dataset.name, user_id=user.id
+        )
     )
     torch_dataset = MarinerTorchDataset(
         converts_file_to_dataframe(dataset.get_dataset_file()),

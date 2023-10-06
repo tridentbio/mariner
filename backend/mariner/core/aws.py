@@ -3,8 +3,9 @@ AWS service
 """
 import enum
 import io
+import os
 from datetime import datetime
-from typing import BinaryIO, Tuple, Union
+from typing import BinaryIO, Optional, Tuple, Union
 
 import boto3
 from botocore.client import BaseClient
@@ -146,20 +147,31 @@ def delete_s3_file(key: str, bucket: Bucket):
     s3.delete_object(Bucket=bucket.value, Key=key)
 
 
-def download_s3(key: str, bucket: Union[str, Bucket]) -> io.BytesIO:
+def download_s3(
+    key: str, bucket: Union[str, Bucket], range_: Optional[str] = None
+) -> io.BytesIO:
     """Download a file from S3
 
     Args:
         key (str): s3 file key
         bucket (str): s3 bucket
+        range (str): A range as specified by rfc9110
 
     Returns:
         io.BytesIO: downloaded file
+
+
+    See Also:
+        Reference for range spec: https://www.rfc-editor.org/rfc/rfc9110.html#name-range
     """
     s3 = create_s3_client()
-    s3_res = s3.get_object(
-        Bucket=bucket.value if isinstance(bucket, Bucket) else bucket, Key=key
-    )
+    kwargs = {
+        "Bucket": bucket.value if isinstance(bucket, Bucket) else bucket,
+        "Key": key,
+    }
+    if range_:
+        kwargs["Range"] = range_
+    s3_res = s3.get_object(**kwargs)
     s3body = s3_res["Body"].read()
     return io.BytesIO(s3body)
 
@@ -209,3 +221,40 @@ def is_in_s3(key: str, bucket: Bucket) -> bool:
         return True
     except (s3.exceptions.NoSuchKey, ClientError):
         return False
+
+
+def download_head(
+    bucket: str, key: str, nlines: int = 3, chunk_size=int(1.6e4)
+):
+    """
+    Downloads at least the first nlines of the S3 object described by bucket and key.
+
+    If more lines than nlines are returned, you shouldn't trust they are complete.
+    This function is not recommended to install the full dataset (for that use download_s3).
+
+    Args:
+        bucket (str): The bucket in which the object is stored.
+        key (str): The object identifier.
+        nlines (int): The number of full lines to download. Defaults to 3.
+        chunk_size (int): The number of chunks to read at a time. Defaults to 1.6e4 (16 kilobytes).
+    """
+
+    start, end = 0, chunk_size - 1
+    data = io.StringIO()
+    len_data = 0
+    while (
+        len_data < nlines + 1
+    ):  # Get one extra since it may be incomplete (discard it later)
+        res = download_s3(
+            bucket=bucket, key=key, range_=f"bytes={start}-{end}"
+        )
+        # We decode the bytes chunk into utf-8 for safe line counting
+        # Make it a bit faster by not decoding intoi utf-8 and counting
+        # line feed bytes https://en.wikipedia.org/wiki/Newline#Unicode
+        decoded = res.read().decode(encoding="utf-8")
+        len_data += decoded.count("\n")
+        data.write(decoded)
+        start += chunk_size
+        end += chunk_size
+    data.seek(0, os.SEEK_SET)
+    return data
