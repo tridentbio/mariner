@@ -92,6 +92,8 @@ class Model(Base):
         User,
     )
     dataset_id = Column(Integer, ForeignKey("dataset.id", ondelete="SET NULL"))
+    check_status = Column(String, nullable=True)
+    check_stack_trace = Column(String, nullable=True)
     dataset = relationship(Dataset)
     versions = relationship(ModelVersion, cascade="all,delete")
     columns = relationship(

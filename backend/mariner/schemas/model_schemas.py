@@ -25,6 +25,8 @@ class ModelVersion(ApiBaseModel):
     config: FleetModelSpec
     created_at: utc_datetime
     updated_at: datetime
+    check_status: Optional[Literal["OK", "FAILED"]] = None
+    check_stack_trace: Optional[str] = None
 
     def get_mlflow_uri(self):
         """Gets the mlflow model uri to load this model"""
@@ -143,6 +145,8 @@ class ModelVersionUpdateRepo(BaseModel):
     """
 
     mlflow_version: str
+    check_status: Optional[Literal["OK", "FAILED"]] = None
+    check_stack_trace: Optional[str] = None
 
 
 LossType = Literal[
