@@ -82,40 +82,6 @@ export const dragComponentsAndMapConfig = (
   return newSchema;
 };
 
-export const fillDatasetInfo = ({
-  modelName,
-  targetCol,
-  featureCols,
-}: {
-  modelName: string;
-  targetCol: string;
-  featureCols: string[];
-}) => {
-  cy.get('#model-name').clear();
-  cy.get('#model-name')
-    .type(modelName)
-    .wait(1000)
-    .get('li[role="option"]')
-    .first()
-    .click();
-  cy.get('#dataset-select').click().get('li[role="option"]').first().click();
-  cy.get('#target-col').click();
-  cy.get('div').contains(targetCol).click();
-  featureCols.forEach((col) => {
-    cy.get('#feature-cols').click();
-    cy.get('div').contains(col).click();
-  });
-};
-//? Not being used currently
-export const createModelFixture = (
-  modelData: Parameters<typeof fillDatasetInfo>[0]
-) => {
-  cy.visit('/models/new');
-  fillDatasetInfo(modelData);
-  cy.get('button').contains('NEXT').click();
-  cy.buildYamlModel(SCHEMA_PATH + 'yaml/small_regressor_schema.yaml');
-};
-
 export const connectAndFill = ({
   argValues = {},
   sourceId,
