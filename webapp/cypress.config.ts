@@ -1,6 +1,7 @@
 import vitePreprocessor from "cypress-vite"
 import { defineConfig } from "cypress"
 import cypressSplit from 'cypress-split'
+import cypressOnFix from 'cypress-on-fix'
 import fs from 'fs'
 
 const preventSuccessfullTestsVideoGeneration = (spec: Cypress.Spec, results: CypressCommandLine.RunResult) => {
@@ -34,7 +35,11 @@ export default defineConfig({
     viewportHeight: 768,
     viewportWidth: 1366,
     baseUrl: "http://localhost:3000/",
-    setupNodeEvents(on, config) {
+    setupNodeEvents(cypressOn, config) {
+      //? Fix bug on Cypress not handling multiple listeners for the same event
+      //? Reason: `cypressSplit` overwrites some of them
+      const on: Cypress.PluginEvents = cypressOnFix(cypressOn)
+      
       on("file:preprocessor", vitePreprocessor());
       on(
         'after:spec',
@@ -43,7 +48,7 @@ export default defineConfig({
       
       cypressSplit(on, config)
 
-      //! IMPORTANT: return the config object (cypress split)
+      //! IMPORTANT: return the config object (required for cypress split)
       return config
     },
     video: true,
