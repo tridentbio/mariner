@@ -223,7 +223,9 @@ def is_in_s3(key: str, bucket: Bucket) -> bool:
         return False
 
 
-def download_head(bucket: str, key: str, nlines: int = 3, chunk_size=5e6):
+def download_head(
+    bucket: str, key: str, nlines: int = 3, chunk_size=int(1.6e4)
+):
     """
     Downloads at least the first nlines of the S3 object described by bucket and key.
 
@@ -234,7 +236,7 @@ def download_head(bucket: str, key: str, nlines: int = 3, chunk_size=5e6):
         bucket (str): The bucket in which the object is stored.
         key (str): The object identifier.
         nlines (int): The number of full lines to download. Defaults to 3.
-        chunk_size (int): The number of chunks to read at a time. Defaults to 5e6 (5 megabytes).
+        chunk_size (int): The number of chunks to read at a time. Defaults to 1.6e4 (16 kilobytes).
     """
 
     start, end = 0, chunk_size - 1
