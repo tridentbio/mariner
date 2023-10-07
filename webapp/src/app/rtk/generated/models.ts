@@ -795,6 +795,8 @@ export type ModelVersion = {
       } & SklearnModelSpec);
   createdAt: string;
   updatedAt: string;
+  checkStatus?: 'OK' | 'FAILED';
+  checkStackTrace?: string;
 };
 export type ModelFeaturesAndTarget = {
   modelId?: number;
@@ -861,8 +863,8 @@ export type ComponentOption = {
   docs?: string;
   outputType?: string;
   defaultArgs?: object;
-  //? Declared manually for mocked version
-  compatibleWith?: {
+   //? Declared manually for mocked version
+   compatibleWith?: {
     domains?: ColumnConfig['dataType']['domainKind'][];
     framework?: ('torch' | 'sklearn')[];
   };
@@ -900,9 +902,7 @@ export type Experiment = {
   mlflowId?: string;
   stage: 'NOT RUNNING' | 'RUNNING' | 'SUCCESS' | 'ERROR';
   createdBy?: User;
-  hyperparams?: {
-    [key: string]: number;
-  };
+  hyperparams?: object;
   epochs?: number;
   trainMetrics?: {
     [key: string]: number;

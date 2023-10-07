@@ -1,4 +1,4 @@
-import { CircularProgress } from '@mui/material';
+import { Button, CircularProgress, Modal, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
 import { experimentsApi } from 'app/rtk/experiments';
 import { Experiment } from 'app/types/domain/experiments';
@@ -10,6 +10,15 @@ import { FilterModel, OperatorValue } from 'components/templates/Table/types';
 import { useMemo, useState } from 'react';
 import { sampleExperiment } from '../common';
 import TrainingStatusChip from './TrainingStatusChip';
+import ModelCheckingStatusChip from './ModelCheckingStatusChip';
+import {
+  TableActionsWrapper,
+  tableActionsSx,
+} from '@components/atoms/TableActions';
+import { ReadMore } from '@mui/icons-material';
+import StackTrace from '@components/organisms/StackTrace';
+import Justify from '@components/atoms/Justify';
+import { useNavigate } from 'react-router-dom';
 interface ModelVersionItemProps {
   versions: ModelVersion[];
   modelId: number;
@@ -21,6 +30,10 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
   });
   const [filteredVersions, setFilteredVersions] =
     useState<ModelVersion[]>(versions);
+
+  const navigate = useNavigate();
+
+  const [selectedModelCheck, setSelectedModelCheck] = useState<ModelVersion>();
 
   const arrayDependancy = JSON.stringify(paginatedExperiments?.data);
   const experimentsByVersion = useMemo(() => {
@@ -34,6 +47,10 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
         return acc;
       }, {} as { [key: number]: Experiment[] });
   }, [arrayDependancy]);
+
+  const handleModelCheckFix = (modelVersion: ModelVersion) => {
+    navigate(`/models/${modelVersion.modelId}/${modelVersion.id}/fix`);
+  };
 
   const columns: Column<
     ModelVersion,
@@ -102,15 +119,70 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
       },
     },
     {
+      title: 'Check status',
+      field: 'checkStatus',
+      name: 'Check status',
+      render: (model: ModelVersion, value: ModelVersion['checkStatus']) => {
+        return (
+          <Justify position="center">
+            {value == null ? (
+              <Tooltip title="Navigate to fix the model version">
+                <ModelCheckingStatusChip
+                  status={value}
+                  onClick={() => handleModelCheckFix(model)}
+                />
+              </Tooltip>
+            ) : (
+              <ModelCheckingStatusChip status={value} />
+            )}
+          </Justify>
+        );
+      },
+    },
+    {
       title: 'Created At',
       field: 'createdAt',
       name: 'Created At',
       render: dateRender((model: ModelVersion) => new Date(model.createdAt)),
     },
+    {
+      name: 'Actions',
+      title: 'Actions',
+      customSx: tableActionsSx,
+      fixed: true,
+      render: (model: ModelVersion, value) => {
+        return (
+          <TableActionsWrapper>
+            <Button
+              onClick={() => {
+                setSelectedModelCheck(model);
+              }}
+              variant="text"
+              color="primary"
+              disabled={!model.checkStackTrace}
+            >
+              <ReadMore />
+            </Button>
+          </TableActionsWrapper>
+        );
+      },
+    },
   ];
 
   return (
     <Box>
+      <Modal
+        open={!!selectedModelCheck}
+        onClose={() => {
+          setSelectedModelCheck(undefined);
+        }}
+        title="Failed model check"
+      >
+        <StackTrace
+          stackTrace={selectedModelCheck?.checkStackTrace}
+          message="Exception during model training"
+        />
+      </Modal>
       <Table
         filterLinkOperatorOptions={['or']}
         rowKey={(row) => row.id}

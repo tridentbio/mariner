@@ -19,12 +19,13 @@ import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import { MouseEvent, useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import { FieldPath, FormProvider, useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import * as yup from 'yup';
 import { DatasetConfigurationForm } from './DatasetConfigurationForm';
 import ModelConfigForm from './ModelConfigForm';
 import { ModelSetup } from './ModelSetup';
 import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
+import { store } from '@app/store';
 
 type ModelCreationStep = {
   title: string;
@@ -65,7 +66,11 @@ const ModelCreateV2 = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
   const [checkModel, { isLoading: checkingModel, data: configCheckData }] =
     modelsApi.usePostModelCheckConfigMutation();
+
   const [searchParams, setSearchParams] = useSearchParams();
+  const routeParams = useParams();
+  const navigate = useNavigate();
+
   const { notifyError } = useNotifications();
 
   const methods = useForm<modelsApi.ModelCreate>({
@@ -93,9 +98,10 @@ const ModelCreateV2 = () => {
 
   const [createModel, { error, isLoading: creatingModel, data }] =
     modelsApi.useCreateModelMutation();
-  const { control, getValues, setValue, watch } = methods;
-  const config = watch('config');
 
+  const { control, getValues, setValue, watch, reset, register, unregister } =
+    methods;
+  const config = watch('config');
   const selectedFramework: 'torch' | 'sklearn' = watch('config.framework');
 
   const onFrameworkChange = () => {
@@ -151,7 +157,43 @@ const ModelCreateV2 = () => {
     onFrameworkChange();
   }, [selectedFramework]);
 
-  const navigate = useNavigate();
+  const test = watch();
+
+  console.log(test);
+
+  const handleModelFix = async () => {
+    const storedModels = store.getState().models.models as
+      | modelsApi.Model[]
+      | undefined;
+
+    const foundModel = storedModels?.length
+      ? storedModels.find(
+          (model) => model.id === parseInt(routeParams.modelId as string)
+        )
+      : await getExistingModel({
+          modelId: parseInt(routeParams.modelId as string),
+        }).unwrap();
+
+    if (foundModel) {
+      const modelVersionToFix = foundModel.versions.find(
+        (version) =>
+          version.id === parseInt(routeParams.modelVersionId as string)
+      );
+
+      register('config');
+
+      !!modelVersionToFix &&
+        reset((prev) => ({
+          ...prev,
+          ...modelVersionToFix,
+        }));
+    }
+  };
+
+  useEffect(() => {
+    handleModelFix();
+  }, [routeParams.modelId, routeParams.modelVersionId]);
+
   const handleModelCreate = (event: MouseEvent) => {
     event.preventDefault();
     methods.handleSubmit(

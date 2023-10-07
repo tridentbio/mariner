@@ -272,6 +272,14 @@ const navigationTree: RouteNode<any>[] = [
                     element: <ModelVersionDetails />,
                   },
                   {
+                    path: 'fix',
+                    breadcrumb: {
+                      label: 'Fix',
+                      url: '/models/:model.id/:version.id/fix',
+                    },
+                    element: <ModelCreate />,
+                  },
+                  {
                     path: 'inference',
                     element: <ModelVersionInference />,
                     breadcrumb: {
