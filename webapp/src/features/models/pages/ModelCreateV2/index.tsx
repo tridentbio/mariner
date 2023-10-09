@@ -26,6 +26,7 @@ import ModelConfigForm from './ModelConfigForm';
 import { ModelSetup } from './ModelSetup';
 import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
 import { store } from '@app/store';
+import { useLazyGetMyDatasetsQuery } from '@app/rtk/generated/datasets';
 
 type ModelCreationStep = {
   title: string;
@@ -62,10 +63,15 @@ export const schema = yup.object({
   }),
 });
 
-const ModelCreateV2 = () => {
+const ModelCreateV2 = ({
+  mode = 'creation',
+}: {
+  mode?: 'creation' | 'fix';
+}) => {
   const [activeStep, setActiveStep] = useState<number>(0);
   const [checkModel, { isLoading: checkingModel, data: configCheckData }] =
     modelsApi.usePostModelCheckConfigMutation();
+  const [fetchDatasets] = useLazyGetMyDatasetsQuery();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const routeParams = useParams();
@@ -99,10 +105,12 @@ const ModelCreateV2 = () => {
   const [createModel, { error, isLoading: creatingModel, data }] =
     modelsApi.useCreateModelMutation();
 
-  const { control, getValues, setValue, watch, reset, register, unregister } =
-    methods;
+  const { control, getValues, setValue, watch, reset } = methods;
   const config = watch('config');
   const selectedFramework: 'torch' | 'sklearn' = watch('config.framework');
+
+  const [modelVersionToFix, setModelVersionToFix] =
+    useState<modelsApi.ModelVersion>();
 
   const onFrameworkChange = () => {
     if (selectedFramework == 'torch') {
@@ -154,12 +162,8 @@ const ModelCreateV2 = () => {
   };
 
   useEffect(() => {
-    onFrameworkChange();
+    if (mode === 'creation') onFrameworkChange();
   }, [selectedFramework]);
-
-  const test = watch();
-
-  console.log(test);
 
   const handleModelFix = async () => {
     const storedModels = store.getState().models.models as
@@ -175,18 +179,30 @@ const ModelCreateV2 = () => {
         }).unwrap();
 
     if (foundModel) {
-      const modelVersionToFix = foundModel.versions.find(
+      const modelVersion = foundModel.versions.find(
         (version) =>
           version.id === parseInt(routeParams.modelVersionId as string)
       );
 
-      register('config');
+      if (!!modelVersion) {
+        //? Fills dataset select input options
+        await fetchDatasets({
+          page: 0,
+          perPage: 15,
+          searchByName: foundModel.dataset?.name,
+        });
 
-      !!modelVersionToFix &&
-        reset((prev) => ({
-          ...prev,
-          ...modelVersionToFix,
-        }));
+        setModelVersionToFix(modelVersion);
+
+        reset(
+          {
+            name: foundModel.name,
+            modelDescription: foundModel.description,
+            modelVersionDescription: modelVersion.description,
+            config: modelVersion.config,
+          } /* {keepDirty: true, keepTouched: true, keepErrors: true, keepValues: false} */
+        );
+      }
     }
   };
 
@@ -196,6 +212,7 @@ const ModelCreateV2 = () => {
 
   const handleModelCreate = (event: MouseEvent) => {
     event.preventDefault();
+
     methods.handleSubmit(
       async (modelCreate) => {
         if (modelCreate.config.framework === 'torch') {
@@ -408,14 +425,14 @@ const ModelCreateV2 = () => {
               </Box>
             )}
           </div>
-          {configCheckData?.stackTrace && (
-            <StackTrace
-              stackTrace={configCheckData?.stackTrace}
-              message={
-                'An exception is raised during your model configuration for this dataset'
-              }
-            />
-          )}
+          <StackTrace
+            stackTrace={
+              configCheckData?.stackTrace || modelVersionToFix?.checkStackTrace
+            }
+            message={
+              'An exception is raised during your model configuration for this dataset'
+            }
+          />
         </Box>
       ),
     },

@@ -277,7 +277,7 @@ const navigationTree: RouteNode<any>[] = [
                       label: 'Fix',
                       url: '/models/:model.id/:version.id/fix',
                     },
-                    element: <ModelCreate />,
+                    element: <ModelCreate mode="fix" />,
                   },
                   {
                     path: 'inference',

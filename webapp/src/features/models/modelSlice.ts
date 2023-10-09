@@ -134,11 +134,46 @@ export const modelSlice = createSlice({
       state.experiments = [...state.experiments, action.payload];
     });
 
+    //? Prevents the cache from being cleared when the request using filters only return few/no models
     builder.addMatcher(
       modelsApi.endpoints.getModelsOld.matchFulfilled,
       (state, action) => {
-        state.models = action.payload.data;
-        state.totalModels = action.payload.total;
+        const modelsTo: {
+          push: Model[];
+          replace: { cacheIndex: number; responseIndex: number }[];
+        } = {
+          push: [],
+          replace: [],
+        };
+
+        action.payload.data.forEach((fetchedModel, fetchedModelIndex) => {
+          const foundModelIndex = state.models.findIndex(
+            (model) => model.id === fetchedModel.id
+          );
+
+          if (foundModelIndex !== -1) {
+            modelsTo.replace.push({
+              cacheIndex: foundModelIndex,
+              responseIndex: fetchedModelIndex,
+            });
+          } else {
+            const modelAlreadyInList =
+              modelsTo.push.some((modelTo) => modelTo.id === fetchedModel.id) ||
+              modelsTo.replace.some(
+                (params) => params.responseIndex === fetchedModelIndex
+              );
+
+            !modelAlreadyInList && modelsTo.push.push(fetchedModel);
+          }
+        });
+
+        modelsTo.replace.forEach((params) => {
+          state.models[params.cacheIndex] =
+            action.payload.data[params.responseIndex];
+        });
+
+        state.models = state.models.concat(modelsTo.push);
+        state.totalModels = state.models.length;
       }
     );
 

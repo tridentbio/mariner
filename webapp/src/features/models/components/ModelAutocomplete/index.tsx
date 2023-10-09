@@ -33,7 +33,7 @@ const ModelAutoComplete = ({
   error,
   ...selectProps
 }: ModelAutoCompleteProps) => {
-  const [getModels, { data }] = modelsApi.useLazyGetModelsOldQuery();
+  const [getModels, { data }] = modelsApi.useLazyGetModelsOldQuery({});
   const [inputVal, setInputVal] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 

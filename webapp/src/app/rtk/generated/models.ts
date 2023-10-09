@@ -863,8 +863,8 @@ export type ComponentOption = {
   docs?: string;
   outputType?: string;
   defaultArgs?: object;
-   //? Declared manually for mocked version
-   compatibleWith?: {
+  //? Declared manually for mocked version
+  compatibleWith?: {
     domains?: ColumnConfig['dataType']['domainKind'][];
     framework?: ('torch' | 'sklearn')[];
   };
