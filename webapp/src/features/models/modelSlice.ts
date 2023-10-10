@@ -96,6 +96,13 @@ export const modelSlice = createSlice({
     ) => {
       state.experiments = action.payload;
     },
+    updateModel: (state, action: { type: string; payload: Model }) => {
+      let foundModel = state.models.find(
+        (model) => model.id === action.payload.id
+      );
+
+      if (foundModel) foundModel = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchExperiments.fulfilled, (state, action) => {
@@ -265,6 +272,6 @@ export const selectExperiments =
     return [...experiments].reverse();
   };
 
-export const { updateExperiment, addTraining, updateExperiments } =
+export const { updateExperiment, addTraining, updateExperiments, updateModel } =
   modelSlice.actions;
 export default modelSlice.reducer;

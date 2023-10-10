@@ -150,14 +150,6 @@ const TorchModelEditor = ({
     fitView();
   }, [nodesInitialized]);
 
-  const handleDagreLayout = (dagre?: TorchModelEditorProps['dagre']) => {
-    if (dagre === 'goodDistance') {
-      applyDagreLayout('TB', getGoodDistance(nodes.length));
-    } else {
-      applyDagreLayout('TB', dagre ?? 3, edges);
-    }
-  };
-
   useEffect(() => {
     if (!reactFlowWrapper.current) return;
     const [nodes, edges] = schemaToEditorGraph(value);

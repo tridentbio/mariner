@@ -12,21 +12,15 @@ import rehypeSanitize from 'rehype-sanitize';
 
 export interface ModelConfigFormProps {
   control: Control<modelsApi.ModelCreate>;
+  onClear?: () => void;
 }
 
-const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
+const ModelConfigForm = ({ control, onClear }: ModelConfigFormProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { setValue } = useFormContext();
   const registeredModel = searchParams.get('registeredModel');
   const [getRandomName, { data, isLoading: randomNameLoading }] =
     modelsApi.useLazyGetModelNameSuggestionQuery();
-
-  const handleClearRegisteredModel = () => {
-    setSearchParams('', {
-      replace: true,
-      state: {},
-    });
-  };
 
   useEffect(() => {
     if (!data) return;
@@ -63,7 +57,7 @@ const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
         />
 
         {registeredModel && (
-          <Button variant="text" onClick={handleClearRegisteredModel}>
+          <Button variant="text" onClick={() => onClear && onClear()}>
             Clear
           </Button>
         )}

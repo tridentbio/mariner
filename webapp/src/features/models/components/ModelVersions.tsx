@@ -1,24 +1,22 @@
-import { Button, CircularProgress, Modal, Tooltip } from '@mui/material';
+import {
+  TableActionsWrapper,
+  tableActionsSx,
+} from '@components/atoms/TableActions';
+import StackTrace from '@components/organisms/StackTrace';
+import { Check, Error, ReadMore } from '@mui/icons-material';
+import { Button, CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
 import { experimentsApi } from 'app/rtk/experiments';
 import { Experiment } from 'app/types/domain/experiments';
 import { ModelVersion } from 'app/types/domain/models';
 import AppLink from 'components/atoms/AppLink';
-import Table, { Column } from 'components/templates/Table';
 import { dateRender } from 'components/atoms/Table/render';
-import { FilterModel, OperatorValue } from 'components/templates/Table/types';
+import Table, { Column } from 'components/templates/Table';
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { sampleExperiment } from '../common';
 import TrainingStatusChip from './TrainingStatusChip';
-import ModelCheckingStatusChip from './ModelCheckingStatusChip';
-import {
-  TableActionsWrapper,
-  tableActionsSx,
-} from '@components/atoms/TableActions';
-import { ReadMore } from '@mui/icons-material';
-import StackTrace from '@components/organisms/StackTrace';
-import Justify from '@components/atoms/Justify';
-import { useNavigate } from 'react-router-dom';
+import Modal from '@components/templates/Modal';
 interface ModelVersionItemProps {
   versions: ModelVersion[];
   modelId: number;
@@ -28,8 +26,6 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
   const { data: paginatedExperiments } = experimentsApi.useGetExperimentsQuery({
     modelId,
   });
-  const [filteredVersions, setFilteredVersions] =
-    useState<ModelVersion[]>(versions);
 
   const navigate = useNavigate();
 
@@ -118,14 +114,14 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
         return undefined;
       },
     },
-    {
+    /*     {
       title: 'Check status',
       field: 'checkStatus',
       name: 'Check status',
       render: (model: ModelVersion, value: ModelVersion['checkStatus']) => {
         return (
           <Justify position="center">
-            {value == null ? (
+            {value == 'FAILED' ? (
               <Tooltip title="Navigate to fix the model version">
                 <ModelCheckingStatusChip
                   status={value}
@@ -138,7 +134,7 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
           </Justify>
         );
       },
-    },
+    }, */
     {
       title: 'Created At',
       field: 'createdAt',
@@ -150,7 +146,7 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
       title: 'Actions',
       customSx: tableActionsSx,
       fixed: true,
-      render: (model: ModelVersion, value) => {
+      render: (model: ModelVersion) => {
         return (
           <TableActionsWrapper>
             <Button
@@ -163,6 +159,22 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
             >
               <ReadMore />
             </Button>
+            {(() => {
+              switch (model.checkStatus) {
+                case 'FAILED':
+                  return (
+                    <Tooltip title="Navigate to fix the model version">
+                      <IconButton onClick={() => handleModelCheckFix(model)}>
+                        <Error sx={{ color: '#ed6c02de' }} />
+                      </IconButton>
+                    </Tooltip>
+                  );
+                case 'OK':
+                  return <Check />;
+                default:
+                  return <CircularProgress size={25} />;
+              }
+            })()}
           </TableActionsWrapper>
         );
       },
@@ -180,7 +192,7 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
       >
         <StackTrace
           stackTrace={selectedModelCheck?.checkStackTrace}
-          message="Exception during model training"
+          message="Exception during model checking"
         />
       </Modal>
       <Table
@@ -188,7 +200,7 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
         rowKey={(row) => row.id}
         //TODO: Use TS to implement a way to the table component to accept column dependency types and pass it to the render function
         columns={columns as Column<any, any>[]}
-        rows={filteredVersions}
+        rows={versions}
         tableId="model-versions"
         usePreferences
         dependencies={{

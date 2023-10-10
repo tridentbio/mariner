@@ -69,17 +69,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['models'],
       }),
-      postModelCheckConfig: build.mutation<
-        PostModelCheckConfigApiResponse,
-        PostModelCheckConfigApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/api/v1/models/check-config`,
-          method: 'POST',
-          body: queryArg.trainingCheckRequest,
-        }),
-        invalidatesTags: ['models'],
-      }),
       getExperimentsMetricsForModelVersion: build.query<
         GetExperimentsMetricsForModelVersionApiResponse,
         GetExperimentsMetricsForModelVersionApiArg
@@ -133,11 +122,6 @@ export type DeleteModelApiResponse =
   /** status 200 Successful Response */ Model;
 export type DeleteModelApiArg = {
   modelId: number;
-};
-export type PostModelCheckConfigApiResponse =
-  /** status 200 Successful Response */ TrainingCheckResponse;
-export type PostModelCheckConfigApiArg = {
-  trainingCheckRequest: TrainingCheckRequest;
 };
 export type GetExperimentsMetricsForModelVersionApiResponse =
   /** status 200 Successful Response */ Experiment[];
@@ -207,6 +191,7 @@ export type Dataset = {
   splitTarget: string;
   splitActual?: string;
   splitType: 'scaffold' | 'random';
+  splitColumn?: string;
   createdAt: string;
   updatedAt: string;
   createdById: number;
@@ -863,11 +848,6 @@ export type ComponentOption = {
   docs?: string;
   outputType?: string;
   defaultArgs?: object;
-  //? Declared manually for mocked version
-  compatibleWith?: {
-    domains?: ColumnConfig['dataType']['domainKind'][];
-    framework?: ('torch' | 'sklearn')[];
-  };
 };
 export type GetNameSuggestionResponse = {
   name: string;
@@ -883,13 +863,6 @@ export type AllowedLosses = {
     [key: string]: string;
   }[];
   typeMap?: object;
-};
-export type TrainingCheckResponse = {
-  stackTrace?: string;
-  output?: any;
-};
-export type TrainingCheckRequest = {
-  modelSpec: TorchModelSpec;
 };
 export type Experiment = {
   experimentName?: string;
@@ -932,7 +905,6 @@ export const {
   useGetModelQuery,
   useLazyGetModelQuery,
   useDeleteModelMutation,
-  usePostModelCheckConfigMutation,
   useGetExperimentsMetricsForModelVersionQuery,
   useLazyGetExperimentsMetricsForModelVersionQuery,
 } = injectedRtkApi;

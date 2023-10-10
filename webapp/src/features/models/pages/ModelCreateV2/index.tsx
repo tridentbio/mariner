@@ -1,13 +1,22 @@
+import { useLazyGetMyDatasetsQuery } from '@app/rtk/generated/datasets';
+import { store } from '@app/store';
 import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
 import {
   preprocessingStepSchema,
   sklearnDatasetSchema,
   torchDatasetSchema,
 } from '@components/organisms/ModelBuilder/formSchema';
+import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
 import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Button, Step, StepLabel, Stepper } from '@mui/material';
+import {
+  Button,
+  CircularProgress,
+  Step,
+  StepLabel,
+  Stepper,
+} from '@mui/material';
 import { Box } from '@mui/system';
 import { useNotifications } from 'app/notifications';
 import * as modelsApi from 'app/rtk/generated/models';
@@ -16,17 +25,14 @@ import Content from 'components/templates/AppLayout/Content';
 import TorchModelEditor from 'components/templates/TorchModelEditorV2';
 import { TorchModelEditorContextProvider } from 'hooks/useTorchModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
-import { MouseEvent, useEffect, useState } from 'react';
-import { ReactFlowProvider } from 'reactflow';
+import { MouseEvent, useEffect, useMemo, useState } from 'react';
 import { FieldPath, FormProvider, useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ReactFlowProvider } from 'reactflow';
 import * as yup from 'yup';
 import { DatasetConfigurationForm } from './DatasetConfigurationForm';
 import ModelConfigForm from './ModelConfigForm';
 import { ModelSetup } from './ModelSetup';
-import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
-import { store } from '@app/store';
-import { useLazyGetMyDatasetsQuery } from '@app/rtk/generated/datasets';
 
 type ModelCreationStep = {
   title: string;
@@ -68,14 +74,15 @@ const ModelCreateV2 = ({
 }: {
   mode?: 'creation' | 'fix';
 }) => {
+  const [currentMode, setCurrentMode] = useState<'creation' | 'fix'>(mode);
   const [activeStep, setActiveStep] = useState<number>(0);
-  const [checkModel, { isLoading: checkingModel, data: configCheckData }] =
-    modelsApi.usePostModelCheckConfigMutation();
   const [fetchDatasets] = useLazyGetMyDatasetsQuery();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const routeParams = useParams();
   const navigate = useNavigate();
+
+  const registeredModel = searchParams.get('registeredModel');
 
   const { notifyError } = useNotifications();
 
@@ -111,6 +118,10 @@ const ModelCreateV2 = ({
 
   const [modelVersionToFix, setModelVersionToFix] =
     useState<modelsApi.ModelVersion>();
+
+  const modelId = useMemo(() => {
+    return currentMode == 'creation' ? registeredModel : routeParams.modelId;
+  }, [routeParams.modelId, registeredModel]);
 
   const onFrameworkChange = () => {
     if (selectedFramework == 'torch') {
@@ -162,7 +173,7 @@ const ModelCreateV2 = ({
   };
 
   useEffect(() => {
-    if (mode === 'creation') onFrameworkChange();
+    currentMode === 'creation' && onFrameworkChange();
   }, [selectedFramework]);
 
   const handleModelFix = async () => {
@@ -194,43 +205,35 @@ const ModelCreateV2 = ({
 
         setModelVersionToFix(modelVersion);
 
-        reset(
-          {
-            name: foundModel.name,
-            modelDescription: foundModel.description,
-            modelVersionDescription: modelVersion.description,
-            config: modelVersion.config,
-          } /* {keepDirty: true, keepTouched: true, keepErrors: true, keepValues: false} */
-        );
+        reset({
+          name: foundModel.name,
+          modelDescription: foundModel.description,
+          modelVersionDescription: modelVersion.description,
+          config: modelVersion.config,
+        });
+
+        //? Move to the last step
+        onStepChange(steps.length - 1, 0);
       }
     }
   };
 
   useEffect(() => {
-    handleModelFix();
-  }, [routeParams.modelId, routeParams.modelVersionId]);
+    currentMode == 'fix' && handleModelFix();
+  }, [modelId, routeParams.modelVersionId]);
 
   const handleModelCreate = (event: MouseEvent) => {
     event.preventDefault();
 
     methods.handleSubmit(
       async (modelCreate) => {
-        if (modelCreate.config.framework === 'torch') {
-          const result = await checkModel({
-            trainingCheckRequest: {
-              modelSpec: modelCreate.config,
-            },
-          });
-          if ('error' in result || result.data.stackTrace)
-            return notifyError('Error creating model');
+        try {
+          const model = await createModel({ modelCreate }).unwrap();
+
+          navigate(`/models/${currentMode == 'fix' ? modelId : model.id}`);
+        } catch (error) {
+          notifyError('Unable to process, please adjust your model');
         }
-        return createModel({
-          modelCreate,
-        }).then((result) => {
-          if ('data' in result) {
-            navigate(`/models/${result.data.id}`);
-          }
-        });
       },
       (errors) => {
         notifyError('Error creating model');
@@ -302,8 +305,6 @@ const ModelCreateV2 = ({
   const [getExistingModel, { data: existingModel, isLoading: fetchingModel }] =
     modelsApi.useLazyGetModelQuery();
 
-  const registeredModel = searchParams.get('registeredModel');
-
   useEffect(() => {
     handleRegisteredModel();
   }, [registeredModel]);
@@ -371,6 +372,15 @@ const ModelCreateV2 = ({
       );
   };
 
+  const handleClearRegisteredModel = () => {
+    setSearchParams('', {
+      replace: true,
+      state: {},
+    });
+
+    setCurrentMode('creation');
+  };
+
   const handlePrevious = () => {
     const newStep = activeStep - 1;
     onStepChange(newStep, activeStep);
@@ -384,7 +394,12 @@ const ModelCreateV2 = ({
     {
       title: 'Model Description',
       stepId: 'model-description',
-      content: <ModelConfigForm control={control} />,
+      content: (
+        <ModelConfigForm
+          control={control}
+          onClear={handleClearRegisteredModel}
+        />
+      ),
     },
     {
       title: 'Model Setup',
@@ -426,9 +441,7 @@ const ModelCreateV2 = ({
             )}
           </div>
           <StackTrace
-            stackTrace={
-              configCheckData?.stackTrace || modelVersionToFix?.checkStackTrace
-            }
+            stackTrace={modelVersionToFix?.checkStackTrace}
             message={
               'An exception is raised during your model configuration for this dataset'
             }
@@ -454,7 +467,21 @@ const ModelCreateV2 = ({
                 </Step>
               ))}
             </Stepper>
-            {steps[activeStep].content}
+            {currentMode == 'fix' && !modelVersionToFix ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  my: 15,
+                }}
+              >
+                <CircularProgress sx={{ mt: 3 }} size={50} />
+              </Box>
+            ) : (
+              steps[activeStep].content
+            )}
             <Box key="footer" sx={{ mt: 2, ml: 3 }}>
               {activeStep !== 0 && (
                 <Button
@@ -462,7 +489,7 @@ const ModelCreateV2 = ({
                   variant="contained"
                   sx={{ mr: 3 }}
                   data-testid="previous"
-                  disabled={checkingModel || creatingModel}
+                  disabled={creatingModel}
                 >
                   PREVIOUS
                 </Button>
@@ -478,11 +505,11 @@ const ModelCreateV2 = ({
               )}
               {activeStep === steps.length - 1 && (
                 <LoadingButton
-                  loading={checkingModel || creatingModel}
+                  loading={creatingModel}
                   variant="contained"
                   onClick={handleModelCreate}
                 >
-                  <span>CREATE</span>
+                  <span>{currentMode == 'creation' ? 'CREATE' : 'UPDATE'}</span>
                 </LoadingButton>
               )}
             </Box>
