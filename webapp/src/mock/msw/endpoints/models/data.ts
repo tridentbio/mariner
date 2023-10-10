@@ -1,3 +1,458 @@
+import { Model } from '@app/types/domain/models';
+
+export const models: Partial<Model>[] = [
+  {
+    id: 1,
+    name: 'SOME_MODEL_NAME',
+    mlflowName: '1-SOME_MODEL_NAME-c99289aa-f6d3-4c61-99f1-2a8e3cd24dd7',
+    description: 'cqlqrats',
+    createdById: 1,
+    createdBy: {
+      email: 'admin@mariner.trident.bio',
+      isActive: true,
+      isSuperuser: false,
+      fullName: undefined,
+      id: 1,
+    },
+    datasetId: 1,
+    dataset: {
+      id: 1,
+      name: 'IRIS_DATASET_NAME',
+      description: 'rhuxbedsfawiyrddnoicssmc',
+      rows: 10,
+      columns: 8,
+      bytes: 340,
+      dataUrl: 'datasets/73fbd8c90c3d3046c83aceab7d2ce8a2.csv',
+      splitTarget: '60-20-20',
+      splitActual: undefined,
+      splitType: 'random',
+      createdAt: '2023-09-25T16:58:41.791011+00:00',
+      updatedAt: '2023-09-25T16:58:41.791014+00:00',
+      createdById: 1,
+      columnsMetadata: [
+        {
+          dataType: {
+            domainKind: 'numeric',
+            unit: 'mole',
+          },
+          description: 'egqfbemnyhrq',
+          pattern: 'sepal_length',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'numeric',
+            unit: 'mole',
+          },
+          description: 'gsqkmfwiwgoe',
+          pattern: 'sepal_width',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'numeric',
+            unit: 'mole',
+          },
+          description: 'ngxgfmamiwsr',
+          pattern: 'petal_length',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'numeric',
+            unit: 'mole',
+          },
+          description: 'juyravjmjwfi',
+          pattern: 'petal_width',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'categorical',
+            classes: {
+              '0': 0,
+              '1': 1,
+              '2': 2,
+            },
+          },
+          description: 'lmvojcloxykm',
+          pattern: 'species',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'categorical',
+            classes: {
+              '0': 0,
+              '1': 1,
+            },
+          },
+          description: 'xgecsyhpcexh',
+          pattern: 'large_petal_length',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'categorical',
+            classes: {
+              '0': 0,
+              '1': 1,
+            },
+          },
+          description: 'enlggptmadkh',
+          pattern: 'large_petal_width',
+          datasetId: 1,
+        },
+      ],
+      readyStatus: 'ready',
+      errors: undefined,
+    },
+    versions: [
+      {
+        id: 1,
+        modelId: 1,
+        name: 'test model version',
+        description: 'fwscttrs',
+        mlflowVersion: '25',
+        mlflowModelName:
+          '1-SOME_MODEL_NAME-c99289aa-f6d3-4c61-99f1-2a8e3cd24dd7',
+        config: {
+          name: 'test model version',
+          framework: 'torch',
+          spec: {
+            layers: [
+              {
+                type: 'fleet.model_builder.layers.Concat',
+                name: 'Concat-0',
+                constructorArgs: {
+                  dim: 1,
+                },
+                forwardArgs: {
+                  xs: ['$sepal_length', '$sepal_width'],
+                },
+              },
+              {
+                type: 'torch.nn.Linear',
+                name: 'Linear-1',
+                constructorArgs: {
+                  in_features: 2,
+                  out_features: 16,
+                  bias: true,
+                },
+                forwardArgs: {
+                  input: '$Concat-0',
+                },
+              },
+              {
+                type: 'torch.nn.ReLU',
+                name: 'ReLU-2',
+                constructorArgs: {
+                  inplace: false,
+                },
+                forwardArgs: {
+                  input: '$Linear-1',
+                },
+              },
+              {
+                type: 'torch.nn.Linear',
+                name: 'Linear-3',
+                constructorArgs: {
+                  in_features: 16,
+                  out_features: 16,
+                  bias: true,
+                },
+                forwardArgs: {
+                  input: '$ReLU-2',
+                },
+              },
+              {
+                type: 'torch.nn.ReLU',
+                name: 'ReLU-4',
+                constructorArgs: {
+                  inplace: false,
+                },
+                forwardArgs: {
+                  input: '$Linear-3',
+                },
+              },
+              {
+                type: 'torch.nn.Linear',
+                name: 'Linear-5',
+                constructorArgs: {
+                  in_features: 16,
+                  out_features: 1,
+                  bias: true,
+                },
+                forwardArgs: {
+                  input: '$ReLU-4',
+                },
+              },
+            ],
+          },
+          dataset: {
+            name: 'IRIS_DATASET_NAME',
+            strategy: 'forwardArgs',
+            targetColumns: [
+              {
+                name: 'large_petal_length',
+                dataType: {
+                  domainKind: 'categorical',
+                  classes: {
+                    '0': 0,
+                    '1': 1,
+                  },
+                },
+                outModule: 'Linear-5',
+                lossFn: 'torch.nn.BCEWithLogitsLoss',
+                columnType: 'binary',
+              },
+            ],
+            featureColumns: [
+              {
+                name: 'sepal_length',
+                dataType: {
+                  domainKind: 'numeric',
+                  unit: 'mole',
+                },
+              },
+              {
+                name: 'sepal_width',
+                dataType: {
+                  domainKind: 'numeric',
+                  unit: 'mole',
+                },
+              },
+            ],
+            featurizers: [],
+            transforms: [],
+          },
+        },
+        createdAt: '2023-09-25T16:58:49.069842+00:00',
+        updatedAt: '2023-09-25T16:58:49.069842',
+      },
+    ],
+    columns: [
+      {
+        modelId: 1,
+        columnName: 'sepal_length',
+        columnType: 'feature',
+      },
+      {
+        modelId: 1,
+        columnName: 'sepal_width',
+        columnType: 'feature',
+      },
+      {
+        modelId: 1,
+        columnName: 'large_petal_length',
+        columnType: 'target',
+      },
+    ],
+    createdAt: '2023-09-25T16:58:48.179663',
+    updatedAt: '2023-09-25T16:58:48.179663',
+  },
+  {
+    id: 2,
+    name: 'xcpakbes',
+    mlflowName: '1-xcpakbes-8d16908f-de8a-498b-a538-ac3034ab243f',
+    description: 'cmyfnnsw',
+    createdById: 1,
+    createdBy: {
+      email: 'admin@mariner.trident.bio',
+      isActive: true,
+      isSuperuser: false,
+      fullName: undefined,
+      id: 1,
+    },
+    datasetId: 1,
+    dataset: {
+      id: 1,
+      name: 'IRIS_DATASET_NAME',
+      description: 'rhuxbedsfawiyrddnoicssmc',
+      rows: 10,
+      columns: 8,
+      bytes: 340,
+      dataUrl: 'datasets/73fbd8c90c3d3046c83aceab7d2ce8a2.csv',
+      splitTarget: '60-20-20',
+      splitActual: undefined,
+      splitType: 'random',
+      createdAt: '2023-09-25T16:58:41.791011+00:00',
+      updatedAt: '2023-09-25T16:58:41.791014+00:00',
+      createdById: 1,
+      columnsMetadata: [
+        {
+          dataType: {
+            domainKind: 'numeric',
+            unit: 'mole',
+          },
+          description: 'egqfbemnyhrq',
+          pattern: 'sepal_length',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'numeric',
+            unit: 'mole',
+          },
+          description: 'gsqkmfwiwgoe',
+          pattern: 'sepal_width',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'numeric',
+            unit: 'mole',
+          },
+          description: 'ngxgfmamiwsr',
+          pattern: 'petal_length',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'numeric',
+            unit: 'mole',
+          },
+          description: 'juyravjmjwfi',
+          pattern: 'petal_width',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'categorical',
+            classes: {
+              '0': 0,
+              '1': 1,
+              '2': 2,
+            },
+          },
+          description: 'lmvojcloxykm',
+          pattern: 'species',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'categorical',
+            classes: {
+              '0': 0,
+              '1': 1,
+            },
+          },
+          description: 'xgecsyhpcexh',
+          pattern: 'large_petal_length',
+          datasetId: 1,
+        },
+        {
+          dataType: {
+            domainKind: 'categorical',
+            classes: {
+              '0': 0,
+              '1': 1,
+            },
+          },
+          description: 'enlggptmadkh',
+          pattern: 'large_petal_width',
+          datasetId: 1,
+        },
+      ],
+      readyStatus: 'ready',
+      errors: undefined,
+    },
+    versions: [
+      {
+        id: 2,
+        modelId: 2,
+        name: 'ysjoyejs',
+        description: 'aqabeota',
+        mlflowVersion: undefined,
+        mlflowModelName: '1-xcpakbes-8d16908f-de8a-498b-a538-ac3034ab243f',
+        config: {
+          framework: 'sklearn',
+          name: 'ysjoyejs',
+          dataset: {
+            name: 'IRIS_DATASET_NAME',
+            strategy: 'pipeline',
+            targetColumns: [
+              {
+                name: 'species',
+                dataType: {
+                  domainKind: 'categorical',
+                  classes: {
+                    '0': 0,
+                    '1': 1,
+                    '2': 2,
+                  },
+                },
+                transforms: [],
+                featurizers: [
+                  {
+                    type: 'sklearn.preprocessing.OneHotEncoder',
+                    constructorArgs: undefined,
+                  },
+                ],
+              },
+            ],
+            featureColumns: [
+              {
+                name: 'sepal_length',
+                dataType: {
+                  domainKind: 'numeric',
+                },
+                transforms: [
+                  {
+                    type: 'sklearn.preprocessing.StandardScaler',
+                    constructorArgs: {},
+                  },
+                ],
+                featurizers: [],
+              },
+              {
+                name: 'sepal_width',
+                dataType: {
+                  domainKind: 'numeric',
+                },
+                transforms: [],
+                featurizers: [],
+              },
+            ],
+          },
+          spec: {
+            model: {
+              type: 'sklearn.ensemble.RandomForestClassifier',
+              taskType: ['multiclass'],
+              constructorArgs: {
+                n_estimators: 100,
+                criterion: 'entropy',
+              },
+              fitArgs: undefined,
+            },
+          },
+        },
+        createdAt: '2023-10-02T16:17:45.731449+00:00',
+        updatedAt: '2023-10-02T16:17:45.731449',
+      },
+    ],
+    columns: [
+      {
+        modelId: 2,
+        columnName: 'sepal_length',
+        columnType: 'feature',
+      },
+      {
+        modelId: 2,
+        columnName: 'sepal_width',
+        columnType: 'feature',
+      },
+      {
+        modelId: 2,
+        columnName: 'species',
+        columnType: 'target',
+      },
+    ],
+    createdAt: '2023-10-02T16:17:42.193525',
+    updatedAt: '2023-10-02T16:17:42.193525',
+  },
+];
+
 export const modelOptionsData = [
   {
     classPath: 'fleet.model_builder.layers.OneHot',

@@ -168,7 +168,7 @@ export const fillDatasetCols = (cols: (ColumnConfig | SimpleColumnConfig)[], col
   cols.map(col => {
     const colId = getColumnConfigTestId(col! as (ColumnConfig | SimpleColumnConfig))
     
-    cy.get(`li[data-testid="${colId}"`)
+    cy.get(`li[data-testid="${colId}"]`)
       .click();
   })
 
