@@ -1,6 +1,7 @@
 """
 Entrypoint to run the mariner API
 """
+import json
 import logging
 import logging.config
 import os
@@ -10,11 +11,9 @@ import uvicorn
 
 from mariner.core.config import get_app_settings
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s    🚢 %(levelname)s %(filename)s:%(lineno)d - [%(name)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+with open("./log_config.json", "r", encoding="utf-8") as f:
+    log_config = json.load(f)
+    logging.config.dictConfig(log_config)
 
 LOG = logging.getLogger("mariner.api")
 
