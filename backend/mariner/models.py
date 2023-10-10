@@ -28,7 +28,10 @@ from mariner.exceptions import (
     ModelNotFound,
     ModelVersionNotFound,
 )
-from mariner.exceptions.model_exceptions import ModelVersionNotTrained
+from mariner.exceptions.model_exceptions import (
+    ModelVersionNotTrained,
+    ModelVersionNotUpdatable,
+)
 from mariner.schemas.api import ApiBaseModel
 from mariner.schemas.model_schemas import (
     Model,
@@ -379,8 +382,8 @@ def delete_model(db: Session, user: UserEntity, model_id: int) -> Model:
     return parsed_model
 
 
-def update_model_version(
-    db: Session, user: UserEntity, version_id: int
+async def update_model_version(
+    db: Session, user: UserEntity, version_id: int, model_id: int | None
 ) -> ModelVersion:
     """
     Updates a single model version.
@@ -398,4 +401,32 @@ def update_model_version(
         is not in the database.
         ModelVersionNotUpdatable: If the model version is not updatable.
     """
-    pass
+    modelversion = model_store.get_model_version(db, version_id)
+    if not modelversion:
+        raise ModelVersionNotFound("Model version not found")
+    if model_id is not None and modelversion.model_id != model_id:
+        raise ModelVersionNotFound(
+            f"Model version not found in model with id {model_id}"
+        )
+
+    if modelversion.check_status != "FAILED":
+        raise ModelVersionNotUpdatable(
+            "Only allowed to update model versions that have failed the check status"
+        )
+    modelversion = model_store.update_model_version(
+        db, version_id, {"check_status": None}
+    )
+    task = start_check_model_step_exception(
+        ModelVersion.from_orm(modelversion),
+        user=user,
+        task_control=get_task_control(),
+    )
+    coroutine = _make_coroutine(task)
+    task = asyncio.create_task(coroutine)
+    task.add_done_callback(
+        lambda _: handle_model_check_finished(
+            task_args={"model_version_id": modelversion.id},
+            task_control=get_task_control(),
+        )
+    )
+    return ModelVersion.from_orm(modelversion)
