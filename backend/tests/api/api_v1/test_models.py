@@ -28,6 +28,7 @@ from mariner.db.session import SessionLocal
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
+from mariner.schemas.dataset_schemas import Dataset as DatasetSchema
 from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from tests.fixtures.model import mock_model, setup_create_model
@@ -366,6 +367,70 @@ def test_get_model_version(
     assert res.status_code == 200
     body = res.json()
     assert body["name"] == some_model.name
+
+
+# @pytest.mark.integration
+# def test_post_check_config_good_model(
+#     some_dataset: DatasetEntity,
+#     normal_user_token_headers: dict[str, str],
+#     client: TestClient,
+# ):
+#     payload = TrainingCheckRequest(
+#         model_spec=model_config(dataset_name=some_dataset.name)
+#     )
+#     res = client.post(
+#         f"{get_app_settings('server').host}/api/v1/models/check-config",
+#         headers=normal_user_token_headers,
+#         json=payload.dict(),
+#     )
+#     assert res.status_code == 200, res.json()
+#     body = res.json()
+#     assert "output" in body
+#
+# @pytest.mark.integration
+# def test_post_check_config_bad_model(
+#     db: Session,
+#     some_dataset: DatasetEntity,
+#     normal_user_token_headers: dict[str, str],
+#     client: TestClient,
+# ):
+#     model_path = "tests/data/yaml/model_fails_on_training.yml"
+#     regressor: TorchModelSpec = TorchModelSpec.from_yaml(model_path)
+#     model = CustomModel(
+#         config=regressor.spec, dataset_config=regressor.dataset
+#     )
+#     regressor.dataset.name = some_dataset.name
+#     user = get_test_user(db)
+#     dataset = DatasetSchema.from_orm(
+#         dataset_sql.dataset_store.get_by_name(
+#             db, regressor.dataset.name, user_id=user.id
+#         )
+#     )
+#     torch_dataset = MarinerTorchDataset(
+#         converts_file_to_dataframe(dataset.get_dataset_file()),
+#         dataset_config=regressor.dataset,
+#     )
+#     dataloader = DataLoader(torch_dataset, batch_size=1)
+#     batch = next(iter(dataloader))
+#     out = model(batch)
+#     assert out != None, "Model forward is fine"
+#     try:
+#         model.training_step(batch, 0)
+#         pytest.fail("training_step should fail")
+#     except Exception:
+#         pass
+#
+#     res = client.post(
+#         f"{get_app_settings('server').host}/api/v1/models/check-config",
+#         headers=normal_user_token_headers,
+#         json={"modelSpec": regressor.dict()},
+#     )
+#     assert res.status_code == 200, res.json()
+#     body = res.json()
+#     assert body["output"] == None
+#     assert not body["output"]
+#     assert "stackTrace" in body
+#     assert len(body["stackTrace"].split("\n")) > 1
 
 
 def test_get_name_suggestion(

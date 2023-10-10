@@ -19,6 +19,8 @@ def is_compressed(file: Union[bytes, IO]) -> bool:
         return file_prefix == gzip_mark
     elif isinstance(file, bytes):
         return file[0:2] == gzip_mark
+    elif isinstance(file, str):
+        return bytes(file.encode("utf-8"))[0:2] == gzip_mark
     else:
         raise TypeError(
             f"file must be of type io.TextIOBase or bytes, not {type(file)}"

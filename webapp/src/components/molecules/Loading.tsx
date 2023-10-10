@@ -28,7 +28,7 @@ const Loading = ({ isLoading, message, ...boxProps }: LoadingProps) => {
       }}
       {...boxProps}
     >
-      <CircularProgress />
+      <CircularProgress size={30} />
       <Typography marginLeft={3} width="80%">
         {message}
         {dots}

@@ -49,7 +49,7 @@ LOG.setLevel(logging.INFO)
 
 def start_check_model_step_exception(
     model_version: ModelVersion, user: UserEntity, task_control: TaskControl
-) -> TrainingCheckResponse:
+) -> ray.ObjectRef[TrainingCheckResponse]:
     """Checks the steps of a pytorch lightning model built from config.
 
     Steps are checked before creating the model on the backend, so the user may fix

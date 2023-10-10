@@ -27,7 +27,8 @@ class TrainingCheckResponse:
 @ray.remote
 class ModelCheckActor:
     """
-    This ray actors performs long running checks in a model.
+    Actor for checking if a model config can be used for creating a model that
+    will train without exceptions.
     """
 
     def check_model_steps(
@@ -45,12 +46,26 @@ class ModelCheckActor:
         Returns:
             The model output
         """
-
         try:
-            df = converts_file_to_dataframe(dataset.get_dataset_file())
+            df = converts_file_to_dataframe(
+                dataset.get_dataset_file(nlines=10)
+            )
             if config.framework == "torch" or isinstance(
                 config, TorchModelSpec
             ):
+                torch_dataset = MarinerTorchDataset(
+                    data=df,
+                    dataset_config=config.dataset,
+                )
+                dataloader = DataLoader(torch_dataset)
+                model = CustomModel(
+                    config=config.spec, dataset_config=config.dataset
+                )
+                sample = next(iter(dataloader))
+                model.predict_step(sample, 0)
+                output = model.training_step(sample, 0)
+                model.validation_step(sample, 0)
+                model.test_step(sample, 0)
 
                 torch_dataset = MarinerTorchDataset(
                     data=df,

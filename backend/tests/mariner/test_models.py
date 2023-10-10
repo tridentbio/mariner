@@ -10,6 +10,7 @@ from mariner import models as model_ctl
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities.model import ModelVersion
+from mariner.schemas.dataset_schemas import Dataset as DatasetSchema
 from mariner.schemas.model_schemas import Model
 from mariner.stores.dataset_sql import dataset_store
 from tests.fixtures.model import model_config
@@ -21,7 +22,9 @@ from tests.fixtures.user import get_test_user
 async def test_get_model_prediction(db: Session, some_trained_model: Model):
     version = some_trained_model.versions[-1]
     test_user = get_test_user(db)
-    ds = dataset_store.get(db, some_trained_model.dataset_id)
+    ds = DatasetSchema.from_orm(
+        dataset_store.get(db, some_trained_model.dataset_id)
+    )
     assert ds
     df = converts_file_to_dataframe(ds.get_dataset_file())
     df = df.to_dict()
