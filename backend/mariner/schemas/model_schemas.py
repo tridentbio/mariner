@@ -2,12 +2,12 @@
 Model related DTOs
 """
 from datetime import datetime
-from typing import Any, List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
 
-from fleet.base_schemas import FleetModelSpec, TorchModelSpec
+from fleet.base_schemas import FleetModelSpec
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User
@@ -137,6 +137,7 @@ class ModelVersionCreateRepo(BaseModel):
     model_id: int
     name: str
     config: FleetModelSpec
+    check_status: Optional[Literal["OK", "FAILED"]] = None
 
 
 class ModelVersionUpdateRepo(BaseModel):
@@ -144,9 +145,10 @@ class ModelVersionUpdateRepo(BaseModel):
     Model version update object
     """
 
-    mlflow_version: str
-    check_status: Optional[Literal["OK", "FAILED"]] = None
-    check_stack_trace: Optional[str] = None
+    config: Optional[FleetModelSpec]
+    mlflow_version: Optional[str]
+    check_status: Optional[Literal["OK", "FAILED"]]
+    check_stack_trace: Optional[str]
 
 
 LossType = Literal[
@@ -163,16 +165,3 @@ class LossOption(ApiBaseModel):
 
     key: LossType
     label: str
-
-
-class TrainingCheckRequest(ApiBaseModel):
-    """Request to a request to check if a model version fitting/training works"""
-
-    model_spec: TorchModelSpec
-
-
-class TrainingCheckResponse(ApiBaseModel):
-    """Response to a request to check if a model version fitting/training works"""
-
-    stack_trace: Optional[str] = None
-    output: Optional[Any] = None

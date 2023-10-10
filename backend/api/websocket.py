@@ -2,7 +2,7 @@
 Package defines all websocket related functionality.
 """
 import logging
-from typing import Any, Dict, Literal
+from typing import Any, Dict, List, Literal
 from uuid import uuid4
 
 from fastapi import WebSocket, WebSocketDisconnect
@@ -27,6 +27,7 @@ class WebSocketResponse(ApiBaseModel):
         "update-running-metrics",
         "dataset-process-finish",
         "update-deployment",
+        "update-model",
     ]
     data: Any
 
@@ -156,7 +157,7 @@ class ConnectionManager:
                     self.active_connections.pop(connection_id)
 
     async def send_message_to_user(
-        self, user_id: int, message: WebSocketResponse
+        self, user_id: int | List[int], message: WebSocketResponse
     ):
         """Sends a message to a specific user
 
@@ -166,10 +167,13 @@ class ConnectionManager:
             user_id (int): id from user to send the message
             message (WebSocketMessage): message to be sent
         """
-        if user_id not in self.active_connections:
-            return
+        if isinstance(user_id, int):
+            user_id = [user_id]
+        for id_ in user_id:
+            if id_ not in self.active_connections:
+                return
 
-        await self.active_connections[user_id].send_message(message)
+            await self.active_connections[id_].send_message(message)
 
     async def broadcast(
         self, message: WebSocketResponse, public: bool = False
@@ -196,7 +200,7 @@ def get_websockets_manager() -> ConnectionManager:
     Returns:
         ConnectionManager: singleton instance of the connection manager
     """
-    global _manager
+    global _manager  # pylint: disable=global-statement
     if not _manager:
         _manager = ConnectionManager()
     return _manager

@@ -1,11 +1,16 @@
+from datetime import datetime
+
 import pytest
+import ray
 from sqlalchemy.orm.session import Session
 
+from fleet.ray_actors.tasks import get_task_control
 from fleet.utils.dataset import converts_file_to_dataframe
 from mariner import models as model_ctl
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
-from mariner.schemas.model_schemas import Model, TrainingCheckRequest
+from mariner.entities.model import ModelVersion
+from mariner.schemas.model_schemas import Model
 from mariner.stores.dataset_sql import dataset_store
 from tests.fixtures.model import model_config
 from tests.fixtures.user import get_test_user
@@ -49,11 +54,24 @@ async def test_check_forward_exception_good_regressor(
     regressor = model_config(
         model_type="regressor", dataset_name=some_dataset.name
     )
-    user = get_test_user(db)
-    check = await model_ctl.check_model_step_exception(
-        db, TrainingCheckRequest(model_spec=regressor), user=user
-    )
     assert regressor.dataset.target_columns[0].loss_fn
+    user = get_test_user(db)
+    model_version = ModelVersion(
+        id=1,
+        model_id=1,
+        description="askdas",
+        name="iajsdijiasd",
+        mlflow_version="iasjdijasda",
+        mlflow_model_name="asjdkasjdk",
+        config=regressor,
+        created_by_id=user.id,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+    check = model_ctl.start_check_model_step_exception(
+        model_version=model_version, user=user, task_control=get_task_control()
+    )
+    check = ray.get(check)
     assert check.stack_trace is None, check.stack_trace
     assert check.output is not None
 
