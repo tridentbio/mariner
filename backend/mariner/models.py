@@ -357,3 +357,25 @@ def delete_model(db: Session, user: UserEntity, model_id: int) -> Model:
     parsed_model = Model.from_orm(model)
     model_store.delete_by_id(db, model_id)
     return parsed_model
+
+
+def update_model_version(
+    db: Session, user: UserEntity, version_id: int
+) -> ModelVersion:
+    """
+    Updates a single model version.
+
+    Model versions are only open for updates when a model training check points to a failure.
+
+    Args:
+        db: Session with the database.
+        user: User making the request.
+        version_id: Model version id to update.
+    Returns:
+        Updated model version.
+    Raises:
+        ModelVersionNotFound: If the version from request.model_version_id
+        is not in the database.
+        ModelVersionNotUpdatable: If the model version is not updatable.
+    """
+    pass
