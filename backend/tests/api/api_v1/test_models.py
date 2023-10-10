@@ -2,13 +2,16 @@
 Tests the mariner.models package
 """
 
+import time
+from typing import Literal
+
 import pytest
+import ray
 from pydantic import AnyHttpUrl
 from sqlalchemy.orm.session import Session
 from starlette import status
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
-from torch_geometric.loader import DataLoader
 
 from fleet.base_schemas import TorchModelSpec
 from fleet.dataset_schemas import (
@@ -18,21 +21,16 @@ from fleet.dataset_schemas import (
 )
 from fleet.model_builder import layers_schema as layers
 from fleet.model_builder.schemas import TorchModelSchema
-from fleet.torch_.models import CustomModel
-from fleet.utils.data import MarinerTorchDataset
-from fleet.utils.dataset import converts_file_to_dataframe
+from fleet.ray_actors.model_check_actor import TrainingCheckResponse
+from fleet.ray_actors.tasks import get_task_control
 from mariner.core.config import get_app_settings
+from mariner.db.session import SessionLocal
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
 from mariner.schemas.dataset_schemas import QuantityDataType
-from mariner.schemas.model_schemas import (
-    Model,
-    ModelCreate,
-    TrainingCheckRequest,
-)
-from mariner.stores import dataset_sql
-from tests.fixtures.model import mock_model, model_config, setup_create_model
+from mariner.schemas.model_schemas import Model, ModelCreate
+from tests.fixtures.model import mock_model, setup_create_model
 from tests.fixtures.user import get_test_user
 from tests.utils.utils import random_lower_string
 
@@ -91,15 +89,14 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
 
 @pytest.mark.parametrize("framework", ("torch", "sklearn"))
 @pytest.mark.integration
-def test_post_models_success(
-    db: Session,
+@pytest.mark.asyncio
+async def test_post_models_success(
     client: TestClient,
     normal_user_token_headers: dict[str, str],
+    framework: Literal["torch", "sklearn"],
     some_dataset: DatasetEntity,  # noqa
     sampl_dataset: DatasetEntity,  # noqa
-    framework: str,
 ):
-    user = get_test_user(db)
     model = mock_model(framework=framework)
     res = client.post(
         f"{get_app_settings('server').host}/api/v1/models/",
@@ -107,11 +104,10 @@ def test_post_models_success(
         headers=normal_user_token_headers,
     )
     body = res.json()
-
     assert res.status_code == HTTP_200_OK, body["detail"]
     assert body["name"] == model.name
     assert "columns" in body
-    assert body["createdById"] == user.id
+    assert body["createdById"] == some_dataset.created_by_id
     assert body["description"] == model.model_description
     assert "versions" in body
     assert len(body["versions"]) == 1
@@ -120,11 +116,42 @@ def test_post_models_success(
     assert version["config"]["name"] is not None
     assert "description" in version
     assert version["description"] == model.model_version_description
+    if framework == "torch":
+        assert version["checkStatus"] is None
+    else:
+        assert version["checkStatus"] == "OK"
+    assert version["checkStackTrace"] is None
     assert model is not None
-    db_model_config = db.query(ModelVersion).filter(
-        ModelVersion.id == version["id"] and ModelVersion.name == model_version
-    )
-    assert db_model_config is not None
+
+    if framework == "torch":
+        # Assert the model checking task is running:
+        ids, tasks = get_task_control().get_tasks(
+            {"model_version_id": version["id"]}
+        )
+        assert (
+            len(tasks) == len(ids) == 1
+        ), f"Expected 1 task got {len(tasks)} tasks and {len(ids)} metadatas"
+        task = tasks[0]
+        result = ray.get(task)
+        # Quick sleep because we're waiting for the ray task
+        # not the asyncio task that wraps the ray task
+        # and follows up with the model version update
+        time.sleep(2)
+        assert isinstance(result, TrainingCheckResponse), (
+            f"Expected TrainingCheckResponse got {type(result)} "
+            f"with value {result}"
+        )
+        print(repr(result))
+        with SessionLocal() as db:
+            model_version = (
+                db.query(ModelVersion)
+                .filter(ModelVersion.id == version["id"])
+                .first()
+            )
+            print(model_version.id)
+            assert (
+                model_version.check_status == "OK"
+            ), f"Expected check_status to be OK got {model_version.check_status}\nmodel_version.check_stack_trace:\n{model_version.check_stack_trace}"
 
 
 @pytest.mark.integration
@@ -341,146 +368,68 @@ def test_get_model_version(
     assert body["name"] == some_model.name
 
 
-@pytest.mark.integration
-def test_post_check_config_good_model(
-    some_dataset: DatasetEntity,
-    normal_user_token_headers: dict[str, str],
-    client: TestClient,
-):
-    payload = TrainingCheckRequest(
-        model_spec=model_config(dataset_name=some_dataset.name)
-    )
-    res = client.post(
-        f"{get_app_settings('server').host}/api/v1/models/check-config",
-        headers=normal_user_token_headers,
-        json=payload.dict(),
-    )
-    assert res.status_code == 200, res.json()
-    body = res.json()
-    assert "output" in body
-
-
-@pytest.mark.integration
-def test_post_check_config_good_model2(
-    some_dataset: DatasetEntity,
-    normal_user_token_headers: dict[str, str],
-    client: TestClient,
-):
-    payload = TrainingCheckRequest(
-        model_spec=model_config(
-            dataset_name=some_dataset.name,
-            model_type="regressor-with-categorical",
-        )
-    )
-    res = client.post(
-        f"{get_app_settings('server').host}/api/v1/models/check-config",
-        headers=normal_user_token_headers,
-        json=payload.dict(),
-    )
-    assert res.status_code == 200, res.json()
-    body = res.json()
-    assert "output" in body
-
-
-@pytest.mark.integration
-def test_post_check_config_good_model3(
-    some_dataset: DatasetEntity,
-    normal_user_token_headers: dict[str, str],
-    client: TestClient,
-):
-    payload = {
-        "modelSpec": {
-            "framework": "torch",
-            "name": "asd",
-            "dataset": {
-                "featureColumns": [
-                    {
-                        "name": "mwt",
-                        "dataType": {"domainKind": "numeric", "unit": "mole"},
-                    }
-                ],
-                "featurizers": [],
-                "targetColumns": [
-                    {
-                        "type": "output",
-                        "name": "tpsa",
-                        "dataType": {"domainKind": "numeric", "unit": "mole"},
-                        "forwardArgs": {"": ""},
-                        "outModule": "Linear-0",
-                        "columnType": "regression",
-                        "lossFn": "torch.nn.MSELoss",
-                    }
-                ],
-                "name": some_dataset.name,
-            },
-            "spec": {
-                "layers": [
-                    {
-                        "type": "torch.nn.Linear",
-                        "forwardArgs": {"input": "$mwt"},
-                        "constructorArgs": {
-                            "in_features": 1,
-                            "out_features": 1,
-                            "bias": True,
-                        },
-                        "name": "Linear-0",
-                    }
-                ]
-            },
-        }
-    }
-    res = client.post(
-        "api/v1/models/check-config",
-        json=payload,
-        headers=normal_user_token_headers,
-    )
-    assert res.status_code == HTTP_200_OK, res.json()
-    assert not res.json()["stackTrace"], res.json()["stackTrace"]
-    assert res.json()["output"] is not None, "check didn't return model output"
-
-
-@pytest.mark.integration
-def test_post_check_config_bad_model(
-    db: Session,
-    some_dataset: DatasetEntity,
-    normal_user_token_headers: dict[str, str],
-    client: TestClient,
-):
-    model_path = "tests/data/yaml/model_fails_on_training.yml"
-    regressor: TorchModelSpec = TorchModelSpec.from_yaml(model_path)
-    model = CustomModel(
-        config=regressor.spec, dataset_config=regressor.dataset
-    )
-    regressor.dataset.name = some_dataset.name
-    user = get_test_user(db)
-    dataset = dataset_sql.dataset_store.get_by_name(
-        db, regressor.dataset.name, user_id=user.id
-    )
-    torch_dataset = MarinerTorchDataset(
-        converts_file_to_dataframe(dataset.get_dataset_file()),
-        dataset_config=regressor.dataset,
-    )
-    dataloader = DataLoader(torch_dataset, batch_size=1)
-    batch = next(iter(dataloader))
-    out = model(batch)
-    assert out != None, "Model forward is fine"
-    try:
-        model.training_step(batch, 0)
-        pytest.fail("training_step should fail")
-    except Exception:
-        pass
-
-    res = client.post(
-        f"{get_app_settings('server').host}/api/v1/models/check-config",
-        headers=normal_user_token_headers,
-        json={"modelSpec": regressor.dict()},
-    )
-    assert res.status_code == 200, res.json()
-    body = res.json()
-    assert body["output"] == None
-    assert not body["output"]
-    assert "stackTrace" in body
-    assert len(body["stackTrace"].split("\n")) > 1
+# @pytest.mark.integration
+# def test_post_check_config_good_model(
+#     some_dataset: DatasetEntity,
+#     normal_user_token_headers: dict[str, str],
+#     client: TestClient,
+# ):
+#     payload = TrainingCheckRequest(
+#         model_spec=model_config(dataset_name=some_dataset.name)
+#     )
+#     res = client.post(
+#         f"{get_app_settings('server').host}/api/v1/models/check-config",
+#         headers=normal_user_token_headers,
+#         json=payload.dict(),
+#     )
+#     assert res.status_code == 200, res.json()
+#     body = res.json()
+#     assert "output" in body
+#
+# @pytest.mark.integration
+# def test_post_check_config_bad_model(
+#     db: Session,
+#     some_dataset: DatasetEntity,
+#     normal_user_token_headers: dict[str, str],
+#     client: TestClient,
+# ):
+#     model_path = "tests/data/yaml/model_fails_on_training.yml"
+#     regressor: TorchModelSpec = TorchModelSpec.from_yaml(model_path)
+#     model = CustomModel(
+#         config=regressor.spec, dataset_config=regressor.dataset
+#     )
+#     regressor.dataset.name = some_dataset.name
+#     user = get_test_user(db)
+#     dataset = DatasetSchema.from_orm(
+#         dataset_sql.dataset_store.get_by_name(
+#             db, regressor.dataset.name, user_id=user.id
+#         )
+#     )
+#     torch_dataset = MarinerTorchDataset(
+#         converts_file_to_dataframe(dataset.get_dataset_file()),
+#         dataset_config=regressor.dataset,
+#     )
+#     dataloader = DataLoader(torch_dataset, batch_size=1)
+#     batch = next(iter(dataloader))
+#     out = model(batch)
+#     assert out != None, "Model forward is fine"
+#     try:
+#         model.training_step(batch, 0)
+#         pytest.fail("training_step should fail")
+#     except Exception:
+#         pass
+#
+#     res = client.post(
+#         f"{get_app_settings('server').host}/api/v1/models/check-config",
+#         headers=normal_user_token_headers,
+#         json={"modelSpec": regressor.dict()},
+#     )
+#     assert res.status_code == 200, res.json()
+#     body = res.json()
+#     assert body["output"] == None
+#     assert not body["output"]
+#     assert "stackTrace" in body
+#     assert len(body["stackTrace"].split("\n")) > 1
 
 
 def test_get_name_suggestion(

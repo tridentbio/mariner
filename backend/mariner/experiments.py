@@ -19,7 +19,7 @@ from fleet.model_builder.optimizers import (
     SGDParamsSchema,
 )
 from fleet.model_functions import Result
-from fleet.ray_actors.tasks import TaskControl
+from fleet.ray_actors.tasks import get_task_control
 from fleet.ray_actors.training_actors import TrainingActor
 from mariner.core.aws import Bucket
 from mariner.core.config import get_app_settings
@@ -50,19 +50,6 @@ from mariner.tasks import ExperimentView, get_exp_manager
 
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
-
-# singleton with ray task control
-_task_control: Union[TaskControl, None] = None
-
-
-def _get_task_control() -> TaskControl:
-    """
-    Returns the singleton task control object.
-    """
-    global _task_control  # pylint: disable=global-statement
-    if not _task_control:
-        _task_control = TaskControl()
-    return _task_control
 
 
 async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
@@ -105,8 +92,8 @@ def handle_training_complete(task: Task, experiment_id: int):
     """
     with SessionLocal() as db:
         experiment = experiment_store.get(db, experiment_id)
-        task_ctl = _get_task_control()
-        assert experiment
+        task_ctl = get_task_control()
+        assert experiment, "Experiment not found"
         exception = task.exception()
         done = task.done()
 
@@ -210,7 +197,7 @@ async def create_model_training(
         ModelVersionNotFound: when model version in training_request is missing
     """
     model_version = model_store.get_model_version(
-        db, id=training_request.model_version_id
+        db, model_id=training_request.model_version_id
     )
 
     if not model_version:
@@ -230,6 +217,7 @@ async def create_model_training(
         {
             "learning_rate": training_request.config.optimizer.params.lr,
             "epochs": training_request.config.epochs,
+            "config": training_request.config.dict(),
         }
         if training_request.framework == "torch"
         else {}
@@ -246,9 +234,10 @@ async def create_model_training(
     if training_request.framework == "torch":
         experiment_payload["epochs"] = training_request.config.epochs
 
+    obj_in = ExperimentCreateRepo(**experiment_payload)
     experiment = experiment_store.create(
         db,
-        obj_in=ExperimentCreateRepo(**experiment_payload),
+        obj_in=obj_in,
     )
 
     training_actor = TrainingActor.options(**get_ray_options(training_request)).remote(  # type: ignore pylint: disable=no-member
@@ -273,7 +262,7 @@ async def create_model_training(
             "split_type": dataset.split_type,
         },
     )
-    _get_task_control().add_task(
+    get_task_control().add_task(
         training_actor,
         {
             "experiment_id": experiment.id,
@@ -301,7 +290,7 @@ def cancel_training(user: UserEntity, experiment_id: int):
         user: user that originated request.
         experiment_id: id of the experiment to be cancelled.
     """
-    task_ctl = _get_task_control()
+    task_ctl = get_task_control()
     ids, _ = task_ctl.get_tasks(
         metadata={
             "experiment_id": experiment_id,
@@ -449,6 +438,9 @@ def log_hyperparams(
     experiment_db = experiment_store.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
+    for key, value in experiment_db.hyperparams.items():
+        if key not in hyperparams:
+            hyperparams[key] = value
     update_obj = ExperimentUpdateRepo(hyperparams=hyperparams)
     experiment_store.update(db, db_obj=experiment_db, obj_in=update_obj)
 

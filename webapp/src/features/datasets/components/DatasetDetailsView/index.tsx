@@ -125,6 +125,7 @@ const DatasetDetailsView = (props: DatasetDetailsProps) => {
         </Box>
         <Box>
           <Link
+            sx={{ cursor: 'pointer' }}
             onClick={() =>
               dataset.dataUrl && downloadDataset(dataset.id, dataset.dataUrl)
             }

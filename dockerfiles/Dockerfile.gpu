@@ -34,7 +34,7 @@ COPY ./fleet /app/fleet
 COPY ./oauth_providers /app/oauth_providers
 COPY ./tests /app/tests
 
-COPY ./alembic.ini ./pylintrc ./pytest.ini /app/
+COPY ./alembic.ini ./pylintrc ./pytest.ini ./log_config.json /app/
 COPY ./scripts /app/scripts
 
 

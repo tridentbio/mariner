@@ -1,15 +1,12 @@
 import { ModelCreate } from "@app/rtk/generated/models"
-import { store } from "@app/store"
 import DataPreprocessingInput from "@components/organisms/ModelBuilder/DataPreprocessingInput"
 import { ModelBuilderContextProvider } from "@components/organisms/ModelBuilder/hooks/useModelBuilder"
 import { SimpleColumnConfig, StepValue } from "@components/organisms/ModelBuilder/types"
 import { getColumnConfigTestId, getStepValueLabelData } from "@components/organisms/ModelBuilder/utils"
 import { schema } from '@features/models/pages/ModelCreateV2'
 import { yupResolver } from "@hookform/resolvers/yup"
-import { ThemeProvider } from "@mui/system"
 import { FormProvider, NonUndefined, useForm } from "react-hook-form"
-import { Provider } from "react-redux"
-import { theme } from "theme"
+import { DefaultProviders } from "../support/DefaultProviders"
 
 describe('DataPreprocessingInput.cy.tsx', () => {
   const value = {
@@ -74,22 +71,20 @@ describe('DataPreprocessingInput.cy.tsx', () => {
     });
 
     return (
-      <Provider store={store}>
-        <ThemeProvider theme={theme}>
-          <FormProvider {...methods}>
-            <ModelBuilderContextProvider>
-              <DataPreprocessingInput
-                value={value?.config?.dataset?.featureColumns as SimpleColumnConfig[] || []}
-                type="featureColumns"
-              />
-              <DataPreprocessingInput
-                value={value?.config?.dataset?.targetColumns as SimpleColumnConfig[] || []}
-                type="targetColumns"
-              />
-            </ModelBuilderContextProvider>
-          </FormProvider>
-        </ThemeProvider>
-      </Provider>
+      <DefaultProviders>
+        <FormProvider {...methods}>
+          <ModelBuilderContextProvider>
+            <DataPreprocessingInput
+              value={value?.config?.dataset?.featureColumns as SimpleColumnConfig[] || []}
+              type="featureColumns"
+            />
+            <DataPreprocessingInput
+              value={value?.config?.dataset?.targetColumns as SimpleColumnConfig[] || []}
+              type="targetColumns"
+            />
+          </ModelBuilderContextProvider>
+        </FormProvider>
+      </DefaultProviders>
     )
   }
 

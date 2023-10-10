@@ -22,7 +22,7 @@ from pydantic import Field, validator
 from pydantic.main import BaseModel
 
 from fleet import data_types
-from mariner.core.aws import Bucket, download_s3
+from mariner.core.aws import Bucket, download_head, download_s3
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 
 SplitType = Literal["scaffold", "random"]
@@ -73,7 +73,16 @@ class Split(str):
 
     @no_type_check
     def __new__(cls, url: Optional[str], **kwargs) -> object:
-        return str.__new__(cls, cls._build(**kwargs) if url is None else url)
+        return str.__new__(
+            cls,
+            cls._build(
+                train_percents=kwargs["train_percents"],
+                val_percents=kwargs["val_percents"],
+                test_percents=kwargs["test_percents"],
+            )
+            if url is None
+            else url,
+        )
 
     @classmethod
     def _validate(cls, v):
@@ -87,8 +96,8 @@ class Split(str):
             instance.test_percents = splits[1]
             instance.val_percents = splits[2]
             return instance
-        except ValueError:
-            raise ValueError('Split should be string "int-int-int"')
+        except ValueError as exc:
+            raise ValueError('Split should be string "int-int-int"') from exc
 
 
 class DatasetsQuery(PaginatedApiQuery):
@@ -131,7 +140,7 @@ class SmileDataType(ApiBaseModel, data_types.SmileDataType):
     domain_kind: Literal["smiles"] = Field("smiles")
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, _):
         return "smiles"
 
 
@@ -142,7 +151,7 @@ class DNADataType(ApiBaseModel, data_types.DNADataType):
     is_ambiguous: bool = Field(False)
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, _):
         return "dna"
 
 
@@ -153,7 +162,7 @@ class RNADataType(ApiBaseModel, data_types.RNADataType):
     is_ambiguous: bool = Field(False)
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, _):
         return "rna"
 
 
@@ -163,7 +172,7 @@ class ProteinDataType(ApiBaseModel, data_types.ProteinDataType):
     domain_kind: Literal["protein"] = Field("protein")
 
     @validator("domain_kind")
-    def check_domain_kind(cls, v):
+    def check_domain_kind(cls, _):
         return "protein"
 
 
@@ -214,8 +223,8 @@ class ColumnMetadataFromJSONStr(str):
             instance = cls(v)
             instance.metadatas = metadatas
             return instance
-        except JSONDecodeError:
-            raise ValueError("Should be a json string")
+        except JSONDecodeError as exc:
+            raise ValueError("Should be a json string") from exc
 
 
 class DatasetBase(ApiBaseModel):
@@ -232,6 +241,7 @@ class DatasetBase(ApiBaseModel):
     split_target: Split
     split_actual: Optional[Split]
     split_type: SplitType
+    split_column: Optional[str] = None
     created_at: utc_datetime
     updated_at: utc_datetime
     created_by_id: int
@@ -284,14 +294,25 @@ class Dataset(DatasetBase):
 
     id: int
 
-    def get_dataset_file(self):
-        """Gets dataset file from s3.
+    def get_dataset_file(self, nlines: Optional[int] = None):
+        """Loads the dataset_file linked to this dataset from s3.
 
-        Gets dataset file stored in this dataset data_url attribute at
+        Gets dataset_file stored in this dataset data_url attribute at
         datasets bucket.
+
+
+        Args:
+            nlines: Number of lines to download from the dataset_file. If
+        None, the whole dataset_file is downloaded.
         """
-        assert self.data_url
-        return download_s3(self.data_url, Bucket.Datasets)
+        if not self.data_url:
+            raise ValueError("Dataset must have data_url")
+        if not nlines:
+            return download_s3(self.data_url, Bucket.Datasets)
+        else:
+            return download_head(
+                key=self.data_url, bucket=Bucket.Datasets.value, nlines=nlines
+            )
 
 
 class DatasetUpdate(ApiBaseModel):

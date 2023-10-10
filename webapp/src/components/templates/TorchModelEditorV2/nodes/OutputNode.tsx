@@ -34,7 +34,6 @@ const OutputNode = ({ editable = true, ...props }: InputNodeProps) => {
       handlesElement={
         <CustomHandle
           nodeId={props.data.name}
-          id=""
           total={1}
           order={0}
           type="target"

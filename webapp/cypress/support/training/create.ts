@@ -19,15 +19,16 @@ const checkTrainFinishes = (
   experimentName: string,
   timeout = 60000
 ): Cypress.Chainable<boolean> =>
-  // Recursively check if the experiment row contains 'Trained' status
-  cy.contains('tr', experimentName).then(($row) => {
-    if ($row.text().includes('Trained')) return cy.wrap(true);
-    else if (timeout <= 0) return cy.wrap(false);
-    else
-      return cy
-        .wait(1000)
-        .then(() => checkTrainFinishes(experimentName, timeout - 1000));
-  });
+  cy
+    .contains('tr', experimentName)
+    .contains('Trained', { timeout })
+    .then(($row) => {
+      debugger
+      const isTrained = $row.text().includes('Trained')
+      
+      return cy.wrap(isTrained)
+    })
+
 
 export const trainModel = (modelName?: string, config: TrainingConfig = {}, framework: 'torch' | 'sklearn' = 'torch') => {
   config = { ...defaultTrainingConfig, ...config };

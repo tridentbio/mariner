@@ -9,8 +9,6 @@ describe('/models/new - Suggestions', () => {
   const applyLayout = (layout: 'vertical' | 'horizontal' = 'horizontal') => {
     cy.get(`div[aria-label="Apply auto ${layout} layout"] button`).click();
     cy.get('button[title="fit view"]').click();
-    cy.get('button[aria-label="Close all components"]').click();
-    cy.get('button[aria-label="Open all components"]').click();
   };
 
   before(() => {

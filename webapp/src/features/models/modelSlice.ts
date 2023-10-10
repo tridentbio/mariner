@@ -68,12 +68,21 @@ export const modelSlice = createSlice({
         if (exp.id === action.payload.experimentId) {
           if (!exp.trainMetrics) exp.trainMetrics = {};
           if (action.payload.metrics) {
-            Object.entries(action.payload.metrics).forEach(([key, value]) => {
-              // @ts-ignore
-              exp.trainMetrics[key] = value;
-            });
+            const trainMetrics: { [key: string]: number } = {};
+            const valMetrics: { [key: string]: number } = {};
+            for (const [key, value] of Object.entries(action.payload.metrics)) {
+              if (key.startsWith('train')) {
+                trainMetrics[key] = value;
+              } else if (key.startsWith('val')) {
+                valMetrics[key] = value;
+              }
+            }
+            if (Object.keys(trainMetrics).length)
+              exp.trainMetrics = trainMetrics;
+            if (Object.keys(valMetrics).length) exp.valMetrics = valMetrics;
           }
-          if (exp.epochs) exp.progress = action.payload.epoch / exp.epochs;
+          if (exp.epochs)
+            exp.progress = (action.payload.epoch || 0) / exp.epochs;
           if (action.payload.stage) {
             if (action.payload.stage !== 'RUNNING') exp.progress = 1;
             exp.stage = action.payload.stage as TrainingStage;

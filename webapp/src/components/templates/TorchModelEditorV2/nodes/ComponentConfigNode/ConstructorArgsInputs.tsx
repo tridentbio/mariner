@@ -28,11 +28,7 @@ const ConstructorArgsInputs = ({
   const { options, editComponent, schema, suggestionsByNode, setNodes } =
     useTorchModelEditor();
 
-  if (!options) return null;
-
-  const option = options[props.data.type!];
-
-  if (!option || !option.component.constructorArgsSummary) return null;
+  const [argsForm, setArgsForm] = useState<{ [field: string]: any }>({});
 
   const editConstrutorArgs = () => {
     if (schema && editable) {
@@ -55,19 +51,21 @@ const ConstructorArgsInputs = ({
     }
   };
 
+  useEffect(() => {
+    editConstrutorArgs();
+  }, [argsForm]);
+
   const suggestions = suggestionsByNode[props.data.name] || [];
   const errors = suggestions.reduce(
     (acc, sug) => ({ ...acc, ...sug.getConstructorArgsErrors() }),
     {} as Record<string, string>
   );
 
-  const [argsForm, setArgsForm] = useState<{ [field: string]: any }>({});
-
-  useEffect(() => {
-    editConstrutorArgs();
-  }, [argsForm]);
+  const option = options?.[props.data.type!];
 
   const ArgsList = useMemo(() => {
+    if (!option) return null;
+
     return (
       <>
         {Object.entries(option.component.constructorArgsSummary)
@@ -180,7 +178,10 @@ const ConstructorArgsInputs = ({
           .filter((el) => !!el)}
       </>
     );
-  }, [editable, props.data]);
+  }, [editable, props.data, option]);
+
+  if (!options) return null;
+  if (!option || !option.component.constructorArgsSummary) return null;
 
   return ArgsList;
 };

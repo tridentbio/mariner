@@ -2,12 +2,13 @@
 Package defines all websocket related functionality.
 """
 import logging
-from typing import Any, Dict, Literal
+from typing import Any, Dict, List, Literal
 from uuid import uuid4
 
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
+from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketState
 
 from api import deps
@@ -27,6 +28,7 @@ class WebSocketResponse(ApiBaseModel):
         "update-running-metrics",
         "dataset-process-finish",
         "update-deployment",
+        "update-model",
     ]
     data: Any
 
@@ -156,7 +158,7 @@ class ConnectionManager:
                     self.active_connections.pop(connection_id)
 
     async def send_message_to_user(
-        self, user_id: int, message: WebSocketResponse
+        self, user_id: int | List[int], message: WebSocketResponse
     ):
         """Sends a message to a specific user
 
@@ -166,10 +168,13 @@ class ConnectionManager:
             user_id (int): id from user to send the message
             message (WebSocketMessage): message to be sent
         """
-        if user_id not in self.active_connections:
-            return
+        if isinstance(user_id, int):
+            user_id = [user_id]
+        for id_ in user_id:
+            if id_ not in self.active_connections:
+                return
 
-        await self.active_connections[user_id].send_message(message)
+            await self.active_connections[id_].send_message(message)
 
     async def broadcast(
         self, message: WebSocketResponse, public: bool = False
@@ -196,7 +201,7 @@ def get_websockets_manager() -> ConnectionManager:
     Returns:
         ConnectionManager: singleton instance of the connection manager
     """
-    global _manager
+    global _manager  # pylint: disable=global-statement
     if not _manager:
         _manager = ConnectionManager()
     return _manager
@@ -207,7 +212,9 @@ ws_router = APIRouter()
 
 @ws_router.websocket("/ws")
 async def websocket_endpoint(
-    websocket: WebSocket, user: User = Depends(deps.get_current_websocket_user)
+    websocket: WebSocket,
+    db: Session = Depends(deps.get_db),
+    token: str = Depends(deps.get_cookie_or_token),
 ):
     """Endpoint for websocket connections
 
@@ -217,6 +224,12 @@ async def websocket_endpoint(
             user instance.
             Defaults to Depends(deps.get_current_websocket_user).
     """
+    try:
+        user = deps.get_current_user(db, token)
+    except Exception as exc:
+        await websocket.close()
+        return
+
     manager = get_websockets_manager()
     session_id = await manager.connect(user.id, websocket)
     while websocket.application_state == WebSocketState.CONNECTED:
@@ -252,5 +265,4 @@ async def public_websocket_endpoint(
             await websocket.receive_text()  # continuously wait for a message
         except (WebSocketDisconnect, AssertionError):
             break
-
     manager.disconnect_session(deployment.id, session_id, public=True)
