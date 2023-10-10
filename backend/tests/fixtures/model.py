@@ -155,7 +155,7 @@ def setup_create_model_db(
         ],
     )
 
-    created_model = model_sql.model_store.create(db, model_create)
+    created_model = model_sql.model_store.create(db, obj_in=model_create)
     version_create = ModelVersionCreateRepo(
         mlflow_version="1",
         mlflow_model_name=model_create.mlflow_name,
@@ -226,7 +226,7 @@ def setup_create_model_db2(
     )
     # Create model in db
     try:
-        created_model = model_sql.model_store.create(db, model_create)
+        created_model = model_sql.model_store.create(db, obj_in=model_create)
     except IntegrityError:
         db.rollback()
         created_model = model_sql.model_store.get_by_name_from_user(

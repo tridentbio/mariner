@@ -23,13 +23,7 @@ from mariner.exceptions.model_exceptions import (
     ModelVersionNotTrained,
 )
 from mariner.schemas.api import ApiBaseModel
-from mariner.schemas.model_schemas import (
-    Model,
-    ModelCreate,
-    ModelsQuery,
-    TrainingCheckRequest,
-    TrainingCheckResponse,
-)
+from mariner.schemas.model_schemas import Model, ModelCreate, ModelsQuery
 from mariner.utils import random_pretty_name
 
 router = APIRouter()
@@ -39,7 +33,7 @@ router = APIRouter()
     "/",
     response_model=Model,
 )
-def create_model(
+async def create_model(
     model_create: ModelCreate,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
@@ -64,22 +58,22 @@ def create_model(
         HTTPException: 404 when some reference in payload doesn't exist.
     """
     try:
-        model = controller.create_model(
+        model = await controller.create_model(
             db,
             current_user,
             model_create,
         )
         return model
-    except ModelNameAlreadyUsed:
+    except ModelNameAlreadyUsed as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Another model is already registered with that name",
-        )
-    except DatasetNotFound:
+        ) from exc
+    except DatasetNotFound as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Dataset "{model_create.config.dataset.name}" not found',
-        )
+        ) from exc
 
 
 @router.get(
@@ -230,20 +224,3 @@ def delete_model(
     """Deletes a model from the database and mlflow."""
     model = controller.delete_model(db, current_user, model_id)
     return model
-
-
-@router.post(
-    "/check-config",
-    response_model=TrainingCheckResponse,
-)
-async def post_model_check_config(
-    model_config: TrainingCheckRequest,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
-):
-    """Checks if the torch model config in the request body doesn't raise
-    any errors."""
-    result = await controller.check_model_step_exception(
-        db, model_config, user=current_user
-    )
-    return result

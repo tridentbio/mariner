@@ -9,7 +9,6 @@ from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.sql.sqltypes import JSON, DateTime
 
-from mariner.core.aws import Bucket, download_s3
 from mariner.db.base_class import Base
 
 
@@ -52,11 +51,3 @@ class Dataset(Base):
     )
     ready_status = Column(String, nullable=True)
     errors = Column(JSON, nullable=True)
-
-    def get_dataset_file(self):
-        """Loads the dataset_file linked to this dataset from s3.
-
-        Gets dataset_file stored in this dataset data_url attribute at
-        datasets bucket.
-        """
-        return download_s3(self.data_url, Bucket.Datasets)
