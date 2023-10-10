@@ -24,7 +24,6 @@ const ModelDeployments = ({ model }: ModelDeploymentsProps) => {
     state.deployments.current,
     state.deployments.deployments,
   ]);
-
   //? Avoids React to undetected recent hook values when `handleClickDelete` callback is called
   const deploymentsRef = useRef(deployments);
 

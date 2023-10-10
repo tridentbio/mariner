@@ -1,14 +1,11 @@
-import { RemoveRedEyeOutlined } from '@mui/icons-material';
-import { MenuItem, Link, IconButton, Tooltip, Typography } from '@mui/material';
-import { Box } from '@mui/system';
-import { useAppDispatch, useAppSelector } from 'app/hooks';
+import { PlayCircle } from '@mui/icons-material';
+import { MenuItem } from '@mui/material';
+import { useAppSelector } from 'app/hooks';
 import {
   MarinerEvent,
   MarinerNotification,
 } from 'features/notifications/notificationsAPI';
-import { updateEventsAsRead } from 'features/notifications/notificationsSlice';
 import { FC } from 'react';
-import { flatten } from 'utils';
 import DashboardCard from '../DashboardCard';
 import NotificationList from '../NotificationList';
 
@@ -36,6 +33,7 @@ const TrainingCard: FC<TrainingCardProps> = ({ notifications }) => {
       url={'/trainings'}
       title="Trainings"
       description="This is where you can find all your trainings"
+      icon={<PlayCircle sx={{ color: 'white' }} fontSize="small" />}
     >
       <NotificationList
         renderEvent={renderEvent}
