@@ -42,15 +42,34 @@ from mariner.schemas.model_schemas import (
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
+from mariner.schemas.dataset_schemas import Dataset as DatasetSchema
 
 LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)
 
+def handle_model_check(
+    model_version: ModelVersion, user: UserEntity, task_control: TaskControl
+):
+    task = start_check_model_step_exception(
+        model_version=model_version,
+        user=user,
+        task_control=task_control,
+    )
+    coroutine = _make_coroutine(task)
+    task = asyncio.create_task(coroutine)
+    task.add_done_callback(
+        lambda _: handle_model_check_finished(
+            task_args={"model_version_id": model_version.id},
+            task_control=task_control,
+        )
+    )
 
 def start_check_model_step_exception(
     model_version: ModelVersion, user: UserEntity, task_control: TaskControl
 ) -> ray.ObjectRef:
     """Checks the steps of a pytorch lightning model built from config.
+
+    TODO: Update the docstring below for the new async checking
 
     Steps are checked before creating the model on the backend, so the user may fix
     the config based on the exceptions raised.
@@ -63,10 +82,12 @@ def start_check_model_step_exception(
         An object either with the stack trace or the model output.
     """
     with SessionLocal() as db:
-        dataset = dataset_store.get_by_name(
-            db,
-            model_version.config.dataset.name,
-            user_id=user.id,
+        dataset = DatasetSchema.from_orm(
+            dataset_store.get_by_name(
+                db,
+                model_version.config.dataset.name,
+                user_id=user.id,
+            )
         )
         actor = ModelCheckActor.remote()  # pylint: disable=E1101
         task = actor.check_model_steps.remote(  # pylint: disable=E1101
@@ -181,7 +202,7 @@ async def create_model(
         db, model_create.name, user_id=user.id
     )
     if existingmodel:
-        model_store.create_model_version(
+        model_version = model_store.create_model_version(
             db,
             ModelVersionCreateRepo(
                 mlflow_version=None,
@@ -192,6 +213,13 @@ async def create_model(
                 description=model_create.model_version_description,
             ),
         )
+
+        handle_model_check(
+            model_version=ModelVersion.from_orm(model_version),
+            user=user,
+            task_control=get_task_control(),
+        )
+        
         return Model.from_orm(existingmodel)
 
     # Handle cases of creating a new model in the registry
@@ -255,18 +283,10 @@ async def create_model(
             0
         ].out_module, "missing out_module in target_column"
 
-        task = start_check_model_step_exception(
-            ModelVersion.from_orm(model_version),
+        handle_model_check(
+            model_version=ModelVersion.from_orm(model_version),
             user=user,
             task_control=get_task_control(),
-        )
-        coroutine = _make_coroutine(task)
-        task = asyncio.create_task(coroutine)
-        task.add_done_callback(
-            lambda _: handle_model_check_finished(
-                task_args={"model_version_id": model_version.id},
-                task_control=get_task_control(),
-            )
         )
 
     model = Model.from_orm(model)

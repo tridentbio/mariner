@@ -36,6 +36,8 @@ class ModelCheckActor:
     ) -> Any:
         """Checks the steps of a pytorch lightning model built from config.
 
+        TODO: Update the docstring below for the new async checking
+
         Steps are checked before creating the model on the backend, so the user may fix
         the config based on the exceptions raised.
 
