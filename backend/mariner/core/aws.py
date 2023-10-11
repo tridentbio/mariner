@@ -14,7 +14,7 @@ from fastapi.datastructures import UploadFile
 
 from fleet.file_utils import is_compressed
 from mariner.core.config import get_app_settings
-from mariner.utils import compress_file, get_size, hash_md5
+from mariner.utils import compress_file, get_size, hash_md5, decompress_file
 
 
 class Bucket(enum.Enum):
@@ -251,7 +251,13 @@ def download_head(
         # We decode the bytes chunk into utf-8 for safe line counting
         # Make it a bit faster by not decoding intoi utf-8 and counting
         # line feed bytes https://en.wikipedia.org/wiki/Newline#Unicode
-        decoded = res.read().decode(encoding="utf-8")
+        decoded = res.read()
+
+        if is_compressed(decoded):
+            decoded = decompress_file(res).read().decode(encoding="utf-8")
+        else:
+            decoded = decoded.decode(encoding="utf-8")
+
         len_data += decoded.count("\n")
         data.write(decoded)
         start += chunk_size
