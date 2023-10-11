@@ -114,27 +114,6 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
         return undefined;
       },
     },
-    /*     {
-      title: 'Check status',
-      field: 'checkStatus',
-      name: 'Check status',
-      render: (model: ModelVersion, value: ModelVersion['checkStatus']) => {
-        return (
-          <Justify position="center">
-            {value == 'FAILED' ? (
-              <Tooltip title="Navigate to fix the model version">
-                <ModelCheckingStatusChip
-                  status={value}
-                  onClick={() => handleModelCheckFix(model)}
-                />
-              </Tooltip>
-            ) : (
-              <ModelCheckingStatusChip status={value} />
-            )}
-          </Justify>
-        );
-      },
-    }, */
     {
       title: 'Created At',
       field: 'createdAt',
@@ -163,13 +142,14 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
               switch (model.checkStatus) {
                 case 'FAILED':
                   return (
-                    <Tooltip title="Navigate to fix the model version">
+                    <Tooltip title="Navigate to fix model version">
                       <IconButton onClick={() => handleModelCheckFix(model)}>
                         <Error sx={{ color: '#ed6c02de' }} />
                       </IconButton>
                     </Tooltip>
                   );
                 case 'OK':
+                case null:
                   return <Check />;
                 default:
                   return <CircularProgress size={25} />;
