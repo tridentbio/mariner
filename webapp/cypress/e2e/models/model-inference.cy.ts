@@ -8,13 +8,13 @@ describe('/models/:modelId/inference', () => {
 
   before(() => {
     cy.on('uncaught:exception', () => false);
-  })
 
-  beforeEach(() => {
+    cy.loginUser();
+
     cy.setupSomeModel().then((deployment) => {
       modelName = deployment.name;
     });
-  });
+  })
 
   it('Visits the page and inference ', () => {
     cy.intercept({
