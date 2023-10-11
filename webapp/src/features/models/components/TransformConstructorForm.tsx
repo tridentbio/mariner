@@ -1,4 +1,4 @@
-import { GenericTransform } from '../pages/ModelCreateV2/DatasetConfigurationForm';
+import { GenericTransform } from '../pages/ModelForm/DatasetConfigurationForm';
 import { Box, Typography, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';

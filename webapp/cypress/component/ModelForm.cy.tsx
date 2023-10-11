@@ -1,6 +1,6 @@
 import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
 import { getColumnConfigTestId } from '@components/organisms/ModelBuilder/utils';
-import ModelCreateV2, { schema } from '@features/models/pages/ModelCreateV2';
+import ModelForm, { schema } from '@features/models/pages/ModelForm';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as modelsApi from 'app/rtk/generated/models';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -8,7 +8,7 @@ import { DefaultProviders } from '../support/DefaultProviders';
 import TestUtils from '../support/TestUtils';
 import { fillDatasetCols } from '../support/models/build-model';
 
-describe('ModelCreateV2.cy.tsx', () => {
+describe('ModelForm.cy.tsx', () => {
   const testModel: modelsApi.ModelCreate = {
     name: 'test_model',
     modelDescription: 'test model description',
@@ -67,7 +67,7 @@ describe('ModelCreateV2.cy.tsx', () => {
       <DefaultProviders>
         <FormProvider {...methods}>
           <ModelBuilderContextProvider>
-            <ModelCreateV2 />
+            <ModelForm />
           </ModelBuilderContextProvider>
         </FormProvider>
       </DefaultProviders>

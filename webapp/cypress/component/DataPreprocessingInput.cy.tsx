@@ -3,7 +3,7 @@ import DataPreprocessingInput from "@components/organisms/ModelBuilder/DataPrepr
 import { ModelBuilderContextProvider } from "@components/organisms/ModelBuilder/hooks/useModelBuilder"
 import { SimpleColumnConfig, StepValue } from "@components/organisms/ModelBuilder/types"
 import { getColumnConfigTestId, getStepValueLabelData } from "@components/organisms/ModelBuilder/utils"
-import { schema } from '@features/models/pages/ModelCreateV2'
+import { schema } from '@features/models/pages/ModelForm'
 import { yupResolver } from "@hookform/resolvers/yup"
 import { FormProvider, NonUndefined, useForm } from "react-hook-form"
 import { DefaultProviders } from "../support/DefaultProviders"

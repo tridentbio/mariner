@@ -16,9 +16,7 @@ import ModelDetails from 'features/models/pages/ModelDetails';
 
 const Dashboard = lazy(() => import('../features/dashboard/Dashboard'));
 // const ModelDetails = import('../features/models/pages/ModelDetails');
-const ModelCreate = lazy(
-  () => import('../features/models/pages/ModelCreateV2')
-);
+const ModelForm = lazy(() => import('../features/models/pages/ModelForm'));
 const ModelVersionDetails = lazy(
   () => import('../features/models/pages/ModelVersionDetails')
 );
@@ -246,7 +244,7 @@ const navigationTree: RouteNode<any>[] = [
               label: 'Create Model',
               url: '/models/new',
             },
-            element: <ModelCreate />,
+            element: <ModelForm />,
           },
           {
             path: '',
@@ -277,7 +275,7 @@ const navigationTree: RouteNode<any>[] = [
                       label: 'Fix',
                       url: '/models/:model.id/:version.id/fix',
                     },
-                    element: <ModelCreate mode="fix" />,
+                    element: <ModelForm mode="fix" />,
                   },
                   {
                     path: 'inference',

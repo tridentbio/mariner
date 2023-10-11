@@ -69,11 +69,7 @@ export const schema = yup.object({
   }),
 });
 
-const ModelCreateV2 = ({
-  mode = 'creation',
-}: {
-  mode?: 'creation' | 'fix';
-}) => {
+const ModelForm = ({ mode = 'creation' }: { mode?: 'creation' | 'fix' }) => {
   const [currentMode, setCurrentMode] = useState<'creation' | 'fix'>(mode);
   const [activeStep, setActiveStep] = useState<number>(0);
   const [fetchDatasets] = useLazyGetMyDatasetsQuery();
@@ -111,6 +107,8 @@ const ModelCreateV2 = ({
 
   const [createModel, { error, isLoading: creatingModel, data }] =
     modelsApi.useCreateModelMutation();
+
+  const [updateModel] = modelsApi.usePutModelVersionMutation();
 
   const { control, getValues, setValue, watch, reset } = methods;
   const config = watch('config');
@@ -226,11 +224,23 @@ const ModelCreateV2 = ({
     event.preventDefault();
 
     methods.handleSubmit(
-      async (modelCreate) => {
+      async (model) => {
         try {
-          const model = await createModel({ modelCreate }).unwrap();
+          if (mode == 'creation') {
+            const createdModel = await createModel({
+              modelCreate: model,
+            }).unwrap();
 
-          navigate(`/models/${currentMode == 'fix' ? modelId : model.id}`);
+            navigate(`/models/${createdModel.id}`);
+          } else {
+            await updateModel({
+              modelId: parseInt(modelId as string),
+              modelVersionId: parseInt(routeParams.modelVersionId as string),
+              // modelVersion: model,
+            }).unwrap();
+
+            navigate(`/models/${modelId}`);
+          }
         } catch (error) {
           notifyError('Unable to process, please adjust your model');
         }
@@ -520,4 +530,4 @@ const ModelCreateV2 = ({
   );
 };
 
-export default ModelCreateV2;
+export default ModelForm;

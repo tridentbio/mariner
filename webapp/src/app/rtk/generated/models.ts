@@ -69,6 +69,16 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['models'],
       }),
+      putModelVersion: build.mutation<
+        PutModelVersionApiResponse,
+        PutModelVersionApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/models/${queryArg.modelId}/versions/${queryArg.modelVersionId}`,
+          method: 'PUT',
+        }),
+        invalidatesTags: ['models'],
+      }),
       getExperimentsMetricsForModelVersion: build.query<
         GetExperimentsMetricsForModelVersionApiResponse,
         GetExperimentsMetricsForModelVersionApiArg
@@ -122,6 +132,12 @@ export type DeleteModelApiResponse =
   /** status 200 Successful Response */ Model;
 export type DeleteModelApiArg = {
   modelId: number;
+};
+export type PutModelVersionApiResponse =
+  /** status 200 Successful Response */ ModelVersion;
+export type PutModelVersionApiArg = {
+  modelId: number;
+  modelVersionId: number;
 };
 export type GetExperimentsMetricsForModelVersionApiResponse =
   /** status 200 Successful Response */ Experiment[];
@@ -848,6 +864,11 @@ export type ComponentOption = {
   docs?: string;
   outputType?: string;
   defaultArgs?: object;
+  //? Declared manually for mocked version
+  compatibleWith?: {
+    domains?: ColumnConfig['dataType']['domainKind'][];
+    framework?: ('torch' | 'sklearn')[];
+  };
 };
 export type GetNameSuggestionResponse = {
   name: string;
@@ -905,6 +926,7 @@ export const {
   useGetModelQuery,
   useLazyGetModelQuery,
   useDeleteModelMutation,
+  usePutModelVersionMutation,
   useGetExperimentsMetricsForModelVersionQuery,
   useLazyGetExperimentsMetricsForModelVersionQuery,
 } = injectedRtkApi;
