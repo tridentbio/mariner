@@ -416,17 +416,11 @@ async def update_model_version(
     modelversion = model_store.update_model_version(
         db, version_id, {"check_status": None}
     )
-    task = start_check_model_step_exception(
-        ModelVersion.from_orm(modelversion),
+
+    handle_model_check(
+        model_version=ModelVersion.from_orm(modelversion),
         user=user,
         task_control=get_task_control(),
     )
-    coroutine = _make_coroutine(task)
-    task = asyncio.create_task(coroutine)
-    task.add_done_callback(
-        lambda _: handle_model_check_finished(
-            task_args={"model_version_id": modelversion.id},
-            task_control=get_task_control(),
-        )
-    )
+
     return ModelVersion.from_orm(modelversion)
