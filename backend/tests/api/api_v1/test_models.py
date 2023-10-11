@@ -117,7 +117,7 @@ async def test_post_models_success(
     assert "description" in version
     assert version["description"] == model.model_version_description
     if framework == "torch":
-        assert version["checkStatus"] is None
+        assert version["checkStatus"] == "RUNNING"
     else:
         assert version["checkStatus"] == "OK"
     assert version["checkStackTrace"] is None

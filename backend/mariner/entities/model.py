@@ -42,7 +42,7 @@ class ModelVersion(Base):
     mlflow_version = Column(String, nullable=True)
     mlflow_model_name = Column(String, nullable=False)
     # experiments = relationship("Experiment", back_populates="model_version")
-    check_status = Column(String, nullable=True)
+    check_status = Column(String, nullable=True, default="RUNNING")
     check_stack_trace = Column(String, nullable=True)
     config = Column(JSON, nullable=False)
 

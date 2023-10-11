@@ -25,7 +25,7 @@ class ModelVersion(ApiBaseModel):
     config: FleetModelSpec
     created_at: utc_datetime
     updated_at: datetime
-    check_status: Optional[Literal["OK", "FAILED"]] = None
+    check_status: Optional[Literal["OK", "FAILED", "RUNNING"]] = None
     check_stack_trace: Optional[str] = None
 
     def get_mlflow_uri(self):
@@ -137,7 +137,7 @@ class ModelVersionCreateRepo(BaseModel):
     model_id: int
     name: str
     config: FleetModelSpec
-    check_status: Optional[Literal["OK", "FAILED"]] = None
+    check_status: Optional[Literal["OK", "FAILED", "RUNNING"]] = None
 
 
 class ModelVersionUpdateRepo(BaseModel):
@@ -147,7 +147,7 @@ class ModelVersionUpdateRepo(BaseModel):
 
     config: Optional[FleetModelSpec]
     mlflow_version: Optional[str]
-    check_status: Optional[Literal["OK", "FAILED"]]
+    check_status: Optional[Literal["OK", "FAILED", "RUNNING"]]
     check_stack_trace: Optional[str]
 
 
