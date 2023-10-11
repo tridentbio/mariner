@@ -6,7 +6,7 @@ const requiredError = 'This field is required';
 
 export const preprocessingStepSchema = yup.object({
   type: yup.string().required(requiredError),
-  constructorArgs: yup.object(),
+  constructorArgs: yup.object().nullable(),
 });
 
 const columnConfigSchema = yup.object({

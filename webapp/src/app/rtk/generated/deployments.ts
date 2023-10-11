@@ -752,6 +752,8 @@ export type ModelVersion = {
       } & SklearnModelSpec);
   createdAt: string;
   updatedAt: string;
+  checkStatus?: 'OK' | 'FAILED';
+  checkStackTrace?: string;
 };
 export type User = {
   id: number;
@@ -841,6 +843,7 @@ export type DeploymentUpdateInput = {
   showTrainingData?: boolean;
   predictionRateLimitValue?: number;
   predictionRateLimitUnit?: RateLimitUnit;
+  modelVersionId?: number;
 };
 export type DeploymentManagerComunication = {
   deploymentId: number;

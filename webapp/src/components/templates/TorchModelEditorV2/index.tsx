@@ -38,6 +38,7 @@ type TorchModelEditorProps = {
   value: ModelSchema;
   onChange?: (schema: ModelSchema) => void;
   editable?: boolean;
+  dagre?: number | 'goodDistance';
 };
 
 const getGoodDistance = (nodesNumber: number) => {
@@ -80,6 +81,7 @@ const TorchModelEditor = ({
   value,
   onChange,
   editable = true,
+  dagre,
 }: TorchModelEditorProps) => {
   const {
     applyDagreLayout,
@@ -152,14 +154,16 @@ const TorchModelEditor = ({
     if (!reactFlowWrapper.current) return;
     const [nodes, edges] = schemaToEditorGraph(value);
 
-    if (editable) {
-      setNodes(nodes.reverse());
-      setEdges(edges);
-      getSuggestions({ schema: value });
-      applyDagreLayout('TB', getGoodDistance(nodes.length));
-    } else {
-      //? Avoids <ComponentConfigNode /> edges unrender when the data for the node handles creation are not loaded yet
-      if (options) {
+    //? Avoids <ComponentConfigNode /> edges unrender when the data for the node handles creation are not loaded yet
+    if (options) {
+      if (editable) {
+        setNodes(nodes.reverse());
+        setEdges(edges);
+        getSuggestions({ schema: value });
+        dagre == 'goodDistance'
+          ? applyDagreLayout('TB', getGoodDistance(nodes.length))
+          : applyDagreLayout('TB', 3, edges);
+      } else {
         setNodes(nodes);
         setEdges(edges);
         getSuggestions({ schema: value });

@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { messageHandler, SocketMessageHandler } from '@app/websocket/handler';
 import { useAppDispatch } from 'app/hooks';
-import { updateExperiment } from 'features/models/modelSlice';
+import { updateExperiment, updateModel } from 'features/models/modelSlice';
 import * as datasetsApi from 'app/rtk/generated/datasets';
 import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { useNotifications } from 'app/notifications';
@@ -55,6 +55,11 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
         fetchDeploymentById({ deploymentId: updatedData.deploymentId }, false);
         dispatch(updateDeploymentStatus(updatedData));
       });
+      socketHandler.on('update-model', (event) => {
+        const updatedData = event.data;
+
+        dispatch(updateModel(updatedData));
+      });
     },
     []
   );
@@ -82,7 +87,7 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
       }
       if (
         [WebSocket.OPEN, WebSocket.CONNECTING, WebSocket.CLOSING].includes(
-          socketHandlerRef.current.socket.readyState
+          socketHandlerRef.current.socket.readyState as 0 | 1 | 2
         )
       ) {
         // console.log('Ready State', socketHandlerRef.current?.socket?.readyState)

@@ -183,6 +183,7 @@ export type Dataset = {
   splitTarget: string;
   splitActual?: string;
   splitType: 'scaffold' | 'random';
+  splitColumn?: string;
   createdAt: string;
   updatedAt: string;
   createdById: number;

@@ -60,7 +60,7 @@ const ModelOverview = ({ model }: ModelOverviewProps) => {
           <FormLabel>Description</FormLabel>
           <TorchModelEditorMarkdown
             source={model.description}
-            warpperElement={{
+            wrapperElement={{
               'data-color-mode': 'light',
             }}
           />

@@ -2,7 +2,6 @@ import {
   ModelQuery,
   Model,
   ModelConfig,
-  ForwardCheck,
   ModelCreateRequest,
 } from 'app/types/domain/models';
 import { Paginated } from 'app/api';
@@ -25,13 +24,6 @@ export const modelsApi = enhancedApi.injectEndpoints({
     getModelById: builder.query<Model, number>({
       query: (params) => ({
         url: `api/v1/models/${params}`,
-      }),
-    }),
-    checkModel: builder.mutation<ForwardCheck, ModelConfig>({
-      query: (params) => ({
-        url: `api/v1/models/check-config`,
-        body: params,
-        method: 'POST',
       }),
     }),
     createModelOld: builder.mutation<Model, ModelCreateRequest>({

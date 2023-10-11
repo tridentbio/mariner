@@ -13,9 +13,6 @@ export const handlers = [
     );
   }),
   rest.post(api('/datasets/csv-metadata'), (req, res, ctx) => {
-    return res(
-      ctx.delay(200),
-      ctx.json(zincCsvMetadata)
-    );
+    return res(ctx.delay(200), ctx.json(zincCsvMetadata));
   }),
 ];

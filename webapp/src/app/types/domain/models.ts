@@ -2,8 +2,6 @@ import { PaginationQueryParams } from '../paginationQuery';
 import { DataType } from './datasets';
 import * as modelsApi from 'app/rtk/generated/models';
 
-export type ForwardCheck = modelsApi.TrainingCheckRequest;
-
 export interface ModelCreationError {
   type: 'value_error.missingcomponentargs';
   msg: string;
