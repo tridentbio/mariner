@@ -11,6 +11,7 @@ import CategoricalRecommenderVisitor from './visitors/CategoricalRecommenderVisi
 import ComponentVisitor from './visitors/ComponentVisitor';
 import ConcatValidatorVisitor from './visitors/ConcatValidatorVisitor';
 import GCNValidatorVisitor from './visitors/GCNValidatorVisitor';
+import GlobalPoolingValidatorVisitor from './visitors/GlobalPoolingValidatorVisitor';
 import LinearLinearWarningVisitor from './visitors/LinearLinearWarningVisitor';
 import LinearValidatorVisitor from './visitors/LinearValidatorVisitor';
 import MolFeaturizerValidatorVisitor from './visitors/MolFeaturizerValidatorVisitor';
@@ -51,6 +52,7 @@ class ModelValidation extends Acceptor implements ModelValidator {
       new LinearLinearWarningVisitor(),
       new CategoricalRecommenderVisitor(),
       new SmilesRecommenderVisitor(),
+      new GlobalPoolingValidatorVisitor(),
     ];
   };
 

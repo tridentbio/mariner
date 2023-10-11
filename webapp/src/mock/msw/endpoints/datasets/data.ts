@@ -1,40 +1,39 @@
 export const zincCsvMetadata = [
   {
-    name: "zinc_id",
+    name: 'zinc_id',
     dtype: {
-      domainKind: "string"
-    }
+      domainKind: 'string',
+    },
   },
   {
-    name: "smiles",
+    name: 'smiles',
     dtype: {
-      domainKind: "smiles"
-    }
+      domainKind: 'smiles',
+    },
   },
   {
-    name: "mwt",
+    name: 'mwt',
     dtype: {
-      domainKind: "numeric"
-    }
+      domainKind: 'numeric',
+    },
   },
   {
-    name: "tpsa",
+    name: 'tpsa',
     dtype: {
-      domainKind: "numeric"
-    }
+      domainKind: 'numeric',
+    },
   },
   {
-    name: "mwt_group",
+    name: 'mwt_group',
     dtype: {
-      domainKind: "categorical",
+      domainKind: 'categorical',
       classes: {
         mwt_big: 0,
-        mwt_small: 1
-      }
-    }
-  }
-]
-
+        mwt_small: 1,
+      },
+    },
+  },
+];
 
 export const datasetsData = [
   {

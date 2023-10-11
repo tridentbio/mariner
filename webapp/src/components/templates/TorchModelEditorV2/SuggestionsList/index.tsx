@@ -1,5 +1,18 @@
-import { AutoFixHighOutlined, ErrorSharp } from '@mui/icons-material';
-import { MenuItem, Box, Alert, IconButton } from '@mui/material';
+import {
+  AutoFixHighOutlined,
+  ErrorSharp,
+  Visibility,
+  Error,
+} from '@mui/icons-material';
+import {
+  ListItem,
+  Box,
+  Alert,
+  IconButton,
+  ButtonGroup,
+  List,
+  Button,
+} from '@mui/material';
 import useTorchModelEditor from 'hooks/useTorchModelEditor';
 import {
   locateContext,
@@ -41,41 +54,68 @@ const SuggestionsList = (props: SuggestionsListProps) => {
     schema && applySuggestions({ suggestions: props.suggestions, schema });
   };
   return (
-    <Box>
+    <List sx={{ pt: 2 }}>
       {(fixable.length > 1
         ? [
-            <MenuItem key={'fix all'} onClick={handleFixAll}>
-              Fix all
-            </MenuItem>,
+            <ListItem key={'fix all'}>
+              <Button onClick={handleFixAll}>Fix all</Button>
+            </ListItem>,
           ]
         : []
       ).concat(
         props.suggestions.map((suggestion, index) => {
           return (
-            <MenuItem
-              onClick={() => handleClickLocate(suggestion)}
-              key={`sugg-${index}`}
-            >
+            <ListItem key={`sugg-${index}`}>
               <Alert
                 color={colorSeverity[suggestion.severity]}
                 icon={<ErrorSharp />}
-              >
-                {suggestion.message}
-              </Alert>
-              <IconButton
-                onClick={(event) => {
-                  event.stopPropagation();
-                  schema &&
-                    applySuggestions({ suggestions: [suggestion], schema });
+                sx={{
+                  py: 0,
+                  alignItems: 'center',
+                  '.MuiAlert-message': {
+                    p: 0,
+                  },
                 }}
               >
-                <AutoFixHighOutlined />
-              </IconButton>
-            </MenuItem>
+                <Box display="flex" alignItems="center">
+                  {suggestion.message}
+
+                  <ButtonGroup
+                    variant="outlined"
+                    sx={{
+                      ml: 2,
+                      p: 1,
+                    }}
+                    aria-label="outlined button group"
+                  >
+                    {suggestion.commands.length > 0 ? (
+                      <IconButton
+                        onClick={(event) => {
+                          schema &&
+                            applySuggestions({
+                              suggestions: [suggestion],
+                              schema,
+                            });
+                        }}
+                      >
+                        <AutoFixHighOutlined fontSize="small" />
+                      </IconButton>
+                    ) : null}
+                    <IconButton
+                      onClick={() => {
+                        handleClickLocate(suggestion);
+                      }}
+                    >
+                      <Visibility fontSize="small" />
+                    </IconButton>
+                  </ButtonGroup>
+                </Box>
+              </Alert>
+            </ListItem>
           );
         })
       )}
-    </Box>
+    </List>
   );
 };
 
