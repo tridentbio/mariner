@@ -14,7 +14,7 @@ from fastapi.datastructures import UploadFile
 
 from fleet.file_utils import is_compressed
 from mariner.core.config import get_app_settings
-from mariner.utils import compress_file, get_size, hash_md5, decompress_file
+from mariner.utils import compress_file, decompress_file, get_size, hash_md5
 
 
 class Bucket(enum.Enum):
@@ -242,6 +242,8 @@ def download_head(
     start, end = 0, chunk_size - 1
     data = io.StringIO()
     len_data = 0
+    is_file_compressed = False
+    last_line_break_index = -1
     while (
         len_data < nlines + 1
     ):  # Get one extra since it may be incomplete (discard it later)
@@ -252,15 +254,26 @@ def download_head(
         # Make it a bit faster by not decoding intoi utf-8 and counting
         # line feed bytes https://en.wikipedia.org/wiki/Newline#Unicode
         decoded = res.read()
+        if start == 0 and is_compressed(decoded):
+            is_file_compressed = True
+        res.seek(0)
 
-        if is_compressed(decoded):
+        if is_file_compressed:
             decoded = decompress_file(res).read().decode(encoding="utf-8")
         else:
             decoded = decoded.decode(encoding="utf-8")
 
         len_data += decoded.count("\n")
-        data.write(decoded)
-        start += chunk_size
-        end += chunk_size
+        last_line_break_index = decoded.rfind("\n")
+        if last_line_break_index != -1:
+            data.write(decoded[: last_line_break_index + 1])
+            start += start + last_line_break_index + 1
+            end = start + chunk_size
+        else:
+            data.write(decoded)
+            start += chunk_size
+            end += chunk_size
+
     data.seek(0, os.SEEK_SET)
+
     return data
