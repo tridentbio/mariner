@@ -43,7 +43,11 @@ const Dashboard = () => {
 
   return (
     <Content>
-      <Masonry columns={2} spacing={5}>
+      <Masonry
+        columns={{ sm: 1, md: 2 }}
+        spacing={5}
+        sx={{ maxWidth: '1500px', margin: 'auto' }}
+      >
         {changelogNotifications.length > 0 && (
           <ChangeLogCard notifications={changelogNotifications} />
         )}

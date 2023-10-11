@@ -23,6 +23,7 @@ from mariner.exceptions import (
 )
 from mariner.exceptions.model_exceptions import ModelVersionNotTrained
 from mariner.schemas.api import ApiBaseModel
+from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.model_schemas import (
     Model,
     ModelCreate,
@@ -57,10 +58,12 @@ async def check_model_step_exception(
         An object either with the stack trace or the model output.
     """
     try:
-        dataset = dataset_store.get_by_name(
-            db, config.model_spec.dataset.name, user_id=user.id
+        dataset = Dataset.from_orm(
+            dataset_store.get_by_name(
+                db, config.model_spec.dataset.name, user_id=user.id
+            )
         )
-        actor = ModelCheckActor.remote()
+        actor = ModelCheckActor.remote()  # pylint: disable=no-member
         output = await actor.check_model_steps.remote(
             dataset=dataset, config=config.model_spec
         )

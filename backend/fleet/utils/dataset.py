@@ -1,3 +1,6 @@
+"""
+This module provides utilities to work with datasets as pandas dataframes.
+"""
 import io
 from gzip import decompress
 from typing import List, Literal, Tuple, Union
@@ -18,7 +21,9 @@ def decompress_file(fileBytes: bytes) -> io.BytesIO:
     return io.BytesIO(fileBytes)
 
 
-def converts_file_to_dataframe(file: Union[bytes, io.BytesIO]) -> pd.DataFrame:
+def converts_file_to_dataframe(
+    file: Union[bytes, io.BytesIO, io.StringIO]
+) -> pd.DataFrame:
     """Converts a file to a dataframe
 
     Args:
@@ -27,9 +32,11 @@ def converts_file_to_dataframe(file: Union[bytes, io.BytesIO]) -> pd.DataFrame:
     Returns:
         pd.DataFrame: dataframe of the file
     """
-    if isinstance(file, io.BytesIO):
+    if isinstance(file, (io.BytesIO, io.StringIO)):
         file.seek(0)
         file = file.read()
+    if isinstance(file, str):
+        file = file.encode("utf-8")
 
     return pd.read_csv(
         decompress_file(file) if is_compressed(file) else io.BytesIO(file)

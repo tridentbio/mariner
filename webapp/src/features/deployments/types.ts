@@ -53,7 +53,6 @@ export interface DeploymentFormFields
   extends Omit<
     Deployment,
     | 'status'
-    | 'modelVersion'
     | 'usersAllowed'
     | 'createdByUserId'
     | 'createdAt'

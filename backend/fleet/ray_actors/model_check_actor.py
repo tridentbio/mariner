@@ -16,6 +16,11 @@ from mariner.schemas.dataset_schemas import Dataset
 
 @ray.remote
 class ModelCheckActor:
+    """
+    Actor for checking if a model config can be used for creating a model that
+    will train without exceptions.
+    """
+
     def check_model_steps(
         self, dataset: Dataset, config: TorchModelSpec
     ) -> Any:
@@ -31,7 +36,7 @@ class ModelCheckActor:
         Returns:
             The model output
         """
-        df = converts_file_to_dataframe(dataset.get_dataset_file())
+        df = converts_file_to_dataframe(dataset.get_dataset_file(nlines=10))
         if config.framework == "torch" or isinstance(config, TorchModelSpec):
             torch_dataset = MarinerTorchDataset(
                 data=df,

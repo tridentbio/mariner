@@ -20,6 +20,7 @@ import { useForm, Controller, FormProvider } from 'react-hook-form';
 import { required } from 'utils/reactFormRules';
 import { ColumnInfo, SplitType } from 'app/types/domain/datasets';
 import { DatasetForm as IDatasetForm } from './types';
+import { InputFileUpload } from '@components/atoms/FileUploadInput';
 const { useGetColumnsMetadataMutation } = dsApi;
 
 const MDTextField = lazy(() => import('components/organisms/MDTextField'));
@@ -202,24 +203,21 @@ const DatasetForm = ({ initialValues, ...props }: DatasetFormProps) => {
                 control={control}
                 name="file"
                 render={({ field, fieldState: { error } }) => (
-                  <>
-                    <InputLabel htmlFor="dataset-upload" error={!!error}>
-                      File
-                    </InputLabel>
-                    <input
-                      type="file"
-                      id="dataset-upload"
-                      onChange={(event) => {
-                        if (event.target.files && event.target.files.length) {
-                          field.onChange({
-                            target: { value: event.target.files[0] },
-                          });
-                          fetchCSVData(event.target.files[0]);
-                        }
-                      }}
-                      accept=".csv"
-                    />
-                  </>
+                  <InputFileUpload
+                    buttonProps={{
+                      sx: { my: 2 },
+                    }}
+                    label="File"
+                    onChange={(event) => {
+                      if (event.target.files && event.target.files.length) {
+                        field.onChange({
+                          target: { value: event.target.files[0] },
+                        });
+                        fetchCSVData(event.target.files[0]);
+                      }
+                    }}
+                    accept=".csv"
+                  />
                 )}
               />
               {!!errors.file && (
