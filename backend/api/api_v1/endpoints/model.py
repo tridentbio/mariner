@@ -23,7 +23,12 @@ from mariner.exceptions.model_exceptions import (
     ModelVersionNotTrained,
 )
 from mariner.schemas.api import ApiBaseModel
-from mariner.schemas.model_schemas import Model, ModelCreate, ModelsQuery
+from mariner.schemas.model_schemas import (
+    Model,
+    ModelCreate,
+    ModelsQuery,
+    ModelVersion,
+)
 from mariner.utils import random_pretty_name
 
 router = APIRouter()
@@ -224,3 +229,19 @@ def delete_model(
     """Deletes a model from the database and mlflow."""
     model = controller.delete_model(db, current_user, model_id)
     return model
+
+
+@router.put(
+    "/{model_id}/versions/{model_version_id}", response_model=ModelVersion
+)
+async def put_model_version(
+    model_id: int,
+    model_version_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+):
+    """Updates a model version in the database"""
+    model_version = await controller.update_model_version(
+        db, user=current_user, version_id=model_version_id, model_id=model_id
+    )
+    return model_version

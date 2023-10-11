@@ -7,42 +7,35 @@
             "datefmt": "%Y-%m-%d %H:%M:%S"
         }
     },
+    "filters": {
+      "uvicorn_filter": {
+        "()": "api.logging.Filter",
+        "name": "uvicorn.error",
+        "allowed_levels": ["WARN", "ERROR", "CRITICAL"]
+      }
+    },
     "handlers": {
         "stdout": {
             "class": "logging.StreamHandler",
             "level": "INFO",
             "formatter": "simple",
-            "stream": "ext://sys.stdout"
+            "stream": "ext://sys.stdout",
+            "filters": ["uvicorn_filter"]
         },
-        "stderr": {
-            "class": "logging.StreamHandler",
-            "level": "ERROR",
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "./app.err",
             "formatter": "simple",
-            "stream": "ext://sys.stderr"
+            "level": "ERROR",
+            "mode": "a"
         }
     },
     "root": {
         "level": "INFO",
         "format": "simple",
         "handlers": [
-            "stderr",
-            "stdout"
+            "stdout",
+            "file"
         ]
-    },
-    "uvicorn.access": {
-        "level": "INFO",
-        "format": "simple",
-        "handlers": [
-            "stderr",
-            "stdout"
-        ]
-    },
-    "pytorch_lightning": {
-      "level": "ERROR",
-      "format": "simple",
-      "handlers": [
-        "stderr",
-        "stdout"
-      ]
     }
 }
