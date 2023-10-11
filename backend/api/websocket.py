@@ -8,6 +8,7 @@ from uuid import uuid4
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.param_functions import Depends
 from fastapi.routing import APIRouter
+from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketState
 
 from api import deps
@@ -211,7 +212,9 @@ ws_router = APIRouter()
 
 @ws_router.websocket("/ws")
 async def websocket_endpoint(
-    websocket: WebSocket, user: User = Depends(deps.get_current_websocket_user)
+    websocket: WebSocket,
+    db: Session = Depends(deps.get_db),
+    token: str = Depends(deps.get_cookie_or_token),
 ):
     """Endpoint for websocket connections
 
@@ -221,6 +224,12 @@ async def websocket_endpoint(
             user instance.
             Defaults to Depends(deps.get_current_websocket_user).
     """
+    try:
+        user = deps.get_current_user(db, token)
+    except Exception as exc:
+        await websocket.close()
+        return
+
     manager = get_websockets_manager()
     session_id = await manager.connect(user.id, websocket)
     while websocket.application_state == WebSocketState.CONNECTED:
@@ -256,5 +265,4 @@ async def public_websocket_endpoint(
             await websocket.receive_text()  # continuously wait for a message
         except (WebSocketDisconnect, AssertionError):
             break
-
     manager.disconnect_session(deployment.id, session_id, public=True)

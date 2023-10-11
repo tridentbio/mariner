@@ -15,7 +15,6 @@ import pandas as pd
 import requests
 import yaml
 
-logging.basicConfig()
 LOG = logging.getLogger("cli").getChild(__name__)
 
 EXPERIMENT_TIMEOUT = timedelta(

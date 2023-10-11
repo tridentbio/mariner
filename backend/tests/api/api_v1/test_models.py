@@ -28,7 +28,6 @@ from mariner.db.session import SessionLocal
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
-from mariner.schemas.dataset_schemas import Dataset as DatasetSchema
 from mariner.schemas.dataset_schemas import QuantityDataType
 from mariner.schemas.model_schemas import Model, ModelCreate
 from tests.fixtures.model import mock_model, setup_create_model
@@ -88,7 +87,7 @@ def mocked_invalid_model(some_dataset: DatasetEntity) -> ModelCreate:
     return model
 
 
-# @pytest.mark.parametrize("framework", ("torch", "sklearn"))
+@pytest.mark.parametrize("framework", ("torch", "sklearn"))
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_post_models_success(
