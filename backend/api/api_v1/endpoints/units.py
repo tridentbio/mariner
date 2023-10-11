@@ -6,10 +6,12 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, status
 
 from mariner import units
+from mariner.utils.metrics import REQUEST_TIME
 
 router = APIRouter()
 
 
+@REQUEST_TIME.labels(endpoint="/units/", method="GET").time()
 @router.get("/", response_model=List[units.Unit])
 def get_units(q: Optional[str]):
     """Endpoint to get a list of available valid units.
@@ -20,6 +22,7 @@ def get_units(q: Optional[str]):
     return units.search_units(q if q is not None else "")
 
 
+@REQUEST_TIME.labels(endpoint="/units/valid", method="GET").time()
 @router.get("/valid", response_model=units.Unit)
 def get_is_unit_valid(q: str = Query(...)):
     """Endpoint that checks if a string represents a valid unit.

@@ -32,10 +32,12 @@ from mariner.schemas.dataset_schemas import (
     Split,
     SplitType,
 )
+from mariner.utils.metrics import REQUEST_TIME
 
 router = APIRouter()
 
 
+@REQUEST_TIME.labels(endpoint="/datasets/", method="GET").time()
 @router.get("/", response_model=Paginated[Dataset])
 def get_my_datasets(
     query: DatasetsQuery = Depends(DatasetsQuery),
@@ -51,6 +53,9 @@ def get_my_datasets(
     )
 
 
+@REQUEST_TIME.labels(
+    endpoint="/datasets/{dataset_id}/summary", method="GET"
+).time()
 @router.get("/{dataset_id}/summary", response_model=DatasetSummary)
 def get_my_dataset_summary(
     dataset_id: int,
@@ -66,6 +71,7 @@ def get_my_dataset_summary(
     return summary
 
 
+@REQUEST_TIME.labels(endpoint="/datasets/{dataset_id}", method="GET").time()
 @router.get("/{dataset_id}", response_model=Dataset)
 def get_my_dataset(
     dataset_id: int,
@@ -79,6 +85,7 @@ def get_my_dataset(
     return Dataset.from_orm(dataset)
 
 
+@REQUEST_TIME.labels(endpoint="/datasets/", method="POST").time()
 @router.post("/", response_model=Dataset)
 async def create_dataset(
     current_user: User = Depends(deps.get_current_active_user),
@@ -114,16 +121,17 @@ async def create_dataset(
         dataset = Dataset.from_orm(db_dataset)
         return dataset
 
-    except DatasetNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    except DatasetNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
-    except DatasetAlreadyExists:
+    except DatasetAlreadyExists as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Dataset name already in use",
-        )
+        ) from exc
 
 
+@REQUEST_TIME.labels(endpoint="/datasets/{dataset_id}", method="PUT").time()
 @router.put(
     "/{dataset_id}",
     response_model=Dataset,
@@ -156,12 +164,13 @@ async def update_dataset(
             ),
         )
         return dataset
-    except DatasetNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    except NotCreatorOwner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    except DatasetNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+    except NotCreatorOwner as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
 
+@REQUEST_TIME.labels(endpoint="/datasets/{dataset_id}", method="DELETE").time()
 @router.delete("/{dataset_id}", response_model=Dataset)
 def delete_dataset(
     dataset_id: int,
@@ -173,6 +182,7 @@ def delete_dataset(
     return dataset
 
 
+@REQUEST_TIME.labels(endpoint="/datasets/csv-metadata", method="GET").time()
 @router.post(
     "/csv-metadata",
     response_model=List[ColumnsMeta],
@@ -184,6 +194,9 @@ async def get_dataset_columns_metadata(file: UploadFile = File(None)):
     return metadata
 
 
+@REQUEST_TIME.labels(
+    endpoint="/datasets/{dataset_id}/file", method="GET"
+).time()
 @router.get(
     "/{dataset_id}/file",
     response_class=StreamingResponse,
@@ -201,12 +214,15 @@ def get_csv_file(
         )
         return StreamingResponse(file, media_type="text/csv")
 
-    except DatasetNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    except NotCreatorOwner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    except DatasetNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+    except NotCreatorOwner as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
 
+@REQUEST_TIME.labels(
+    endpoint="/datasets/{dataset_id}/file-with-errors", method="GET"
+).time()
 @router.get(
     "/{dataset_id}/file-with-errors",
     response_class=StreamingResponse,
@@ -222,7 +238,7 @@ def get_csv_file_with_errors(
         file = controller.get_csv_file(db, dataset_id, current_user, "error")
         return StreamingResponse(file, media_type="text/csv")
 
-    except DatasetNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    except NotCreatorOwner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    except DatasetNotFound as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+    except NotCreatorOwner as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc

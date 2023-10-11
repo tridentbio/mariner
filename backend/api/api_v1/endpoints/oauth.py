@@ -13,17 +13,20 @@ from mariner.core.config import get_app_settings
 from mariner.exceptions import UserNotActive
 from mariner.exceptions.user_exceptions import UserEmailNotAllowed
 from mariner.users import authenticate
+from mariner.utils.metrics import REQUEST_TIME
 
 router = APIRouter()
 LOG = logging.getLogger(__name__)
 
 
+@REQUEST_TIME.labels(endpoint="/oauth-providers", method="GET").time()
 @router.get("/oauth-providers", response_model=List[oauth.Provider])
 def get_oauth_providers():
     """Endpoint to get list of oauth providers."""
     return oauth.oauth_manager.get_providers()
 
 
+@REQUEST_TIME.labels(endpoint="/oauth", method="GET").time()
 @router.get("/oauth")
 def get_oauth_provider_redirect(provider: str):
     """Endpoint to redirect user to provider authentication site.
@@ -41,6 +44,7 @@ def get_oauth_provider_redirect(provider: str):
     return RedirectResponse(url=url)
 
 
+@REQUEST_TIME.labels(endpoint="/oauth-callback", method="GET").time()
 @router.get("/oauth-callback")
 def get_oauth_callback(request: Request):
     """Function to handle callback from oauth provider.

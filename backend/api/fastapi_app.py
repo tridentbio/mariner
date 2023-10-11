@@ -7,6 +7,7 @@ from fastapi.applications import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi_utils.openapi import simplify_operation_ids
+from prometheus_client import make_asgi_app
 from starlette.middleware.cors import CORSMiddleware
 
 from api import startup_functions
@@ -19,6 +20,10 @@ app = FastAPI(
     title=get_app_settings("package").name,
     openapi_url="/api/v1/openapi.json",
 )
+
+# Add prometheus asgi middleware to route /metrics requests
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 
 ## Filters the healthcheck from logs
@@ -81,7 +86,7 @@ if get_app_settings("server").cors:
         allow_headers=["*"],
     )
 
-app.add_middleware(GZipMiddleware, minimum_size=100)
+# app.add_middleware(GZipMiddleware, minimum_size=100)
 
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(ws_router)

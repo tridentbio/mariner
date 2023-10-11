@@ -5,19 +5,18 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
 
-from api import deps
 from mariner.exceptions import UserNotActive, UserNotFound
 from mariner.schemas.token import Token
 from mariner.users import BasicAuth, authenticate
+from mariner.utils.metrics import REQUEST_TIME
 
 router = APIRouter()
 
 
+@REQUEST_TIME.labels(endpoint="/login/access-token", method="POST").time()
 @router.post("/login/access-token", response_model=Token)
 def login_access_token(
-    db: Session = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> Any:
     """
@@ -30,9 +29,9 @@ def login_access_token(
             )
         )
         return token
-    except UserNotFound:
+    except UserNotFound as exc:
         raise HTTPException(
             status_code=400, detail="Incorrect email or password"
-        )
-    except UserNotActive:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        ) from exc
+    except UserNotActive as exc:
+        raise HTTPException(status_code=400, detail="Inactive user") from exc

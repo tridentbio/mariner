@@ -30,10 +30,12 @@ from mariner.schemas.model_schemas import (
     ModelVersion,
 )
 from mariner.utils import random_pretty_name
+from mariner.utils.metrics import REQUEST_TIME
 
 router = APIRouter()
 
 
+@REQUEST_TIME.labels(endpoint="/models/", method="POST").time()
 @router.post(
     "/",
     response_model=Model,
@@ -81,6 +83,7 @@ async def create_model(
         ) from exc
 
 
+@REQUEST_TIME.labels(endpoint="/models/", method="GET").time()
 @router.get(
     "/",
     response_model=Paginated[Model],
@@ -102,6 +105,7 @@ def get_models(
     return Paginated(data=models, total=total)
 
 
+@REQUEST_TIME.labels(endpoint="/models/options", method="GET").time()
 @router.get(
     "/options",
     response_model=List[ComponentOption],
@@ -122,6 +126,7 @@ class GetNameSuggestionResponse(ApiBaseModel):
     name: str
 
 
+@REQUEST_TIME.labels(endpoint="/models/name-suggestion", method="GET").time()
 @router.get(
     "/name-suggestion",
     dependencies=[Depends(deps.get_current_active_user)],
@@ -132,6 +137,9 @@ def get_model_name_suggestion():
     return GetNameSuggestionResponse(name=random_pretty_name())
 
 
+@REQUEST_TIME.labels(
+    endpoint="/models/{model_version_id}/predict", method="POST"
+).time()
 @router.post(
     "/{model_version_id}/predict",
     response_model=Dict[str, List[Any]],
@@ -199,6 +207,7 @@ def post_model_predict(
         ) from exp
 
 
+@REQUEST_TIME.labels(endpoint="/models/losses", method="GET").time()
 @router.get(
     "/losses",
     response_model=AllowedLosses,
@@ -209,6 +218,7 @@ def get_model_losses():
     return AllowedLosses()
 
 
+@REQUEST_TIME.labels(endpoint="/models/{model_id}", method="GET").time()
 @router.get("/{model_id}", response_model=Model)
 def get_model(
     model_id: int,
@@ -221,6 +231,7 @@ def get_model(
 
 
 @router.delete("/{model_id}", response_model=Model)
+@REQUEST_TIME.labels(endpoint="/models/{model_id}", method="DELETE").time()
 def delete_model(
     model_id: int,
     db: Session = Depends(deps.get_db),
@@ -231,6 +242,9 @@ def delete_model(
     return model
 
 
+@REQUEST_TIME.labels(
+    endpoint="/models/{model_id}/versions/{model_version_id}", method="PUT"
+).time()
 @router.put(
     "/{model_id}/versions/{model_version_id}", response_model=ModelVersion
 )

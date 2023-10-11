@@ -19,10 +19,12 @@ from mariner.schemas.experiment_schemas import (
     SklearnTrainingRequest,
     TorchTrainingRequest,
 )
+from mariner.utils.metrics import REQUEST_TIME
 
 router = APIRouter()
 
 
+@REQUEST_TIME.labels(endpoint="/experiments/", method="POST").time()
 @router.post("/", response_model=Experiment)
 async def post_experiments(
     request: TorchTrainingRequest | SklearnTrainingRequest,
@@ -45,6 +47,7 @@ async def post_experiments(
     return result
 
 
+@REQUEST_TIME.labels(endpoint="/experiments/", method="GET").time()
 @router.get("/", response_model=Paginated[Experiment])
 def get_experiments(
     experiments_query: ListExperimentsQuery = Depends(),
@@ -67,6 +70,9 @@ def get_experiments(
     return Paginated(data=data, total=total)
 
 
+@REQUEST_TIME.labels(
+    endpoint="/experiments/running-history", method="GET"
+).time()
 @router.get("/running-history", response_model=List[RunningHistory])
 def get_experiments_running_history(
     user: User = Depends(deps.get_current_active_user),
@@ -93,6 +99,9 @@ class MetricsUpdate(ApiBaseModel):
     user_id: int
 
 
+@REQUEST_TIME.labels(
+    endpoint="/experiments/epoch_metrics", method="POST"
+).time()
 @router.post(
     "/epoch_metrics",
     response_model=str,
@@ -154,6 +163,7 @@ async def post_update_metrics(
     return "ok"
 
 
+@REQUEST_TIME.labels(endpoint="/experiments/metrics", method="GET").time()
 @router.get(
     "/metrics",
     dependencies=[Depends(deps.get_current_active_user)],
@@ -164,6 +174,7 @@ def get_experiments_metrics():
     return experiments_ctl.get_metrics_for_monitoring()
 
 
+@REQUEST_TIME.labels(endpoint="/experiments/optimizers", method="GET").time()
 @router.get(
     "/optimizers",
     dependencies=[Depends(deps.get_current_active_user)],
@@ -174,6 +185,9 @@ def get_training_experiment_optimizers():
     return experiments_ctl.get_optimizer_options()
 
 
+@REQUEST_TIME.labels(
+    endpoint="/experiments/{experiment_id}", method="GET"
+).time()
 @router.get("/{experiment_id}", response_model=Experiment)
 def get_experiment(
     experiment_id: int,
@@ -196,6 +210,9 @@ def get_experiment(
     return experiment
 
 
+@REQUEST_TIME.labels(
+    endpoint="/experiments/{model_version_id}/metrics", method="GET"
+).time()
 @router.get(
     "/{model_version_id}/metrics",
     response_model=List[Experiment],
@@ -211,9 +228,18 @@ def get_experiments_metrics_for_model_version(
     )
 
 
+@REQUEST_TIME.labels(
+    endpoint="/experiments/{experiment_id}/cancel", method="PUT"
+).time()
 @router.put("/{experiment_id}/cancel", response_model=None)
 def cancel_experiment(
     experiment_id: int,
     user: User = Depends(deps.get_current_active_user),
 ):
+    """Cancels a running experiment.
+
+    Args:
+        experiment_id: Id of the experiment to cancel.
+        user: User that originated the request.
+    """
     return experiments_ctl.cancel_training(user, experiment_id)

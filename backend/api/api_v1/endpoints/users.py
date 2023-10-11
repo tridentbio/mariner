@@ -11,10 +11,12 @@ from api import deps
 from mariner.entities.user import User
 from mariner.schemas import user_schemas as schemas
 from mariner.stores.user_sql import user_store
+from mariner.utils.metrics import REQUEST_TIME
 
 router = APIRouter()
 
 
+@REQUEST_TIME.labels(endpoint="/users/", method="GET").time()
 @router.get(
     "/",
     response_model=List[schemas.User],
@@ -32,6 +34,7 @@ def read_users(
     return users
 
 
+@REQUEST_TIME.labels(endpoint="/users/me", method="PUT").time()
 @router.put("/me", response_model=schemas.User)
 def update_user_me(
     db: Session = Depends(deps.get_db),
@@ -45,6 +48,7 @@ def update_user_me(
     return user
 
 
+@REQUEST_TIME.labels(endpoint="/users/me", method="GET").time()
 @router.get("/me", response_model=schemas.User)
 def read_user_me(
     current_user: User = Depends(deps.get_current_active_user),
@@ -55,6 +59,7 @@ def read_user_me(
     return current_user
 
 
+@REQUEST_TIME.labels(endpoint="/users/{user_id}", method="PUT").time()
 @router.put(
     "/{user_id}",
     response_model=schemas.User,
