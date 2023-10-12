@@ -261,6 +261,7 @@ async def create_model(
     model_version = model_store.create_model_version(
         db,
         ModelVersionCreateRepo(
+            created_by_id=user.id,
             mlflow_version=None,
             check_status=(
                 "OK" if model_create.config.framework != "torch" else None

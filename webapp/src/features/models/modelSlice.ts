@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
-import { Model } from 'app/types/domain/models';
+import { Model, ModelVersion } from 'app/types/domain/models';
 import {
   EClassPaths,
   ModelOptionsComponent,
@@ -11,7 +11,8 @@ import { UpdateExperiment } from '@app/websocket/handler';
 import { modelsApi } from 'app/rtk/models';
 import { Experiment, TrainingStage } from 'app/types/domain/experiments';
 import { experimentsApi } from 'app/rtk/experiments';
-import { enhancedApi } from 'app/rtk/generated/experiments';
+import { enhancedApi as experimentsGeneratedApi } from 'app/rtk/generated/experiments';
+import { enhancedApi as modelsGeneratedApi } from 'app/rtk/generated/models';
 import { deepClone } from 'utils';
 
 export type ArgumentType = 'string' | 'bool' | 'int';
@@ -96,12 +97,21 @@ export const modelSlice = createSlice({
     ) => {
       state.experiments = action.payload;
     },
-    updateModel: (state, action: { type: string; payload: Model }) => {
-      let foundModel = state.models.find(
-        (model) => model.id === action.payload.id
-      );
-
-      if (foundModel) foundModel = action.payload;
+    updateModel: (state, action: { type: string; payload: ModelVersion }) => {
+      state.models = [...state.models].map((model) => {
+        if (model.id === action.payload.modelId) {
+          return {
+            ...model,
+            versions: model.versions.map((version) => {
+              if (version.id === action.payload.id) {
+                return action.payload;
+              }
+              return version;
+            }),
+          };
+        }
+        return model;
+      });
     },
   },
   extraReducers: (builder) => {
@@ -201,6 +211,34 @@ export const modelSlice = createSlice({
     );
 
     builder.addMatcher(
+      modelsGeneratedApi.endpoints.createModel.matchFulfilled,
+      (state, action) => {
+        state.models.push(action.payload);
+        state.totalModels += 1;
+      }
+    );
+
+    builder.addMatcher(
+      modelsGeneratedApi.endpoints.putModelVersion.matchFulfilled,
+      (state, action) => {
+        state.models = [...state.models].map((model) => {
+          if (model.id === action.payload.modelId) {
+            return {
+              ...model,
+              versions: model.versions.map((version) => {
+                if (version.id === action.payload.id) {
+                  return action.payload;
+                }
+                return version;
+              }),
+            };
+          }
+          return model;
+        });
+      }
+    );
+
+    builder.addMatcher(
       modelsApi.endpoints.getOptions.matchFulfilled,
       (state, action) => {
         state.modelOptions = action.payload;
@@ -214,7 +252,7 @@ export const modelSlice = createSlice({
     );
 
     builder.addMatcher(
-      enhancedApi.endpoints.getExperiments.matchFulfilled,
+      experimentsGeneratedApi.endpoints.getExperiments.matchFulfilled,
       (state, action) => {
         // @ts-ignore
         state.experiments = action.payload.data;
@@ -222,7 +260,7 @@ export const modelSlice = createSlice({
     );
 
     builder.addMatcher(
-      enhancedApi.endpoints.postExperiments.matchFulfilled,
+      experimentsGeneratedApi.endpoints.postExperiments.matchFulfilled,
       (state, action) => {
         // @ts-ignore
         state.experiments = [...state.experiments, action.payload];
