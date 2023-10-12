@@ -10,14 +10,20 @@ from fleet.base_schemas import TorchModelSpec
 from fleet.ray_actors.tasks import get_task_control
 from fleet.utils.dataset import converts_file_to_dataframe
 from mariner import models as model_ctl
+from mariner.db.session import SessionLocal
 from mariner.entities import Dataset as DatasetEntity
 from mariner.entities import Model as ModelEntity
 from mariner.entities.model import ModelVersion
 from mariner.schemas.dataset_schemas import Dataset as DatasetSchema
-from mariner.schemas.model_schemas import Model, ModelCreate
+from mariner.schemas.model_schemas import (
+    Model,
+    ModelCreate,
+    ModelVersionUpdate,
+)
 from mariner.stores.dataset_sql import dataset_store
 from tests.fixtures.model import model_config
 from tests.fixtures.user import get_test_user
+from tests.utils.utils import random_lower_string
 
 
 @pytest.mark.asyncio
@@ -105,31 +111,57 @@ async def test_update_model_version(db: Session, some_dataset: DatasetSchema):
     ) as config_file:
         config_dict = yaml.unsafe_load(config_file)
     config = TorchModelSpec.parse_obj(config_dict)
+    original_in_channels = config.spec.layers[0].constructor_args.in_channels
     config.spec.layers[0].constructor_args.in_channels = 1
-    model = await model_ctl.create_model(
+    model_create = ModelCreate(
+        name=random_lower_string(),
+        model_description="This is a model description",
+        model_version_description="This is a model version description",
+        config=config,
+    )
+    ctlresult = await model_ctl.create_model(
         db=db,
         user=user,
-        model_create=ModelCreate(
-            name="Test model",
-            model_description="This is a model description",
-            model_version_description="This is a model version description",
-            config=config,
-        ),
+        return_async_task=True,
+        model_create=model_create,
     )
-    assert model.name == "Test model"
-    assert model.versions[0].check_status == None
+    import logging
+
+    model, task = ctlresult
+    assert model.name == model_create.name
+    model_version = model.versions[-1]
+    assert model_version.check_status == "RUNNING"
+
     ids, tasks = get_task_control().get_tasks(
         {
-            "model_version_id": model.versions[0].id,
+            "model_version_id": model_version.id,
         }
     )
     assert len(tasks) == len(ids) == 1
-    ray.get(tasks[0])
-    time.sleep(5)
+    result = await task
     modelversion = (
         db.query(ModelVersion)
-        .filter(ModelVersion.id == model.versions[0].id)
+        .filter(ModelVersion.id == model_version.id)
         .first()
     )
     assert modelversion.check_status == "FAILED"
     # Update model version with new config
+    config.spec.layers[0].constructor_args.in_channels = original_in_channels
+    updated_model_version, task = await model_ctl.update_model_version(
+        db=db,
+        user=user,
+        version_id=model_version.id,
+        version_update=ModelVersionUpdate(config=config),
+        model_id=model.id,
+        return_async_task=True,
+    )
+    assert updated_model_version.id == modelversion.id == model_version.id
+    assert updated_model_version.check_status == "RUNNING"
+    await task
+    with SessionLocal() as db:
+        modelversion = (
+            db.query(ModelVersion)
+            .filter(ModelVersion.id == updated_model_version.id)
+            .first()
+        )
+        assert modelversion.check_status == "OK"

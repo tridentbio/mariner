@@ -28,6 +28,7 @@ from mariner.schemas.model_schemas import (
     ModelCreate,
     ModelsQuery,
     ModelVersion,
+    ModelVersionUpdate,
 )
 from mariner.utils import random_pretty_name
 
@@ -235,6 +236,7 @@ def delete_model(
     "/{model_id}/versions/{model_version_id}", response_model=ModelVersion
 )
 async def put_model_version(
+    version_update: ModelVersionUpdate,
     model_id: int,
     model_version_id: int,
     db: Session = Depends(deps.get_db),
@@ -242,6 +244,10 @@ async def put_model_version(
 ):
     """Updates a model version in the database"""
     model_version = await controller.update_model_version(
-        db, user=current_user, version_id=model_version_id, model_id=model_id
+        db,
+        user=current_user,
+        version_update=version_update,
+        version_id=model_version_id,
+        model_id=model_id,
     )
     return model_version

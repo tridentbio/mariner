@@ -145,10 +145,18 @@ class ModelVersionUpdateRepo(BaseModel):
     Model version update object
     """
 
+    config: Optional[FleetModelSpec] = None
+    mlflow_version: Optional[str] = None
+    check_status: Optional[Literal["OK", "FAILED", "RUNNING"]] = None
+    check_stack_trace: Optional[str] = None
+
+
+class ModelVersionUpdate(BaseModel):
+    """
+    Model version update object.
+    """
+
     config: Optional[FleetModelSpec]
-    mlflow_version: Optional[str]
-    check_status: Optional[Literal["OK", "FAILED", "RUNNING"]]
-    check_stack_trace: Optional[str]
 
 
 LossType = Literal[
