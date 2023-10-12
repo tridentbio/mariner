@@ -163,6 +163,7 @@ def setup_create_model_db(
         name=model.config.name,
         config=model.config,
         description=model.model_version_description,
+        created_by_id=user.id,
     )
     model_sql.model_store.create_model_version(db, version_create)
     model = db.query(ModelEntity).get(created_model.id)
@@ -238,6 +239,7 @@ def setup_create_model_db2(
         config=parsed_config,
         mlflow_model_name=mlflow_model.name,
         description="test version",
+        created_by_id=owner_id,
     )
     model_sql.model_store.create_model_version(db, version_create)
     return created_model
