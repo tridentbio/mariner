@@ -796,7 +796,7 @@ export type ModelVersion = {
       } & SklearnModelSpec);
   createdAt: string;
   updatedAt: string;
-  checkStatus?: 'OK' | 'FAILED';
+  checkStatus?: 'OK' | 'FAILED' | 'RUNNING';
   checkStackTrace?: string;
 };
 export type ModelFeaturesAndTarget = {
