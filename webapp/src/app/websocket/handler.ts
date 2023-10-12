@@ -1,9 +1,9 @@
-import { matchPath } from 'react-router-dom';
 import { DeploymentStatus } from '@app/rtk/generated/deployments';
+import { ModelVersion } from '@app/rtk/generated/models';
 import { ELocalStorage, fetchLocalStorage } from 'app/local-storage';
 import { Dataset } from 'app/types/domain/datasets';
+import { matchPath } from 'react-router-dom';
 import { isDev } from 'utils';
-import { Model } from '@app/rtk/generated/models';
 
 export type UpdateExperiment = {
   type: 'update-running-metrics';
@@ -35,7 +35,7 @@ export type UpdateDeployment = {
 
 export type UpdateModel = {
   type: 'update-model';
-  data: Model;
+  data: ModelVersion;
 };
 
 // Union type for all websocket incoming messages
