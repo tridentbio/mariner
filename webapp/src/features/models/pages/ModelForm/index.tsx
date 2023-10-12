@@ -105,10 +105,16 @@ const ModelForm = ({ mode = 'creation' }: { mode?: 'creation' | 'fix' }) => {
     resolver: yupResolver(schema),
   });
 
-  const [createModel, { error, isLoading: creatingModel, data }] =
+  const [createModel, { isLoading: creatingModel }] =
     modelsApi.useCreateModelMutation();
 
-  const [updateModel] = modelsApi.usePutModelVersionMutation();
+  const [updateModel, { isLoading: updatingModel }] =
+    modelsApi.usePutModelVersionMutation();
+
+  const isSubmittingModel = useMemo(
+    () => creatingModel || updatingModel,
+    [creatingModel, updatingModel]
+  );
 
   const { control, getValues, setValue, watch, reset } = methods;
   const config = watch('config');
@@ -236,7 +242,9 @@ const ModelForm = ({ mode = 'creation' }: { mode?: 'creation' | 'fix' }) => {
             await updateModel({
               modelId: parseInt(modelId as string),
               modelVersionId: parseInt(routeParams.modelVersionId as string),
-              // modelVersion: model,
+              modelVersionUpdate: {
+                config: model.config,
+              },
             }).unwrap();
 
             navigate(`/models/${modelId}`);
@@ -408,6 +416,7 @@ const ModelForm = ({ mode = 'creation' }: { mode?: 'creation' | 'fix' }) => {
         <ModelConfigForm
           control={control}
           onClear={handleClearRegisteredModel}
+          disabled={currentMode == 'fix'}
         />
       ),
     },
@@ -499,7 +508,7 @@ const ModelForm = ({ mode = 'creation' }: { mode?: 'creation' | 'fix' }) => {
                   variant="contained"
                   sx={{ mr: 3 }}
                   data-testid="previous"
-                  disabled={creatingModel}
+                  disabled={isSubmittingModel}
                 >
                   PREVIOUS
                 </Button>
@@ -515,7 +524,7 @@ const ModelForm = ({ mode = 'creation' }: { mode?: 'creation' | 'fix' }) => {
               )}
               {activeStep === steps.length - 1 && (
                 <LoadingButton
-                  loading={creatingModel}
+                  loading={isSubmittingModel}
                   variant="contained"
                   onClick={handleModelCreate}
                 >

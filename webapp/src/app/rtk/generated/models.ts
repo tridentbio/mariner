@@ -76,6 +76,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/v1/models/${queryArg.modelId}/versions/${queryArg.modelVersionId}`,
           method: 'PUT',
+          body: queryArg.modelVersionUpdate,
         }),
         invalidatesTags: ['models'],
       }),
@@ -138,6 +139,7 @@ export type PutModelVersionApiResponse =
 export type PutModelVersionApiArg = {
   modelId: number;
   modelVersionId: number;
+  modelVersionUpdate: ModelVersionUpdate;
 };
 export type GetExperimentsMetricsForModelVersionApiResponse =
   /** status 200 Successful Response */ Experiment[];
@@ -884,6 +886,9 @@ export type AllowedLosses = {
     [key: string]: string;
   }[];
   typeMap?: object;
+};
+export type ModelVersionUpdate = {
+  config?: TorchModelSpec | SklearnModelSpec;
 };
 export type Experiment = {
   experimentName?: string;
