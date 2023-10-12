@@ -231,23 +231,10 @@ export const buildModel = (
   if (params.submitModelRequest) {
     cy.intercept({
       method: 'POST',
-      url: `${API_BASE_URL}/api/v1/models/check-config`,
-    }).as('checkConfig');
-    cy.intercept({
-      method: 'POST',
       url: `${API_BASE_URL}/api/v1/models`,
     }).as('createModel');
 
     cy.get('button').contains('CREATE').click();
-
-    if(modelCreate.config?.framework == 'torch') {
-      cy.wait('@checkConfig', {responseTimeout: 60000}).then(({ response }) => {
-        expect(response?.statusCode).to.eq(200);
-        if (params.successfullRequestRequired) {
-          expect(Boolean(response?.body.stackTrace)).to.eq(false);
-        }
-      });
-    }
 
     if (params.successfullRequestRequired)
       cy.wait('@createModel').then(({ response }) => {

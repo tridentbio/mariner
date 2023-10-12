@@ -197,9 +197,13 @@ export const modelSlice = createSlice({
     builder.addMatcher(
       modelsApi.endpoints.getModelById.matchFulfilled,
       (state, action) => {
-        if (state.models.find((model) => model.id === action.payload.id))
-          return;
-        state.models.push(action.payload);
+        let foundModelIndex = state.models.findIndex(
+          (model) => model.id === action.payload.id
+        );
+
+        if (foundModelIndex !== -1)
+          state.models[foundModelIndex] = action.payload;
+        else state.models.push(action.payload);
       }
     );
     builder.addMatcher(
@@ -213,8 +217,16 @@ export const modelSlice = createSlice({
     builder.addMatcher(
       modelsGeneratedApi.endpoints.createModel.matchFulfilled,
       (state, action) => {
-        state.models.push(action.payload);
-        state.totalModels += 1;
+        let foundModelIndex = state.models.findIndex(
+          (model) => model.id === action.payload.id
+        );
+
+        if (foundModelIndex !== -1)
+          state.models[foundModelIndex] = action.payload;
+        else {
+          state.models.push(action.payload);
+          state.totalModels += 1;
+        }
       }
     );
 
