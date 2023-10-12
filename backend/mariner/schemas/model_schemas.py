@@ -136,6 +136,7 @@ class ModelVersionCreateRepo(BaseModel):
     mlflow_model_name: str
     model_id: int
     name: str
+    created_by_id: int
     config: FleetModelSpec
     check_status: Optional[Literal["OK", "FAILED", "RUNNING"]] = None
 

@@ -204,6 +204,7 @@ async def create_model(
                 model_id=existingmodel.id,
                 name=model_create.config.name,
                 config=model_create.config,
+                created_by_id=user.id,
                 description=model_create.model_version_description,
             ),
         )
