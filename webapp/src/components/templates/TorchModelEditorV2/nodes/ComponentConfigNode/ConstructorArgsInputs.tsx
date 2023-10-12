@@ -58,10 +58,12 @@ const ConstructorArgsInputs = ({
   }, [argsForm]);
 
   const suggestions = suggestionsByNode[props.data.name] || [];
-  const errors = suggestions.reduce(
-    (acc, sug) => ({ ...acc, ...sug.getConstructorArgsErrors() }),
-    {} as Record<string, string>
-  );
+  const errors = schema
+    ? suggestions.reduce(
+        (acc, sug) => ({ ...acc, ...sug.getConstructorArgsErrors(schema) }),
+        {} as Record<string, string>
+      )
+    : {};
 
   const option = options?.[props.data.type!];
 
