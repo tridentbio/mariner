@@ -254,10 +254,12 @@ const TorchModelEditor = ({
       },
       options,
     });
-    editComponent({
-      schema,
-      data,
-    });
+    editComponent(
+      {
+        data,
+      },
+      schema
+    );
   };
 
   useLayoutEffect(() => {
@@ -351,10 +353,12 @@ const TorchModelEditor = ({
                 },
                 options,
               });
-              return editComponent({
-                schema: value,
-                data,
-              });
+              return editComponent(
+                {
+                  data,
+                },
+                value
+              );
             }}
           >
             <Background color="#384E77" variant={BackgroundVariant.Dots} />

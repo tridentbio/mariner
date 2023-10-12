@@ -35,17 +35,26 @@ export default class LinearLinearWarningVisitor extends ComponentVisitor {
             new AddComponentCommand({
               type: 'layer',
               data: nonLinearLayer,
-              schema: info.schema,
               position: {
                 type: 'relative',
                 references: [dependentLinearLayer.name, component.name],
               },
             }),
             new EditComponentsCommand({
-              schema: info.schema,
-              data: {
-                ...dependentLinearLayer,
-                forwardArgs: { input: nonLinearLayer.name },
+              data: (schema) => {
+                const foundSpec = schema.spec.layers?.find(
+                  (node) => node.name == dependentLinearLayer.name
+                );
+
+                if (!foundSpec) {
+                  // eslint-disable-next-line no-console
+                  console.error('Could not find dependent linear layer');
+                  return null as any;
+                }
+
+                foundSpec.forwardArgs = { input: nonLinearLayer.name };
+
+                return foundSpec;
               },
             }),
           ],

@@ -32,14 +32,16 @@ const ConstructorArgsInputs = ({
 
   const editConstrutorArgs = () => {
     if (schema && editable) {
-      editComponent({
-        schema,
-        data: makeComponentEdit({
-          component: getComponent(schema, props.data.name),
-          constructorArgs: argsForm,
-          options,
-        }),
-      });
+      editComponent(
+        {
+          data: makeComponentEdit({
+            component: getComponent(schema, props.data.name),
+            constructorArgs: argsForm,
+            options,
+          }),
+        },
+        schema
+      );
 
       //? Persist selected node overlay
       setNodes((prev) =>

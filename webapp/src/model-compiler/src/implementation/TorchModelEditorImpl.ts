@@ -32,10 +32,11 @@ class TorchModelEditorImpl {
    * @returns {ModelSchema}
    */
   addComponent = <T extends ComponentType>(
-    args: AddCompArgs<T>
+    args: AddCompArgs<T>,
+    schema: ModelSchema
   ): ModelSchema => {
     const command = new AddComponentCommand(args);
-    return command.execute();
+    return command.execute(schema);
   };
 
   /**
@@ -45,9 +46,12 @@ class TorchModelEditorImpl {
    * @param {EditComponentsCommandArgs<T>} args - arguments of the EditComponentsCommand
    * @returns {ModelSchema}
    */
-  editComponent = (args: EditComponentsCommandArgs): ModelSchema => {
+  editComponent = (
+    args: EditComponentsCommandArgs,
+    schema: ModelSchema
+  ): ModelSchema => {
     const command = new EditComponentsCommand(args);
-    return command.execute();
+    return command.execute(schema);
   };
 
   /**

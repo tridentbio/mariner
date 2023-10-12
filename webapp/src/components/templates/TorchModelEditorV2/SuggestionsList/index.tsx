@@ -16,6 +16,7 @@ import {
 import useTorchModelEditor from 'hooks/useTorchModelEditor';
 import {
   locateContext,
+  NodeSchemaContext,
   SchemaContextTypeGuard,
 } from 'model-compiler/src/implementation/SchemaContext';
 import Suggestion from 'model-compiler/src/implementation/Suggestion';
@@ -24,13 +25,46 @@ interface SuggestionsListProps {
   suggestions: Suggestion[];
 }
 
-const ZOOM = 0.5;
+const ZOOM = 0.8;
+
 const SuggestionsList = (props: SuggestionsListProps) => {
-  const { setCenter, getNode, getEdge, applySuggestions, schema, expandNodes } =
-    useTorchModelEditor();
+  const {
+    setCenter,
+    getNode,
+    getEdge,
+    applySuggestions,
+    schema,
+    expandNodes,
+    highlightNodes,
+    NODE_DEFAULT_STYLISH,
+  } = useTorchModelEditor();
+
+  const highlightSuggestionNodes = (suggestion: Suggestion) => {
+    const nodeId = (suggestion.context as NodeSchemaContext).nodeId;
+
+    const highlightColor = (() => {
+      switch (suggestion.severity) {
+        case 'WARNING':
+          return '#ed6c02';
+        case 'ERROR':
+          return '#d32f2f';
+        default:
+          NODE_DEFAULT_STYLISH.borderColor;
+      }
+    })();
+
+    highlightNodes([nodeId], highlightColor);
+
+    setTimeout(() => {
+      highlightNodes([nodeId], NODE_DEFAULT_STYLISH.borderColor);
+    }, 2000);
+  };
+
   const handleClickLocate = (suggestion: Suggestion) => {
     if (SchemaContextTypeGuard.isNodeSchema(suggestion.context)) {
       expandNodes([suggestion.context.nodeId]);
+
+      highlightSuggestionNodes(suggestion);
     }
     const position = locateContext(suggestion.context, {
       getNode,
@@ -53,6 +87,7 @@ const SuggestionsList = (props: SuggestionsListProps) => {
   const handleFixAll = () => {
     schema && applySuggestions({ suggestions: props.suggestions, schema });
   };
+
   return (
     <List sx={{ pt: 2 }}>
       {(fixable.length > 1

@@ -1,6 +1,7 @@
 import {
   ModelSchema,
   NodePositionTypesMap,
+  NodeType,
 } from '../../interfaces/torch-model-editor';
 import Suggestion from '../Suggestion';
 import AddComponentCommand from './AddComponentCommand';
@@ -30,14 +31,22 @@ class ApplySuggestionsCommand extends Command<
           command instanceof EditComponentsCommand ||
           command instanceof AddComponentCommand
         ) {
-          if ('schema' in command.args) {
-            command.args.schema = currentSchema;
+          if ('position' in command.args && command.args.position) {
+            let nodeName: string;
+
+            if (command instanceof EditComponentsCommand) {
+              nodeName =
+                typeof command.args.data == 'function'
+                  ? command.args.data(currentSchema).name
+                  : command.args.data.name;
+            } else {
+              nodeName = command.args.data.name;
+            }
+
+            updatedNodePositions[nodeName] = command.args.position;
           }
-          if ('position' in command.args && command.args.position)
-            updatedNodePositions[command.args.data.name] =
-              command.args.position;
         }
-        currentSchema = command.execute();
+        currentSchema = command.execute(currentSchema);
       });
     });
 
