@@ -204,6 +204,14 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
       );
 
       if (!!modelVersion) {
+        if (modelVersion.checkStatus !== 'FAILED') {
+          notifyError('Unable to modify non failed model versions');
+
+          navigate(`/models/${routeParams.modelId}`);
+
+          return;
+        }
+
         //? Fills dataset select input options
         await fetchDatasets({
           page: 0,
