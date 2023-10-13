@@ -101,6 +101,7 @@ def test_get_model_options():
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_update_model_version(db: Session, some_dataset: DatasetSchema):
     # Create test model that fails check
     user = get_test_user(db)
