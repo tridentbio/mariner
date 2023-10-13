@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 pylint $@
 PYLINT_RESULT=$?
 

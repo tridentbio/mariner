@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 import ray
-from botocore.endpoint import time
 from sqlalchemy.orm.session import Session
 
 from fleet.base_schemas import TorchModelSpec
@@ -101,6 +100,7 @@ def test_get_model_options():
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_update_model_version(db: Session, some_dataset: DatasetSchema):
     # Create test model that fails check
     user = get_test_user(db)
@@ -125,7 +125,6 @@ async def test_update_model_version(db: Session, some_dataset: DatasetSchema):
         return_async_task=True,
         model_create=model_create,
     )
-    import logging
 
     model, task = ctlresult
     assert model.name == model_create.name
@@ -138,7 +137,7 @@ async def test_update_model_version(db: Session, some_dataset: DatasetSchema):
         }
     )
     assert len(tasks) == len(ids) == 1
-    result = await task
+    await task
     modelversion = (
         db.query(ModelVersion)
         .filter(ModelVersion.id == model_version.id)

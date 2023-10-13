@@ -1,5 +1,5 @@
 # Continous integration checks that can be done out of docker
-name: Continuous integration
+name: Python Continuous integration
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -25,8 +25,8 @@ on:
     paths: [backend/**/*.py]
 
 jobs:
-  # Checks: pylint score, unit test cov regression
-  backend_sca:
+  # Run static code analyser and unit tests
+  sca_and_unit_tests:
     services:
       db:
         # Docker Hub image

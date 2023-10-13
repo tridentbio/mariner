@@ -196,6 +196,9 @@ async def create_model(
         db, model_create.name, user_id=user.id
     )
     if existingmodel:
+        check_status = (
+            "OK" if model_create.config.framework != "torch" else "RUNNING"
+        )
         model_version = model_store.create_model_version(
             db,
             ModelVersionCreateRepo(
@@ -206,16 +209,20 @@ async def create_model(
                 config=model_create.config,
                 created_by_id=user.id,
                 description=model_create.model_version_description,
+                check_status=check_status,
             ),
         )
-
-        _check_model(
-            model_version=ModelVersion.from_orm(model_version),
-            user=user,
-            task_control=get_task_control(),
-        )
-
-        return Model.from_orm(existingmodel)
+        task = None
+        if check_status == "RUNNING":
+            task = _check_model(
+                model_version=ModelVersion.from_orm(model_version),
+                user=user,
+                task_control=get_task_control(),
+            )
+        model = Model.from_orm(existingmodel)
+        if return_async_task:
+            return model, task
+        return model
 
     # Handle cases of creating a new model in the registry
     mlflow_name = f"{user.id}-{model_create.name}-{uuid4()}"
