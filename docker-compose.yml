@@ -179,7 +179,7 @@ services:
     image: cypress/included:12.6.0
     working_dir: /e2e
     environment:
-      # Override the env variables from cypress.config.js
+      # Override the env variables from cypress.config.ts
       - CYPRESS_SCHEMA_PATH=/e2e/cypress/fixtures/data
     network_mode: host
     command: sh -c "npm run serve:e2e"

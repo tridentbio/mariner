@@ -11,7 +11,7 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
   };
   let dataset: DatasetFormData;
   before(() => {
-    cy.loginSuper();
+    cy.loginUser();
 
     cy.setupZincDataset().then((zinc) => {
       dataset = zinc;
@@ -21,7 +21,6 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
     deleteDatasetIfAlreadyExists(updatedDataset.name);
   });
   beforeEach(() => {
-    cy.loginSuper();
     cy.intercept('GET', `${API_BASE_URL}/api/v1/datasets/*`).as(
       'getDatasets'
     );

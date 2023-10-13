@@ -123,7 +123,7 @@ describe('Table.cy.tsx', () => {
     })
   })
 
-  it('should hide/show columns by the column picker and persist the preferences', async () => {
+  it('should hide/show columns by the column picker and persist the preferences', () => {
     cy.mount(<MountedComponent />)
 
     const nonFixedColumns = columns.filter(column => !column.fixed)

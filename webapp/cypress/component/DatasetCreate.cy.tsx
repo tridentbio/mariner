@@ -45,8 +45,7 @@ describe('DatasetCreate.cy.tsx', () => {
       .siblings()
       .should('have.class', TestUtils.errorClass);
     cy.get('#dataset-upload')
-      .siblings()
-      .should('have.class', TestUtils.errorClass);
+      .should('have.class', 'invalid');
 
 
     cy.get('#dataset-upload').attachFile(zincDatasetFixture.file)

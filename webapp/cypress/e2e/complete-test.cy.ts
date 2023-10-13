@@ -11,12 +11,12 @@ const SCHEMA_PATH = Cypress.env('SCHEMA_PATH');
 
 describe.skip('Complete test from dataset creation to inference', () => {
   before(() => {
-    cy.loginSuper();
+    cy.loginUser();
     deleteDatasetIfAlreadyExists(zincDatasetFixture.name);
     deleteTestModelsIfExist();
   });
   after(() => {
-    cy.loginSuper();
+    cy.loginUser();
     deleteTestModelsIfExist();
   });
 

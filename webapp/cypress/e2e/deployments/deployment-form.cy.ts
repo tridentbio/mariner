@@ -6,7 +6,7 @@ describe('Deployments Form.', () => {
   let deploymentName: string | null = null;
 
   before(() => {
-    cy.loginSuper();
+    cy.loginUser();
     cy.setupSomeModel().then((model) => {
       modelName = model.name;
       modelVersionName =  'config' in model ? model.config.name : model.versions[0].config.name
@@ -14,7 +14,6 @@ describe('Deployments Form.', () => {
   });
 
   after(() => {
-    cy.loginSuper();
     cy.deleteDeployment(modelName!, deploymentName!);
   });
 
@@ -25,17 +24,17 @@ describe('Deployments Form.', () => {
   });
 
   it('Share model with test user.', () => {
-    cy.loginSuper();
+    cy.loginUser();
     cy.updateDeployment(modelName!, deploymentName!, {
-      shareWithUser: [TEST_USER],
+      shareWithUser: [TEST_USER.username],
     });
 
-    cy.loginTest();
+    cy.loginUser('test');
     cy.goToSpecificDeployment(deploymentName!, 'Shared');
   });
 
   it('Access model publically.', () => {
-    cy.loginSuper();
+    cy.loginUser();
     cy.updateDeployment(modelName!, deploymentName!, {
       shareStrategy: 'Public',
     }).then((res) => {

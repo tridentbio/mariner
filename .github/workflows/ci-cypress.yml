@@ -8,13 +8,13 @@ on:
       - backend/**/*
       - webapp/**/*
 env:
-    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    AWS_REGION: us-east-1
-    AWS_MODELS_BUCKET: s3://dev-mariner-datasets
-    AWS_DATASETS: dev-mariner-datasets
-    COMPOSE_HTTP_TIMEOUT: 600
-    DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose.cicd.yml"
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: us-east-1
+  AWS_MODELS_BUCKET: s3://dev-mariner-datasets
+  AWS_DATASETS: dev-mariner-datasets
+  COMPOSE_HTTP_TIMEOUT: 600
+  DOCKER_COMPOSE: "docker compose -f docker-compose.yml -f docker-compose.cicd.yml"
 jobs:
   generate-webapp-build:
     runs-on: ubuntu-latest
@@ -81,11 +81,31 @@ jobs:
   #           backend.cache-to=type=gha
   #         files: docker-compose.yml, docker-compose.cicd.yml
   #         targets: backend
-
+  # example splitting all tests across GitHub machines
+  prepare-cypress-runners:
+    runs-on: ubuntu-latest
+    # explicitly set the output of this job
+    # so that other jobs can use it
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+    steps:
+      # generate the list using a bash script
+      - name: Create matrix ⊹
+        id: prepare
+        # for reusable workflow, must use the full action reference
+        uses: bahmutov/gh-build-matrix@main
+        with:
+          n: 2 # number of containers to output
+      - name: Print result 🖨
+        run: echo '${{ steps.prepare.outputs.matrix }}'
   e2e-tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-cypress-runners.outputs.matrix) }}
     needs:
       # - backend-build
+      - prepare-cypress-runners
       - generate-webapp-build
     steps:
       - name: Checkout
@@ -109,6 +129,10 @@ jobs:
           install-command: npm install vite
           wait-on: 'http://localhost:3000/login, http://localhost:8000/health'
           wait-on-timeout: 30 # seconds
+        env:
+          SPLIT: ${{ strategy.job-total }}
+          SPLIT_INDEX: ${{ strategy.job-index }}
+          DEBUG: cypress-split
       - name: Collect backend container logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2

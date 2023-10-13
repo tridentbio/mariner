@@ -204,6 +204,8 @@ const DatasetForm = ({ initialValues, ...props }: DatasetFormProps) => {
                 name="file"
                 render={({ field, fieldState: { error } }) => (
                   <InputFileUpload
+                    id="dataset-upload"
+                    error={!!error}
                     buttonProps={{
                       sx: { my: 2 },
                     }}

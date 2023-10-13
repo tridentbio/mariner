@@ -22,6 +22,7 @@ interface InputFileUploadProps
     startIcon?: React.ReactNode;
     sx?: SxProps<Theme>;
   };
+  error?: boolean;
 }
 
 export const InputFileUpload = (props: InputFileUploadProps) => {
@@ -30,10 +31,17 @@ export const InputFileUpload = (props: InputFileUploadProps) => {
       component="label"
       variant="contained"
       startIcon={props.buttonProps?.startIcon || <CloudUploadIcon />}
-      sx={props.buttonProps?.sx}
+      sx={{
+        ...props.buttonProps?.sx,
+        border: props.error ? '1px solid red' : 'initial',
+      }}
     >
       {props.label || 'Upload file'}
-      <VisuallyHiddenInput type="file" {...props} />
+      <VisuallyHiddenInput
+        type="file"
+        {...props}
+        className={props.error ? 'invalid' : ''}
+      />
     </Button>
   );
 };
