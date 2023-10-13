@@ -13,6 +13,7 @@ from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet import options
+from fleet.base_schemas import FleetModelSpec
 from fleet.model_functions import predict
 from fleet.ray_actors.model_check_actor import ModelCheckActor
 from fleet.ray_actors.tasks import TaskControl, get_task_control
@@ -47,6 +48,18 @@ from mariner.stores.model_sql import model_store
 
 LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)
+
+
+def _is_config_checkable(config: FleetModelSpec) -> bool:
+    """
+    Checks if a config has a checkable model framework.
+
+    Currently only "torch" is checkable.
+
+    Args:
+        config: ModelSchema instance specifying the model.
+    """
+    return config.framework == "torch"
 
 
 def _check_model(
@@ -197,7 +210,9 @@ async def create_model(
     )
     if existingmodel:
         check_status = (
-            "OK" if model_create.config.framework != "torch" else "RUNNING"
+            "OK"
+            if not _is_config_checkable(model_create.config)
+            else "RUNNING"
         )
         model_version = model_store.create_model_version(
             db,
@@ -271,7 +286,9 @@ async def create_model(
             created_by_id=user.id,
             mlflow_version=None,
             check_status=(
-                "OK" if model_create.config.framework != "torch" else None
+                "OK"
+                if not _is_config_checkable(model_create.config)
+                else "RUNNING"
             ),
             mlflow_model_name=mlflow_name,
             model_id=model.id,
@@ -281,7 +298,7 @@ async def create_model(
         ),
     )
     task = None
-    if model_create.config.framework == "torch":
+    if _is_config_checkable(model_create.config):
         assert model_create.config.dataset.target_columns[
             0
         ].out_module, "missing out_module in target_column"
@@ -392,7 +409,7 @@ async def update_model_version(
     version_update: ModelVersionUpdate,
     model_id: int | None = None,
     return_async_task=False,
-) -> ModelVersion:
+) -> ModelVersion | Tuple[ModelVersion, Any | None]:
     """
     Updates a single model version.
 
@@ -426,18 +443,31 @@ async def update_model_version(
         raise ModelVersionNotUpdatable(
             "Only allowed to update model versions that have failed the check status"
         )
+    repo_version_update = ModelVersionUpdateRepo(
+        **version_update.dict(exclude_unset=True)
+    )
+    if repo_version_update.config and not _is_config_checkable(
+        repo_version_update.config
+    ):
+        repo_version_update.check_status = "OK"
+        repo_version_update.check_stack_trace = None
+
     modelversion = model_store.update_model_version(
-        db,
-        version_id,
-        {"check_status": "RUNNING", "config": version_update.config.dict()},
+        db, version_id, repo_version_update.dict(exclude_unset=True)
     )
 
-    task = _check_model(
-        model_version=ModelVersion.from_orm(modelversion),
-        user=user,
-        task_control=get_task_control(),
-    )
+    task = None
+    model_version = ModelVersion.from_orm(modelversion)
+    if repo_version_update.config and _is_config_checkable(
+        repo_version_update.config
+    ):
+        LOG.info(repo_version_update.config)
+        task = _check_model(
+            model_version=model_version,
+            user=user,
+            task_control=get_task_control(),
+        )
 
     if return_async_task:
-        return ModelVersion.from_orm(modelversion), task
-    return ModelVersion.from_orm(modelversion)
+        return model_version, task
+    return model_version
