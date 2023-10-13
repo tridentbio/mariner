@@ -20,6 +20,7 @@ import {
   SchemaContextTypeGuard,
 } from 'model-compiler/src/implementation/SchemaContext';
 import Suggestion from 'model-compiler/src/implementation/Suggestion';
+import { NODE_DEFAULT_STYLISH } from '../styles';
 
 interface SuggestionsListProps {
   suggestions: Suggestion[];
@@ -36,11 +37,12 @@ const SuggestionsList = (props: SuggestionsListProps) => {
     schema,
     expandNodes,
     highlightNodes,
-    NODE_DEFAULT_STYLISH,
   } = useTorchModelEditor();
 
-  const highlightSuggestionNodes = (suggestion: Suggestion) => {
-    const nodeId = (suggestion.context as NodeSchemaContext).nodeId;
+  const highlightSuggestionNodes = (
+    suggestion: Suggestion<NodeSchemaContext>
+  ) => {
+    const nodeId = suggestion.context.nodeId;
 
     const highlightColor = (() => {
       switch (suggestion.severity) {
@@ -64,7 +66,7 @@ const SuggestionsList = (props: SuggestionsListProps) => {
     if (SchemaContextTypeGuard.isNodeSchema(suggestion.context)) {
       expandNodes([suggestion.context.nodeId]);
 
-      highlightSuggestionNodes(suggestion);
+      highlightSuggestionNodes(suggestion as Suggestion<NodeSchemaContext>);
     }
     const position = locateContext(suggestion.context, {
       getNode,

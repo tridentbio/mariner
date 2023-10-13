@@ -32,3 +32,9 @@ export const StyleOverrides = styled.div`
   react-flow__node-featurizer {
   }
 `;
+
+export const NODE_DEFAULT_STYLISH: {
+  borderColor: string;
+} = {
+  borderColor: 'rgb(204, 204, 204)',
+};

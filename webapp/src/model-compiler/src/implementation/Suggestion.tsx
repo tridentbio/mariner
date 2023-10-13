@@ -4,17 +4,17 @@ import EditComponentsCommand from './commands/EditComponentsCommand';
 import SchemaContext from './SchemaContext';
 
 type Severity = 'ERROR' | 'WARNING' | 'IMPROV';
-class Suggestion {
+class Suggestion<SC extends SchemaContext = SchemaContext> {
   readonly severity: Severity;
   readonly message: string;
   readonly commands: Command<unknown, ModelSchema>[];
-  readonly context: SchemaContext;
+  readonly context: SC;
 
   constructor(
     severity: Severity,
     message: string,
     commands: Command<any, ModelSchema>[],
-    context: SchemaContext
+    context: SC
   ) {
     this.severity = severity;
     this.commands = commands;

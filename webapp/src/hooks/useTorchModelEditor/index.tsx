@@ -65,10 +65,6 @@ export const TorchModelEditorContextProvider = ({
   const { data: modelOptions } = useGetModelOptionsQuery();
   const nodesInitialized = useNodesInitialized();
 
-  const NODE_DEFAULT_STYLISH = {
-    borderColor: 'rgb(204, 204, 204)',
-  };
-
   const optionsByLib: ITorchModelEditorContext['optionsByLib'] = useMemo(() => {
     return (
       modelOptions?.reduce((acc, model) => {
@@ -554,7 +550,6 @@ export const TorchModelEditorContextProvider = ({
         onEdgesChange,
         nodesInitialized,
         highlightNodes,
-        NODE_DEFAULT_STYLISH,
       }}
     >
       {children}

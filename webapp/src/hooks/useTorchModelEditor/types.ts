@@ -180,8 +180,4 @@ export interface ITorchModelEditorContext
   nodesInitialized: boolean;
 
   highlightNodes: (nodeIds: string[], color?: CSSProperties['color']) => void;
-
-  readonly NODE_DEFAULT_STYLISH: {
-    borderColor: string;
-  };
 }
