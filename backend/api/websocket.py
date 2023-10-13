@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketState
 
 from api import deps
-from mariner.entities import Deployment, User
+from mariner.entities import Deployment
 from mariner.schemas.api import ApiBaseModel
 
 LOG = logging.getLogger(__name__)
@@ -226,7 +226,7 @@ async def websocket_endpoint(
     """
     try:
         user = deps.get_current_user(db, token)
-    except Exception as exc:
+    except Exception:
         await websocket.close()
         return
 

@@ -136,7 +136,6 @@ from tests.fleet import helpers
 
 
 class TestPreprocessingPipeline:
-
     # This class is used to resolve the FleetModelSpec union
     class ModelConfigWrapper(BaseModel):
         model_config: FleetModelSpec
