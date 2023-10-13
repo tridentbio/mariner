@@ -34,6 +34,10 @@ import { DatasetConfigurationForm } from './DatasetConfigurationForm';
 import ModelConfigForm from './ModelConfigForm';
 import { ModelSetup } from './ModelSetup';
 
+export interface ModelFormProps {
+  mode?: 'creation' | 'fix';
+}
+
 type ModelCreationStep = {
   title: string;
   stepId:
@@ -69,7 +73,7 @@ export const schema = yup.object({
   }),
 });
 
-const ModelForm = ({ mode = 'creation' }: { mode?: 'creation' | 'fix' }) => {
+const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
   const [currentMode, setCurrentMode] = useState<'creation' | 'fix'>(mode);
   const [activeStep, setActiveStep] = useState<number>(0);
   const [fetchDatasets] = useLazyGetMyDatasetsQuery();

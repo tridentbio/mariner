@@ -1,3 +1,4 @@
+import { AllowedLosses } from '@app/rtk/generated/models';
 import { Model } from '@app/types/domain/models';
 
 export const models: Partial<Model>[] = [
@@ -107,6 +108,7 @@ export const models: Partial<Model>[] = [
       readyStatus: 'ready',
       errors: undefined,
     },
+    //? FAILED MODEL VERSION
     versions: [
       {
         id: 1,
@@ -114,6 +116,9 @@ export const models: Partial<Model>[] = [
         name: 'test model version',
         description: 'fwscttrs',
         mlflowVersion: '25',
+        checkStackTrace:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+        checkStatus: 'FAILED',
         mlflowModelName:
           '1-SOME_MODEL_NAME-c99289aa-f6d3-4c61-99f1-2a8e3cd24dd7',
         config: {
@@ -1230,3 +1235,29 @@ export const modelOptionsData = [
     },
   },
 ];
+
+export const losses: AllowedLosses = {
+  regr: [
+    {
+      key: 'torch.nn.MSELoss',
+      value: 'MSELoss',
+    },
+  ],
+  binClass: [
+    {
+      key: 'torch.nn.BCEWithLogitsLoss',
+      value: 'BCEWithLogitsLoss',
+    },
+  ],
+  mcClass: [
+    {
+      key: 'torch.nn.CrossEntropyLoss',
+      value: 'CrossEntropyLoss',
+    },
+  ],
+  typeMap: {
+    regression: 'regr',
+    binary: 'bin_class',
+    multiclass: 'mc_class',
+  },
+};
