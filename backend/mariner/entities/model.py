@@ -32,6 +32,7 @@ class ModelVersion(Base):
     """
 
     id = Column(Integer, primary_key=True, index=True, unique=True)
+
     model_id = Column(
         Integer, ForeignKey("model.id", ondelete="CASCADE"), nullable=False
     )
@@ -41,7 +42,12 @@ class ModelVersion(Base):
     mlflow_version = Column(String, nullable=True)
     mlflow_model_name = Column(String, nullable=False)
     # experiments = relationship("Experiment", back_populates="model_version")
+    check_status = Column(String, nullable=True, default="RUNNING")
+    check_stack_trace = Column(String, nullable=True)
     config = Column(JSON, nullable=False)
+
+    created_by_id = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"))
+    created_by = relationship(User)
     created_at = Column(
         DateTime, server_default=current_timestamp(), nullable=False
     )

@@ -1,7 +1,8 @@
-import { matchPath } from 'react-router-dom';
 import { DeploymentStatus } from '@app/rtk/generated/deployments';
+import { ModelVersion } from '@app/rtk/generated/models';
 import { ELocalStorage, fetchLocalStorage } from 'app/local-storage';
 import { Dataset } from 'app/types/domain/datasets';
+import { matchPath } from 'react-router-dom';
 import { isDev } from 'utils';
 
 export type UpdateExperiment = {
@@ -32,8 +33,17 @@ export type UpdateDeployment = {
   };
 };
 
+export type UpdateModel = {
+  type: 'update-model';
+  data: ModelVersion;
+};
+
 // Union type for all websocket incoming messages
-type MessageType = UpdateExperiment | DatasetProcessed | UpdateDeployment;
+type MessageType =
+  | UpdateExperiment
+  | DatasetProcessed
+  | UpdateDeployment
+  | UpdateModel;
 
 type CallbackMap = {
   [MT in MessageType as MT['type']]: (message: MT) => void;
@@ -56,6 +66,7 @@ export class SocketMessageHandler {
       'dataset-process-finish': () => {},
       'update-running-metrics': () => {},
       'update-deployment': () => {},
+      'update-model': () => {},
     };
     this.setListeners();
   }

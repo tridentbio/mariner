@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, current } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
-import { Model } from 'app/types/domain/models';
+import { Model, ModelVersion } from 'app/types/domain/models';
 import {
   EClassPaths,
   ModelOptionsComponent,
@@ -11,7 +11,8 @@ import { UpdateExperiment } from '@app/websocket/handler';
 import { modelsApi } from 'app/rtk/models';
 import { Experiment, TrainingStage } from 'app/types/domain/experiments';
 import { experimentsApi } from 'app/rtk/experiments';
-import { enhancedApi } from 'app/rtk/generated/experiments';
+import { enhancedApi as experimentsGeneratedApi } from 'app/rtk/generated/experiments';
+import { enhancedApi as modelsGeneratedApi } from 'app/rtk/generated/models';
 import { deepClone } from 'utils';
 
 export type ArgumentType = 'string' | 'bool' | 'int';
@@ -96,6 +97,22 @@ export const modelSlice = createSlice({
     ) => {
       state.experiments = action.payload;
     },
+    updateModel: (state, action: { type: string; payload: ModelVersion }) => {
+      state.models = [...state.models].map((model) => {
+        if (model.id === action.payload.modelId) {
+          return {
+            ...model,
+            versions: model.versions.map((version) => {
+              if (version.id === action.payload.id) {
+                return action.payload;
+              }
+              return version;
+            }),
+          };
+        }
+        return model;
+      });
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchExperiments.fulfilled, (state, action) => {
@@ -134,20 +151,59 @@ export const modelSlice = createSlice({
       state.experiments = [...state.experiments, action.payload];
     });
 
+    //? Prevents the cache from being cleared when the request using filters only return few/no models
     builder.addMatcher(
       modelsApi.endpoints.getModelsOld.matchFulfilled,
       (state, action) => {
-        state.models = action.payload.data;
-        state.totalModels = action.payload.total;
+        const modelsTo: {
+          push: Model[];
+          replace: { cacheIndex: number; responseIndex: number }[];
+        } = {
+          push: [],
+          replace: [],
+        };
+
+        action.payload.data.forEach((fetchedModel, fetchedModelIndex) => {
+          const foundModelIndex = state.models.findIndex(
+            (model) => model.id === fetchedModel.id
+          );
+
+          if (foundModelIndex !== -1) {
+            modelsTo.replace.push({
+              cacheIndex: foundModelIndex,
+              responseIndex: fetchedModelIndex,
+            });
+          } else {
+            const modelAlreadyInList =
+              modelsTo.push.some((modelTo) => modelTo.id === fetchedModel.id) ||
+              modelsTo.replace.some(
+                (params) => params.responseIndex === fetchedModelIndex
+              );
+
+            !modelAlreadyInList && modelsTo.push.push(fetchedModel);
+          }
+        });
+
+        modelsTo.replace.forEach((params) => {
+          state.models[params.cacheIndex] =
+            action.payload.data[params.responseIndex];
+        });
+
+        state.models = state.models.concat(modelsTo.push);
+        state.totalModels = state.models.length;
       }
     );
 
     builder.addMatcher(
       modelsApi.endpoints.getModelById.matchFulfilled,
       (state, action) => {
-        if (state.models.find((model) => model.id === action.payload.id))
-          return;
-        state.models.push(action.payload);
+        let foundModelIndex = state.models.findIndex(
+          (model) => model.id === action.payload.id
+        );
+
+        if (foundModelIndex !== -1)
+          state.models[foundModelIndex] = action.payload;
+        else state.models.push(action.payload);
       }
     );
     builder.addMatcher(
@@ -155,6 +211,42 @@ export const modelSlice = createSlice({
       (state, action) => {
         state.models.push(action.payload);
         state.totalModels += 1;
+      }
+    );
+
+    builder.addMatcher(
+      modelsGeneratedApi.endpoints.createModel.matchFulfilled,
+      (state, action) => {
+        let foundModelIndex = state.models.findIndex(
+          (model) => model.id === action.payload.id
+        );
+
+        if (foundModelIndex !== -1)
+          state.models[foundModelIndex] = action.payload;
+        else {
+          state.models.push(action.payload);
+          state.totalModels += 1;
+        }
+      }
+    );
+
+    builder.addMatcher(
+      modelsGeneratedApi.endpoints.putModelVersion.matchFulfilled,
+      (state, action) => {
+        state.models = [...state.models].map((model) => {
+          if (model.id === action.payload.modelId) {
+            return {
+              ...model,
+              versions: model.versions.map((version) => {
+                if (version.id === action.payload.id) {
+                  return action.payload;
+                }
+                return version;
+              }),
+            };
+          }
+          return model;
+        });
       }
     );
 
@@ -172,7 +264,7 @@ export const modelSlice = createSlice({
     );
 
     builder.addMatcher(
-      enhancedApi.endpoints.getExperiments.matchFulfilled,
+      experimentsGeneratedApi.endpoints.getExperiments.matchFulfilled,
       (state, action) => {
         // @ts-ignore
         state.experiments = action.payload.data;
@@ -180,7 +272,7 @@ export const modelSlice = createSlice({
     );
 
     builder.addMatcher(
-      enhancedApi.endpoints.postExperiments.matchFulfilled,
+      experimentsGeneratedApi.endpoints.postExperiments.matchFulfilled,
       (state, action) => {
         // @ts-ignore
         state.experiments = [...state.experiments, action.payload];
@@ -230,6 +322,6 @@ export const selectExperiments =
     return [...experiments].reverse();
   };
 
-export const { updateExperiment, addTraining, updateExperiments } =
+export const { updateExperiment, addTraining, updateExperiments, updateModel } =
   modelSlice.actions;
 export default modelSlice.reducer;

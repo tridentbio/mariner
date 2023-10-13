@@ -12,21 +12,20 @@ import rehypeSanitize from 'rehype-sanitize';
 
 export interface ModelConfigFormProps {
   control: Control<modelsApi.ModelCreate>;
+  onClear?: () => void;
+  disabled?: boolean;
 }
 
-const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
+const ModelConfigForm = ({
+  control,
+  onClear,
+  disabled,
+}: ModelConfigFormProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { setValue } = useFormContext();
   const registeredModel = searchParams.get('registeredModel');
   const [getRandomName, { data, isLoading: randomNameLoading }] =
     modelsApi.useLazyGetModelNameSuggestionQuery();
-
-  const handleClearRegisteredModel = () => {
-    setSearchParams('', {
-      replace: true,
-      state: {},
-    });
-  };
 
   useEffect(() => {
     if (!data) return;
@@ -47,11 +46,12 @@ const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
           name="name"
           render={({ field, fieldState }) => (
             <ModelAutoComplete
+              {...field}
               data-testid="model-name"
               sx={{ width: '100%' }}
               error={!!fieldState.error}
               label={fieldState.error?.message || 'Model Name'}
-              disabled={!!registeredModel}
+              disabled={!!registeredModel || disabled}
               value={{ name: field.value }}
               onChange={(event) => {
                 field.onChange({ target: { value: event?.name } });
@@ -62,12 +62,12 @@ const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
           )}
         />
 
-        {registeredModel && (
-          <Button variant="text" onClick={handleClearRegisteredModel}>
+        {registeredModel && !disabled && (
+          <Button variant="text" onClick={() => onClear && onClear()}>
             Clear
           </Button>
         )}
-        {!registeredModel && (
+        {!registeredModel && !disabled && (
           <IconButton
             data-testid="random-model-name"
             disabled={randomNameLoading}
@@ -87,6 +87,7 @@ const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
             error={!!fieldState.error}
             label={fieldState.error?.message || 'Model Description'}
             sx={{ width: '100%', mt: 1 }}
+            disabled={disabled}
           />
         )}
       />
@@ -100,6 +101,7 @@ const ModelConfigForm = ({ control }: ModelConfigFormProps) => {
             error={!!fieldState.error}
             label={fieldState.error?.message || 'Model Version Name'}
             sx={{ width: '100%', mt: 1 }}
+            disabled={disabled}
           />
         )}
       />

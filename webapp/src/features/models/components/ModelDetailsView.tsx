@@ -1,26 +1,36 @@
-import { Box, Button } from '@mui/material';
-import NotFound from 'components/atoms/NotFound';
-import AppTabs, { AppTabsProps } from 'components/organisms/Tabs';
-import { LargerBoldText } from 'components/molecules/Text';
-import { useNotifications } from 'app/notifications';
-import ModelExperiments from './ModelExperiments';
-import ModalHeader from 'components/templates/Modal/ModalHeader';
-import { useNavigate, useLocation } from 'react-router-dom';
-import Content from 'components/templates/AppLayout/Content';
-import ModelInferenceView from './ModelInferenceView';
-import { modelsApi } from 'app/rtk/models';
-import ModelOverview from './ModelOverview';
-import Loading from 'components/molecules/Loading';
-import ModelMetricsView from './ModelMetricsView';
 import { ModelDeployments } from '@features/deployments/Pages/ModelDeployments';
+import { useAppSelector } from '@hooks';
+import { Box, Button } from '@mui/material';
+import { useNotifications } from 'app/notifications';
+import { modelsApi } from 'app/rtk/models';
+import NotFound from 'components/atoms/NotFound';
+import Loading from 'components/molecules/Loading';
+import { LargerBoldText } from 'components/molecules/Text';
+import AppTabs, { AppTabsProps } from 'components/organisms/Tabs';
+import Content from 'components/templates/AppLayout/Content';
+import ModalHeader from 'components/templates/Modal/ModalHeader';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import ModelExperiments from './ModelExperiments';
+import ModelInferenceView from './ModelInferenceView';
+import ModelMetricsView from './ModelMetricsView';
+import ModelOverview from './ModelOverview';
 
 interface ModelDetailsProps {
   modelId: number;
 }
 
 const ModelDetailsView = ({ modelId }: ModelDetailsProps) => {
-  const { data: model, isLoading: isModelLoading } =
-    modelsApi.useGetModelByIdQuery(modelId);
+  const [fetchModel, { isLoading: isModelLoading }] =
+    modelsApi.useLazyGetModelByIdQuery();
+  const model = useAppSelector((state) =>
+    state.models.models.find((model) => model.id === modelId)
+  );
+
+  useEffect(() => {
+    fetchModel(modelId);
+  }, [modelId]);
+
   const [deleteModel, { isLoading: isDeleting }] =
     modelsApi.useDeleteModelOldMutation();
   const { hash } = useLocation();

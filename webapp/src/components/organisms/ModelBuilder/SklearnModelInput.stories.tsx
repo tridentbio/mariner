@@ -1,6 +1,6 @@
 import { ModelCreate } from '@app/rtk/generated/models';
 import { store } from '@app/store';
-import { schema } from '@features/models/pages/ModelCreateV2';
+import { schema } from '@features/models/pages/ModelForm';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Container, ThemeProvider } from '@mui/material';
 import { StoryFn, StoryObj } from '@storybook/react';

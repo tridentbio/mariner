@@ -1,14 +1,15 @@
 import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
-import { getColumnConfigTestId } from '@components/organisms/ModelBuilder/utils';
-import ModelCreateV2, { schema } from '@features/models/pages/ModelCreateV2';
+import ModelForm, { ModelFormProps, schema } from '@features/models/pages/ModelForm';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as modelsApi from 'app/rtk/generated/models';
 import { FormProvider, useForm } from 'react-hook-form';
-import { DefaultProviders } from '../support/DefaultProviders';
-import TestUtils from '../support/TestUtils';
+import { MemoryRouter } from 'react-router-dom';
+import { DefaultProviders, DefaultProvidersProps } from '../support/DefaultProviders';
 import { fillDatasetCols } from '../support/models/build-model';
+import TestUtils from '../support/TestUtils';
+import { getColumnConfigTestId } from '@components/organisms/ModelBuilder/utils';
 
-describe('ModelCreateV2.cy.tsx', () => {
+describe('ModelForm.cy.tsx', () => {
   const testModel: modelsApi.ModelCreate = {
     name: 'test_model',
     modelDescription: 'test model description',
@@ -55,7 +56,10 @@ describe('ModelCreateV2.cy.tsx', () => {
     },
   };
 
-  const MountedComponent = () => {
+  const MountedComponent = (props: {
+    modelFormProps?: ModelFormProps,
+    providersProps?: Omit<DefaultProvidersProps, 'children'>
+  }) => {
     const methods = useForm<modelsApi.ModelCreate>({
       mode: 'all',
       reValidateMode: 'onBlur',
@@ -64,10 +68,10 @@ describe('ModelCreateV2.cy.tsx', () => {
     });
 
     return (
-      <DefaultProviders>
+      <DefaultProviders {...props.providersProps}>
         <FormProvider {...methods}>
           <ModelBuilderContextProvider>
-            <ModelCreateV2 />
+            <ModelForm {...props.modelFormProps} />
           </ModelBuilderContextProvider>
         </FormProvider>
       </DefaultProviders>
@@ -305,4 +309,41 @@ describe('ModelCreateV2.cy.tsx', () => {
       firstTargetCol?.name
     );
   });
+
+  describe('ModelForm fix mode', () => {
+    beforeEach(() => {
+      cy.mount(
+        <MountedComponent
+          modelFormProps={{mode: 'fix'}}
+          providersProps={{
+            routerProps: {
+              initialEntries: ['/models/1/1/fix'],
+            },
+            routePath: '/models/:modelId/:modelVersionId/fix',
+          }}
+        />
+      )
+    })
+
+    it('Should display the mounted model editor with its respective stack trace and have the inputs filled', () => {
+      cy.get('.react-flow__pane').should('exist')
+      cy.get('.react-flow__node').should('have.length.above', 0)
+      cy.get('.react-flow__edge').should('have.length.above', 0)
+
+      cy.get('[data-testid="stack-trace"]').should('exist')
+
+      goToFirstStep()
+
+      cy.get('@modelInput').should('be.disabled').and('not.have.value', '')
+      cy.get('[data-testid="model-description"] input').should('be.disabled').and('not.have.value', '')
+      cy.get('[data-testid="version-name"] input').should('be.disabled').and('not.have.value', '')
+
+      clickNext()
+
+      cy.get('#dataset-select').should('not.have.value', '')
+
+      cy.get('[data-testid="dataset-target-column"] .MuiChip-root').should('have.length.above', 0)
+      cy.get('[data-testid="dataset-feature-columns"] .MuiChip-root').should('have.length.above', 0)
+    })
+  })
 });

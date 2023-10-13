@@ -9,6 +9,7 @@ interface StackTraceProps {
 const StackTrace = ({ stackTrace, message }: StackTraceProps) => {
   return stackTrace ? (
     <Box
+      data-testid="stack-trace"
       sx={{
         mt: 2,
         '& > pre': {

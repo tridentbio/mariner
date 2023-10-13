@@ -120,3 +120,17 @@ class TaskControl:
         """
         for id_, task in self._tasks.items():
             yield id_, (task, self._tasks_metadata[id_])
+
+
+# singleton with ray task control
+_task_control: Union[TaskControl, None] = None
+
+
+def get_task_control() -> TaskControl:
+    """
+    Returns the singleton task control object.
+    """
+    global _task_control  # pylint: disable=global-statement
+    if not _task_control:
+        _task_control = TaskControl()
+    return _task_control
