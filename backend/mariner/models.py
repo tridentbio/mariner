@@ -451,13 +451,15 @@ async def update_model_version(
     ):
         repo_version_update.check_status = "OK"
         repo_version_update.check_stack_trace = None
+    elif repo_version_update.config:
+        repo_version_update.check_status = "RUNNING"
 
     modelversion = model_store.update_model_version(
         db, version_id, repo_version_update.dict(exclude_unset=True)
     )
+    model_version = ModelVersion.from_orm(modelversion)
 
     task = None
-    model_version = ModelVersion.from_orm(modelversion)
     if repo_version_update.config and _is_config_checkable(
         repo_version_update.config
     ):
