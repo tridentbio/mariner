@@ -2,7 +2,6 @@
 Trainable lightning model classes and is mapped from :py:class:`fleet.torch_.schemas.TorchModelSpec`
 as well as auxiliary classes and functions.
 """
-import logging
 from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 import lightning.pytorch as pl
@@ -36,9 +35,6 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
     if isinstance(x, str):
         return [x]
     return x
-
-
-LOG = logging.getLogger(__name__)
 
 
 def _adapt_loss_args(

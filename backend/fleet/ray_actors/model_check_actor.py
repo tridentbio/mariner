@@ -7,11 +7,12 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import ray
-from torch_geometric.loader import DataLoader
+from lightning.pytorch import Trainer
 
 from fleet.base_schemas import TorchModelSpec
+from fleet.model_builder.optimizers import AdamOptimizer
 from fleet.torch_.models import CustomModel
-from fleet.utils.data import MarinerTorchDataset
+from fleet.utils.data import DataModule
 from fleet.utils.dataset import converts_file_to_dataframe
 from mariner.schemas.dataset_schemas import Dataset
 
@@ -50,34 +51,27 @@ class ModelCheckActor:
             if config.framework == "torch" or isinstance(
                 config, TorchModelSpec
             ):
-                torch_dataset = MarinerTorchDataset(
+                dm = DataModule(
                     data=df,
-                    dataset_config=config.dataset,
+                    config=config.dataset,
+                    batch_size=4,
                 )
-                dataloader = DataLoader(torch_dataset)
+                # dm.setup(stage=None)
                 model = CustomModel(
-                    config=config.spec, dataset_config=config.dataset
-                )
-                sample = next(iter(dataloader))
-                model.predict_step(sample, 0)
-                output = model.training_step(sample, 0)
-                model.validation_step(sample, 0)
-                model.test_step(sample, 0)
-
-                torch_dataset = MarinerTorchDataset(
-                    data=df,
+                    config=config.spec,
                     dataset_config=config.dataset,
+                    use_gpu=False,
                 )
-                dataloader = DataLoader(torch_dataset)
-                model = CustomModel(
-                    config=config.spec, dataset_config=config.dataset
-                )
-                sample = next(iter(dataloader))
-                model.predict_step(sample, 0)
-                output = model.training_step(sample, 0)
-                model.validation_step(sample, 0)
-                model.test_step(sample, 0)
+                model.set_optimizer(AdamOptimizer())
 
+                trainer = Trainer(
+                    max_epochs=1,
+                    logger=None,
+                    callbacks=None,
+                    default_root_dir=None,
+                )
+                trainer.fit(model=model, datamodule=dm)
+                output = trainer.test(model=model, datamodule=dm)
                 return TrainingCheckResponse(output=output)
             raise NotImplementedError(
                 f"No fit check implementation for {config.__class__}"

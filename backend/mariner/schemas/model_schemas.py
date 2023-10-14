@@ -1,7 +1,6 @@
 """
 Model related DTOs
 """
-from datetime import datetime
 from typing import List, Literal, Optional, Union
 
 from mlflow.entities.model_registry.registered_model import RegisteredModel
@@ -24,7 +23,7 @@ class ModelVersion(ApiBaseModel):
     mlflow_model_name: str
     config: FleetModelSpec
     created_at: utc_datetime
-    updated_at: datetime
+    updated_at: utc_datetime
     check_status: Optional[Literal["OK", "FAILED", "RUNNING"]] = None
     check_stack_trace: Optional[str] = None
 
@@ -58,8 +57,8 @@ class Model(ApiBaseModel):
     dataset: Optional[Dataset] = None
     versions: List[ModelVersion]
     columns: List[ModelFeaturesAndTarget]
-    created_at: datetime
-    updated_at: datetime
+    created_at: utc_datetime
+    updated_at: utc_datetime
 
     _loaded: Optional[RegisteredModel] = None
 
