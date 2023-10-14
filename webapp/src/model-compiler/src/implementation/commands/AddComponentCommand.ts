@@ -11,7 +11,6 @@ import { wrapForwardArgs } from '../../utils';
 import Command from './Command';
 
 export type AddCompArgs<T extends ComponentType> = {
-  schema: ModelSchema;
   readonly type: T;
   readonly data: T extends 'layer'
     ? LayersType
@@ -30,10 +29,10 @@ class AddComponentCommand<T extends ComponentType> extends Command<
   constructor(args: AddCompArgs<T>) {
     super(args);
   }
-  execute = (): ModelSchema => {
+  execute = (schema: ModelSchema): ModelSchema => {
     this.args.data.forwardArgs = wrapForwardArgs(this.args.data.forwardArgs);
     if (this.args.type === 'layer') {
-      const layers = [...(this.args.schema.spec.layers || [])];
+      const layers = [...(schema.spec.layers || [])];
       // Hack to make up for deffective backend default construction arguments
       // for the Embedding layer
       if (this.args.data.type === 'torch.nn.Embedding') {
@@ -43,18 +42,18 @@ class AddComponentCommand<T extends ComponentType> extends Command<
         layers.push(data as LayersType);
       } else layers.push(this.args.data as LayersType);
       return {
-        ...this.args.schema,
+        ...schema,
         spec: {
           layers,
         },
       };
     } else if (this.args.type === 'featurizer') {
-      const featurizers = [...(this.args.schema.dataset.featurizers || [])];
+      const featurizers = [...(schema.dataset.featurizers || [])];
       featurizers.push(this.args.data as FeaturizersType);
       return {
-        ...this.args.schema,
+        ...schema,
         dataset: {
-          ...this.args.schema.dataset,
+          ...schema.dataset,
           featurizers,
         },
       };

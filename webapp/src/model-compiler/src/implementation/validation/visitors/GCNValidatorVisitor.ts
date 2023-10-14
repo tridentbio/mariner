@@ -35,7 +35,6 @@ class GCNValidatorVisitor extends ComponentVisitor {
         Suggestion.makeFixableConstructorArgsError(
           [
             new EditComponentsCommand({
-              schema: info.schema,
               data,
             }),
           ],
@@ -74,7 +73,6 @@ class GCNValidatorVisitor extends ComponentVisitor {
             Suggestion.makeFixableConstructorArgsError(
               [
                 new EditComponentsCommand({
-                  schema: info.schema,
                   data,
                 }),
               ],

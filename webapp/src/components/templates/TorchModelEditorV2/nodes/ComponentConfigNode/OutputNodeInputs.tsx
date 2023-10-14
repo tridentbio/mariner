@@ -110,16 +110,18 @@ const OutputNodeInputs = ({ editable, name }: OutputNodeInputsProps) => {
     editable &&
       schema &&
       component &&
-      editComponent({
-        schema,
-        data: makeComponentEdit({
-          component,
-          lossFn: selectedLoss?.key,
-          columnType:
-            (taskType && taskType !== 'typeMap' && columnTypeMap[taskType]) ||
-            undefined,
-        }),
-      });
+      editComponent(
+        {
+          data: makeComponentEdit({
+            component,
+            lossFn: selectedLoss?.key,
+            columnType:
+              (taskType && taskType !== 'typeMap' && columnTypeMap[taskType]) ||
+              undefined,
+          }),
+        },
+        schema
+      );
   }, [selectedLoss, taskType]);
 
   useEffect(() => {

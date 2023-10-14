@@ -1,7 +1,7 @@
 abstract class Command<T, S> {
   args: T;
 
-  abstract execute: () => S;
+  abstract execute: (schema: S) => S;
 
   constructor(args: T) {
     this.args = args;

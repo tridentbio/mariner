@@ -32,14 +32,16 @@ const ConstructorArgsInputs = ({
 
   const editConstrutorArgs = () => {
     if (schema && editable) {
-      editComponent({
-        schema,
-        data: makeComponentEdit({
-          component: getComponent(schema, props.data.name),
-          constructorArgs: argsForm,
-          options,
-        }),
-      });
+      editComponent(
+        {
+          data: makeComponentEdit({
+            component: getComponent(schema, props.data.name),
+            constructorArgs: argsForm,
+            options,
+          }),
+        },
+        schema
+      );
 
       //? Persist selected node overlay
       setNodes((prev) =>
@@ -56,10 +58,12 @@ const ConstructorArgsInputs = ({
   }, [argsForm]);
 
   const suggestions = suggestionsByNode[props.data.name] || [];
-  const errors = suggestions.reduce(
-    (acc, sug) => ({ ...acc, ...sug.getConstructorArgsErrors() }),
-    {} as Record<string, string>
-  );
+  const errors = schema
+    ? suggestions.reduce(
+        (acc, sug) => ({ ...acc, ...sug.getConstructorArgsErrors(schema) }),
+        {} as Record<string, string>
+      )
+    : {};
 
   const option = options?.[props.data.type!];
 

@@ -346,25 +346,28 @@ export const TorchModelEditorContextProvider = ({
     if (!modelOptions) throw 'too early';
     const map = getNodePositionsMap();
     map[args.name] = position;
-    const schema = addComponent({
-      schema: args.schema,
-      type: args.componentType,
-      // @ts-ignore
-      data: {
-        ...(makeDefaultData(args.type, modelOptions) as object),
-        name: args.name,
+    const schema = addComponent(
+      {
+        type: args.componentType,
+        // @ts-ignore
+        data: {
+          ...(makeDefaultData(args.type, modelOptions) as object),
+          name: args.name,
+        },
       },
-    });
+      args.schema
+    );
     updateNodesAndEdges(schema, map);
     return schema;
   };
 
   const editComponentAndApply: ITorchModelEditorContext['editComponent'] = (
-    args: EditComponentsCommandArgs
+    args: EditComponentsCommandArgs,
+    schema
   ) => {
-    const schema = editComponent(args);
-    updateNodesAndEdges(schema);
-    return schema;
+    const updatedSchema = editComponent(args, schema);
+    updateNodesAndEdges(updatedSchema);
+    return updatedSchema;
   };
 
   const deleteComponentAndApply: ITorchModelEditorContext['deleteComponents'] =
@@ -495,6 +498,24 @@ export const TorchModelEditorContextProvider = ({
     () => {
       setHandleKeysByNodeId([]);
     };
+
+  const highlightNodes: ITorchModelEditorContext['highlightNodes'] = (
+    nodeIds,
+    color
+  ) => {
+    const updatedNodes = nodes.map((node) => {
+      if (nodeIds.includes(node.id))
+        node.style = {
+          border: `1px solid ${color || 'initial'}`,
+          transition: 'border 0.5s ease-in-out',
+        };
+
+      return node;
+    });
+
+    setNodes(updatedNodes);
+  };
+
   return (
     <TorchModelEditorContext.Provider
       value={{
@@ -528,6 +549,7 @@ export const TorchModelEditorContextProvider = ({
         onNodesChange,
         onEdgesChange,
         nodesInitialized,
+        highlightNodes,
       }}
     >
       {children}
