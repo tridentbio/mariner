@@ -1,4 +1,5 @@
 """Utilities to build datasets."""
+import logging
 from typing import (
     Any,
     Callable,
@@ -47,6 +48,8 @@ from fleet.utils.graph import (
     iterate_topologically,
     make_graph_from_forward_args,
 )
+
+LOG = logging.getLogger(__name__)
 
 
 def make_graph_from_dataset_config(
@@ -297,9 +300,9 @@ def _prepare_data(
     ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
         X, y = self._prepare_X_and_y(X, y)  # pylint: disable=W0212
         if self.featurize_data_types:
-            self._apply_default_featurizers(  # pylint: disable=W0212
-                X, self.dataset_config.feature_columns
-            )
+            # self._apply_default_featurizers(  # pylint: disable=W0212
+            #     X, self.dataset_config.feature_columns
+            # )
             if y is not None and not y.empty:
                 self._apply_default_featurizers(  # pylint: disable=W0212
                     y, self.dataset_config.target_columns
@@ -397,6 +400,7 @@ class PreprocessingPipeline:
         "dataset_config",
         "_fitted",
         "output_columns",
+        "featurize_data_types",
     ]
 
     def get_state(self):
@@ -415,7 +419,10 @@ class PreprocessingPipeline:
         """
         instance = cls(state["dataset_config"])
         for state_attr in cls._state_attrs:
-            setattr(instance, state_attr, state[state_attr])
+            if state_attr in state:
+                setattr(instance, state_attr, state[state_attr])
+            else:
+                LOG.warning("Missing prop from state: %s", state_attr)
         return instance
 
     def _prepare_transform(self, func: Any):
@@ -719,7 +726,9 @@ class MarinerTorchDataset(Dataset):
         """
         self.data = data
         if preprocessing_pipeline is None:
-            self.preprocessing_pipeline = PreprocessingPipeline(dataset_config)
+            self.preprocessing_pipeline = PreprocessingPipeline(
+                dataset_config,
+            )
         else:
             self.preprocessing_pipeline = preprocessing_pipeline
         args = self.preprocessing_pipeline.get_X_and_y(self.data)
@@ -824,7 +833,7 @@ class DataModule(pl.LightningDataModule):
         self.split_column = split_column
         if preprocessing_pipeline is None:
             self.preprocessing_pipeline = PreprocessingPipeline(
-                self.dataset_config
+                self.dataset_config, featurize_data_types=True
             )
         else:
             self.preprocessing_pipeline = preprocessing_pipeline
@@ -841,6 +850,8 @@ class DataModule(pl.LightningDataModule):
         Args:
             stage (_type_, optional): _description_. Defaults to None.
         """
+        if all([self.train_dataset, self.val_dataset, self.test_dataset]):
+            return
         if "step" not in self.data.columns:
             apply_split_indexes(
                 df=self.data,
@@ -850,24 +861,28 @@ class DataModule(pl.LightningDataModule):
             )
 
         self.preprocessing_pipeline.fit(
-            self.data["step"] == TrainingStep.TRAIN.value
+            self.data[self.data["step"] == TrainingStep.TRAIN.value]
         )
         dataset = MarinerTorchDataset(
             data=self.data,
             dataset_config=self.dataset_config,
+            preprocessing_pipeline=self.preprocessing_pipeline,
         )
-        self.train_dataset = Subset(
-            dataset=dataset,
-            indices=dataset.get_subset_idx(TrainingStep.TRAIN.value),
-        )
-        self.val_dataset = Subset(
-            dataset=dataset,
-            indices=dataset.get_subset_idx(TrainingStep.VAL.value),
-        )
-        self.test_dataset = Subset(
-            dataset=dataset,
-            indices=dataset.get_subset_idx(TrainingStep.TEST.value),
-        )
+        if not self.train_dataset:
+            self.train_dataset = Subset(
+                dataset=dataset,
+                indices=dataset.get_subset_idx(TrainingStep.TRAIN.value),
+            )
+        if not self.val_dataset:
+            self.val_dataset = Subset(
+                dataset=dataset,
+                indices=dataset.get_subset_idx(TrainingStep.VAL.value),
+            )
+        if not self.test_dataset:
+            self.test_dataset = Subset(
+                dataset=dataset,
+                indices=dataset.get_subset_idx(TrainingStep.TEST.value),
+            )
 
     def train_dataloader(self) -> DataLoader:
         """Return the DataLoader instance used to train the custom model.
