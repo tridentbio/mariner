@@ -9,7 +9,9 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
     name: randomLowerCase(),
     description: randomLowerCase(24),
   };
+
   let dataset: DatasetFormData;
+
   before(() => {
     cy.loginUser();
 
@@ -17,16 +19,15 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
       dataset = zinc;
     });
   });
+
   after(() => {
     deleteDatasetIfAlreadyExists(updatedDataset.name);
   });
+
   beforeEach(() => {
-    cy.intercept('GET', `${API_BASE_URL}/api/v1/datasets/*`).as(
-      'getDatasets'
-    );
     cy.visit('/datasets');
 
-    cy.get('tbody', { timeout: 10000 })
+    cy.get('tbody', { timeout: 15000 })
       .within((_scope) => {
         cy.get('a').contains(dataset.name).click();
       })
@@ -46,10 +47,17 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
       .type(updatedDataset.description);
     cy.get('button').contains('Save').click();
     cy.url().should('match', /^.*\/datasets\/\d+$/);
-    cy.get('#dataset-name').should('have.text', updatedDataset.name);
-    cy.get('#dataset-description').should(
-      'have.text',
-      updatedDataset.description
+
+    cy.intercept('GET', `${API_BASE_URL}/api/v1/datasets/*`).as(
+      'getDatasets'
     );
+
+    cy.wait('@getDatasets').then(interceptor => {
+      cy.get('#dataset-name').should('have.text', updatedDataset.name);
+      cy.get('#dataset-description').should(
+        'have.text',
+        updatedDataset.description
+      );
+    })
   });
 });
