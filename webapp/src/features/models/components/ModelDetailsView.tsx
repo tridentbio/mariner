@@ -129,7 +129,13 @@ const ModelDetailsView = ({ modelId }: ModelDetailsProps) => {
               </Button>
             </Box>
           </ModalHeader>
-          <AppTabs initialTab={hash === '#newtraining' ? 1 : 0} tabs={tabs} />
+          <AppTabs
+            initialTab={hash === '#newtraining' ? 1 : 0}
+            tabs={tabs}
+            boxProps={{
+              sx: { p: 3 },
+            }}
+          />
         </>
       )}
     </Content>

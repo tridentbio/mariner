@@ -1,4 +1,10 @@
+import { Text } from '@components/molecules/Text';
+import { AppTabsProps } from '@components/organisms/Tabs';
 import { useTorchModelEditor } from '@hooks';
+import {
+  ModelSchema,
+  NodeType,
+} from '@model-compiler/src/interfaces/torch-model-editor';
 import { Box } from '@mui/material';
 import FullScreenWrapper from 'components/organisms/FullScreenWrapper';
 import TorchModelEditorControls from 'components/templates/TorchModelEditor/Components/TorchModelEditorControls';
@@ -8,25 +14,23 @@ import {
   getNode,
 } from 'model-compiler/src/implementation/modelSchemaQuery';
 import {
-  ModelSchema,
-  NodeType,
-} from '@model-compiler/src/interfaces/torch-model-editor';
-import {
   DragEvent,
   memo,
-  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
-  useState,
+  useState
 } from 'react';
 import ReactFlow, { Background, BackgroundVariant, NodeProps } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { substrAfterLast } from 'utils';
+import { ModelTemplates } from './ModelTemplates';
 import OptionsSidebarV2, {
   HandleProtoDragStartParams,
 } from './OptionsSidebarV2';
+import { SidebarBase } from './SidebarBase';
+import { SidebarToggle } from './SidebarToggle';
 import SuggestionsList from './SuggestionsList';
 import ModelEdge from './edges/ModelEdge';
 import ComponentConfigNode from './nodes/ComponentConfigNode';
@@ -48,8 +52,8 @@ const getGoodDistance = (nodesNumber: number) => {
   else return 1;
 };
 
-const SideBar = memo(
-  ({ editable }: { editable: boolean }) => (
+const OptionsGrid = memo(() => {
+  return (
     <OptionsSidebarV2
       onDragStart={({ event, data }: HandleProtoDragStartParams) => {
         event.dataTransfer.setData(
@@ -69,13 +73,11 @@ const SideBar = memo(
         );
         event.dataTransfer.effectAllowed = 'move';
       }}
-      editable={editable}
     />
-  ),
-  (prevValue, nextValue) => prevValue.editable === nextValue.editable
-);
+  );
+});
 
-SideBar.displayName = 'SideBar';
+OptionsGrid.displayName = 'OptionsGrid';
 
 const TorchModelEditor = ({
   value,
@@ -115,6 +117,24 @@ const TorchModelEditor = ({
       }
     | undefined
   >();
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentSidebarTab, setCurrentSidebarTab] = useState(0);
+
+  const handleSidebarTabChange = (tabValue: number) => {
+    setCurrentSidebarTab(tabValue);
+  };
+
+  const tabs: AppTabsProps['tabs'] = [
+    {
+      label: 'Options',
+      panel: <OptionsGrid />,
+    },
+    {
+      label: 'Templates',
+      panel: <ModelTemplates />,
+    },
+  ];
 
   const nodeTypes = useMemo(
     () => ({
@@ -376,7 +396,30 @@ const TorchModelEditor = ({
             />
           </ReactFlow>
 
-          {editable ? <SideBar editable /> : null}
+          {editable ? (
+            <SidebarToggle
+              onOpen={() => {
+                setIsSidebarOpen(true);
+              }}
+            />
+          ) : null}
+
+          <SidebarBase
+            open={isSidebarOpen}
+            onClose={() => {
+              setIsSidebarOpen(false);
+            }}
+            tabs={tabs}
+            onTabChange={handleSidebarTabChange}
+            header={() => {
+              switch (currentSidebarTab) {
+                case 0:
+                  return <Text>You can drag these nodes to the editor</Text>;
+                default:
+                  return null;
+              }
+            }}
+          />
         </Box>
         <div>
           {suggestions?.length > 0 && (
