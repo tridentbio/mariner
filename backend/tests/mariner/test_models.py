@@ -5,8 +5,8 @@ import pytest
 import ray
 from sqlalchemy.orm.session import Session
 
-from fleet.base_schemas import TorchModelSpec
 from fleet.ray_actors.tasks import get_task_control
+from fleet.torch_.schemas import TorchModelSpec
 from fleet.utils.dataset import converts_file_to_dataframe
 from mariner import models as model_ctl
 from mariner.db.session import SessionLocal

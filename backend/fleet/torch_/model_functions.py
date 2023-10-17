@@ -16,9 +16,13 @@ from torch_geometric.loader import DataLoader
 from typing_extensions import override
 
 import fleet.mlflow
-from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
+from fleet.base_schemas import BaseModelFunctions
 from fleet.torch_.models import CustomModel
-from fleet.torch_.schemas import TorchTrainingConfig, get_metric_mode
+from fleet.torch_.schemas import (
+    TorchModelSpec,
+    TorchTrainingConfig,
+    get_metric_mode,
+)
 from fleet.utils.data import (
     DataModule,
     MarinerTorchDataset,

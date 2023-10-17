@@ -10,13 +10,14 @@ from pydantic import BaseModel
 from torch.utils.data import Subset
 
 from fleet import data_types
-from fleet.base_schemas import FleetModelSpec, TorchModelSpec
 from fleet.dataset_schemas import (
     DatasetConfigBuilder,
     DatasetConfigWithPreprocessing,
 )
 from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.splitters import apply_split_indexes
+from fleet.model_schemas import FleetModelSpec
+from fleet.torch_.schemas import TorchModelSpec
 from fleet.utils.data import MarinerTorchDataset, PreprocessingPipeline
 
 dataset_configs = [

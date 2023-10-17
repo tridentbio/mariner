@@ -1,6 +1,7 @@
 """
 Functions to train and use sklearn models.
 """
+import logging
 from typing import Dict, List, Literal, Union
 
 import mlflow
@@ -16,6 +17,8 @@ from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.utils import get_references_dict
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.utils import data
+
+LOG = logging.getLogger(__name__)
 
 
 class SciKitFunctions(BaseModelFunctions):
@@ -42,7 +45,7 @@ class SciKitFunctions(BaseModelFunctions):
     def __init__(
         self,
         spec: SklearnModelSpec,
-        dataset: pd.DataFrame = None,
+        dataset: pd.DataFrame | None = None,
         model: Union[None, sklearn.base.ClassifierMixin] = None,
         preprocessing_pipeline: Union[
             None, "data.PreprocessingPipeline"
@@ -116,7 +119,7 @@ class SciKitFunctions(BaseModelFunctions):
             self.references["y"]
         ] if targets else (self.data[self.references["X"]],)
 
-        if isinstance(filtering, pd.Series):
+        if filtering is not None:
             args = map(lambda x: self._filter_data(filtering, x), args)
 
         return args
@@ -226,19 +229,43 @@ class SciKitFunctions(BaseModelFunctions):
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
 
-    def predict(self, input_: pd.DataFrame):
+    def predict(
+        self,
+        input_: pd.DataFrame,
+        return_labels=False,
+    ):
         """
         Predicts the output of the model on the given dataset.
 
         Args:
             input_ (pd.DataFrame): The dataset to predict on.
         """
+        task_type = self.spec.spec.model.task_type
+        is_classification = ("multiclass" in task_type) or (
+            "multilabel" in task_type
+        )
+        classifier_only_flags = [
+            return_labels,
+        ]
+        if not is_classification and any(classifier_only_flags):
+            unused_args = ["return_labels", "return_probs", "return_log_probs"]
+            LOG.warning(
+                "The unused args %r will not be used for task type %s",
+                ",".join(unused_args),
+                task_type,
+            )
+
         transformed_data = self.preprocessing_pipeline.transform(
             input_, concat_features=True, only_features=True
         )
         X = transformed_data[self.references["X"]]
         target_column = self.spec.dataset.target_columns[0].name
-        return {target_column: self.model.predict(X).tolist()}
+        predictions = self.model.predict(X)
+        if return_labels:
+            predictions = self.preprocessing_pipeline.inverse_transform(
+                X=None, y=predictions, only_targets=True
+            )
+        return {target_column: predictions.tolist()}
 
     def log_models(
         self,

@@ -13,8 +13,8 @@ from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet import options
-from fleet.base_schemas import FleetModelSpec
 from fleet.model_functions import predict
+from fleet.model_schemas import FleetModelSpec
 from fleet.ray_actors.model_check_actor import ModelCheckActor
 from fleet.ray_actors.tasks import TaskControl, get_task_control
 from mariner.core import mlflowapi
@@ -244,8 +244,8 @@ async def create_model(
 
     try:
         mlflowapi.create_registered_model(
-            client,
             name=mlflow_name,
+            client=client,
             description=model_create.model_description,
         )
     except mlflow.exceptions.MlflowException as exp:

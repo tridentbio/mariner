@@ -27,7 +27,10 @@ dataset:
   targetColumns:
     - name: HIV_active
       dataType:
-        domainKind: numeric
+        domainKind: categorical
+        classes:
+          0: 0
+          1: 1
 spec:
   model:
     type: sklearn.ensemble.RandomForestClassifier

@@ -99,7 +99,7 @@ class {{ component["prefix"] }}LayerConfig(CamelCaseModel):
     name: str
     {% if ctr_count > 0 %}
     constructor_args: {{ component["prefix"] }}ConstructorArgs
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -110,7 +110,7 @@ class {{ component["prefix"] }}LayerConfig(CamelCaseModel):
                 newargs[key] = value
         return lib_cls(**newargs)
     {% else %}
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls

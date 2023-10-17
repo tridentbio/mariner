@@ -19,20 +19,17 @@ from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
 from pydantic import BaseModel
 
-from fleet.base_schemas import (
-    BaseModelFunctions,
-    FleetModelSpec,
-    TorchModelSpec,
-)
+from fleet.base_schemas import BaseModelFunctions
 from fleet.dataset_schemas import (
     DatasetConfigWithPreprocessing,
     TorchDatasetConfig,
 )
 from fleet.mlflow import load_pipeline, save_pipeline
+from fleet.model_schemas import FleetModelSpec
 from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.model_functions import TorchFunctions
-from fleet.torch_.schemas import TorchTrainingConfig
+from fleet.torch_.schemas import TorchModelSpec, TorchTrainingConfig
 from fleet.train.custom_logger import MarinerLogger
 from fleet.utils.dataset import (
     check_dataframe_conforms_dataset,
@@ -41,6 +38,7 @@ from fleet.utils.dataset import (
 from mariner.core.aws import download_s3
 from mariner.exceptions import InvalidDataframe
 
+MODEL_CONFIG_ARTIFACT = "model_config.yaml"
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
 
@@ -184,6 +182,7 @@ def fit(
         else:
             raise ValueError("Can't find functions for spec")
 
+        mlflow.log_text(spec.to_yaml_str(), MODEL_CONFIG_ARTIFACT)
         save_pipeline(functions.preprocessing_pipeline)
 
     return Result(
@@ -263,6 +262,7 @@ def predict(
     mlflow_model_name: str,
     mlflow_model_version: str,
     input_: Union[pd.DataFrame, dict],
+    return_labels: bool = False,
 ):
     """Predicts with a model from any of the supported frameworks.
 
@@ -271,6 +271,8 @@ def predict(
         mlflow_model_name: The name of the registered model in mlflow.
         mlflow_model_version: The version of the model.
         input_: The dataframe with the input data.
+        return_labels: If the model outputs categorical data, return the
+            labels instead of the indices.
     """
     filtered_input = {}
     for feature in spec.dataset.feature_columns:
@@ -293,9 +295,9 @@ def predict(
             spec.dataset = spec.dataset.to_dataset_config()
         model = mlflow.sklearn.load_model(model_uri)
         functions = SciKitFunctions(
-            spec, None, model=model, preprocessing_pipeline=pipeline
+            spec, dataset=None, model=model, preprocessing_pipeline=pipeline
         )
-        return functions.predict(input_)
+        return functions.predict(input_, return_labels=return_labels)
 
     elif isinstance(spec, TorchModelSpec):
         model = mlflow.pytorch.load_model(model_uri)

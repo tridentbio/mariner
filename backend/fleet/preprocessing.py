@@ -27,18 +27,21 @@ Todo:
     is not used in the elsewhere code and is confusing.
 """
 
+import abc
 from typing import Annotated, Any, Dict, List, Literal, Union, get_args
 
 from humps import camel
 from pydantic import BaseModel, Field
+from typing_extensions import override
 
+from fleet import data_types
 from fleet.model_builder.layers_schema import (
     FeaturizersType as FeaturizersType_,
 )
 from fleet.model_builder.layers_schema import (
     FleetmoleculefeaturizerLayerConfig as FleetmoleculefeaturizerLayerConfig_,
 )
-from fleet.model_builder.utils import get_class_from_path_string
+from fleet.model_builder.utils import get_class_from_path_string, unwrap_dollar
 from fleet.options import options_manager
 
 
@@ -70,7 +73,7 @@ class CreateFromType(CamelCaseModel):
     type: str
     constructor_args: Union[BaseModel, dict[str, Any], None] = None
 
-    def create(self):
+    def create(self, dataset_config=None):  # pylint: disable=W0613
         """Creates an instance of the class from the class path and constructor_args."""
         class_ = get_class_from_path_string(self.type)
         if self.constructor_args and isinstance(self.constructor_args, dict):
@@ -82,7 +85,7 @@ class CreateFromType(CamelCaseModel):
         return class_()
 
 
-class TransformConfigBase:
+class TransformConfigBase(abc.ABC):
     """
     Base class for transforms.
     """
@@ -132,7 +135,7 @@ class FPVecFilteredTransformerConfig(CreateFromType, TransformConfigBase):
 
 
 @options_manager.config_featurizer()
-class LabelEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
+class LabelEncoderConfig(CreateFromType, TransformConfigBase):
     """
     Models the constructor arguments of a sklearn.preprocessing.LabelEncoder
 
@@ -145,10 +148,6 @@ class LabelEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
     ] = "sklearn.preprocessing.LabelEncoder"
     name: str
     forward_args: Union[Dict[str, str], list[str]]
-
-    def adapt_args_and_apply(self, method, args):
-        args = map(lambda x: x.reshape(-1, 1), args)
-        return super().adapt_args_and_apply(method, args)
 
 
 @options_manager.config_featurizer()
@@ -165,6 +164,32 @@ class OneHotEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):
     ] = "sklearn.preprocessing.OneHotEncoder"
     name: str
     forward_args: Union[Dict[str, str], List[str]]
+
+    @override
+    def create(self, dataset_config=None):
+        class_ = get_class_from_path_string(self.type)
+        # Find the column name from forward_args
+        ref, _is_ref = unwrap_dollar(self.forward_args["X"])
+        column_config = dataset_config.get_column(ref)
+        assert isinstance(
+            column_config.data_type, data_types.CategoricalDataType
+        )
+        entries = list(column_config.data_type.classes.items())
+        # Sort by the values
+        entries.sort(key=lambda x: x[1])
+        # Set classes_
+        categories = [entry[0] for entry in entries]  # pylint: disable=E1136
+        kwargs = {
+            "categories": [categories],
+        }
+        if self.constructor_args and isinstance(self.constructor_args, dict):
+            kwargs = kwargs | self.constructor_args
+        elif self.constructor_args and isinstance(
+            self.constructor_args, BaseModel
+        ):
+            kwargs = kwargs | self.constructor_args.dict()
+
+        return class_(**kwargs)
 
     def adapt_args_and_apply(self, method, args):
         args = map(lambda x: x.reshape(-1, 1), args)

@@ -16,7 +16,10 @@ dataset:
   targetColumns:
     - name: HIV_active
       dataType:
-        domainKind: numeric
+        domainKind: categorical
+        classes:
+          0: 0
+          1: 1
   featurizers:
     - name: MolFPFeaturizer
       type: molfeat.trans.fp.FPVecFilteredTransformer
