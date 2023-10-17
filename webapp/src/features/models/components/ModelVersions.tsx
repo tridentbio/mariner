@@ -3,8 +3,9 @@ import {
   tableActionsSx,
 } from '@components/atoms/TableActions';
 import StackTrace from '@components/organisms/StackTrace';
-import { Check, Error, ReadMore } from '@mui/icons-material';
-import { Button, CircularProgress, IconButton, Tooltip } from '@mui/material';
+import Modal from '@components/templates/Modal';
+import { Check, ContentCopy, Error, ReadMore } from '@mui/icons-material';
+import { CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
 import { experimentsApi } from 'app/rtk/experiments';
 import { Experiment } from 'app/types/domain/experiments';
@@ -16,7 +17,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sampleExperiment } from '../common';
 import TrainingStatusChip from './TrainingStatusChip';
-import Modal from '@components/templates/Modal';
 interface ModelVersionItemProps {
   versions: ModelVersion[];
   modelId: number;
@@ -46,6 +46,12 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
 
   const handleModelCheckFix = (modelVersion: ModelVersion) => {
     navigate(`/models/${modelVersion.modelId}/${modelVersion.id}/fix`);
+  };
+
+  const handleModelDuplicate = (modelVersion: ModelVersion) => {
+    navigate(
+      `/models/new?registeredModel=${modelVersion.modelId}&duplicateFromModelVersion=${modelVersion.id}`
+    );
   };
 
   const columns: Column<
@@ -128,16 +134,22 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
       render: (model: ModelVersion) => {
         return (
           <TableActionsWrapper>
-            <Button
+            {(model.checkStatus == 'OK' || model.checkStatus == null) && (
+              <Tooltip title="Duplicate model">
+                <IconButton onClick={() => handleModelDuplicate(model)}>
+                  <ContentCopy sx={{ fontSize: '1.6rem' }} />
+                </IconButton>
+              </Tooltip>
+            )}
+            <IconButton
               onClick={() => {
                 setSelectedModelCheck(model);
               }}
-              variant="text"
               color="primary"
               disabled={!model.checkStackTrace}
             >
               <ReadMore />
-            </Button>
+            </IconButton>
             {(() => {
               switch (model.checkStatus) {
                 case 'FAILED':
@@ -150,7 +162,7 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
                   );
                 case 'OK':
                 case null:
-                  return <Check />;
+                  return <Check sx={{ color: 'rgba(0, 0, 0, 0.26)' }} />;
                 default:
                   return <CircularProgress size={25} />;
               }
