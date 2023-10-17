@@ -92,7 +92,7 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
         onClose={() => {
           setOpenModelTemplatesModal(false);
         }}
-        title="Failed model check"
+        title="Model template creation"
       >
         <ModelTemplateForm
           toggleModal={() => setOpenModelTemplatesModal(false)}

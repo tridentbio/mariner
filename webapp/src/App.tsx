@@ -1,13 +1,24 @@
 import { NotificationContextProvider } from './app/notifications';
 import useAppNavigation from 'hooks/useAppNavigation';
 import Notifications from 'components/organisms/Notifications';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { CircularProgress } from '@mui/material';
 import { Box } from '@mui/system';
 import { WebSocketContextProvider } from 'app/websocket/context';
+import { startMock } from 'mock/msw';
 
 function App() {
   const { routes } = useAppNavigation();
+
+  const handleApiMock = async () => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      await startMock();
+    }
+  };
+
+  useEffect(() => {
+    handleApiMock();
+  }, []);
 
   return (
     <WebSocketContextProvider>

@@ -25,6 +25,7 @@ import { fakeApi } from '../../src/mock/msw/server'
 import { rest } from 'msw'
 import '@4tw/cypress-drag-drop'
 import 'cypress-file-upload'
+import { startMock } from 'mock/msw'
 
 Cypress.Commands.add('mount', mount)
 
@@ -44,13 +45,5 @@ declare global {
 }
 
 Cypress.on('test:before:run:async', async () => {
-  if(window.msw) {
-    console.log('MSW is already running.')
-  } else {
-    console.log('MSW has not been started. Starting now.')
-
-    window.msw = { fakeApi, rest }
-
-    await fakeApi.start();
-  }
+  await startMock()
 });

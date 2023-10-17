@@ -60,7 +60,7 @@ export const SidebarBase = ({
           sx: {
             display: 'flex',
             flexDirection: 'column',
-            overflowY: 'scroll',
+            overflowY: 'auto',
             height: 'calc(100% - 100px)',
           },
         }}
