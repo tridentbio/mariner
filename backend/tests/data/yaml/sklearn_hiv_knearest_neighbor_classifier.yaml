@@ -2,7 +2,7 @@ name: HIV K-Nearest Neighbor Classifier
 framework: sklearn
 
 dataset:
-  name: HIV
+  name: HIV2
   strategy: forwardArgs
   featureColumns:
     - name: smiles
@@ -12,15 +12,15 @@ dataset:
       dataType:
         domainKind: categorical
         classes:
-          CI: 0
-          CM: 1
+          CM: 0
+          CI: 1
   targetColumns:
     - name: HIV_active
       dataType:
         domainKind: categorical
         classes:
-          0: 0
-          1: 1
+          negative: 0
+          positive: 1
   featurizers:
     - name: MolFPFeaturizer
       type: molfeat.trans.fp.FPVecFilteredTransformer
@@ -33,6 +33,10 @@ dataset:
       type: sklearn.preprocessing.OneHotEncoder
       forward_args:
         X: $activity
+    - name: OneHotEncoder-out
+      type: sklearn.preprocessing.OneHotEncoder
+      forward_args:
+        X: $HIV_active
 
 spec:
   model:

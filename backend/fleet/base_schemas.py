@@ -88,11 +88,9 @@ class BaseModelFunctions(Protocol):
     def predict(
         self,
         input_: pd.DataFrame,
-        return_labels=False,
     ) -> None:
         """Predicts using a loaded model.
 
         Args:
             input_: The input for the model predictions.
-            return_labels: Whether to return the predicted labels. Only valid for classification tasks.
         """

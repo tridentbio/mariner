@@ -262,7 +262,6 @@ def predict(
     mlflow_model_name: str,
     mlflow_model_version: str,
     input_: Union[pd.DataFrame, dict],
-    return_labels: bool = False,
 ):
     """Predicts with a model from any of the supported frameworks.
 
@@ -271,8 +270,6 @@ def predict(
         mlflow_model_name: The name of the registered model in mlflow.
         mlflow_model_version: The version of the model.
         input_: The dataframe with the input data.
-        return_labels: If the model outputs categorical data, return the
-            labels instead of the indices.
     """
     filtered_input = {}
     for feature in spec.dataset.feature_columns:
@@ -297,7 +294,7 @@ def predict(
         functions = SciKitFunctions(
             spec, dataset=None, model=model, preprocessing_pipeline=pipeline
         )
-        return functions.predict(input_, return_labels=return_labels)
+        return functions.predict(input_)
 
     elif isinstance(spec, TorchModelSpec):
         model = mlflow.pytorch.load_model(model_uri)

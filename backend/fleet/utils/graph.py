@@ -1,7 +1,7 @@
 """
 Utility functions to operate on graphs.
 """
-from typing import Any, Callable, Iterable, List, Tuple, Union
+from typing import Any, Callable, Iterable, List, Literal, Tuple, Union
 
 import networkx as nx
 
@@ -94,35 +94,45 @@ def get_leaf_nodes(graph: nx.DiGraph) -> List[str]:
     return [node for node in graph.nodes if graph.out_degree(node) == 0]
 
 
-def iterate_topologically(
+def iterate_graph(
     graph: nx.DiGraph,
     fn: Callable[[str, bool], None],
-    skip_roots: Union[None, list[str]] = None,
+    skip_nodes: Union[None, list[str]] = None,
+    order: Literal["pre", "pos"] = "pre",
 ) -> None:
-    """Iterates over a graph in topological order.
-
-    If skip_roots is provided, the branches starting from the roots
-    in skip_roots are skipped.
+    """Iterates over a graph from dependencies to dependents or vice-versa.
 
     Args:
         graph: a directed graph.
         fn: a function to be called on each node.
-        skip_roots: a list of nodes to skip.
-
-    Raises:
-        ValueError: if the graph has at least one cycle.
+        skip_nodes: a list of nodes to skip.
+        order: the order to traverse the graph. Can be "pre" or "post".
+        use "pre" for dependencies to dependents and "post" for dependents to
+        dependencies.
     """
-    roots = [
-        n
-        for n, d in dict(graph.in_degree).items()
-        if d == 0 and n not in skip_roots
-    ]
-    visited = set()
-    for root in roots:
-        enumerated_branch = list(enumerate(nx.dfs_preorder_nodes(graph, root)))
-        depth = len(enumerated_branch)
-        for index, node in enumerated_branch:
-            if node in visited:
-                continue
-            fn(node, index == depth - 1)
-            visited.add(node)
+    if order == "pre":
+        roots = [n for n, d in dict(graph.in_degree).items() if d == 0]
+        visited = set()
+        for root in set(roots) - set(skip_nodes or []):
+            enumerated_branch = list(
+                enumerate(nx.dfs_preorder_nodes(graph, root))
+            )
+            depth = len(enumerated_branch)
+            for index, node in enumerated_branch:
+                if node in visited or node in skip_nodes:
+                    continue
+                fn(node, index == depth - 1)
+                visited.add(node)
+    elif order == "pos":
+        roots = [n for n, d in dict(graph.out_degree).items() if d == 0]
+        visited = set()
+        for root in set(roots) - set(skip_nodes or []):
+            enumerated_branch = list(
+                enumerate(nx.dfs_postorder_nodes(graph, root))
+            )
+            depth = len(enumerated_branch)
+            for index, node in enumerated_branch:
+                if node in visited or node in skip_nodes:
+                    continue
+                fn(node, index == depth - 1)
+                visited.add(node)

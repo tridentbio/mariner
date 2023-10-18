@@ -67,6 +67,7 @@ class TorchFunctions(BaseModelFunctions):
         super().__init__()
         self.dataset = dataset
         self.spec = spec
+        self.use_gpu = use_gpu
         if model:
             self.model = model
         else:
@@ -230,16 +231,9 @@ class TorchFunctions(BaseModelFunctions):
         dataloader = DataLoader(dataset, batch_size=len(input_))
         next(iter(dataloader))
 
-        trainer = Trainer(accelerator="cpu")
+        trainer = Trainer(accelerator="gpu" if self.use_gpu else "cpu")
         result: dict = trainer.predict(
             model=self.model, dataloaders=dataloader
         )[0]
 
-        result = {
-            key: value.detach().cpu().numpy().tolist()
-            for key, value in result.items()
-        }
-        prediction: Dict[str, List[float]] = {}
-        for column, item in result.items():
-            prediction[column] = item if isinstance(item, list) else [item]
-        return prediction
+        return result

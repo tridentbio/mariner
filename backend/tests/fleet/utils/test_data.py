@@ -175,7 +175,9 @@ class TestPreprocessingPipeline:
             expected_feature_leaves,
         ) in cases:
             pipeline = self.pipeline_fixture(model_path)
-            assert pipeline.features_leaves == expected_feature_leaves, (
+            assert set(pipeline.features_leaves) == set(
+                expected_feature_leaves
+            ), (
                 f"Expected feature leaves to be {', '.join(expected_feature_leaves)}, "
                 f"but got {pipeline.features_leaves}"
             )

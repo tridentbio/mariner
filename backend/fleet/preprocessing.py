@@ -149,6 +149,11 @@ class LabelEncoderConfig(CreateFromType, TransformConfigBase):
     name: str
     forward_args: Union[Dict[str, str], list[str]]
 
+    def adapt_args_and_apply(self, method, args):
+        args = map(lambda x: x.reshape(-1, 1), args)
+        result = super().adapt_args_and_apply(method, args)
+        return result
+
 
 @options_manager.config_featurizer()
 class OneHotEncoderConfig(CreateFromType, CamelCaseModel, TransformConfigBase):

@@ -232,7 +232,6 @@ class SciKitFunctions(BaseModelFunctions):
     def predict(
         self,
         input_: pd.DataFrame,
-        return_labels=False,
     ):
         """
         Predicts the output of the model on the given dataset.
@@ -244,28 +243,61 @@ class SciKitFunctions(BaseModelFunctions):
         is_classification = ("multiclass" in task_type) or (
             "multilabel" in task_type
         )
-        classifier_only_flags = [
-            return_labels,
-        ]
-        if not is_classification and any(classifier_only_flags):
-            unused_args = ["return_labels", "return_probs", "return_log_probs"]
-            LOG.warning(
-                "The unused args %r will not be used for task type %s",
-                ",".join(unused_args),
-                task_type,
-            )
 
         transformed_data = self.preprocessing_pipeline.transform(
             input_, concat_features=True, only_features=True
         )
         X = transformed_data[self.references["X"]]
-        target_column = self.spec.dataset.target_columns[0].name
-        predictions = self.model.predict(X)
-        if return_labels:
-            predictions = self.preprocessing_pipeline.inverse_transform(
-                X=None, y=predictions, only_targets=True
+
+        target_column = self.spec.dataset.target_columns[0]
+        if is_classification:
+            prediction_probs = self.model.predict_proba(X)
+            col_featurizer_config = self.spec.dataset.get_featurizer(
+                target_column.name
             )
-        return {target_column: predictions.tolist()}
+
+            if (
+                col_featurizer_config is not None
+                and "OneHotEncoder" in col_featurizer_config.type
+            ):
+                print("Getting prediction")
+                prediction_probs = prediction_probs[0].tolist()
+                print("Getting classes")
+                classes = (
+                    self.preprocessing_pipeline.featurizers[
+                        col_featurizer_config.name
+                    ][0]
+                    .categories_[0]
+                    .tolist()
+                )
+            elif (
+                col_featurizer_config is not None
+                and "LabelEncoder" in col_featurizer_config.type
+            ):
+                prediction_probs = prediction_probs.tolist()
+                classes = self.preprocessing_pipeline.featurizers[
+                    col_featurizer_config.name
+                ][0].classes_.tolist()
+
+            else:
+                LOG.warning(
+                    "Classifier %s was not using any encoder", self.spec.name
+                )
+                classes = list(
+                    map(
+                        lambda entry: entry[0],
+                        sorted(target_column.data_type.classes.items()),
+                    )
+                )
+            return {
+                target_column.name: {
+                    "probs": prediction_probs,
+                    "classes": classes,
+                }
+            }
+        else:
+            predictions = self.model.predict(X)
+            return {target_column.name: predictions.tolist()}
 
     def log_models(
         self,

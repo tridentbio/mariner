@@ -18,8 +18,8 @@ dataset:
       dataType:
         domainKind: categorical
         classes:
-          0: 0
-          1: 1
+          negative: 0
+          positive: 1
   featurizers:
     - name: MolFPFeaturizer
       type: molfeat.trans.fp.FPVecFilteredTransformer
@@ -32,8 +32,8 @@ dataset:
       type: sklearn.preprocessing.OneHotEncoder
       forward_args:
         X: $activity
-    - name: OneHotEncoder-targets
-      type: sklearn.preprocessing.OneHotEncoder
+    - name: LabelEncoder-targets
+      type: sklearn.preprocessing.LabelEncoder
       forward_args:
         X: $HIV_active
 spec:

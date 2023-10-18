@@ -135,9 +135,9 @@ def get_model_name_suggestion():
 
 @router.post(
     "/{model_version_id}/predict",
-    response_model=Dict[str, List[Any]],
+    response_model=Dict[str, dict | List[Any]],
 )
-def post_model_predict(
+async def post_model_predict(
     model_version_id: int,
     model_input: Annotated[
         Dict[str, List[Any]],
@@ -175,7 +175,7 @@ def post_model_predict(
     ```
     """
     try:
-        result = controller.get_model_prediction(
+        result = await controller.get_model_prediction(
             db,
             controller.PredictRequest(
                 user_id=current_user.id,

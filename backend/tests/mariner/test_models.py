@@ -37,7 +37,7 @@ async def test_get_model_prediction(db: Session, some_trained_model: Model):
     df = converts_file_to_dataframe(ds.get_dataset_file())
     df = df.to_dict()
     assert df
-    result = model_ctl.get_model_prediction(
+    result = await model_ctl.get_model_prediction(
         db,
         model_ctl.PredictRequest(
             user_id=test_user.id, model_version_id=version.id, model_input=df
