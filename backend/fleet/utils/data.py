@@ -32,10 +32,7 @@ from fleet.dataset_schemas import ColumnConfig, DatasetConfig
 from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.dataset import Collater
 from fleet.model_builder.featurizers import (
-    DNASequenceFeaturizer,
     IntegerFeaturizer,
-    ProteinSequenceFeaturizer,
-    RNASequenceFeaturizer,
 )
 from fleet.model_builder.featurizers.small_molecule_featurizer import (
     MoleculeFeaturizer,
@@ -201,12 +198,12 @@ def get_default_data_type_featurizer(
             dataset_config=dataset_config,
             deps=[column.name],
         )
-    elif isinstance(column.data_type, data_types.DNADataType):
-        feat = DNASequenceFeaturizer()
-    elif isinstance(column.data_type, data_types.RNADataType):
-        feat = RNASequenceFeaturizer()
-    elif isinstance(column.data_type, data_types.ProteinDataType):
-        feat = ProteinSequenceFeaturizer()
+    # elif isinstance(column.data_type, data_types.DNADataType):
+    #     feat = DNASequenceFeaturizer()
+    # elif isinstance(column.data_type, data_types.RNADataType):
+    #     feat = RNASequenceFeaturizer()
+    # elif isinstance(column.data_type, data_types.ProteinDataType):
+    #     feat = ProteinSequenceFeaturizer()
 
     return feat
 
