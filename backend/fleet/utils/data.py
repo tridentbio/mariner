@@ -32,7 +32,10 @@ from fleet.dataset_schemas import ColumnConfig, DatasetConfig
 from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.dataset import Collater
 from fleet.model_builder.featurizers import (
+    DNASequenceFeaturizer,
     IntegerFeaturizer,
+    ProteinSequenceFeaturizer,
+    RNASequenceFeaturizer,
 )
 from fleet.model_builder.featurizers.small_molecule_featurizer import (
     MoleculeFeaturizer,
@@ -198,12 +201,12 @@ def get_default_data_type_featurizer(
             dataset_config=dataset_config,
             deps=[column.name],
         )
-    # elif isinstance(column.data_type, data_types.DNADataType):
-    #     feat = DNASequenceFeaturizer()
-    # elif isinstance(column.data_type, data_types.RNADataType):
-    #     feat = RNASequenceFeaturizer()
-    # elif isinstance(column.data_type, data_types.ProteinDataType):
-    #     feat = ProteinSequenceFeaturizer()
+    elif isinstance(column.data_type, data_types.DNADataType):
+        feat = DNASequenceFeaturizer()
+    elif isinstance(column.data_type, data_types.RNADataType):
+        feat = RNASequenceFeaturizer()
+    elif isinstance(column.data_type, data_types.ProteinDataType):
+        feat = ProteinSequenceFeaturizer()
 
     return feat
 
@@ -297,9 +300,9 @@ def _prepare_data(
     ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
         X, y = self._prepare_X_and_y(X, y)  # pylint: disable=W0212
         if self.featurize_data_types:
-            self._apply_default_featurizers(  # pylint: disable=W0212
-                X, self.dataset_config.feature_columns
-            )
+            # self._apply_default_featurizers(  # pylint: disable=W0212
+            #     X, self.dataset_config.feature_columns
+            # )
             if y is not None and not y.empty:
                 self._apply_default_featurizers(  # pylint: disable=W0212
                     y, self.dataset_config.target_columns
