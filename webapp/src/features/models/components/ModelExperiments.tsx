@@ -30,12 +30,18 @@ import {
   tableActionsSx,
 } from '@components/atoms/TableActions';
 import ConfirmationDialog from '@components/templates/ConfirmationDialog';
+import { useGetExperimentsMetricsQuery } from '@app/rtk/generated/experiments';
+import useMetricsCols from '@hooks/useMetricsCols';
 
 interface ModelExperimentsProps {
   model: Model;
 }
 
 type QueryParams = Omit<FetchExperimentsQuery, 'modelId'>;
+
+type ColumnT = Column<Experiment, keyof Experiment> & {
+  isMetric?: boolean;
+};
 
 const queryParamsInitialState = {
   perPage: 10,
@@ -92,7 +98,43 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
     }
   };
 
-  const columns: Column<Experiment, keyof Experiment>[] = [
+  const metricsCols: ColumnT[] = useMetricsCols(storeExperiments);
+  const actionsColumn = {
+    name: 'Actions',
+    title: 'Actions',
+    customSx: tableActionsSx,
+    fixed: true,
+    render: (row: Experiment, value, { trainingCanceling }) => {
+      return (
+        <TableActionsWrapper>
+          <Button
+            onClick={() => {
+              setSelectedExperimentId(row.id);
+            }}
+            variant="text"
+            color="primary"
+            disabled={!row.stackTrace}
+          >
+            <ReadMore />
+          </Button>
+          {row.stage === 'RUNNING' && (
+            <Tooltip title="Cancel training" placement="top">
+              <IconButton
+                onClick={() => {
+                  setConfirmExperimentCancelling(row.id);
+                }}
+                disabled={trainingCanceling}
+              >
+                <Cancel />
+              </IconButton>
+            </Tooltip>
+          )}
+        </TableActionsWrapper>
+      );
+    },
+  } as ColumnT;
+
+  const columns: ColumnT[] = [
     {
       title: 'Experiment Name',
       name: 'Experiment Name',
@@ -106,7 +148,7 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
       ),
     },
     {
-      field: 'stage',
+      field: 'stage' as const,
       title: 'Stage',
       name: 'Stage',
       render: (row: Experiment) => (
@@ -142,78 +184,11 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
             { label: 'Failed', key: 'ERROR' },
             { label: 'Not started', key: 'NOT RUNNING' },
           ],
+          // @ts-ignore
           optionKey: (option) => option.key,
+          // @ts-ignore
           getLabel: (option) => option.label,
         },
-      },
-      customSx: {
-        textAlign: 'center',
-      },
-    },
-    {
-      field: 'trainMetrics' as const,
-      name: 'Train Loss',
-      title: (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <Typography>Train Loss</Typography>
-        </Box>
-      ),
-      render: (_row: Experiment, value: Experiment['trainMetrics']) => (
-        <Justify position="end">
-          {(() => {
-            if (!value || !_row) return '-';
-
-            const column = _row.modelVersion.config.dataset.targetColumns[0];
-            if (`train/loss/${column.name}` in value) {
-              return value[`train/loss/${column.name}`].toFixed(2);
-            }
-          })()}
-        </Justify>
-      ),
-      customSx: {
-        textAlign: 'center',
-      },
-      skeletonProps: {
-        variant: 'text',
-        width: 30,
-      },
-    },
-    {
-      field: 'valMetrics' as const,
-      name: 'Validation Loss',
-      title: (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-
-            alignItems: 'center',
-          }}
-        >
-          <Typography>Validation Loss</Typography>
-        </Box>
-      ),
-      render: (_row: Experiment, value: Experiment['valMetrics']) => (
-        <Justify position="end">
-          {(() => {
-            if (!value || !_row) return '-';
-
-            const column = _row.modelVersion.config.dataset.targetColumns[0];
-            if (`val/loss/${column.name}` in value) {
-              return value[`val/loss/${column.name}`].toFixed(2);
-            }
-          })()}
-        </Justify>
-      ),
-      skeletonProps: {
-        variant: 'text',
-        width: 30,
       },
       customSx: {
         textAlign: 'center',
@@ -255,48 +230,14 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
         textAlign: 'center',
       },
     },
-    {
-      name: 'Actions',
-      title: 'Actions',
-      customSx: tableActionsSx,
-      fixed: true,
-      render: (row: Experiment, value, { trainingCanceling }) => {
-        return (
-          <TableActionsWrapper>
-            <Button
-              onClick={() => {
-                setSelectedExperimentId(row.id);
-              }}
-              variant="text"
-              color="primary"
-              disabled={!row.stackTrace}
-            >
-              <ReadMore />
-            </Button>
-            {row.stage === 'RUNNING' && (
-              <Tooltip title="Cancel training" placement="top">
-                <IconButton
-                  onClick={() => {
-                    setConfirmExperimentCancelling(row.id);
-                  }}
-                  disabled={trainingCanceling}
-                >
-                  <Cancel />
-                </IconButton>
-              </Tooltip>
-            )}
-          </TableActionsWrapper>
-        );
-      },
-    },
   ];
-
+  const cols = columns.concat(metricsCols).concat([actionsColumn]);
   const columnsTreeView: TreeNode[] = [
     {
       id: 'attributes',
       name: 'Attributes',
-      children: columns
-        .filter((col) => col.field != 'trainMetrics' && !col.fixed)
+      children: cols
+        .filter((col) => !col.isMetric! && !col.fixed)
         .map((col) => ({
           id: col.name,
           name: col.name,
@@ -306,8 +247,8 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
     {
       id: 'metrics',
       name: 'Metrics',
-      children: columns
-        .filter((col) => col.field === 'trainMetrics' && !col.fixed)
+      children: cols
+        .filter((col) => col.isMetric!)
         .map((col) => ({
           id: col.name,
           name: col.name,
@@ -366,10 +307,10 @@ const ModelExperiments = ({ model }: ModelExperimentsProps) => {
         }}
         open={confirmExperimentCancelling !== undefined}
       />
-      <Table<Experiment>
+      <Table<any>
         onStateChange={handleTableStateChange}
         rows={storeExperiments}
-        columns={columns}
+        columns={cols}
         rowKey={(row) => row.id}
         rowAlign="center"
         pagination={{
