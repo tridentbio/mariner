@@ -300,9 +300,9 @@ def _prepare_data(
     ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
         X, y = self._prepare_X_and_y(X, y)  # pylint: disable=W0212
         if self.featurize_data_types:
-            # self._apply_default_featurizers(  # pylint: disable=W0212
-            #     X, self.dataset_config.feature_columns
-            # )
+            self._apply_default_featurizers(  # pylint: disable=W0212
+                X, self.dataset_config.feature_columns
+            )
             if y is not None and not y.empty:
                 self._apply_default_featurizers(  # pylint: disable=W0212
                     y, self.dataset_config.target_columns
@@ -844,6 +844,7 @@ class MarinerTorchDataset(Dataset):
             self.preprocessing_pipeline.output_columns,
         )
 
+        print("out_cols", output_columns)
         for column in self.data[output_columns]:
             data[column] = adapt_numpy_to_tensor(self.data.loc[idx, column])
 

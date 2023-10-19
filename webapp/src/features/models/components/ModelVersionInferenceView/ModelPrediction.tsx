@@ -48,12 +48,14 @@ const ModelPrediction = ({
     <div data-testid="inference-result">
       <Text fontWeight="bold">{`Prediction for ${column}:`}</Text>
 
-      {type === 'categorical' && <Vega spec={modelOutputToVegaSpec(value)} />}
+      {type === 'categorical' && (
+        <Vega spec={modelOutputToVegaSpec(value['probs'], value['classes'])} />
+      )}
 
       {type === 'numerical' && 'unit' in props && (
         <NumericalPredictionContainer>
           <Text fontWeight="bold">
-            {extractVal(value).toExponential(2)} {props.unit}
+            {extractVal(value)!.toExponential(2)} {props.unit}
           </Text>
         </NumericalPredictionContainer>
       )}

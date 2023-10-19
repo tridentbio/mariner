@@ -193,7 +193,7 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
   };
 
   useEffect(() => {
-    currentMode === 'creation' && onFrameworkChange();
+    onFrameworkChange();
   }, [selectedFramework]);
 
   useEffect(() => {

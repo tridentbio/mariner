@@ -23,6 +23,7 @@ import { getPrediction } from 'features/models/modelsApi';
 import { TorchModelSpec } from '@app/rtk/generated/models';
 import { useNotifications } from '@app/notifications';
 import { HTTPError } from '@utils/http';
+import { DataTypeGuard } from '@app/types/domain/datasets';
 
 interface ModelVersionInferenceViewProps {
   model: Model;
@@ -57,7 +58,7 @@ const ModelVersionInferenceView = ({
   const [predictionLoading, setPredictionLoading] = useState(false);
   const { notifyError, success } = useNotifications();
   const { data: dataset } = datasetsApi.useGetDatasetByIdQuery(
-    model.datasetId!
+    model.datasetId!,
   );
   const inputRef = useRef<ElementRef<typeof ModelInput>>(null);
   const handlePrediction = () => {
@@ -72,22 +73,34 @@ const ModelVersionInferenceView = ({
   };
   const modelVersion = useMemo(() => {
     return model.versions.find(
-      (modelVersion) => modelVersion.id === modelVersionId
+      (modelVersion) => modelVersion.id === modelVersionId,
     );
   }, [model, modelVersionId]);
   const targetColumns = useMemo(
     () => (modelVersion?.config as TorchModelSpec).dataset.targetColumns || [],
-    [modelVersion?.config.dataset.targetColumns]
+    [modelVersion?.config.dataset.targetColumns],
   );
 
   const isTargetColumnCategorical = useCallback(
-    (columnName: string): boolean => {
-      const targetColumn = targetColumns.find(
-        (targetColumn) => targetColumn.name === columnName
-      );
-      return ['multiclass', 'binary'].includes(targetColumn?.columnType || '');
+    (version: typeof modelVersion, columnName: string): boolean => {
+      if (!version) return false;
+      if (version.config.framework === 'torch') {
+        const targetColumn = targetColumns.find(
+          (targetColumn) => targetColumn.name === columnName,
+        );
+        return ['multiclass', 'binary'].includes(
+          targetColumn?.columnType || '',
+        );
+      } else if (version.config.framework === 'sklearn') {
+        return DataTypeGuard.isCategorical(
+          version.config.dataset.targetColumns.find(
+            (col) => col.name === columnName,
+          )?.dataType,
+        );
+      }
     },
-    [targetColumns]
+
+    [targetColumns],
   );
   return (
     <Box>
@@ -142,7 +155,7 @@ const ModelVersionInferenceView = ({
             {modelOutputs &&
               Object.keys(modelOutputs).map((key) => (
                 <>
-                  {isTargetColumnCategorical(key) ? (
+                  {isTargetColumnCategorical(modelVersion, key) ? (
                     <ModelPrediction
                       type={'categorical'}
                       // @ts-ignore
@@ -155,7 +168,7 @@ const ModelVersionInferenceView = ({
                         // TODO: check how to handle inference page with multiple target columns
                         const targetColumn =
                           targetColumns.find(
-                            (targetColumn) => targetColumn.name === key
+                            (targetColumn) => targetColumn.name === key,
                           ) || targetColumns[0];
                         return 'unit' in targetColumn.dataType
                           ? targetColumn.dataType.unit
