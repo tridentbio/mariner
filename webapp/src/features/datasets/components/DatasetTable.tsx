@@ -146,17 +146,13 @@ const DatasetTable = (props: DatasetTableProps) => {
       const { page, rowsPerPage: perPage } = state.paginationModel;
 
       if (page !== pFilters.page || perPage !== pFilters.perPage) {
-        pFilters.page = page;
-        pFilters.perPage = perPage;
-
         const newFilters: Parameters<typeof fetchDatasets>[0] = {
+          ...pFilters,
           page: state.paginationModel?.page || 0,
           perPage: state.paginationModel?.rowsPerPage || filters.perPage,
-          ...pFilters,
         };
 
         setPFilters(pFilters);
-
         fetchDatasets(newFilters);
       }
     }
