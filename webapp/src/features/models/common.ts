@@ -8,7 +8,7 @@ type SampleExperimentReturn = {
 };
 
 export const sampleExperiment = (
-  trainings: Experiment[],
+  trainings: Experiment[]
 ): SampleExperimentReturn => {
   const initialState = {
     successful: false,
@@ -39,5 +39,5 @@ export const extractVal = (val: any): number => {
   if (guards.isNumber(val)) return val;
   else if (guards.isListOfNumber(val)) return val[0];
   else if (guards.isListOfListOfNumber(val)) return val[0][0];
-  return;
+  return 0;
 };

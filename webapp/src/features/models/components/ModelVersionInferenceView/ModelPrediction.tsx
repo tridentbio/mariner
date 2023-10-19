@@ -49,6 +49,7 @@ const ModelPrediction = ({
       <Text fontWeight="bold">{`Prediction for ${column}:`}</Text>
 
       {type === 'categorical' && (
+        // @ts-ignore
         <Vega spec={modelOutputToVegaSpec(value['probs'], value['classes'])} />
       )}
 

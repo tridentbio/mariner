@@ -10,7 +10,7 @@ const colorScheme = {
 
 export const modelOutputToVegaSpec = (
   outputs: modelsApi.ModelOutputValue,
-  classIndices?: (number | string)[],
+  classIndices?: (number | string)[]
 ): VisualizationSpec => {
   let flatOutputs = outputs.flat();
   if (flatOutputs.length === 1 && typeof flatOutputs[0] === 'number') {
@@ -18,14 +18,14 @@ export const modelOutputToVegaSpec = (
   }
   const isMultiTargetColumns = useMemo(
     () => flatOutputs.length > 1,
-    [flatOutputs],
+    [flatOutputs]
   );
   const maxIndex = useMemo(
     () =>
       isMultiTargetColumns
         ? flatOutputs.indexOf(Math.max(...(flatOutputs as number[])))
         : 0,
-    [flatOutputs],
+    [flatOutputs]
   );
 
   const encoding = useMemo(
@@ -39,7 +39,7 @@ export const modelOutputToVegaSpec = (
                 range: flatOutputs.map((_, index) =>
                   index === maxIndex
                     ? colorScheme['green']
-                    : colorScheme['blue'],
+                    : colorScheme['blue']
                 ),
               },
             },
@@ -57,7 +57,7 @@ export const modelOutputToVegaSpec = (
               },
             },
           },
-    [flatOutputs, classIndices],
+    [flatOutputs, classIndices]
   );
 
   return {
@@ -66,7 +66,8 @@ export const modelOutputToVegaSpec = (
       'Bar chart with text labels. Set domain to make the frame cover the labels.',
     data: {
       values: Object.entries(flatOutputs).map(([key, value]) => ({
-        Prediction: classIndices ? classIndices[key] : key,
+        Prediction:
+          classIndices && typeof key === 'number' ? classIndices[key] : key,
         Probability: (value as number).toFixed(3),
       })),
     },
