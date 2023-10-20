@@ -1,49 +1,64 @@
+import {
+  ModelTemplate,
+  useGetModelTemplatesQuery,
+} from '@app/rtk/generated/models';
 import { CardActionArea, List, ListItem } from '@mui/material';
-import Card from '@mui/material/Card';
+import Card, { CardProps } from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Typography from '@mui/material/Typography';
+import { EditorDragStartParams } from '.';
 
-const TemplateItem = () => {
+interface TemplateItemProps extends CardProps {
+  template: ModelTemplate;
+}
+
+const TemplateItem = ({ template, ...rest }: TemplateItemProps) => {
   return (
-    <Card>
+    <Card sx={{ width: '100%' }} {...rest}>
       <CardActionArea>
         <CardMedia
           component="img"
           height="140"
-          image="/static/images/cards/contemplative-reptile.jpg"
+          image=""
           alt="model-preview"
         />
         <CardContent>
-          <Typography gutterBottom variant="h5" component="div">
-            Model
+          <Typography gutterBottom variant="h6" component="div">
+            {template.name}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Lorem ipsum dolor sit, amet consectetur adipisicing elit. Itaque,
-            fugit quibusdam
+            {template.description}
           </Typography>
         </CardContent>
       </CardActionArea>
-      {/*  <CardActions>
-        <Button size="small" color="primary">
-          Share
-        </Button>
-      </CardActions> */}
     </Card>
   );
 };
 
-interface ModelTemplatesProps {}
+interface ModelTemplatesProps {
+  onDragStart?: (element: EditorDragStartParams<ModelTemplate>) => void;
+}
 
-export const ModelTemplates = ({}: ModelTemplatesProps) => {
+export const ModelTemplates = ({ onDragStart }: ModelTemplatesProps) => {
+  const { data: templates } = useGetModelTemplatesQuery();
+
   return (
-    <List sx={{ p: 2 }}>
-      <ListItem>
-        <TemplateItem />
-      </ListItem>
-      <ListItem>
-        <TemplateItem />
-      </ListItem>
-    </List>
+    <>
+      <List sx={{ p: 2, pl: 0 }}>
+        {templates?.map((template, index) => (
+          <ListItem sx={{ p: 0, mb: 2 }} key={index}>
+            <TemplateItem
+              template={template}
+              draggable
+              onDragStart={(event) =>
+                onDragStart &&
+                onDragStart({ data: template, event, type: 'Template' })
+              }
+            />
+          </ListItem>
+        ))}
+      </List>
+    </>
   );
 };

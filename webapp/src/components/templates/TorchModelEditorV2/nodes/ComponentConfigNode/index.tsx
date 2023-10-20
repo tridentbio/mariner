@@ -34,6 +34,7 @@ const ComponentConfigNode = ({
       handlesElement={
         <CustomHandles nodeId={props.id} type={props.data.type} />
       }
+      selected={props.selected}
       headerExtra={
         <NodeHeader
           options={[

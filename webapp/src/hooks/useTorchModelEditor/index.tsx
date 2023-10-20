@@ -1,34 +1,48 @@
-import { useGetModelOptionsQuery } from 'app/rtk/generated/models';
-import { positionNodes } from './utils';
-import { ApplySuggestionsCommandArgs } from 'model-compiler/src/implementation/commands/ApplySuggestionsCommand';
-import { DeleteCommandArgs } from 'model-compiler/src/implementation/commands/DeleteComponentsCommand';
-import { EditComponentsCommandArgs } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
-import TorchModelEditorImpl from 'model-compiler/src/implementation/TorchModelEditorImpl';
-import { SchemaContextTypeGuard } from 'model-compiler/src/implementation/SchemaContext';
-import Suggestion from 'model-compiler/src/implementation/Suggestion';
 import {
   ComponentConfigType,
   LayerFeaturizerType,
-  NodeType,
   ModelSchema,
   NodePositionTypesMap,
+  NodeType,
+  TorchModelSchema,
 } from '@model-compiler/src/interfaces/torch-model-editor';
-import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
-import { createContext, useContext, useMemo, ReactNode, useState } from 'react';
 import {
-  Edge,
-  useReactFlow,
-  useNodesState,
-  useEdgesState,
-  useStore,
-  useNodesInitialized,
-} from 'reactflow';
-import { ArrayElement, isArray, Required } from 'utils';
-import { ITorchModelEditorContext, MarinerNode } from './types';
+  ColumnConfig,
+  TargetTorchColumnConfig,
+  useGetModelOptionsQuery,
+} from 'app/rtk/generated/models';
+import { SchemaContextTypeGuard } from 'model-compiler/src/implementation/SchemaContext';
+import Suggestion from 'model-compiler/src/implementation/Suggestion';
+import TorchModelEditorImpl from 'model-compiler/src/implementation/TorchModelEditorImpl';
+import { ApplySuggestionsCommandArgs } from 'model-compiler/src/implementation/commands/ApplySuggestionsCommand';
+import { DeleteCommandArgs } from 'model-compiler/src/implementation/commands/DeleteComponentsCommand';
+import { EditComponentsCommandArgs } from 'model-compiler/src/implementation/commands/EditComponentsCommand';
 import {
   getSourceHandles,
   getTargetHandles,
 } from 'model-compiler/src/implementation/modelSchemaQuery';
+import { iterateTopologically, unwrapDollar } from 'model-compiler/src/utils';
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import {
+  Edge,
+  OnNodesDelete,
+  useEdgesState,
+  useNodesInitialized,
+  useNodesState,
+  useReactFlow,
+  useStore,
+  useStoreApi,
+} from 'reactflow';
+import { ArrayElement, Required, isArray } from 'utils';
+import { ITorchModelEditorContext, MarinerNode } from './types';
+import { positionNodes } from './utils';
 
 // Context impement `ITorchModelEditorContext`
 // @ts-ignore
@@ -52,18 +66,25 @@ export const TorchModelEditorContextProvider = ({
     applySuggestions,
   } = new TorchModelEditorImpl();
   const reactFlowValue = useReactFlow<NodeType, any>();
-  const [schema, setSchema] = useState<ModelSchema | undefined>();
+  const [schema, setSchema] = useState<TorchModelSchema | undefined>();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const nodeInternals = useStore((state) => {
-    return state.nodeInternals;
-  });
+  const nodeInternals = useStore((state) => state.nodeInternals);
+  const unselectNodesAndEdges = useStore(
+    (state) => state.unselectNodesAndEdges
+  );
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [expandedNodesMap, setExpandedNodesMap] = useState<
     Record<string, boolean>
   >({});
   const { data: modelOptions } = useGetModelOptionsQuery();
   const nodesInitialized = useNodesInitialized();
+
+  useEffect(() => {
+    return () => {
+      unselectNodesAndEdges();
+    };
+  }, []);
 
   const optionsByLib: ITorchModelEditorContext['optionsByLib'] = useMemo(() => {
     return (
@@ -217,12 +238,15 @@ export const TorchModelEditorContextProvider = ({
     const nodes: MarinerNode[] = [];
     let edges: Edge[] = [];
     const map = positions ? positions : getNodePositionsMap();
+
+    const NON_DELETABLE_NODE_TYPES: NodeType['type'][] = ['input', 'output'];
     // @ts-ignore
     iterateTopologically(schema, (node, type) => {
       nodes.push({
         id: node.name,
         data: node,
         type,
+        deletable: !NON_DELETABLE_NODE_TYPES.includes(node.type),
         position: map[node.name] || {
           x: Math.random() * 400,
           y: Math.random() * 400,
@@ -272,14 +296,38 @@ export const TorchModelEditorContextProvider = ({
     return [nodes, edges];
   };
 
+  const isInputNode = (nodeName: string) => {
+    return nodes.some((node) => node.id === nodeName && node.type === 'input');
+  };
+
   const applyDagreLayout: ITorchModelEditorContext['applyDagreLayout'] = (
     direction,
     spaceValue,
-    _edges
+    _edges,
+    _selectedNodes
   ) => {
-    setNodes((nodes) =>
-      positionNodes(nodes, _edges || edges, direction, spaceValue)
-    );
+    setNodes((nodes) => {
+      const nodesToApplyDagre: MarinerNode[] = _selectedNodes
+        ? nodes.filter((node) => _selectedNodes.includes(node.id))
+        : nodes;
+
+      const repositionedNodes = positionNodes(
+        nodesToApplyDagre,
+        _edges || edges,
+        direction,
+        spaceValue
+      );
+
+      const nodesWithSamePosition: MarinerNode[] = [];
+
+      nodes.forEach((node) => {
+        const foundNode = repositionedNodes.some((n) => n.id === node.id);
+
+        if (!foundNode) nodesWithSamePosition.push(node);
+      });
+
+      return [...repositionedNodes, ...nodesWithSamePosition];
+    });
   };
 
   const getMiddlePosition = (positions: Position[]) => {
@@ -327,14 +375,40 @@ export const TorchModelEditorContextProvider = ({
    */
   const updateNodesAndEdges = (
     schema: ModelSchema,
-    positionsMap?: ReturnType<typeof getNodePositionsMap>
+    positionsMap?: ReturnType<typeof getNodePositionsMap>,
+    onBeforeUpdate?: (
+      nodes: MarinerNode[],
+      edges: Edge[]
+    ) => { nodes: MarinerNode[]; edges: Edge[] }
   ) => {
     if (!positionsMap) positionsMap = getNodePositionsMap();
     setSchema(schema);
     // @ts-ignore
-    const [nodes, edges] = schemaToEditorGraph(schema, positionsMap);
-    setNodes(nodes);
-    setEdges(edges);
+    let [parsedNodes, parsedEdges] = schemaToEditorGraph(schema, positionsMap);
+
+    if (typeof onBeforeUpdate === 'function') {
+      const { nodes: modifiedNodes, edges: modifiedEdges } = onBeforeUpdate(
+        parsedNodes,
+        parsedEdges
+      );
+
+      parsedNodes = modifiedNodes;
+      parsedEdges = modifiedEdges;
+    }
+
+    setNodes(
+      parsedNodes.map((node) => {
+        const oldNode = nodes.find((oldNode) => oldNode.id === node.id);
+
+        if (oldNode) {
+          return Object.assign({}, oldNode, node);
+        }
+
+        return node;
+      })
+    );
+
+    setEdges(parsedEdges);
     // @ts-ignore
     setSuggestions(getSuggestions({ schema }).getSuggestions());
   };
@@ -346,6 +420,9 @@ export const TorchModelEditorContextProvider = ({
     if (!modelOptions) throw 'too early';
     const map = getNodePositionsMap();
     map[args.name] = position;
+
+    unselectNodesAndEdges();
+
     const schema = addComponent(
       {
         type: args.componentType,
@@ -357,7 +434,17 @@ export const TorchModelEditorContextProvider = ({
       },
       args.schema
     );
-    updateNodesAndEdges(schema, map);
+
+    updateNodesAndEdges(schema, map, (parsedNodes, parsedEdges) => {
+      return {
+        nodes: parsedNodes.map((node) => ({
+          ...node,
+          selected: node.id === args.name,
+        })),
+        edges: parsedEdges,
+      };
+    });
+
     return schema;
   };
 
@@ -382,6 +469,8 @@ export const TorchModelEditorContextProvider = ({
 
     const updatedPositions =
       convertRelativePositionsToAbsolute(updatedNodePositions);
+
+    unselectNodesAndEdges();
 
     updateNodesAndEdges(schema, updatedPositions);
 
@@ -516,6 +605,35 @@ export const TorchModelEditorContextProvider = ({
     setNodes(updatedNodes);
   };
 
+  const onNodesDelete: OnNodesDelete = (nodes) => {
+    const existentNodeVerifier = (
+      col: ColumnConfig | TargetTorchColumnConfig | LayerFeaturizerType
+    ) => !nodes.some((node) => node.id === col.name);
+
+    setSchema((currentSchema) => {
+      if (!currentSchema) return currentSchema;
+
+      return {
+        ...currentSchema,
+        dataset: {
+          ...currentSchema.dataset,
+          featurizers:
+            currentSchema.dataset.featurizers.filter(existentNodeVerifier),
+          transforms:
+            currentSchema.dataset.transforms.filter(existentNodeVerifier),
+          featureColumns:
+            currentSchema.dataset.featureColumns.filter(existentNodeVerifier),
+          targetColumns:
+            currentSchema.dataset.targetColumns.filter(existentNodeVerifier),
+        },
+        spec: {
+          ...currentSchema.spec,
+          layers: currentSchema.spec.layers?.filter(existentNodeVerifier),
+        },
+      };
+    });
+  };
+
   return (
     <TorchModelEditorContext.Provider
       value={{
@@ -550,6 +668,11 @@ export const TorchModelEditorContextProvider = ({
         onEdgesChange,
         nodesInitialized,
         highlightNodes,
+        updateNodesAndEdges,
+        getNodePositionsMap,
+        unselectNodesAndEdges,
+        isInputNode,
+        onNodesDelete,
       }}
     >
       {children}

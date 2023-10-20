@@ -1,27 +1,46 @@
-import { Box } from '@mui/system';
+import { Box, BoxProps } from '@mui/system';
 import * as modelsApi from 'app/rtk/generated/models';
 import { useGetModelOptionsQuery } from 'app/rtk/generated/models';
 import { Text } from 'components/molecules/Text';
 import DocsModel from 'components/templates/TorchModelEditor/Components/DocsModel/DocsModel';
-import { DragEvent, useMemo } from 'react';
+import { useMemo } from 'react';
 import { substrAfterLast } from 'utils';
+import { EditorDragStartParams } from '.';
 
-export type HandleProtoDragStartParams = {
-  event: DragEvent<HTMLDivElement>;
-  data: modelsApi.ComponentOption;
-};
+interface OptionItemProps extends BoxProps {
+  option: modelsApi.ComponentOption;
+}
 
-const styleProto = {
-  cursor: 'grab',
-  p: 1,
-  width: 'fit-content',
-  border: '1px solid black',
-  m: 1,
-  borderRadius: 2,
+const OptionItem = ({ option, ...rest }: OptionItemProps) => {
+  return (
+    <Box
+      {...rest}
+      sx={{
+        cursor: 'grab',
+        p: 1,
+        width: 'fit-content',
+        border: '1px solid black',
+        m: 1,
+        borderRadius: 2,
+        ...rest.sx,
+      }}
+    >
+      {substrAfterLast(option.classPath, '.')}
+      <DocsModel
+        commonIconProps={{
+          fontSize: 'small',
+        }}
+        docs={option.docs}
+        docsLink={option.docsLink || ''}
+      />
+    </Box>
+  );
 };
 
 interface OptionsSidebarProps {
-  onDragStart: (params: HandleProtoDragStartParams) => void;
+  onDragStart?: (
+    params: EditorDragStartParams<modelsApi.ComponentOption>
+  ) => void;
 }
 
 /**
@@ -67,27 +86,20 @@ const OptionsSidebarV2 = ({ onDragStart }: OptionsSidebarProps) => {
                 flexWrap: 'wrap',
               }}
             >
-              {models.map((option) => (
-                <Box
-                  sx={styleProto}
+              {models.map((option, index) => (
+                <OptionItem
+                  key={index}
                   draggable
-                  onDragStart={(event) => {
+                  onDragStart={(event) =>
+                    onDragStart &&
                     onDragStart({
                       event,
                       data: option,
-                    });
-                  }}
-                  key={option.classPath}
-                >
-                  {substrAfterLast(option.classPath, '.')}
-                  <DocsModel
-                    commonIconProps={{
-                      fontSize: 'small',
-                    }}
-                    docs={option.docs}
-                    docsLink={option.docsLink || ''}
-                  />
-                </Box>
+                      type: 'ComponentOption',
+                    })
+                  }
+                  option={option}
+                />
               ))}
             </div>
           </Box>

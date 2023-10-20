@@ -1,9 +1,16 @@
+import {
+  ModelTemplate
+} from '@app/rtk/generated/models';
 import { Text } from '@components/molecules/Text';
 import { AppTabsProps } from '@components/organisms/Tabs';
 import { useTorchModelEditor } from '@hooks';
+import { MarinerNode } from '@hooks/useTorchModelEditor/types';
 import {
+  FeaturizersType,
+  LayersType,
   ModelSchema,
   NodeType,
+  TorchModelSchema
 } from '@model-compiler/src/interfaces/torch-model-editor';
 import { Box } from '@mui/material';
 import FullScreenWrapper from 'components/organisms/FullScreenWrapper';
@@ -15,20 +22,23 @@ import {
 } from 'model-compiler/src/implementation/modelSchemaQuery';
 import {
   DragEvent,
-  memo,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
-  useState
+  useState,
 } from 'react';
-import ReactFlow, { Background, BackgroundVariant, NodeProps } from 'reactflow';
+import ReactFlow, {
+  Background,
+  BackgroundVariant,
+  Edge,
+  NodeProps,
+  SelectionMode,
+} from 'reactflow';
 import 'reactflow/dist/style.css';
-import { substrAfterLast } from 'utils';
+import { deepClone, isArray, substrAfterLast } from 'utils';
 import { ModelTemplates } from './ModelTemplates';
-import OptionsSidebarV2, {
-  HandleProtoDragStartParams,
-} from './OptionsSidebarV2';
+import OptionsSidebarV2 from './OptionsSidebarV2';
 import { SidebarBase } from './SidebarBase';
 import { SidebarToggle } from './SidebarToggle';
 import SuggestionsList from './SuggestionsList';
@@ -38,12 +48,27 @@ import InputNode from './nodes/InputNode';
 import OutputNode from './nodes/OutputNode';
 import { StyleOverrides } from './styles';
 
+export type ModelEditorElementsCount = {
+  components: number;
+  templates: number;
+};
+
 type TorchModelEditorProps = {
   value: ModelSchema;
   onChange?: (schema: ModelSchema) => void;
   editable?: boolean;
   dagre?: number | 'goodDistance';
+  initialElementsCount?: ModelEditorElementsCount;
+  onElementsCountChange?: (count: ModelEditorElementsCount) => void;
 };
+
+type DraggingContexts = 'ComponentOption' | 'Template';
+
+export interface EditorDragStartParams<T extends object> {
+  event: DragEvent<HTMLDivElement>;
+  data: T;
+  type: DraggingContexts;
+}
 
 const getGoodDistance = (nodesNumber: number) => {
   if (nodesNumber < 3) return 8;
@@ -52,38 +77,13 @@ const getGoodDistance = (nodesNumber: number) => {
   else return 1;
 };
 
-const OptionsGrid = memo(() => {
-  return (
-    <OptionsSidebarV2
-      onDragStart={({ event, data }: HandleProtoDragStartParams) => {
-        event.dataTransfer.setData(
-          'application/reactflow',
-          'ComponentConfigNode'
-        );
-        event.dataTransfer.setData(
-          'application/componentData',
-          JSON.stringify(data)
-        );
-        event.dataTransfer.setData(
-          'application/offset',
-          JSON.stringify({
-            x: event.clientX - event.currentTarget.getBoundingClientRect().x,
-            y: event.clientY - event.currentTarget.getBoundingClientRect().y,
-          })
-        );
-        event.dataTransfer.effectAllowed = 'move';
-      }}
-    />
-  );
-});
-
-OptionsGrid.displayName = 'OptionsGrid';
-
 const TorchModelEditor = ({
   value,
   onChange,
   editable = true,
   dagre,
+  initialElementsCount,
+  onElementsCountChange,
 }: TorchModelEditorProps) => {
   const {
     applyDagreLayout,
@@ -107,6 +107,11 @@ const TorchModelEditor = ({
     onNodesChange,
     onEdgesChange,
     nodesInitialized,
+    updateNodesAndEdges,
+    getNodePositionsMap,
+    unselectNodesAndEdges,
+    isInputNode,
+    onNodesDelete,
   } = useTorchModelEditor();
   const [fullScreen, setFullScreen] = useState(false);
   const [connectingNode, setConnectingNode] = useState<
@@ -124,17 +129,6 @@ const TorchModelEditor = ({
   const handleSidebarTabChange = (tabValue: number) => {
     setCurrentSidebarTab(tabValue);
   };
-
-  const tabs: AppTabsProps['tabs'] = [
-    {
-      label: 'Options',
-      panel: <OptionsGrid />,
-    },
-    {
-      label: 'Templates',
-      panel: <ModelTemplates />,
-    },
-  ];
 
   const nodeTypes = useMemo(
     () => ({
@@ -160,15 +154,27 @@ const TorchModelEditor = ({
 
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
 
+  const [droppedElementsCount, setDroppedElementsCount] =
+    useState<ModelEditorElementsCount>({
+      components: 0,
+      templates: 0,
+    });
+
   useEffect(() => {
     if (value) {
       setSchema(value);
     }
+
+    if (initialElementsCount) setDroppedElementsCount(initialElementsCount);
   }, []);
 
   useEffect(() => {
     fitView();
   }, [nodesInitialized]);
+
+  useEffect(() => {
+    onElementsCountChange && onElementsCountChange(droppedElementsCount);
+  }, [droppedElementsCount]);
 
   useEffect(() => {
     if (!reactFlowWrapper.current) return;
@@ -196,6 +202,28 @@ const TorchModelEditor = ({
     onChange && schema && onChange(schema);
   }, [schema]);
 
+  const [draggingElement, setDraggingNode] = useState<{
+    x: number;
+    y: number;
+    data: { [key: string]: any };
+    type: DraggingContexts;
+  }>();
+
+  const onDragStart = <T extends object>({
+    event,
+    data,
+    type,
+  }: EditorDragStartParams<T>) => {
+    setDraggingNode({
+      data,
+      type,
+      x: event.clientX - event.currentTarget.getBoundingClientRect().x,
+      y: event.clientY - event.currentTarget.getBoundingClientRect().y,
+    });
+
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
   /**
    * DragOver event handler for when an option from the options sidebar
    * is dragged over the canvas.
@@ -205,42 +233,179 @@ const TorchModelEditor = ({
     event.dataTransfer.dropEffect = 'move';
   };
 
-  const [componentsDropped, setComponentsDropped] = useState(0);
   /**
    * Drop event handler, with the side effect of adding the node with empty
    * arguments in the canvas state
    */
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
-    if (!reactFlowWrapper.current) return;
-    const componentData = JSON.parse(
-      event.dataTransfer.getData('application/componentData')
-    ) as HandleProtoDragStartParams['data'];
+    if (!reactFlowWrapper.current || !draggingElement) return;
+
+    unselectNodesAndEdges();
+
+    switch (draggingElement.type) {
+      case 'ComponentOption':
+        handleAddOption(event);
+        break;
+      case 'Template':
+        handleAddTemplate(event);
+        break;
+    }
+
+    setDraggingNode(undefined);
+  };
+
+  const handleAddOption = (event: DragEvent<HTMLDivElement>) => {
+    if (!reactFlowWrapper.current || !draggingElement) return;
+
+    const componentData = draggingElement.data;
+    const { type: classPath } = componentData.component;
 
     if (
       componentData.type === 'scikit_reg' ||
-      componentData.type === 'scikit_class'
-    ) {
+      componentData.type === 'scikit_class' ||
+      !classPath
+    )
       return;
-    }
-    const offset = JSON.parse(event.dataTransfer.getData('application/offset'));
-    const { type: classPath } = componentData.component;
+
     const { type: componentType } = componentData;
-    if (!classPath) return;
     const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+
     const position = project({
-      x: event.clientX - reactFlowBounds.left - offset.x,
-      y: event.clientY - reactFlowBounds.top - offset.y,
+      x: event.clientX - reactFlowBounds.left - draggingElement.x,
+      y: event.clientY - reactFlowBounds.top - draggingElement.y,
     });
+
     addComponent(
       {
-        schema: value,
-        name: `${substrAfterLast(classPath, '.')}-${componentsDropped}`,
+        schema: schema as TorchModelSchema,
+        name: `${substrAfterLast(classPath, '.')}-${
+          droppedElementsCount.components
+        }`,
         type: classPath,
         componentType,
       },
       position
     );
-    setComponentsDropped((dropped) => dropped + 1);
+
+    setDroppedElementsCount((data) => ({
+      ...data,
+      components: data.components + 1,
+    }));
+  };
+
+  const handleAddTemplate = (event: DragEvent<HTMLDivElement>) => {
+    if (!reactFlowWrapper.current || !draggingElement) return;
+
+    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+
+    const position = project({
+      x: event.clientX - reactFlowBounds.left - draggingElement.x,
+      y: event.clientY - reactFlowBounds.top - draggingElement.y,
+    });
+
+    const template = draggingElement.data as ModelTemplate;
+
+    if (schema) {
+      let sourceLayer: LayersType | FeaturizersType | undefined;
+
+      const generateTemplateNodeId = (nodeId: string) =>
+        `${nodeId}-template-${droppedElementsCount.templates}`;
+
+      //? Update layer nodes ID's and remove edges pointing to input nodes
+      const templateLayers = (
+        template.version.config as TorchModelSchema
+      ).spec.layers?.map((layer) => {
+        const layerCopy = deepClone(layer) as typeof layer;
+
+        if ('forwardArgs' in layerCopy) {
+          Object.keys(layerCopy.forwardArgs).forEach((arg) => {
+            const forwardArgs = layerCopy.forwardArgs as {
+              [key: string]: string | string[];
+            };
+
+            if (isArray(forwardArgs[arg])) {
+              forwardArgs[arg] = (forwardArgs[arg] as string[])
+                .filter((arg) => !isInputNode(arg))
+                .map(generateTemplateNodeId);
+
+              if (forwardArgs[arg].length == 0) delete forwardArgs[arg];
+            } else if (isInputNode(forwardArgs[arg] as string)) {
+              delete forwardArgs[arg];
+            } else {
+              forwardArgs[arg] = generateTemplateNodeId(
+                forwardArgs[arg] as string
+              );
+            }
+
+            if (!forwardArgs[arg]) sourceLayer = layerCopy;
+          });
+        }
+
+        layerCopy.name = `${layerCopy.name}-template-${droppedElementsCount.templates}`;
+
+        return layerCopy;
+      });
+
+      const updatedSchema: ModelSchema = {
+        ...schema,
+        spec: {
+          layers: [...(schema.spec.layers || []), ...(templateLayers || [])],
+        },
+      };
+
+      let templateLayerNodes: string[] = [];
+
+      const updatedElements: {
+        nodes: MarinerNode[];
+        edges: Edge[];
+      } = {
+        nodes: [],
+        edges: [],
+      };
+
+      updateNodesAndEdges(
+        updatedSchema,
+        !!sourceLayer
+          ? {
+              [sourceLayer.name]: position,
+              ...getNodePositionsMap(),
+            }
+          : undefined,
+        (nodes, edges) => {
+          updatedElements.nodes = nodes;
+          updatedElements.edges = edges;
+
+          templateLayerNodes = nodes
+            .filter((node) =>
+              templateLayers?.some((layer) => layer.name == node.id)
+            )
+            .map((node) => node.id);
+
+          return {
+            nodes: nodes.map((node) => ({
+              ...node,
+              selected: templateLayerNodes.includes(node.id),
+            })),
+            edges,
+          };
+        }
+      );
+
+      // TODO: Fix the wrong template position coordinates not being applied on drop
+      //? Dagre package does not support layout positioning
+      //? Solutions: Manually update the selected nodes positions based on delta?
+      applyDagreLayout(
+        'TB',
+        getGoodDistance(updatedElements.nodes.length),
+        updatedElements.edges,
+        templateLayerNodes
+      );
+
+      setDroppedElementsCount((data) => ({
+        ...data,
+        templates: data.templates + 1,
+      }));
+    }
   };
 
   const [listeningForKeyPress, setListeningForKeyPress] = useState(false);
@@ -293,6 +458,17 @@ const TorchModelEditor = ({
     };
   }, [listeningForKeyPress, keyAssignments]);
 
+  const tabs: AppTabsProps['tabs'] = [
+    {
+      label: 'Options',
+      panel: <OptionsSidebarV2 onDragStart={onDragStart} />,
+    },
+    {
+      label: 'Templates',
+      panel: <ModelTemplates onDragStart={onDragStart} />,
+    },
+  ];
+
   return (
     <FullScreenWrapper fullScreen={fullScreen} setFullScreen={setFullScreen}>
       <StyleOverrides>
@@ -312,9 +488,11 @@ const TorchModelEditor = ({
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onNodesDelete={onNodesDelete}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             minZoom={0.1}
+            selectionMode={SelectionMode.Partial}
             onDragOver={onDragOver}
             onDrop={onDrop}
             onConnectEnd={() => {
@@ -416,7 +594,9 @@ const TorchModelEditor = ({
                 case 0:
                   return <Text>You can drag these nodes to the editor</Text>;
                 default:
-                  return null;
+                  return (
+                    <Text>You can drag these templates to the editor</Text>
+                  );
               }
             }}
           />
