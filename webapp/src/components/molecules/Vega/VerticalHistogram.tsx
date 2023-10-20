@@ -66,8 +66,9 @@ export const modelOutputToVegaSpec = (
       'Bar chart with text labels. Set domain to make the frame cover the labels.',
     data: {
       values: Object.entries(flatOutputs).map(([key, value]) => ({
-        Prediction:
-          classIndices && typeof key === 'number' ? classIndices[key] : key,
+        Prediction: classIndices
+          ? classIndices[parseInt(key)]
+          : Object.keys(flatOutputs),
         Probability: (value as number).toFixed(3),
       })),
     },
