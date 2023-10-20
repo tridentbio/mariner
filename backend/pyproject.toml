@@ -42,6 +42,7 @@ ray = {version = "2.4.0", extras = ["default"]}
 scikit-learn = "^1.2.2"
 molfeat = "^0.8.9"
 psycopg2 = "^2.9.6"
+debugpy = "^1.8.0"
 
 [tool.poetry.group.dev.dependencies]
 Jinja2 = "3.1.2"
