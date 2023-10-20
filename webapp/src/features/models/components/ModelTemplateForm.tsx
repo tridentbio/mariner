@@ -1,14 +1,12 @@
+import { User } from '@app/rtk/generated/models';
 import ShareStrategyInput from '@features/deployments/Components/ShareStrategyInput';
 import SubmitCancelButtons from '@features/deployments/Components/SubmitCancelButtons';
 import { EShareStrategies } from '@features/deployments/types';
-import {
-  InputLabel,
-  TextField
-} from '@mui/material';
+import { InputLabel, TextField } from '@mui/material';
 import { Box } from '@mui/system';
 import MDEditor from '@uiw/react-md-editor';
 import { useAppSelector } from 'app/hooks';
-import { Deployment } from 'app/rtk/generated/deployments';
+import { Deployment, ShareStrategy } from 'app/rtk/generated/deployments';
 import { Model } from 'app/types/domain/models';
 import ConfirmationDialog from 'components/templates/ConfirmationDialog';
 import React, { useState } from 'react';
@@ -21,14 +19,24 @@ type DeploymentFormProps = {
   deployment?: Deployment;
   toggleModal: () => void;
 };
-const defaultFormState = {
+
+export interface ModelTemplateFormFields {
+  name: string;
+  readme?: string;
+  modelVersionId: number | null;
+  shareStrategy?: ShareStrategy;
+  usersIdAllowed?: number[];
+  organizationsAllowed?: string[];
+  usersAllowed?: User[];
+}
+
+const defaultFormState: ModelTemplateFormFields = {
   name: '',
   readme: '',
   shareStrategy: EShareStrategies.PRIVATE,
   usersIdAllowed: [],
   organizationsAllowed: [],
-  predictionRateLimitValue: 10,
-  showTrainingData: true,
+  modelVersionId: null,
 };
 
 export const ModelTemplateForm: React.FC<DeploymentFormProps> = ({
@@ -40,7 +48,7 @@ export const ModelTemplateForm: React.FC<DeploymentFormProps> = ({
     (state) => state.deployments.current
   );
 
-  const hookFormMethods = useForm<DeploymentFormFields>({
+  const hookFormMethods = useForm<ModelTemplateFormFields>({
     defaultValues: currentDeployment || defaultFormState,
     reValidateMode: 'onChange',
     shouldUnregister: false,
@@ -61,7 +69,7 @@ export const ModelTemplateForm: React.FC<DeploymentFormProps> = ({
     width: '100%',
   };
 
-  const onSubmit = (value: DeploymentFormFields) => {
+  const onSubmit = (value: ModelTemplateFormFields) => {
     if (value.shareStrategy === EShareStrategies.PUBLIC) {
       setShowConfirmation(true);
       return;
@@ -121,7 +129,9 @@ export const ModelTemplateForm: React.FC<DeploymentFormProps> = ({
               control={control}
               name="shareStrategy"
               render={({ field, fieldState: { error } }) => (
-                <ShareStrategyInput {...{ field }} />
+                <ShareStrategyInput<ModelTemplateFormFields, 'shareStrategy'>
+                  {...{ field }}
+                />
               )}
             />
           </Box>
