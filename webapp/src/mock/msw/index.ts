@@ -1,6 +1,15 @@
 import { rest } from 'msw';
 import { fakeApi } from './server';
 
+declare global {
+  interface Window {
+    msw?: {
+      fakeApi: typeof fakeApi
+      rest: typeof rest
+    }
+  }
+}
+
 export const startMock = async () => {
   if (window.msw) {
     // eslint-disable-next-line no-console
