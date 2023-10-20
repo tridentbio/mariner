@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from fleet.base_schemas import FleetModelSpec
 from fleet.dataset_schemas import DatasetConfigWithPreprocessing
+from fleet.model_schemas import FleetModelSpec
 from tests.fleet import helpers
 
 

@@ -9,15 +9,23 @@ const colorScheme = {
 };
 
 export const modelOutputToVegaSpec = (
-  outputs: modelsApi.ModelOutputValue
+  outputs: modelsApi.ModelOutputValue,
+  classIndices?: (number | string)[]
 ): VisualizationSpec => {
-  const isMultiTargetColumns = useMemo(() => outputs.length > 1, [outputs]);
+  let flatOutputs = outputs.flat();
+  if (flatOutputs.length === 1 && typeof flatOutputs[0] === 'number') {
+    flatOutputs = [1 - flatOutputs[0], flatOutputs[0]];
+  }
+  const isMultiTargetColumns = useMemo(
+    () => flatOutputs.length > 1,
+    [flatOutputs]
+  );
   const maxIndex = useMemo(
     () =>
       isMultiTargetColumns
-        ? outputs.indexOf(Math.max(...(outputs as number[])))
+        ? flatOutputs.indexOf(Math.max(...(flatOutputs as number[])))
         : 0,
-    [outputs]
+    [flatOutputs]
   );
 
   const encoding = useMemo(
@@ -27,8 +35,8 @@ export const modelOutputToVegaSpec = (
             color: {
               field: 'Prediction',
               scale: {
-                domain: Object.keys(outputs),
-                range: outputs.map((_, index) =>
+                domain: classIndices || Object.keys(flatOutputs),
+                range: flatOutputs.map((_, index) =>
                   index === maxIndex
                     ? colorScheme['green']
                     : colorScheme['blue']
@@ -40,14 +48,16 @@ export const modelOutputToVegaSpec = (
             color: {
               field: 'Prediction',
               scale: {
-                domain: Object.keys(outputs),
+                domain: Object.keys(flatOutputs),
                 range: [
-                  outputs[0] > 0.5 ? colorScheme['green'] : colorScheme['blue'],
+                  flatOutputs[0] > 0.5
+                    ? colorScheme['green']
+                    : colorScheme['blue'],
                 ],
               },
             },
           },
-    [outputs]
+    [flatOutputs, classIndices]
   );
 
   return {
@@ -55,8 +65,9 @@ export const modelOutputToVegaSpec = (
     description:
       'Bar chart with text labels. Set domain to make the frame cover the labels.',
     data: {
-      values: Object.entries(outputs).map(([key, value]) => ({
-        Prediction: key,
+      values: Object.entries(flatOutputs).map(([key, value]) => ({
+        Prediction:
+          classIndices && typeof key === 'number' ? classIndices[key] : key,
         Probability: (value as number).toFixed(3),
       })),
     },

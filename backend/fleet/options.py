@@ -176,7 +176,7 @@ class ComponentOverride(BaseModel):
         underscore_attrs_are_private = True
 
 
-class FleetConfigV2(BaseModel, YAML_Model):
+class FleetConfigV2(YAML_Model):
     """
     Specifies the format of the yaml file with fleet configs.
     """

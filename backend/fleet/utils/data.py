@@ -45,7 +45,7 @@ from fleet.model_builder.splitters import apply_split_indexes
 from fleet.model_builder.utils import DataInstance, get_references_dict
 from fleet.utils.graph import (
     get_leaf_nodes,
-    iterate_topologically,
+    iterate_graph,
     make_graph_from_forward_args,
 )
 
@@ -294,7 +294,7 @@ def _prepare_data(
 
     def wrapper(
         self: "PreprocessingPipeline",
-        X: Union[pd.DataFrame, np.ndarray],
+        X: Union[pd.DataFrame, np.ndarray, None],
         y: Union[pd.DataFrame, np.ndarray, None] = None,
         **kwargs,
     ) -> Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]]:
@@ -352,17 +352,17 @@ class PreprocessingPipeline:
 
             return func
 
-        iterate_topologically(
+        iterate_graph(
             graph,
             if_last_add_on(self.features_leaves),
-            skip_roots=[
+            skip_nodes=[
                 target.name for target in dataset_config.target_columns
             ],
         )
-        iterate_topologically(
+        iterate_graph(
             graph,
             if_last_add_on(self.target_leaves),
-            skip_roots=[
+            skip_nodes=[
                 feature.name for feature in dataset_config.feature_columns
             ],
         )
@@ -376,7 +376,9 @@ class PreprocessingPipeline:
 
         self.featurizers = {
             feat.name: (
-                self._prepare_transform(feat.create()),
+                self._prepare_transform(
+                    feat.create(dataset_config=self.dataset_config)
+                ),
                 feat.adapt_args_and_apply
                 if hasattr(feat, "adapt_args_and_apply")
                 else None,
@@ -385,7 +387,9 @@ class PreprocessingPipeline:
         }
         self.transforms = {
             transform.name: (
-                self._prepare_transform(transform.create()),
+                self._prepare_transform(
+                    transform.create(dataset_config=self.dataset_config)
+                ),
                 transform.adapt_args_and_apply
                 if hasattr(transform, "adapt_args_and_apply")
                 else None,
@@ -459,27 +463,33 @@ class PreprocessingPipeline:
         ]
         return df.loc[:, feature_names], df.loc[:, target_names]
 
+    def _make_dataframe(
+        self, data: None | pd.DataFrame | np.ndarray, column_names: list[str]
+    ):
+        if data is not None and not isinstance(data, pd.DataFrame):
+            data = pd.DataFrame(data, columns=column_names)
+        return data
+
+    def _prepare_X(self, X: None | pd.DataFrame | np.ndarray):
+        return self._make_dataframe(
+            X,
+            [feature.name for feature in self.dataset_config.feature_columns],
+        )
+
+    def _prepare_Y(self, Y: None | pd.DataFrame | np.ndarray):
+        return self._make_dataframe(
+            Y,
+            [target.name for target in self.dataset_config.target_columns],
+        )
+
     def _prepare_X_and_y(
         self,
-        X: Union[pd.DataFrame, np.ndarray],
+        X: Union[None, pd.DataFrame, np.ndarray],
         y: Union[None, pd.DataFrame, np.ndarray],
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         try:
-            if not isinstance(X, pd.DataFrame):
-                X = pd.DataFrame(
-                    X,
-                    columns=[
-                        col.name for col in self.dataset_config.feature_columns
-                    ],
-                )
-
-            if y is not None and not isinstance(y, pd.DataFrame):
-                y = pd.DataFrame(
-                    y,
-                    columns=[
-                        col.name for col in self.dataset_config.target_columns
-                    ],
-                )
+            X = self._prepare_X(X)
+            y = self._prepare_Y(y)
             return X, y
         except Exception as exc:
             raise TypeError(
@@ -499,26 +509,49 @@ class PreprocessingPipeline:
                 data.drop(labels=[column.name], axis="columns", inplace=True)
                 data[column.name] = feat.transform(value)
 
-    def get_preprocess_steps(self, only_features=False):
+    def get_preprocess_steps(
+        self,
+        only_features=False,
+        only_targets=False,
+    ):
         """
         Returns the featurizers and transforms in the order they are applied.
+
+        Args:
+            only_features: If True, only get preprocessing steps from features.
+            Defaults to False.
+            only_targets: If True, only get preprocessing steps from targets.
+            Defaults to False.
         """
-        if only_features:
+        if only_features or only_targets:
             feats, transforms = [], []
 
-            def add_on_arr(config_name, is_last):
+            def add_on_arr(config_name, _):
                 if config_name in self.featurizers:
                     feats.append(config_name)
                 elif config_name in self.transforms:
                     transforms.append(config_name)
 
-            iterate_topologically(
-                make_graph_from_dataset_config(self.dataset_config),
-                add_on_arr,
-                skip_roots=[
+            skip_nodes = None
+            if only_features and not only_targets:
+                skip_nodes = [
                     target.name
                     for target in self.dataset_config.target_columns
-                ],
+                ]
+            elif only_targets and not only_features:
+                skip_nodes = [
+                    feature.name
+                    for feature in self.dataset_config.feature_columns
+                ]
+            elif all([only_features, only_targets]):
+                raise ValueError(
+                    "only_features and only_targets cannot both be True"
+                )
+
+            iterate_graph(
+                make_graph_from_dataset_config(self.dataset_config),
+                add_on_arr,
+                skip_nodes=skip_nodes,
             )
             for name in feats:
                 yield (self.featurizers_config[name], self.featurizers[name])
@@ -565,12 +598,45 @@ class PreprocessingPipeline:
         self._fitted = True
 
     @_prepare_data
+    def inverse_transform(
+        self,
+        data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]],
+        only_features=False,
+        only_targets=False,
+    ):
+        """
+        Inverse transforms the data.
+        """
+        for config, (
+            transformer,
+            adapt_args_and_apply,
+        ) in self.get_preprocess_steps(
+            only_features=only_features,
+            only_targets=only_targets,
+        ):
+            args = get_args(data, config)
+            try:
+                if adapt_args_and_apply:
+                    transformed = adapt_args_and_apply(
+                        transformer.inverse_transform, args
+                    )
+                else:
+                    transformer.inverse_transform(*args)
+                return transformed
+            except Exception as exp:
+                raise fleet.exceptions.TransformError(
+                    f"Failed to transform {config}"
+                ) from exp
+        return data
+
+    @_prepare_data
     def transform(
         self,
         data: Dict[str, Union[np.ndarray, List[np.ndarray], pd.Series]],
         concat_features=False,
         concat_targets=False,
         only_features=False,
+        only_targets=False,
     ):
         """Transforms X and y according to preprocessor config.
 
@@ -585,7 +651,9 @@ class PreprocessingPipeline:
         for config, (
             transformer,
             adapt_args_and_apply,
-        ) in self.get_preprocess_steps(only_features=only_features):
+        ) in self.get_preprocess_steps(
+            only_features=only_features, only_targets=only_targets
+        ):
             args = get_args(data, config)
             try:
                 if adapt_args_and_apply:
@@ -661,6 +729,9 @@ class PreprocessingPipeline:
             data[out_target_key] for out_target_key in self.target_leaves
         ]
         return np.concatenate(out_targets, axis=-1)
+
+    def get_target_featurizer(self):
+        self.target_leaves
 
 
 def adapt_numpy_to_tensor(
@@ -773,6 +844,7 @@ class MarinerTorchDataset(Dataset):
             self.preprocessing_pipeline.output_columns,
         )
 
+        print("out_cols", output_columns)
         for column in self.data[output_columns]:
             data[column] = adapt_numpy_to_tensor(self.data.loc[idx, column])
 

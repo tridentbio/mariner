@@ -10,13 +10,14 @@ from pydantic import BaseModel
 from torch.utils.data import Subset
 
 from fleet import data_types
-from fleet.base_schemas import FleetModelSpec, TorchModelSpec
 from fleet.dataset_schemas import (
     DatasetConfigBuilder,
     DatasetConfigWithPreprocessing,
 )
 from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.splitters import apply_split_indexes
+from fleet.model_schemas import FleetModelSpec
+from fleet.torch_.schemas import TorchModelSpec
 from fleet.utils.data import MarinerTorchDataset, PreprocessingPipeline
 
 dataset_configs = [
@@ -174,7 +175,9 @@ class TestPreprocessingPipeline:
             expected_feature_leaves,
         ) in cases:
             pipeline = self.pipeline_fixture(model_path)
-            assert pipeline.features_leaves == expected_feature_leaves, (
+            assert set(pipeline.features_leaves) == set(
+                expected_feature_leaves
+            ), (
                 f"Expected feature leaves to be {', '.join(expected_feature_leaves)}, "
                 f"but got {pipeline.features_leaves}"
             )

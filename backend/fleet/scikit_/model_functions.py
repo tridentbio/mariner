@@ -1,6 +1,7 @@
 """
 Functions to train and use sklearn models.
 """
+import logging
 from typing import Dict, List, Literal, Union
 
 import mlflow
@@ -16,6 +17,8 @@ from fleet.model_builder.constants import TrainingStep
 from fleet.model_builder.utils import get_references_dict
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.utils import data
+
+LOG = logging.getLogger(__name__)
 
 
 class SciKitFunctions(BaseModelFunctions):
@@ -42,7 +45,7 @@ class SciKitFunctions(BaseModelFunctions):
     def __init__(
         self,
         spec: SklearnModelSpec,
-        dataset: pd.DataFrame = None,
+        dataset: pd.DataFrame | None = None,
         model: Union[None, sklearn.base.ClassifierMixin] = None,
         preprocessing_pipeline: Union[
             None, "data.PreprocessingPipeline"
@@ -116,7 +119,7 @@ class SciKitFunctions(BaseModelFunctions):
             self.references["y"]
         ] if targets else (self.data[self.references["X"]],)
 
-        if isinstance(filtering, pd.Series):
+        if filtering is not None:
             args = map(lambda x: self._filter_data(filtering, x), args)
 
         return args
@@ -226,19 +229,75 @@ class SciKitFunctions(BaseModelFunctions):
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
 
-    def predict(self, input_: pd.DataFrame):
+    def predict(
+        self,
+        input_: pd.DataFrame,
+    ):
         """
         Predicts the output of the model on the given dataset.
 
         Args:
             input_ (pd.DataFrame): The dataset to predict on.
         """
+        task_type = self.spec.spec.model.task_type
+        is_classification = ("multiclass" in task_type) or (
+            "multilabel" in task_type
+        )
+
         transformed_data = self.preprocessing_pipeline.transform(
             input_, concat_features=True, only_features=True
         )
         X = transformed_data[self.references["X"]]
-        target_column = self.spec.dataset.target_columns[0].name
-        return {target_column: self.model.predict(X).tolist()}
+
+        target_column = self.spec.dataset.target_columns[0]
+        if is_classification:
+            prediction_probs = self.model.predict_proba(X)
+            col_featurizer_config = self.spec.dataset.get_featurizer(
+                target_column.name
+            )
+
+            if (
+                col_featurizer_config is not None
+                and "OneHotEncoder" in col_featurizer_config.type
+            ):
+                print("Getting prediction")
+                prediction_probs = prediction_probs[0].tolist()
+                print("Getting classes")
+                classes = (
+                    self.preprocessing_pipeline.featurizers[
+                        col_featurizer_config.name
+                    ][0]
+                    .categories_[0]
+                    .tolist()
+                )
+            elif (
+                col_featurizer_config is not None
+                and "LabelEncoder" in col_featurizer_config.type
+            ):
+                prediction_probs = prediction_probs.tolist()
+                classes = self.preprocessing_pipeline.featurizers[
+                    col_featurizer_config.name
+                ][0].classes_.tolist()
+
+            else:
+                LOG.warning(
+                    "Classifier %s was not using any encoder", self.spec.name
+                )
+                classes = list(
+                    map(
+                        lambda entry: entry[0],
+                        sorted(target_column.data_type.classes.items()),
+                    )
+                )
+            return {
+                target_column.name: {
+                    "probs": prediction_probs,
+                    "classes": classes,
+                }
+            }
+        else:
+            predictions = self.model.predict(X)
+            return {target_column.name: predictions.tolist()}
 
     def log_models(
         self,

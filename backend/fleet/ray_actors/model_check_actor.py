@@ -9,9 +9,9 @@ from typing import Any, Optional
 import ray
 from lightning.pytorch import Trainer
 
-from fleet.base_schemas import TorchModelSpec
 from fleet.model_builder.optimizers import AdamOptimizer
 from fleet.torch_.models import CustomModel
+from fleet.torch_.schemas import TorchModelSpec
 from fleet.utils.data import DataModule
 from fleet.utils.dataset import converts_file_to_dataframe
 from mariner.schemas.dataset_schemas import Dataset

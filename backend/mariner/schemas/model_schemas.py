@@ -6,7 +6,7 @@ from typing import List, Literal, Optional, Union
 from mlflow.entities.model_registry.registered_model import RegisteredModel
 from pydantic import BaseModel
 
-from fleet.base_schemas import FleetModelSpec
+from fleet.model_schemas import FleetModelSpec
 from mariner.schemas.api import ApiBaseModel, PaginatedApiQuery, utc_datetime
 from mariner.schemas.dataset_schemas import Dataset
 from mariner.schemas.user_schemas import User

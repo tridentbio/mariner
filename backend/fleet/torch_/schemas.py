@@ -4,10 +4,13 @@ Schemas used to specify the torch based model and how it is trained.
 TODO: Move fleet.base_schema subclasses to here.
 """
 import logging
-from typing import Optional
+from typing import Literal, Optional
 
+from fleet.dataset_schemas import TorchDatasetConfig
 from fleet.model_builder import optimizers
+from fleet.model_builder.schemas import TorchModelSchema
 from fleet.model_builder.utils import CamelCaseModel
+from fleet.yaml_model import YAML_Model
 
 LOG = logging.getLogger(__name__)
 
@@ -107,3 +110,15 @@ class TorchTrainingConfig(CamelCaseModel):
     optimizer: optimizers.Optimizer = optimizers.AdamOptimizer()
     early_stopping_config: Optional[EarlyStoppingConfig] = None
     use_gpu: bool = False
+
+
+class TorchModelSpec(CamelCaseModel, YAML_Model):
+    """
+    Concrete implementation of torch model specs.
+    TODO: move to fleet.torch_.schemas
+    """
+
+    name: str
+    framework: Literal["torch"] = "torch"
+    spec: TorchModelSchema
+    dataset: TorchDatasetConfig

@@ -74,7 +74,7 @@ class FleetonehotLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.layers.OneHot"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -152,7 +152,7 @@ class FleetglobalpoolingLayerConfig(CamelCaseModel):
 
     constructor_args: FleetglobalpoolingConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -230,7 +230,7 @@ class FleetconcatLayerConfig(CamelCaseModel):
 
     constructor_args: FleetconcatConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -308,7 +308,7 @@ class FleetaddpoolingLayerConfig(CamelCaseModel):
 
     constructor_args: FleetaddpoolingConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -386,7 +386,7 @@ class TorchlinearLayerConfig(CamelCaseModel):
 
     constructor_args: TorchlinearConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -446,7 +446,7 @@ class TorchsigmoidLayerConfig(CamelCaseModel):
     type: Literal["torch.nn.Sigmoid"] = "torch.nn.Sigmoid"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -515,7 +515,7 @@ class TorchreluLayerConfig(CamelCaseModel):
 
     constructor_args: TorchreluConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -607,7 +607,7 @@ class TorchgeometricgcnconvLayerConfig(CamelCaseModel):
 
     constructor_args: TorchgeometricgcnconvConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -697,7 +697,7 @@ class TorchembeddingLayerConfig(CamelCaseModel):
 
     constructor_args: TorchembeddingConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -802,7 +802,7 @@ class TorchtransformerencoderlayerLayerConfig(CamelCaseModel):
 
     constructor_args: TorchtransformerencoderlayerConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -884,7 +884,7 @@ class FleetmoleculefeaturizerLayerConfig(CamelCaseModel):
 
     constructor_args: FleetmoleculefeaturizerConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -948,7 +948,7 @@ class FleetintegerfeaturizerLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.featurizers.IntegerFeaturizer"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -1011,7 +1011,7 @@ class FleetdnasequencefeaturizerLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.featurizers.DNASequenceFeaturizer"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -1074,7 +1074,7 @@ class FleetrnasequencefeaturizerLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.featurizers.RNASequenceFeaturizer"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -1137,7 +1137,7 @@ class FleetproteinsequencefeaturizerLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.featurizers.ProteinSequenceFeaturizer"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls

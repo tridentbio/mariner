@@ -13,8 +13,8 @@ from sqlalchemy.orm.session import Session
 
 from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet import options
-from fleet.base_schemas import FleetModelSpec
 from fleet.model_functions import predict
+from fleet.model_schemas import FleetModelSpec
 from fleet.ray_actors.model_check_actor import ModelCheckActor
 from fleet.ray_actors.tasks import TaskControl, get_task_control
 from mariner.core import mlflowapi
@@ -244,8 +244,8 @@ async def create_model(
 
     try:
         mlflowapi.create_registered_model(
-            client,
             name=mlflow_name,
+            client=client,
             description=model_create.model_description,
         )
     except mlflow.exceptions.MlflowException as exp:
@@ -345,7 +345,12 @@ class PredictRequest(ApiBaseModel):
     model_input: Any
 
 
-def get_model_prediction(
+@ray.remote
+def _predict(*args, **kwargs):
+    return predict(*args, **kwargs)
+
+
+async def get_model_prediction(
     db: Session, request: PredictRequest
 ) -> Dict[str, List[Any]]:
     """(Slowly) Loads a model version and apply it to a sample input
@@ -373,12 +378,13 @@ def get_model_prediction(
     if not modelversion.mlflow_version:
         raise ModelVersionNotTrained()
 
-    return predict(
+    result = await _predict.remote(
         mlflow_model_name=modelversion.mlflow_model_name,
         mlflow_model_version=modelversion.mlflow_version,
         spec=modelversion.config,
         input_=request.model_input,
     )
+    return result
 
 
 def get_model(db: Session, user: UserEntity, model_id: int) -> Model:

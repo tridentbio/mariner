@@ -27,7 +27,13 @@ dataset:
   targetColumns:
     - name: HIV_active
       dataType:
-        domainKind: numeric
+        domainKind: categorical
+        classes:
+          negative: 0
+          positive: 1
+      featurizers:
+        - name: OneHotEncoder
+          type: sklearn.preprocessing.OneHotEncoder
 spec:
   model:
     type: sklearn.ensemble.RandomForestClassifier

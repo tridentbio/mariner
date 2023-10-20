@@ -13,7 +13,6 @@ from starlette import status
 from starlette.status import HTTP_200_OK
 from starlette.testclient import TestClient
 
-from fleet.base_schemas import TorchModelSpec
 from fleet.dataset_schemas import (
     ColumnConfig,
     TargetTorchColumnConfig,
@@ -23,6 +22,7 @@ from fleet.model_builder import layers_schema as layers
 from fleet.model_builder.schemas import TorchModelSchema
 from fleet.ray_actors.model_check_actor import TrainingCheckResponse
 from fleet.ray_actors.tasks import get_task_control
+from fleet.torch_.schemas import TorchModelSpec
 from mariner.core.config import get_app_settings
 from mariner.db.session import SessionLocal
 from mariner.entities import Dataset as DatasetEntity
