@@ -89,10 +89,27 @@ const injectedRtkApi = api
         }),
         providesTags: ['experiments'],
       }),
+      getModelTemplates: build.query<ModelTemplate[], void>({
+        query: (queryArg) => ({
+          url: `/api/v1/models/templates`,
+        }),
+        // providesTags: ['models'],
+      }),
     }),
     overrideExisting: false,
   });
 export { injectedRtkApi as enhancedApi };
+export type ModelTemplate = {
+  id: number;
+  name: string;
+  description?: string;
+  createdById: number;
+  createdBy?: User;
+  version: ModelVersion;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type GetModelsApiResponse =
   /** status 200 Successful Response */ PaginatedModel;
 export type GetModelsApiArg = {
@@ -934,4 +951,5 @@ export const {
   usePutModelVersionMutation,
   useGetExperimentsMetricsForModelVersionQuery,
   useLazyGetExperimentsMetricsForModelVersionQuery,
+  useGetModelTemplatesQuery,
 } = injectedRtkApi;
