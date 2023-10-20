@@ -351,53 +351,57 @@ def test_post_experiment_n(
     client, datasets_and_models, normal_user_token_headers
 ):
     parsed = [Model.from_orm(model) for _, model in datasets_and_models]
-    for model in parsed:
-        version = model.versions[-1]
-        payload = {
-            "framework": version.config.framework,
-            "name": random_lower_string(),
-            "modelVersionId": version.id,
-            "config": mocked_training_config(model),
-        }
-        res = client.post(
-            f"{get_app_settings('server').host}/api/v1/experiments/",
-            json=payload,
-            headers=normal_user_token_headers,
-        )
-        assert res.status_code == HTTP_200_OK, res.json()
-        timeout = 60  # around 65 seconds per case
-
-        while True:
-            res = client.get(
-                f"{get_app_settings('server').host}/api/v1/experiments/{res.json()['id']}",
+    for idx, model in enumerate(parsed):
+        try:
+            version = model.versions[-1]
+            payload = {
+                "framework": version.config.framework,
+                "name": random_lower_string(),
+                "modelVersionId": version.id,
+                "config": mocked_training_config(model),
+            }
+            res = client.post(
+                f"{get_app_settings('server').host}/api/v1/experiments/",
+                json=payload,
                 headers=normal_user_token_headers,
             )
-            experiment = Experiment.parse_obj(res.json())
-            if experiment.stage == "SUCCESS":
-                model_version_id = experiment.model_version_id
-                predict_res = client.post(
-                    f"{get_app_settings('server').host}/api/v1/models/{model_version_id}/predict",
-                    json=get_predict_payload(model),
+            assert res.status_code == HTTP_200_OK, res.json()
+            timeout = 60  # around 65 seconds per case
+
+            while True:
+                res = client.get(
+                    f"{get_app_settings('server').host}/api/v1/experiments/{res.json()['id']}",
                     headers=normal_user_token_headers,
                 )
-                assert (
-                    predict_res.status_code == HTTP_200_OK
-                ), predict_res.json()
-                break
-            elif experiment.stage == "FAILED":
-                assert False, "Experiment failed"
+                experiment = Experiment.parse_obj(res.json())
+                if experiment.stage == "SUCCESS":
+                    model_version_id = experiment.model_version_id
+                    predict_res = client.post(
+                        f"{get_app_settings('server').host}/api/v1/models/{model_version_id}/predict",
+                        json=get_predict_payload(model),
+                        headers=normal_user_token_headers,
+                    )
+                    assert (
+                        predict_res.status_code == HTTP_200_OK
+                    ), predict_res.json()
+                    break
+                elif experiment.stage == "FAILED":
+                    assert False, "Experiment failed"
 
-            time.sleep(1)
-            timeout -= 1
+                time.sleep(1)
+                timeout -= 1
 
-            if timeout == 0:
-                assert False, f"Experiment model {model.name} timed out"
-        # Get experiment by id
-        experiment_id = res.json()["id"]
-        res = client.get(
-            f"{get_app_settings('server').host}/api/v1/experiments/{experiment_id}",
-            headers=normal_user_token_headers,
-        )
-        assert res.status_code == HTTP_200_OK, (
-            "Request failed with body: %r" % res.json()
-        )
+                if timeout == 0:
+                    assert False, f"Experiment model {model.name} timed out"
+            # Get experiment by id
+            experiment_id = res.json()["id"]
+            res = client.get(
+                f"{get_app_settings('server').host}/api/v1/experiments/{experiment_id}",
+                headers=normal_user_token_headers,
+            )
+            assert res.status_code == HTTP_200_OK, (
+                "Request failed with body: %r" % res.json()
+            )
+        except:
+            print(f"Failed to run experiment for {idx}-th model {model.name}")
+            raise

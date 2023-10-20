@@ -5,9 +5,10 @@ from pathlib import Path
 from typing import Union
 
 import yaml
+from pydantic import BaseModel
 
 
-class YAML_Model:  # pylint: disable=invalid-name
+class YAML_Model(BaseModel):  # pylint: disable=invalid-name
     """
     Adds methods to handle the model as YAML files.
     """
@@ -32,3 +33,11 @@ class YAML_Model:  # pylint: disable=invalid-name
         with open(yamlpath, "rU", encoding="utf-8") as file:
             yaml_str = file.read()
             return cls.from_yaml_str(yaml_str)
+
+    def to_yaml_str(self) -> str:
+        """Converts the model schema object to a yaml string
+
+        Returns:
+            str: yaml string
+        """
+        return yaml.dump(self.dict())

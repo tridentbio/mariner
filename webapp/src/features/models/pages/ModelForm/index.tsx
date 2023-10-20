@@ -35,9 +35,10 @@ import * as yup from 'yup';
 import { DatasetConfigurationForm } from './DatasetConfigurationForm';
 import ModelConfigForm from './ModelConfigForm';
 import { ModelSetup } from './ModelSetup';
+import { NonUndefined } from '@utils';
 
 export interface ModelFormProps {
-  mode?: 'creation' | 'fix';
+  mode?: 'creation' | 'fix' | 'duplication';
 }
 
 type ModelCreationStep = {
@@ -76,15 +77,18 @@ export const schema = yup.object({
 });
 
 const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
-  const [currentMode, setCurrentMode] = useState<'creation' | 'fix'>(mode);
+  const [currentMode, setCurrentMode] =
+    useState<NonUndefined<ModelFormProps['mode']>>(mode);
   const [activeStep, setActiveStep] = useState<number>(0);
-  const [fetchDatasets] = useLazyGetMyDatasetsQuery();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const routeParams = useParams();
   const navigate = useNavigate();
 
   const registeredModel = searchParams.get('registeredModel');
+  const duplicationModelReference = searchParams.get(
+    'duplicateFromModelVersion'
+  );
 
   const { notifyError } = useNotifications();
 
@@ -111,22 +115,28 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
     resolver: yupResolver(schema),
   });
 
+  const { control, getValues, setValue, watch, reset } = methods;
+  const config = watch('config');
+  const selectedFramework: 'torch' | 'sklearn' = watch('config.framework');
+
+  const [fetchDatasets] = useLazyGetMyDatasetsQuery();
+
   const [createModel, { isLoading: creatingModel }] =
     modelsApi.useCreateModelMutation();
 
   const [updateModel, { isLoading: updatingModel }] =
     modelsApi.usePutModelVersionMutation();
 
+  const [getExistingModel] = modelsApi.useLazyGetModelQuery();
+
+  const [getNameSuggestion] = modelsApi.useLazyGetModelNameSuggestionQuery();
+
   const isSubmittingModel = useMemo(
     () => creatingModel || updatingModel,
     [creatingModel, updatingModel]
   );
 
-  const { control, getValues, setValue, watch, reset } = methods;
-  const config = watch('config');
-  const selectedFramework: 'torch' | 'sklearn' = watch('config.framework');
-
-  const [modelVersionToFix, setModelVersionToFix] =
+  const [modelVersionReference, setModelVersionReference] =
     useState<modelsApi.ModelVersion>();
 
   const [modelEditorNodesCount, setModelEditorNodesCount] =
@@ -150,10 +160,12 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
             name: column.name,
             dataType: column.dataType,
           })),
-          targetColumns: config.dataset.targetColumns.map((column) => ({
+          targetColumns: (
+            config.dataset.targetColumns as modelsApi.TargetTorchColumnConfig[]
+          ).map((column) => ({
             name: column.name,
             dataType: column.dataType,
-            outModule: '',
+            outModule: column.outModule,
           })),
           featurizers: [],
           transforms: [],
@@ -189,37 +201,45 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
   };
 
   useEffect(() => {
-    currentMode === 'creation' && onFrameworkChange();
+    onFrameworkChange();
   }, [selectedFramework]);
 
-  const handleModelFix = async () => {
+  useEffect(() => {
+    if (
+      currentMode == 'fix' &&
+      modelVersionReference &&
+      modelVersionReference.checkStatus !== 'FAILED'
+    ) {
+      notifyError('Unable to modify non failed model versions');
+
+      navigate(`/models/${routeParams.modelId}`);
+    }
+  }, [currentMode, modelVersionReference]);
+
+  useEffect(() => {
+    if (duplicationModelReference) setCurrentMode('duplication');
+  }, [duplicationModelReference]);
+
+  const fillFormByModel = async (
+    modelId: modelsApi.Model['id'],
+    modelVersionId: modelsApi.ModelVersion['id']
+  ) => {
     const storedModels = store.getState().models.models as
       | modelsApi.Model[]
       | undefined;
 
     const foundModel = storedModels?.length
-      ? storedModels.find(
-          (model) => model.id === parseInt(routeParams.modelId as string)
-        )
+      ? storedModels.find((model) => model.id === modelId)
       : await getExistingModel({
-          modelId: parseInt(routeParams.modelId as string),
+          modelId: modelId,
         }).unwrap();
 
     if (foundModel) {
       const modelVersion = foundModel.versions.find(
-        (version) =>
-          version.id === parseInt(routeParams.modelVersionId as string)
+        (version) => version.id === modelVersionId
       );
 
       if (!!modelVersion) {
-        if (modelVersion.checkStatus !== 'FAILED') {
-          notifyError('Unable to modify non failed model versions');
-
-          navigate(`/models/${routeParams.modelId}`);
-
-          return;
-        }
-
         //? Fills dataset select input options
         await fetchDatasets({
           page: 0,
@@ -227,7 +247,7 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
           searchByName: foundModel.dataset?.name,
         });
 
-        setModelVersionToFix(modelVersion);
+        setModelVersionReference(modelVersion);
 
         reset({
           name: foundModel.name,
@@ -235,16 +255,35 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
           modelVersionDescription: modelVersion.description,
           config: modelVersion.config,
         });
-
-        //? Move to the last step
-        onStepChange(steps.length - 1, 0);
       }
     }
   };
 
-  useEffect(() => {
-    currentMode == 'fix' && handleModelFix();
-  }, [modelId, routeParams.modelVersionId]);
+  const handleModelDuplication = async () => {
+    const [{ name }] = await Promise.all([
+      getNameSuggestion().unwrap(),
+      await fillFormByModel(
+        parseInt(modelId as string),
+        parseInt(
+          duplicationModelReference as string
+        ) as modelsApi.ModelVersion['id']
+      ),
+    ]);
+
+    setValue('config.name', name);
+  };
+
+  const handleModelFix = async () => {
+    await fillFormByModel(
+      parseInt(modelId as string),
+      parseInt(
+        routeParams.modelVersionId as string
+      ) as modelsApi.ModelVersion['id']
+    );
+
+    //? Move to the last step
+    onStepChange(steps.length - 1, 0);
+  };
 
   const handleModelCreate = (event: MouseEvent) => {
     event.preventDefault();
@@ -340,12 +379,6 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
     setActiveStep(stepIndex);
   };
 
-  const [getExistingModel] = modelsApi.useLazyGetModelQuery();
-
-  useEffect(() => {
-    handleRegisteredModel();
-  }, [registeredModel]);
-
   const handleRegisteredModel = async () => {
     if (!registeredModel) return;
 
@@ -427,6 +460,20 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
     onStepChange(newStep, activeStep);
   };
 
+  useEffect(() => {
+    currentMode == 'fix' && handleModelFix();
+  }, [modelId, routeParams.modelVersionId]);
+
+  useEffect(() => {
+    currentMode == 'creation' &&
+      !duplicationModelReference &&
+      handleRegisteredModel();
+  }, [registeredModel]);
+
+  useEffect(() => {
+    currentMode == 'duplication' && handleModelDuplication();
+  }, [currentMode]);
+
   const steps: ModelCreationStep[] = [
     {
       title: 'Model Description',
@@ -480,12 +527,14 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
               </Box>
             )}
           </div>
-          <StackTrace
-            stackTrace={modelVersionToFix?.checkStackTrace}
-            message={
-              'An exception is raised during your model configuration for this dataset'
-            }
-          />
+          {currentMode == 'fix' && (
+            <StackTrace
+              stackTrace={modelVersionReference?.checkStackTrace}
+              message={
+                'An exception is raised during your model configuration for this dataset'
+              }
+            />
+          )}
         </Box>
       ),
     },
@@ -507,7 +556,8 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
                 </Step>
               ))}
             </Stepper>
-            {currentMode == 'fix' && !modelVersionToFix ? (
+            {['fix', 'duplication'].includes(currentMode) &&
+            !modelVersionReference ? (
               <Box
                 sx={{
                   display: 'flex',
@@ -549,7 +599,7 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
                   variant="contained"
                   onClick={handleModelCreate}
                 >
-                  <span>{currentMode == 'creation' ? 'CREATE' : 'UPDATE'}</span>
+                  <span>{currentMode == 'fix' ? 'UPDATE' : 'CREATE'}</span>
                 </LoadingButton>
               )}
             </Box>

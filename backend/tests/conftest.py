@@ -189,15 +189,15 @@ def datasets_and_models(
         ),
         (
             "sklearn_hiv_extra_trees_classifier.yaml",
-            "HIV.csv",
+            "HIV2.csv",
         ),
         (
             "sklearn_hiv_knearest_neighbor_classifier.yaml",
-            "HIV.csv",
+            "HIV2.csv",
         ),
         (
             "sklearn_hiv_random_forest_classifier.yaml",
-            "HIV.csv",
+            "HIV2.csv",
         ),
         (
             "small_regressor_schema.yaml",
@@ -313,7 +313,7 @@ def some_sklearn_model_integration(
     dataset = setup_create_dataset_db2(
         db,
         user_id,
-        csv_path="HIV.csv",
+        csv_path="HIV2.csv",
     )
     model = setup_create_model(
         client,

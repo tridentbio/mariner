@@ -10,6 +10,7 @@ from humps import camel
 from pydantic import BaseModel, Field, root_validator
 
 from fleet import data_types
+from fleet.model_builder.utils import unwrap_dollar
 from fleet.preprocessing import (
     CreateFromType,
     FeaturizerConfig,
@@ -127,6 +128,13 @@ class DatasetConfig(BaseDatasetModel, YAML_Model):
             if col.name == col_name:
                 return col
         raise ValueError(f"Column {col_name} not found")
+
+    def get_featurizer(self, column: str) -> FeaturizersType | None:
+        for featurizer in self.featurizers:
+            for value in featurizer.forward_args.values():
+                ref, is_ref = unwrap_dollar(value)
+                if is_ref and ref == column:
+                    return featurizer
 
 
 AllowedLossesType = List[Dict[str, str]]

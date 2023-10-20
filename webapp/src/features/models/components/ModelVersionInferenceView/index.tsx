@@ -23,6 +23,7 @@ import { getPrediction } from 'features/models/modelsApi';
 import { TorchModelSpec } from '@app/rtk/generated/models';
 import { useNotifications } from '@app/notifications';
 import { HTTPError } from '@utils/http';
+import { DataTypeGuard } from '@app/types/domain/datasets';
 
 interface ModelVersionInferenceViewProps {
   model: Model;
@@ -81,12 +82,25 @@ const ModelVersionInferenceView = ({
   );
 
   const isTargetColumnCategorical = useCallback(
-    (columnName: string): boolean => {
-      const targetColumn = targetColumns.find(
-        (targetColumn) => targetColumn.name === columnName
-      );
-      return ['multiclass', 'binary'].includes(targetColumn?.columnType || '');
+    (version: typeof modelVersion, columnName: string): boolean => {
+      if (!version) return false;
+      if (version.config.framework === 'torch') {
+        const targetColumn = targetColumns.find(
+          (targetColumn) => targetColumn.name === columnName
+        );
+        return ['multiclass', 'binary'].includes(
+          targetColumn?.columnType || ''
+        );
+      } else if (version.config.framework === 'sklearn') {
+        return DataTypeGuard.isCategorical(
+          version.config.dataset.targetColumns.find(
+            (col) => col.name === columnName
+          )?.dataType
+        );
+      }
+      return false;
     },
+
     [targetColumns]
   );
   return (
@@ -142,7 +156,7 @@ const ModelVersionInferenceView = ({
             {modelOutputs &&
               Object.keys(modelOutputs).map((key) => (
                 <>
-                  {isTargetColumnCategorical(key) ? (
+                  {isTargetColumnCategorical(modelVersion, key) ? (
                     <ModelPrediction
                       type={'categorical'}
                       // @ts-ignore

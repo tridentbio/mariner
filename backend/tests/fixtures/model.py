@@ -7,7 +7,8 @@ from mlflow.exceptions import RestException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from fleet.base_schemas import SklearnModelSpec, TorchModelSpec
+from fleet.scikit_.schemas import SklearnModelSpec
+from fleet.torch_.schemas import TorchModelSpec
 from mariner.core.config import get_app_settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion

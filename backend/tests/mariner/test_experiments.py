@@ -117,7 +117,12 @@ async def test_create_model_training_sklearn(
     )
     db_exp = Experiment.from_orm(db_exp)
     assert db_exp.stage == "SUCCESS"
-    metrics = ["mse", "mae", "ev", "mape", "R2", "pearson"]
+    metrics = [
+        "precision",
+        "accuracy",
+        "recall",
+        "f1",
+    ]
     expected_train_metrics = {
         f"train/{metric}/{target_column.name}" for metric in metrics
     }
