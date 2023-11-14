@@ -3,95 +3,70 @@
 Configuring Environment
 =======================
 
+The app configuration is done by the :ref:`mariner.core.config` module. It loads information from the environment variables, as well as the pyproject.toml file.
+
 Environment variables are divided into 2 files, ``backend/.env`` and ``backend/.env.secret``.
 The separation was made to support some CI workflows, but all variables should be considered
 sensitive in production.
-
-The ``.env`` file contains all variables that are not sensitive, and can be shared with the team.
-
+The ``.env`` file contains all variables that can be shared with the team.
 The ``.env.secret`` file contains all sensitive variables, and should be kept secret.
 
+Server settings
+---------------
+
+This configuration is loaded from the environment variables described next into the class `mariner.core.config`_.
+
+
+.. confval:: SERVER_HOST
+
+   The backend url, such as ``"https://dev.mariner.backend.com"``
+
+.. confval:: BACKEND_CORS_ORIGIN
+
+   A comma separated string with the origins allowed to use the REST API, such as ``"http://localhost:3000,http://localhost:8080"``
+
+.. confval:: ACCESS_TOKEN_EXPIRE_MINUTES
+
+
+   Duration of token's validity.
+
+   :default: ``12888`` equivalent to 8 days
 
 .. confval:: ENV
 
    Describes the application environment. One of "production", "development"
 
-.. confval:: SERVER_NAME
 
-   The host used by the backend
+Webapp Settings
+---------------
 
-.. confval:: SERVER_HOST
+Webapp related information the backend needs.
 
-   The backend url.
+.. confval:: WEBAPP_URL
 
-.. confval:: PROJECT_NAME
+   The URL used by the webapp. Necessary when the backend needs to redirect to the webapp, such as during oauth flows. Example: ``https://dev.mariner.webapp.com``
 
-   The name of the project, used to fill variables in generated files.
+   :default: ``http://localhost:3000``
 
-.. confval:: DOMAIN
+Tenant Settings
+---------------
 
-   Same as SERVER_NAME.
+Settings related to the tenant that is currently being used.
 
-   .. todo::
+.. confval:: TENANT_NAME
+   :default: ``default``
+   The name of the tenant. Any string will be accepted.
 
-      Choose SERVER_NAME or DOMAIN variables and remove the duplicated.
-
-.. confval:: ALLOWED_GITHUB_AUTH_EMAILS
-   :default: ``[]``
-
-   Subsets the emails allowed through github OAuth.
+Secret
+------
 
 .. confval:: SECRET_KEY
 
-   Used to sign JWT tokens. Should be kept secret from everyone.
+   Used to sign JWT tokens. Should be kept secret and be cryptographic safe.
 
 .. confval:: APPLICATION_SECRET
 
-   Used as basic auth password for inter service communication.
-
-.. confval:: BACKEND_CORS_ORIGIN
-
-   Defines the origins allowed to use the REST API.
-
-.. confval:: POSTGRES_SERVER
-
-   Defines the host running the postgres server.
-
-.. confval:: POSTGRES_USER
-
-   The username used to connect to the database.
-
-.. confval:: POSTGRES_PASSWORD
-
-   The password used to connect to the database.
-
-.. confval:: POSTGRES_DB
-
-   The database name.
-
-.. confval:: RAY_ADDRESS
-
-   The URI used to connect ray, e.g. ``ray://ray-head:10001``
-
-.. confval:: MLFLOW_TRACKING_URI
-
-   The MLFlow's server tracking URI.
-
-.. confval:: MLFLOW_ARTFIFACT_URI
-
-   The MLlow's artifact URI. Used to store models and experiments metadata.
-
-.. confval:: LIGHTNING_LOGS_DIR
-
-   Can be either a S3 URI or a file path. Used to store the outputs of lightning loggers.
-
-.. confval:: GITHUB_CLIENT_ID
-
-   Configures authentication by Github OAuth.
-
-.. confval:: GITHUB_CLIENT_SECRET
-
-   Configures authentication secret by Github OAuth.
+   Used as basic auth password for inter service communication. Should be kept secret and be cryptographic safe.
 
 .. confval:: AWS_MODE
    :default: ``"local"``
@@ -128,14 +103,49 @@ The ``.env.secret`` file contains all sensitive variables, and should be kept se
 
    S3 URI used to store models.
 
+Services
+--------
+
+.. confval:: POSTGRES_URI
+
+   The URI used to connect to the postgres database. Example: ``postgresql://user:password@localhost:5432/dbname``
+
+.. confval:: MLFLOW_POSTGRES_URI
+
+    The URI used to connect to the MLFlow's postgres database. Example: ``postgresql://user:password@localhost:5432/dbname``
+
+   .. warning::
+  
+    Maybe this is not used. Instead we pass the value of the mlflow postgres directly in the mlflow start command.
+
+.. confval:: MLFLOW_ARTIFACT_URI
+
+    The URI used to connect to the MLFlow's artifact database. Example: ``postgresql://user:password@localhost:5432/dbname``
+
+   .. warning::
+  
+    Maybe this is not used. Instead we pass the value of the artifact uri directly in the mlflow start command.
+
+.. confval:: MLFLOW_TRACKING_URI
+
+    The URI used to connect to the MLFlow's tracking database. See <https://mlflow.org/docs/latest/tracking.html#id31> for more information.
+
+    
+
+.. confval:: RAY_ADDRESS
+
+    The URI used to connect to the Ray cluster.
+
+Package settings
+----------------
+
+This configuration comes from the `backend/pyproject.toml` file, and is loaded by the `mariner.core.config.Package`_ class.
+
+
+.. confval:: LIGHTNING_LOGS_DIR
+
+   Can be either a S3 URI or a file path. Used to store the outputs of lightning loggers.
+
 .. confval:: API_V1_STR
    :default: ``"/api/v1"``
 
-.. confval:: ACCESS_TOKEN_EXPIRE_MINUTES
-   :default: ``12888`` equilaent to 8 days
-
-   S3 URI used to store models.
-
-.. confval:: EMAILS_ENABLED
-
-   ???

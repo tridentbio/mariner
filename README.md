@@ -11,17 +11,41 @@ To run the application, you simply need:
 
 ## Starting the application locally:
 
-Use one of the following:
+Use one of the following to start all core services:
 
-- `make start` is the fastest way to start all the needed applications.
-- `docker compose up --wait backend webapp` is also another way that does not require building.
+```console
+make start
+```
 
-Create a local user to interact with the app (if OAUTH environment variables were not passed to you):
-- `make create-admin`. This will create a user with email `admin@.mariner.trident.bio` and password `123456`.
+or 
 
-Finally, access <http://localhost:3000>, login to use the app.
+```console
+docker compose up --wait backend webapp` is also another way that does not require building.
+```
 
+Alternatively you may wish to run only the backend on docker, and the webapp locally. Then you can:
 
-## Making code contributions:
+```console
+make start-backend
+cd webapp
+npm install . 
+npm start
+```
 
-See [the Contributing page](./CONTRIBUTING.md).
+In case you're not using make you can omit the webapp service from the `docker-compose` start command.
+
+Finally, you'll want a local user credentials to interact with the app. For that you can run one of the following commands:
+
+```
+make create-admin
+```
+
+or 
+
+```
+docker compose run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
+```
+
+This will create a user with email `admin@.mariner.trident.bio` and password `123456`.
+
+Finally, access <http://localhost:3000/login> and login to use the app. Checkout the User Guide to know what

@@ -21,7 +21,7 @@ This is a distilled version of the API reference.
     :no-inherited-members:
 
 Classes
-------------
+-------
 .. currentmodule:: mariner
 
 .. autosummary::
@@ -150,3 +150,42 @@ Functions
     :no-members:
     :no-inherited-members:
 
+
+.. _mariner.core.config:
+
+:mod:`mariner.core.config`: Configuration
+=========================================
+
+.. automodule:: mariner.core.config
+    :no-members:
+    :no-inherited-members:
+
+Classes
+-------
+.. currentmodule:: mariner.core
+
+.. autosummary::
+   :nosignatures:
+   :toctree:
+   :template: class.rst
+
+    config.ServerSettings
+    config.WebappSettings
+    config.AuthSettingsDict
+    config.SecretEnv
+    config.ServicesEnv
+    config.Package
+    config.QA_Test_Settings
+    config.TenantSettings
+
+
+
+Functions
+---------
+.. currentmodule:: mariner.core
+
+.. autosummary::
+   :toctree:
+   :template: function.rst
+
+    config.get_app_settings
