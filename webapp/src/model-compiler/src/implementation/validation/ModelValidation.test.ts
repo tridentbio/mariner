@@ -264,7 +264,11 @@ describe('ModelValidation', () => {
       if (!(editCommand instanceof EditComponentsCommand))
         throw new Error('Command is not an instance of EditComponentsCommand');
 
-      const secondNode = editCommand.args.data as LayersType & {
+      const secondNode = (
+        typeof editCommand.args.data == 'function'
+          ? editCommand.args.data(info.schema)
+          : editCommand.args.data
+      ) as LayersType & {
         type: 'torch.nn.Linear';
       };
 

@@ -17,7 +17,6 @@ import {
 import { BaseTrainingRequest } from '@app/types/domain/experiments';
 // TODO: fix MathJax in TexMath
 // import TexMath from 'components/atoms/TexMath';
-import { defaultModeIsMax } from 'utils';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ModelVersionType } from 'app/types/domain/models';
 import { APITargetConfig } from '@model-compiler/src/interfaces/torch-model-editor';
@@ -25,7 +24,6 @@ import { APITargetConfig } from '@model-compiler/src/interfaces/torch-model-edit
 type MetricSelectProps = {
   field: ControllerRenderProps<BaseTrainingRequest, any>;
   error?: FieldError;
-  setValue: (value: 'min' | 'max') => void;
   reset?: () => void;
   cleanable?: boolean;
   targetColumns: APITargetConfig[];
@@ -48,7 +46,6 @@ const sortFilterMetrics = (
 const MetricSelect: React.FC<MetricSelectProps> = ({
   error,
   field: { onChange, name, ref },
-  setValue,
   targetColumns,
   reset = () => {},
   cleanable = false,
@@ -98,9 +95,6 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
               sx={{ width: '100%' }}
               onChange={(event) => {
                 setColumn(getColumn(event.target.value as string));
-                setValue(
-                  defaultModeIsMax(event.target.value as string) ? 'max' : 'min'
-                );
               }}
               value={column?.name || ''}
               ref={ref}
@@ -120,7 +114,6 @@ const MetricSelect: React.FC<MetricSelectProps> = ({
               sx={{ width: '100%' }}
               onChange={(event) => {
                 setSelected(event.target.value);
-                setValue(defaultModeIsMax(event.target.value) ? 'max' : 'min');
               }}
               disabled={!column?.name}
               value={selected || ''}

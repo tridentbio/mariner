@@ -61,6 +61,7 @@ const ColumnDescriptionSelector = <M extends boolean>(
         id={props.id}
         sx={{ mt: 1 }}
         multiple={props.multiple}
+        disableCloseOnSelect={props.multiple}
         title={props.label}
         onChange={handleChange}
         value={props.value || (props.multiple ? [] : null)}

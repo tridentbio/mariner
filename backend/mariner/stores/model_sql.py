@@ -92,7 +92,7 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
         db.refresh(db_obj)
         return db_obj
 
-    def create(self, db: Session, obj_in: ModelCreateRepo):
+    def create(self, db: Session, *, obj_in: ModelCreateRepo):
         """Creates a model.
 
         Args:
@@ -131,7 +131,7 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
         db.commit()
 
     def get_model_version(
-        self, db: Session, id: int
+        self, db: Session, model_id: int
     ) -> Optional[ModelVersion]:
         """Get's a single model version by id.
 
@@ -142,10 +142,15 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
         Returns:
             Model version instance with given id or None if none is found.
         """
-        return db.query(ModelVersion).filter(ModelVersion.id == id).first()
+        return (
+            db.query(ModelVersion).filter(ModelVersion.id == model_id).first()
+        )
 
     def update_model_version(
-        self, db: Session, version_id: int, obj_in: ModelVersionUpdateRepo
+        self,
+        db: Session,
+        version_id: int,
+        obj_in: ModelVersionUpdateRepo | dict,
     ):
         """Updates model version
 
@@ -153,16 +158,26 @@ class CRUDModel(CRUDBase[Model, ModelCreateRepo, None]):
             db: Connection to the database
             version_id: id of the version to be updated.
             obj_in: version database entity instance.
+
+        Returns:
+            Updated model version instance.
         """
         version = (
             db.query(ModelVersion)
             .filter(ModelVersion.id == version_id)
             .first()
         )
-        for key, value in obj_in.dict().items():
-            setattr(version, key, value)
+        if not isinstance(obj_in, dict):
+            obj_in = obj_in.dict(exclude_none=True)
+        if not version:
+            raise ValueError("Model version not found")
+        for key, value in obj_in.items():
+            if not hasattr(version, key) or getattr(version, key) != value:
+                setattr(version, key, value)
         db.add(version)
         db.flush()
+        db.commit()
+        return version
 
 
 model_store = CRUDModel(Model)

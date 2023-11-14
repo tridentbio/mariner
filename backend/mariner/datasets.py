@@ -12,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm.session import Session
 from starlette.responses import ContentStream
 
-from api.websocket import WebSocketMessage, get_websockets_manager
+from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet.file_utils import is_compressed
 from fleet.ray_actors.dataset_transforms import DatasetTransforms
 from mariner.core.aws import (
@@ -64,6 +64,7 @@ def get_my_datasets(
     """
     query.created_by_id = current_user.id
     datasets, total = dataset_store.get_many_paginated(db, query)
+    datasets = Dataset.from_orm_array(datasets)
     return datasets, total
 
 
@@ -116,9 +117,9 @@ async def process_dataset(
 
         # Send the file to the ray actor by chunks
         chunk_size = get_app_settings("server").application_chunk_size
-        dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))
+        dataset_ray_transformer = DatasetTransforms.remote(is_compressed(file))  # type: ignore pylint: disable=no-member
         for chunk in iter(lambda: file.read(chunk_size), b""):
-            await dataset_ray_transformer.write_dataset_buffer.remote(chunk)
+            await dataset_ray_transformer.write_dataset_buffer.remote(chunk)  # type: ignore pylint: disable=no-member
         await dataset_ray_transformer.set_is_dataset_fully_loaded.remote(True)
 
         (
@@ -265,7 +266,7 @@ def start_process(
         asyncio.ensure_future(
             get_websockets_manager().send_message_to_user(
                 user_id=dataset.created_by_id,
-                message=WebSocketMessage(
+                message=WebSocketResponse(
                     data=task.result(), type="dataset-process-finish"
                 ),
             )
@@ -421,7 +422,7 @@ async def parse_csv_headers(csv_file: UploadFile) -> List[ColumnsMeta]:
     Returns:
         List[ColumnsMeta]: list of metadata for each column in the csv file
     """
-    dataset_actor = DatasetTransforms.remote()
+    dataset_actor = DatasetTransforms.remote()  # type: ignore pylint: disable=no-member
     chunk_size = get_app_settings("server").application_chunk_size
     for chunk in iter(lambda: csv_file.file.read(chunk_size), b""):
         await dataset_actor.write_dataset_buffer.remote(chunk)

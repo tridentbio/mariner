@@ -92,17 +92,19 @@ export const ModelEdge = ({ editable = true, ...props }: ModelEdgeProps) => {
             onClick={(event) => {
               schema &&
                 options &&
-                editComponent({
-                  schema,
-                  data: makeComponentEdit({
-                    component: getComponent(schema, target),
-                    options,
-                    removeConnection: {
-                      targetNodeForwardArg: targetHandleId || '',
-                      elementValue: sourceHandleId || undefined,
-                    },
-                  }),
-                });
+                editComponent(
+                  {
+                    data: makeComponentEdit({
+                      component: getComponent(schema, target),
+                      options,
+                      removeConnection: {
+                        targetNodeForwardArg: targetHandleId || '',
+                        elementValue: sourceHandleId || undefined,
+                      },
+                    }),
+                  },
+                  schema
+                );
             }}
           >
             ×

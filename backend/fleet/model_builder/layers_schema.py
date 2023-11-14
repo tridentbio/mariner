@@ -46,7 +46,6 @@ class FleetonehotForwardArgsSummary(BaseModel):
 
 
 class FleetonehotForwardArgsReferences(BaseModel):
-
     x1: str
 
 
@@ -75,7 +74,7 @@ class FleetonehotLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.layers.OneHot"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -110,7 +109,6 @@ class FleetglobalpoolingForwardArgsSummary(BaseModel):
 
 
 class FleetglobalpoolingForwardArgsReferences(BaseModel):
-
     x: str
 
     batch: Optional[str] = None
@@ -154,7 +152,7 @@ class FleetglobalpoolingLayerConfig(CamelCaseModel):
 
     constructor_args: FleetglobalpoolingConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -192,7 +190,6 @@ class FleetconcatForwardArgsSummary(BaseModel):
 
 
 class FleetconcatForwardArgsReferences(BaseModel):
-
     xs: List[str]
 
 
@@ -233,7 +230,7 @@ class FleetconcatLayerConfig(CamelCaseModel):
 
     constructor_args: FleetconcatConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -271,7 +268,6 @@ class FleetaddpoolingForwardArgsSummary(BaseModel):
 
 
 class FleetaddpoolingForwardArgsReferences(BaseModel):
-
     x: str
 
 
@@ -312,7 +308,7 @@ class FleetaddpoolingLayerConfig(CamelCaseModel):
 
     constructor_args: FleetaddpoolingConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -352,7 +348,6 @@ class TorchlinearForwardArgsSummary(BaseModel):
 
 
 class TorchlinearForwardArgsReferences(BaseModel):
-
     input: str
 
 
@@ -391,7 +386,7 @@ class TorchlinearLayerConfig(CamelCaseModel):
 
     constructor_args: TorchlinearConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -427,7 +422,6 @@ class TorchsigmoidForwardArgsSummary(BaseModel):
 
 
 class TorchsigmoidForwardArgsReferences(BaseModel):
-
     input: str
 
 
@@ -452,7 +446,7 @@ class TorchsigmoidLayerConfig(CamelCaseModel):
     type: Literal["torch.nn.Sigmoid"] = "torch.nn.Sigmoid"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -485,7 +479,6 @@ class TorchreluForwardArgsSummary(BaseModel):
 
 
 class TorchreluForwardArgsReferences(BaseModel):
-
     input: str
 
 
@@ -522,7 +515,7 @@ class TorchreluLayerConfig(CamelCaseModel):
 
     constructor_args: TorchreluConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -568,7 +561,6 @@ class TorchgeometricgcnconvForwardArgsSummary(BaseModel):
 
 
 class TorchgeometricgcnconvForwardArgsReferences(BaseModel):
-
     x: str
 
     edge_index: str
@@ -615,7 +607,7 @@ class TorchgeometricgcnconvLayerConfig(CamelCaseModel):
 
     constructor_args: TorchgeometricgcnconvConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -661,7 +653,6 @@ class TorchembeddingForwardArgsSummary(BaseModel):
 
 
 class TorchembeddingForwardArgsReferences(BaseModel):
-
     input: str
 
 
@@ -706,7 +697,7 @@ class TorchembeddingLayerConfig(CamelCaseModel):
 
     constructor_args: TorchembeddingConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -756,7 +747,6 @@ class TorchtransformerencoderlayerForwardArgsSummary(BaseModel):
 
 
 class TorchtransformerencoderlayerForwardArgsReferences(BaseModel):
-
     src: str
 
     src_mask: Optional[str] = None
@@ -812,7 +802,7 @@ class TorchtransformerencoderlayerLayerConfig(CamelCaseModel):
 
     constructor_args: TorchtransformerencoderlayerConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -852,7 +842,6 @@ class FleetmoleculefeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetmoleculefeaturizerForwardArgsReferences(BaseModel):
-
     mol: str
 
 
@@ -895,7 +884,7 @@ class FleetmoleculefeaturizerLayerConfig(CamelCaseModel):
 
     constructor_args: FleetmoleculefeaturizerConstructorArgs
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -931,7 +920,6 @@ class FleetintegerfeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetintegerfeaturizerForwardArgsReferences(BaseModel):
-
     input_: str
 
 
@@ -960,7 +948,7 @@ class FleetintegerfeaturizerLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.featurizers.IntegerFeaturizer"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -991,7 +979,6 @@ class FleetdnasequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetdnasequencefeaturizerForwardArgsReferences(BaseModel):
-
     input_: str
 
 
@@ -1024,7 +1011,7 @@ class FleetdnasequencefeaturizerLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.featurizers.DNASequenceFeaturizer"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -1055,7 +1042,6 @@ class FleetrnasequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetrnasequencefeaturizerForwardArgsReferences(BaseModel):
-
     input_: str
 
 
@@ -1088,7 +1074,7 @@ class FleetrnasequencefeaturizerLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.featurizers.RNASequenceFeaturizer"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls
@@ -1119,7 +1105,6 @@ class FleetproteinsequencefeaturizerForwardArgsSummary(BaseModel):
 
 
 class FleetproteinsequencefeaturizerForwardArgsReferences(BaseModel):
-
     input_: str
 
 
@@ -1152,7 +1137,7 @@ class FleetproteinsequencefeaturizerLayerConfig(CamelCaseModel):
     ] = "fleet.model_builder.featurizers.ProteinSequenceFeaturizer"
     name: str
 
-    def create(self):
+    def create(self, dataset_config=None):
         lib_cls = get_class_from_path_string(self.type)
         if is_func(lib_cls):
             return lib_cls

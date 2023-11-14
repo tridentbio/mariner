@@ -13,10 +13,9 @@ from fleet.ray_actors.dataset_transforms import get_columns_metadata
 from mariner.core import aws
 from mariner.core.config import get_app_settings
 from mariner.entities.dataset import Dataset
-from mariner.schemas.dataset_schemas import (
-    ColumnsDescription,
-    DatasetCreateRepo,
-)
+from mariner.schemas.dataset_schemas import ColumnsDescription
+from mariner.schemas.dataset_schemas import Dataset as DatasetSchema
+from mariner.schemas.dataset_schemas import DatasetCreateRepo
 from mariner.stores import dataset_sql
 from tests.fixtures.user import get_test_user
 from tests.fleet import helpers
@@ -186,8 +185,10 @@ def setup_create_dataset_db(
         columns_metadata=mock_columns_metadatas(),
         from_alias=True,
     )
-    dataset = dataset_sql.dataset_store.create(db, create_data)
     db.commit()
+    dataset = DatasetSchema.from_orm(
+        dataset_sql.dataset_store.create(db, create_data)
+    )
     return dataset
 
 
@@ -238,7 +239,7 @@ def setup_create_dataset_db2(
         except IntegrityError:
             db.rollback()
             dataset = dataset_sql.dataset_store.get_by_name(
-                db, create_obj.name
+                db, create_obj.name, user_id=owner_id
             )
 
     return dataset

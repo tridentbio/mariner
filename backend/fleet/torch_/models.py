@@ -2,7 +2,6 @@
 Trainable lightning model classes and is mapped from :py:class:`fleet.torch_.schemas.TorchModelSpec`
 as well as auxiliary classes and functions.
 """
-import logging
 from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 import lightning.pytorch as pl
@@ -11,6 +10,8 @@ import torch
 import torch.nn
 
 import fleet.exceptions
+from fleet import data_types
+from fleet.dataset_schemas import ColumnConfig
 from fleet.metrics import Metrics
 from fleet.model_builder.component_builder import AutoBuilder
 from fleet.model_builder.model_schema_query import get_dependencies
@@ -36,9 +37,6 @@ def if_str_make_list(x: Union[str, List[str]]) -> List[str]:
     if isinstance(x, str):
         return [x]
     return x
-
-
-LOG = logging.getLogger(__name__)
 
 
 def _adapt_loss_args(
@@ -141,7 +139,6 @@ class CustomModel(pl.LightningModule):
 
     @staticmethod
     def _call_model(model, args):
-        LOG.info("%r", args)
         if isinstance(args, dict):
             return model(**args)
         if isinstance(args, list):
@@ -315,6 +312,17 @@ class CustomModel(pl.LightningModule):
         loss = sum(losses.values())
         return loss
 
+    def _get_classes(self, target_column: ColumnConfig):
+        classes = None
+        if isinstance(target_column.data_type, data_types.CategoricalDataType):
+            classes = list(
+                map(
+                    lambda entry: entry[1],
+                    sorted(target_column.data_type.classes.items()),
+                )
+            )
+        return classes
+
     def predict_step(self, batch, _batch_idx=0, dataloader_idx=0):
         """
         Runs the forward pass using self.forward, then, for
@@ -323,18 +331,34 @@ class CustomModel(pl.LightningModule):
         """
         predictions = self(batch)
 
+        def prepare_tensor(tensor):
+            item = tensor.detach().cpu().numpy().tolist()
+            if not isinstance(item, list):
+                return [item]
+            return item
+
         for target_column in self.dataset_config.target_columns:
             if target_column.column_type == "multiclass":
-                predictions[target_column.name] = torch.nn.functional.softmax(
-                    predictions[target_column.name].squeeze(), dim=-1
+                probs = prepare_tensor(
+                    torch.nn.functional.softmax(
+                        predictions[target_column.name].squeeze(), dim=-1
+                    )
                 )
+                predictions[target_column.name] = {
+                    "probs": probs,
+                    "classes": self._get_classes(target_column),
+                }
             elif target_column.column_type == "binary":
-                predictions[target_column.name] = torch.sigmoid(
-                    predictions[target_column.name].squeeze()
+                probs = prepare_tensor(
+                    torch.sigmoid(predictions[target_column.name].squeeze())
                 )
+                predictions[target_column.name] = {
+                    "probs": probs,
+                    "classes": self._get_classes(target_column),
+                }
             else:
-                predictions[target_column.name] = predictions[
-                    target_column.name
-                ].squeeze()
+                predictions[target_column.name] = prepare_tensor(
+                    predictions[target_column.name]
+                )
 
         return predictions

@@ -27,8 +27,8 @@ from mariner.schemas.model_schemas import (
     Model,
     ModelCreate,
     ModelsQuery,
-    TrainingCheckRequest,
-    TrainingCheckResponse,
+    ModelVersion,
+    ModelVersionUpdate,
 )
 from mariner.utils import random_pretty_name
 
@@ -39,7 +39,7 @@ router = APIRouter()
     "/",
     response_model=Model,
 )
-def create_model(
+async def create_model(
     model_create: ModelCreate,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
@@ -64,22 +64,22 @@ def create_model(
         HTTPException: 404 when some reference in payload doesn't exist.
     """
     try:
-        model = controller.create_model(
+        model = await controller.create_model(
             db,
             current_user,
             model_create,
         )
         return model
-    except ModelNameAlreadyUsed:
+    except ModelNameAlreadyUsed as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Another model is already registered with that name",
-        )
-    except DatasetNotFound:
+        ) from exc
+    except DatasetNotFound as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Dataset "{model_create.config.dataset.name}" not found',
-        )
+        ) from exc
 
 
 @router.get(
@@ -135,9 +135,9 @@ def get_model_name_suggestion():
 
 @router.post(
     "/{model_version_id}/predict",
-    response_model=Dict[str, List[Any]],
+    response_model=Dict[str, dict | List[Any]],
 )
-def post_model_predict(
+async def post_model_predict(
     model_version_id: int,
     model_input: Annotated[
         Dict[str, List[Any]],
@@ -175,7 +175,7 @@ def post_model_predict(
     ```
     """
     try:
-        result = controller.get_model_prediction(
+        result = await controller.get_model_prediction(
             db,
             controller.PredictRequest(
                 user_id=current_user.id,
@@ -232,15 +232,22 @@ def delete_model(
     return model
 
 
-@router.post(
-    "/check-config",
-    response_model=TrainingCheckResponse,
-    dependencies=[Depends(deps.get_current_active_user)],
+@router.put(
+    "/{model_id}/versions/{model_version_id}", response_model=ModelVersion
 )
-async def post_model_check_config(
-    model_config: TrainingCheckRequest, db: Session = Depends(deps.get_db)
+async def put_model_version(
+    version_update: ModelVersionUpdate,
+    model_id: int,
+    model_version_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
-    """Checks if the torch model config in the request body doesn't raise
-    any errors."""
-    result = await controller.check_model_step_exception(db, model_config)
-    return result
+    """Updates a model version in the database"""
+    model_version = await controller.update_model_version(
+        db,
+        user=current_user,
+        version_update=version_update,
+        version_id=model_version_id,
+        model_id=model_id,
+    )
+    return model_version

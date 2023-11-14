@@ -1,6 +1,6 @@
 import { ReactFlowInstance } from 'reactflow';
 
-type NodeSchemaContext = {
+export type NodeSchemaContext = {
   nodeId: string;
 };
 type EdgeSchemaContext = {

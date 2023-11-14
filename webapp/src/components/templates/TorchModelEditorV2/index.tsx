@@ -38,6 +38,7 @@ type TorchModelEditorProps = {
   value: ModelSchema;
   onChange?: (schema: ModelSchema) => void;
   editable?: boolean;
+  dagre?: number | 'goodDistance';
 };
 
 const getGoodDistance = (nodesNumber: number) => {
@@ -46,8 +47,6 @@ const getGoodDistance = (nodesNumber: number) => {
   else if (nodesNumber < 7) return 3;
   else return 1;
 };
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const SideBar = memo(
   ({ editable }: { editable: boolean }) => (
@@ -82,6 +81,7 @@ const TorchModelEditor = ({
   value,
   onChange,
   editable = true,
+  dagre,
 }: TorchModelEditorProps) => {
   const {
     applyDagreLayout,
@@ -104,6 +104,7 @@ const TorchModelEditor = ({
     fitView,
     onNodesChange,
     onEdgesChange,
+    nodesInitialized,
   } = useTorchModelEditor();
   const [fullScreen, setFullScreen] = useState(false);
   const [connectingNode, setConnectingNode] = useState<
@@ -137,42 +138,39 @@ const TorchModelEditor = ({
     [editable]
   );
 
+  const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (value) {
       setSchema(value);
     }
   }, []);
 
-  const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
-  const [firstRenderWithElements, setFirstRenderWithElements] = useState(false);
+  useEffect(() => {
+    fitView();
+  }, [nodesInitialized]);
+
   useEffect(() => {
     if (!reactFlowWrapper.current) return;
     const [nodes, edges] = schemaToEditorGraph(value);
-    if (editable) {
-      setNodes(nodes.reverse());
-      setEdges(edges);
-      getSuggestions({ schema: value });
-      applyDagreLayout('TB', getGoodDistance(nodes.length));
-    } else {
-      setNodes(nodes);
-      setEdges(edges);
-      getSuggestions({ schema: value });
-      applyDagreLayout('TB', 3, edges);
-    }
-  }, []);
 
-  // Fit view when started
-  // Needs a delay and hook update to works
-  const temporalyFixScreen = useCallback(async () => {
-    await sleep(50);
-    setFirstRenderWithElements(true);
-  }, []);
-  useEffect(() => {
-    temporalyFixScreen();
-  }, [nodes.length > 0]);
-  useEffect(() => {
-    fitView();
-  }, [firstRenderWithElements]);
+    //? Avoids <ComponentConfigNode /> edges unrender when the data for the node handles creation are not loaded yet
+    if (options) {
+      if (editable) {
+        setNodes(nodes.reverse());
+        setEdges(edges);
+        getSuggestions({ schema: value });
+        dagre == 'goodDistance'
+          ? applyDagreLayout('TB', getGoodDistance(nodes.length))
+          : applyDagreLayout('TB', 3, edges);
+      } else {
+        setNodes(nodes);
+        setEdges(edges);
+        getSuggestions({ schema: value });
+        applyDagreLayout('TB', 3, edges);
+      }
+    }
+  }, [options]);
 
   useEffect(() => {
     onChange && schema && onChange(schema);
@@ -260,11 +258,14 @@ const TorchModelEditor = ({
       },
       options,
     });
-    editComponent({
-      schema,
-      data,
-    });
+    editComponent(
+      {
+        data,
+      },
+      schema
+    );
   };
+
   useLayoutEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
     return () => {
@@ -298,6 +299,14 @@ const TorchModelEditor = ({
             onDrop={onDrop}
             onConnectEnd={() => {
               clearPositionOrdering();
+            }}
+            onNodeClick={(event, clickedNode) => {
+              setNodes((prev) =>
+                prev.map((node) => ({
+                  ...node,
+                  selected: node.id === clickedNode.id,
+                }))
+              );
             }}
             onConnectStart={(event, connectionParams) => {
               if (!schema) return;
@@ -348,10 +357,12 @@ const TorchModelEditor = ({
                 },
                 options,
               });
-              return editComponent({
-                schema: value,
-                data,
-              });
+              return editComponent(
+                {
+                  data,
+                },
+                value
+              );
             }}
           >
             <Background color="#384E77" variant={BackgroundVariant.Dots} />

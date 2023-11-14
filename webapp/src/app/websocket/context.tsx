@@ -6,14 +6,15 @@ import {
   useEffect,
   useCallback,
 } from 'react';
-import { messageHandler, SocketMessageHandler } from 'app/websocket/types';
+import { messageHandler, SocketMessageHandler } from '@app/websocket/handler';
 import { useAppDispatch } from 'app/hooks';
-import { updateExperiment } from 'features/models/modelSlice';
+import { updateExperiment, updateModel } from 'features/models/modelSlice';
 import * as datasetsApi from 'app/rtk/generated/datasets';
 import * as deploymentsApi from 'app/rtk/generated/deployments';
 import { useNotifications } from 'app/notifications';
 import { updateDataset } from 'features/datasets/datasetSlice';
 import { updateDeploymentStatus } from '@features/deployments/deploymentsSlice';
+import { useAppSelector } from '@hooks';
 
 const WebSocketContext = createContext<{
   socketHandler: SocketMessageHandler | null;
@@ -26,6 +27,10 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
 ) => {
   const socketHandlerRef = useRef<SocketMessageHandler>(messageHandler);
   const dispatch = useAppDispatch();
+  const { loggedIn, loginStatus } = useAppSelector((state) => ({
+    loggedIn: state.users.loggedIn,
+    loginStatus: state.users.loginStatus,
+  }));
 
   const [fetchDatasetById] = datasetsApi.useLazyGetMyDatasetQuery();
   const [fetchDeploymentById] = deploymentsApi.useLazyGetDeploymentQuery();
@@ -50,7 +55,11 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
         fetchDeploymentById({ deploymentId: updatedData.deploymentId }, false);
         dispatch(updateDeploymentStatus(updatedData));
       });
-      return socketHandler;
+      socketHandler.on('update-model', (event) => {
+        const updatedData = event.data;
+
+        dispatch(updateModel(updatedData));
+      });
     },
     []
   );
@@ -61,27 +70,41 @@ export const WebSocketContextProvider: FC<{ children: ReactNode }> = (
         const updatedData = event.data;
         dispatch(updateDeploymentStatus(updatedData));
       });
-      return socketHandler;
     },
     []
   );
 
   useEffect(() => {
-    let socketHandler = socketHandlerRef.current;
-    if (socketHandler.isDisconnected()) socketHandler.connect();
-
-    if (socketHandler.connectionType === 'authenticated') {
-      socketHandler = applyAuthenticatedCallbacks(socketHandler);
-    } else if (socketHandler.connectionType === 'anonymous') {
-      socketHandler = applyAnonymousCallbacks(socketHandler);
-    }
-
-    socketHandlerRef.current = socketHandler;
-
+    const interval = setInterval(() => {
+      if (!socketHandlerRef.current) return;
+      if (!socketHandlerRef.current.socket) {
+        socketHandlerRef.current.connect();
+        applyAnonymousCallbacks(socketHandlerRef.current);
+        if (loginStatus === 'idle' && loggedIn) {
+          applyAuthenticatedCallbacks(socketHandlerRef.current);
+        }
+        return;
+      }
+      if (
+        [WebSocket.OPEN, WebSocket.CONNECTING, WebSocket.CLOSING].includes(
+          socketHandlerRef.current.socket.readyState as 0 | 1 | 2
+        )
+      ) {
+        // console.log('Ready State', socketHandlerRef.current?.socket?.readyState)
+        // console.log('Socket already connected (or connecting/closing), skipping reconnection')
+        return;
+      } else {
+        socketHandlerRef.current.connect();
+        applyAnonymousCallbacks(socketHandlerRef.current);
+        if (loginStatus === 'idle' && loggedIn) {
+          applyAuthenticatedCallbacks(socketHandlerRef.current);
+        }
+      }
+    }, 1000);
     return () => {
-      socketHandler.disconnect();
+      clearInterval(interval);
     };
-  }, []);
+  }, [loggedIn, loginStatus]);
 
   return (
     <WebSocketContext.Provider value={{ socketHandler: messageHandler }}>

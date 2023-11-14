@@ -12,7 +12,7 @@ describe('Deployments Workflow.', () => {
       (err) => err.toString().includes('ResizeObserver') && false
     );
     
-    cy.loginSuper();
+    cy.loginUser();
 
     cy.setupSomeModel().then((model) => {
       modelName = model.name;
@@ -32,10 +32,6 @@ describe('Deployments Workflow.', () => {
 
   after(() => {
     cy.deleteDeployment(modelName!, deploymentName!);
-  });
-
-  beforeEach(() => {
-    cy.loginSuper();
   });
 
   it('Runs deployment succesfully.', () => {

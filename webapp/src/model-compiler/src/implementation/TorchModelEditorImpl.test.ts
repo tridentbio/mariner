@@ -24,22 +24,24 @@ describe('TorchModelEditorImpl', () => {
       expect(schema.name).toBe('GNNExample');
       expect(schema.spec.layers).toHaveLength(10);
       const oldLayersSize = schema.spec.layers?.length || 0;
-      const newSchema = editor.addComponent({
-        type: 'layer',
-        data: {
-          name: 'firstLinear',
-          type: 'torch.nn.Linear',
-          constructorArgs: {
-            in_features: 1,
-            out_features: 64,
-            bias: false,
-          },
-          forwardArgs: {
-            input: 'LinearJoined',
+      const newSchema = editor.addComponent(
+        {
+          type: 'layer',
+          data: {
+            name: 'firstLinear',
+            type: 'torch.nn.Linear',
+            constructorArgs: {
+              in_features: 1,
+              out_features: 64,
+              bias: false,
+            },
+            forwardArgs: {
+              input: 'LinearJoined',
+            },
           },
         },
-        schema,
-      });
+        schema
+      );
       expect(newSchema.spec.layers).toBeDefined();
       expect(newSchema.spec.layers?.length).toBe(oldLayersSize + 1);
       const insertedLayer = newSchema.spec.layers?.find(
@@ -57,20 +59,22 @@ describe('TorchModelEditorImpl', () => {
     it('edits a single component in the model schema', () => {
       const editor = getTestTorchModelEditor();
       const schema = getRegressorModelSchema();
-      const newSchema = editor.editComponent({
-        schema: extendSpecWithTargetForwardArgs(schema),
-        data: makeComponentEdit({
-          component: getComponent(
-            extendSpecWithTargetForwardArgs(schema),
-            'GCN3'
-          ) as GcnConv & {
-            type: 'torch_geometric.nn.GCNConv';
-          },
-          constructorArgs: {
-            in_channels: 1,
-          },
-        }),
-      });
+      const newSchema = editor.editComponent(
+        {
+          data: makeComponentEdit({
+            component: getComponent(
+              extendSpecWithTargetForwardArgs(schema),
+              'GCN3'
+            ) as GcnConv & {
+              type: 'torch_geometric.nn.GCNConv';
+            },
+            constructorArgs: {
+              in_channels: 1,
+            },
+          }),
+        },
+        extendSpecWithTargetForwardArgs(schema)
+      );
 
       // @ts-ignore
       const editedLayer = newSchema.spec.layers.find(

@@ -34,7 +34,6 @@ export default class MolFeaturizerValidatorVisitor extends ComponentVisitor {
           [
             new EditComponentsCommand({
               data,
-              schema: info.schema,
             }),
           ],
           { edgeId: `${component.name}-${mol}` },

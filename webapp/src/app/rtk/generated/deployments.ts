@@ -404,7 +404,7 @@ export type ColumnConfig = {
 export type BaseModel = {};
 export type OneHotEncoderConfig = {
   type?: 'sklearn.preprocessing.OneHotEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -414,7 +414,7 @@ export type OneHotEncoderConfig = {
 };
 export type LabelEncoderConfig = {
   type?: 'sklearn.preprocessing.LabelEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -500,7 +500,7 @@ export type StandardScalerConfig = {
 };
 export type NpConcatenateConfig = {
   type?: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -602,7 +602,7 @@ export type DatasetConfig = {
 };
 export type CreateFromType = {
   type: string;
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
 };
 export type ColumnConfigWithPreprocessing = {
   name: string;
@@ -752,6 +752,8 @@ export type ModelVersion = {
       } & SklearnModelSpec);
   createdAt: string;
   updatedAt: string;
+  checkStatus?: 'OK' | 'FAILED' | 'RUNNING';
+  checkStackTrace?: string;
 };
 export type User = {
   id: number;
@@ -841,6 +843,7 @@ export type DeploymentUpdateInput = {
   showTrainingData?: boolean;
   predictionRateLimitValue?: number;
   predictionRateLimitUnit?: RateLimitUnit;
+  modelVersionId?: number;
 };
 export type DeploymentManagerComunication = {
   deploymentId: number;

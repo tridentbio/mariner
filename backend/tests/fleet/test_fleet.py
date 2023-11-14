@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 from mlflow.tracking import MlflowClient
 
-from fleet.base_schemas import FleetModelSpec, TorchModelSpec
+from fleet import data_types
 from fleet.dataset_schemas import (
     TargetTorchColumnConfig,
     is_regression,
@@ -19,8 +19,13 @@ from fleet.dataset_schemas import (
 from fleet.model_builder import optimizers
 from fleet.model_builder.splitters import apply_split_indexes
 from fleet.model_functions import fit, predict, run_test
+from fleet.model_schemas import FleetModelSpec
 from fleet.scikit_.schemas import SklearnModelSpec
-from fleet.torch_.schemas import MonitoringConfig, TorchTrainingConfig
+from fleet.torch_.schemas import (
+    MonitoringConfig,
+    TorchModelSpec,
+    TorchTrainingConfig,
+)
 from mariner.core.aws import Bucket, list_s3_objects
 from tests.utils.utils import random_lower_string
 
@@ -144,13 +149,13 @@ specs = [
             "SAMPL.csv",
             "sampl2",
         ),
-        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV.csv", "hiv"),
+        ("sklearn_hiv_extra_trees_classifier.yaml", "HIV2.csv", "hiv"),
         (
             "sklearn_hiv_knearest_neighbor_classifier.yaml",
-            "HIV.csv",
+            "HIV2.csv",
             "hiv",
         ),
-        ("sklearn_hiv_random_forest_classifier.yaml", "HIV.csv", "hiv2"),
+        ("sklearn_hiv_random_forest_classifier.yaml", "HIV2.csv", "hiv2"),
         ("small_regressor_schema.yaml", "zinc.csv", ""),
         ("multiclass_classification_model.yaml", "iris.csv", ""),
         ("multitarget_classification_model.yaml", "iris.csv", ""),
@@ -166,7 +171,6 @@ test_cases = [
             epochs=4,
             batch_size=32,
             checkpoint_config=MonitoringConfig(
-                mode="min",
                 metric_key=f"val/mse/{targets_head(spec).name}"
                 if is_regression(targets_head(spec))
                 else f"val/precision/{targets_head(spec).name}",
@@ -219,17 +223,35 @@ def test_train(case: TestCase):
             )
 
             if case.predict_sample:
+                input_length = len(next(iter(case.predict_sample.values())))
                 result = predict(
                     spec=case.model_spec,
                     mlflow_model_name=mlflow_model_name,
                     mlflow_model_version=result.mlflow_model_version.version,
                     input_=case.predict_sample,
                 )
-                assert len(
-                    result[case.model_spec.dataset.target_columns[0].name]
-                ) == len(
-                    next(iter(case.predict_sample.values()))
-                ), "prediction result needs to have the same length as the input"
+                for target_column in case.model_spec.dataset.target_columns:
+                    is_categorical = isinstance(
+                        target_column.data_type, data_types.CategoricalDataType
+                    )
+                    assert (
+                        len(
+                            result[target_column.name]
+                            if not is_categorical
+                            else result[target_column.name]["probs"]
+                        )
+                        == input_length
+                    )
+                    # Assert the prediction output of classification models
+                    # is the same as the categories classes, found on the keys
+                    # of the data type's classes dict.
+                    if is_categorical:
+                        assert "classes" in result[target_column.name]
+                        assert "probs" in result[target_column.name]
+                    else:
+                        assert (
+                            len(result[target_column.name]) == input_length
+                        ), "prediction result needs to have the same length as the input"
 
         else:
             with pytest.raises(case.should_fail):

@@ -1,4 +1,4 @@
-from fleet.base_schemas import TorchModelSpec
+from fleet.torch_.schemas import TorchModelSpec
 
 payload = {
     "name": "afoyucpx",

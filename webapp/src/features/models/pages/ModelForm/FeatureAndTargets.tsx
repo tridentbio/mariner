@@ -16,15 +16,6 @@ export interface FeatureAndTargets {
   control: Control<ModelCreate>;
 }
 
-const sortColumnsMetadata = (columnsMetadata: Dataset['columnsMetadata']) => {
-  if (!columnsMetadata) return columnsMetadata;
-  const arr = [...columnsMetadata];
-  arr?.sort((a, b) => b.pattern.length - a.pattern.length);
-  arr?.sort((a, b) =>
-    (b.dataType.domainKind || '').localeCompare(a.dataType.domainKind || '')
-  );
-  return arr;
-};
 const FeatureAndTargets = ({ control }: FeatureAndTargets) => {
   const { setValue, watch, getValues } = useFormContext();
   const [fetchDatasetById] = useLazyGetMyDatasetQuery();

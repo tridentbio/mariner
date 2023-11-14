@@ -1,0 +1,41 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s\t%(levelname)s %(filename)s:%(lineno)d - [%(name)s] %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        }
+    },
+    "filters": {
+      "uvicorn_filter": {
+        "()": "api.logging.Filter",
+        "name": "uvicorn.error",
+        "allowed_levels": ["WARN", "ERROR", "CRITICAL"]
+      }
+    },
+    "handlers": {
+        "stdout": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout",
+            "filters": ["uvicorn_filter"]
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "./app.err",
+            "formatter": "simple",
+            "level": "ERROR",
+            "mode": "a"
+        }
+    },
+    "root": {
+        "level": "INFO",
+        "format": "simple",
+        "handlers": [
+            "stdout",
+            "file"
+        ]
+    }
+}

@@ -18,3 +18,5 @@ secrets
 secrets-local/
 ./build/
 build/
+./ray-configs
+app.err

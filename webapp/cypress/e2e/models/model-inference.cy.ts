@@ -6,12 +6,15 @@ const API_BASE_URL = Cypress.env('API_BASE_URL');
 describe('/models/:modelId/inference', () => {
   let modelName: string | null = null;
 
-  beforeEach(() => {
-    cy.loginSuper();
+  before(() => {
+    cy.on('uncaught:exception', () => false);
+
+    cy.loginUser();
+
     cy.setupSomeModel().then((deployment) => {
       modelName = deployment.name;
     });
-  });
+  })
 
   it('Visits the page and inference ', () => {
     cy.intercept({

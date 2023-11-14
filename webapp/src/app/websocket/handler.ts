@@ -1,7 +1,8 @@
-import { matchPath } from 'react-router-dom';
 import { DeploymentStatus } from '@app/rtk/generated/deployments';
-import { ELocalStorage } from 'app/local-storage';
+import { ModelVersion } from '@app/rtk/generated/models';
+import { ELocalStorage, fetchLocalStorage } from 'app/local-storage';
 import { Dataset } from 'app/types/domain/datasets';
+import { matchPath } from 'react-router-dom';
 import { isDev } from 'utils';
 
 export type UpdateExperiment = {
@@ -32,8 +33,17 @@ export type UpdateDeployment = {
   };
 };
 
+export type UpdateModel = {
+  type: 'update-model';
+  data: ModelVersion;
+};
+
 // Union type for all websocket incoming messages
-type MessageType = UpdateExperiment | DatasetProcessed | UpdateDeployment;
+type MessageType =
+  | UpdateExperiment
+  | DatasetProcessed
+  | UpdateDeployment
+  | UpdateModel;
 
 type CallbackMap = {
   [MT in MessageType as MT['type']]: (message: MT) => void;
@@ -56,6 +66,7 @@ export class SocketMessageHandler {
       'dataset-process-finish': () => {},
       'update-running-metrics': () => {},
       'update-deployment': () => {},
+      'update-model': () => {},
     };
     this.setListeners();
   }
@@ -76,17 +87,11 @@ export class SocketMessageHandler {
   };
 
   connectAuthenticated = (token: string) => {
-    let access_token: string = '';
-    try {
-      access_token = JSON.parse(token)?.access_token;
-    } catch (err) {
-      localStorage.removeItem(ELocalStorage.TOKEN);
-    } finally {
-      if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
-        this.socket = new WebSocket(`${this.address}?token=${access_token}`);
-      }
-      this.setListeners('authenticated');
+    if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
+      this.socket = new WebSocket(`${this.address}?token=${token}`);
     }
+
+    this.setListeners('authenticated');
   };
 
   connectAnonymous = (token: string) => {
@@ -103,9 +108,12 @@ export class SocketMessageHandler {
       this.connectAnonymous(publicDeploymentToken);
     }
 
-    const authToken = localStorage.getItem(ELocalStorage.TOKEN);
-    if (authToken) return this.connectAuthenticated(authToken);
+    const authToken = fetchLocalStorage<{ access_token: string }>(
+      ELocalStorage.TOKEN
+    );
+    if (authToken) return this.connectAuthenticated(authToken.access_token);
   };
+
   disconnect = () => {
     if (this.socket) {
       this.socket.close();
@@ -128,13 +136,8 @@ export class SocketMessageHandler {
     // eslint-disable-next-line
     if (isDev()) console.log('[WEBSOCKET]: ', event.data);
     const data: MessageType = JSON.parse(event.data);
-    if (data.type === 'update-running-metrics') {
-      this.callbacks['update-running-metrics'](data);
-    } else if (data.type === 'dataset-process-finish') {
-      this.callbacks['dataset-process-finish'](data);
-    } else if (data.type === 'update-deployment') {
-      this.callbacks['update-deployment'](data);
-    }
+
+    this.callbacks[data.type](data as any);
   };
 
   private getTokenFromPublicDeploymentUrl = (url: string) => {

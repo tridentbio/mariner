@@ -16,9 +16,13 @@ from torch_geometric.loader import DataLoader
 from typing_extensions import override
 
 import fleet.mlflow
-from fleet.base_schemas import BaseModelFunctions, TorchModelSpec
+from fleet.base_schemas import BaseModelFunctions
 from fleet.torch_.models import CustomModel
-from fleet.torch_.schemas import TorchTrainingConfig
+from fleet.torch_.schemas import (
+    TorchModelSpec,
+    TorchTrainingConfig,
+    get_metric_mode,
+)
 from fleet.utils.data import (
     DataModule,
     MarinerTorchDataset,
@@ -63,6 +67,7 @@ class TorchFunctions(BaseModelFunctions):
         super().__init__()
         self.dataset = dataset
         self.spec = spec
+        self.use_gpu = use_gpu
         if model:
             self.model = model
         else:
@@ -122,7 +127,7 @@ class TorchFunctions(BaseModelFunctions):
         else:
             self.checkpoint_callback = ModelCheckpoint(
                 monitor=params.checkpoint_config.metric_key,
-                mode=params.checkpoint_config.mode,
+                mode=get_metric_mode(params.checkpoint_config.metric_key),
                 save_last=True,
             )
             callbacks.append(self.checkpoint_callback)
@@ -131,7 +136,9 @@ class TorchFunctions(BaseModelFunctions):
             callbacks.append(
                 EarlyStopping(
                     monitor=params.early_stopping_config.metric_key,
-                    mode=params.early_stopping_config.mode,
+                    mode=get_metric_mode(
+                        params.early_stopping_config.metric_key
+                    ),
                     min_delta=params.early_stopping_config.min_delta,
                     patience=params.early_stopping_config.patience,
                     check_finite=params.early_stopping_config.check_finite,
@@ -224,16 +231,9 @@ class TorchFunctions(BaseModelFunctions):
         dataloader = DataLoader(dataset, batch_size=len(input_))
         next(iter(dataloader))
 
-        trainer = Trainer(accelerator="cpu")
+        trainer = Trainer(accelerator="gpu" if self.use_gpu else "cpu")
         result: dict = trainer.predict(
             model=self.model, dataloaders=dataloader
         )[0]
 
-        result = {
-            key: value.detach().cpu().numpy().tolist()
-            for key, value in result.items()
-        }
-        prediction: Dict[str, List[float]] = {}
-        for column, item in result.items():
-            prediction[column] = item if isinstance(item, list) else [item]
-        return prediction
+        return result

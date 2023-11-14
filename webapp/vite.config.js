@@ -14,22 +14,18 @@ import react from '@vitejs/plugin-react';
 import viteTsconfigPaths from 'vite-tsconfig-paths';
 import svgrPlugin from 'vite-plugin-svgr';
 
-const globalVendorPackages = ['react', 'react-dom', 'react-router-dom'];
-
-function renderChunks(deps) {
-  let chunks = {};
-  Object.keys(deps).forEach((key) => {
-    if (globalVendorPackages.includes(key)) return;
-    chunks[key] = [key];
-  });
-  return chunks;
-}
-// https://vitejs.dev/config/
-
+/** @type {import('vite').UserConfig} */
 let config = {
   plugins: [react(), viteTsconfigPaths(), svgrPlugin()],
   build: {
     outDir: 'build',
+  },
+  /**
+   * Avoids Cypress E2E tests error caused by PopperJS dependencies with Material UI
+   * @link https://github.com/vitejs/vite/issues/12423
+   */
+  optimizeDeps: {
+    include: ['@mui/material/Tooltip'],
   },
   server: {
     host: true,

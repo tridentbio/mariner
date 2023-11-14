@@ -35,7 +35,6 @@ class LinearValidatorVisitor extends ComponentVisitor {
         Suggestion.makeFixableConstructorArgsError(
           [
             new EditComponentsCommand({
-              schema: info.schema,
               data,
             }),
           ],
@@ -76,7 +75,6 @@ class LinearValidatorVisitor extends ComponentVisitor {
             Suggestion.makeFixableConstructorArgsError(
               [
                 new EditComponentsCommand({
-                  schema: info.schema,
                   data,
                 }),
               ],

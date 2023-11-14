@@ -1,6 +1,6 @@
-#!/bin/sh -e
-set -x
+#!/bin/bash
+set -e
 
-isort --check-only $@
-autoflake --quiet --check --ignore-init-module-imports --remove-all-unused-imports --recursive --remove-unused-variables --in-place $@
-black --check $@
+isort --diff -c $@
+autoflake --check --ignore-init-module-imports --remove-all-unused-imports --recursive --remove-unused-variables --in-place $@
+black --diff --check $@

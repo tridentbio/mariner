@@ -4,17 +4,17 @@ import EditComponentsCommand from './commands/EditComponentsCommand';
 import SchemaContext from './SchemaContext';
 
 type Severity = 'ERROR' | 'WARNING' | 'IMPROV';
-class Suggestion {
+class Suggestion<SC extends SchemaContext = SchemaContext> {
   readonly severity: Severity;
   readonly message: string;
   readonly commands: Command<unknown, ModelSchema>[];
-  readonly context: SchemaContext;
+  readonly context: SC;
 
   constructor(
     severity: Severity,
     message: string,
     commands: Command<any, ModelSchema>[],
-    context: SchemaContext
+    context: SC
   ) {
     this.severity = severity;
     this.commands = commands;
@@ -57,16 +57,16 @@ class Suggestion {
       context
     );
 
-  getCurrentConstructorArgs = (name: string) => {
+  getCurrentConstructorArgs = (name: string, schema: ModelSchema) => {
     for (const command of this.commands) {
-      if (command instanceof EditComponentsCommand && command.args.schema) {
+      if (command instanceof EditComponentsCommand && schema) {
         let obj;
-        obj = (command.args.schema.spec.layers || []).find(
+        obj = (schema.spec.layers || []).find(
           (schemaObj: any) => schemaObj.name === name
         );
         obj =
           obj ||
-          (command.args.schema.dataset.featurizers || []).find(
+          (schema.dataset.featurizers || []).find(
             (schemaObj: any) => schemaObj.name === name
           );
         // ignored because the constructorArgs property is not always in obj but ts doesn't know that
@@ -76,7 +76,7 @@ class Suggestion {
     }
   };
 
-  getConstructorArgsErrors = () => {
+  getConstructorArgsErrors = (schema: ModelSchema) => {
     return this.commands.reduce((acc, command) => {
       if (command instanceof EditComponentsCommand) {
         if (
@@ -86,7 +86,8 @@ class Suggestion {
           return acc;
 
         const currentConstructorArgs = this.getCurrentConstructorArgs(
-          command.args.data.name
+          command.args.data.name,
+          schema
         ) as typeof command.args.data.constructorArgs;
 
         const isWrong = currentConstructorArgs

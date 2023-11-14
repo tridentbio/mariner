@@ -27,13 +27,15 @@ const isForwardArgList = (
     const forwardArgType = argsSummary[forwardArg];
     return forwardArgType.toLowerCase().includes('list');
   }
-  throw `${component} not found in options dict! This is a temporary error.`;
+  // eslint-disable-next-line no-console
+  console.error(
+    `${component} not found in options dict! This is a temporary error.`
+  );
   return false;
 };
 
 export interface EditComponentsCommandArgs {
-  schema: ModelSchema;
-  data: NodeType;
+  data: NodeType | ((schema: ModelSchema) => NodeType);
   position?: NodePositionTypes;
 }
 
@@ -44,40 +46,45 @@ class EditComponentsCommand extends Command<
   constructor(args: EditComponentsCommandArgs) {
     super(args);
   }
-  execute = (): ModelSchema => {
+  execute = (schema: ModelSchema): ModelSchema => {
+    const data =
+      typeof this.args.data === 'function'
+        ? this.args.data(schema)
+        : this.args.data;
+
     // Handle target column connection
     const targetColumnIndex =
-      this.args.data.type === 'output'
-        ? this.args.schema.dataset.targetColumns.findIndex(
-            (targetColumn) => this.args.data.name === targetColumn.name
+      data.type === 'output'
+        ? schema.dataset.targetColumns.findIndex(
+            (targetColumn) => data.name === targetColumn.name
           )
         : -1;
     if (targetColumnIndex !== -1) {
-      const targetColumns = [...this.args.schema.dataset.targetColumns];
-      targetColumns[targetColumnIndex] = this.args.data as Output;
+      const targetColumns = [...schema.dataset.targetColumns];
+      targetColumns[targetColumnIndex] = data as Output;
       return {
-        ...this.args.schema,
+        ...schema,
         dataset: {
-          ...this.args.schema.dataset,
+          ...schema.dataset,
           targetColumns: targetColumns,
         },
       };
     }
-    const layers = this.args.schema.spec.layers || [];
+    const layers = schema.spec.layers || [];
     const updatedLayers = layers.map((layer) => {
-      if (layer.name !== this.args.data.name) return layer;
-      return this.args.data as LayersType;
+      if (layer.name !== data.name) return layer;
+      return data as LayersType;
     });
-    const featurizers = this.args.schema.dataset.featurizers || [];
+    const featurizers = schema.dataset.featurizers || [];
     const updatedFeaturizers = featurizers.map((featurizer) => {
-      if (featurizer.name !== this.args.data.name) return featurizer;
-      else return this.args.data as FeaturizersType;
+      if (featurizer.name !== data.name) return featurizer;
+      else return data as FeaturizersType;
     });
     return {
-      ...this.args.schema,
+      ...schema,
       spec: { layers: updatedLayers },
       dataset: {
-        ...this.args.schema.dataset,
+        ...schema.dataset,
         featurizers: updatedFeaturizers,
       },
     };
@@ -152,7 +159,7 @@ export const makeComponentEdit = <T extends NodeType>(params: {
     const { targetNodeForwardArg, elementValue } = removeConnection;
     if (
       elementValue &&
-      isForwardArgList(newComponent.type, targetNodeForwardArg)
+      isForwardArgList(newComponent.type, targetNodeForwardArg, options)
     ) {
       // @ts-ignore
       const fArgs = newComponent.forwardArgs as Concat['forwardArgs'];

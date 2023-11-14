@@ -72,6 +72,16 @@ const injectedRtkApi = api
         }),
         providesTags: ['experiments'],
       }),
+      cancelExperiment: build.mutation<
+        CancelExperimentApiResponse,
+        CancelExperimentApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/v1/experiments/${queryArg.experimentId}/cancel`,
+          method: 'PUT',
+        }),
+        invalidatesTags: ['experiments'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -117,6 +127,11 @@ export type GetExperimentsMetricsForModelVersionApiResponse =
   /** status 200 Successful Response */ Experiment[];
 export type GetExperimentsMetricsForModelVersionApiArg = {
   modelVersionId: number;
+};
+export type CancelExperimentApiResponse =
+  /** status 200 Successful Response */ any;
+export type CancelExperimentApiArg = {
+  experimentId: number;
 };
 export type FleetonehotForwardArgsReferences = {
   x1: string;
@@ -349,7 +364,7 @@ export type ColumnConfig = {
 export type BaseModel = {};
 export type OneHotEncoderConfig = {
   type?: 'sklearn.preprocessing.OneHotEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -359,7 +374,7 @@ export type OneHotEncoderConfig = {
 };
 export type LabelEncoderConfig = {
   type?: 'sklearn.preprocessing.LabelEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -445,7 +460,7 @@ export type StandardScalerConfig = {
 };
 export type NpConcatenateConfig = {
   type?: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -547,7 +562,7 @@ export type DatasetConfig = {
 };
 export type CreateFromType = {
   type: string;
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
 };
 export type ColumnConfigWithPreprocessing = {
   name: string;
@@ -697,6 +712,8 @@ export type ModelVersion = {
       } & SklearnModelSpec);
   createdAt: string;
   updatedAt: string;
+  checkStatus?: 'OK' | 'FAILED' | 'RUNNING';
+  checkStackTrace?: string;
 };
 export type User = {
   email?: string;
@@ -716,9 +733,7 @@ export type Experiment = {
   mlflowId?: string;
   stage: 'NOT RUNNING' | 'RUNNING' | 'SUCCESS' | 'ERROR';
   createdBy?: User;
-  hyperparams?: {
-    [key: string]: number;
-  };
+  hyperparams?: object;
   epochs?: number;
   trainMetrics?: {
     [key: string]: number;
@@ -744,7 +759,6 @@ export type HttpValidationError = {
 };
 export type MonitoringConfig = {
   metricKey: string;
-  mode: string;
 };
 export type AdamParams = {
   lr?: number;
@@ -766,7 +780,6 @@ export type SgdOptimizer = {
 };
 export type EarlyStoppingConfig = {
   metricKey: string;
-  mode: string;
   minDelta?: number;
   patience?: number;
   checkFinite?: boolean;
@@ -845,4 +858,5 @@ export const {
   useLazyGetExperimentQuery,
   useGetExperimentsMetricsForModelVersionQuery,
   useLazyGetExperimentsMetricsForModelVersionQuery,
+  useCancelExperimentMutation,
 } = injectedRtkApi;

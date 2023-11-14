@@ -24,7 +24,14 @@ const ColumnConfigurationAccordion = ({
   return (
     <CustomAccordion
       testId={testId}
-      title={<DataTypeChip prefix={name} {...dataType} color={labelColor} />}
+      title={
+        <DataTypeChip
+          prefix={name}
+          {...dataType}
+          color={labelColor}
+          sx={{ cursor: 'pointer' }}
+        />
+      }
       textProps={textProps}
       defaultExpanded={defaultExpanded}
     >

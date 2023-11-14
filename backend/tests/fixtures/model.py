@@ -7,7 +7,8 @@ from mlflow.exceptions import RestException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from fleet.base_schemas import SklearnModelSpec, TorchModelSpec
+from fleet.scikit_.schemas import SklearnModelSpec
+from fleet.torch_.schemas import TorchModelSpec
 from mariner.core.config import get_app_settings
 from mariner.entities import Model as ModelEntity
 from mariner.entities import ModelVersion
@@ -155,7 +156,7 @@ def setup_create_model_db(
         ],
     )
 
-    created_model = model_sql.model_store.create(db, model_create)
+    created_model = model_sql.model_store.create(db, obj_in=model_create)
     version_create = ModelVersionCreateRepo(
         mlflow_version="1",
         mlflow_model_name=model_create.mlflow_name,
@@ -163,6 +164,7 @@ def setup_create_model_db(
         name=model.config.name,
         config=model.config,
         description=model.model_version_description,
+        created_by_id=user.id,
     )
     model_sql.model_store.create_model_version(db, version_create)
     model = db.query(ModelEntity).get(created_model.id)
@@ -226,7 +228,7 @@ def setup_create_model_db2(
     )
     # Create model in db
     try:
-        created_model = model_sql.model_store.create(db, model_create)
+        created_model = model_sql.model_store.create(db, obj_in=model_create)
     except IntegrityError:
         db.rollback()
         created_model = model_sql.model_store.get_by_name_from_user(
@@ -238,6 +240,7 @@ def setup_create_model_db2(
         config=parsed_config,
         mlflow_model_name=mlflow_model.name,
         description="test version",
+        created_by_id=owner_id,
     )
     model_sql.model_store.create_model_version(db, version_create)
     return created_model

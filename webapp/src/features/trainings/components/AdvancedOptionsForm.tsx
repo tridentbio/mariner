@@ -66,9 +66,6 @@ const AdvancedOptionsForm = ({
                 <MetricSelect
                   field={field}
                   error={error}
-                  setValue={(value: MetricMode) => {
-                    setValue('config.earlyStoppingConfig.mode', value);
-                  }}
                   targetColumns={targetColumns}
                   reset={() =>
                     resetField('config.earlyStoppingConfig.metricKey')
@@ -128,7 +125,6 @@ const AdvancedOptionsForm = ({
                 )}
               />
             </Box>
-            <ModeRadioInput fieldName="earlyStoppingConfig.mode" />
             <Tooltip
               title={
                 'Halt training if an infinite value is returned for the monitored metric'

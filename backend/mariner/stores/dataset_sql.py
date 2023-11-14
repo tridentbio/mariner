@@ -130,7 +130,9 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
         super().update(db, db_obj=db_obj, obj_in=obj_in)
         return db_obj
 
-    def get_by_name(self, db: Session, name: str) -> Dataset:
+    def get_by_name(
+        self, db: Session, name: str, user_id: int | None = None
+    ) -> Dataset:
         """Get a dataset by name
 
         Args:
@@ -140,7 +142,10 @@ class CRUDDataset(CRUDBase[Dataset, DatasetCreateRepo, DatasetUpdateRepo]):
         Returns:
             Found dataset
         """
-        return db.query(Dataset).filter(Dataset.name == name).first()
+        query = db.query(Dataset).filter(Dataset.name == name)
+        if user_id:
+            query = query.filter(Dataset.created_by_id == user_id)
+        return query.first()
 
 
 dataset_store = CRUDDataset(Dataset)

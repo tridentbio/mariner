@@ -133,15 +133,20 @@ const connect = (sourceHandleId: string, targetHandleId: string) => {
 export const fillModelDescriptionStepForm = (
   modelCreate: DeepPartial<ModelCreate>
 ) => {
-  cy.location().then((location) => {
-    if (!location.pathname.includes('/models/new')) cy.visit('/models/new');
+  cy.intercept({
+    method: 'GET',
+    url: `${API_BASE_URL}/api/v1/models/*`,
+  }).as('getModels');
+  
+  cy.visit('/models/new');
 
+  cy.wait('@getModels', {requestTimeout: 10000}).then(({ response }) => {
     // Fill model name
-    cy.get('[data-testid="model-name"] input')
+    cy.get('[data-testid="model-name"] input', {timeout: 10000})
       .clear()
       .type(modelCreate.name || randomName())
       .type('{enter}');
-
+  
     // Fill model description
     cy.get('[data-testid="model-description"] input')
       .clear()
@@ -154,17 +159,20 @@ export const fillModelDescriptionStepForm = (
     cy.get('[data-testid="version-description"] textarea')
       .clear()
       .type(modelCreate.modelVersionDescription || randomName());
-  });
+  })
 };
 
 export const fillDatasetCols = (cols: (ColumnConfig | SimpleColumnConfig)[], colInputSelector: string) => {
+  cy.get(colInputSelector).click();
+
   cols.map(col => {
     const colId = getColumnConfigTestId(col! as (ColumnConfig | SimpleColumnConfig))
-  
-    cy.get(colInputSelector).click();
-    cy.get(`li[data-testid="${colId}"`)
+    
+    cy.get(`li[data-testid="${colId}"]`)
       .click();
   })
+
+  cy.get(colInputSelector).parent().find('[data-testid="ArrowDropDownIcon"]').click();
 }
 
 export const buildModel = (
@@ -223,23 +231,10 @@ export const buildModel = (
   if (params.submitModelRequest) {
     cy.intercept({
       method: 'POST',
-      url: `${API_BASE_URL}/api/v1/models/check-config`,
-    }).as('checkConfig');
-    cy.intercept({
-      method: 'POST',
       url: `${API_BASE_URL}/api/v1/models`,
     }).as('createModel');
 
     cy.get('button').contains('CREATE').click();
-
-    if(modelCreate.config?.framework == 'torch') {
-      cy.wait('@checkConfig').then(({ response }) => {
-        expect(response?.statusCode).to.eq(200);
-        if (params.successfullRequestRequired) {
-          expect(Boolean(response?.body.stackTrace)).to.eq(false);
-        }
-      });
-    }
 
     if (params.successfullRequestRequired)
       cy.wait('@createModel').then(({ response }) => {
@@ -331,8 +326,6 @@ const buildSklearnPreprocessingForm = (
     .click();
 
   if('constructorArgs' in modelSchema.model && modelSchema.model.constructorArgs) {
-    cy.get(`[data-testid="sklearn-model-select-action-btn"]`).click()
-    
     const args: {[key: string]: any} = modelSchema.model.constructorArgs || {}
     buildStepConstructorArgs(`sklearn-model-select`, args)
   }
@@ -404,8 +397,7 @@ const buildFlowSchema = (
 
   cy.get('div[aria-label="Apply auto vertical layout"] button').click();
   cy.get('button[title="fit view"]').click();
-  cy.get('button[aria-label="Close all components"]').click();
-  cy.get('button[aria-label="Open all components"]').click();
+  cy.get('div[aria-label="Open all components"]').click();
 
   cy.then(() =>
     iterateTopologically(config, (node, type) => {

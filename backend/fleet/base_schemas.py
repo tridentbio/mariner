@@ -9,16 +9,14 @@ FleetModelSpec, which unifies the descriptions of all framework schemas,
 and FleetTrainingConfig, that does the same for framework training parameters.
 """
 from abc import ABC
-from typing import Annotated, Literal, Union
 
+import pandas as pd
 from mlflow.entities.model_registry.model_version import ModelVersion
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing_extensions import Protocol
 
-from fleet.dataset_schemas import DatasetConfig, TorchDatasetConfig
-from fleet.model_builder.schemas import TorchModelSchema
+from fleet.dataset_schemas import DatasetConfig
 from fleet.model_builder.utils import CamelCaseModel
-from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.yaml_model import YAML_Model
 
 
@@ -42,24 +40,6 @@ class BaseFleetModelSpec(CamelCaseModel, ABC, YAML_Model):
     framework: str
     dataset: "DatasetConfig"
     spec: BaseModel
-
-
-class TorchModelSpec(CamelCaseModel, YAML_Model):
-    """
-    Concrete implementation of torch model specs.
-    TODO: move to fleet.torch_.schemas
-    """
-
-    name: str
-    framework: Literal["torch"] = "torch"
-    spec: TorchModelSchema
-    dataset: "TorchDatasetConfig"
-
-
-# TODO: move to fleet.schemas
-FleetModelSpec = Annotated[
-    Union[TorchModelSpec, SklearnModelSpec], Field(discriminator="framework")
-]
 
 
 class BaseModelFunctions(Protocol):
@@ -105,5 +85,12 @@ class BaseModelFunctions(Protocol):
     def load(self) -> None:
         """Loads a model to be tested."""
 
-    def predict(self) -> None:
-        """Predicts using a loaded model."""
+    def predict(
+        self,
+        input_: pd.DataFrame,
+    ) -> None:
+        """Predicts using a loaded model.
+
+        Args:
+            input_: The input for the model predictions.
+        """

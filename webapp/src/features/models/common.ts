@@ -39,7 +39,5 @@ export const extractVal = (val: any): number => {
   if (guards.isNumber(val)) return val;
   else if (guards.isListOfNumber(val)) return val[0];
   else if (guards.isListOfListOfNumber(val)) return val[0][0];
-  throw new Error(
-    'Unhandled case of prediction shape:' + JSON.stringify(val, null, 2)
-  );
+  return 0;
 };

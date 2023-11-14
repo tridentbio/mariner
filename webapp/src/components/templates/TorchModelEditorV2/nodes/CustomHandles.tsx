@@ -51,7 +51,6 @@ const CustomHandles = (props: CustomHandlesProps) => {
         {
           nodeId,
           type: 'source',
-          id: '',
           position: Position.Bottom,
           isConnectable: true,
           order: 0,
@@ -62,10 +61,11 @@ const CustomHandles = (props: CustomHandlesProps) => {
   };
   const inputHandles: CustomHandleProps[] = getInputHandles();
   const outputHandles: CustomHandleProps[] = getOutputHandles();
+
   return (
     <>
-      {inputHandles.concat(outputHandles).map((handleProps) => {
-        return <CustomHandle {...handleProps} key={handleProps.id} />;
+      {inputHandles.concat(outputHandles).map((handleProps, index) => {
+        return <CustomHandle {...handleProps} key={index} />;
       })}
     </>
   );

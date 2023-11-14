@@ -1,13 +1,20 @@
-import { CircularProgress } from '@mui/material';
+import {
+  TableActionsWrapper,
+  tableActionsSx,
+} from '@components/atoms/TableActions';
+import StackTrace from '@components/organisms/StackTrace';
+import Modal from '@components/templates/Modal';
+import { Check, ContentCopy, Error, ReadMore } from '@mui/icons-material';
+import { CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
 import { experimentsApi } from 'app/rtk/experiments';
 import { Experiment } from 'app/types/domain/experiments';
 import { ModelVersion } from 'app/types/domain/models';
 import AppLink from 'components/atoms/AppLink';
-import Table, { Column } from 'components/templates/Table';
 import { dateRender } from 'components/atoms/Table/render';
-import { FilterModel, OperatorValue } from 'components/templates/Table/types';
+import Table, { Column } from 'components/templates/Table';
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { sampleExperiment } from '../common';
 import TrainingStatusChip from './TrainingStatusChip';
 interface ModelVersionItemProps {
@@ -19,8 +26,10 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
   const { data: paginatedExperiments } = experimentsApi.useGetExperimentsQuery({
     modelId,
   });
-  const [filteredVersions, setFilteredVersions] =
-    useState<ModelVersion[]>(versions);
+
+  const navigate = useNavigate();
+
+  const [selectedModelCheck, setSelectedModelCheck] = useState<ModelVersion>();
 
   const arrayDependancy = JSON.stringify(paginatedExperiments?.data);
   const experimentsByVersion = useMemo(() => {
@@ -34,6 +43,16 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
         return acc;
       }, {} as { [key: number]: Experiment[] });
   }, [arrayDependancy]);
+
+  const handleModelCheckFix = (modelVersion: ModelVersion) => {
+    navigate(`/models/${modelVersion.modelId}/${modelVersion.id}/fix`);
+  };
+
+  const handleModelDuplicate = (modelVersion: ModelVersion) => {
+    navigate(
+      `/models/new?registeredModel=${modelVersion.modelId}&duplicateFromModelVersion=${modelVersion.id}`
+    );
+  };
 
   const columns: Column<
     ModelVersion,
@@ -107,16 +126,73 @@ const ModelVersions = ({ modelId, versions }: ModelVersionItemProps) => {
       name: 'Created At',
       render: dateRender((model: ModelVersion) => new Date(model.createdAt)),
     },
+    {
+      name: 'Actions',
+      title: 'Actions',
+      customSx: tableActionsSx,
+      fixed: true,
+      render: (model: ModelVersion) => {
+        return (
+          <TableActionsWrapper>
+            {(model.checkStatus == 'OK' || model.checkStatus == null) && (
+              <Tooltip title="Duplicate model">
+                <IconButton onClick={() => handleModelDuplicate(model)}>
+                  <ContentCopy sx={{ fontSize: '1.6rem' }} />
+                </IconButton>
+              </Tooltip>
+            )}
+            <IconButton
+              onClick={() => {
+                setSelectedModelCheck(model);
+              }}
+              color="primary"
+              disabled={!model.checkStackTrace}
+            >
+              <ReadMore />
+            </IconButton>
+            {(() => {
+              switch (model.checkStatus) {
+                case 'FAILED':
+                  return (
+                    <Tooltip title="Navigate to fix model version">
+                      <IconButton onClick={() => handleModelCheckFix(model)}>
+                        <Error sx={{ color: '#ed6c02de' }} />
+                      </IconButton>
+                    </Tooltip>
+                  );
+                case 'OK':
+                case null:
+                  return <Check sx={{ color: 'rgba(0, 0, 0, 0.26)' }} />;
+                default:
+                  return <CircularProgress size={25} />;
+              }
+            })()}
+          </TableActionsWrapper>
+        );
+      },
+    },
   ];
 
   return (
     <Box>
+      <Modal
+        open={!!selectedModelCheck}
+        onClose={() => {
+          setSelectedModelCheck(undefined);
+        }}
+        title="Failed model check"
+      >
+        <StackTrace
+          stackTrace={selectedModelCheck?.checkStackTrace}
+          message="Exception during model checking"
+        />
+      </Modal>
       <Table
         filterLinkOperatorOptions={['or']}
         rowKey={(row) => row.id}
         //TODO: Use TS to implement a way to the table component to accept column dependency types and pass it to the render function
         columns={columns as Column<any, any>[]}
-        rows={filteredVersions}
+        rows={versions}
         tableId="model-versions"
         usePreferences
         dependencies={{

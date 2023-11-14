@@ -32,7 +32,7 @@ const ComponentConfigNode = ({
       docsLink={docsLink}
       id={props.id}
       handlesElement={
-        <CustomHandles nodeId={props.data.name} type={props.data.type} />
+        <CustomHandles nodeId={props.id} type={props.data.type} />
       }
       headerExtra={
         <NodeHeader

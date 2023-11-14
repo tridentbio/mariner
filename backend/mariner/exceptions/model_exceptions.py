@@ -36,3 +36,8 @@ class ModelVersionNotTrained(Exception):
     """Raised when the application can't proceed because the
     user is trying to use a model not yet trained.
     """
+
+
+class ModelVersionNotUpdatable(Exception):
+    """Raised when the application can't proceed with a user request
+    for a model version update because the model it's already final"""

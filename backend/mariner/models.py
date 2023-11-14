@@ -1,19 +1,24 @@
 """
 Models service
 """
+import asyncio
 import logging
-import traceback
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from uuid import uuid4
 
 import mlflow
 import mlflow.exceptions
+import ray
 from sqlalchemy.orm.session import Session
 
+from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet import options
 from fleet.model_functions import predict
+from fleet.model_schemas import FleetModelSpec
 from fleet.ray_actors.model_check_actor import ModelCheckActor
+from fleet.ray_actors.tasks import TaskControl, get_task_control
 from mariner.core import mlflowapi
+from mariner.db.session import SessionLocal
 from mariner.entities.user import User as UserEntity
 from mariner.exceptions import (
     DatasetNotFound,
@@ -21,8 +26,12 @@ from mariner.exceptions import (
     ModelNotFound,
     ModelVersionNotFound,
 )
-from mariner.exceptions.model_exceptions import ModelVersionNotTrained
+from mariner.exceptions.model_exceptions import (
+    ModelVersionNotTrained,
+    ModelVersionNotUpdatable,
+)
 from mariner.schemas.api import ApiBaseModel
+from mariner.schemas.dataset_schemas import Dataset as DatasetSchema
 from mariner.schemas.model_schemas import (
     Model,
     ModelCreate,
@@ -31,8 +40,8 @@ from mariner.schemas.model_schemas import (
     ModelsQuery,
     ModelVersion,
     ModelVersionCreateRepo,
-    TrainingCheckRequest,
-    TrainingCheckResponse,
+    ModelVersionUpdate,
+    ModelVersionUpdateRepo,
 )
 from mariner.stores.dataset_sql import dataset_store
 from mariner.stores.model_sql import model_store
@@ -41,13 +50,44 @@ LOG = logging.getLogger(__file__)
 LOG.setLevel(logging.INFO)
 
 
-async def check_model_step_exception(
-    db: Session, config: TrainingCheckRequest
-) -> TrainingCheckResponse:
+def _is_config_checkable(config: FleetModelSpec) -> bool:
+    """
+    Checks if a config has a checkable model framework.
+
+    Currently only "torch" is checkable.
+
+    Args:
+        config: ModelSchema instance specifying the model.
+    """
+    return config.framework == "torch"
+
+
+def _check_model(
+    model_version: ModelVersion, user: UserEntity, task_control: TaskControl
+):
+    ray_task = start_check_model_step_exception(
+        model_version=model_version,
+        user=user,
+        task_control=task_control,
+    )
+    coroutine = _make_coroutine(ray_task)
+    task = asyncio.create_task(coroutine)
+    task.add_done_callback(
+        lambda _: handle_model_check_finished(
+            task_args={"model_version_id": model_version.id},
+            task_control=task_control,
+        )
+    )
+    return task
+
+
+def start_check_model_step_exception(
+    model_version: ModelVersion, user: UserEntity, task_control: TaskControl
+) -> ray.ObjectRef:
     """Checks the steps of a pytorch lightning model built from config.
 
-    Steps are checked before creating the model on the backend, so the user may fix
-    the config based on the exceptions raised.
+    The checking task runs asynchronously in a ray actor. It is added to
+    the task control so that it can be monitored.
 
     Args:
         db: Connection to the database, needed to get the dataset.
@@ -55,25 +95,99 @@ async def check_model_step_exception(
 
     Returns:
         An object either with the stack trace or the model output.
+
+    See also:
+        :class:`fleet.ray_actors.model_check_actor.ModelCheckActor`
     """
-    try:
-        dataset = dataset_store.get_by_name(db, config.model_spec.dataset.name)
-        actor = ModelCheckActor.remote()
-        output = await actor.check_model_steps.remote(
-            dataset=dataset, config=config.model_spec
+    with SessionLocal() as db:
+        dataset = DatasetSchema.from_orm(
+            dataset_store.get_by_name(
+                db,
+                model_version.config.dataset.name,
+                user_id=user.id,
+            )
         )
-        return TrainingCheckResponse(output=output)
-    # Don't catch any specific exception to properly get the traceback
-    except:  # noqa E722 pylint: disable=W0702
-        lines = traceback.format_exc()
-        return TrainingCheckResponse(stack_trace=lines)
+        actor = ModelCheckActor.remote()  # pylint: disable=E1101
+        task = actor.check_model_steps.remote(  # pylint: disable=E1101
+            dataset=dataset, config=model_version.config
+        )
+        task_control.add_task(
+            task,
+            {
+                "model_version_id": model_version.id,
+            },
+        )
+
+        return task
 
 
-def create_model(
+def handle_model_check_finished(
+    task_args: Dict[str, Any],
+    task_control: TaskControl,
+):
+    """Handles the result of the model check task.
+
+    1. Update model version check_status
+    fields according to task result.
+    2. Remove task from task control.
+    3. Update connected users of interest
+    """
+    # Update model version check status
+    model_version_id = task_args["model_version_id"]
+    ids, tasks = task_control.get_tasks(
+        {
+            "model_version_id": model_version_id,
+        }
+    )
+    if len(tasks) == 0:
+        LOG.warning("Handling check but no tasks were found")
+    with SessionLocal() as db:
+        for id_, task in zip(ids, tasks):
+            result = ray.get(task)
+            model_version = model_store.update_model_version(
+                db=db,
+                version_id=task_args["model_version_id"],
+                obj_in=ModelVersionUpdateRepo(
+                    check_status="OK" if not result.stack_trace else "FAILED",
+                    check_stack_trace=result.stack_trace,
+                ).dict(exclude_unset=True),
+            )
+            if not model_version:
+                raise RuntimeError(
+                    "model_version is None: Failed to update model version"
+                )
+
+            # User of interest is the model version creator
+            users = [model_version.created_by_id]
+            asyncio.ensure_future(
+                get_websockets_manager().send_message_to_user(
+                    user_id=users,
+                    message=WebSocketResponse(
+                        type="update-model",
+                        data=ModelVersion.from_orm(model_version),
+                    ),
+                )
+            )
+
+        # Remove tasks:
+        for id_ in ids:
+            task_control.remove_task(id_)
+
+
+async def _make_coroutine(ray_object_ref: ray.ObjectRef):
+    """
+    Turns a ray task into a coroutine.
+    """
+    result = await ray_object_ref
+    return result
+
+
+async def create_model(
     db: Session,
     user: UserEntity,
     model_create: ModelCreate,
-) -> Model:
+    return_async_task=False,
+) -> Model | Tuple[Model, Any]:
     r"""
     Creates a model and a model version if passed with a
     non-existing `model_create.name`, otherwise creates a
@@ -81,7 +195,9 @@ def create_model(
     Triggers the creation of a RegisteredModel and a ModelVersion
     in MLFlow API's
     """
-    dataset = dataset_store.get_by_name(db, model_create.config.dataset.name)
+    dataset = dataset_store.get_by_name(
+        db, model_create.config.dataset.name, user_id=user.id
+    )
     if not dataset:
         raise DatasetNotFound(
             f"Dataset {model_create.config.dataset.name} not found"
@@ -93,7 +209,12 @@ def create_model(
         db, model_create.name, user_id=user.id
     )
     if existingmodel:
-        model_store.create_model_version(
+        check_status = (
+            "OK"
+            if not _is_config_checkable(model_create.config)
+            else "RUNNING"
+        )
+        model_version = model_store.create_model_version(
             db,
             ModelVersionCreateRepo(
                 mlflow_version=None,
@@ -101,18 +222,30 @@ def create_model(
                 model_id=existingmodel.id,
                 name=model_create.config.name,
                 config=model_create.config,
+                created_by_id=user.id,
                 description=model_create.model_version_description,
+                check_status=check_status,
             ),
         )
-        return Model.from_orm(existingmodel)
+        task = None
+        if check_status == "RUNNING":
+            task = _check_model(
+                model_version=ModelVersion.from_orm(model_version),
+                user=user,
+                task_control=get_task_control(),
+            )
+        model = Model.from_orm(existingmodel)
+        if return_async_task:
+            return model, task
+        return model
 
     # Handle cases of creating a new model in the registry
     mlflow_name = f"{user.id}-{model_create.name}-{uuid4()}"
 
     try:
         mlflowapi.create_registered_model(
-            client,
             name=mlflow_name,
+            client=client,
             description=model_create.model_description,
         )
     except mlflow.exceptions.MlflowException as exp:
@@ -147,15 +280,16 @@ def create_model(
         ),
     )
 
-    if model_create.config.framework == "torch":
-        assert model_create.config.dataset.target_columns[
-            0
-        ].out_module, "missing out_module in target_column"
-
-    model_store.create_model_version(
+    model_version = model_store.create_model_version(
         db,
         ModelVersionCreateRepo(
+            created_by_id=user.id,
             mlflow_version=None,
+            check_status=(
+                "OK"
+                if not _is_config_checkable(model_create.config)
+                else "RUNNING"
+            ),
             mlflow_model_name=mlflow_name,
             model_id=model.id,
             name=model_create.config.name,
@@ -163,8 +297,22 @@ def create_model(
             description=model_create.model_version_description,
         ),
     )
+    task = None
+    if _is_config_checkable(model_create.config):
+        assert model_create.config.dataset.target_columns[
+            0
+        ].out_module, "missing out_module in target_column"
 
+        task = _check_model(
+            model_version=ModelVersion.from_orm(model_version),
+            user=user,
+            task_control=get_task_control(),
+        )
+
+    assert model_version.id in [version.id for version in model.versions]
     model = Model.from_orm(model)
+    if return_async_task:
+        return model, task
     return model
 
 
@@ -197,7 +345,12 @@ class PredictRequest(ApiBaseModel):
     model_input: Any
 
 
-def get_model_prediction(
+@ray.remote
+def _predict(*args, **kwargs):
+    return predict(*args, **kwargs)
+
+
+async def get_model_prediction(
     db: Session, request: PredictRequest
 ) -> Dict[str, List[Any]]:
     """(Slowly) Loads a model version and apply it to a sample input
@@ -225,12 +378,13 @@ def get_model_prediction(
     if not modelversion.mlflow_version:
         raise ModelVersionNotTrained()
 
-    return predict(
+    result = await _predict.remote(
         mlflow_model_name=modelversion.mlflow_model_name,
         mlflow_model_version=modelversion.mlflow_version,
         spec=modelversion.config,
         input_=request.model_input,
     )
+    return result
 
 
 def get_model(db: Session, user: UserEntity, model_id: int) -> Model:
@@ -252,3 +406,76 @@ def delete_model(db: Session, user: UserEntity, model_id: int) -> Model:
     parsed_model = Model.from_orm(model)
     model_store.delete_by_id(db, model_id)
     return parsed_model
+
+
+async def update_model_version(
+    db: Session,
+    user: UserEntity,
+    version_id: int,
+    version_update: ModelVersionUpdate,
+    model_id: int | None = None,
+    return_async_task=False,
+) -> ModelVersion | Tuple[ModelVersion, Any | None]:
+    """
+    Updates a single model version.
+
+    Model versions are only open for updates when a model training check points to a failure.
+
+    Args:
+        db: Session with the database.
+        user: User making the request.
+        version_id: Model version id to update.
+        version_update: Model version update data.
+        model_id (optional): Model id. If provided, the model version must belong to this model.
+        return_async_task (optional): If True, returns a tuple with the model version and the
+            async task that will update the model version. If False, returns only the model version.
+            Defaults to False.
+    Returns:
+        Updated model version.
+    Raises:
+        ModelVersionNotFound: If the version from request.model_version_id
+        is not in the database.
+        ModelVersionNotUpdatable: If the model version is not updatable.
+    """
+    modelversion = model_store.get_model_version(db, version_id)
+    if not modelversion:
+        raise ModelVersionNotFound("Model version not found")
+    if model_id is not None and modelversion.model_id != model_id:
+        raise ModelVersionNotFound(
+            f"Model version not found in model with id {model_id}"
+        )
+
+    if modelversion.check_status != "FAILED":
+        raise ModelVersionNotUpdatable(
+            "Only allowed to update model versions that have failed the check status"
+        )
+    repo_version_update = ModelVersionUpdateRepo(
+        **version_update.dict(exclude_unset=True)
+    )
+    if repo_version_update.config and not _is_config_checkable(
+        repo_version_update.config
+    ):
+        repo_version_update.check_status = "OK"
+        repo_version_update.check_stack_trace = None
+    elif repo_version_update.config:
+        repo_version_update.check_status = "RUNNING"
+
+    modelversion = model_store.update_model_version(
+        db, version_id, repo_version_update.dict(exclude_unset=True)
+    )
+    model_version = ModelVersion.from_orm(modelversion)
+
+    task = None
+    if repo_version_update.config and _is_config_checkable(
+        repo_version_update.config
+    ):
+        LOG.info(repo_version_update.config)
+        task = _check_model(
+            model_version=model_version,
+            user=user,
+            task_control=get_task_control(),
+        )
+
+    if return_async_task:
+        return model_version, task
+    return model_version

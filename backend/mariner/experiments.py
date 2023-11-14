@@ -12,13 +12,14 @@ import ray
 from sqlalchemy.orm.session import Session
 
 import mariner.events as events_ctl
-from api.websocket import WebSocketMessage, get_websockets_manager
+from api.websocket import WebSocketResponse, get_websockets_manager
 from fleet.model_builder.optimizers import (
     AdamParamsSchema,
     OptimizerSchema,
     SGDParamsSchema,
 )
 from fleet.model_functions import Result
+from fleet.ray_actors.tasks import get_task_control
 from fleet.ray_actors.training_actors import TrainingActor
 from mariner.core.aws import Bucket
 from mariner.core.config import get_app_settings
@@ -56,8 +57,24 @@ async def make_coroutine_from_ray_objectref(ref: ray.ObjectRef):
     Args:
         ref: ray ObjectRef
     """
-    result = await ref
-    return result
+    try:
+        result = await ref
+        return result
+    except ray.exceptions.RayActorError as exc:
+        # Actor killed, or other
+        # LOG.error("RayActorError")
+        # LOG.exception(exc)
+        raise exc
+    except ray.exceptions.TaskCancelledError as exc:
+        # LOG.warning("TASK CANCELLED!!!")
+        raise exc
+    except ray.exceptions.RaySystemError as exc:
+        # LOG.error("RaySystemError")
+        # LOG.exception(exc)
+        raise exc
+    except Exception as exc:
+        # LOG.warning("TASK FAILED ", exc)
+        raise exc
 
 
 def handle_training_complete(task: Task, experiment_id: int):
@@ -75,9 +92,16 @@ def handle_training_complete(task: Task, experiment_id: int):
     """
     with SessionLocal() as db:
         experiment = experiment_store.get(db, experiment_id)
-        assert experiment
+        task_ctl = get_task_control()
+        assert experiment, "Experiment not found"
         exception = task.exception()
         done = task.done()
+
+        for id_, (_, task_metadata) in task_ctl.items():
+            if task_metadata.get("experiment_id") == experiment_id:
+                task_ctl.kill_and_remove(id_)
+                break
+
         if not done:
             raise RuntimeError("Task is not done")
         if exception:
@@ -95,7 +119,7 @@ def handle_training_complete(task: Task, experiment_id: int):
             asyncio.ensure_future(
                 get_websockets_manager().send_message_to_user(  # noqa
                     user_id=experiment.created_by_id,
-                    message=WebSocketMessage(
+                    message=WebSocketResponse(
                         type="update-running-metrics",
                         data=UpdateRunningData(
                             experiment_id=experiment_id,
@@ -129,7 +153,7 @@ def handle_training_complete(task: Task, experiment_id: int):
         asyncio.ensure_future(
             get_websockets_manager().send_message_to_user(
                 user_id=experiment.created_by_id,
-                message=WebSocketMessage(
+                message=WebSocketResponse(
                     type="update-running-metrics",
                     data=UpdateRunningData(
                         experiment_id=experiment_id,
@@ -146,10 +170,13 @@ def handle_training_complete(task: Task, experiment_id: int):
 
 def get_ray_options(training_request: TrainingRequest):
     """Extracts the options of a ray task from the training request"""
-    if training_request.framework == 'torch':
-        return { 'num_gpus': 1 if training_request.config.use_gpu else 0}
+    if training_request.framework == "torch":
+        return {"num_gpus": 1 if training_request.config.use_gpu else 0}
     else:
-        return {}
+        return {
+            "num_gpus": 0,
+        }
+
 
 async def create_model_training(
     db: Session, user: UserEntity, training_request: TrainingRequest
@@ -170,7 +197,7 @@ async def create_model_training(
         ModelVersionNotFound: when model version in training_request is missing
     """
     model_version = model_store.get_model_version(
-        db, id=training_request.model_version_id
+        db, model_id=training_request.model_version_id
     )
 
     if not model_version:
@@ -178,7 +205,7 @@ async def create_model_training(
 
     model_version_parsed = ModelVersion.from_orm(model_version)
     dataset = dataset_store.get_by_name(
-        db, model_version_parsed.config.dataset.name
+        db, model_version_parsed.config.dataset.name, user_id=user.id
     )
     assert (
         dataset
@@ -190,6 +217,7 @@ async def create_model_training(
         {
             "learning_rate": training_request.config.optimizer.params.lr,
             "epochs": training_request.config.epochs,
+            "config": training_request.config.dict(),
         }
         if training_request.framework == "torch"
         else {}
@@ -206,12 +234,13 @@ async def create_model_training(
     if training_request.framework == "torch":
         experiment_payload["epochs"] = training_request.config.epochs
 
+    obj_in = ExperimentCreateRepo(**experiment_payload)
     experiment = experiment_store.create(
         db,
-        obj_in=ExperimentCreateRepo(**experiment_payload),
+        obj_in=obj_in,
     )
 
-    training_actor = TrainingActor.options(**get_ray_options(training_request)).remote(  # type: ignore
+    training_actor = TrainingActor.options(**get_ray_options(training_request)).remote(  # type: ignore pylint: disable=no-member
         experiment=Experiment.from_orm(experiment),
         request=training_request,
         user_id=user.id,
@@ -219,7 +248,7 @@ async def create_model_training(
     )
 
     dataset_uri = f"s3://{Bucket.Datasets.value}/{dataset.data_url}"
-    training_ref = training_actor.fit.remote(
+    training_ref = training_actor.fit.remote(  # type: ignore
         experiment_id=experiment.id,
         experiment_name=experiment.experiment_name,
         user_id=user.id,
@@ -233,6 +262,13 @@ async def create_model_training(
             "split_type": dataset.split_type,
         },
     )
+    get_task_control().add_task(
+        training_actor,
+        {
+            "experiment_id": experiment.id,
+            "created_by_id": experiment.created_by_id,
+        },
+    )
     get_exp_manager().add_experiment(
         ExperimentView(
             experiment_id=experiment.id,
@@ -244,6 +280,25 @@ async def create_model_training(
         handle_training_complete,
     )
     return Experiment.from_orm(experiment)
+
+
+def cancel_training(user: UserEntity, experiment_id: int):
+    """
+    Cancels a training.
+
+    Args:
+        user: user that originated request.
+        experiment_id: id of the experiment to be cancelled.
+    """
+    task_ctl = get_task_control()
+    ids, _ = task_ctl.get_tasks(
+        metadata={
+            "experiment_id": experiment_id,
+            "created_by_id": user.id,
+        }
+    )
+    for id_ in ids:
+        task_ctl.kill_and_remove(id_)
 
 
 def get_experiments(
@@ -383,6 +438,9 @@ def log_hyperparams(
     experiment_db = experiment_store.get(db, experiment_id)
     if not experiment_db:
         raise ExperimentNotFound()
+    for key, value in experiment_db.hyperparams.items():
+        if key not in hyperparams:
+            hyperparams[key] = value
     update_obj = ExperimentUpdateRepo(hyperparams=hyperparams)
     experiment_store.update(db, db_obj=experiment_db, obj_in=update_obj)
 
@@ -456,7 +514,7 @@ async def send_ws_epoch_update(
         running_history[metric_name].append(metric_value)
     await get_websockets_manager().send_message_to_user(
         user_id,
-        WebSocketMessage(
+        WebSocketResponse(
             type="update-running-metrics",
             data=UpdateRunningData(
                 experiment_id=experiment_id,
@@ -537,6 +595,8 @@ def get_experiments_metrics_for_model_version(
     Returns:
         List[Experiment]
     """
-    return experiment_store.get_experiments_metrics_for_model_version(
-        db, model_version_id, user.id
+    return Experiment.from_orm_array(
+        experiment_store.get_experiments_metrics_for_model_version(
+            db, model_version_id, user.id
+        )
     )

@@ -19,20 +19,17 @@ from mlflow.entities.model_registry.model_version import ModelVersion
 from pandas import DataFrame
 from pydantic import BaseModel
 
-from fleet.base_schemas import (
-    BaseModelFunctions,
-    FleetModelSpec,
-    TorchModelSpec,
-)
+from fleet.base_schemas import BaseModelFunctions
 from fleet.dataset_schemas import (
     DatasetConfigWithPreprocessing,
     TorchDatasetConfig,
 )
 from fleet.mlflow import load_pipeline, save_pipeline
+from fleet.model_schemas import FleetModelSpec
 from fleet.scikit_.model_functions import SciKitFunctions
 from fleet.scikit_.schemas import SklearnModelSpec
 from fleet.torch_.model_functions import TorchFunctions
-from fleet.torch_.schemas import TorchTrainingConfig
+from fleet.torch_.schemas import TorchModelSpec, TorchTrainingConfig
 from fleet.train.custom_logger import MarinerLogger
 from fleet.utils.dataset import (
     check_dataframe_conforms_dataset,
@@ -41,6 +38,7 @@ from fleet.utils.dataset import (
 from mariner.core.aws import download_s3
 from mariner.exceptions import InvalidDataframe
 
+MODEL_CONFIG_ARTIFACT = "model_config.yaml"
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
 
@@ -184,6 +182,7 @@ def fit(
         else:
             raise ValueError("Can't find functions for spec")
 
+        mlflow.log_text(spec.to_yaml_str(), MODEL_CONFIG_ARTIFACT)
         save_pipeline(functions.preprocessing_pipeline)
 
     return Result(
@@ -293,7 +292,7 @@ def predict(
             spec.dataset = spec.dataset.to_dataset_config()
         model = mlflow.sklearn.load_model(model_uri)
         functions = SciKitFunctions(
-            spec, None, model=model, preprocessing_pipeline=pipeline
+            spec, dataset=None, model=model, preprocessing_pipeline=pipeline
         )
         return functions.predict(input_)
 

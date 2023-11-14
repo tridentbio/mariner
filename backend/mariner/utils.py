@@ -110,9 +110,9 @@ def compress_file(file: Union[io.BytesIO, BinaryIO]) -> io.BytesIO:
     """
     try:
         file.seek(0)
-        file = io.BytesIO(compress(file.read()))
-        file.seek(0)
-        return file
+        file2 = io.BytesIO(compress(file.read()))
+        file2.seek(0)
+        return file2
 
     except AttributeError as e:
         raise TypeError("file must be instance of file") from e

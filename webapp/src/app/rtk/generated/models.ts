@@ -69,14 +69,14 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['models'],
       }),
-      postModelCheckConfig: build.mutation<
-        PostModelCheckConfigApiResponse,
-        PostModelCheckConfigApiArg
+      putModelVersion: build.mutation<
+        PutModelVersionApiResponse,
+        PutModelVersionApiArg
       >({
         query: (queryArg) => ({
-          url: `/api/v1/models/check-config`,
-          method: 'POST',
-          body: queryArg.trainingCheckRequest,
+          url: `/api/v1/models/${queryArg.modelId}/versions/${queryArg.modelVersionId}`,
+          method: 'PUT',
+          body: queryArg.modelVersionUpdate,
         }),
         invalidatesTags: ['models'],
       }),
@@ -134,10 +134,12 @@ export type DeleteModelApiResponse =
 export type DeleteModelApiArg = {
   modelId: number;
 };
-export type PostModelCheckConfigApiResponse =
-  /** status 200 Successful Response */ TrainingCheckResponse;
-export type PostModelCheckConfigApiArg = {
-  trainingCheckRequest: TrainingCheckRequest;
+export type PutModelVersionApiResponse =
+  /** status 200 Successful Response */ ModelVersion;
+export type PutModelVersionApiArg = {
+  modelId: number;
+  modelVersionId: number;
+  modelVersionUpdate: ModelVersionUpdate;
 };
 export type GetExperimentsMetricsForModelVersionApiResponse =
   /** status 200 Successful Response */ Experiment[];
@@ -207,6 +209,7 @@ export type Dataset = {
   splitTarget: string;
   splitActual?: string;
   splitType: 'scaffold' | 'random';
+  splitColumn?: string;
   createdAt: string;
   updatedAt: string;
   createdById: number;
@@ -447,7 +450,7 @@ export type ColumnConfig = {
 export type BaseModel = {};
 export type OneHotEncoderConfig = {
   type?: 'sklearn.preprocessing.OneHotEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -457,7 +460,7 @@ export type OneHotEncoderConfig = {
 };
 export type LabelEncoderConfig = {
   type?: 'sklearn.preprocessing.LabelEncoder';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -543,7 +546,7 @@ export type StandardScalerConfig = {
 };
 export type NpConcatenateConfig = {
   type?: 'fleet.model_builder.transforms.np_concatenate.NpConcatenate';
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
   name: string;
   forwardArgs:
     | {
@@ -645,7 +648,7 @@ export type DatasetConfig = {
 };
 export type CreateFromType = {
   type: string;
-  constructorArgs?: BaseModel;
+  constructorArgs?: BaseModel | object;
 };
 export type ColumnConfigWithPreprocessing = {
   name: string;
@@ -795,6 +798,8 @@ export type ModelVersion = {
       } & SklearnModelSpec);
   createdAt: string;
   updatedAt: string;
+  checkStatus?: 'OK' | 'FAILED' | 'RUNNING';
+  checkStackTrace?: string;
 };
 export type ModelFeaturesAndTarget = {
   modelId?: number;
@@ -882,12 +887,8 @@ export type AllowedLosses = {
   }[];
   typeMap?: object;
 };
-export type TrainingCheckResponse = {
-  stackTrace?: string;
-  output?: any;
-};
-export type TrainingCheckRequest = {
-  modelSpec: TorchModelSpec;
+export type ModelVersionUpdate = {
+  config?: TorchModelSpec | SklearnModelSpec;
 };
 export type Experiment = {
   experimentName?: string;
@@ -900,9 +901,7 @@ export type Experiment = {
   mlflowId?: string;
   stage: 'NOT RUNNING' | 'RUNNING' | 'SUCCESS' | 'ERROR';
   createdBy?: User;
-  hyperparams?: {
-    [key: string]: number;
-  };
+  hyperparams?: object;
   epochs?: number;
   trainMetrics?: {
     [key: string]: number;
@@ -932,7 +931,7 @@ export const {
   useGetModelQuery,
   useLazyGetModelQuery,
   useDeleteModelMutation,
-  usePostModelCheckConfigMutation,
+  usePutModelVersionMutation,
   useGetExperimentsMetricsForModelVersionQuery,
   useLazyGetExperimentsMetricsForModelVersionQuery,
 } = injectedRtkApi;

@@ -162,6 +162,7 @@ class DeploymentUpdateInput(ApiBaseModel):
     show_training_data: bool = None
     prediction_rate_limit_value: int = None
     prediction_rate_limit_unit: RateLimitUnit = None
+    model_version_id: int = None
 
 
 class DeploymentUpdateRepo(DeploymentUpdateInput):

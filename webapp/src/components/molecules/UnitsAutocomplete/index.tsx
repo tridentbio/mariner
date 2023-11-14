@@ -1,16 +1,11 @@
-import {
-  Autocomplete,
-  Chip,
-  CircularProgress,
-  MenuItem,
-  TextField,
-} from '@mui/material';
+import { VirtualizedAutocomplete } from '@components/atoms/VirtualizedAutocomplete';
+import { Chip, CircularProgress, MenuItem, TextField } from '@mui/material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
-import { debounce } from 'utils';
-import { isUnitValid, Unit } from 'features/units/unitsAPI';
+import { useNotifications } from 'app/notifications';
+import { Unit, isUnitValid } from 'features/units/unitsAPI';
 import { fetchUnits } from 'features/units/unitsSlice';
 import { useEffect, useMemo, useState } from 'react';
-import { useNotifications } from 'app/notifications';
+import { debounce } from 'utils';
 
 interface UnitsAutocompleteProps {
   value?: Unit;
@@ -59,15 +54,34 @@ const UnitAutocomplete = ({
       })
       .finally(() => setCheckLoading(false));
   }, 500);
-  const optionsWithValue = useMemo(
-    () =>
-      value && options.map((opt) => opt.name).includes(value.name)
-        ? options
-        : [{ name: value?.name, type: 'raw' }, ...options],
-    [options, value]
-  );
+
+  const optionsWithValue = useMemo(() => {
+    if (!!value?.name && !options.some((opt) => opt.name === value.name))
+      return [{ name: value?.name, type: 'raw' }, ...options];
+
+    return options;
+  }, [options, value]);
+
+  const filterOptions = (options: UnitOption[], inputValue: string) => {
+    options = options
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .filter(
+        (opt) =>
+          opt.type === 'raw' ||
+          opt.name.toLowerCase().includes(inputValue.toLowerCase())
+      );
+
+    const invalidOption =
+      !!inputValue && !options.some((opt) => opt.name == inputValue);
+
+    if (invalidOption)
+      options.unshift({ name: inputValue, type: 'raw' as const });
+
+    return options;
+  };
+
   return (
-    <Autocomplete
+    <VirtualizedAutocomplete
       sx={{ mt: 2, width: '100%' }}
       data-testid={`dataset-col-data-type-unit-${pattern}`}
       renderInput={(params) => (
@@ -79,22 +93,9 @@ const UnitAutocomplete = ({
           {...params}
         />
       )}
-      filterOptions={(options, state) => {
-        options.sort((a, b) => (a.name < b.name ? 1 : -1));
-        return [
-          ...(state.inputValue &&
-          !options.map((opt) => opt.name).includes(state.inputValue)
-            ? [{ name: state.inputValue, type: 'raw' as const }]
-            : []),
-          ...options
-            .filter(
-              (opt) =>
-                opt.type === 'raw' ||
-                opt.name.toLowerCase().includes(state.inputValue.toLowerCase())
-            )
-            .slice(0, 100),
-        ];
-      }}
+      filterOptions={(options, state) =>
+        filterOptions(options, state.inputValue)
+      }
       renderOption={(props, option) => {
         return (
           <MenuItem {...props}>

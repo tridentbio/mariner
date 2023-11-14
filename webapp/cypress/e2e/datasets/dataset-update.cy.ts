@@ -2,6 +2,8 @@ import { randomLowerCase } from 'utils';
 import { DatasetFormData } from '../../support/dataset/create';
 import { deleteDatasetIfAlreadyExists } from '../../support/dataset/delete';
 
+const API_BASE_URL = Cypress.env('API_BASE_URL');
+
 describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
   const updatedDataset = {
     name: randomLowerCase(),
@@ -9,7 +11,7 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
   };
   let dataset: DatasetFormData;
   before(() => {
-    cy.loginSuper();
+    cy.loginUser();
 
     cy.setupZincDataset().then((zinc) => {
       dataset = zinc;
@@ -19,8 +21,7 @@ describe('/datasets/:datasetId/edit - Dataset Edit Page', () => {
     deleteDatasetIfAlreadyExists(updatedDataset.name);
   });
   beforeEach(() => {
-    cy.loginSuper();
-    cy.intercept('GET', 'http://localhost:3000/api/v1/datasets/*').as(
+    cy.intercept('GET', `${API_BASE_URL}/api/v1/datasets/*`).as(
       'getDatasets'
     );
     cy.visit('/datasets');

@@ -16,6 +16,7 @@ import {
   OnEdgesChange,
 } from 'reactflow';
 import { ArrayElement } from 'utils';
+import { CSSProperties } from 'styled-components';
 
 export type MarinerNode = Node<NodeType>;
 
@@ -175,4 +176,8 @@ export interface ITorchModelEditorContext
 
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
+
+  nodesInitialized: boolean;
+
+  highlightNodes: (nodeIds: string[], color?: CSSProperties['color']) => void;
 }

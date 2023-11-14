@@ -62,6 +62,12 @@ build:                  ## Builds needed local images to run application.
 	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
 
 
+.PHONY: build-backend
+build-backend:
+	$(DOCKER_COMPOSE) build backend
+	$(DOCKER_COMPOSE) build --parallel ray-head ray-worker mlflow mlflowdb db
+
+
 .PHONY: create-admin
 create-admin:           ## Creates default "admin@mariner.trident.bio" with "123456" password
 	$(DOCKER_COMPOSE) run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
@@ -77,9 +83,10 @@ start-backend:         ## Builds and starts backend
 
 .PHONY: start-backend-local
 start-backend-local:        ## Runs backend locally
-	$(DOCKER_COMPOSE) up --wait db mlflow ray-head mlflow
+	$(DOCKER_COMPOSE) up --wait db mlflowdb
 	cd backend &&\
-		RESTART=true poetry run dotenv run python -m api.main
+		export FILE=$(mktemp); cat .env .env.secret > $FILE && \
+		RESTART=true poetry run dotenv -f $FILE run python -m api.main
 
 
 .PHONY: start
@@ -125,9 +132,8 @@ test-integration: start-backend ## Runs unit tests
 	$(DOCKER_COMPOSE) exec backend pytest -m 'integration' $(ARGS)
 
 
-.PHONY: test-e2e
-test-e2e: build start create-admin create-test-user## Runs test target
-	$(DOCKER_COMPOSE) run --entrypoint sh e2e -c "npm install && npx cypress install && npx cypress run --config-file /e2e/cypress.config.js --browser chrome"
+.PHONY: e2e-test
+e2e-test: start create-admin create-test-user
 
 
 .PHONY: pre-commit
@@ -176,3 +182,6 @@ live-docs-local:  ## Runs the documentation server.
 		poetry run \
 		dotenv -f .env.secret -f .env run \
 		sphinx-autobuild --port 8001 --open-browser -a --watch .. $(SPHINX_OPTS) ../docs/source ../build
+.PHONY: jupyter
+jupyter:  ## Starts jupyter on the backend container
+	docker run -p 8888:8888 -v ./backend:/app:z --entrypoint bash -i --tty  --network host --env-file backend/.env mariner-backend
