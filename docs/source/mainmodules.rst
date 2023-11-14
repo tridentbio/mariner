@@ -4,11 +4,6 @@
 API Reference
 =============
 
-.. note::
-
-   This is a work in progress.
-
-
 This is a distilled version of the API reference.
 
 .. _users_ref:
@@ -172,6 +167,8 @@ Classes
     config.ServerSettings
     config.WebappSettings
     config.AuthSettingsDict
+    config.AuthSettings
+    config.SettingsV2
     config.SecretEnv
     config.ServicesEnv
     config.Package
@@ -189,3 +186,18 @@ Functions
    :template: function.rst
 
     config.get_app_settings
+
+
+:mod:`oauth_providers`: OAuth providers configuration
+=====================================================
+
+.. automodule:: oauth_providers
+
+.. currentmodule:: oauth_providers
+
+.. autosummary::
+   :recursive:
+
+    main
+    github
+    genentech

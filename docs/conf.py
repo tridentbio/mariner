@@ -19,6 +19,7 @@ try:
     import mariner
     import fleet
     import api
+    import oauth_providers
 except ImportError:
     logging.error("Failed to import packages")
     logging.error("Make sure to run with backend's virtualenv activated")

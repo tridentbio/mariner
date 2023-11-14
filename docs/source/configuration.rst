@@ -3,7 +3,7 @@
 Configuring Environment
 =======================
 
-The app configuration is done by the :ref:`mariner.core.config` module. It loads information from the environment variables, as well as the pyproject.toml file.
+The app configuration is done by the :ref:`mariner.core.config <mariner.core.config>` module. It loads information from the environment variables, as well as the pyproject.toml file.
 
 Environment variables are divided into 2 files, ``backend/.env`` and ``backend/.env.secret``.
 The separation was made to support some CI workflows, but all variables should be considered
@@ -11,17 +11,13 @@ sensitive in production.
 The ``.env`` file contains all variables that can be shared with the team.
 The ``.env.secret`` file contains all sensitive variables, and should be kept secret.
 
-Server settings
----------------
-
-This configuration is loaded from the environment variables described next into the class `mariner.core.config`_.
-
+In the implementation, those variables are usually accessed with :doc:``get_app_settings` <mariner.core.config.get_app_settings>`
 
 .. confval:: SERVER_HOST
 
    The backend url, such as ``"https://dev.mariner.backend.com"``
 
-.. confval:: BACKEND_CORS_ORIGIN
+.. confval:: SERVER_CORS 
 
    A comma separated string with the origins allowed to use the REST API, such as ``"http://localhost:3000,http://localhost:8080"``
 
@@ -32,37 +28,70 @@ This configuration is loaded from the environment variables described next into 
 
    :default: ``12888`` equivalent to 8 days
 
-.. confval:: ENV
-
-   Describes the application environment. One of "production", "development"
-
-
-Webapp Settings
----------------
-
-Webapp related information the backend needs.
 
 .. confval:: WEBAPP_URL
 
-   The URL used by the webapp. Necessary when the backend needs to redirect to the webapp, such as during oauth flows. Example: ``https://dev.mariner.webapp.com``
+   The URL used by the webapp. Necessary when the backend needs to redirect to the webapp, such as during oauth flows. Example: ``"https://dev.mariner.webapp.com"``
 
-   :default: ``http://localhost:3000``
-
-Tenant Settings
----------------
-
-Settings related to the tenant that is currently being used.
+   :default: ``"http://localhost:3000"``
 
 .. confval:: TENANT_NAME
-   :default: ``default``
+
    The name of the tenant. Any string will be accepted.
+
+   :default: ``"default"``
+
+.. confval:: LIGHTNING_LOGS_DIR
+
+   Environment variable used to specify where the lightning trainer should store the generated files (used in the ``default_root_dir`` parameter of the Trainer). Can be a s3 uri, such as s3://dev-mariner-datasets/lightning-logs
+
+  :default: ``"lightning_logs/"``, i.e. stores the files in the local filesystem. Not recommended for production environments.
+
+Services
+--------
+
+.. confval:: POSTGRES_URI
+
+   The URI used to connect to the postgres database. Example: ``postgresql://user:password@localhost:5432/dbname``
+
+.. confval:: MLFLOW_TRACKING_URI
+
+    The URI used to connect to the MLFlow's tracking database. See `the mlflow docs <https://mlflow.org/docs/latest/tracking.html#id31>`_ for more information.
+
+    
+.. confval:: RAY_ADDRESS
+
+    The URI used to connect to the Ray cluster. Example: ``"ray://ray-head-backend.ray.svc.cluster.local:10001"``
+
+OAuth Settings
+--------------
+
+Here we describe the environment variables that have a role in the OAuth flow.
+New OAuth providers can be added by adding the variables to the environment
+and providing an implementation for the authentication flow in the :doc:``oauth_providers` <oauth_providers>` module.
+All OAuth providers must have the following variables.
+
+- ``OAUTH_<PROVIDER-ID>_NAME``: Configures the name of the OAuth provider button in the frontend.
+- ``OAUTH_<PROVIDER-ID>_CLIENT_ID``: Used to identify the application in the OAuth provider.
+- ``OAUTH_<PROVIDER-ID>_CLIENT_SECRET``: Used to authenticate the application in the OAuth provider.
+- ``OAUTH_<PROVIDER-ID>_AUTHORIZATION_URL``: The URL used to start the OAuth flow.
+- ``OAUTH_<PROVIDER-ID>_SCOPE``: The scope of the OAuth flow.
+- ``OAUTH_<PROVIDER-ID>_ALLOWED_EMAILS``: Optional list of emails that are allowed separated by strings. Example: ``"user1@domain.com,user2@domain.com"``
+
+Those configurations are used in the ``oauth_providers`` module to configure the OAuth flow.
 
 Secret
 ------
 
-.. confval:: SECRET_KEY
+All following variables are considered sensitive and should be kept secret.
+
+.. confval:: AUTHENTICATION_SECRET_KEY
 
    Used to sign JWT tokens. Should be kept secret and be cryptographic safe.
+
+.. confval:: DEPLOYMENT_URL_SIGNATURE_SECRET_KEY
+
+   Used to sign deployment urls. Should be kept secret and be cryptographic safe.
 
 .. confval:: APPLICATION_SECRET
 
@@ -102,50 +131,4 @@ Secret
 .. confval:: AWS_MODELS_BUCKET
 
    S3 URI used to store models.
-
-Services
---------
-
-.. confval:: POSTGRES_URI
-
-   The URI used to connect to the postgres database. Example: ``postgresql://user:password@localhost:5432/dbname``
-
-.. confval:: MLFLOW_POSTGRES_URI
-
-    The URI used to connect to the MLFlow's postgres database. Example: ``postgresql://user:password@localhost:5432/dbname``
-
-   .. warning::
-  
-    Maybe this is not used. Instead we pass the value of the mlflow postgres directly in the mlflow start command.
-
-.. confval:: MLFLOW_ARTIFACT_URI
-
-    The URI used to connect to the MLFlow's artifact database. Example: ``postgresql://user:password@localhost:5432/dbname``
-
-   .. warning::
-  
-    Maybe this is not used. Instead we pass the value of the artifact uri directly in the mlflow start command.
-
-.. confval:: MLFLOW_TRACKING_URI
-
-    The URI used to connect to the MLFlow's tracking database. See <https://mlflow.org/docs/latest/tracking.html#id31> for more information.
-
-    
-
-.. confval:: RAY_ADDRESS
-
-    The URI used to connect to the Ray cluster.
-
-Package settings
-----------------
-
-This configuration comes from the `backend/pyproject.toml` file, and is loaded by the `mariner.core.config.Package`_ class.
-
-
-.. confval:: LIGHTNING_LOGS_DIR
-
-   Can be either a S3 URI or a file path. Used to store the outputs of lightning loggers.
-
-.. confval:: API_V1_STR
-   :default: ``"/api/v1"``
 
