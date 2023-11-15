@@ -107,10 +107,13 @@ Torch layers can be added the same as transforms and featurizers, but there are 
 There are some caveats when using the code generation scripts: code generation relies on correct type-hint annotations,
 and ignores all non-primitive arguments when creating the ``forward_args`` and ``constructor_args`` pydantic models.
 The module responsible for the code generation is the :doc:`/generated/fleet.model_builder.generate`. To add new layers for code generation,
-the one should add a ``Layer`` instance on the ``layers`` or ``featurizers`` lists.
+we must add a ``Layer`` instance on the ``layers`` or ``featurizers`` lists.
 
 Adding new sklearn class
 ------------------------
 
 Currently, sklearn models must be added manually. They are placed in the :doc:`/generated/fleet.scikit_.schemas` module.
+Differently from the torch models, the sklearn components don't have to specify forward args as they are inferred from the preprocessing pipeline graph
+represented in the ``dataset`` property as explained previously.
+The feature outputs of the pipeline are concatenated and fed as the ``X`` argument of the ``fit`` method of the sklearn model and target outputs are fed as the ``y`` argument of the ``fit`` method.
 
