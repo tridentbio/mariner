@@ -16,7 +16,7 @@ To have them working in your machine run:
 make pre-commit-install
 ```
 
-## Docker compose services:
+## Docker compose services
 
 Running the application locally is easy with docker compose. If you're unfamiliar with it check out it's [user guide](https://docs.docker.com/compose/).
 

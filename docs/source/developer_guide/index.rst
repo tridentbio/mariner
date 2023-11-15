@@ -1,10 +1,14 @@
 .. _userguide:
 
-==========
-User Guide
-==========
+================
+Developers Guide
+================
+
+This section is for developers who want to extend the functionality of
+application.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    modelschema
+   extending_components

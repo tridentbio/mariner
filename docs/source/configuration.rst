@@ -1,5 +1,6 @@
 .. _configuration:
 
+=======================
 Configuring Environment
 =======================
 
@@ -60,6 +61,7 @@ Services
 .. confval:: MLFLOW_TRACKING_URI
 
     The URI used to connect to the MLFlow's tracking database. See `the mlflow docs <https://mlflow.org/docs/latest/tracking.html#id31>`_ for more information.
+    Example: ``"http://localhost:5000"`` when running mlflow locally.
 
     
 .. confval:: RAY_ADDRESS
@@ -83,8 +85,8 @@ All OAuth providers must have the following variables.
 
 Those configurations are used in the :doc:`/generated/oauth_providers` module to configure the OAuth flow.
 
-Secret
-------
+Secrets
+-------
 
 All following variables are considered sensitive and should be kept secret.
 
@@ -99,6 +101,11 @@ All following variables are considered sensitive and should be kept secret.
 .. confval:: APPLICATION_SECRET
 
    Used as basic auth password for inter service communication. Should be kept secret and be cryptographic safe.
+
+AWS
+---
+
+For the application to work, the AWS credentials must have permission to read and write to the S3 buckets defined in ``AWS_DATASETS`` and ``AWS_MODELS_BUCKET``.
 
 .. confval:: AWS_MODE
    :default: ``"local"``
@@ -135,3 +142,19 @@ All following variables are considered sensitive and should be kept secret.
 
    S3 URI used to store models.
 
+
+
+Production Environments
+=======================
+
+For production environments, we have the `infrastructure/` folder distributed with the project. It may have information from past deployments, so it should be reviewed before using it.
+To deploy it on AWS, the necessary services are:
+
+- S3 buckets of ``AWS_DATASETS`` and ``AWS_MODELS_BUCKET``. Could be the same bucket.
+- RDS
+- EKS
+- Route53
+- Cloudwatch
+- ECR
+
+With read and write permissions to these service, the infrastructure can be deployed using helm and kubectl.

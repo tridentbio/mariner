@@ -14,8 +14,10 @@ To run the application, you simply need:
 - [Docker Compose](https://docs.docker.com/compose/install/).
 - and optionally [GNU Make](https://www.gnu.org/software/make/), which is included in many distributions, and will allow you to use shorter commands
 
-
 ## Starting the application locally
+
+First you should place the AWS credentials in the `backend/.env.secret` file so the docker-compose files can use them in the services that must interact with AWS.
+For production environments, those credentials should be in the environment variables. The necessary roles
 
 Use one of the following to start all core services:
 
