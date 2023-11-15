@@ -82,3 +82,16 @@ napoleon_use_rtype = True
 napoleon_preprocess_types = False
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
+
+
+autodoc_default_options = {
+    'members': True,
+    'special-members': '__init__',
+    'undoc-members': True,
+    'exclude-members': '__weakref__',
+    'show-inheritance': True,
+}
+autodoc_mock_imports = ["lightning"]
+autodoc_typehints = "both"
+# autodoc_warningiserror = True
+autodoc_preserve_defaults = True

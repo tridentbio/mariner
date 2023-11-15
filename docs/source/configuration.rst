@@ -3,7 +3,7 @@
 Configuring Environment
 =======================
 
-The app configuration is done by the :ref:`mariner.core.config <mariner.core.config>` module. It loads information from the environment variables, as well as the pyproject.toml file.
+The app configuration is done by the :doc:`mariner.core.config </generated/mariner.core.config>` module. It loads information from the environment variables, as well as the pyproject.toml file.
 
 Environment variables are divided into 2 files, ``backend/.env`` and ``backend/.env.secret``.
 The separation was made to support some CI workflows, but all variables should be considered
@@ -11,7 +11,10 @@ sensitive in production.
 The ``.env`` file contains all variables that can be shared with the team.
 The ``.env.secret`` file contains all sensitive variables, and should be kept secret.
 
-In the implementation, those variables are usually accessed with :doc:``get_app_settings` <mariner.core.config.get_app_settings>`
+In the implementation, those variables are usually accessed with ``get_app_settings``
+
+General Configuration
+---------------------
 
 .. confval:: SERVER_HOST
 
@@ -68,7 +71,7 @@ OAuth Settings
 
 Here we describe the environment variables that have a role in the OAuth flow.
 New OAuth providers can be added by adding the variables to the environment
-and providing an implementation for the authentication flow in the :doc:``oauth_providers` <oauth_providers>` module.
+and providing an implementation for the authentication flow in the oauth_providers module.
 All OAuth providers must have the following variables.
 
 - ``OAUTH_<PROVIDER-ID>_NAME``: Configures the name of the OAuth provider button in the frontend.
@@ -78,7 +81,7 @@ All OAuth providers must have the following variables.
 - ``OAUTH_<PROVIDER-ID>_SCOPE``: The scope of the OAuth flow.
 - ``OAUTH_<PROVIDER-ID>_ALLOWED_EMAILS``: Optional list of emails that are allowed separated by strings. Example: ``"user1@domain.com,user2@domain.com"``
 
-Those configurations are used in the ``oauth_providers`` module to configure the OAuth flow.
+Those configurations are used in the :doc:`/generated/oauth_providers` module to configure the OAuth flow.
 
 Secret
 ------

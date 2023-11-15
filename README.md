@@ -1,3 +1,9 @@
+# Mariner
+
+Mariner is an application to create and manage ML models from a web interface, without the requirement of knowing how to code to build and use these models.
+It works by abstracting the ML tasks, such as training and validating a model, into a simpler functions and json convertible objects, that are used to build a REST API to perform such tasks.
+
+
 # Getting started
 
 ## Installation
@@ -9,7 +15,7 @@ To run the application, you simply need:
 - and optionally [GNU Make](https://www.gnu.org/software/make/), which is included in many distributions, and will allow you to use shorter commands
 
 
-## Starting the application locally:
+## Starting the application locally
 
 Use one of the following to start all core services:
 

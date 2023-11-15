@@ -11,8 +11,9 @@ of the application.
 
    Getting Started <getting_started>
    Configuration <configuration>
+   User Guide <user_guide/index>
    Overview <overview>
-   Reference <mainmodules>
+   Reference <reference>
    Contributing <contributing>
 
 
