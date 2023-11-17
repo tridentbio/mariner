@@ -2,17 +2,20 @@
 Mariner
 =======
 
-
 Welcome to Mariner's documentation! Here you'll find information on the internals
-of the software behind Mariner.
+of the application.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    Getting Started <getting_started>
+   Configuration <configuration>
+   Developers Guide <developer_guide/index>
    Overview <overview>
-   Reference <mainmodules>
+   Reference <reference>
+   Contributing <contributing>
+
 
 .. toctree::
    :maxdepth: 2

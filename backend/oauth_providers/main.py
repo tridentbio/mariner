@@ -24,7 +24,7 @@ def get_user_data(provider: str, **kwargs) -> UserData:
         provider (str): the provider to use.
         code (str): the code to exchange for a user. (keyword!)
         credentials (dict[str, str]): the credentials to use from conf.toml. (keyword!)
-        **kwargs: the arguments to pass to the provider. It must include.
+        **kwargs: the arguments to pass to the provider.
     """
     if provider == "github":
         github_user = github.exchange_code(**kwargs)

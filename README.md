@@ -1,218 +1,59 @@
-# mariner
+# Mariner
 
-## Backend local development
+Mariner is an application to create and manage ML models from a web interface, without the requirement of knowing how to code to build and use these models.
+It works by abstracting the ML tasks, such as training and validating a model, into a simpler functions and json convertible objects, that are used to build a REST API to perform such tasks.
 
-### Requirements
+
+# Getting started
+
+## Installation
 
 To run the application, you simply need:
 
 - [Docker](https://www.docker.com/).
 - [Docker Compose](https://docs.docker.com/compose/install/).
+- and optionally [GNU Make](https://www.gnu.org/software/make/), which is included in many distributions, and will allow you to use shorter commands
 
-To contribute to the project, you might need extra requirements:
+## Starting the application locally
 
-- [GNU Make](https://www.gnu.org/software/make/) for helper scripts
-- [Python 3.9](https://www.python.org/downloads/) for backend and ML
-- [Poetry](https://python-poetry.org/) for Python package and environment management.
-- [Node 16](https://nodejs.org/en/download) for webapplication
+First you should place the AWS credentials in the `backend/.env.secret` file so the docker-compose files can use them in the services that must interact with AWS.
+For production environments, those credentials should be in the environment variables. The necessary roles
 
-### Contributing
-
-Once all requirements are installed, have a look in the commands provided by `make`
-
-We have a series of git hooks to keep up with the code standards defined for the project.
-To have them working in your machine run:
-
-```bash
-make pre-commit-install
-```
-
-#### Backend
-
-Here are some commands you can run on the `backend/` root
-
-4. Use the virtualenv as appropriate. As long as in the virtualenv, all dependencies should be found, and editor support should have autocompletion working:
-
-```bash
-poetry shell # starts shell with the virtualenv loaded or ...
-poetry run code . # starts vscode with the virtualenv loaded in this folder
-```
-
-### Running the code in docker-compose
-
-- Start the stack with Docker Compose (only needed to apply the changes of configuration files, code changes are captured by a volume defined in the [override file](./docker-compose.override.yml)
-
-```bash
-docker compose up -d
-```
-
-- Update dependencies on a running container
-
-```bash
-docker compose exec backend poetry install
-```
-
-- Forces rebuilding of docker services:
-
-```bash
-docker compose up --build
-```
-
-- To check the logs and attach to it
-
-```bash
-docker compose logs --follow
-```
-
-- To check the logs of the backend, or some specific server
-
-```bash
-docker compose logs --follow backend
-```
-
-- Tune docker compose to your needs by changing the [override file](./docker-compose.override.yml) or ignore it with:
-
-```bash
-docker compose -f ./docker-compose.yml <...> # whatever docker compose commad you'd like to run without being overwritten by override file
-```
-
-### Automated Tests
-
-Refer to [pytest documentation](https://docs.pytest.org/en/7.2.x/) to know how to best select what tests to run
-If your stack is already up and you just want to run the tests, you can use:
-
-- Run default tests (short run)
-
-```bash
-docker compose exec backend pytest
-```
-
-- Run tests with HTML coverage report
-
-```bash
-docker compose exec backend pytest --cov-report=html
-```
-
-- Run all tests (will take some time)
-
-```bash
-docker compose exec backend pytest -m 'not benchmark'
-```
-
-Some tests will fail if ran outside docker-compose.
-
-#### Running Benchmarks
-
-When implementing a benchmark, place it along other tests, and name your test function as `test_benchmark_name-of-benchmarking-target`, and mark it with `@pytest.mark.benchmark`
-
-To execute a set of benchmarks, use the following pytest options:
-
-- `-s` pytest option to capture the test stdout
-- `-m benchmark` otherwise the benchmarks collected will be deselected by the pytest.ini `adopts`
-
-### Live development with Python Jupyter Notebooks
-
-To run jupyterlab withing the docker compose networks (in order to access services such as the db and ray), run:
-
-```bash
-docker compose exec backend bash # get a shell in container
-$JUPYTER # use JUPYTER variable defined in docker-compose.override.yml
-```
-
-If calling $JUPYTER fails, possible causes are:
-
-1. Docker-compose.override.yml was not used, in such case you can run in the backend container shell:
-
-```bash
-jupyter lab --ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888
-```
-
-2. Development dependencies were not installed, in such case you should
-   get a shell in the container and run `poetry add jupyter`. The default
-   development image (Dockerfile.local) already has jupyter as a dev dependency
-
-### Migrations
-
-#### Running existing migrations
-
-There are 3 make commands that many help with migrations, their names are self-explanatory:
-
-1. `make migrate-backend`: Runs backend migrations
-1. `make migrate-mlflow`: Runs mlflow migrations
-1. `make migrate`: Runs all migrations
-
-As during local development your app directory is mounted as a volume inside the container, you can also run the migrations with `alembic` commands inside the container and the migration code will be in your app directory (instead of being only inside the container). So you can add it to your git repository.
-
-Make sure you create a "revision" of your models and that you "upgrade" your database with that revision every time you change them. As this is what will update the tables in your database. Otherwise, your application will have errors.
-
-- Start an interactive session in the backend container:
+Use one of the following to start all core services:
 
 ```console
-$ docker compose exec backend bash
+make start
 ```
 
-- If you created a new model in `./mariner/entities`, make sure to import it in `mariner/entities/__init__.py`, that Python module that imports all the models will be used by Alembic.
-
-- After changing a model (for example, adding a column), inside the container, create a revision, e.g.:
+or 
 
 ```console
-$ alembic revision --autogenerate -m "Add column last_name to User model"
+docker compose up --wait backend webapp` is also another way that does not require building.
 ```
 
-- Commit to the git repository the files generated in the alembic directory.
-
-- After creating the revision, run the migration in the database (this is what will actually change the database):
+Alternatively you may wish to run only the backend on docker, and the webapp locally. Then you can:
 
 ```console
-$ alembic upgrade head
+make start-backend
+cd webapp
+npm install . 
+npm start
 ```
 
-## Publishing releases
+In case you're not using make you can omit the webapp service from the `docker-compose` start command.
 
-A cli tool was made to publish releases from the [RELEASES.md](./RELEASES.md) file.
+Finally, you'll want a local user credentials to interact with the app. For that you can run one of the following commands:
 
-If on the commit, there is an upgrade to the version in the pyproject, the script will
-detect it, and use it to filter the current release to publish notifications for.
-
-You may use it from the command line for debugging like so:
-
-```bash
-cd backend
-cat RELEASES.md | python -m mariner.changelog publish
+```
+make create-admin
 ```
 
-or with make
+or 
 
-```bash
-make publish
+```
+docker compose run --entrypoint "python -c 'from mariner.db.init_db import create_admin_user; create_admin_user()'" backend
 ```
 
-## Testing the application
+This will create a user with email `admin@.mariner.trident.bio` and password `123456`.
 
-When you just want to test the application, i.e. you don't want to make changes to it, it's
-recommended to run the project without src code volumes created by default with our docker-compose
-files. To do that, you must run all make commands like following:
-
-```console
-make build DOCKER_COMPOSE="docker-compose.yml"
-```
-Causing only the docker-compose.yml file to have affect, and therefore ignoring the volumes created in docker-compose.override.yml
-
-## Troubleshooting
-- Getting pre-commit failures because of style when trying to commit
-
-  Try running the following command to run automatic formatters:
-  ```console
-  make fix
-  ```
-- Got a: `OSError: libcublas.so.11: cannot open shared object file: No such file or directory`
-
-  **CPU** users:
-
-  Reinstall torch with cpu extra deps in the correct virtual environment
-
-  ```
-  poetry shell
-  pip uninstall torch
-  pip install torch==2.0.0 --extra-index-url https://download.pytorch.org/whl/cpu
-  ```
+Finally, access <http://localhost:3000/login> and login to use the app. Checkout the User Guide to know what

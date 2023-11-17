@@ -4758,14 +4758,14 @@ files = [
 
 [[package]]
 name = "mistune"
-version = "3.0.1"
-description = "A sane and fast Markdown parser with useful plugins and renderers"
+version = "2.0.5"
+description = "A sane Markdown parser with useful plugins and renderers"
 category = "dev"
 optional = false
-python-versions = ">=3.7"
+python-versions = "*"
 files = [
-    {file = "mistune-3.0.1-py3-none-any.whl", hash = "sha256:b9b3e438efbb57c62b5beb5e134dab664800bdf1284a7ee09e8b12b13eb1aac6"},
-    {file = "mistune-3.0.1.tar.gz", hash = "sha256:e912116c13aa0944f9dc530db38eb88f6a77087ab128f49f84a48f4c05ea163c"},
+    {file = "mistune-2.0.5-py2.py3-none-any.whl", hash = "sha256:bad7f5d431886fcbaf5f758118ecff70d31f75231b34024a1341120340a65ce8"},
+    {file = "mistune-2.0.5.tar.gz", hash = "sha256:0246113cb2492db875c6be56974a7c893333bf26cd92891c85f63151cee09d34"},
 ]
 
 [[package]]
@@ -8079,6 +8079,23 @@ jinja2 = ">=2.10"
 markupsafe = ">=1"
 
 [[package]]
+name = "sphinx-mdinclude"
+version = "0.5.3"
+description = "Markdown extension for Sphinx"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "sphinx_mdinclude-0.5.3-py3-none-any.whl", hash = "sha256:02afadf4597aecf8255a702956eff5b8c5cb9658ea995c3d361722d2ed78cca9"},
+    {file = "sphinx_mdinclude-0.5.3.tar.gz", hash = "sha256:2998e3d18b3022c9983d1b72191fe37e25ffccd54165cbe3acb22cceedd91af4"},
+]
+
+[package.dependencies]
+docutils = ">=0.16,<1.0"
+mistune = ">=2.0,<3.0"
+pygments = ">=2.8"
+
+[[package]]
 name = "sphinx-prompt"
 version = "1.5.0"
 description = "Sphinx directive to add unselectable prompt"
@@ -9435,4 +9452,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "6f94e2709cebed80d2e308b77712672c6f8c22031ea425bfce751645e184ac30"
+content-hash = "55aac84bdde87373b3e5f6e80bdf4d447d7196902b2865750011baaf9bdacdea"

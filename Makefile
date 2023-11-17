@@ -35,7 +35,7 @@ webapp-install: webapp/package-lock.json         ## Install dependencies to run 
 backend-install: backend/poetry.lock       ## Install dependencies to run backend locally and run it's CLI tools
 	cd backend &&\
 		poetry install &&\
-		poetry run install_deps_cpu
+		poetry run deps.py
 
 .PHONY: help
 help:                   ## Display this help
@@ -161,31 +161,30 @@ publish: ## Parse RELEASE.md file into mariner events that will show up as notif
 		cat RELEASES.md | $(DOCKER_COMPOSE) run --entrypoint 'python -m mariner.changelog publish' backend
 
 SPHINX_OPTS = -a -W -c ../docs
+.PHONY: build-docs-local
+build-docs-local: ## Builds the documentation
+	cd backend &&\
+		poetry run \
+		dotenv -f .env run \
+		sphinx-build -a $(SPHINX_OPTS) ../docs/source ../build
+
 .PHONY: build-docs 
 build-docs: ## Builds the documentation
-	docker compose -f docker-compose.yml run --entrypoint \
-		'sphinx-build' backend $(SPHINX_OPTS) --keep-going ../docs/source ../build
-
+		sphinx-build backend -a $(SPHINX_OPTS) ../docs/source ../build
 
 .PHONY: live-docs 
 live-docs:  ## Runs the documentation server.
-	docker compose run --service-ports --entrypoint sphinx-autobuild backend --port 8000 --open-browser --watch . $(SPHINX_OPTS) ../docs/source ../build
+	docker compose run --service-ports --entrypoint sphinx-autobuild backend --port 8001 --open-browser --watch . $(SPHINX_OPTS) ../docs/source ../build
 
+docs-clean:  ## Removes the documentation build directory and generated RST.
+	rm -rf build/
+	rm -rf docs/source/generated/*
 .PHONY: live-docs-local
 live-docs-local:  ## Runs the documentation server.
 	cd backend&&\
 		poetry run \
 		dotenv -f .env.secret -f .env run \
-		sphinx-autobuild --port 8000 --open-browser -a --watch . $(SPHINX_OPTS) ../docs/source ../build
-
-
-
+		sphinx-autobuild --port 8001 --open-browser -a --watch .. $(SPHINX_OPTS) ../docs/source ../build
 .PHONY: jupyter
 jupyter:  ## Starts jupyter on the backend container
 	docker run -p 8888:8888 -v ./backend:/app:z --entrypoint bash -i --tty  --network host --env-file backend/.env mariner-backend
-
-
-
-
-
-

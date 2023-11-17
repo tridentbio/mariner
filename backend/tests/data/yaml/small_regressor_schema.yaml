@@ -1,21 +1,21 @@
-name: GNNExample
-framework: torch
-dataset:
-  name: Small Zinc dataset
-  strategy: forwardArgs
-  targetColumns:
-    - name: tpsa
-      dataType:
+name: GNNExample                                                   # The name of the model
+framework: torch                                                   # Framework that will be used
+dataset:                                                           # Description of dataset
+  name: Small Zinc dataset                                         # Name of the dataset
+  strategy: forwardArgs                                            # For torch models, forwardArgs is recommended
+  targetColumns:                                                   # Description of the target columns
+    - name: tpsa                                                   # Name of the column
+      dataType:                                                    # Column dataType
         domainKind: numeric
-      outModule: LinearJoined
-  featureColumns:
+      outModule: LinearJoined                                      # The model output id that will estimate this value
+  featureColumns:                                                  # Description of the feature columns. Have the same structure as targetColumns, but doesn't require outModule.
     - name: smiles
       dataType:
         domainKind: smiles
     - name: mwt
       dataType:
         domainKind: numeric
-  featurizers:
+  featurizers:                                                    # Featurizer components that will be used in the preprocessing step.
     - name: MolToGraphFeaturizer
       type: fleet.model_builder.featurizers.MoleculeFeaturizer
       forwardArgs:
@@ -24,16 +24,16 @@ dataset:
         allow_unknown: false
         sym_bond_list: true
         per_atom_fragmentation: false
-spec:
-  layers:
-    - name: GCN1
-      type: torch_geometric.nn.GCNConv
-      constructorArgs:
+spec:                                                             # Torch model specification
+  layers:                                                         # List of layers used
+    - name: GCN1                                                  # Layer component id
+      type: torch_geometric.nn.GCNConv                            # Python object to use in model instantiation
+      constructorArgs:                                            # Object constructor arguments
         in_channels: 26
         out_channels: 64
-      forwardArgs:
-        x: ${MolToGraphFeaturizer.x}
-        edge_index: ${MolToGraphFeaturizer.edge_index}
+      forwardArgs:                                                # Specifies how to connect inputs to outputs during forward
+        x: ${MolToGraphFeaturizer.x}                              # References the output of MolToGraphFeaturizer's x property.
+        edge_index: ${MolToGraphFeaturizer.edge_index}            # References the output of MolToGraphFeaturizer's edge_index property.
     - name: GCN1_Activation
       type: torch.nn.ReLU
       constructorArgs:
