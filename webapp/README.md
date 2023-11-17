@@ -19,7 +19,15 @@ npm run build
 This repository holds the frontend of the Mariner system, and it needs the [backend]() to be running.
 So if you haven't, go there and follow the installation instructions.
 
-`npm run install`
+```console
+npm run install
+```
+
+Once installed, you can run it with:
+
+```console
+npm run start
+```
 
 ## pre-commit
 
