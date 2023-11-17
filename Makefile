@@ -35,7 +35,7 @@ webapp-install: webapp/package-lock.json         ## Install dependencies to run 
 backend-install: backend/poetry.lock       ## Install dependencies to run backend locally and run it's CLI tools
 	cd backend &&\
 		poetry install &&\
-		poetry run install_deps_cpu
+		poetry run deps.py
 
 .PHONY: help
 help:                   ## Display this help
@@ -176,6 +176,9 @@ build-docs: ## Builds the documentation
 live-docs:  ## Runs the documentation server.
 	docker compose run --service-ports --entrypoint sphinx-autobuild backend --port 8001 --open-browser --watch . $(SPHINX_OPTS) ../docs/source ../build
 
+docs-clean:  ## Removes the documentation build directory and generated RST.
+	rm -rf build/
+	rm -rf docs/source/generated/*
 .PHONY: live-docs-local
 live-docs-local:  ## Runs the documentation server.
 	cd backend&&\
