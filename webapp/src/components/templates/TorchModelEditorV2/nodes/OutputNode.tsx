@@ -18,6 +18,7 @@ const OutputNode = ({ editable = true, ...props }: InputNodeProps) => {
     <BaseNode
       id={props.id}
       title={props.data.name}
+      selected={props.selected}
       headerExtra={
         <NodeHeader
           options={[

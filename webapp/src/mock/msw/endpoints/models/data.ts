@@ -1,4 +1,8 @@
-import { AllowedLosses } from '@app/rtk/generated/models';
+import {
+  AllowedLosses,
+  ModelTemplate,
+  TorchModelSpec,
+} from '@app/rtk/generated/models';
 import { Model } from '@app/types/domain/models';
 
 export const models: Partial<Model>[] = [
@@ -1261,3 +1265,35 @@ export const losses: AllowedLosses = {
     multiclass: 'mc_class',
   },
 };
+
+export const modelTemplates: ModelTemplate[] = [
+  {
+    id: 1,
+    name: 'Template name',
+    createdAt: '2023-10-02T16:17:42.193525',
+    description: 'Template description',
+    createdById: 1,
+    updatedAt: '2023-10-02T16:17:42.193525',
+    createdBy: {
+      email: 'test@email.com',
+      fullName: 'Test User',
+      id: 1,
+      isActive: true,
+      isSuperuser: true,
+    },
+    version: {
+      id: 1,
+      name: 'Version name',
+      description: 'Version description',
+      createdAt: '2023-10-02T16:17:42.193525',
+      updatedAt: '2023-10-02T16:17:42.193525',
+      mlflowModelName: 'mlflow-model-name',
+      modelId: 1,
+      checkStackTrace: undefined,
+      checkStatus: 'OK',
+      config: models?.[0]?.versions?.[0]?.config as {
+        framework: 'torch';
+      } & TorchModelSpec,
+    },
+  },
+];

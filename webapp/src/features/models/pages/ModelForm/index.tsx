@@ -22,7 +22,9 @@ import { useNotifications } from 'app/notifications';
 import * as modelsApi from 'app/rtk/generated/models';
 import StackTrace from 'components/organisms/StackTrace';
 import Content from 'components/templates/AppLayout/Content';
-import TorchModelEditor from 'components/templates/TorchModelEditorV2';
+import TorchModelEditor, {
+  ModelEditorElementsCount,
+} from 'components/templates/TorchModelEditorV2';
 import { TorchModelEditorContextProvider } from 'hooks/useTorchModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
 import { MouseEvent, useEffect, useMemo, useState } from 'react';
@@ -136,6 +138,12 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
 
   const [modelVersionReference, setModelVersionReference] =
     useState<modelsApi.ModelVersion>();
+
+  const [modelEditorNodesCount, setModelEditorNodesCount] =
+    useState<ModelEditorElementsCount>({
+      components: 0,
+      templates: 0,
+    });
 
   const modelId = useMemo(() => {
     return currentMode == 'creation' ? registeredModel : routeParams.modelId;
@@ -508,6 +516,8 @@ const ModelForm = ({ mode = 'creation' }: ModelFormProps) => {
                         value as modelsApi.ModelCreate['config']
                       );
                     }}
+                    initialElementsCount={modelEditorNodesCount}
+                    onElementsCountChange={setModelEditorNodesCount}
                   />
                 </TorchModelEditorContextProvider>
               </ReactFlowProvider>

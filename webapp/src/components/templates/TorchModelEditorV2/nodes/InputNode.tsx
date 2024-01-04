@@ -11,6 +11,7 @@ const InputNode = (props: InputNodeProps) => {
     <BaseNode
       id={props.id}
       title={props.data.name}
+      selected={props.selected}
       handlesElement={
         <CustomHandle
           nodeId={props.data.name}

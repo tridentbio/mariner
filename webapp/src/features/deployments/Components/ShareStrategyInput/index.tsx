@@ -6,16 +6,24 @@ import {
   RadioGroup,
 } from '@mui/material';
 import { usersApiRtk } from 'app/rtk/users';
-import React, { useMemo } from 'react';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
-import { DeploymentFormFields, EShareStrategies } from '../../types';
+import { useMemo } from 'react';
+import {
+  ControllerRenderProps,
+  FieldValues,
+  Path,
+  useFormContext,
+} from 'react-hook-form';
+import { EShareStrategies } from '../../types';
 import { AccountsStrategy } from './AccountsStrategy';
 import OrganizationStrategy from './OrganizationStrategy';
 
-type ShareStrategyInputProps = {
-  field: ControllerRenderProps<DeploymentFormFields, 'shareStrategy'>;
+type ShareStrategyInputProps<T extends object, K extends Path<T>> = {
+  field: ControllerRenderProps<T, K>;
 };
-const ShareStrategyInput: React.FC<ShareStrategyInputProps> = ({ field }) => {
+
+const ShareStrategyInput = <T extends FieldValues, K extends Path<T>>({
+  field,
+}: ShareStrategyInputProps<T, K>) => {
   const { setValue, unregister } = useFormContext();
   const { data: usersList } = usersApiRtk.useGetUsersQuery({}, {});
 

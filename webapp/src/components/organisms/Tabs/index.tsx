@@ -1,25 +1,32 @@
 import { ReactNode, SyntheticEvent, useState } from 'react';
-import { Tabs, Box, Tab } from '@mui/material';
+import { Tabs, Box, Tab, SxProps, Theme } from '@mui/material';
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
+  boxProps?: {
+    sx: SxProps<Theme>;
+  };
 }
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
+  if (value === index)
+    return (
+      <Box
+        role="tabpanel"
+        hidden={value !== index}
+        id={`simple-tabpanel-${index}`}
+        aria-labelledby={`simple-tab-${index}`}
+        {...other}
+        {...props.boxProps}
+      >
+        {children}
+      </Box>
+    );
+
+  return null;
 }
 
 function a11yProps(index: number) {
@@ -35,6 +42,8 @@ export interface AppTabsProps {
     panel: ReactNode;
   }[];
   initialTab?: number;
+  boxProps?: TabPanelProps['boxProps'];
+  onChange?: (tabValue: number) => void;
 }
 
 export default function AppTabs(props: AppTabsProps) {
@@ -42,10 +51,12 @@ export default function AppTabs(props: AppTabsProps) {
 
   const handleChange = (_event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
+
+    props.onChange && props.onChange(newValue);
   };
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', height: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange}>
           {props.tabs.map((tab, index) => (
@@ -54,7 +65,12 @@ export default function AppTabs(props: AppTabsProps) {
         </Tabs>
       </Box>
       {props.tabs.map((tab, index) => (
-        <TabPanel key={index} value={value} index={index}>
+        <TabPanel
+          key={index}
+          value={value}
+          index={index}
+          boxProps={props.boxProps}
+        >
           {tab.panel}
         </TabPanel>
       ))}

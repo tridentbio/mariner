@@ -5,6 +5,7 @@ import {
   LayerFeaturizerType,
   ModelSchema,
   NodeType,
+  TorchModelSchema,
 } from '@model-compiler/src/interfaces/torch-model-editor';
 import { Dispatch } from 'react';
 import {
@@ -14,6 +15,8 @@ import {
   ReactFlowInstance,
   OnNodesChange,
   OnEdgesChange,
+  ReactFlowActions,
+  OnNodesDelete,
 } from 'reactflow';
 import { ArrayElement } from 'utils';
 import { CSSProperties } from 'styled-components';
@@ -32,7 +35,7 @@ export interface ITorchModelEditorContext
    * Maps a model schema to react flow's graph
    *
    * @param {ModelSchema} schema - the model schema
-   * @param {ReturnType<typeof getNodePositionsMap>} [positions] - optional map of node positions
+   * @param {ReturnType<typeof ITorchModelEditorContext['getNodePositionsMap']>} [positions] - optional map of node positions
    * @returns {[MarinerNode[], Edge[]]} react flow nodes and edges
    */
   schemaToEditorGraph(
@@ -46,7 +49,8 @@ export interface ITorchModelEditorContext
   applyDagreLayout(
     director: 'TB' | 'LR',
     spaceValue: number,
-    _edges?: Edge[]
+    _edges?: Edge[],
+    _selectedNodes?: MarinerNode['id'][]
   ): void;
 
   /**
@@ -127,7 +131,7 @@ export interface ITorchModelEditorContext
    * `deleteComponents` and other methods from `TorchModelEditor` ). It's only use is to
    * set the initial state with the help of provided methods
    */
-  setSchema: Dispatch<ModelSchema>;
+  setSchema: Dispatch<React.SetStateAction<TorchModelSchema | undefined>>;
 
   /**
    * Suggestions gathered from last model schema edition
@@ -180,4 +184,24 @@ export interface ITorchModelEditorContext
   nodesInitialized: boolean;
 
   highlightNodes: (nodeIds: string[], color?: CSSProperties['color']) => void;
+
+  getNodePositionsMap: () => Record<string, { x: number; y: number }>;
+
+  updateNodesAndEdges: (
+    schema: ModelSchema,
+    positionsMap?: ReturnType<ITorchModelEditorContext['getNodePositionsMap']>,
+    onBeforeUpdate?: (
+      nodes: MarinerNode[],
+      edges: Edge[]
+    ) => {
+      nodes: MarinerNode[];
+      edges: Edge[];
+    }
+  ) => void;
+
+  unselectNodesAndEdges: ReactFlowActions['unselectNodesAndEdges'];
+
+  isInputNode: (nodeName: string) => boolean;
+
+  onNodesDelete: OnNodesDelete;
 }

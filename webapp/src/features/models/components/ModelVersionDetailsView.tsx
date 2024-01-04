@@ -1,14 +1,14 @@
-import {
-  ModelCreate,
-  TorchModelSchema,
-  TorchModelSpec,
-} from '@app/rtk/generated/models';
+import { ModelCreate, TorchModelSpec } from '@app/rtk/generated/models';
 import { Text } from '@components/molecules/Text';
 import DataPreprocessingInput from '@components/organisms/ModelBuilder/DataPreprocessingInput';
 import SklearnModelInput from '@components/organisms/ModelBuilder/SklearnModelInput';
 import { ModelBuilderContextProvider } from '@components/organisms/ModelBuilder/hooks/useModelBuilder';
 import { SimpleColumnConfig } from '@components/organisms/ModelBuilder/types';
+import { ModelSchema } from '@model-compiler/src/interfaces/torch-model-editor';
+import { CheckCircle } from '@mui/icons-material';
 import {
+  Box,
+  Button,
   Container,
   FormLabel,
   Step,
@@ -21,11 +21,11 @@ import NotFound from 'components/atoms/NotFound';
 import TorchModelEditor from 'components/templates/TorchModelEditorV2';
 import { TorchModelEditorContextProvider } from 'hooks/useTorchModelEditor';
 import { extendSpecWithTargetForwardArgs } from 'model-compiler/src/utils';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { ReactFlowProvider } from 'reactflow';
-import { CheckCircle } from '@mui/icons-material';
-import { ModelSchema } from '@model-compiler/src/interfaces/torch-model-editor';
+import { ModelTemplateForm } from './ModelTemplateForm';
+import Modal from '@components/templates/Modal';
 
 interface ModelVersionDetailsProps {
   modelName?: string;
@@ -38,6 +38,7 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
   const model = modelsApi.useGetModelByIdQuery(props.modelId).data;
   const sklearnFormMethods = useForm<ModelCreate>();
   const [torchExtendedSpec, setTorchExtendedSpec] = useState<ModelSchema>();
+  const [openModelTemplatesModal, setOpenModelTemplatesModal] = useState(false);
 
   const modelVersion = model?.versions?.find(
     (modelVersion) => modelVersion.id === props.modelVersionId
@@ -84,71 +85,93 @@ const ModelVersionDetailsView = (props: ModelVersionDetailsProps) => {
   const isSklearnFormFilled =
     Object.keys(sklearnFormMethods.watch() || {}).length > 0;
 
-  if (modelVersion.config.framework == 'sklearn') {
-    if (!isSklearnFormFilled) return null;
-
-    return (
-      <FormProvider {...sklearnFormMethods}>
-        <ModelBuilderContextProvider editable={false} defaultExpanded={true}>
-          <Container sx={{ pt: 3 }}>
-            <Stepper orientation="vertical">
-              <Step active>
-                <StepContent>
-                  <StepLabel StepIconComponent={CheckCircle}>
-                    <Text variant="subtitle1">Feature columns</Text>
-                  </StepLabel>
-                  <DataPreprocessingInput
-                    value={
-                      modelVersion.config.dataset
-                        .featureColumns as SimpleColumnConfig[]
-                    }
-                    type="featureColumns"
-                  />
-                </StepContent>
-              </Step>
-              <Step active>
-                <StepContent>
-                  <StepLabel StepIconComponent={CheckCircle}>
-                    <Text variant="subtitle1">Target columns</Text>
-                  </StepLabel>
-                  <DataPreprocessingInput
-                    value={
-                      modelVersion.config.dataset
-                        .targetColumns as SimpleColumnConfig[]
-                    }
-                    type="targetColumns"
-                  />
-                </StepContent>
-              </Step>
-              <Step active>
-                <StepContent>
-                  <StepLabel StepIconComponent={CheckCircle}>
-                    <Text variant="subtitle1">Model</Text>
-                  </StepLabel>
-                  <SklearnModelInput />
-                </StepContent>
-              </Step>
-            </Stepper>
-          </Container>
-        </ModelBuilderContextProvider>
-      </FormProvider>
-    );
-  }
-
-  if (!torchExtendedSpec) return null;
-
   return (
-    <>
-      <FormLabel>Model:</FormLabel>
-      <ReactFlowProvider>
-        <TorchModelEditorContextProvider>
-          <TorchModelEditor
-            value={torchExtendedSpec as ModelSchema}
-            editable={false}
-          />
-        </TorchModelEditorContextProvider>
-      </ReactFlowProvider>
-    </>
+    <Box>
+      <Modal
+        open={openModelTemplatesModal}
+        onClose={() => {
+          setOpenModelTemplatesModal(false);
+        }}
+        title="Model template creation"
+      >
+        <ModelTemplateForm
+          toggleModal={() => setOpenModelTemplatesModal(false)}
+          model={model}
+        />
+      </Modal>
+      <Box sx={{ py: 2 }}>
+        <Button
+          variant="contained"
+          onClick={() => setOpenModelTemplatesModal(true)}
+        >
+          Add template
+        </Button>
+      </Box>
+
+      {modelVersion.config.framework == 'sklearn'
+        ? isSklearnFormFilled && (
+            <FormProvider {...sklearnFormMethods}>
+              <ModelBuilderContextProvider
+                editable={false}
+                defaultExpanded={true}
+              >
+                <Container sx={{ pt: 3 }}>
+                  <Stepper orientation="vertical">
+                    <Step active>
+                      <StepContent>
+                        <StepLabel StepIconComponent={CheckCircle}>
+                          <Text variant="subtitle1">Feature columns</Text>
+                        </StepLabel>
+                        <DataPreprocessingInput
+                          value={
+                            modelVersion.config.dataset
+                              .featureColumns as SimpleColumnConfig[]
+                          }
+                          type="featureColumns"
+                        />
+                      </StepContent>
+                    </Step>
+                    <Step active>
+                      <StepContent>
+                        <StepLabel StepIconComponent={CheckCircle}>
+                          <Text variant="subtitle1">Target columns</Text>
+                        </StepLabel>
+                        <DataPreprocessingInput
+                          value={
+                            modelVersion.config.dataset
+                              .targetColumns as SimpleColumnConfig[]
+                          }
+                          type="targetColumns"
+                        />
+                      </StepContent>
+                    </Step>
+                    <Step active>
+                      <StepContent>
+                        <StepLabel StepIconComponent={CheckCircle}>
+                          <Text variant="subtitle1">Model</Text>
+                        </StepLabel>
+                        <SklearnModelInput />
+                      </StepContent>
+                    </Step>
+                  </Stepper>
+                </Container>
+              </ModelBuilderContextProvider>
+            </FormProvider>
+          )
+        : torchExtendedSpec && (
+            <>
+              <FormLabel>Model:</FormLabel>
+              <ReactFlowProvider>
+                <TorchModelEditorContextProvider>
+                  <TorchModelEditor
+                    value={torchExtendedSpec as ModelSchema}
+                    editable={false}
+                  />
+                </TorchModelEditorContextProvider>
+              </ReactFlowProvider>
+            </>
+          )}
+    </Box>
   );
 };
 

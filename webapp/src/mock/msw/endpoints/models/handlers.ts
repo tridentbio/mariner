@@ -1,5 +1,5 @@
 import { rest } from 'msw';
-import { losses, modelOptionsData, models } from './data';
+import { losses, modelOptionsData, modelTemplates, models } from './data';
 import { api } from '../../api';
 
 export const handlers = [
@@ -25,6 +25,9 @@ export const handlers = [
   }),
   rest.get(api('/models/losses'), (req, res, ctx) => {
     return res(ctx.status(200), ctx.json(losses));
+  }),
+  rest.get(api('/models/templates'), (req, res, ctx) => {
+    return res(ctx.status(200), ctx.json(modelTemplates));
   }),
   rest.get(api('/models/*'), (req, res, ctx) => {
     return res(ctx.status(200), ctx.json(models[0]));
